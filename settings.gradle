@@ -1,0 +1,2 @@
+rootProject.name = 'net.simforge.airways'
+include 'module1'
