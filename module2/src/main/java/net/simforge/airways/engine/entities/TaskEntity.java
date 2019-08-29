@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -11,6 +15,7 @@ package net.simforge.airways.engine.entities;
 import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity(name = "EngineTask")
 @Table(name = "engine_task")
@@ -24,7 +29,7 @@ public class TaskEntity implements BaseEntity {
 
     private Integer status;
     private Integer retryCount;
-    private Long taskTime;
+    private LocalDateTime taskTime;
     private String processorClassName;
     private String entityClassName;
     private Integer entityId;
@@ -65,11 +70,11 @@ public class TaskEntity implements BaseEntity {
         this.retryCount = retryCount;
     }
 
-    public Long getTaskTime() {
+    public LocalDateTime getTaskTime() {
         return taskTime;
     }
 
-    public void setTaskTime(Long taskTime) {
+    public void setTaskTime(LocalDateTime taskTime) {
         this.taskTime = taskTime;
     }
 

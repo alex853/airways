@@ -1,27 +1,16 @@
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.engine.event.Event;
 import net.simforge.airways.engine.proto.ActivityStatus;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
@@ -32,6 +21,7 @@ import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
@@ -103,13 +93,13 @@ public class Engine implements Runnable {
 
     private void invalidateQueue() {
         List<TaskEntity> tasks;
-        long currTime = timeMachine.getTimeMillis();
+        LocalDateTime now = timeMachine.now();
         int maxResults = 1000;
         try (Session session = sessionFactory.openSession()) {
             //noinspection unchecked,JpaQlInspection
             tasks = session
                     .createQuery("from EngineTask where taskTime <= :toTime order by taskTime")
-                    .setLong("toTime", currTime + 60000)
+                    .setParameter("toTime", now.plusMinutes(1))
                     .setMaxResults(maxResults)
                     .list();
         }
@@ -132,11 +122,15 @@ public class Engine implements Runnable {
         throw new UnsupportedOperationException("EngineRuntime.reschedule");
     }
 
+    public ActivityStatus getActivityStatus(Class<? extends Activity> activityClass, BaseEntity entity) {
+        throw new UnsupportedOperationException("Engine.getActivityStatus");
+    }
+
     public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
-        task.setTaskTime(timeMachine.getTimeMillis());
+        task.setTaskTime(timeMachine.now());
         task.setProcessorClassName(activityClass.getName());
         task.setEntityClassName(entity.getClass().getName());
         task.setEntityId(entity.getId());
@@ -146,19 +140,43 @@ public class Engine implements Runnable {
         }
     }
 
-    public ActivityStatus getActivityStatus(Class<? extends Activity> activityClass, BaseEntity entity) {
-        throw new UnsupportedOperationException("Engine.getActivityStatus");
+    public void scheduleActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime startTime) {
+        TaskEntity task = new TaskEntity();
+        task.setStatus(TaskEntity.Status.ACTIVE);
+        task.setRetryCount(0);
+        task.setTaskTime(startTime);
+        task.setProcessorClassName(activityClass.getName());
+        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityId(entity.getId());
+
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.saveAndCommit(session, task);
+        }
     }
 
     public void fireEvent(Session session, Class eventClass, BaseEntity entity) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
+        task.setTaskTime(timeMachine.now());
         task.setProcessorClassName(eventClass.getName());
         task.setEntityClassName(entity.getClass().getName());
         task.setEntityId(entity.getId());
-        task.setTaskTime(timeMachine.getTimeMillis());
 
         session.save(task);
+    }
+
+    public void scheduleEvent(Class<? extends Event> eventClass, BaseEntity entity, LocalDateTime eventTime) {
+        TaskEntity task = new TaskEntity();
+        task.setStatus(TaskEntity.Status.ACTIVE);
+        task.setRetryCount(0);
+        task.setTaskTime(eventTime);
+        task.setProcessorClassName(eventClass.getName());
+        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityId(entity.getId());
+
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.saveAndCommit(session, task);
+        }
     }
 }

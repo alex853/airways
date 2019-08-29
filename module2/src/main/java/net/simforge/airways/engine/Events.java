@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.engine;
 
 import net.simforge.airways.model.flight.TransportFlight;
@@ -14,7 +18,7 @@ public class Events {
 
     }
 
-    public static void schedule(Class<CheckinClosed> checkinClosedClass, TransportFlight transportFlight, LocalDateTime plusMinutes) {
+    public static void schedule(Class clazz, BaseEntity transportFlight, LocalDateTime dateTime) {
 
     }
 }

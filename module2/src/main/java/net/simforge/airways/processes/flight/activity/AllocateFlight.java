@@ -1,30 +1,38 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.flight.activity;
 
-import net.simforge.airways.engine.proto.Activity;
-import net.simforge.airways.engine.proto.ActivityResult;
+import net.simforge.airways.engine.Result;
+import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.model.flight.Flight;
 import net.simforge.airways.engine.Events;
 import net.simforge.airways.processes.flight.event.Allocated;
 import net.simforge.airways.processes.flight.event.Cancelled;
 
-/**
- * Created by Alexey on 17.07.2018.
- */
-public class AllocateFlight implements Activity<Flight> {
+public class AllocateFlight implements Activity {
+    private Flight flight;
+
     @Override
-    public ActivityResult act(Flight flight) {
+    public Result act() {
         // todo allocation stuff
 
         boolean isAllocated = false;
         if (isAllocated) {
             Events.fire(Allocated.class, flight);
-            return ActivityResult.done();
+            return Result.ok();
         } else {
-            return ActivityResult.repeat(/*FewTimesPerDay*/);
+            return Result.ok();//ActivityResult.repeat(/*FewTimesPerDay*/);
         }
     }
 
-    public void onExpired(Flight flight) {
+    public Result afterExpired() {
         Events.fire(Cancelled.class, flight);
+        return null;
     }
 }

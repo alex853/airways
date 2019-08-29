@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -24,7 +28,7 @@ class TaskQueue {
         ListIterator<TaskEntity> it = tasks.listIterator();
         while (it.hasNext()) {
             TaskEntity next = it.next();
-            if (next.getTaskTime() > task.getTaskTime()) {
+            if (next.getTaskTime().isAfter(task.getTaskTime())) {
                 it.previous();
                 it.add(task);
                 return;

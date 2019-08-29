@@ -2,6 +2,10 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.timetablerow.activity;
 
 import net.simforge.airways.engine.Engine;
@@ -11,8 +15,7 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
-import net.simforge.airways.processes.FlightPlanned;
-import net.simforge.airways.processes.TransportFlightScheduled;
+import net.simforge.airways.processes.transportflight.event.Scheduled;
 import net.simforge.airways.service.TimetableService;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.TimeMachine;
@@ -110,8 +113,8 @@ public class ScheduleFlight implements Activity {
                         session.save(EventLog.make(flight, "Scheduled", timetableRow, transportFlight));
                         session.save(EventLog.make(transportFlight, "Scheduled", timetableRow, flight));
 
-                        engine.fireEvent(session, TransportFlightScheduled.class, transportFlight);
-                        engine.fireEvent(session, FlightPlanned.class, flight);
+                        engine.fireEvent(session, Scheduled.class, transportFlight);
+                        //engine.fireEvent(session, Planned.class, flight);
                     });
 
                     logger.info("Flight {} {}-{} departing at {} is scheduled",

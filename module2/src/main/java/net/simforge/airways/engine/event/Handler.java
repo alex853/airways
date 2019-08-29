@@ -6,10 +6,11 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.processes.flight.event;
+package net.simforge.airways.engine.event;
 
 /**
- * 2) starts Allocation activity
+ * Created by Alexey on 17.07.2018.
  */
-public class Planned {
+public interface Handler {
+    void process();
 }

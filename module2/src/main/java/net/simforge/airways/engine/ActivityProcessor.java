@@ -1,13 +1,9 @@
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 package net.simforge.airways.engine;
@@ -25,11 +21,11 @@ class ActivityProcessor extends Processor {
 
     @Override
     ProcessingResult process() {
-        Activity activity = createActivity();
+        Activity activity = (Activity) create(task.getProcessorClassName());
 
         ActivityInfo activityInfo = null; // todo
 
-        Class entityClass = getEntityClass();
+        Class entityClass = clazz(task.getEntityClassName());
 
         BaseEntity entity = (BaseEntity) session.get(entityClass, task.getEntityId());
 
@@ -60,17 +56,4 @@ class ActivityProcessor extends Processor {
         return null; // todo
     }
 
-    private Activity createActivity() {
-        try {
-            //noinspection unchecked
-            Class<Activity> processorClass = (Class<Activity>) Class.forName(task.getProcessorClassName());
-            return processorClass.newInstance();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Could not find processor class", e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException("Could not instantiate processor class", e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException("Could not access processor class", e);
-        }
-    }
 }

@@ -1,11 +1,17 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.transportflight.event;
+
+import net.simforge.airways.engine.event.Event;
 
 /**
  * 'Scheduled' event is fired at the moment when TimetableRow creates new TransportFlight instance.
- *
- * The event does the following:
- * 1) configures CheckinStarted timer
- * 2) starts Allocation activity
  */
-public class Scheduled {
+public class Scheduled implements Event {
 }

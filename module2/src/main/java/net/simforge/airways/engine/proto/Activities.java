@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.engine.proto;
 
 import net.simforge.airways.model.flight.Flight;
@@ -7,9 +11,7 @@ import net.simforge.airways.processes.transportflight.activity.Checkin;
 
 import java.time.LocalDateTime;
 
-/**
- * Created by Alexey on 17.07.2018.
- */
+@Deprecated
 public class Activities {
     public static void start(Class aClass, Object o) {
 

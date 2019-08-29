@@ -1,8 +1,12 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.transportflight.handler;
 
 import net.simforge.airways.engine.proto.Activities;
 import net.simforge.airways.engine.proto.ActivityStatus;
-import net.simforge.airways.engine.proto.Subscribe;
+import net.simforge.airways.engine.event.Subscribe;
 import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processes.transportflight.activity.Checkin;
 import net.simforge.airways.processes.transportflight.event.CheckinClosed;

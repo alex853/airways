@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -17,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.time.LocalDateTime;
 
 abstract class Processor {
     private static Logger logger = LoggerFactory.getLogger(Processor.class);
@@ -38,14 +43,6 @@ abstract class Processor {
 
     abstract ProcessingResult process();
 
-    Class getEntityClass() {
-        try {
-            return Class.forName(task.getEntityClassName());
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Could not find processor class", e);
-        }
-    }
-
     static Processor create(TaskEntity task, InjectionContext baseInjectionContext) {
         Class<?> processorClass;
         try {
@@ -65,15 +62,41 @@ abstract class Processor {
         }
     }
 
-    long nextRunToTime(Result.NextRun nextRun) {
-        long now = timeMachine.getTimeMillis();
+    LocalDateTime nextRunToTime(Result.NextRun nextRun) {
+        LocalDateTime now = timeMachine.now();
         switch (nextRun) {
             case NextDay:
-                return now + 24 * 60 * 60 * 1000;
+                return now.plusDays(1);
             case NextHour:
-                return now + 60 * 60 * 1000;
+                return now.plusHours(1);
             default:
                 throw new IllegalArgumentException("unable to calculate next run time for " + nextRun + " mode");
+        }
+    }
+
+    Class clazz(String className) {
+        try {
+            return Class.forName(className);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Could not find class by name", e);
+        }
+    }
+
+    protected Object create(String className) {
+        try {
+            Class clazz = Class.forName(className);
+            return create(clazz);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("Could not instantiate class", e);
+        }
+    }
+
+    protected Object create(Class clazz) {
+        try {
+            //noinspection unchecked
+            return clazz.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("Could not instantiate class", e);
         }
     }
 }

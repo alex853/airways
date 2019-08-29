@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -7,6 +11,8 @@ package net.simforge.airways.engine;
 import net.simforge.airways.engine.entities.TaskEntity;
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.time.LocalDateTime;
 
 import static org.junit.Assert.assertEquals;
 
@@ -17,7 +23,7 @@ public class TaskQueueTest {
 
         q.push(newTask(0));
 
-        assertEquals(0, q.poll().getTaskTime().longValue());
+        assertEquals(0, q.poll().getTaskTime().getMinute());
     }
 
     @Test
@@ -29,10 +35,10 @@ public class TaskQueueTest {
         q.push(newTask(2));
         q.push(newTask(3));
 
-        assertEquals(0, q.poll().getTaskTime().longValue());
-        assertEquals(1, q.poll().getTaskTime().longValue());
-        assertEquals(2, q.poll().getTaskTime().longValue());
-        assertEquals(3, q.poll().getTaskTime().longValue());
+        assertEquals(0, q.poll().getTaskTime().getMinute());
+        assertEquals(1, q.poll().getTaskTime().getMinute());
+        assertEquals(2, q.poll().getTaskTime().getMinute());
+        assertEquals(3, q.poll().getTaskTime().getMinute());
     }
 
     @Test
@@ -44,10 +50,10 @@ public class TaskQueueTest {
         q.push(newTask(4));
         q.push(newTask(12));
 
-        assertEquals(0, q.poll().getTaskTime().longValue());
-        assertEquals(4, q.poll().getTaskTime().longValue());
-        assertEquals(10, q.poll().getTaskTime().longValue());
-        assertEquals(12, q.poll().getTaskTime().longValue());
+        assertEquals(0, q.poll().getTaskTime().getMinute());
+        assertEquals(4, q.poll().getTaskTime().getMinute());
+        assertEquals(10, q.poll().getTaskTime().getMinute());
+        assertEquals(12, q.poll().getTaskTime().getMinute());
     }
 
     @Test
@@ -66,17 +72,17 @@ public class TaskQueueTest {
 
         q.push(taskOfInterest);
 
-        assertEquals(0, q.poll().getTaskTime().longValue());
-        assertEquals(10, q.poll().getTaskTime().longValue());
-        assertEquals(20, q.poll().getTaskTime().longValue());
+        assertEquals(0, q.poll().getTaskTime().getMinute());
+        assertEquals(10, q.poll().getTaskTime().getMinute());
+        assertEquals(20, q.poll().getTaskTime().getMinute());
     }
 
     private int taskIdCounter = 0;
 
-    private TaskEntity newTask(long time) {
+    private TaskEntity newTask(int time) {
         TaskEntity task = new TaskEntity();
         task.setId(taskIdCounter++);
-        task.setTaskTime(time);
+        task.setTaskTime(LocalDateTime.of(2018, 1, 1, 0, time));
         return task;
     }
 }
