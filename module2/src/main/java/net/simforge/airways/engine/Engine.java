@@ -8,7 +8,7 @@ import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.engine.proto.ActivityStatus;
+import net.simforge.airways.engine.activity.ActivityStatus;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -149,6 +149,10 @@ public class Engine implements Runnable {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, task);
         }
+    }
+
+    public void fireEvent(Class eventClass, BaseEntity entity) {
+        throw new UnsupportedOperationException();
     }
 
     public void fireEvent(Session session, Class eventClass, BaseEntity entity) {

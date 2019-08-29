@@ -2,16 +2,11 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.service.TimetableService;
 import net.simforge.commons.hibernate.BaseEntity;
 
 class ActivityProcessor extends Processor {
@@ -33,10 +28,7 @@ class ActivityProcessor extends Processor {
                 .add(entityClass, entity)
                 .add(ActivityInfo.class, activityInfo);
 
-        TimetableService timetableService = new TimetableService();
-        activityInjectionContext.inject(timetableService);
-        activityInjectionContext = activityInjectionContext
-                .add(TimetableService.class, timetableService);
+        activityInjectionContext = addServicesToInjectionContext(activityInjectionContext);
 
         activityInjectionContext.inject(activity);
 

@@ -2,10 +2,11 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine.proto;
+package net.simforge.airways.engine.activity;
 
 import java.time.LocalDateTime;
 
+// todo ActivityInfo vs ActivityStatus???
 @Deprecated
 public class ActivityStatus {
     public boolean isDone() {

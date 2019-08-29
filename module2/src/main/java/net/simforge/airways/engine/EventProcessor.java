@@ -2,10 +2,6 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.entities.TaskEntity;
@@ -38,7 +34,7 @@ class EventProcessor extends Processor {
                 .add(entityClass, entity)
                 /*.add(ActivityInfo.class, activityInfo)*/;
 
-        // todo add services to injection context
+        handlerInjectionContext = addServicesToInjectionContext(handlerInjectionContext);
 
         for (Class<Handler> handlerClass : handlerClasses) {
             Handler handler = (Handler) create(handlerClass);

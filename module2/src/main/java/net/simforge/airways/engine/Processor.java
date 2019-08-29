@@ -6,15 +6,13 @@
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Event;
+import net.simforge.airways.service.TimetableService;
+import net.simforge.airways.service.TransportFlightService;
 import net.simforge.airways.util.TimeMachine;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -69,6 +67,8 @@ abstract class Processor {
                 return now.plusDays(1);
             case NextHour:
                 return now.plusHours(1);
+            case NextMinute:
+                return now.plusMinutes(1);
             default:
                 throw new IllegalArgumentException("unable to calculate next run time for " + nextRun + " mode");
         }
@@ -98,5 +98,17 @@ abstract class Processor {
         } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException("Could not instantiate class", e);
         }
+    }
+
+    protected InjectionContext addServicesToInjectionContext(InjectionContext injectionContext) {
+        TimetableService timetableService = new TimetableService();
+        injectionContext.inject(timetableService);
+
+        TransportFlightService transportFlightService = new TransportFlightService();
+        injectionContext.inject(transportFlightService);
+
+        return injectionContext
+                .add(TimetableService.class, timetableService)
+                .add(TransportFlightService.class, transportFlightService);
     }
 }
