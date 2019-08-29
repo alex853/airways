@@ -111,7 +111,7 @@ public class ScheduleFlight implements Activity {
                         session.save(EventLog.make(transportFlight, "Scheduled", timetableRow, flight));
 
                         engine.fireEvent(session, Scheduled.class, transportFlight);
-                        // todo p1 engine.fireEvent(session, Planned.class, flight);
+                        engine.fireEvent(session, Planned.class, flight);
                     });
 
                     logger.info("Flight {} {}-{} departing at {} is scheduled",

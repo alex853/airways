@@ -4,8 +4,10 @@
 
 package net.simforge.airways.processes.flight.event;
 
+import net.simforge.airways.engine.event.Event;
+
 /**
  * It starts Allocation activity.
  */
-public class Planned {
+public class Planned implements Event {
 }
