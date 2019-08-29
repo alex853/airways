@@ -1,0 +1,79 @@
+package net.simforge.airways.worldbuilder;
+
+import net.simforge.airways.stage2.Airways;
+import net.simforge.airways.stage2.EventLog;
+import net.simforge.airways.stage2.PersonOps;
+import net.simforge.airways.stage2.model.Person;
+import net.simforge.airways.stage2.model.Pilot;
+import net.simforge.airways.stage2.model.geo.Airport;
+import net.simforge.airways.stage2.model.geo.City;
+import net.simforge.airways.stage2.model.geo.Country;
+import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.misc.JavaTime;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+
+@Deprecated
+public class AddPilots {
+
+    private static final Logger logger = LoggerFactory.getLogger(AddPilots.class.getName());
+
+    public static void main(String[] args) throws IOException {
+        try (SessionFactory sessionFactory = Airways.buildSessionFactory();
+             Session session = sessionFactory.openSession()) {
+
+            addPilots(session, "United kingdom", "London", "EGLL", 100);
+            addPilots(session, "Australia", "Sydney", "YSSY", 20);
+            addPilots(session, "China", "Shanghai", "ZSPD", 20);
+        }
+    }
+
+    private static void addPilots(Session session, String countryName, String cityName, String airportIcao, int count) {
+        Country country = Airways.countryByName(session, countryName);
+        if (country == null) {
+            throw new IllegalArgumentException("Could not find country '" + countryName + "'");
+        }
+
+        City city = Airways.cityByNameAndCountry(session, cityName, country);
+        if (city == null) {
+            throw new IllegalArgumentException("Could not find city '" + cityName + "'");
+        }
+
+        Airport airport = Airways.airportByIcao(session, airportIcao);
+
+        //noinspection JpaQlInspection,unchecked
+        List<Pilot> pilots = session
+                .createQuery("from Pilot pilot where pilot.person.originCity = :city")
+                .setEntity("city", city)
+                .list();
+
+        if (pilots.size() >= count) {
+            return;
+        }
+
+        int countToCreate = count - pilots.size();
+
+        for (int i = 0; i < countToCreate; i++) {
+            HibernateUtils.transaction(session, () -> {
+                Person person = PersonOps.create(session, city);
+                person.setType(Person.Type.Excluded);
+                person.setPositionAirport(airport);
+                person.setPositionCity(null);
+                session.update(person);
+
+                Pilot pilot = new Pilot();
+                pilot.setPerson(person);
+                pilot.setStatus(Pilot.Status.Idle);
+                pilot.setHeartbeatDt(JavaTime.nowUtc());
+                session.save(pilot);
+
+                EventLog.saveLog(session, pilot, "Pilot created", person);
+            });
+        }
+    }
+}
