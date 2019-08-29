@@ -2,10 +2,6 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.timetablerow.activity;
 
 import net.simforge.airways.engine.Engine;
@@ -114,7 +110,7 @@ public class ScheduleFlight implements Activity {
                         session.save(EventLog.make(transportFlight, "Scheduled", timetableRow, flight));
 
                         engine.fireEvent(session, Scheduled.class, transportFlight);
-                        //engine.fireEvent(session, Planned.class, flight);
+                        //todo engine.fireEvent(session, Planned.class, flight);
                     });
 
                     logger.info("Flight {} {}-{} departing at {} is scheduled",

@@ -2,13 +2,10 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Event;
 import net.simforge.airways.engine.proto.ActivityStatus;
@@ -178,5 +175,13 @@ public class Engine implements Runnable {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, task);
         }
+    }
+
+    public ActivityInfo findActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
+        throw new UnsupportedOperationException();
+    }
+
+    public void stopActivity(ActivityInfo activityInfo) {
+        throw new UnsupportedOperationException();
     }
 }

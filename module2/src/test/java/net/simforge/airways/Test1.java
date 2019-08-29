@@ -95,6 +95,7 @@ public class Test1 {
         Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
 
         timetableRow = new TimetableRow();
+        timetableRow.setNumber("AB101");
         timetableRow.setFromAirport(egll);
         timetableRow.setToAirport(egcc);
         timetableRow.setDepartureTime("12:00");

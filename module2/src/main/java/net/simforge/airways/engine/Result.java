@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -10,7 +14,8 @@ public class Result {
     public enum NextRun {
         NotSpecified,
         NextDay,
-        NextHour
+        NextHour,
+        NextMinute
     }
 
     private Result(NextRun nextRun) {

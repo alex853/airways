@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model;
 
 import net.simforge.airways.persistence.EventLog;
@@ -9,7 +13,7 @@ import net.simforge.commons.HeartbeatObject;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "Journey")
 @Table(name="aw_journey")
 public class Journey implements HeartbeatObject, EventLog.Loggable {
     public static final String EventLogCode = "journey";

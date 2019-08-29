@@ -1,4 +1,8 @@
 /*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+/*
  * Airways project (C) Alexey Kornev, 2015-2018
  */
 
@@ -18,6 +22,10 @@ public class ActivityInfo {
     }
 
     public long expireTime() {
+        throw new UnsupportedOperationException("ActivityInfo.expireTime");
+    }
+
+    public boolean isDone() {
         throw new UnsupportedOperationException("ActivityInfo.expireTime");
     }
 
