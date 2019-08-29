@@ -85,7 +85,8 @@ public class OneFlightTest {
 
         AircraftType a320type = TestRefData.getA320Data();
 
-        // todo p2 add some aircrafts and pilots
+        // todo p2 add some aircrafts
+        // todo p2 add some pilots
 
         SimpleFlight simpleFlight = SimpleFlight.forRoute(
                 new Geo.Coords(egll.getLatitude(), egll.getLongitude()),

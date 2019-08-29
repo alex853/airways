@@ -8,6 +8,9 @@ import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
 import net.simforge.airways.processes.flight.event.Allocated;
 
+/**
+ * Useless???
+ */
 @Subscribe(Allocated.class)
 public class OnAllocated implements Handler {
     @Override

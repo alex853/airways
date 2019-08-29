@@ -13,6 +13,9 @@ import net.simforge.airways.processes.flight.event.Cancelled;
 
 import javax.inject.Inject;
 
+/**
+ * todo p3 description
+ */
 public class AllocateFlight implements Activity {
     @Inject
     private Flight flight;
@@ -21,7 +24,10 @@ public class AllocateFlight implements Activity {
 
     @Override
     public Result act() {
-        // todo p3 allocation stuff
+        // todo p2 allocation stuff
+
+
+        // todo p2 if pilot allocated - fire PilotAllocated event, all other flight-related things will happen from pilot's control
 
         boolean isAllocated = false;
         if (isAllocated) {

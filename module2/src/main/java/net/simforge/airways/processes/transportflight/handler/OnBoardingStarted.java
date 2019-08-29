@@ -15,7 +15,7 @@ import net.simforge.airways.processes.transportflight.event.BoardingStarted;
 public class OnBoardingStarted implements Handler {
     @Override
     public void process() {
-        // todo p2
+        // todo p3 implement boarding
         throw new UnsupportedOperationException();
     }
 }

@@ -68,7 +68,7 @@ public class Engine implements Runnable {
             if (!_task.getVersion().equals(task.getVersion())) {
                 throw new UnsupportedOperationException("think about it"); // todo think about it
             }
-            // todo p2 check status
+            // todo p1 check status
 
             InjectionContext processorInjectionContext = baseInjectionContext
                     .add(Session.class, session);
