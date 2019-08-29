@@ -1,7 +1,10 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.flight.event;
 
-/**
- * Created by Alexey on 17.07.2018.
- */
-public class Allocated {
+import net.simforge.airways.engine.event.Event;
+
+public class Allocated implements Event {
 }

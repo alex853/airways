@@ -11,6 +11,7 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.processes.flight.event.Planned;
 import net.simforge.airways.processes.transportflight.event.Scheduled;
 import net.simforge.airways.service.TimetableService;
 import net.simforge.airways.util.FlightTimeline;
@@ -110,7 +111,7 @@ public class ScheduleFlight implements Activity {
                         session.save(EventLog.make(transportFlight, "Scheduled", timetableRow, flight));
 
                         engine.fireEvent(session, Scheduled.class, transportFlight);
-                        //todo engine.fireEvent(session, Planned.class, flight);
+                        // todo p1 engine.fireEvent(session, Planned.class, flight);
                     });
 
                     logger.info("Flight {} {}-{} departing at {} is scheduled",

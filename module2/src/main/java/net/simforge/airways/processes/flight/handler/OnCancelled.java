@@ -1,11 +1,19 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.flight.handler;
 
-import net.simforge.airways.model.flight.Flight;
+import net.simforge.airways.engine.event.Handler;
+import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.persistence.model.flight.Flight;
+import net.simforge.airways.processes.flight.event.Cancelled;
 
 /**
- * Created by Alexey on 17.07.2018.
+ *
  */
-public class OnCancelled {
+@Subscribe(Cancelled.class)
+public class OnCancelled implements Handler {
     public void process() {
         Flight flight = null;
 
