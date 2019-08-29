@@ -7,7 +7,7 @@ package net.simforge.airways;
 import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.engine.proto.ActivityStatus;
+import net.simforge.airways.engine.activity.ActivityStatus;
 import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.model.EventLogEntry;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
@@ -37,7 +37,7 @@ import java.time.LocalDateTime;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-public class Test1 {
+public class OneFlightTest {
 
     private static final LocalDateTime START_TIME = LocalDateTime.of(2018, 1, 1, 0, 0);
 
@@ -129,10 +129,10 @@ public class Test1 {
     }
 
     @Test
-    public void test1() {
+    public void testFlight() {
         engine.startActivity(ScheduleFlight.class, timetableRow);
 
-        runEngine(10);
+        runEngine(1000);
 
         ActivityStatus status = engine.getActivityStatus(ScheduleFlight.class, timetableRow);
         assertFalse(status.isDone());

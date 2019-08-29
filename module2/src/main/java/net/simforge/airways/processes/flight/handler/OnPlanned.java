@@ -1,6 +1,9 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.flight.handler;
 
-import net.simforge.airways.engine.proto.Activities;
 import net.simforge.airways.model.flight.Flight;
 import net.simforge.airways.processes.flight.activity.AllocateFlight;
 
@@ -10,6 +13,6 @@ import net.simforge.airways.processes.flight.activity.AllocateFlight;
 public class OnPlanned {
     public void process() {
         Flight flight = null;
-        Activities.startWithExpiration(AllocateFlight.class, flight, flight.getScheduledDepartureTime().minusMinutes(60));
+        //Activities.startWithExpiration(AllocateFlight.class, flight, flight.getScheduledDepartureTime().minusMinutes(60));
     }
 }

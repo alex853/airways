@@ -6,6 +6,7 @@ package net.simforge.airways.processes.transportflight.handler;
 
 import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.activity.ActivityInfo;
+import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
@@ -23,7 +24,7 @@ import javax.inject.Inject;
  * It stops check-in for the flight. Boarding will be started by pilot's command.
  */
 @Subscribe(CheckinClosed.class)
-public class OnCheckinClosed {
+public class OnCheckinClosed implements Handler {
     private static Logger logger = LoggerFactory.getLogger(OnCheckinClosed.class);
 
     @Inject

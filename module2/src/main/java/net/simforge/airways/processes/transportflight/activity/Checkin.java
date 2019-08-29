@@ -32,18 +32,19 @@ public class Checkin implements Activity {
     private Engine engine;
     @Inject
     private SessionFactory sessionFactory;
+    @Inject
+    private TransportFlightService transportFlightService;
 
     @Override
     public Result act() {
-        TransportFlightService service = null;
-        Collection<Journey> journeys = service.getJourneys(transportFlight);
+        Collection<Journey> journeys = transportFlightService.getJourneys(transportFlight);
 
         // todo some stuff with journeys and persons
 
         try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, EventLog.make(transportFlight, "Check-in in progress")); // todo amount of PAX
+            HibernateUtils.saveAndCommit(session, EventLog.make(transportFlight, "Check-in is in progress")); // todo amount of PAX
         }
-        logger.info(transportFlight + " - Check-in in progress"); // todo amount of PAX
+        logger.info(transportFlight + " - Check-in is in progress"); // todo amount of PAX
 
         return Result.ok(Result.NextRun.NextMinute);
     }
