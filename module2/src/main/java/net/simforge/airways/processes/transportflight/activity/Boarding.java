@@ -10,5 +10,5 @@ import net.simforge.airways.engine.activity.Activity;
  * It boards passengers to the aircraft. Boarding started by BoardingStarted event which initiated by pilot's command.
  */
 public abstract class Boarding implements Activity {
-    // todo
+    // todo p2
 }

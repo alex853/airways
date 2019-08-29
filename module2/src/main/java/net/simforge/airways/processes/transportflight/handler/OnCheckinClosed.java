@@ -36,7 +36,7 @@ public class OnCheckinClosed implements Handler {
 
     public void process() {
         ActivityInfo checkinActivity = engine.findActivity(Checkin.class, transportFlight);
-        if (!checkinActivity.isDone()) {
+        if (!checkinActivity.isFinished()) {
             engine.stopActivity(checkinActivity);
         }
 
