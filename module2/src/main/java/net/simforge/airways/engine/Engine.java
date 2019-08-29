@@ -65,9 +65,15 @@ public class Engine implements Runnable {
         try (Session session = sessionFactory.openSession()) {
             TaskEntity _task = session.get(TaskEntity.class, task.getId());
             if (!_task.getVersion().equals(task.getVersion())) {
-                throw new UnsupportedOperationException("think about it"); // todo think about it
+                logger.warn("Task {} - Version is outdated, skipped", _task.getId());
+                return;
             }
-            // todo p1 check status
+            if (_task.getStatus() != TaskEntity.Status.ACTIVE) {
+                logger.warn("Task {} - Status is {}, it is not ACTIVE, skipped", _task.getId(), _task.getStatus());
+                _task.setTaskTime(null);
+                HibernateUtils.updateAndCommit(session, _task);
+                return;
+            }
 
             InjectionContext processorInjectionContext = baseInjectionContext
                     .add(Session.class, session);
