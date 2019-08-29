@@ -15,7 +15,8 @@ public class Result {
         NotSpecified,
         NextDay,
         NextHour,
-        NextMinute
+        NextMinute,
+        FewTimesPerDay
     }
 
     private Result(NextRun nextRun) {

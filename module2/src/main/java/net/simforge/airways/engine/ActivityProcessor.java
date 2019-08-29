@@ -18,7 +18,7 @@ class ActivityProcessor extends Processor {
     ProcessingResult process() {
         Activity activity = (Activity) create(task.getProcessorClassName());
 
-        ActivityInfo activityInfo = null; // todo
+        ActivityInfo activityInfo = new ActivityInfo(task);
 
         Class entityClass = clazz(task.getEntityClassName());
 
@@ -32,16 +32,19 @@ class ActivityProcessor extends Processor {
 
         activityInjectionContext.inject(activity);
 
-        if (true || activityInfo.expireTime() > timeMachine.getTimeMillis()) { // todo remove 'true ||'
+        if (activityInfo.getExpireTime() == null
+                || activityInfo.getExpireTime().isAfter(timeMachine.now())) {
             Result result = activity.act();
 
             task.setTaskTime(nextRunToTime(result.getNextRun()));
+
             // todo circuit breaker
             // todo stats
         } else {
             activity.afterExpired(); // result is ignored
 
             task.setTaskTime(null);
+            task.setStatus(TaskEntity.Status.EXPIRED);
             // todo stats
         }
 

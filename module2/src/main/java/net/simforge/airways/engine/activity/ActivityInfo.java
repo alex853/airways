@@ -2,38 +2,29 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
 package net.simforge.airways.engine.activity;
 
+import net.simforge.airways.engine.entities.TaskEntity;
+
+import java.time.LocalDateTime;
+
 public class ActivityInfo {
-//    public Class eventClass() {
-//        throw new UnsupportedOperationException("ActivityInfo.eventClass");
-//    }
+    private TaskEntity taskEntity;
 
-//    public <T extends BaseEntity> T get() {
-//        throw new UnsupportedOperationException("ActivityInfo.get");
-//    }
-
-    public long createTime() {
-        throw new UnsupportedOperationException("ActivityInfo.createTime");
+    public ActivityInfo(TaskEntity taskEntity) {
+        this.taskEntity = taskEntity;
     }
 
-    public long expireTime() {
-        throw new UnsupportedOperationException("ActivityInfo.expireTime");
+    public LocalDateTime getExpireTime() {
+        // todo p2 expiration support
+        return null;
     }
 
-    public boolean isDone() {
-        throw new UnsupportedOperationException("ActivityInfo.expireTime");
+    public boolean isFinished() {
+        return taskEntity.getStatus() != TaskEntity.Status.ACTIVE;
     }
 
-    /*
-
-    proto:
-
-
-
-     */
+    public Integer getTaskId() {
+        return taskEntity.getId();
+    }
 }

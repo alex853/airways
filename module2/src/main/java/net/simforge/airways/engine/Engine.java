@@ -68,6 +68,7 @@ public class Engine implements Runnable {
             if (!_task.getVersion().equals(task.getVersion())) {
                 throw new UnsupportedOperationException("think about it"); // todo think about it
             }
+            // todo p2 check status
 
             InjectionContext processorInjectionContext = baseInjectionContext
                     .add(Session.class, session);
@@ -93,7 +94,7 @@ public class Engine implements Runnable {
         LocalDateTime now = timeMachine.now();
         int maxResults = 1000;
         try (Session session = sessionFactory.openSession()) {
-            //noinspection unchecked,JpaQlInspection
+            //noinspection unchecked
             tasks = session
                     .createQuery("from EngineTask where taskTime <= :toTime order by taskTime")
                     .setParameter("toTime", now.plusMinutes(1))
@@ -182,10 +183,35 @@ public class Engine implements Runnable {
     }
 
     public ActivityInfo findActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
-        throw new UnsupportedOperationException();
+        try (Session session = sessionFactory.openSession()) {
+            TaskEntity _task = (TaskEntity) session
+                    .createQuery("from EngineTask " +
+                            "where processorClassName = :activityClass " +
+                            "and entityClassName = :entityClass " +
+                            "and entityId = :entityId " +
+                            "order by status asc, id desc")
+                    .setString("activityClass", activityClass.getName())
+                    .setString("entityClass", entity.getClass().getName())
+                    .setInteger("entityId", entity.getId())
+                    .setMaxResults(1) // we are looking for one row only
+                    .uniqueResult();
+            if (_task == null) {
+                return null;
+            } else {
+                return new ActivityInfo(_task);
+            }
+        }
     }
 
     public void stopActivity(ActivityInfo activityInfo) {
-        throw new UnsupportedOperationException();
+        try (Session session = sessionFactory.openSession()) {
+            TaskEntity _task = session.load(TaskEntity.class, activityInfo.getTaskId());
+            _task.setTaskTime(null);
+            _task.setStatus(TaskEntity.Status.STOPPED);
+            HibernateUtils.updateAndCommit(session, _task);
+        }
+
+        // todo queue lock
+        taskQueue.removeIf(task -> task.getId().equals(activityInfo.getTaskId()));
     }
 }

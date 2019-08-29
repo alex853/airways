@@ -104,8 +104,10 @@ public class TaskEntity implements BaseEntity {
 
     public static class Status {
         public static final int ACTIVE = 0;
-        public static final int DONE = 100;
         public static final int FAILED = 99;
+        public static final int DONE = 100;
+        public static final int STOPPED = 101;
+        public static final int EXPIRED = 102;
     }
 
 }
