@@ -1,7 +1,11 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.util;
 
 import junit.framework.TestCase;
-import net.simforge.airways.model.aircraft.AircraftType;
+import net.simforge.airways.persistence.model.aircraft.AircraftType;
 import net.simforge.commons.gckls2com.GC;
 import net.simforge.commons.gckls2com.GCAirport;
 import net.simforge.commons.misc.Geo;
@@ -11,73 +15,73 @@ import java.time.Duration;
 
 public class SimpleFlightTest extends TestCase {
 
-    public void testA320_20NM() throws Exception {
+    public void testA320_20NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 20), data);
         assertEquals(6, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_50NM() throws Exception {
+    public void testA320_50NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 50), data);
         assertEquals(15, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_100NM() throws Exception {
+    public void testA320_100NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 100), data);
         assertEquals(26, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_200NM() throws Exception {
+    public void testA320_200NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 200), data);
         assertEquals(43, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_300NM() throws Exception {
+    public void testA320_300NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 300), data);
         assertEquals(56, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_400NM() throws Exception {
+    public void testA320_400NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 400), data);
         assertEquals(69, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_500NM() throws Exception {
+    public void testA320_500NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 500), data);
         assertEquals(83, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testA320_1000NM() throws Exception {
+    public void testA320_1000NM() {
         AircraftType data = TestRefData.getA320Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 1000), data);
         assertEquals(150, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testC152_20NM() throws Exception {
+    public void testC152_20NM() {
         AircraftType data = TestRefData.getC152Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 20), data);
         assertEquals(15, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testC152_50NM() throws Exception {
+    public void testC152_50NM() {
         AircraftType data = TestRefData.getC152Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 50), data);
         assertEquals(32, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testC152_100NM() throws Exception {
+    public void testC152_100NM() {
         AircraftType data = TestRefData.getC152Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 100), data);
         assertEquals(60, simpleFlight.getTotalTime().toMinutes());
     }
 
-    public void testC152_200NM() throws Exception {
+    public void testC152_200NM() {
         AircraftType data = TestRefData.getC152Data();
         SimpleFlight simpleFlight = SimpleFlight.forRoute(new Geo.Coords(0, 0), Geo.destination(new Geo.Coords(0, 0), 0, 200), data);
         assertEquals(116, simpleFlight.getTotalTime().toMinutes());

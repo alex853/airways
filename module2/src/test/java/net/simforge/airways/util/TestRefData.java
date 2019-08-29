@@ -1,15 +1,14 @@
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 package net.simforge.airways.util;
 
-import net.simforge.airways.entities.aircraft.AircraftTypeEntity;
-import net.simforge.airways.model.aircraft.AircraftType;
+import net.simforge.airways.persistence.model.aircraft.AircraftType;
 
 public class TestRefData {
     public static AircraftType getA320Data() {
-        AircraftType data = new AircraftTypeEntity();
+        AircraftType data = new AircraftType();
         data.setTypicalCruiseAltitude(36000);
         data.setTypicalCruiseSpeed(444);
         data.setTakeoffSpeed(160);
@@ -20,7 +19,7 @@ public class TestRefData {
     }
 
     public static AircraftType getC152Data() {
-        AircraftType data = new AircraftTypeEntity();
+        AircraftType data = new AircraftType();
         data.setTypicalCruiseAltitude(6000);
         data.setTypicalCruiseSpeed(107);
         data.setTakeoffSpeed(60);

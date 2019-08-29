@@ -1,13 +1,5 @@
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
 package net.simforge.airways;
@@ -16,16 +8,13 @@ import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.proto.ActivityStatus;
-import net.simforge.airways.entities.AirlineEntity;
-import net.simforge.airways.entities.aircraft.AircraftTypeEntity;
-import net.simforge.airways.entities.flight.FlightEntity;
-import net.simforge.airways.entities.flight.TimetableRowEntity;
-import net.simforge.airways.entities.flight.TransportFlightEntity;
-import net.simforge.airways.entities.geo.AirportEntity;
-import net.simforge.airways.model.aircraft.AircraftType;
-import net.simforge.airways.model.flight.TimetableRow;
-import net.simforge.airways.model.geo.Airport;
+import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.model.EventLogEntry;
+import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.persistence.model.flight.Flight;
+import net.simforge.airways.persistence.model.flight.TimetableRow;
+import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
@@ -68,12 +57,12 @@ public class Test1 {
 
                         EventLogEntry.class,
 
-                        AircraftTypeEntity.class,
-                        TimetableRowEntity.class,
-                        TransportFlightEntity.class,
-                        FlightEntity.class,
-                        AirportEntity.class,
-                        AirlineEntity.class})
+                        AircraftType.class,
+                        TimetableRow.class,
+                        TransportFlight.class,
+                        Flight.class,
+                        Airport.class,
+                        Airline.class})
                 .build();
     }
 
@@ -105,13 +94,14 @@ public class Test1 {
         FlightTimeline timeline = FlightTimeline.byFlyingTime(flyingTime);
         Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
 
-        timetableRow = new TimetableRowEntity();
+        timetableRow = new TimetableRow();
         timetableRow.setFromAirport(egll);
         timetableRow.setToAirport(egcc);
         timetableRow.setDepartureTime("12:00");
         timetableRow.setDuration(JavaTime.toHhmm(flightDuration));
         timetableRow.setWeekdays(Weekdays.wholeWeek().toString());
         timetableRow.setAircraftType(a320type);
+        timetableRow.setTotalTickets(160);
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, a320type);
@@ -121,7 +111,7 @@ public class Test1 {
 
     private Airport loadAirport(String icao) throws IOException {
         GCAirport gcAirport = GC.findAirport(icao);
-        Airport airport = new AirportEntity();
+        Airport airport = new Airport();
         airport.setIcao(gcAirport.getIcao());
         airport.setIata(gcAirport.getIata());
         airport.setName(gcAirport.getName());
@@ -148,6 +138,7 @@ public class Test1 {
         assertTrue(status.getLastActTime().isAfter(START_TIME));
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void runEngine(int minutesToRun) {
         for (int i = 0; i < minutesToRun; i++) {
             timeMachine.plusMinutes(1);
