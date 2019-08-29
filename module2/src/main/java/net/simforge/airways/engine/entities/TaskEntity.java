@@ -26,6 +26,8 @@ public class TaskEntity implements BaseEntity {
     private String entityClassName;
     private Integer entityId;
 
+    // todo p3 add startedTime, finishedTime, lastProcessingTime, processingCount
+
     @Override
     public Integer getId() {
         return id;

@@ -6,8 +6,8 @@ package net.simforge.airways;
 
 import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
+import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.engine.activity.ActivityStatus;
 import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.model.EventLogEntry;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
@@ -137,9 +137,9 @@ public class OneFlightTest {
 
         runEngine(1000);
 
-        ActivityStatus status = engine.getActivityStatus(ScheduleFlight.class, timetableRow);
-        assertFalse(status.isDone());
-        assertTrue(status.getLastActTime().isAfter(START_TIME));
+        ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
+        assertFalse(status.isFinished());
+        // todo p2 activityInfo assertTrue(status.getLastActTime().isAfter(START_TIME));
     }
 
     @SuppressWarnings("SameParameterValue")

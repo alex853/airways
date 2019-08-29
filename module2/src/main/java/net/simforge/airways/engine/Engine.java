@@ -8,7 +8,6 @@ import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.engine.activity.ActivityStatus;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -118,10 +117,6 @@ public class Engine implements Runnable {
 
     private void reschedule(TaskEntity task) {
         throw new UnsupportedOperationException("EngineRuntime.reschedule");
-    }
-
-    public ActivityStatus getActivityStatus(Class<? extends Activity> activityClass, BaseEntity entity) {
-        throw new UnsupportedOperationException("Engine.getActivityStatus");
     }
 
     public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
