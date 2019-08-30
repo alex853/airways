@@ -1,17 +1,21 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.commons.HeartbeatObject;
 import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name="aw_person")
-public class Person implements HeartbeatObject, EventLog.Loggable, Auditable {
+@Entity(name = "Person")
+@Table(name = "aw_person")
+public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable, Auditable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "person";
 
@@ -29,12 +33,13 @@ public class Person implements HeartbeatObject, EventLog.Loggable, Auditable {
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
+//    @Column(name = "heartbeat_dt")
+//    private LocalDateTime heartbeatDt;
+
     @Column
     private Integer type;
     @Column
     private Integer status;
-    @Column(name = "heartbeat_dt")
-    private LocalDateTime heartbeatDt;
     @Column
     private String name;
     @Column
@@ -59,18 +64,22 @@ public class Person implements HeartbeatObject, EventLog.Loggable, Auditable {
         return EventLogCode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }
@@ -84,6 +93,16 @@ public class Person implements HeartbeatObject, EventLog.Loggable, Auditable {
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
+
+/*    @Override
+    public LocalDateTime getHeartbeatDt() {
+        return heartbeatDt;
+    }
+
+    @Override
+    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
+        this.heartbeatDt = heartbeatDt;
+    }*/
 
     public Integer getType() {
         return type;
@@ -99,14 +118,6 @@ public class Person implements HeartbeatObject, EventLog.Loggable, Auditable {
 
     public void setStatus(Integer status) {
         this.status = status;
-    }
-
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
     }
 
     public String getName() {

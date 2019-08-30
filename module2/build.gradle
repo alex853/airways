@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 version '1.0-SNAPSHOT'
 
 apply plugin: 'java'
@@ -12,6 +16,7 @@ repositories {
 
 dependencies {
     compile project(':persistence')
+    compile project(':module1')
 
     compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.4'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.1'

@@ -4,8 +4,8 @@
 
 package net.simforge.airways.worldbuilder;
 
+import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.persistence.Airways;
-import net.simforge.airways.persistence.CommonOps;
 import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
 import net.simforge.commons.hibernate.HibernateUtils;

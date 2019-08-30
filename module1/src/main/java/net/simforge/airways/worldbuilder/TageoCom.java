@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.worldbuilder;
 
 import java.io.File;
@@ -7,7 +11,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import net.simforge.airways.persistence.Airways;
-import net.simforge.airways.persistence.CommonOps;
+import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
 import net.simforge.commons.hibernate.HibernateUtils;

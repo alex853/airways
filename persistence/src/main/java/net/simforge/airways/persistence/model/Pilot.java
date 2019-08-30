@@ -1,14 +1,19 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model;
 
 import net.simforge.airways.persistence.EventLog;
-import net.simforge.commons.HeartbeatObject;
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "Pilot")
 @Table(name = "aw_pilot")
-public class Pilot implements HeartbeatObject, EventLog.Loggable {
+public class Pilot implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable, Auditable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "pilot";
 
@@ -19,9 +24,17 @@ public class Pilot implements HeartbeatObject, EventLog.Loggable {
     @Version
     private Integer version;
 
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
+
+//    @Column(name = "heartbeat_dt")
+//    private LocalDateTime heartbeatDt;
+
     private Integer status;
-    @Column(name = "heartbeat_dt")
-    private LocalDateTime heartbeatDt;
     @ManyToOne
     @JoinColumn(name = "person_id")
     private Person person;
@@ -31,21 +44,43 @@ public class Pilot implements HeartbeatObject, EventLog.Loggable {
         return EventLogCode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
+    }
+
+/*    public LocalDateTime getHeartbeatDt() {
+        return heartbeatDt;
+    }
+
+    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
+        this.heartbeatDt = heartbeatDt;
+    }*/
 
     public Integer getStatus() {
         return status;
@@ -53,14 +88,6 @@ public class Pilot implements HeartbeatObject, EventLog.Loggable {
 
     public void setStatus(Integer status) {
         this.status = status;
-    }
-
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
     }
 
     public Person getPerson() {
@@ -81,6 +108,7 @@ public class Pilot implements HeartbeatObject, EventLog.Loggable {
 
     public static class Status {
         public static final int Idle = 100;
+        public static final int IdlePlanned = 101; // temporarily added status for stupid allocation needs
         public static final int OnDuty = 200;
     }
 

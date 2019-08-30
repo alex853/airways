@@ -1,7 +1,11 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.worldbuilder;
 
 import net.simforge.airways.persistence.Airways;
-import net.simforge.airways.persistence.CommonOps;
+import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.io.Csv;

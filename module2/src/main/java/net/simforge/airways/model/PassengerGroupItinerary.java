@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.model;
 
 //import net.simforge.commons.persistence.BaseEntity;
@@ -5,6 +9,7 @@ package net.simforge.airways.model;
 //import net.simforge.commons.persistence.Table;
 
 //@Table(name = "aw_pg_itinerary")
+@Deprecated
 public class PassengerGroupItinerary /*extends BaseEntity*/ {
     //    @Column
     private int groupId;

@@ -1,4 +1,8 @@
-package net.simforge.airways.persistence;
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ops;
 
 import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
@@ -13,8 +17,6 @@ public class CommonOps {
     public static Country countryByName(Session session, String countryName) {
         BM.start("Airways.countryByName");
         try {
-
-            //noinspection JpaQlInspection
             return (Country) session
                     .createQuery("from Country c where name = :name")
                     .setString("name", countryName)
@@ -28,7 +30,6 @@ public class CommonOps {
     public static City cityByNameAndCountry(Session session, String cityName, Country country) {
         BM.start("Airways.cityByNameAndCountry");
         try {
-            //noinspection JpaQlInspection
             return (City) session
                     .createQuery("from City c where name = :name and country = :country")
                     .setString("name", cityName)
@@ -43,7 +44,6 @@ public class CommonOps {
     public static Airport airportByIcao(Session session, String icao) {
         BM.start("Airways.airportByIcao");
         try {
-            //noinspection JpaQlInspection
             return (Airport) session
                     .createQuery("from Airport c where icao = :icao")
                     .setString("icao", icao)
@@ -58,7 +58,6 @@ public class CommonOps {
     public static Airline airlineByIata(Session session, String iata) {
         BM.start("Airways.airlineByIata");
         try {
-            //noinspection JpaQlInspection
             return (Airline) session
                     .createQuery("from Airline c where iata = :iata")
                     .setString("iata", iata)
@@ -72,7 +71,6 @@ public class CommonOps {
     public static AircraftType aircraftTypeByIcao(Session session, String icao) {
         BM.start("Airways.aircraftTypeByIcao");
         try {
-            //noinspection JpaQlInspection
             return (AircraftType) session
                     .createQuery("from AircraftType c where icao = :icao")
                     .setString("icao", icao)

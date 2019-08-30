@@ -1,8 +1,13 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.model.person;
 
 import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.City;
 
+@Deprecated
 public interface Person /*extends BaseHeartbeatEntity, EventLog.Loggable, Auditable */ {
     Integer getType();
 

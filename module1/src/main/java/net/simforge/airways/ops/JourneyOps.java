@@ -1,4 +1,8 @@
-package net.simforge.airways.cityflows;
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ops;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Journey;

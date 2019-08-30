@@ -1,7 +1,9 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.model;
 
-/**
- * Created by Alexey on 17.07.2018.
- */
+@Deprecated
 public interface Journey {
 }

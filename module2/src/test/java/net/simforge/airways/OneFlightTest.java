@@ -8,13 +8,14 @@ import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.persistence.model.Airline;
-import net.simforge.airways.persistence.model.EventLogEntry;
+import net.simforge.airways.ops.CommonOps;
+import net.simforge.airways.ops.PilotOps;
+import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
-import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.geo.Airport;
+import net.simforge.airways.persistence.model.geo.City;
+import net.simforge.airways.persistence.model.geo.Country;
 import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
@@ -35,7 +36,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class OneFlightTest {
 
@@ -52,17 +52,8 @@ public class OneFlightTest {
         sessionFactory = SessionFactoryBuilder
                 .forDatabase("test")
                 .createSchemaIfNeeded()
-                .entities(new Class[]{
-                        TaskEntity.class,
-
-                        EventLogEntry.class,
-
-                        AircraftType.class,
-                        TimetableRow.class,
-                        TransportFlight.class,
-                        Flight.class,
-                        Airport.class,
-                        Airline.class})
+                .entities(Airways.entities)
+                .entities(new Class[]{TaskEntity.class})
                 .build();
     }
 
@@ -85,8 +76,14 @@ public class OneFlightTest {
 
         AircraftType a320type = TestRefData.getA320Data();
 
+        createCountry("United kingdom", "GB");
+        createCity("United kingdom", "London", 51, 0);
+
         // todo p2 add some aircrafts
-        // todo p1 add some pilots
+
+        try (Session session = sessionFactory.openSession()) {
+            PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 10);
+        }
 
         SimpleFlight simpleFlight = SimpleFlight.forRoute(
                 new Geo.Coords(egll.getLatitude(), egll.getLongitude()),
@@ -110,6 +107,32 @@ public class OneFlightTest {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, a320type);
             HibernateUtils.saveAndCommit(session, timetableRow);
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void createCity(String countryName, String cityName, double lat, double lon) {
+        try (Session session = sessionFactory.openSession()) {
+            City city = new City();
+            city.setCountry(CommonOps.countryByName(session, countryName));
+            city.setName(cityName);
+            city.setPopulation(1000);
+            city.setLatitude(lat);
+            city.setLongitude(lon);
+            city.setDataset(Airways.ACTIVE_DATASET);
+
+            HibernateUtils.saveAndCommit(session, city);
+        }
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private void createCountry(String name, String code) {
+        try (Session session = sessionFactory.openSession()) {
+            Country country = new Country();
+            country.setName(name);
+            country.setCode(code);
+
+            HibernateUtils.saveAndCommit(session, country);
         }
     }
 
