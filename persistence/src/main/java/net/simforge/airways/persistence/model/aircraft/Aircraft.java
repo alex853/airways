@@ -1,16 +1,21 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.aircraft;
 
 import net.simforge.airways.persistence.model.Airline;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "Aircraft")
 @Table(name = "aw_aircraft")
-public class Aircraft implements Auditable, EventLog.Loggable {
+public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_aircraft_id")
     @SequenceGenerator(name = "aw_aircraft_id", sequenceName = "aw_aircraft_id_seq", allocationSize = 1)
@@ -25,6 +30,9 @@ public class Aircraft implements Auditable, EventLog.Loggable {
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
+//    @Column(name = "heartbeat_dt")
+//    private LocalDateTime heartbeatDt;
+
     @ManyToOne
     @JoinColumn(name = "aircraft_type_id")
     private AircraftType type;
@@ -34,8 +42,6 @@ public class Aircraft implements Auditable, EventLog.Loggable {
     @JoinColumn(name = "airline_id")
     private Airline airline;
     private Integer status;
-    @Column(name = "heartbeat_dt")
-    private LocalDateTime heartbeatDt;
     @Column(name = "position_latitude")
     private Double positionLatitude;
     @Column(name = "position_longitude")
@@ -49,18 +55,22 @@ public class Aircraft implements Auditable, EventLog.Loggable {
         return "aircraft";
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }
@@ -74,6 +84,16 @@ public class Aircraft implements Auditable, EventLog.Loggable {
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
+
+/*    @Override
+    public LocalDateTime getHeartbeatDt() {
+        return heartbeatDt;
+    }
+
+    @Override
+    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
+        this.heartbeatDt = heartbeatDt;
+    }*/
 
     public AircraftType getType() {
         return type;
@@ -107,14 +127,6 @@ public class Aircraft implements Auditable, EventLog.Loggable {
         this.status = status;
     }
 
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }
-
     public Double getPositionLatitude() {
         return positionLatitude;
     }
@@ -141,6 +153,7 @@ public class Aircraft implements Auditable, EventLog.Loggable {
 
     public static class Status {
         public final static int Idle = 100;
+        public final static int IdlePlanned = 101; // temporarily added status for stupid allocation needs
         public final static int PreFlight = 200;
         public final static int TaxiingOut = 300;
         public final static int Flying = 400;
