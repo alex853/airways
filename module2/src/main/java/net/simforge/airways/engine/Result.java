@@ -12,7 +12,9 @@ public class Result {
         NextDay,
         NextHour,
         NextMinute,
-        FewTimesPerDay
+        FewTimesPerDay,
+        FewTimesPerHour,
+        DoNotRun
     }
 
     private Result(NextRun nextRun) {

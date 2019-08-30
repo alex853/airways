@@ -50,7 +50,7 @@ public class Checkin implements Activity {
     }
 
     @Override
-    public Result afterExpired() {
+    public Result onExpiry() {
         return null;
     }
 }

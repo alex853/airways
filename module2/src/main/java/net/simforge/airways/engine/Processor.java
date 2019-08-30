@@ -2,10 +2,6 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
-
 package net.simforge.airways.engine;
 
 import net.simforge.airways.engine.activity.Activity;
@@ -57,20 +53,6 @@ abstract class Processor {
             String msg = String.format("Unable to create processor for task %s, class name %s", task.getId(), task.getProcessorClassName());
             logger.error(msg);
             throw new IllegalArgumentException(msg);
-        }
-    }
-
-    LocalDateTime nextRunToTime(Result.NextRun nextRun) {
-        LocalDateTime now = timeMachine.now();
-        switch (nextRun) {
-            case NextDay:
-                return now.plusDays(1);
-            case NextHour:
-                return now.plusHours(1);
-            case NextMinute:
-                return now.plusMinutes(1);
-            default:
-                throw new IllegalArgumentException("unable to calculate next run time for " + nextRun + " mode");
         }
     }
 

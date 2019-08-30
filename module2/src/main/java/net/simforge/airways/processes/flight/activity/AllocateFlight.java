@@ -8,39 +8,44 @@ import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.Result;
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.persistence.model.flight.Flight;
-import net.simforge.airways.processes.flight.event.Allocated;
+import net.simforge.airways.processes.flight.event.FullyAllocated;
 import net.simforge.airways.processes.flight.event.Cancelled;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 
 import javax.inject.Inject;
 
 /**
- * todo p1 description
+ * This activity allocates or configures allocation process for the flight.
  */
 public class AllocateFlight implements Activity {
     @Inject
     private Flight flight;
     @Inject
     private Engine engine;
+    @Inject
+    private SessionFactory sessionFactory;
 
     @Override
     public Result act() {
-        // todo p3 aircraft allocation
-
-        // todo p1 pilot allocation
-        // todo p1 if pilot allocated - fire PilotAllocated event, all other flight-related things will happen from pilot's control
-
-        boolean isFullyAllocated = false;
-        if (isFullyAllocated) {
-            engine.fireEvent(Allocated.class, flight);
-            return Result.ok();
-        } else {
-            return Result.ok(Result.NextRun.FewTimesPerDay);
-        }
+        // Currently, for simplicity, it starts trivial allocation with quite narrow time frame
+        engine.scheduleActivity(TrivialAllocation.class, flight, flight.getScheduledDepartureTime().minusHours(6), flight.getScheduledDepartureTime().minusHours(3));
+        return Result.ok(Result.NextRun.DoNotRun);
     }
 
-    public Result afterExpired() {
-        // todo p2 message unable to allocate
-        engine.fireEvent(Cancelled.class, flight);
+    public Result onExpiry() {
+        FlightContext flightContext;
+        try (Session session = sessionFactory.openSession()) {
+            flightContext = FlightContext.load(session, flight);
+        }
+
+        // todo p2 messages & logging
+        boolean isFullyAllocated = flightContext.isFullyAllocated();
+        if (isFullyAllocated) {
+            engine.fireEvent(FullyAllocated.class, flight);
+        } else {
+            engine.fireEvent(Cancelled.class, flight); // todo p3 Сancel instead of Cancelled?
+        }
         return null;
     }
 }

@@ -1,7 +1,11 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.processes.pilot.event;
 
 /**
- * Created by Alexey on 17.07.2018.
+ * todo p2 to start PilotOnDuty activity
  */
 public class PilotCheckin {
 }

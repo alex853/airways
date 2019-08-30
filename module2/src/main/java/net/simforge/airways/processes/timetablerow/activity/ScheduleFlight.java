@@ -182,7 +182,7 @@ public class ScheduleFlight implements Activity {
     }
 
     @Override
-    public Result afterExpired() {
+    public Result onExpiry() {
         return Result.ok();
     }
 }

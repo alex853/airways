@@ -7,7 +7,6 @@ package net.simforge.airways.engine;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
-import net.simforge.airways.processes.flight.handler.OnAllocated;
 import net.simforge.airways.processes.flight.handler.OnCancelled;
 import net.simforge.airways.processes.flight.handler.OnPlanned;
 import net.simforge.airways.processes.transportflight.handler.OnCheckinClosed;
@@ -15,6 +14,7 @@ import net.simforge.airways.processes.transportflight.handler.OnCheckinOpens;
 import net.simforge.airways.processes.transportflight.handler.OnScheduled;
 import net.simforge.commons.hibernate.BaseEntity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +57,7 @@ class EventProcessor extends Processor {
         // todo rework it!!
 
         List<Class<Handler>> result = new ArrayList<>();
-        Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnAllocated.class, OnCancelled.class, OnPlanned.class};
+        Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnCancelled.class, OnPlanned.class};
         for (Class handlerClass : handlerClasses) {
             Subscribe subscribe = (Subscribe) handlerClass.getAnnotation(Subscribe.class);
             if (subscribe == null) {

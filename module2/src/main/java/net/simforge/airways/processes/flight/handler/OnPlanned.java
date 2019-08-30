@@ -34,7 +34,7 @@ public class OnPlanned implements Handler {
     private SessionFactory sessionFactory;
 
     public void process() {
-        engine.startActivity(AllocateFlight.class, flight); // todo p2 support for expiration!!! flight.getScheduledDepartureTime().minusMinutes(60)
+        engine.startActivity(AllocateFlight.class, flight, flight.getScheduledDepartureTime().minusHours(2));
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Flight Allocation initiated"));

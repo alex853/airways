@@ -6,5 +6,5 @@ package net.simforge.airways.processes.flight.event;
 
 import net.simforge.airways.engine.event.Event;
 
-public class Allocated implements Event {
+public class FullyAllocated implements Event {
 }

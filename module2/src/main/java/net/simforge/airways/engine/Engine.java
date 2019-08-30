@@ -54,10 +54,16 @@ public class Engine implements Runnable {
 
         invalidateQueue();
 
-        TaskEntity task = taskQueue.poll();
+        TaskEntity task = taskQueue.peek();
 
         if (task == null) {
             return;
+        }
+
+        if (task.getTaskTime().isAfter(timeMachine.now())) {
+            return;
+        } else {
+            taskQueue.remove(task);
         }
 
         // todo check circuit breaker
@@ -126,6 +132,10 @@ public class Engine implements Runnable {
     }
 
     public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
+        startActivity(activityClass, entity, null);
+    }
+
+    public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime expiryTime) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
@@ -133,6 +143,7 @@ public class Engine implements Runnable {
         task.setProcessorClassName(activityClass.getName());
         task.setEntityClassName(entity.getClass().getName());
         task.setEntityId(entity.getId());
+        task.setExpiryTime(expiryTime);
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, task);
@@ -140,6 +151,10 @@ public class Engine implements Runnable {
     }
 
     public void scheduleActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime startTime) {
+        scheduleActivity(activityClass, entity, startTime, null);
+    }
+
+    public void scheduleActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime startTime, LocalDateTime expiryTime) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
@@ -147,6 +162,7 @@ public class Engine implements Runnable {
         task.setProcessorClassName(activityClass.getName());
         task.setEntityClassName(entity.getClass().getName());
         task.setEntityId(entity.getId());
+        task.setExpiryTime(expiryTime);
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, task);
@@ -154,7 +170,11 @@ public class Engine implements Runnable {
     }
 
     public void fireEvent(Class eventClass, BaseEntity entity) {
-        throw new UnsupportedOperationException();
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.transaction(session, () -> {
+                fireEvent(session, eventClass, entity);
+            });
+        }
     }
 
     public void fireEvent(Session session, Class eventClass, BaseEntity entity) {

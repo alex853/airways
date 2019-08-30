@@ -1,18 +1,23 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.flight;
 
 import net.simforge.airways.persistence.model.Pilot;
 import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-@Entity
+@Entity(name = "PilotAssignment")
 @Table(name = "aw_pilot_assignment")
-public class PilotAssignment implements Auditable {
+public class PilotAssignment implements BaseEntity, Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_pilot_assignment_id")
     @SequenceGenerator(name = "aw_pilot_assignment_id", sequenceName = "aw_pilot_assignment_id_seq", allocationSize = 1)
-    private Long id;
+    private Integer id;
     @Version
     private Integer version;
 
@@ -33,18 +38,22 @@ public class PilotAssignment implements Auditable {
 
     private Integer status;
 
-    public Long getId() {
+    @Override
+    public Integer getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    @Override
+    public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
     }

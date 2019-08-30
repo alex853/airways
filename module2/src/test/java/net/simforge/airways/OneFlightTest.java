@@ -79,7 +79,7 @@ public class OneFlightTest {
         createCountry("United kingdom", "GB");
         createCity("United kingdom", "London", 51, 0);
 
-        // todo p2 add some aircrafts
+        // todo p1 add some aircrafts
 
         try (Session session = sessionFactory.openSession()) {
             PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 10);
@@ -103,6 +103,7 @@ public class OneFlightTest {
         timetableRow.setWeekdays(Weekdays.wholeWeek().toString());
         timetableRow.setAircraftType(a320type);
         timetableRow.setTotalTickets(160);
+        timetableRow.setHorizon(1);
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, a320type);
@@ -162,14 +163,17 @@ public class OneFlightTest {
 
         ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
         assertFalse(status.isFinished());
-        // todo p2 activityInfo assertTrue(status.getLastActTime().isAfter(START_TIME));
     }
 
     @SuppressWarnings("SameParameterValue")
     private void runEngine(int minutesToRun) {
         for (int i = 0; i < minutesToRun; i++) {
             timeMachine.plusMinutes(1);
-            engine.tick();
+
+            // ten ticks for each minute
+            for (int j = 0; j < 10; j++) {
+                engine.tick();
+            }
         }
     }
 }

@@ -15,9 +15,8 @@ public class ActivityInfo {
         this.taskEntity = taskEntity;
     }
 
-    public LocalDateTime getExpireTime() {
-        // todo p2 expiration support
-        return null;
+    public LocalDateTime getExpiryTime() {
+        return taskEntity.getExpiryTime();
     }
 
     public boolean isFinished() {

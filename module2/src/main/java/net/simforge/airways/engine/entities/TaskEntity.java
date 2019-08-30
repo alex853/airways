@@ -25,6 +25,7 @@ public class TaskEntity implements BaseEntity {
     private String processorClassName;
     private String entityClassName;
     private Integer entityId;
+    private LocalDateTime expiryTime;
 
     // todo p3 add startedTime, finishedTime, lastProcessingTime, processingCount
 
@@ -94,6 +95,14 @@ public class TaskEntity implements BaseEntity {
 
     public void setEntityId(Integer entityId) {
         this.entityId = entityId;
+    }
+
+    public LocalDateTime getExpiryTime() {
+        return expiryTime;
+    }
+
+    public void setExpiryTime(LocalDateTime expiryTime) {
+        this.expiryTime = expiryTime;
     }
 
     public static class Status {
