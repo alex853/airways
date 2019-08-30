@@ -1,9 +1,14 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.model.flight;
 
 import net.simforge.airways.model.person.Pilot;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
 
+@Deprecated
 public interface PilotAssignment extends BaseEntity, Auditable {
 
     Flight getFlight();
