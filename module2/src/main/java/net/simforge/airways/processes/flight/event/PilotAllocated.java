@@ -6,6 +6,6 @@ package net.simforge.airways.processes.flight.event;
 
 import net.simforge.airways.engine.event.Event;
 
-// todo p2 schedule pilot checkin
+// todo p1 schedule pilot checkin
 public class PilotAllocated implements Event {
 }

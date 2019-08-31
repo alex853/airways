@@ -5,7 +5,7 @@
 package net.simforge.airways.processes.pilot.event;
 
 /**
- * todo p2 to start PilotOnDuty activity
+ * todo p1 to start PilotOnDuty activity
  */
 public class PilotCheckin {
 }
