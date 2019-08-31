@@ -7,9 +7,11 @@ package net.simforge.airways.processes.flight.activity;
 import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.Result;
 import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.processes.flight.event.FullyAllocated;
 import net.simforge.airways.processes.flight.event.Cancelled;
+import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
@@ -37,14 +39,15 @@ public class AllocateFlight implements Activity {
         FlightContext flightContext;
         try (Session session = sessionFactory.openSession()) {
             flightContext = FlightContext.load(session, flight);
-        }
 
-        // todo p2 messages & logging
-        boolean isFullyAllocated = flightContext.isFullyAllocated();
-        if (isFullyAllocated) {
-            engine.fireEvent(FullyAllocated.class, flight);
-        } else {
-            engine.fireEvent(Cancelled.class, flight); // todo p3 Сancel instead of Cancelled?
+            boolean isFullyAllocated = flightContext.isFullyAllocated();
+            if (isFullyAllocated) {
+                engine.fireEvent(FullyAllocated.class, flight);
+                HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Flight is fully allocated"));
+            } else {
+                engine.fireEvent(Cancelled.class, flight); // todo p3 СancelDueToNoAllocation instead of Cancelled?
+                HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Unable to fully allocate the flight"));
+            }
         }
         return null;
     }
