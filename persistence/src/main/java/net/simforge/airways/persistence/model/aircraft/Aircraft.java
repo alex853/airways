@@ -160,4 +160,12 @@ public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
         public final static int TaxiingIn = 500;
         public final static int PostFlight = 600;
     }
+
+    @Override
+    public String toString() {
+        return "Aircraft{" +
+                "regNo='" + regNo + '\'' +
+                ", status=" + status +
+                '}';
+    }
 }

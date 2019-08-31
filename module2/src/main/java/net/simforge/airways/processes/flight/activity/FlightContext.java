@@ -5,6 +5,8 @@
 package net.simforge.airways.processes.flight.activity;
 
 import net.simforge.airways.persistence.model.Pilot;
+import net.simforge.airways.persistence.model.aircraft.Aircraft;
+import net.simforge.airways.persistence.model.flight.AircraftAssignment;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.PilotAssignment;
 import net.simforge.commons.legacy.BM;
@@ -14,8 +16,8 @@ public class FlightContext {
     private Flight flight;
     private Pilot pilot;
     private PilotAssignment pilotAssignment;
-    //todo p3 private Aircraft aircraft;
-    //todo p3 private AircraftAssignment aircraftAssignment;
+    private Aircraft aircraft;
+    private AircraftAssignment aircraftAssignment;
 
     public static FlightContext load(Session session, Flight flight) {
         BM.start("FlightContext.load#direct");
@@ -24,8 +26,7 @@ public class FlightContext {
 
             ctx.flight = session.load(Flight.class, flight.getId());
 
-/*todo p3
-           ctx.aircraftAssignment = (AircraftAssignment) session
+            ctx.aircraftAssignment = (AircraftAssignment) session
                     .createQuery("select aa " +
                             "from AircraftAssignment as aa " +
                             "where aa.flight = :flight" +
@@ -36,7 +37,7 @@ public class FlightContext {
                     .uniqueResult();
             if (ctx.aircraftAssignment != null) {
                 ctx.aircraft = ctx.aircraftAssignment.getAircraft();
-            }*/
+            }
 
             ctx.pilotAssignment = (PilotAssignment) session
                     .createQuery("select pa " +
@@ -69,15 +70,15 @@ public class FlightContext {
         return pilotAssignment;
     }
 
-/*todo p3    public Aircraft getAircraft() {
+    public Aircraft getAircraft() {
         return aircraft;
     }
 
     public AircraftAssignment getAircraftAssignment() {
         return aircraftAssignment;
-    }*/
+    }
 
     public boolean isFullyAllocated() {
-        return pilotAssignment != null /*todo p3&& aircraftAssignment != null*/;
+        return pilotAssignment != null && aircraftAssignment != null;
     }
 }

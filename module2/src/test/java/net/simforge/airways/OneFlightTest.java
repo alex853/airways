@@ -8,6 +8,7 @@ import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.persistence.Airways;
@@ -75,13 +76,17 @@ public class OneFlightTest {
         Airport egcc = loadAirport("EGCC");
 
         AircraftType a320type = TestRefData.getA320Data();
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.saveAndCommit(session, a320type);
+            a320type = CommonOps.aircraftTypeByIcao(session, "A320");
+        }
 
         createCountry("United kingdom", "GB");
         createCity("United kingdom", "London", 51, 0);
 
-        // todo p1 add some aircrafts
-
         try (Session session = sessionFactory.openSession()) {
+            AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 10);
+
             PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 10);
         }
 
@@ -106,7 +111,6 @@ public class OneFlightTest {
         timetableRow.setHorizon(1);
 
         try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, a320type);
             HibernateUtils.saveAndCommit(session, timetableRow);
         }
     }

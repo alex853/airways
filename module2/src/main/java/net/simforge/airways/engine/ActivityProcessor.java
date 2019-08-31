@@ -60,7 +60,6 @@ class ActivityProcessor extends Processor {
                     throw new IllegalArgumentException("unable to calculate next run time for " + result.getNextRun() + " mode");
             }
 
-
             // todo circuit breaker
             // todo stats
         } else {

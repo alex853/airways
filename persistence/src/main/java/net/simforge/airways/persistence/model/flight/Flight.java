@@ -81,6 +81,8 @@ public class Flight implements BaseEntity, Auditable/*, HeartbeatObject*/, Event
     @Column(name = "status_dt")
     private LocalDateTime statusDt;
 
+    // todo aircraft property in flight and crew assignments instead of flight/aircraft assignments...
+
     @Override
     public String getEventLogCode() {
         return EventLogCode;

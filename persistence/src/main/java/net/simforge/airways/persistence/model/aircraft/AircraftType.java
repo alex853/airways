@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.aircraft;
 
 import net.simforge.commons.hibernate.BaseEntity;
@@ -113,5 +117,13 @@ public class AircraftType implements BaseEntity {
 
     public void setLandingSpeed(Integer landingSpeed) {
         this.landingSpeed = landingSpeed;
+    }
+
+    @Override
+    public String toString() {
+        return "AircraftType{" +
+                "id=" + id +
+                ", icao='" + icao + '\'' +
+                '}';
     }
 }
