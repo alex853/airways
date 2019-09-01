@@ -103,7 +103,7 @@ public class PilotOnDuty implements Activity {
                     // error
                     throw new IllegalArgumentException("Can't process flight status " + flight.getStatus() + " for flight " + flight + " and pilot " + pilot);
 
-                case Flight.Status.PreFlight:
+                case Flight.Status.PreFlight: // todo p2 start boarding at some moment
                     if (timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
                         blocksOff(flightCtx);
                     }
@@ -125,7 +125,7 @@ public class PilotOnDuty implements Activity {
                     }
                     break;
 
-                case Flight.Status.PostFlight:
+                case Flight.Status.PostFlight: // todo p2 start deboarding at some moment
                     if (timeline.getFinish().getEstimatedTime().isBefore(now)) {
                         finishFlight(flightCtx);
                     }

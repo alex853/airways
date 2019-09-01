@@ -94,7 +94,7 @@ class ActivityProcessor extends Processor {
         return now.equals(expiryTime) || now.isAfter(expiryTime);
     }
 
-    // todo p3 move to commons
+    // todo p2 move to commons
     private int random(int from, int to) {
         return from + (int)((to - from + 1) * Math.random());
     }

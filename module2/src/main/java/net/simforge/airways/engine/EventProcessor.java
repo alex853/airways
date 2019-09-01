@@ -58,7 +58,7 @@ class EventProcessor extends Processor {
     private List<Class<Handler>> getSubscriptions(Class eventClass) {
         List<Class<Handler>> result = new ArrayList<>();
 
-        // todo p2 rework it!!
+        // todo p1 rework it!!
         Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnCancelled.class, OnPlanned.class, OnPilotAllocated.class, PilotCheckin.class, FullyAllocated.class};
 
         for (Class handlerClass : handlerClasses) {

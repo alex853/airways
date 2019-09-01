@@ -167,6 +167,8 @@ public class OneFlightTest {
 
         ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
         assertFalse(status.isFinished());
+
+        // todo p2 write asserts re state/status/position of pilot, aircraft, flight, transport flight, etc
     }
 
     @SuppressWarnings("SameParameterValue")
