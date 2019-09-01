@@ -1,10 +1,17 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.geo;
+
+import net.simforge.airways.persistence.EventLog;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 
 @Entity(name = "Airport")
 @Table(name="aw_airport")
-public class Airport {
+public class Airport implements BaseEntity, EventLog.Loggable {
     public static final String EventLogCode = "airport";
 
     @Id
@@ -27,20 +34,29 @@ public class Airport {
     @Column
     private Integer dataset;
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public String getEventLogCode() {
+        return EventLogCode;
     }
 
     public String getIata() {

@@ -5,31 +5,56 @@
 package net.simforge.airways.engine;
 
 public class Result {
-    private final NextRun nextRun;
+    private final Action action;
+    private final When when;
 
-    public enum NextRun {
-        NotSpecified,
+    public enum Action {
+        Resume,
+        Done,
+        Sleep,
+        Nothing
+    }
+
+    public enum When {
         NextDay,
         NextHour,
         NextMinute,
         FewTimesPerDay,
-        FewTimesPerHour,
-        DoNotRun
+        FewTimesPerHour
     }
 
-    private Result(NextRun nextRun) {
-        this.nextRun = nextRun;
+    private Result(Action action, When when) {
+        this.action = action;
+        this.when = when;
     }
 
-    public NextRun getNextRun() {
-        return nextRun;
+    public Action getAction() {
+        return action;
     }
 
-    public static Result ok() {
-        return ok(NextRun.NotSpecified);
+    public When getWhen() {
+        return when;
     }
 
-    public static Result ok(NextRun nextRun) {
-        return new Result(nextRun);
+    public static Result resume(When when) {
+        return new Result(Action.Resume, when);
+    }
+
+    /**
+     * Activity goes to DONE status, expiry code will be skipped.
+     */
+    public static Result done() {
+        return new Result(Action.Done, null);
+    }
+
+    /**
+     * Activity remains in ACTIVE status, next run will be expiry time or no run if expiry time is not specified.
+     */
+    public static Result sleep() {
+        return new Result(Action.Sleep, null);
+    }
+
+    public static Result nothing() {
+        return new Result(Action.Nothing, null);
     }
 }

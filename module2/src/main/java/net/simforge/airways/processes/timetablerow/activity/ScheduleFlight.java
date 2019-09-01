@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static net.simforge.airways.engine.Result.NextRun.NextDay;
-import static net.simforge.airways.engine.Result.NextRun.NextHour;
+import static net.simforge.airways.engine.Result.When.NextDay;
+import static net.simforge.airways.engine.Result.When.NextHour;
 
 /**
  * It creates TransportFlight and Flight for the according to the timetable and date.
@@ -127,10 +127,10 @@ public class ScheduleFlight implements Activity {
 
             if (!someFlightFailed) {
                 // process it on the next day
-                return Result.ok(NextDay);
+                return Result.resume(NextDay);
             } else {
                 // in case of any failure we are going to retry some minutes later
-                return Result.ok(NextHour);
+                return Result.resume(NextHour);
             }
 
         } finally {
@@ -183,6 +183,6 @@ public class ScheduleFlight implements Activity {
 
     @Override
     public Result onExpiry() {
-        return Result.ok();
+        return Result.nothing();
     }
 }

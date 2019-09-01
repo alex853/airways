@@ -7,14 +7,16 @@ package net.simforge.airways.engine;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processes.flight.event.FullyAllocated;
 import net.simforge.airways.processes.flight.handler.OnCancelled;
 import net.simforge.airways.processes.flight.handler.OnPlanned;
+import net.simforge.airways.processes.pilot.event.PilotCheckin;
+import net.simforge.airways.processes.pilot.handler.OnPilotAllocated;
 import net.simforge.airways.processes.transportflight.handler.OnCheckinClosed;
 import net.simforge.airways.processes.transportflight.handler.OnCheckinOpens;
 import net.simforge.airways.processes.transportflight.handler.OnScheduled;
 import net.simforge.commons.hibernate.BaseEntity;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,10 +56,11 @@ class EventProcessor extends Processor {
     }
 
     private List<Class<Handler>> getSubscriptions(Class eventClass) {
-        // todo rework it!!
-
         List<Class<Handler>> result = new ArrayList<>();
-        Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnCancelled.class, OnPlanned.class};
+
+        // todo p2 rework it!!
+        Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnCancelled.class, OnPlanned.class, OnPilotAllocated.class, PilotCheckin.class, FullyAllocated.class};
+
         for (Class handlerClass : handlerClasses) {
             Subscribe subscribe = (Subscribe) handlerClass.getAnnotation(Subscribe.class);
             if (subscribe == null) {

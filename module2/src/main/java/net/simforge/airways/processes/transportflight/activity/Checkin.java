@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import java.util.Collection;
 
+import static net.simforge.airways.engine.Result.When.NextMinute;
+
 /**
  * 'Checkin' activity starts in 'CheckinStarted' event.
  */
@@ -46,11 +48,11 @@ public class Checkin implements Activity {
         }
         logger.info(transportFlight + " - Check-in is in progress"); // todo amount of PAX
 
-        return Result.ok(Result.NextRun.NextMinute);
+        return Result.resume(NextMinute);
     }
 
     @Override
     public Result onExpiry() {
-        return null;
+        return Result.nothing();
     }
 }

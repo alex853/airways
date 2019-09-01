@@ -23,6 +23,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
+import static net.simforge.airways.engine.Result.When.FewTimesPerHour;
+
 public class TrivialAllocation implements Activity {
     private static Logger logger = LoggerFactory.getLogger(TrivialAllocation.class);
 
@@ -115,14 +117,14 @@ public class TrivialAllocation implements Activity {
 
         boolean isFullyAllocated = flightContext.isFullyAllocated();
         if (!isFullyAllocated) {
-            return Result.ok(Result.NextRun.FewTimesPerHour);
+            return Result.resume(FewTimesPerHour);
         } else {
-            return Result.ok(Result.NextRun.DoNotRun); // todo p3 done instead of expiry
+            return Result.done();
         }
     }
 
     @Override
     public Result onExpiry() {
-        return null;
+        return Result.nothing();
     }
 }
