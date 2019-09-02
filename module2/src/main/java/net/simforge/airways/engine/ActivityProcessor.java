@@ -8,11 +8,12 @@ import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.commons.hibernate.BaseEntity;
+import net.simforge.commons.misc.Misc;
 
 import java.time.LocalDateTime;
 
 class ActivityProcessor extends Processor {
-    protected ActivityProcessor(TaskEntity task, InjectionContext baseInjectionContext) {
+    ActivityProcessor(TaskEntity task, InjectionContext baseInjectionContext) {
         super(task, baseInjectionContext);
     }
 
@@ -24,6 +25,7 @@ class ActivityProcessor extends Processor {
 
         Class entityClass = clazz(task.getEntityClassName());
 
+        //noinspection unchecked
         BaseEntity entity = (BaseEntity) session.get(entityClass, task.getEntityId());
 
         InjectionContext activityInjectionContext = processorInjectionContext
@@ -50,10 +52,10 @@ class ActivityProcessor extends Processor {
                         task.setTaskTime(now.plusMinutes(1));
                         break;
                     case FewTimesPerHour:
-                        task.setTaskTime(now.plusMinutes(random(10, 30)));
+                        task.setTaskTime(now.plusMinutes(Misc.random(10, 30)));
                         break;
                     case FewTimesPerDay:
-                        task.setTaskTime(now.plusHours(random(3, 8)));
+                        task.setTaskTime(now.plusHours(Misc.random(3, 8)));
                         break;
                     default:
                         throw new IllegalArgumentException("unable to calculate next run time for " + result.getWhen() + " mode");
@@ -92,10 +94,5 @@ class ActivityProcessor extends Processor {
 
         LocalDateTime now = timeMachine.now();
         return now.equals(expiryTime) || now.isAfter(expiryTime);
-    }
-
-    // todo p2 move to commons
-    private int random(int from, int to) {
-        return from + (int)((to - from + 1) * Math.random());
     }
 }

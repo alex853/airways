@@ -18,7 +18,7 @@ dependencies {
     compile project(':persistence')
     compile project(':module1')
 
-    compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.4'
+    compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.1'
 
     compile group: 'javax.inject', name: 'javax.inject', version: '1'
