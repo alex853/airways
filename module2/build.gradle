@@ -23,7 +23,9 @@ dependencies {
 
     compile group: 'javax.inject', name: 'javax.inject', version: '1'
 
-    compile 'postgresql:postgresql:9.1-901-1.jdbc4'
+    compile group: 'postgresql', name: 'postgresql', version: '9.1-901-1.jdbc4'
+    
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
 
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile group: 'com.h2database', name: 'h2', version: '1.4.197'

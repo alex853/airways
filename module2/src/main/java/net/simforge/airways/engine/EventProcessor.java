@@ -7,18 +7,13 @@ package net.simforge.airways.engine;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
-import net.simforge.airways.processes.flight.event.FullyAllocated;
-import net.simforge.airways.processes.flight.handler.OnCancelled;
-import net.simforge.airways.processes.flight.handler.OnPlanned;
-import net.simforge.airways.processes.pilot.event.PilotCheckin;
-import net.simforge.airways.processes.pilot.handler.OnPilotAllocated;
-import net.simforge.airways.processes.transportflight.handler.OnCheckinClosed;
-import net.simforge.airways.processes.transportflight.handler.OnCheckinOpens;
-import net.simforge.airways.processes.transportflight.handler.OnScheduled;
 import net.simforge.commons.hibernate.BaseEntity;
+import org.reflections.Reflections;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 class EventProcessor extends Processor {
     protected EventProcessor(TaskEntity task, InjectionContext baseInjectionContext) {
@@ -29,7 +24,7 @@ class EventProcessor extends Processor {
     ProcessingResult process() {
         Class eventClass = clazz(task.getProcessorClassName()); // todo
 
-        List<Class<Handler>> handlerClasses = getSubscriptions(eventClass);
+        List<Class<? extends Handler>> handlerClasses = getSubscriptions(eventClass);
 
         Class entityClass = clazz(task.getEntityClassName());
 
@@ -41,7 +36,7 @@ class EventProcessor extends Processor {
 
         handlerInjectionContext = addServicesToInjectionContext(handlerInjectionContext);
 
-        for (Class<Handler> handlerClass : handlerClasses) {
+        for (Class<? extends Handler> handlerClass : handlerClasses) {
             Handler handler = (Handler) create(handlerClass);
 
             handlerInjectionContext.inject(handler);
@@ -55,14 +50,13 @@ class EventProcessor extends Processor {
         return null; // todo
     }
 
-    private List<Class<Handler>> getSubscriptions(Class eventClass) {
-        List<Class<Handler>> result = new ArrayList<>();
+    private List<Class<? extends Handler>> getSubscriptions(Class eventClass) {
+        List<Class<? extends Handler>> result = new ArrayList<>();
 
-        // todo p1 rework it!!
-        Class[] handlerClasses = {OnScheduled.class, OnCheckinOpens.class, OnCheckinClosed.class, OnCancelled.class, OnPlanned.class, OnPilotAllocated.class, PilotCheckin.class, FullyAllocated.class};
+        Collection<Class<? extends Handler>> handlerClasses = scanHandlerClasses();
 
-        for (Class handlerClass : handlerClasses) {
-            Subscribe subscribe = (Subscribe) handlerClass.getAnnotation(Subscribe.class);
+        for (Class<? extends Handler> handlerClass : handlerClasses) {
+            Subscribe subscribe = handlerClass.getAnnotation(Subscribe.class);
             if (subscribe == null) {
                 continue;
             }
@@ -73,5 +67,11 @@ class EventProcessor extends Processor {
         }
 
         return result;
+    }
+
+    private Set<Class<? extends Handler>> scanHandlerClasses() {
+        String packageName = "net.simforge.airways.processes";
+        Reflections reflections = new Reflections(packageName);
+        return reflections.getSubTypesOf(Handler.class);
     }
 }
