@@ -16,6 +16,6 @@ public class OnBoardingStarted implements Handler {
     @Override
     public void process() {
         // todo p3 implement boarding
-        throw new UnsupportedOperationException();
+//        throw new UnsupportedOperationException();
     }
 }

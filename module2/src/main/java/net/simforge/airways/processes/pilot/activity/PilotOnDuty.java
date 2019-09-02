@@ -18,6 +18,8 @@ import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.PilotAssignment;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.processes.flight.activity.FlightContext;
+import net.simforge.airways.processes.flight.event.StartBoardingCommand;
+import net.simforge.airways.processes.flight.event.StartDeboardingCommand;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.airways.util.TimeMachine;
@@ -76,11 +78,14 @@ public class PilotOnDuty implements Activity {
                 if (flight.getStatus() == Flight.Status.Assigned
                     /*&& preflightStartsAtDt.isBefore(timeMachine.now())*/) {
                     startFlight(flightCtx);
+
+                    engine.scheduleEvent(StartBoardingCommand.class, flight, flight.getScheduledDepartureTime().minusMinutes(35));
+
                     return Result.resume(NextMinute);
                 } else {
                     logger.error("Pilot {} - Unable to find start the flight");
                     // todo event log, cancellation?
-                    return Result.done();
+                    return Result.done(); // todo error?
                 }
 
             }
@@ -103,7 +108,7 @@ public class PilotOnDuty implements Activity {
                     // error
                     throw new IllegalArgumentException("Can't process flight status " + flight.getStatus() + " for flight " + flight + " and pilot " + pilot);
 
-                case Flight.Status.PreFlight: // todo p2 start boarding at some moment
+                case Flight.Status.PreFlight:
                     if (timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
                         blocksOff(flightCtx);
                     }
@@ -122,10 +127,12 @@ public class PilotOnDuty implements Activity {
                 case Flight.Status.Arrival:
                     if (timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                         blocksOn(flightCtx);
+
+                        engine.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
                     }
                     break;
 
-                case Flight.Status.PostFlight: // todo p2 start deboarding at some moment
+                case Flight.Status.PostFlight:
                     if (timeline.getFinish().getEstimatedTime().isBefore(now)) {
                         finishFlight(flightCtx);
                     }
