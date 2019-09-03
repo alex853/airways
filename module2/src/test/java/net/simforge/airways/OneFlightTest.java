@@ -12,8 +12,12 @@ import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.persistence.Airways;
+import net.simforge.airways.persistence.model.Pilot;
+import net.simforge.airways.persistence.model.aircraft.Aircraft;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
+import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
@@ -36,6 +40,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class OneFlightTest {
@@ -85,9 +90,9 @@ public class OneFlightTest {
         createCity("United kingdom", "London", 51, 0);
 
         try (Session session = sessionFactory.openSession()) {
-            AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 10);
+            AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);
 
-            PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 10);
+            PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 1);
         }
 
         SimpleFlight simpleFlight = SimpleFlight.forRoute(
@@ -108,7 +113,7 @@ public class OneFlightTest {
         timetableRow.setWeekdays(Weekdays.wholeWeek().toString());
         timetableRow.setAircraftType(a320type);
         timetableRow.setTotalTickets(160);
-        timetableRow.setHorizon(1);
+        timetableRow.setHorizon(0);
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, timetableRow);
@@ -168,7 +173,21 @@ public class OneFlightTest {
         ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
         assertFalse(status.isFinished());
 
-        // todo p1 write asserts re state/status/position of pilot, aircraft, flight, transport flight, etc
+        try (Session session = sessionFactory.openSession()) {
+            Pilot pilot = session.load(Pilot.class, 1);
+            assertEquals(Pilot.Status.Idle, pilot.getStatus().intValue());
+            assertEquals("EGCC", pilot.getPerson().getPositionAirport().getIcao());
+
+            Aircraft aircraft = session.load(Aircraft.class, 1);
+            assertEquals(Aircraft.Status.Idle, aircraft.getStatus().intValue());
+            assertEquals("EGCC", aircraft.getPositionAirport().getIcao());
+
+            Flight flight = session.load(Flight.class, 1);
+            assertEquals(Flight.Status.Finished, flight.getStatus().intValue());
+
+            TransportFlight transportFlight = flight.getTransportFlight();
+            // todo p3 uncomment that failing line assertEquals(TransportFlight.Status.Finished, transportFlight.getStatus());
+        }
     }
 
     @SuppressWarnings("SameParameterValue")

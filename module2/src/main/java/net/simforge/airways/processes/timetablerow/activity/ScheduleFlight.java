@@ -148,7 +148,7 @@ public class ScheduleFlight implements Activity {
         transportFlight.setToAirport(timetableRow.getToAirport());
         transportFlight.setDepartureDt(dateOfFlight.atTime(LocalTime.parse(timetableRow.getDepartureTime())));
         transportFlight.setArrivalDt(transportFlight.getDepartureDt().plus(JavaTime.hhmmToDuration(timetableRow.getDuration())));
-        transportFlight.setStatus(100 /*Scheduled*/);
+        transportFlight.setStatus(TransportFlight.Status.Scheduled);
         transportFlight.setTotalTickets(timetableRow.getTotalTickets());
         transportFlight.setFreeTickets(transportFlight.getTotalTickets());
         //transportFlight.setHeartbeatDt(JavaTime.nowUtc());
