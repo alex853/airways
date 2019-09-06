@@ -1,0 +1,39 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ticketing;
+
+import net.simforge.legacy.airways.model.Flight;
+
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: Default
+ * Date: 01.01.2011
+ * Time: 22:15:53
+ * To change this template use File | Settings | File Templates.
+ */
+public class Journey {
+    private AirportLocation airportLocation;
+
+    public Journey(AirportLocation airportLocation) {
+        this.airportLocation = airportLocation;
+    }
+
+    public List<Flight> getFlights() {
+        AirportLocation curr = airportLocation;
+        List<Flight> flights = new ArrayList<Flight>();
+        while(true) {
+            FlightConnection flightConnection = curr.getInboundFlightConnection();
+            if (flightConnection == null) {
+                break;
+            }
+            flights.add(0, flightConnection.getFlight());
+            curr = flightConnection.getFrom();
+        }
+        return flights;
+    }
+}

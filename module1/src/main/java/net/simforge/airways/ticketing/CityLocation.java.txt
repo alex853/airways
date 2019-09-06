@@ -1,0 +1,47 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ticketing;
+
+import net.simforge.legacy.airways.model.City;
+import net.simforge.legacy.airways.model.Airport2City;
+import net.simforge.legacy.airways.RefDataCache;
+import net.simforge.commons.persistence.Persistence;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.ArrayList;
+
+public class CityLocation {
+    private Routing routing;
+    private City city;
+    private List<AirportLocation> airportLocations = new ArrayList<AirportLocation>();
+
+    public CityLocation(Routing routing, City city) {
+        this.routing = routing;
+        this.city = city;
+    }
+
+    public void loadAirports() throws SQLException {
+        long t1 = System.currentTimeMillis();
+
+        List<Airport2City> a2cList = Persistence.loadByQuery(
+                routing.getConnx(),
+                Airport2City.class,
+                "select * from %tn% where city_id = " + city.getId());
+
+        long t2 = System.currentTimeMillis();
+
+        for (Airport2City a2c : a2cList) {
+            airportLocations.add(new AirportLocation(routing, RefDataCache.getAirport(a2c.getAirportId())));
+        }
+
+        long t3 = System.currentTimeMillis();
+        routing.log("loadAirports Tq=" + (t2-t1) + " Ti=" + (t3-t2));
+    }
+
+    public List<AirportLocation> getAirportLocations() {
+        return airportLocations;
+    }
+}

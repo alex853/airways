@@ -1,0 +1,110 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ticketing;
+
+import net.simforge.legacy.airways.model.City;
+import net.simforge.legacy.airways.model.Flight;
+import net.simforge.legacy.airways.RefDataCache;
+import net.simforge.legacy.airways.DT;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import forge.commons.db.DB;
+import org.apache.log4j.Logger;
+
+public class Routing {
+    private static Logger logger = Logger.getLogger("Routing");
+
+    private Connection connx;
+    private City fromCity;
+    private City toCity;
+    private int groupSize;
+    private List<Journey> journeys = new ArrayList<Journey>();
+
+    public Routing(Connection connx, City fromCity, City toCity, int groupSize) {
+        this.connx = connx;
+        this.fromCity = fromCity;
+        this.toCity = toCity;
+        this.groupSize = groupSize;
+    }
+
+    public void proceed() throws SQLException {
+        log("Started");
+
+        long t1 = System.currentTimeMillis();
+
+        CityLocation fromCityLocation = new CityLocation(this, fromCity);
+        fromCityLocation.loadAirports();
+        List<AirportLocation> fromAirportLocations = fromCityLocation.getAirportLocations();
+        for (AirportLocation airportLocation : fromAirportLocations) {
+            airportLocation.setDepTime(DT.addMinutes(180));
+        }
+
+        List<AirportLocation> airportLocations = new ArrayList<AirportLocation>(fromAirportLocations);
+        int roundLevel = 1;
+        while (roundLevel <= 4) {
+            log("Round: " + roundLevel + "       airport locations: " + airportLocations.size());
+
+            List<AirportLocation> nextRoundAirportLocations = new ArrayList<AirportLocation>();
+            for (AirportLocation airportLocation : airportLocations) {
+                airportLocation.buildFlightConnections();
+                List<AirportLocation> reachedAirportLocations = airportLocation.getReachedAirportLocations();
+                for (AirportLocation eachReached : reachedAirportLocations) {
+                    if (eachReached.isAirportForCity(toCity)) {
+                        journeys.add(new Journey(eachReached));
+                    } else {
+                        nextRoundAirportLocations.add(eachReached);
+                    }
+                }
+            }
+            roundLevel++;
+            airportLocations = nextRoundAirportLocations;
+            for (AirportLocation airportLocation : airportLocations) {
+                airportLocation.calcDepTime();
+            }
+        }
+
+        long t2 = System.currentTimeMillis();
+        log("Finished. Found " + journeys.size() + " journeys. Total time " + (t2-t1));
+    }
+
+    void log(String msg) {
+        logger.info("Routing " + fromCity.getName() + "-" + toCity.getName() + ": " + msg);
+    }
+
+    public Connection getConnx() {
+        return connx;
+    }
+
+    public static void main(String[] args) throws SQLException {
+        City saoPaulo = RefDataCache.getCity(872);
+        City newYork = RefDataCache.getCity(7266);
+        City buenosAires = RefDataCache.getCity(194);
+        City samara = RefDataCache.getCity(5676);
+
+//        Routing routing = new Routing(DB.getConnection(), newYork, saoPaulo, 1);
+        Routing routing = new Routing(DB.getConnection(), samara, buenosAires, 1);
+        routing.proceed();
+        List<Journey> journeys = routing.getJourneys();
+        System.out.println("found journeys = " + journeys.size());
+
+        Journey journey = journeys.get(0);
+        List<Flight> flights = journey.getFlights();
+        for (Flight flight : flights) {
+            System.out.println(RefDataCache.getAirport(flight.getFromAirportId()).getIata() + "-" + RefDataCache.getAirport(flight.getToAirportId()).getIata());
+        }
+    }
+
+    public List<Journey> getJourneys() {
+        return journeys;
+    }
+
+    public int getGroupSize() {
+        return groupSize;
+    }
+}

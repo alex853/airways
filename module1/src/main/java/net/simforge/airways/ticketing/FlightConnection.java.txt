@@ -1,0 +1,41 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ticketing;
+
+import net.simforge.legacy.airways.model.Flight;
+import net.simforge.legacy.airways.RefDataCache;
+
+/**
+ * Created by IntelliJ IDEA.
+ * User: Default
+ * Date: 01.01.2011
+ * Time: 21:49:05
+ * To change this template use File | Settings | File Templates.
+ */
+public class FlightConnection {
+    private Routing routing;
+    private Flight flight;
+    private AirportLocation from;
+    private AirportLocation to;
+
+    public FlightConnection(Routing routing, AirportLocation from, Flight flight) {
+        this.routing = routing;
+        this.from = from;
+        this.flight = flight;
+        this.to = new AirportLocation(routing, RefDataCache.getAirport(flight.getToAirportId()), this);
+    }
+
+    public AirportLocation getTo() {
+        return to;
+    }
+
+    public Flight getFlight() {
+        return flight;
+    }
+
+    public AirportLocation getFrom() {
+        return from;
+    }
+}

@@ -1,0 +1,112 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.ticketing;
+
+import net.simforge.legacy.airways.model.Airport;
+import net.simforge.legacy.airways.model.Flight;
+import net.simforge.legacy.airways.model.City;
+import net.simforge.legacy.airways.model.Airport2City;
+import net.simforge.legacy.airways.DT;
+import net.simforge.legacy.airways.FlightHelper;
+import net.simforge.commons.persistence.Persistence;
+import org.joda.time.DateTime;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
+
+public class AirportLocation {
+    private Routing routing;
+    private Airport airport;
+    private FlightConnection inboundFlightConnection;
+    private DateTime depTime;
+    private List<FlightConnection> flightConnections = new ArrayList<FlightConnection>();
+
+    public AirportLocation(Routing routing, Airport airport) {
+        this.routing = routing;
+        this.airport = airport;
+    }
+
+    public AirportLocation(Routing routing, Airport airport, FlightConnection inboundFlightConnection) {
+        this.routing = routing;
+        this.airport = airport;
+        this.inboundFlightConnection = inboundFlightConnection;
+    }
+
+    public void setDepTime(DateTime depTime) {
+        this.depTime = depTime;
+    }
+
+    public void buildFlightConnections() throws SQLException {
+        long t1 = System.currentTimeMillis();
+
+        String toAirportIdExclusions = "";
+        AirportLocation curr = this;
+        while (curr != null) {
+            toAirportIdExclusions += curr.airport.getId() + ",";
+            curr = curr.inboundFlightConnection != null ? curr.inboundFlightConnection.getFrom() : null;
+        }
+        toAirportIdExclusions = toAirportIdExclusions.substring(0, toAirportIdExclusions.length()-1);
+
+        String sql = "select * from %tn% " +
+                "where from_airport_id = %airportId% " +
+                "and status = %status% " +
+                "and free_tickets >= %groupSize% " +
+                "and dep_time >= '%dt%' " +
+                "and to_airport_id not in (" + toAirportIdExclusions + ") " +
+                "order by dep_time";
+        sql = sql.replaceAll("%airportId%", String.valueOf(airport.getId()));
+        sql = sql.replaceAll("%status%", String.valueOf(Flight.Status.Scheduled));
+        sql = sql.replaceAll("%groupSize%", String.valueOf(routing.getGroupSize()));
+        sql = sql.replaceAll("%dt%", DT.DTF.print(depTime));
+        List<Flight> flights = Persistence.loadByQuery(
+                routing.getConnx(),
+                Flight.class,
+                sql);
+
+        long t2 = System.currentTimeMillis();
+
+        Map<Integer, FlightConnection> onlyOneConnForEachAirport = new HashMap<Integer, FlightConnection>();
+        for (Flight flight : flights) {
+            FlightConnection flightConnection = onlyOneConnForEachAirport.get(flight.getToAirportId());
+            if (flightConnection != null) {
+                continue;
+            }
+            flightConnection = new FlightConnection(routing, this, flight);
+            flightConnections.add(flightConnection);
+            onlyOneConnForEachAirport.put(flight.getToAirportId(), flightConnection);
+        }
+
+        long t3 = System.currentTimeMillis();
+        routing.log("buildFlightConnections " + airport.getIata() + " Tq=" + (t2-t1) + " Ti=" + (t3-t2));
+    }
+
+    public List<AirportLocation> getReachedAirportLocations() {
+        List<AirportLocation> airportLocations = new ArrayList<AirportLocation>();
+        for (FlightConnection flightConnection : flightConnections) {
+            airportLocations.add(flightConnection.getTo());
+        }
+        return airportLocations;
+    }
+
+    public boolean isAirportForCity(City city) throws SQLException {
+        List<Airport2City> a2c = Persistence.loadByQuery(
+                routing.getConnx(),
+                Airport2City.class,
+                "select * from %tn% where airport_id = " + airport.getId() + " and city_id = " + city.getId());
+        return !a2c.isEmpty();
+    }
+
+    public void calcDepTime() {
+        Flight flight = inboundFlightConnection.getFlight();
+        depTime = DT.addMinutes(FlightHelper.getDoneDT(flight), FlightHelper.Checkin2Departure);
+    }
+
+    public FlightConnection getInboundFlightConnection() {
+        return inboundFlightConnection;
+    }
+}
