@@ -120,7 +120,7 @@ public class ScheduleFlight implements Activity {
                             timetableRow.getToAirport().getIcao(),
                             timetableRow.getDepartureTime());
                 } catch (Exception e) {
-                    logger.error("Unable to create a flight, timetableRow " + timetableRow, e);
+                    logger.error("Unable to createOrdinalPerson a flight, timetableRow " + timetableRow, e);
                     someFlightFailed = true;
                 }
             }

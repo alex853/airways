@@ -8,14 +8,15 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.commons.HeartbeatObject;
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity(name = "Journey")
 @Table(name="aw_journey")
-public class Journey implements HeartbeatObject, EventLog.Loggable {
+public class Journey implements BaseEntity, /*HeartbeatObject,*/ Auditable, EventLog.Loggable {
     public static final String EventLogCode = "journey";
 
     @Id
@@ -24,6 +25,13 @@ public class Journey implements HeartbeatObject, EventLog.Loggable {
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @ManyToOne
     @JoinColumn(name = "c2c_flow_id")
@@ -38,8 +46,8 @@ public class Journey implements HeartbeatObject, EventLog.Loggable {
     private Integer groupSize;
     @Column
     private Integer status;
-    @Column(name = "heartbeat_dt")
-    private LocalDateTime heartbeatDt;
+//    @Column(name = "heartbeat_dt")
+//    private LocalDateTime heartbeatDt;
     @Column(name = "expiration_dt")
     private LocalDateTime expirationDt;
 //    @Column
@@ -58,20 +66,34 @@ public class Journey implements HeartbeatObject, EventLog.Loggable {
         return EventLogCode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public City2CityFlow getC2cFlow() {
@@ -114,13 +136,13 @@ public class Journey implements HeartbeatObject, EventLog.Loggable {
         this.status = status;
     }
 
-    public LocalDateTime getHeartbeatDt() {
+/*    public LocalDateTime getHeartbeatDt() {
         return heartbeatDt;
     }
 
     public void setHeartbeatDt(LocalDateTime heartbeatDt) {
         this.heartbeatDt = heartbeatDt;
-    }
+    }*/
 
     public LocalDateTime getExpirationDt() {
         return expirationDt;
@@ -151,9 +173,13 @@ public class Journey implements HeartbeatObject, EventLog.Loggable {
         public static final int LookingForTickets   = 2000;
         public static final int CouldNotFindTickets = 2900;
         public static final int WaitingForFlight    = 3000;
+        public static final int TransferToAirport = 0;
+        public static final int WaitingForCheckin = 0;
+        public static final int WaitingForBoarding = 0;
         public static final int TooLateToBoard      = 3900;
         public static final int OnBoard             = 4000;
-        public static final int Arrived             = 5000;
+        public static final int JustArrived             = 5000;
+        public static final int TransferToCity = 0;
         public static final int ItinerariesDone     = 6000;
         public static final int Done                = 9000;
         public static final int Died                = 9999;

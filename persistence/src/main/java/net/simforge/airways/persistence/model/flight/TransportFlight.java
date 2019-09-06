@@ -223,8 +223,8 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
         public static final int Departure             = 1400;
         public static final int Flying                = 2000;
         public static final int Arrival               = 3000;
-        public static final int WaitingForUnboarding  = 3100;
-        public static final int Unboarding            = 3200;
+        public static final int WaitingForDeboarding  = 3100;
+        public static final int Deboarding            = 3200;
         public static final int Finished              = 7777;
         public static final int CancellationRequested = 8000;
         public static final int Cancelled             = 8888;

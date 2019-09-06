@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways;
 
 import net.simforge.airways.engine.Engine;
@@ -11,7 +15,7 @@ public class Run {
     public static void main(String[] args) {
 /*        new AirwaysApp.StartupAction().run();
 
-        Engine engine = EngineBuilder.create()
+        Engine engine = EngineBuilder.createOrdinalPerson()
                 .withSessionFactory(AirwaysApp.getSessionFactory())
                 .withTimeMachine(new DefaultTimeMachine())
                 .build();

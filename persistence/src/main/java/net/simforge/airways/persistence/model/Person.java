@@ -182,8 +182,8 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
     }
 
     public static class Status {
-        public static final int ReadyToTravel = 0;
-        public static final int Travelling    = 1;
+        public static final int ReadyToTravel = 0; // todo p2 idle
+        public static final int Travelling    = 1; // todo p2 has journey
         public static final int NoTravel      = 2;
     }
 }

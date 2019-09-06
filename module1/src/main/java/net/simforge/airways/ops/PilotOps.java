@@ -45,7 +45,7 @@ public class PilotOps {
 
         for (int i = 0; i < countToCreate; i++) {
             HibernateUtils.transaction(session, () -> {
-                Person person = PersonOps.create(session, city);
+                Person person = PersonOps.createOrdinalPerson(session, city);
                 person.setType(Person.Type.Excluded);
                 person.setPositionAirport(airport);
                 person.setPositionCity(null);

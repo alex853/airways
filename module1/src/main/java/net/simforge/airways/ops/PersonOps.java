@@ -16,8 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class PersonOps {
-    public static Person create(Session session, City originCity) {
-        BM.start("PersonOps.create");
+    public static Person createOrdinalPerson(Session session, City originCity) {
+        BM.start("PersonOps.createOrdinalPerson");
 
         try {
             Person person = new Person();

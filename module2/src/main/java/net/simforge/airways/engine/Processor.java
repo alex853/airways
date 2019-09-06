@@ -50,7 +50,7 @@ abstract class Processor {
         } else if (Event.class.isAssignableFrom(processorClass)) {
             return new EventProcessor(task, baseInjectionContext);
         } else {
-            String msg = String.format("Unable to create processor for task %s, class name %s", task.getId(), task.getProcessorClassName());
+            String msg = String.format("Unable to createOrdinalPerson processor for task %s, class name %s", task.getId(), task.getProcessorClassName());
             logger.error(msg);
             throw new IllegalArgumentException(msg);
         }

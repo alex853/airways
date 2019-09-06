@@ -12,6 +12,7 @@ import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.misc.Misc;
+import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
@@ -142,7 +143,7 @@ public class Engine implements Runnable {
         task.setRetryCount(0);
         task.setTaskTime(timeMachine.now());
         task.setProcessorClassName(activityClass.getName());
-        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityClassName(Hibernate.getClass(entity).getName());
         task.setEntityId(entity.getId());
         task.setExpiryTime(expiryTime);
 
@@ -161,7 +162,7 @@ public class Engine implements Runnable {
         task.setRetryCount(0);
         task.setTaskTime(startTime);
         task.setProcessorClassName(activityClass.getName());
-        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityClassName(Hibernate.getClass(entity).getName());
         task.setEntityId(entity.getId());
         task.setExpiryTime(expiryTime);
 
@@ -184,7 +185,7 @@ public class Engine implements Runnable {
         task.setRetryCount(0);
         task.setTaskTime(timeMachine.now());
         task.setProcessorClassName(eventClass.getName());
-        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityClassName(Hibernate.getClass(entity).getName());
         task.setEntityId(entity.getId());
 
         session.save(task);
@@ -196,7 +197,7 @@ public class Engine implements Runnable {
         task.setRetryCount(0);
         task.setTaskTime(eventTime);
         task.setProcessorClassName(eventClass.getName());
-        task.setEntityClassName(entity.getClass().getName());
+        task.setEntityClassName(Hibernate.getClass(entity).getName());
         task.setEntityId(entity.getId());
 
         try (Session session = sessionFactory.openSession()) {
