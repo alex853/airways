@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence;
 
 import net.simforge.airways.persistence.model.*;
@@ -34,6 +38,7 @@ public class Airways {
             City2CityFlowStats.class,
 
             Journey.class,
+            JourneyItinerary.class,
             Person.class,
 
             Pilot.class,

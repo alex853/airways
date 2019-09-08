@@ -10,7 +10,6 @@ import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.flow.CityFlow;
-import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
@@ -28,12 +27,11 @@ public class JourneyLookingForPersonsTest extends BaseEngineCaseTest {
 
     @Override
     protected void buildWorld() {
-        createCountry("United kingdom", "GB");
-        City londonCity = createCity("United kingdom", "London", 51, 0);
-        City manchesterCity = createCity("United kingdom", "Manchester", 53, -2);
+        TestWorld testWorld = new TestWorld(sessionFactory);
+        testWorld.createGeo();
 
-        CityFlow londonCityFlow = createCityFlow(londonCity);
-        CityFlow manchesterCityFlow = createCityFlow(manchesterCity);
+        CityFlow londonCityFlow = createCityFlow(testWorld.getLondon());
+        CityFlow manchesterCityFlow = createCityFlow(testWorld.getManchester());
 
         City2CityFlow flow = createC2CFlow(londonCityFlow, manchesterCityFlow, GROUP_SIZE);
 

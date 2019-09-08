@@ -7,13 +7,12 @@ package net.simforge.airways;
 import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.flow.CityFlow;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.util.SimulatedTimeMachine;
 import net.simforge.commons.gckls2com.GC;
 import net.simforge.commons.gckls2com.GCAirport;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -53,7 +52,7 @@ public abstract class BaseEngineCaseTest {
     }
 
     @Before
-    public void before() throws IOException {
+    public void before() {
         timeMachine = new SimulatedTimeMachine(START_TIME);
         engine = EngineBuilder.create()
                 .withTimeMachine(timeMachine)
@@ -80,35 +79,6 @@ public abstract class BaseEngineCaseTest {
             }
         }
     }
-
-    @SuppressWarnings("SameParameterValue")
-    protected City createCity(String countryName, String cityName, double lat, double lon) {
-        try (Session session = sessionFactory.openSession()) {
-            City city = new City();
-            city.setCountry(CommonOps.countryByName(session, countryName));
-            city.setName(cityName);
-            city.setPopulation(1000);
-            city.setLatitude(lat);
-            city.setLongitude(lon);
-            city.setDataset(Airways.ACTIVE_DATASET);
-
-            HibernateUtils.saveAndCommit(session, city);
-
-            return city;
-        }
-    }
-
-    @SuppressWarnings("SameParameterValue")
-    protected void createCountry(String name, String code) {
-        try (Session session = sessionFactory.openSession()) {
-            Country country = new Country();
-            country.setName(name);
-            country.setCode(code);
-
-            HibernateUtils.saveAndCommit(session, country);
-        }
-    }
-
     protected CityFlow createCityFlow(City city) {
         try (Session session = sessionFactory.openSession()) {
             CityFlow cityFlow = new CityFlow();

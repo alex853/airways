@@ -16,7 +16,6 @@ repositories {
 
 dependencies {
     compile project(':persistence')
-    compile project(':module0')
 
     compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.1'
@@ -26,7 +25,18 @@ dependencies {
     compile group: 'ch.qos.logback', name: 'logback-core', version: '1.1.7'
     compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 
-    testCompile project (path: ":module0", configuration: 'testArtifacts')
-
     testCompile group: 'junit', name: 'junit', version: '4.11'
+}
+
+// section below is to provide test utility classes for other modules
+// other modules have to have testCompile project (path: ":module0", configuration: 'testArtifacts') in dependencies sections
+configurations {
+    testArtifacts.extendsFrom testRuntime
+}
+task testJar(type: Jar) {
+    classifier "test"
+    from sourceSets.test.output
+}
+artifacts {
+    testArtifacts testJar
 }

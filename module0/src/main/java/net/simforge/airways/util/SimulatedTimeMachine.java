@@ -1,10 +1,9 @@
 /*
- * Airways project (C) Alexey Kornev, 2015-2018
+ * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways;
+package net.simforge.airways.util;
 
-import net.simforge.airways.util.TimeMachine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

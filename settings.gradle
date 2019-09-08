@@ -1,4 +1,9 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 rootProject.name = 'net.simforge.airways'
 include 'persistence'
+include 'module0'
 include 'module1'
 include 'module2'

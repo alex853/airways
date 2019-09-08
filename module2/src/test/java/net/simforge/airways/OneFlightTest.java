@@ -18,7 +18,6 @@ import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
-import net.simforge.airways.util.TestRefData;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;
@@ -45,8 +44,8 @@ public class OneFlightTest extends BaseEngineCaseTest {
             a320type = CommonOps.aircraftTypeByIcao(session, "A320");
         }
 
-        createCountry("United kingdom", "GB");
-        createCity("United kingdom", "London", 51, 0);
+        TestWorld testWorld = new TestWorld(sessionFactory);
+        testWorld.createGeo();
 
         try (Session session = sessionFactory.openSession()) {
             AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);

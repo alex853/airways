@@ -32,7 +32,15 @@ public class LookingForTickets implements Activity {
 
     @Override
     public Result act() {
-        return Result.done(); // todo p1
+        BM.start("LookingForTickets.act");
+        try (Session session = sessionFactory.openSession()) {
+            // todo p1
+
+
+            return Result.done();
+        } finally {
+            BM.stop();
+        }
     }
 
     @Override
