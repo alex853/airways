@@ -26,7 +26,7 @@ public class Boarding implements Activity {
 //
 //        List<Journey> journeysToBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.WaitingForBoarding).collect(Collectors.toList());
 //        if (journeysToBoard.isEmpty()) {
-//            return Result.done(); // todo p1 finish checkin!
+//            return Result.done(); // todo p2 finish checkin!
 //        }
 
 

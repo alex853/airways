@@ -24,21 +24,21 @@ public class DirectConnectionsTicketing {
             //noinspection unchecked
             List<TransportFlight> flights = session.createQuery("select tp " +
                     "from TransportFlight tp " +
-                    "where tp.fromAirport = (select ac.airport from Airport2City ac where ac.city = :fromCity) " +
-                    "and tp.toAirport = (select ac.airport from Airport2City ac where ac.city = :toCity) " +
-                    "and tp.departureDt >= :departureTime " +
-                    "and tp.status = :scheduled " +
-                    "and tp.freeTickets >= :groupSize " +
+                    "where tp.fromAirport = (select ac.airport from Airport2City ac where ac.city = :fromCity) " + // todo ac.dataset = active
+                    "  and tp.toAirport = (select ac.airport from Airport2City ac where ac.city = :toCity) " + // todo ac.dataset = active
+                    "  and tp.departureDt >= :departureTimeSince " +
+                    "  and tp.status = :scheduled " +
+                    "  and tp.freeTickets >= :groupSize " +
                     "order by tp.departureDt")
                     .setEntity("fromCity", journey.getFromCity())
                     .setEntity("toCity", journey.getToCity())
-                    .setParameter("departureTime", timeMachine.now().plusHours(3))
+                    .setParameter("departureTimeSince", timeMachine.now().plusHours(3)) // three hours as reserve for all organizational matter
                     .setInteger("scheduled", TransportFlight.Status.Scheduled)
                     .setInteger("groupSize", journey.getGroupSize())
                     .list();
 
             if (flights.isEmpty()) {
-                return null;
+                return Collections.emptyList();
             } else {
                 TransportFlight flight = flights.get(0);
                 return Collections.singletonList(flight);

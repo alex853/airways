@@ -35,8 +35,6 @@ public class OneFlightTest extends BaseEngineCaseTest {
     private TimetableRow timetableRow;
 
     protected void buildWorld() {
-        Airport egll = importAirportFromGC("EGLL");
-        Airport egcc = importAirportFromGC("EGCC");
 
         AircraftType a320type = TestRefData.getA320Data();
         try (Session session = sessionFactory.openSession()) {
@@ -47,16 +45,16 @@ public class OneFlightTest extends BaseEngineCaseTest {
         TestWorld testWorld = new TestWorld(sessionFactory);
         testWorld.createGeo();
 
+        Airport egll = testWorld.getEgllAirport();
+        Airport egcc = testWorld.getEgccAirport();
+
         try (Session session = sessionFactory.openSession()) {
             AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);
 
             PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 1);
         }
 
-        SimpleFlight simpleFlight = SimpleFlight.forRoute(
-                new Geo.Coords(egll.getLatitude(), egll.getLongitude()),
-                new Geo.Coords(egcc.getLatitude(), egcc.getLongitude()),
-                a320type);
+        SimpleFlight simpleFlight = SimpleFlight.forRoute(egll.getCoords(), egcc.getCoords(), a320type);
 
         Duration flyingTime = simpleFlight.getTotalTime();
         FlightTimeline timeline = FlightTimeline.byFlyingTime(flyingTime);

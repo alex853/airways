@@ -8,10 +8,7 @@ import net.simforge.airways.engine.Engine;
 import net.simforge.airways.engine.EngineBuilder;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.persistence.Airways;
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.flow.CityFlow;
 import net.simforge.airways.persistence.model.geo.Airport;
-import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.util.SimulatedTimeMachine;
 import net.simforge.commons.gckls2com.GC;
 import net.simforge.commons.gckls2com.GCAirport;
@@ -25,10 +22,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 public abstract class BaseEngineCaseTest {
-    protected static final LocalDateTime START_TIME = LocalDateTime.of(2018, 1, 1, 0, 0);
 
     protected static SessionFactory sessionFactory;
 
@@ -53,7 +48,7 @@ public abstract class BaseEngineCaseTest {
 
     @Before
     public void before() {
-        timeMachine = new SimulatedTimeMachine(START_TIME);
+        timeMachine = new SimulatedTimeMachine(TestWorld.BEGINNING_OF_TIME);
         engine = EngineBuilder.create()
                 .withTimeMachine(timeMachine)
                 .withSessionFactory(sessionFactory)
@@ -79,48 +74,5 @@ public abstract class BaseEngineCaseTest {
             }
         }
     }
-    protected CityFlow createCityFlow(City city) {
-        try (Session session = sessionFactory.openSession()) {
-            CityFlow cityFlow = new CityFlow();
-            cityFlow.setCity(city);
 
-            HibernateUtils.saveAndCommit(session, cityFlow);
-
-            return cityFlow;
-        }
-    }
-
-    protected City2CityFlow createC2CFlow(CityFlow cityFlow1, CityFlow cityFlow2, int nextGroupSize) {
-        try (Session session = sessionFactory.openSession()) {
-            City2CityFlow flow = new City2CityFlow();
-            flow.setFromFlow(cityFlow1);
-            flow.setToFlow(cityFlow2);
-            flow.setNextGroupSize(nextGroupSize);
-
-            HibernateUtils.saveAndCommit(session, flow);
-
-            return flow;
-        }
-    }
-
-    protected Airport importAirportFromGC(String icao) {
-        GCAirport gcAirport;
-        try {
-            gcAirport = GC.findAirport(icao);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        Airport airport = new Airport();
-        airport.setIcao(gcAirport.getIcao());
-        airport.setIata(gcAirport.getIata());
-        airport.setName(gcAirport.getName());
-        airport.setLatitude(gcAirport.getLat());
-        airport.setLongitude(gcAirport.getLon());
-
-        try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, airport);
-        }
-        return airport;
-    }
 }

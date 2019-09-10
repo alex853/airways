@@ -6,6 +6,7 @@ package net.simforge.airways.persistence.model.geo;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.commons.hibernate.BaseEntity;
+import net.simforge.commons.misc.Geo;
 
 import javax.persistence.*;
 
@@ -97,6 +98,10 @@ public class Airport implements BaseEntity, EventLog.Loggable {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public Geo.Coords getCoords() {
+        return new Geo.Coords(latitude, longitude);
     }
 
     public Integer getDataset() {
