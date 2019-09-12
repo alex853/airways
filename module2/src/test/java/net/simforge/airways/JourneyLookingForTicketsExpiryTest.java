@@ -20,12 +20,11 @@ import java.util.List;
 import static net.simforge.airways.TestWorld.BEGINNING_OF_TIME;
 import static org.junit.Assert.*;
 
-public class JourneyLookingForTicketsTest extends BaseEngineCaseTest {
+public class JourneyLookingForTicketsExpiryTest extends BaseEngineCaseTest {
 
     private static final int GROUP_SIZE = 5;
 
     private Journey journey;
-    private TransportFlight ab101_today;
 
     protected void buildWorld() {
         TestWorld testWorld = new TestWorld(sessionFactory);
@@ -35,31 +34,27 @@ public class JourneyLookingForTicketsTest extends BaseEngineCaseTest {
 
         testWorld.createAircraftTypes();
 
-        ab101_today = testWorld.createTransportFlight(
-                "AB101",
-                testWorld.getEgllAirport(),
-                testWorld.getEgccAirport(),
-                testWorld.getA320Type(),
-                BEGINNING_OF_TIME.plusHours(12),
-                160);
+        /* no flight created */
     }
 
     @Test
     public void testCase() {
         engine.startActivity(LookingForPersons.class, journey);
 
-        runEngine(10);
+        runEngine(1440*7 + 10);
 
         ActivityInfo status = engine.findActivity(LookingForTickets.class, journey);
-        assertTrue(status.isDone());
+        assertTrue(status.isExpired());
 
         try (Session session = sessionFactory.openSession()) {
             journey = session.load(Journey.class, journey.getId());
-            assertEquals(Journey.Status.WaitingForFlight, journey.getStatus().intValue());
+            assertEquals(Journey.Status.CouldNotFindTickets, journey.getStatus().intValue());
+
+            List<Person> persons = JourneyOps.getPersons(session, journey);
+            assertEquals(0, persons.size());
 
             List<JourneyItinerary> itineraryList = JourneyOps.getItineraries(session, journey);
-            assertEquals(1, itineraryList.size());
-            assertEquals(ab101_today.getId(), itineraryList.get(0).getFlight().getId());
+            assertEquals(0, itineraryList.size());
         }
     }
 }

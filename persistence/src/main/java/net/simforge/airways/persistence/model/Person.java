@@ -53,11 +53,11 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
     @JoinColumn(name = "journey_id")
     private Journey journey;
     @ManyToOne
-    @JoinColumn(name = "position_city_id")
-    private City positionCity;
+    @JoinColumn(name = "location_city_id")
+    private City locationCity;
     @ManyToOne
-    @JoinColumn(name = "position_airport_id")
-    private Airport positionAirport;
+    @JoinColumn(name = "location_airport_id")
+    private Airport locationAirport;
 
     @Override
     public String getEventLogCode() {
@@ -152,14 +152,6 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
         this.originCity = originCity;
     }
 
-    public City getPositionCity() {
-        return positionCity;
-    }
-
-    public void setPositionCity(City positionCity) {
-        this.positionCity = positionCity;
-    }
-
     public Journey getJourney() {
         return journey;
     }
@@ -168,22 +160,29 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
         this.journey = journey;
     }
 
-    public Airport getPositionAirport() {
-        return positionAirport;
+    public City getLocationCity() {
+        return locationCity;
     }
 
-    public void setPositionAirport(Airport positionAirport) {
-        this.positionAirport = positionAirport;
+    public void setLocationCity(City locationCity) {
+        this.locationCity = locationCity;
+    }
+
+    public Airport getLocationAirport() {
+        return locationAirport;
+    }
+
+    public void setLocationAirport(Airport locationAirport) {
+        this.locationAirport = locationAirport;
     }
 
     public static class Type {
-        public static final int Ordinal = 0;
+        public static final int Ordinal  = 0;
         public static final int Excluded = 1;
     }
 
     public static class Status {
-        public static final int ReadyToTravel = 0; // todo p2 idle
-        public static final int Travelling    = 1; // todo p2 has journey
-        public static final int NoTravel      = 2;
+        public static final int Idle      = 0;
+        public static final int OnJourney = 1;
     }
 }

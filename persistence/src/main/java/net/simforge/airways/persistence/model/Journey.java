@@ -6,7 +6,6 @@ package net.simforge.airways.persistence.model;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
@@ -16,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "Journey")
 @Table(name="aw_journey")
-public class Journey implements BaseEntity, /*HeartbeatObject,*/ Auditable, EventLog.Loggable {
+public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     public static final String EventLogCode = "journey";
 
     @Id
@@ -46,20 +45,19 @@ public class Journey implements BaseEntity, /*HeartbeatObject,*/ Auditable, Even
     private Integer groupSize;
     @Column
     private Integer status;
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
     @Column(name = "expiration_dt")
     private LocalDateTime expirationDt;
-//    @Column
-//    private int itineraryId;
     @ManyToOne
-    @JoinColumn(name = "current_city_id")
-    private City currentCity;
-    @ManyToOne
-    @JoinColumn(name = "current_airport_id")
-    private Airport currentAirport;
+    @JoinColumn(name = "itinerary_id")
+    private JourneyItinerary itinerary;
 //    @Column
-//    private Flight currentFlight;
+//    private Flight flight; // todo p3 optional to speed up an access?
+//    @ManyToOne
+//    @JoinColumn(name = "location_city_id")
+//    private City locationCity;
+//    @ManyToOne
+//    @JoinColumn(name = "location_airport_id")
+//    private Airport locationAirport;
 
     @Override
     public String getEventLogCode() {
@@ -136,14 +134,6 @@ public class Journey implements BaseEntity, /*HeartbeatObject,*/ Auditable, Even
         this.status = status;
     }
 
-/*    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
-
     public LocalDateTime getExpirationDt() {
         return expirationDt;
     }
@@ -152,36 +142,44 @@ public class Journey implements BaseEntity, /*HeartbeatObject,*/ Auditable, Even
         this.expirationDt = expirationDt;
     }
 
-    public City getCurrentCity() {
-        return currentCity;
+    public JourneyItinerary getItinerary() {
+        return itinerary;
     }
 
-    public void setCurrentCity(City currentCity) {
-        this.currentCity = currentCity;
+    public void setItinerary(JourneyItinerary itinerary) {
+        this.itinerary = itinerary;
     }
 
-    public Airport getCurrentAirport() {
-        return currentAirport;
-    }
-
-    public void setCurrentAirport(Airport currentAirport) {
-        this.currentAirport = currentAirport;
-    }
+ //    public City getLocationCity() {
+//        return locationCity;
+//    }
+//
+//    public void setCurrentCity(City locationCity) {
+//        this.locationCity = locationCity;
+//    }
+//
+//    public Airport getLocationAirport() {
+//        return locationAirport;
+//    }
+//
+//    public void setLocationAirport(Airport locationAirport) {
+//        this.locationAirport = locationAirport;
+//    }
 
     public static class Status {
         public static final int LookingForPersons   = 1000;
         public static final int LookingForTickets   = 2000;
-        public static final int CouldNotFindTickets = 2900;
+        public static final int CouldNotFindTickets = 2999;
         public static final int WaitingForFlight    = 3000;
-        public static final int TransferToAirport = 0;
-        public static final int WaitingForCheckin = 0;
-        public static final int WaitingForBoarding = 0;
-        public static final int TooLateToBoard      = 3900;
+        public static final int TransferToAirport   = 3100;
+        public static final int WaitingForCheckin   = 3200;
+        public static final int WaitingForBoarding  = 3300;
+        public static final int TooLateToBoard      = 3999;
         public static final int OnBoard             = 4000;
-        public static final int JustArrived             = 5000;
-        public static final int TransferToCity = 0;
+        public static final int JustArrived         = 5000;
+        public static final int TransferToCity      = 5100;
         public static final int ItinerariesDone     = 6000;
-        public static final int Done                = 9000;
-        public static final int Died                = 9999;
+        public static final int Done                = 9999;
+        // deprecated public static final int Died                = 9999;
     }
 }

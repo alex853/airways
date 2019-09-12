@@ -47,8 +47,8 @@ public class PilotOps {
             HibernateUtils.transaction(session, () -> {
                 Person person = PersonOps.createOrdinalPerson(session, city);
                 person.setType(Person.Type.Excluded);
-                person.setPositionAirport(airport);
-                person.setPositionCity(null);
+                person.setLocationAirport(airport);
+                person.setLocationCity(null);
                 session.update(person);
 
                 Pilot pilot = new Pilot();

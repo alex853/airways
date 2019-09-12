@@ -42,13 +42,13 @@ public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
     @JoinColumn(name = "airline_id")
     private Airline airline;
     private Integer status;
-    @Column(name = "position_latitude")
-    private Double positionLatitude;
-    @Column(name = "position_longitude")
-    private Double positionLongitude;
+    @Column(name = "location_latitude")
+    private Double locationLatitude;
+    @Column(name = "location_longitude")
+    private Double locationLongitude;
     @ManyToOne
-    @JoinColumn(name = "position_airport_id")
-    private Airport positionAirport;
+    @JoinColumn(name = "location_airport_id")
+    private Airport locationAirport;
 
     @Override
     public String getEventLogCode() {
@@ -127,28 +127,28 @@ public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
         this.status = status;
     }
 
-    public Double getPositionLatitude() {
-        return positionLatitude;
+    public Double getLocationLatitude() {
+        return locationLatitude;
     }
 
-    public void setPositionLatitude(Double positionLatitude) {
-        this.positionLatitude = positionLatitude;
+    public void setLocationLatitude(Double locationLatitude) {
+        this.locationLatitude = locationLatitude;
     }
 
-    public Double getPositionLongitude() {
-        return positionLongitude;
+    public Double getLocationLongitude() {
+        return locationLongitude;
     }
 
-    public void setPositionLongitude(Double positionLongitude) {
-        this.positionLongitude = positionLongitude;
+    public void setLocationLongitude(Double locationLongitude) {
+        this.locationLongitude = locationLongitude;
     }
 
-    public Airport getPositionAirport() {
-        return positionAirport;
+    public Airport getLocationAirport() {
+        return locationAirport;
     }
 
-    public void setPositionAirport(Airport positionAirport) {
-        this.positionAirport = positionAirport;
+    public void setLocationAirport(Airport locationAirport) {
+        this.locationAirport = locationAirport;
     }
 
     public static class Status {

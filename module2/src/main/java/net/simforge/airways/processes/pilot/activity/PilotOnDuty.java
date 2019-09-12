@@ -236,13 +236,13 @@ public class PilotOnDuty implements Activity {
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
                 Person person = pilot.getPerson();
-                person.setPositionAirport(null);
+                person.setLocationAirport(null);
 
                 aircraft.setStatus(Aircraft.Status.Flying);
-                Airport positionAirport = ctx.getAircraft().getPositionAirport();
-                aircraft.setPositionAirport(null);
-                aircraft.setPositionLatitude(positionAirport.getLatitude());
-                aircraft.setPositionLongitude(positionAirport.getLongitude());
+                Airport locationAirport = ctx.getAircraft().getLocationAirport();
+                aircraft.setLocationAirport(null);
+                aircraft.setLocationLatitude(locationAirport.getLatitude());
+                aircraft.setLocationLongitude(locationAirport.getLongitude());
 
                 session.update(flight);
                 session.update(pilot);
@@ -290,8 +290,8 @@ public class PilotOnDuty implements Activity {
 
                     Geo.Coords coords = aircraftPosition.getCoords();
 
-                    aircraft.setPositionLatitude(coords.getLat());
-                    aircraft.setPositionLongitude(coords.getLon());
+                    aircraft.setLocationLatitude(coords.getLat());
+                    aircraft.setLocationLongitude(coords.getLon());
 
 //                        pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -324,12 +324,12 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Arrival);
                 flight.setActualLandingTime(timeMachine.now());
 
-                person.setPositionAirport(flight.getToAirport());
+                person.setLocationAirport(flight.getToAirport());
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
-                aircraft.setPositionLatitude(null);
-                aircraft.setPositionLongitude(null);
-                aircraft.setPositionAirport(ctx.getFlight().getToAirport());
+                aircraft.setLocationLatitude(null);
+                aircraft.setLocationLongitude(null);
+                aircraft.setLocationAirport(ctx.getFlight().getToAirport());
                 aircraft.setStatus(Aircraft.Status.TaxiingIn);
 
                 session.update(flight);

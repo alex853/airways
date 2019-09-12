@@ -38,11 +38,10 @@ public class JourneyLookingForPersonsTest extends BaseEngineCaseTest {
         runEngine(1);
 
         ActivityInfo status = engine.findActivity(LookingForPersons.class, journey);
-        assertTrue(status.isFinished());
+        assertTrue(status.isDone());
 
         try (Session session = sessionFactory.openSession()) {
             List<Person> persons = JourneyOps.getPersons(session, journey);
-
             assertEquals(GROUP_SIZE, persons.size());
         }
     }

@@ -50,7 +50,7 @@ public class AircraftOps {
             aircraft.setType(aircraftType);
             aircraft.setRegNo(regNo);
             aircraft.setAirline(airline);
-            aircraft.setPositionAirport(airport);
+            aircraft.setLocationAirport(airport);
             aircraft.setStatus(Aircraft.Status.Idle);
 
             HibernateUtils.saveAndCommit(session, aircraft);

@@ -19,7 +19,6 @@ import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.commons.hibernate.HibernateUtils;
-import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;
 import net.simforge.commons.misc.Weekdays;
 import org.hibernate.Session;
@@ -88,11 +87,11 @@ public class OneFlightTest extends BaseEngineCaseTest {
         try (Session session = sessionFactory.openSession()) {
             Pilot pilot = session.load(Pilot.class, 1);
             assertEquals(Pilot.Status.Idle, pilot.getStatus().intValue());
-            assertEquals("EGCC", pilot.getPerson().getPositionAirport().getIcao());
+            assertEquals("EGCC", pilot.getPerson().getLocationAirport().getIcao());
 
             Aircraft aircraft = session.load(Aircraft.class, 1);
             assertEquals(Aircraft.Status.Idle, aircraft.getStatus().intValue());
-            assertEquals("EGCC", aircraft.getPositionAirport().getIcao());
+            assertEquals("EGCC", aircraft.getLocationAirport().getIcao());
 
             Flight flight = session.load(Flight.class, 1);
             assertEquals(Flight.Status.Finished, flight.getStatus().intValue());

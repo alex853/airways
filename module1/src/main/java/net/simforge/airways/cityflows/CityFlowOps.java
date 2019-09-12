@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.cityflows;
 
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
@@ -25,6 +29,8 @@ public class CityFlowOps {
     public static final double DefaultAttraction = 1;
     public static final double DefaultUnitsThreshold = 0.1;
     public static final double DefaultAvailability = 0.01;
+
+    private static final Random random = new Random();
 
     public static int getDailyFlow(City city) {
         return (int) (city.getPopulation() * 0.001);
@@ -104,12 +110,10 @@ public class CityFlowOps {
                 return stats;
             }
 
-            Random random = new Random();
-
             stats = new City2CityFlowStats();
             stats.setC2cFlow(c2cFlow);
             stats.setDate(date);
-            stats.setHeartbeatDt(date.plusDays(1).atTime(4 + random.nextInt(4), random.nextInt(60)));
+            stats.setHeartbeatDt(date.plusDays(1).atTime(4 + random.nextInt(24), random.nextInt(60)));
             stats.setAvailabilityBefore(0.0);
             stats.setAvailabilityAfter(0.0);
             stats.setAvailabilityDelta(0.0);
@@ -117,7 +121,7 @@ public class CityFlowOps {
             stats.setTicketsBought(0);
             stats.setTravelled(0);
 
-            HibernateUtils.saveAndCommit(session, stats, "createStats");
+            session.save(stats);
 
             return stats;
         } finally {

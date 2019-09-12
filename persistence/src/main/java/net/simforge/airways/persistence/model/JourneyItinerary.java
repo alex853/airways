@@ -11,6 +11,7 @@ import net.simforge.commons.hibernate.BaseEntity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+@Entity(name = "JourneyItinerary")
 @Table(name = "aw_journey_itinerary")
 public class JourneyItinerary implements BaseEntity, Auditable {
     @Id

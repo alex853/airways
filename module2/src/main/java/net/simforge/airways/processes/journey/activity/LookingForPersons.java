@@ -12,6 +12,7 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.geo.City;
+import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
@@ -31,6 +32,8 @@ public class LookingForPersons implements Activity {
     private Engine engine;
     @Inject
     private SessionFactory sessionFactory;
+    @Inject
+    private TimeMachine timeMachine;
 
     @Override
     public Result act() {
@@ -51,9 +54,13 @@ public class LookingForPersons implements Activity {
                 try {
                     //noinspection unchecked
                     persons = session
-                            .createQuery("from Person where type = :ordinal and status = :readyToTravel and originCity = :originCity and positionCity = :fromCity")
+                            .createQuery("from Person " +
+                                    "where type = :ordinal " +
+                                    "  and status = :readyToTravel " +
+                                    "  and originCity = :originCity " +
+                                    "  and locationCity = :fromCity")
                             .setInteger("ordinal", Person.Type.Ordinal)
-                            .setInteger("readyToTravel", Person.Status.ReadyToTravel)
+                            .setInteger("readyToTravel", Person.Status.Idle)
                             .setEntity("originCity", originCity)
                             .setEntity("fromCity", fromCity)
                             .setMaxResults(journey.getGroupSize())
@@ -74,24 +81,19 @@ public class LookingForPersons implements Activity {
                 }
 
                 for (Person person : persons) {
-                    person.setStatus(Person.Status.Travelling);
+                    person.setStatus(Person.Status.OnJourney);
                     person.setJourney(journey);
-                    // todo p2 seems obsolete person.setPositionCity(null);
-
+                    // todo p2 seems obsolete person.setLocationCity(null);
                     session.update(person);
                     session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
                 }
 
                 journey.setStatus(Journey.Status.LookingForTickets);
-                //journey.setHeartbeatDt(JavaTime.nowUtc());
-                // todo p2 mmmm journey.setExpirationDt(JavaTime.nowUtc().plusDays(7));
-
                 session.update(journey);
                 session.save(EventLog.make(journey, "Looking for tickets"));
 
+                engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(7));
             });
-
-            engine.startActivity(LookingForTickets.class, journey);
 
             return Result.done();
         } finally {
@@ -101,6 +103,6 @@ public class LookingForPersons implements Activity {
 
     @Override
     public Result onExpiry() {
-        return Result.nothing();
+        return Result.nothing(); // no op because no expiration expected
     }
 }

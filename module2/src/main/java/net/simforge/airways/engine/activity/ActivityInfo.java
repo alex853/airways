@@ -23,6 +23,14 @@ public class ActivityInfo {
         return taskEntity.getStatus() != TaskEntity.Status.ACTIVE;
     }
 
+    public boolean isDone() {
+        return taskEntity.getStatus() == TaskEntity.Status.DONE;
+    }
+
+    public boolean isExpired() {
+        return taskEntity.getStatus() == TaskEntity.Status.EXPIRED;
+    }
+
     public Integer getTaskId() {
         return taskEntity.getId();
     }

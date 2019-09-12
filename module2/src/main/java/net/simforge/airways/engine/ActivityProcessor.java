@@ -60,6 +60,11 @@ class ActivityProcessor extends Processor {
                     default:
                         throw new IllegalArgumentException("unable to calculate next run time for " + result.getWhen() + " mode");
                 }
+                if (task.getExpiryTime() != null) {
+                    if (task.getExpiryTime().isBefore(task.getTaskTime())) {
+                        task.setTaskTime(task.getExpiryTime());
+                    }
+                }
             } else if (result.getAction() == Result.Action.Done) {
                 task.setTaskTime(null);
                 task.setStatus(TaskEntity.Status.DONE);

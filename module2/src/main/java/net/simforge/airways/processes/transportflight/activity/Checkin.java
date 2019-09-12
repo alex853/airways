@@ -41,6 +41,7 @@ public class Checkin implements Activity {
     public Result act() {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.transaction(session, () -> {
+                // todo p1 some stuff with journeys and persons
 //                Collection<Journey> journeys = JourneyOps.loadJourneysForFlight(session, transportFlight);
 //
 //                List<Journey> journeysToBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.ReadyForCheckin).collect(Collectors.toList());
@@ -48,7 +49,6 @@ public class Checkin implements Activity {
 //                    return Result.done(); // todo p2 finish checkin!
 //                }
 
-                // todo p2 some stuff with journeys and persons
 
 
 

@@ -25,9 +25,9 @@ public class PersonOps {
             person.setName(randomName(person.getSex()));
             person.setSurname(randomSurname());
             person.setOriginCity(originCity);
-            person.setPositionCity(originCity);
+            person.setLocationCity(originCity);
             person.setType(Person.Type.Ordinal);
-            person.setStatus(Person.Status.ReadyToTravel);
+            person.setStatus(Person.Status.Idle);
 
             session.save(person);
             session.save(EventLog.make(person, "New person created", originCity));
@@ -83,23 +83,4 @@ public class PersonOps {
         }
         return Csv.fromContent(content);
     }
-
-/*    public static void releaseFromJourney(Session session, Person person) {
-        BM.start("PersonOps.releaseFromJourney");
-        try {
-            person.setStatus(Person.Status.NoTravel);
-            person.setHeartbeatDt(JavaTime.nowUtc().plusDays(7));
-            City currentCity = person.getJourney().getCurrentCity();
-            if (currentCity == null) {
-                throw new IllegalStateException("fix it!");
-            }
-            person.setPositionCity(currentCity);
-            person.setJourney(null);
-
-            Util.update(session, person, "releasePerson");
-            EventLog.saveLog(session, person, "Journey finished (or terminated)", currentCity);
-        } finally {
-            BM.stop();
-        }
-    }*/
 }

@@ -4,5 +4,17 @@
 
 package net.simforge.airways.processes.journey.activity;
 
-public class WaitingForFlight {
+import net.simforge.airways.engine.Result;
+import net.simforge.airways.engine.activity.Activity;
+
+public class WaitingForFlight implements Activity {
+    @Override
+    public Result act() {
+        return Result.done();
+    }
+
+    @Override
+    public Result onExpiry() {
+        return Result.nothing();
+    }
 }

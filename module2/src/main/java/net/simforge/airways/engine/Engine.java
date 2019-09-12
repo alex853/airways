@@ -133,11 +133,20 @@ public class Engine implements Runnable {
     }
 
     // todo p3 add audit event log entries
+
     public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity) {
         startActivity(activityClass, entity, null);
     }
 
     public void startActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime expiryTime) {
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.transaction(session, () -> {
+                startActivity(session, activityClass, entity, expiryTime);
+            });
+        }
+    }
+
+    public void startActivity(Session session, Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime expiryTime) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
@@ -147,9 +156,7 @@ public class Engine implements Runnable {
         task.setEntityId(entity.getId());
         task.setExpiryTime(expiryTime);
 
-        try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, task);
-        }
+        session.save(task);
     }
 
     public void scheduleActivity(Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime startTime) {

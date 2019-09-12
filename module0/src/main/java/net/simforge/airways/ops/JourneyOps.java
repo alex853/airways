@@ -6,6 +6,7 @@ package net.simforge.airways.ops;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Journey;
+import net.simforge.airways.persistence.model.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.commons.legacy.BM;
@@ -23,7 +24,7 @@ public class JourneyOps {
 
             Journey journey = new Journey();
             journey.setGroupSize(flow.getNextGroupSize());
-            journey.setCurrentCity(flow.getFromFlow().getCity());
+            // journey.setCurrentCity(flow.getFromFlow().getCity());
             journey.setFromCity(flow.getFromFlow().getCity());
             journey.setToCity(flow.getToFlow().getCity());
             journey.setC2cFlow(flow);
@@ -46,6 +47,19 @@ public class JourneyOps {
             //noinspection unchecked
             return session
                     .createQuery("from Person where journey = :journey")
+                    .setEntity("journey", journey)
+                    .list();
+        } finally {
+            BM.stop();
+        }
+    }
+
+    public static List<JourneyItinerary> getItineraries(Session session, Journey journey) {
+        BM.start("JourneyOps.getItineraries");
+        try {
+            //noinspection unchecked
+            return session
+                    .createQuery("from JourneyItinerary where journey = :journey")
                     .setEntity("journey", journey)
                     .list();
         } finally {

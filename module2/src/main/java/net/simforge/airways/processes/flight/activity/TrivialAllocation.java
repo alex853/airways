@@ -49,7 +49,7 @@ public class TrivialAllocation implements Activity {
                     Aircraft aircraft = (Aircraft) session
                             .createQuery("from Aircraft a" +
                                     " where a.type = :type" +
-                                    " and a.positionAirport = :fromAirport" +
+                                    " and a.locationAirport = :fromAirport" +
                                     " and a.status = :idle")
                             .setParameter("type", flight.getAircraftType())
                             .setParameter("fromAirport", flight.getFromAirport())
@@ -82,7 +82,7 @@ public class TrivialAllocation implements Activity {
                     // todo nov17 license check
                     Pilot pilot = (Pilot) session
                             .createQuery("from Pilot p " +
-                                    "where p.person.positionAirport = :fromAirport" +
+                                    "where p.person.locationAirport = :fromAirport" +
                                     " and p.status = :idle")
                             .setParameter("fromAirport", flight.getFromAirport())
                             .setInteger("idle", Pilot.Status.Idle)
