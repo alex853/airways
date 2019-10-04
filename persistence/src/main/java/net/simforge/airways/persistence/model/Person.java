@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "Person")
 @Table(name = "aw_person")
-public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable, Auditable {
+public class Person implements BaseEntity, EventLog.Loggable, Auditable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "person";
 
@@ -32,9 +32,6 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
     @SuppressWarnings("unused")
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
-
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
 
     @Column
     private Integer type;
@@ -93,16 +90,6 @@ public class Person implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggabl
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
-
-/*    @Override
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    @Override
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
 
     public Integer getType() {
         return type;

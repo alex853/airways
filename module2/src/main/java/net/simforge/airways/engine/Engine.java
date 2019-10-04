@@ -146,6 +146,10 @@ public class Engine implements Runnable {
         }
     }
 
+    public void startActivity(Session session, Class<? extends Activity> activityClass, BaseEntity entity) {
+        startActivity(session, activityClass, entity, null);
+    }
+
     public void startActivity(Session session, Class<? extends Activity> activityClass, BaseEntity entity, LocalDateTime expiryTime) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
@@ -178,7 +182,7 @@ public class Engine implements Runnable {
         }
     }
 
-    public void fireEvent(Class eventClass, BaseEntity entity) {
+    public void fireEvent(Class<? extends Event> eventClass, BaseEntity entity) {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.transaction(session, () -> {
                 fireEvent(session, eventClass, entity);
@@ -186,7 +190,7 @@ public class Engine implements Runnable {
         }
     }
 
-    public void fireEvent(Session session, Class eventClass, BaseEntity entity) {
+    public void fireEvent(Session session, Class<? extends Event> eventClass, BaseEntity entity) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
@@ -199,6 +203,14 @@ public class Engine implements Runnable {
     }
 
     public void scheduleEvent(Class<? extends Event> eventClass, BaseEntity entity, LocalDateTime eventTime) {
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.transaction(session, () -> {
+                scheduleEvent(session, eventClass, entity, eventTime);
+            });
+        }
+    }
+
+    public void scheduleEvent(Session session, Class<? extends Event> eventClass, BaseEntity entity, LocalDateTime eventTime) {
         TaskEntity task = new TaskEntity();
         task.setStatus(TaskEntity.Status.ACTIVE);
         task.setRetryCount(0);
@@ -207,9 +219,7 @@ public class Engine implements Runnable {
         task.setEntityClassName(Hibernate.getClass(entity).getName());
         task.setEntityId(entity.getId());
 
-        try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, task);
-        }
+        session.save(task);
     }
 
     public ActivityInfo findActivity(Class<? extends Activity> activityClass, BaseEntity entity) {

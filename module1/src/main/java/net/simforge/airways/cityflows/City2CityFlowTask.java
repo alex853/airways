@@ -20,10 +20,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-// todo p2 restore journey and person tasks
-// todo p2 trivial ticketing
-// todo p2 integrate journeys & persons with process-based code
-// todo p2 write test for one flight with some persons bought tickets and travelled on the flight
 public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
 
     private final SessionFactory sessionFactory;
@@ -77,6 +73,7 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
                 if (flow.getAccumulatedFlow() >= flow.getNextGroupSize()) {
                     logger.info("City2CityFlow {}-{} - generating journey for group of {} persons", flow.getFromFlow().getCity().getName(), flow.getToFlow().getCity().getName(), flow.getNextGroupSize());
 
+                    // todo p2 randomize direction of journey - 50% of journeys are from-to and 50% are returning journeys
                     JourneyOps.create(session, flow);
                     // todo p2 start LookingForPersons activity somehow
 

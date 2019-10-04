@@ -9,7 +9,6 @@ import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
 import org.hibernate.Session;
@@ -17,7 +16,6 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static net.simforge.airways.TestWorld.BEGINNING_OF_TIME;
 import static org.junit.Assert.*;
 
 public class JourneyLookingForTicketsExpiryTest extends BaseEngineCaseTest {

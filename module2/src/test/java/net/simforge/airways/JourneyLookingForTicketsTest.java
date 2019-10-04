@@ -8,7 +8,6 @@ import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.JourneyItinerary;
-import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;

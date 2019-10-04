@@ -15,6 +15,7 @@ import net.simforge.airways.persistence.model.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
+import net.simforge.airways.processes.journey.event.TicketsBought;
 import net.simforge.airways.ticketing.DirectConnectionsTicketing;
 import net.simforge.airways.ticketing.TicketingRequest;
 import net.simforge.airways.util.TimeMachine;
@@ -78,11 +79,7 @@ public class LookingForTickets implements Activity {
                 stats.setTicketsBought(stats.getTicketsBought() + journey.getGroupSize());
                 session.update(stats);
 
-                // todo p1 we need to fire event or start some activity which starts transfer of passengers to airport
-                // ? schedule event StartTransferToAirport at some calculated time
-                // ? it changes location of persons and updates status of journey and schedule event FinishTransferToAirport
-                // ? FinishTransferToAirport updates persons' location to airport location and prepares for check-in
-                engine.startActivity(session, WaitingForFlight.class, journey, null);
+                engine.fireEvent(session, TicketsBought.class, journey);
             });
 
             return Result.done();

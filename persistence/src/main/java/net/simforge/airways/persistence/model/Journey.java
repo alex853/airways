@@ -50,14 +50,6 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     @ManyToOne
     @JoinColumn(name = "itinerary_id")
     private JourneyItinerary itinerary;
-//    @Column
-//    private Flight flight; // todo p3 optional to speed up an access?
-//    @ManyToOne
-//    @JoinColumn(name = "location_city_id")
-//    private City locationCity;
-//    @ManyToOne
-//    @JoinColumn(name = "location_airport_id")
-//    private Airport locationAirport;
 
     @Override
     public String getEventLogCode() {
@@ -149,22 +141,6 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     public void setItinerary(JourneyItinerary itinerary) {
         this.itinerary = itinerary;
     }
-
- //    public City getLocationCity() {
-//        return locationCity;
-//    }
-//
-//    public void setCurrentCity(City locationCity) {
-//        this.locationCity = locationCity;
-//    }
-//
-//    public Airport getLocationAirport() {
-//        return locationAirport;
-//    }
-//
-//    public void setLocationAirport(Airport locationAirport) {
-//        this.locationAirport = locationAirport;
-//    }
 
     public static class Status {
         public static final int LookingForPersons   = 1000;

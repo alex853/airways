@@ -17,6 +17,7 @@ import net.simforge.airways.persistence.model.flight.AircraftAssignment;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.PilotAssignment;
 import net.simforge.airways.persistence.model.geo.Airport;
+import net.simforge.airways.processes.DurationConsts;
 import net.simforge.airways.processes.flight.activity.FlightContext;
 import net.simforge.airways.processes.flight.event.StartBoardingCommand;
 import net.simforge.airways.processes.flight.event.StartDeboardingCommand;
@@ -79,7 +80,7 @@ public class PilotOnDuty implements Activity {
                     /*&& preflightStartsAtDt.isBefore(timeMachine.now())*/) {
                     startFlight(flightCtx);
 
-                    engine.scheduleEvent(StartBoardingCommand.class, flight, flight.getScheduledDepartureTime().minusMinutes(35));
+                    engine.scheduleEvent(StartBoardingCommand.class, flight, flight.getScheduledDepartureTime().minusMinutes(DurationConsts.START_OF_BOARDING_TO_DEPARTURE_MINS));
 
                     return Result.resume(NextMinute);
                 } else {

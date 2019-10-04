@@ -57,11 +57,9 @@ public class LookingForPersons implements Activity {
                             .createQuery("from Person " +
                                     "where type = :ordinal " +
                                     "  and status = :readyToTravel " +
-                                    "  and originCity = :originCity " +
                                     "  and locationCity = :fromCity")
                             .setInteger("ordinal", Person.Type.Ordinal)
                             .setInteger("readyToTravel", Person.Status.Idle)
-                            .setEntity("originCity", originCity)
                             .setEntity("fromCity", fromCity)
                             .setMaxResults(journey.getGroupSize())
                             .list();
@@ -83,7 +81,6 @@ public class LookingForPersons implements Activity {
                 for (Person person : persons) {
                     person.setStatus(Person.Status.OnJourney);
                     person.setJourney(journey);
-                    // todo p2 seems obsolete person.setLocationCity(null);
                     session.update(person);
                     session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
                 }

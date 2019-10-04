@@ -8,20 +8,19 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
+import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.JavaTime;
 import org.hibernate.Session;
 
+import java.util.Collection;
 import java.util.List;
 
 public class JourneyOps {
     public static Journey create(Session session, City2CityFlow flow) {
-        BM.start("JourneyOps.createOrdinalPerson");
+        BM.start("JourneyOps.create");
         try {
-            // todo AK select direction using query: from Person where status is FREE and location = :flow.toCity
-            // todo AK if it says that there are enough persons in TO City then the it will be 'returning' journey
-
             Journey journey = new Journey();
             journey.setGroupSize(flow.getNextGroupSize());
             // journey.setCurrentCity(flow.getFromFlow().getCity());
@@ -69,5 +68,19 @@ public class JourneyOps {
 
     public static boolean isExpired(Journey journey) {
         return journey.getExpirationDt().isBefore(JavaTime.nowUtc());
+    }
+
+    public static Collection<Journey> loadJourneysForFlight(Session session, TransportFlight transportFlight) {
+        BM.start("JourneyOps.loadJourneysForFlight");
+        try {
+            //noinspection unchecked
+            return session
+                    .createQuery("from Journey j " +
+                            "where j.itinerary.flight = :flight")
+                    .setEntity("flight", transportFlight)
+                    .list();
+        } finally {
+            BM.stop();
+        }
     }
 }
