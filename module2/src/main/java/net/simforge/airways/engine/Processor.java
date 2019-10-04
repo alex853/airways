@@ -8,14 +8,12 @@ import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.engine.entities.TaskEntity;
 import net.simforge.airways.engine.event.Event;
 import net.simforge.airways.service.TimetableService;
-import net.simforge.airways.service.TransportFlightService;
 import net.simforge.airways.util.TimeMachine;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import java.time.LocalDateTime;
 
 abstract class Processor {
     private static Logger logger = LoggerFactory.getLogger(Processor.class);
@@ -86,11 +84,7 @@ abstract class Processor {
         TimetableService timetableService = new TimetableService();
         injectionContext.inject(timetableService);
 
-        TransportFlightService transportFlightService = new TransportFlightService();
-        injectionContext.inject(transportFlightService);
-
         return injectionContext
-                .add(TimetableService.class, timetableService)
-                .add(TransportFlightService.class, transportFlightService);
+                .add(TimetableService.class, timetableService);
     }
 }

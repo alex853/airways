@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import java.time.LocalDate;
 import java.util.Collection;
 
+// todo p2 convert it into Ops-class and remove
 public class TimetableService {
     @Inject
     private Session session;
