@@ -9,6 +9,7 @@ import net.simforge.airways.persistence.model.aircraft.Aircraft;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,12 +35,7 @@ public class AircraftOps {
 
             logger.info("Aircraft Reg No: " + regNo);
 
-            //noinspection JpaQlInspection
-            Aircraft aircraft = (Aircraft) session
-                    .createQuery("from Aircraft a where regNo = :regNo")
-                    .setString("regNo", regNo)
-                    .setMaxResults(1)
-                    .uniqueResult();
+            Aircraft aircraft = loadByRegNo(session, regNo);
 
             if (aircraft != null) {
                 logger.info("Aircraft " + regNo + " exists");
@@ -54,6 +50,19 @@ public class AircraftOps {
             aircraft.setStatus(Aircraft.Status.Idle);
 
             HibernateUtils.saveAndCommit(session, aircraft);
+        }
+    }
+
+    public static Aircraft loadByRegNo(Session session, String regNo) {
+        BM.start("AircraftOps.loadByRegNo");
+        try {
+            return (Aircraft) session
+                    .createQuery("from Aircraft a where regNo = :regNo")
+                    .setString("regNo", regNo)
+                    .setMaxResults(1)
+                    .uniqueResult();
+        } finally {
+            BM.stop();
         }
     }
 }

@@ -6,6 +6,7 @@ package net.simforge.airways.ops;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Person;
+import net.simforge.airways.persistence.model.flight.PilotAssignment;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -14,6 +15,7 @@ import org.hibernate.Session;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 public class PersonOps {
     public static Person createOrdinalPerson(Session session, City originCity) {
@@ -82,5 +84,23 @@ public class PersonOps {
             e.printStackTrace();
         }
         return Csv.fromContent(content);
+    }
+
+    public static List<Person> loadOrdinalPersonsByLocationCity(Session session, City locationCity) {
+        BM.start("PersonOps.loadOrdinalPersonsByLocationCity");
+        try {
+
+            //noinspection unchecked
+            return session
+                    .createQuery("from Person " +
+                            "where type = :ordinal " +
+                            " and locationCity = :locationCity")
+                    .setInteger("ordinal", Person.Type.Ordinal)
+                    .setEntity("locationCity", locationCity)
+                    .list();
+
+        } finally {
+            BM.stop();
+        }
     }
 }

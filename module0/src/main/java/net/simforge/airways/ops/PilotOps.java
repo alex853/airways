@@ -65,7 +65,6 @@ public class PilotOps {
     public static PilotAssignment findInProgressAssignment(Session session, Pilot pilot) {
         BM.start("PilotOps.findInProgressAssignment");
         try {
-
             return (PilotAssignment) session // todo check uniqueness
                     .createQuery("from PilotAssignment as pa " +
                             "where pa.pilot = :pilot " +
@@ -94,6 +93,20 @@ public class PilotOps {
                             "order by flight.scheduledDepartureTime asc")
                     .setEntity("pilot", pilot)
                     .setInteger("assigned", PilotAssignment.Status.Assigned)
+                    .list();
+
+        } finally {
+            BM.stop();
+        }
+    }
+
+    public static List<Pilot> loadAllPilots(Session session) {
+        BM.start("PilotOps.loadAllPilots");
+        try {
+
+            //noinspection unchecked
+            return session
+                    .createQuery("from Pilot")
                     .list();
 
         } finally {

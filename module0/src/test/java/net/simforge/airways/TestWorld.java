@@ -6,9 +6,11 @@ package net.simforge.airways;
 
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.JourneyOps;
+import net.simforge.airways.ops.PersonOps;
 import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.persistence.model.Journey;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.persistence.model.flight.TimetableRow;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.flow.CityFlow;
@@ -18,9 +20,12 @@ import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
+import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.gckls2com.GC;
 import net.simforge.commons.gckls2com.GCAirport;
 import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.misc.JavaTime;
+import net.simforge.commons.misc.Weekdays;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
@@ -123,7 +128,6 @@ public class TestWorld {
         }
     }
 
-
     public Journey createJourney(City fromCity, City toCity, int groupSize) {
         Journey[] resultedJourney = new Journey[1];
         try (Session session = sessionFactory.openSession()) {
@@ -137,6 +141,39 @@ public class TestWorld {
         }
 
         return resultedJourney[0];
+    }
+
+    public void createPerson(City originCity) {
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.transaction(session, () -> {
+                PersonOps.createOrdinalPerson(session, originCity);
+            });
+        }
+    }
+
+    public TimetableRow createTimetableRow(String flightNumber, Airport egll, Airport egcc, String departureTime, AircraftType a320type) {
+        SimpleFlight simpleFlight = SimpleFlight.forRoute(egll.getCoords(), egcc.getCoords(), a320type);
+
+        Duration flyingTime = simpleFlight.getTotalTime();
+        FlightTimeline timeline = FlightTimeline.byFlyingTime(flyingTime);
+        Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
+
+        TimetableRow timetableRow = new TimetableRow();
+        timetableRow.setNumber(flightNumber);
+        timetableRow.setFromAirport(egll);
+        timetableRow.setToAirport(egcc);
+        timetableRow.setDepartureTime(departureTime);
+        timetableRow.setDuration(JavaTime.toHhmm(flightDuration));
+        timetableRow.setWeekdays(Weekdays.wholeWeek().toString());
+        timetableRow.setAircraftType(a320type);
+        timetableRow.setTotalTickets(160);
+        timetableRow.setHorizon(0);
+
+        try (Session session = sessionFactory.openSession()) {
+            HibernateUtils.saveAndCommit(session, timetableRow);
+        }
+
+        return timetableRow;
     }
 
     private City2CityFlow getOrCreateC2CFlow(City fromCity, City toCity) {
@@ -235,5 +272,4 @@ public class TestWorld {
             HibernateUtils.saveAndCommit(session, airport2City);
         }
     }
-
 }

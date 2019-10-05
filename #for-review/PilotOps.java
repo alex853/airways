@@ -54,18 +54,4 @@ public class PilotOps {
             BM.stop();
         }
     }
-
-    public static List<Pilot> loadAllPilots(Session session) {
-        BM.start("PilotOps.loadAllPilots");
-        try {
-
-            //noinspection JpaQlInspection,unchecked
-            return session
-                    .createQuery("select p from Pilot p")
-                    .list();
-
-        } finally {
-            BM.stop();
-        }
-    }
 }
