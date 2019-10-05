@@ -117,7 +117,7 @@ public class CityFlowOps {
             stats = new City2CityFlowStats();
             stats.setC2cFlow(c2cFlow);
             stats.setDate(date);
-            stats.setHeartbeatDt(date.plusDays(1).atTime(4 + random.nextInt(24), random.nextInt(60)));
+            stats.setHeartbeatDt(date.plusDays(1).atTime(random.nextInt(24), random.nextInt(60)));
             stats.setAvailabilityBefore(0.0);
             stats.setAvailabilityAfter(0.0);
             stats.setAvailabilityDelta(0.0);

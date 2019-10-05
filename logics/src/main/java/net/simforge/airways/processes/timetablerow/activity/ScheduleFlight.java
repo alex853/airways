@@ -65,7 +65,7 @@ public class ScheduleFlight implements Activity {
                 horizon = 7; // default horizon
             }
 
-            LocalDate today = timeMachine.today();
+            LocalDate today = timeMachine.now().toLocalDate();
             LocalDate tillDay = today.plusDays(horizon);
 
             Collection<TransportFlight> transportFlights;
