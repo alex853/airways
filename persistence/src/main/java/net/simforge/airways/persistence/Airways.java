@@ -16,7 +16,7 @@ import net.simforge.airways.persistence.model.geo.Airport2City;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
 import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.JourneyItinerary;
+import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.journey.Transfer;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 import org.hibernate.SessionFactory;
@@ -41,7 +41,7 @@ public class Airways {
             City2CityFlowStats.class,
 
             Journey.class,
-            JourneyItinerary.class,
+            Itinerary.class,
             Transfer.class,
             Person.class,
 

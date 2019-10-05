@@ -11,10 +11,9 @@ import net.simforge.commons.hibernate.BaseEntity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-// todo p1 rename class to Itinerary
 @Entity(name = "JourneyItinerary")
 @Table(name = "aw_journey_itinerary")
-public class JourneyItinerary implements BaseEntity, Auditable {
+public class Itinerary implements BaseEntity, Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_journey_itinerary_id")
     @SequenceGenerator(name = "aw_journey_itinerary_id", sequenceName = "aw_journey_itinerary_id_seq", allocationSize = 1)

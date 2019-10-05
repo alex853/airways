@@ -10,7 +10,7 @@ import net.simforge.airways.engine.event.Handler;
 import net.simforge.airways.engine.event.Subscribe;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.JourneyItinerary;
+import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.processes.journey.InTransfer;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
@@ -36,12 +36,12 @@ public class ArrivedOnFlight implements Event, Handler {
 
             journey = session.load(Journey.class, journey.getId());
 
-            List<JourneyItinerary> itineraries = JourneyOps.getItineraries(session, journey);
+            List<Itinerary> itineraries = JourneyOps.getItineraries(session, journey);
             int itineraryIndex = itineraries.indexOf(journey.getItinerary());
             if (itineraryIndex == -1) {
                 throw new RuntimeException(); // todo p3 replace with something else
             }
-            JourneyItinerary nextItinerary = itineraryIndex != itineraries.size()-1
+            Itinerary nextItinerary = itineraryIndex != itineraries.size()-1
                     ? itineraries.get(itineraryIndex + 1)
                     : null;
 

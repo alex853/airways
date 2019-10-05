@@ -10,8 +10,8 @@ import net.simforge.airways.engine.Result;
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.EventLog;
+import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
@@ -52,12 +52,12 @@ public class LookingForTickets implements Activity {
             journey = session.load(Journey.class, journey.getId());
 
             HibernateUtils.transaction(session, () -> {
-                JourneyItinerary firstItinerary = null;
+                Itinerary firstItinerary = null;
 
                 for (int i = 0; i < foundFlights.size(); i++) {
                     TransportFlight foundFlight = foundFlights.get(i);
 
-                    JourneyItinerary itinerary = new JourneyItinerary();
+                    Itinerary itinerary = new Itinerary();
                     itinerary.setJourney(journey);
                     itinerary.setFlight(foundFlight);
                     itinerary.setItemOrder(i);

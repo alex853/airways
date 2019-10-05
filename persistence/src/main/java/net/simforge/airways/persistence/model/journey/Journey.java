@@ -49,7 +49,7 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     private LocalDateTime expirationDt;
     @ManyToOne
     @JoinColumn(name = "itinerary_id")
-    private JourneyItinerary itinerary;
+    private Itinerary itinerary;
     @ManyToOne
     @JoinColumn(name = "transfer_id")
     private Transfer transfer;
@@ -137,11 +137,11 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
         this.expirationDt = expirationDt;
     }
 
-    public JourneyItinerary getItinerary() {
+    public Itinerary getItinerary() {
         return itinerary;
     }
 
-    public void setItinerary(JourneyItinerary itinerary) {
+    public void setItinerary(Itinerary itinerary) {
         this.itinerary = itinerary;
     }
 

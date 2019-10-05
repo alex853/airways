@@ -7,7 +7,7 @@ package net.simforge.airways;
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.JourneyItinerary;
+import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
@@ -56,7 +56,7 @@ public class JourneyLookingForTicketsTest extends BaseEngineCaseTest {
             journey = session.load(Journey.class, journey.getId());
             assertEquals(Journey.Status.WaitingForFlight, journey.getStatus().intValue());
 
-            List<JourneyItinerary> itineraryList = JourneyOps.getItineraries(session, journey);
+            List<Itinerary> itineraryList = JourneyOps.getItineraries(session, journey);
             assertEquals(1, itineraryList.size());
             assertEquals(ab101_today.getId(), itineraryList.get(0).getFlight().getId());
         }
