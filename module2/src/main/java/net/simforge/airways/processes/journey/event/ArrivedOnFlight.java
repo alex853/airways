@@ -11,7 +11,7 @@ import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.journey.Itinerary;
-import net.simforge.airways.processes.journey.InTransfer;
+import net.simforge.airways.processes.journey.TransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
@@ -62,7 +62,7 @@ public class ArrivedOnFlight implements Event, Handler {
                     journey.setItinerary(null);
                     session.update(journey);
 
-                    InTransfer.startTransferToCity(engine, session, journey, journey.getToCity());
+                    TransferLauncher.startTransferToCity(engine, session, journey, journey.getToCity());
 
                 });
 

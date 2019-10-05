@@ -19,10 +19,9 @@ import org.hibernate.Session;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// todo p2 convert it into TransferOps ?
-public class InTransfer {
+public class TransferLauncher {
     public static void scheduleTransferToAirport(ProcessEngine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
-        BM.start("InTransfer.scheduleTransferToAirport");
+        BM.start("TransferLauncher.scheduleTransferToAirport");
         try {
             journey = session.load(Journey.class, journey.getId());
 
@@ -48,7 +47,7 @@ public class InTransfer {
     }
 
     public static void startTransferToCity(ProcessEngine engine, Session session, Journey journey, City toCity) {
-        BM.start("InTransfer.startTransferToCity");
+        BM.start("TransferLauncher.startTransferToCity");
         try {
             journey = session.load(Journey.class, journey.getId());
 
@@ -78,7 +77,7 @@ public class InTransfer {
     }
 
     private static double calcMaxDistance(Session session, Journey journey, Geo.Coords toCoords) {
-        BM.start("InTransfer.calcMaxDistance");
+        BM.start("TransferLauncher.calcMaxDistance");
         try {
 
             List<Person> persons = JourneyOps.getPersons(session, journey);

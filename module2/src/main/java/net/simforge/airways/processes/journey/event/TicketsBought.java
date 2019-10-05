@@ -12,7 +12,7 @@ import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.processes.DurationConsts;
-import net.simforge.airways.processes.journey.InTransfer;
+import net.simforge.airways.processes.journey.TransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
@@ -48,7 +48,7 @@ public class TicketsBought implements Event, Handler {
 
             HibernateUtils.transaction(session, () -> {
 
-                InTransfer.scheduleTransferToAirport(engine, session, journey, transportFlight.getFromAirport(), checkinStartsAt);
+                TransferLauncher.scheduleTransferToAirport(engine, session, journey, transportFlight.getFromAirport(), checkinStartsAt);
 
             });
 
