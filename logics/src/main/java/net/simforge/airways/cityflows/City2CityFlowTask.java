@@ -71,10 +71,11 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
                 }
 
                 if (flow.getAccumulatedFlow() >= flow.getNextGroupSize()) {
-                    logger.info("City2CityFlow {}-{} - generating journey for group of {} persons", flow.getFromFlow().getCity().getName(), flow.getToFlow().getCity().getName(), flow.getNextGroupSize());
+                    boolean directOrBackDirection = CityFlowOps.randomDirection();
 
-                    // todo p2 randomize direction of journey - 50% of journeys are from-to and 50% are returning journeys
-                    JourneyOps.create(session, flow);
+                    logger.info("City2CityFlow {}-{} - generating journey for group of {} persons, direct direction - {}", flow.getFromFlow().getCity().getName(), flow.getToFlow().getCity().getName(), flow.getNextGroupSize(), directOrBackDirection);
+
+                    JourneyOps.create(session, flow, directOrBackDirection);
                     // todo p2 start LookingForPersons activity somehow
 
                     flow.setAccumulatedFlow(flow.getAccumulatedFlow() - flow.getNextGroupSize());

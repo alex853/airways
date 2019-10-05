@@ -18,17 +18,15 @@ import java.util.Collection;
 import java.util.List;
 
 public class JourneyOps {
-    public static Journey create(Session session, City2CityFlow flow) {
+    public static Journey create(Session session, City2CityFlow flow, boolean directDirection) {
         BM.start("JourneyOps.create");
         try {
             Journey journey = new Journey();
             journey.setGroupSize(flow.getNextGroupSize());
-            // journey.setCurrentCity(flow.getFromFlow().getCity());
-            journey.setFromCity(flow.getFromFlow().getCity());
-            journey.setToCity(flow.getToFlow().getCity());
+            journey.setFromCity(directDirection ? flow.getFromFlow().getCity() : flow.getToFlow().getCity());
+            journey.setToCity(directDirection ? flow.getToFlow().getCity() : flow.getFromFlow().getCity());
             journey.setC2cFlow(flow);
             journey.setStatus(Journey.Status.LookingForPersons);
-//            journey.setHeartbeatDt(JavaTime.nowUtc());
             journey.setExpirationDt(JavaTime.nowUtc().plusDays(7));
 
             session.save(journey);

@@ -135,7 +135,7 @@ public class TestWorld {
             HibernateUtils.transaction(session, () -> {
                 city2CityFlow.setNextGroupSize(groupSize);
 
-                resultedJourney[0] = JourneyOps.create(session, city2CityFlow);
+                resultedJourney[0] = JourneyOps.create(session, city2CityFlow, true);
             });
         }
 

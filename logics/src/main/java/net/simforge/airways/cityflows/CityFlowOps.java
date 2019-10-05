@@ -48,6 +48,10 @@ public class CityFlowOps {
         return (int) (Math.random() * 10) + 1;
     }
 
+    public static boolean randomDirection() {
+        return Math.random() < 0.5;
+    }
+
     public static double getUnits(CityFlow fromCityFlow, CityFlow toCityFlow) {
         BM.start("CityFlowOps.getUnits");
         try {
