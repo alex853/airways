@@ -8,7 +8,7 @@ import net.simforge.airways.engine.Result;
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Journey;
+import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;

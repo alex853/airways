@@ -7,6 +7,7 @@ package net.simforge.airways.persistence.model;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
+import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
 

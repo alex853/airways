@@ -6,8 +6,8 @@ package net.simforge.airways;
 
 import net.simforge.airways.engine.activity.ActivityInfo;
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.model.Journey;
-import net.simforge.airways.persistence.model.JourneyItinerary;
+import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.persistence.model.journey.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;

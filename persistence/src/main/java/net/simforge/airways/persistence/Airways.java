@@ -15,6 +15,8 @@ import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.Airport2City;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.persistence.model.journey.JourneyItinerary;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 import org.hibernate.SessionFactory;
 

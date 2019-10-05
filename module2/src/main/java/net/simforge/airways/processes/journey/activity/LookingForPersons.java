@@ -9,7 +9,7 @@ import net.simforge.airways.engine.Result;
 import net.simforge.airways.engine.activity.Activity;
 import net.simforge.airways.ops.PersonOps;
 import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Journey;
+import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.util.TimeMachine;

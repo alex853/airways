@@ -4,7 +4,7 @@
 
 package net.simforge.airways.ticketing;
 
-import net.simforge.airways.persistence.model.Journey;
+import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.legacy.BM;

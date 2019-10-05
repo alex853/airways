@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.persistence.model;
+package net.simforge.airways.persistence.model.journey;
 
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.commons.hibernate.Auditable;

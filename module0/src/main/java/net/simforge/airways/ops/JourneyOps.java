@@ -5,8 +5,8 @@
 package net.simforge.airways.ops;
 
 import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Journey;
-import net.simforge.airways.persistence.model.JourneyItinerary;
+import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.persistence.model.journey.JourneyItinerary;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
