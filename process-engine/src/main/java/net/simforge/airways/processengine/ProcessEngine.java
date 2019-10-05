@@ -8,7 +8,6 @@ import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.airways.processengine.event.Event;
-import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.misc.Misc;

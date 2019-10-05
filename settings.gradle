@@ -5,6 +5,4 @@
 rootProject.name = 'net.simforge.airways'
 include 'persistence'
 include 'process-engine'
-include 'module0'
-include 'module1'
-include 'module2'
+include 'logics'
