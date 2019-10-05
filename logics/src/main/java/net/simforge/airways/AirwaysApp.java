@@ -1,4 +1,8 @@
-package net.simforge.airways.persistence;
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways;
 
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;

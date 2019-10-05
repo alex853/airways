@@ -5,7 +5,7 @@
 package net.simforge.airways.worldbuilder;
 
 import net.simforge.airways.ops.AircraftOps;
-import net.simforge.airways.persistence.Airways;
+import net.simforge.airways.Airways;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 

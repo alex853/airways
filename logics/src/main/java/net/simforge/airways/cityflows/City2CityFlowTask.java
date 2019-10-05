@@ -5,7 +5,7 @@
 package net.simforge.airways.cityflows;
 
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.AirwaysApp;
+import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.flow.CityFlow;
 import net.simforge.airways.persistence.model.geo.City;

@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.persistence;
+package net.simforge.airways;
 
 import net.simforge.airways.persistence.model.*;
 import net.simforge.airways.persistence.model.aircraft.Aircraft;
@@ -18,6 +18,7 @@ import net.simforge.airways.persistence.model.geo.Country;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.journey.Transfer;
+import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 import org.hibernate.SessionFactory;
 
@@ -64,6 +65,7 @@ public class Airways {
         return SessionFactoryBuilder
                 .forDatabase("airways")
                 .entities(entities)
+                .entities(new Class[]{TaskEntity.class})
                 .build();
     }
 }

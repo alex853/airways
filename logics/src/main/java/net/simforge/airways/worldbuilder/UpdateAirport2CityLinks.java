@@ -4,7 +4,7 @@
 
 package net.simforge.airways.worldbuilder;
 
-import net.simforge.airways.persistence.Airways;
+import net.simforge.airways.Airways;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.Airport2City;
 import net.simforge.airways.persistence.model.geo.City;

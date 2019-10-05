@@ -4,7 +4,7 @@
 
 package net.simforge.airways.worldbuilder;
 
-import net.simforge.airways.persistence.Airways;
+import net.simforge.airways.Airways;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 
 import java.io.IOException;

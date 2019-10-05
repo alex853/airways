@@ -7,7 +7,6 @@ package net.simforge.airways;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.entities.TaskEntity;
-import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.processengine.SimulatedTimeMachine;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 import org.hibernate.SessionFactory;

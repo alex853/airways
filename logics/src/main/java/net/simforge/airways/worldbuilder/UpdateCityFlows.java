@@ -4,7 +4,7 @@
 
 package net.simforge.airways.worldbuilder;
 
-import net.simforge.airways.persistence.Airways;
+import net.simforge.airways.Airways;
 import net.simforge.airways.persistence.model.flow.CityFlow;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.commons.hibernate.HibernateUtils;

@@ -7,7 +7,6 @@ package net.simforge.airways;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.ops.PersonOps;
-import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.aircraft.AircraftType;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
