@@ -5,7 +5,7 @@
 package net.simforge.airways;
 
 import net.simforge.airways.processengine.ProcessEngine;
-import net.simforge.airways.processengine.EngineBuilder;
+import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.airways.persistence.Airways;
 import net.simforge.airways.processengine.SimulatedTimeMachine;
@@ -42,7 +42,7 @@ public abstract class BaseEngineCaseTest {
     @Before
     public void before() {
         timeMachine = new SimulatedTimeMachine(TestWorld.BEGINNING_OF_TIME);
-        engine = EngineBuilder.create()
+        engine = ProcessEngineBuilder.create()
                 .withTimeMachine(timeMachine)
                 .withSessionFactory(sessionFactory)
                 .build();

@@ -6,25 +6,25 @@ package net.simforge.airways.processengine;
 
 import org.hibernate.SessionFactory;
 
-public class EngineBuilder {
+public class ProcessEngineBuilder {
     private ProcessEngine engine;
 
-    private EngineBuilder() {
+    private ProcessEngineBuilder() {
         engine = new ProcessEngine();
     }
 
-    public static EngineBuilder create() {
-        return new EngineBuilder();
+    public static ProcessEngineBuilder create() {
+        return new ProcessEngineBuilder();
     }
 
-    public EngineBuilder withTimeMachine(TimeMachine timeMachine) {
+    public ProcessEngineBuilder withTimeMachine(TimeMachine timeMachine) {
         checkEngine();
 
         engine.timeMachine = timeMachine;
         return this;
     }
 
-    public EngineBuilder withSessionFactory(SessionFactory sessionFactory) {
+    public ProcessEngineBuilder withSessionFactory(SessionFactory sessionFactory) {
         checkEngine();
 
         engine.sessionFactory = sessionFactory;

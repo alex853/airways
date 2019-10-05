@@ -10,7 +10,7 @@ import net.simforge.airways.persistence.model.flow.City2CityFlow;
 import net.simforge.airways.persistence.model.flow.CityFlow;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.processengine.EngineBuilder;
+import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.RealTimeMachine;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
@@ -43,7 +43,7 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
     protected void startup() {
         super.startup();
 
-        engine = EngineBuilder.create()
+        engine = ProcessEngineBuilder.create()
                 .withTimeMachine(new RealTimeMachine())
                 .withSessionFactory(sessionFactory)
                 .build();
