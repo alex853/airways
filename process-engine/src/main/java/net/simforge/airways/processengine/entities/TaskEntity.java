@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine.entities;
+package net.simforge.airways.processengine.entities;
 
 import net.simforge.commons.hibernate.BaseEntity;
 

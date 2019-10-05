@@ -1,13 +1,17 @@
-package net.simforge.airways.engine;
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+package net.simforge.airways.processengine;
 
 import net.simforge.airways.util.TimeMachine;
 import org.hibernate.SessionFactory;
 
 public class EngineBuilder {
-    private Engine engine;
+    private ProcessEngine engine;
 
     private EngineBuilder() {
-        engine = new Engine();
+        engine = new ProcessEngine();
     }
 
     public static EngineBuilder create() {
@@ -28,17 +32,17 @@ public class EngineBuilder {
         return this;
     }
 
-    public Engine build() {
+    public ProcessEngine build() {
         checkEngine();
 
-        Engine engine = this.engine;
+        ProcessEngine engine = this.engine;
         this.engine = null;
         return engine;
     }
 
     private void checkEngine() {
         if (engine == null) {
-            throw new IllegalStateException("Engine already built");
+            throw new IllegalStateException("ProcessEngine already built");
         }
     }
 }

@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine;
+package net.simforge.airways.processengine;
 
 public class Result {
     private final Action action;

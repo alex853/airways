@@ -4,10 +4,10 @@
 
 package net.simforge.airways.processes.journey.event;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.engine.event.Handler;
-import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.event.Event;
+import net.simforge.airways.processengine.event.Handler;
+import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.persistence.model.journey.Itinerary;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
@@ -33,7 +33,7 @@ public class TicketsBought implements Event, Handler {
     @Inject
     private Journey journey;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 

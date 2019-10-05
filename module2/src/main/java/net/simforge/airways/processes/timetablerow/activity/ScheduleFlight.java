@@ -4,16 +4,16 @@
 
 package net.simforge.airways.processes.timetablerow.activity;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.ops.TimetableOps;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
 import net.simforge.airways.processes.flight.event.Planned;
 import net.simforge.airways.processes.transportflight.event.Scheduled;
-import net.simforge.airways.service.TimetableService;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static net.simforge.airways.engine.Result.When.NextDay;
-import static net.simforge.airways.engine.Result.When.NextHour;
+import static net.simforge.airways.processengine.Result.When.NextDay;
+import static net.simforge.airways.processengine.Result.When.NextHour;
 
 /**
  * It creates TransportFlight and Flight for the according to the timetable and date.
@@ -47,9 +47,9 @@ public class ScheduleFlight implements Activity {
     @Inject
     private SessionFactory sessionFactory;
     @Inject
-    private TimetableService timetableService;
+    private TimetableOps timetableService;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private TimeMachine timeMachine;
 
@@ -68,7 +68,10 @@ public class ScheduleFlight implements Activity {
             LocalDate today = timeMachine.today();
             LocalDate tillDay = today.plusDays(horizon);
 
-            Collection<TransportFlight> transportFlights = timetableService.loadTransportFlights(timetableRow, today, tillDay);
+            Collection<TransportFlight> transportFlights;
+            try (Session session = sessionFactory.openSession()) {
+                transportFlights = TimetableOps.loadTransportFlights(session, timetableRow, today, tillDay);
+            }
 
             logger.debug("Loaded " + transportFlights.size() + " flights for horizon " + horizon + " days");
 

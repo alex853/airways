@@ -4,9 +4,9 @@
 
 package net.simforge.airways.processes.journey.activity;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.PersonOps;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.journey.Journey;
@@ -29,7 +29,7 @@ public class LookingForPersons implements Activity {
     @Inject
     private Journey journey;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
     @Inject

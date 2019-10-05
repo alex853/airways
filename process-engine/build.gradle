@@ -15,10 +15,9 @@ repositories {
 }
 
 dependencies {
-    compile project(':persistence')
-    compile project(':process-engine')
+//    compile project(':persistence')
     compile project(':module0')
-    compile project(':module1')
+//    compile project(':module1')
     
     compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.1'
@@ -29,7 +28,7 @@ dependencies {
     
     compile group: 'org.reflections', name: 'reflections', version: '0.9.11'
 
-    testCompile project (path: ":module0", configuration: 'testArtifacts')
+//    testCompile project (path: ":module0", configuration: 'testArtifacts')
     
     testCompile group: 'junit', name: 'junit', version: '4.11'
 

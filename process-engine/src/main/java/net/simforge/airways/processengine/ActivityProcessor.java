@@ -2,11 +2,11 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine;
+package net.simforge.airways.processengine;
 
-import net.simforge.airways.engine.activity.Activity;
-import net.simforge.airways.engine.activity.ActivityInfo;
-import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.processengine.activity.Activity;
+import net.simforge.airways.processengine.activity.ActivityInfo;
+import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.misc.Misc;
 

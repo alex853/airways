@@ -4,8 +4,8 @@
 
 package net.simforge.airways.processes.flight.handler;
 
-import net.simforge.airways.engine.event.Handler;
-import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processengine.event.Handler;
+import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.processes.flight.event.Cancelled;
 

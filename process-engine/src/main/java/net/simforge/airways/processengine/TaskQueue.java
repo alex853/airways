@@ -2,13 +2,9 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-/*
- * Airways project (C) Alexey Kornev, 2015-2018
- */
+package net.simforge.airways.processengine;
 
-package net.simforge.airways.engine;
-
-import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.processengine.entities.TaskEntity;
 
 import java.util.LinkedList;
 import java.util.ListIterator;

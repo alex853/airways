@@ -4,10 +4,10 @@
 
 package net.simforge.airways.processes.flight.activity;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
-import net.simforge.airways.engine.activity.ActivityInfo;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
+import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.processes.flight.event.Cancelled;
@@ -25,7 +25,7 @@ public class AllocateFlight implements Activity {
     @Inject
     private Flight flight;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 

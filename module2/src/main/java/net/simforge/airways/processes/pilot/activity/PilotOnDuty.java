@@ -4,9 +4,9 @@
 
 package net.simforge.airways.processes.pilot.activity;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Person;
@@ -37,7 +37,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static net.simforge.airways.engine.Result.When.NextMinute;
+import static net.simforge.airways.processengine.Result.When.NextMinute;
 
 public class PilotOnDuty implements Activity {
     private static Logger logger = LoggerFactory.getLogger(PilotOnDuty.class);
@@ -45,7 +45,7 @@ public class PilotOnDuty implements Activity {
     @Inject
     private Pilot pilot;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
     @Inject

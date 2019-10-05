@@ -2,12 +2,12 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine;
+package net.simforge.airways.processengine;
 
-import net.simforge.airways.engine.activity.Activity;
-import net.simforge.airways.engine.activity.ActivityInfo;
-import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.engine.event.Event;
+import net.simforge.airways.processengine.activity.Activity;
+import net.simforge.airways.processengine.activity.ActivityInfo;
+import net.simforge.airways.processengine.entities.TaskEntity;
+import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.util.TimeMachine;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -23,9 +23,9 @@ import java.util.ArrayDeque;
 import java.util.List;
 import java.util.Queue;
 
-public class Engine implements Runnable {
+public class ProcessEngine implements Runnable {
 
-    private static Logger logger = LoggerFactory.getLogger(Engine.class);
+    private static Logger logger = LoggerFactory.getLogger(ProcessEngine.class);
 
     private Queue<TaskEntity> taskQueue = new ArrayDeque<>(); // very trivial way of queue management based on database
 
@@ -33,7 +33,7 @@ public class Engine implements Runnable {
     TimeMachine timeMachine;
     SessionFactory sessionFactory;
 
-    Engine() {
+    ProcessEngine() {
     }
 
     @Override
@@ -47,7 +47,7 @@ public class Engine implements Runnable {
     }
 
     private boolean isStopRequested() {
-        throw new UnsupportedOperationException("Engine.isStopRequested");
+        throw new UnsupportedOperationException("ProcessEngine.isStopRequested");
     }
 
     public void tick() {
@@ -123,7 +123,7 @@ public class Engine implements Runnable {
         }
 
         baseInjectionContext = InjectionContext.create()
-                .add(Engine.class, this)
+                .add(ProcessEngine.class, this)
                 .add(TimeMachine.class, timeMachine)
                 .add(SessionFactory.class, sessionFactory);
     }

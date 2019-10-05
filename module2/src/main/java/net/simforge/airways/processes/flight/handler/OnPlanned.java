@@ -4,9 +4,9 @@
 
 package net.simforge.airways.processes.flight.handler;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.event.Handler;
-import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.event.Handler;
+import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.processes.flight.activity.AllocateFlight;
@@ -29,7 +29,7 @@ public class OnPlanned implements Handler {
     @Inject
     private Flight flight;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 

@@ -4,7 +4,7 @@
 
 package net.simforge.airways;
 
-import net.simforge.airways.engine.activity.ActivityInfo;
+import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.persistence.model.Pilot;

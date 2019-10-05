@@ -4,7 +4,7 @@
 
 package net.simforge.airways.processes.flight.event;
 
-import net.simforge.airways.engine.event.Event;
+import net.simforge.airways.processengine.event.Event;
 
 public class PilotAllocated implements Event {
 }

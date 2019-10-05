@@ -4,13 +4,13 @@
 
 package net.simforge.airways.processes.journey;
 
-import net.simforge.airways.engine.Engine;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.journey.Transfer;
+import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processes.journey.event.TransferStarted;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Geo;
@@ -21,7 +21,7 @@ import java.util.List;
 
 // todo p2 convert it into TransferOps ?
 public class InTransfer {
-    public static void scheduleTransferToAirport(Engine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
+    public static void scheduleTransferToAirport(ProcessEngine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
         BM.start("InTransfer.scheduleTransferToAirport");
         try {
             journey = session.load(Journey.class, journey.getId());
@@ -47,7 +47,7 @@ public class InTransfer {
         }
     }
 
-    public static void startTransferToCity(Engine engine, Session session, Journey journey, City toCity) {
+    public static void startTransferToCity(ProcessEngine engine, Session session, Journey journey, City toCity) {
         BM.start("InTransfer.startTransferToCity");
         try {
             journey = session.load(Journey.class, journey.getId());

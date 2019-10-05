@@ -5,9 +5,9 @@
 package net.simforge.airways.processes.journey.activity;
 
 import net.simforge.airways.cityflows.CityFlowOps;
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.journey.Itinerary;
@@ -31,7 +31,7 @@ public class LookingForTickets implements Activity {
     @Inject
     private Journey journey;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
     @Inject

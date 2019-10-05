@@ -4,31 +4,24 @@
 
 package net.simforge.airways;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.EngineBuilder;
-import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.EngineBuilder;
+import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.airways.persistence.Airways;
-import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.util.SimulatedTimeMachine;
-import net.simforge.commons.gckls2com.GC;
-import net.simforge.commons.gckls2com.GCAirport;
-import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
-import java.io.IOException;
-
 public abstract class BaseEngineCaseTest {
 
     protected static SessionFactory sessionFactory;
 
     protected SimulatedTimeMachine timeMachine;
-    protected Engine engine;
+    protected ProcessEngine engine;
 
     @BeforeClass
     public static void beforeClass() {

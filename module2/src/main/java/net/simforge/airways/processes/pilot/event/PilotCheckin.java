@@ -4,10 +4,10 @@
 
 package net.simforge.airways.processes.pilot.event;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.engine.event.Handler;
-import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.event.Event;
+import net.simforge.airways.processengine.event.Handler;
+import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.persistence.model.Pilot;
 import net.simforge.airways.processes.pilot.activity.PilotOnDuty;
 import org.hibernate.SessionFactory;
@@ -19,7 +19,7 @@ public class PilotCheckin implements Event, Handler {
     @Inject
     private Pilot pilot;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 

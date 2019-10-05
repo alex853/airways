@@ -4,8 +4,8 @@
 
 package net.simforge.airways.processes.transportflight.activity;
 
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.journey.Journey;
@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static net.simforge.airways.engine.Result.When.NextMinute;
+import static net.simforge.airways.processengine.Result.When.NextMinute;
 
 /**
  * 'Checkin' activity starts in 'CheckinStarted' event.

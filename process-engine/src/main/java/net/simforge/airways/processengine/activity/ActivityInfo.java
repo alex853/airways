@@ -2,9 +2,9 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine.activity;
+package net.simforge.airways.processengine.activity;
 
-import net.simforge.airways.engine.entities.TaskEntity;
+import net.simforge.airways.processengine.entities.TaskEntity;
 
 import java.time.LocalDateTime;
 

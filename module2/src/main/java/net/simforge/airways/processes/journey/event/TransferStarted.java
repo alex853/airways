@@ -4,10 +4,10 @@
 
 package net.simforge.airways.processes.journey.event;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.engine.event.Handler;
-import net.simforge.airways.engine.event.Subscribe;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.event.Event;
+import net.simforge.airways.processengine.event.Handler;
+import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.journey.Journey;
@@ -27,7 +27,7 @@ public class TransferStarted implements Event, Handler {
     @Inject
     private Transfer transfer;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
     @Inject

@@ -2,12 +2,11 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.engine;
+package net.simforge.airways.processengine;
 
-import net.simforge.airways.engine.activity.Activity;
-import net.simforge.airways.engine.entities.TaskEntity;
-import net.simforge.airways.engine.event.Event;
-import net.simforge.airways.service.TimetableService;
+import net.simforge.airways.processengine.activity.Activity;
+import net.simforge.airways.processengine.entities.TaskEntity;
+import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.util.TimeMachine;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -22,7 +21,7 @@ abstract class Processor {
     final InjectionContext processorInjectionContext;
 
     @Inject
-    protected Engine engine;
+    protected ProcessEngine engine;
     @Inject
     Session session;
     @Inject
@@ -81,10 +80,6 @@ abstract class Processor {
     }
 
     protected InjectionContext addServicesToInjectionContext(InjectionContext injectionContext) {
-        TimetableService timetableService = new TimetableService();
-        injectionContext.inject(timetableService);
-
-        return injectionContext
-                .add(TimetableService.class, timetableService);
+        return injectionContext;
     }
 }

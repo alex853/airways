@@ -4,9 +4,9 @@
 
 package net.simforge.airways.processes.flight.activity;
 
-import net.simforge.airways.engine.Engine;
-import net.simforge.airways.engine.Result;
-import net.simforge.airways.engine.activity.Activity;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Pilot;
 import net.simforge.airways.persistence.model.aircraft.Aircraft;
@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
-import static net.simforge.airways.engine.Result.When.FewTimesPerHour;
+import static net.simforge.airways.processengine.Result.When.FewTimesPerHour;
 
 public class TrivialAllocation implements Activity {
     private static Logger logger = LoggerFactory.getLogger(TrivialAllocation.class);
@@ -31,7 +31,7 @@ public class TrivialAllocation implements Activity {
     @Inject
     private Flight flight;
     @Inject
-    private Engine engine;
+    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 
