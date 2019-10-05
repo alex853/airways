@@ -13,7 +13,6 @@ import net.simforge.commons.hibernate.BaseEntity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
-// todo p1 transfer object?
 @Entity(name = "Journey")
 @Table(name="aw_journey")
 public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
@@ -51,6 +50,9 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     @ManyToOne
     @JoinColumn(name = "itinerary_id")
     private JourneyItinerary itinerary;
+    @ManyToOne
+    @JoinColumn(name = "transfer_id")
+    private Transfer transfer;
 
     @Override
     public String getEventLogCode() {
@@ -141,6 +143,14 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
 
     public void setItinerary(JourneyItinerary itinerary) {
         this.itinerary = itinerary;
+    }
+
+    public Transfer getTransfer() {
+        return transfer;
+    }
+
+    public void setTransfer(Transfer transfer) {
+        this.transfer = transfer;
     }
 
     public static class Status {
