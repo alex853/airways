@@ -7,9 +7,7 @@ package net.simforge.airways.processengine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 public class SimulatedTimeMachine implements TimeMachine {
     private static Logger logger = LoggerFactory.getLogger(SimulatedTimeMachine.class);
@@ -21,13 +19,8 @@ public class SimulatedTimeMachine implements TimeMachine {
     }
 
     @Override
-    public long getTimeMillis() {
-        return time.toInstant(ZoneOffset.UTC).toEpochMilli();
-    }
-
-    @Override
-    public LocalDate today() {
-        return time.toLocalDate();
+    public LocalDateTime now() {
+        return time;
     }
 
     public void plusMinutes(long minutes) {
