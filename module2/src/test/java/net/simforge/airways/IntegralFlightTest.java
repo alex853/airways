@@ -17,6 +17,7 @@ import org.hibernate.Session;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class IntegralFlightTest extends BaseEngineCaseTest {
     private TestWorld testWorld;
@@ -71,6 +72,16 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
 
             assertEquals(4, PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getLondonCity()).size());
             assertEquals(6, PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getManchesterCity()).size());
+
+            journey1 = session.load(Journey.class, journey1.getId());
+            journey2 = session.load(Journey.class, journey2.getId());
+            journey3 = session.load(Journey.class, journey3.getId());
+            assertEquals(Journey.Status.Done, journey1.getStatus().intValue());
+            assertEquals(Journey.Status.Done, journey2.getStatus().intValue());
+            assertEquals(Journey.Status.Done, journey3.getStatus().intValue());
+            assertNull(journey1.getItinerary());
+            assertNull(journey2.getItinerary());
+            assertNull(journey3.getItinerary());
 
         }
     }

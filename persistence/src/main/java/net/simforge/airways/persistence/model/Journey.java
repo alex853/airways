@@ -13,6 +13,7 @@ import net.simforge.commons.hibernate.BaseEntity;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
+// todo p1 transfer object?
 @Entity(name = "Journey")
 @Table(name="aw_journey")
 public class Journey implements BaseEntity, Auditable, EventLog.Loggable {

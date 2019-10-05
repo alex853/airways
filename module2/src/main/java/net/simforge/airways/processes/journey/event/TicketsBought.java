@@ -27,8 +27,8 @@ import java.util.List;
  * It calculates moment when passengers have to start their way to airport.
  * DepartAtAirport event will be fired at that calculated moment.
  * It will change location of persons and update status of journey.
- * Also it will schedule event ArriveToAirport.
- * ArriveToAirport updates persons' location to airport location and prepares journey for check-in.
+ * Also it will schedule event TransferCityToAirportArrived.
+ * TransferCityToAirportArrived updates persons' location to airport location and prepares journey for check-in.
  */
 @Subscribe(TicketsBought.class)
 public class TicketsBought implements Event, Handler {
@@ -55,10 +55,10 @@ public class TicketsBought implements Event, Handler {
                 return Geo.distance(person.getLocationCity().getCoords(), transportFlight.getFromAirport().getCoords());
             }).max().orElse(0.0);
 
-            int transferToAirportMinutes = (int) (maxDistance / 25 * 60 + DepartToAirport.TRANSFER_RESERVE_BEFORE_CHECKIN);
+            int transferToAirportMinutes = (int) (maxDistance / 25 * 60 + TransferCityToAirportDeparted.TRANSFER_RESERVE_BEFORE_CHECKIN);
             LocalDateTime transferWillStartAt = checkinStartsAt.minusMinutes(transferToAirportMinutes);
 
-            engine.scheduleEvent(DepartToAirport.class, journey, transferWillStartAt);
+            engine.scheduleEvent(TransferCityToAirportDeparted.class, journey, transferWillStartAt);
 
         } finally {
             BM.stop();
