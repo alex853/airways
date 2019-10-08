@@ -107,4 +107,9 @@ public class City implements EventLog.Loggable {
     public void setDataset(Integer dataset) {
         this.dataset = dataset;
     }
+
+    @Override
+    public String toString() {
+        return "City { " + name + " }";
+    }
 }

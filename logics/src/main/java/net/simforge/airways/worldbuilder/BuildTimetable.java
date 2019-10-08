@@ -13,6 +13,11 @@ import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.Airport2City;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineBuilder;
+import net.simforge.airways.processengine.RealTimeMachine;
+import net.simforge.airways.processes.journey.activity.LookingForPersons;
+import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.commons.io.Csv;
@@ -34,6 +39,7 @@ public class BuildTimetable {
     private static Map<String, Integer> icao2size;
 
     private static Random random = new Random();
+    private static ProcessEngine engine;
 
     public static void main(String[] args) throws IOException {
         Csv csv = Csv.load(new File("./data/icaodata.csv"));
@@ -50,7 +56,17 @@ public class BuildTimetable {
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
             Session session = sessionFactory.openSession()) {
 
-            buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 200, 799,  "A320", 30);
+            engine = ProcessEngineBuilder.create()
+                    .withTimeMachine(new RealTimeMachine())
+                    .withSessionFactory(sessionFactory)
+                    .build();
+
+            addRoundtripTimetableRow(session, "ZZ", "A320",
+                    CommonOps.airportByIcao(session, "EGLL"),
+                    CommonOps.airportByIcao(session, "LFPG"),
+                    "08:00");
+
+/*            buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 200, 799,  "A320", 30);
             buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 800, 1500, "A320", 20);
             buildMidRangeHub(session, "ZZ", "United kingdom", "London", 100, 1500, "A320", 50);
             buildMidRangeHub(session, "ZZ", "United states", "New york", 100, 2000, "A320", 50);
@@ -107,7 +123,7 @@ public class BuildTimetable {
             addRoundtripTimetableRow(session, "WW", "B744",
                     findAirportForCity(session, "China", "Shanghai"),
                     findAirportForCity(session, "Singapore", "Singapore"),
-                    "07:00");
+                    "07:00");*/
         }
     }
 
@@ -221,6 +237,7 @@ public class BuildTimetable {
         flight1row.setTotalTickets(aircraftTypeIcao.equals("B744") ? 350 : 160); // todo AK
 
         session.save(flight1row);
+        engine.startActivity(session, ScheduleFlight.class, flight1row);
 
 
         LocalTime flight2departureTime = LocalTime.parse(departureTime).plus(flightDuration).plusMinutes(90);
@@ -242,6 +259,7 @@ public class BuildTimetable {
         flight2row.setTotalTickets(aircraftTypeIcao.equals("B744") ? 350 : 160); // todo AK
 
         session.save(flight2row);
+        engine.startActivity(session, ScheduleFlight.class, flight2row);
 
 
         session.getTransaction().commit();

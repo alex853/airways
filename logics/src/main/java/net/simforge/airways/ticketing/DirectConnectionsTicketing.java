@@ -24,8 +24,8 @@ public class DirectConnectionsTicketing {
             //noinspection unchecked
             List<TransportFlight> flights = session.createQuery("select tp " +
                     "from TransportFlight tp " +
-                    "where tp.fromAirport = (select ac.airport from Airport2City ac where ac.city = :fromCity) " + // todo ac.dataset = active
-                    "  and tp.toAirport = (select ac.airport from Airport2City ac where ac.city = :toCity) " + // todo ac.dataset = active
+                    "where tp.fromAirport in (select ac.airport from Airport2City ac where ac.city = :fromCity) " + // todo ac.dataset = active
+                    "  and tp.toAirport in (select ac.airport from Airport2City ac where ac.city = :toCity) " + // todo ac.dataset = active
                     "  and tp.departureDt >= :departureTimeSince " +
                     "  and tp.status = :scheduled " +
                     "  and tp.freeTickets >= :groupSize " +

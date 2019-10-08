@@ -42,6 +42,8 @@ public class LookingForTickets implements Activity {
         BM.start("LookingForTickets.act");
         try (Session session = sessionFactory.openSession()) {
 
+            journey = session.load(Journey.class, journey.getId());
+
             TicketingRequest ticketingRequest = TicketingRequest.get(journey, session, timeMachine);
             List<TransportFlight> foundFlights = DirectConnectionsTicketing.search(ticketingRequest);
 
@@ -75,6 +77,8 @@ public class LookingForTickets implements Activity {
                 journey.setItinerary(firstItinerary);
                 session.update(journey);
 
+                session.save(EventLog.make(journey, "Tickets bought"));
+
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setTicketsBought(stats.getTicketsBought() + journey.getGroupSize());
                 session.update(stats);
@@ -83,6 +87,7 @@ public class LookingForTickets implements Activity {
             });
 
             return Result.done();
+
         } finally {
             BM.stop();
         }
@@ -92,6 +97,7 @@ public class LookingForTickets implements Activity {
     public Result onExpiry() {
         BM.start("LookingForTickets.onExpiry");
         try (Session session = sessionFactory.openSession()) {
+
             journey = session.load(Journey.class, journey.getId());
 
             HibernateUtils.transaction(session, () -> {
@@ -115,6 +121,7 @@ public class LookingForTickets implements Activity {
             });
 
             return Result.nothing();
+
         } finally {
             BM.stop();
         }

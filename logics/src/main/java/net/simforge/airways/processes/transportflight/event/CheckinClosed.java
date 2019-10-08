@@ -38,6 +38,11 @@ public class CheckinClosed implements Event, Handler {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.transaction(session, () -> {
 
+                transportFlight = session.load(TransportFlight.class, transportFlight.getId());
+
+                transportFlight.setStatus(TransportFlight.Status.WaitingForBoarding);
+                session.update(transportFlight);
+
                 ActivityInfo checkinActivity = engine.findActivity(Checkin.class, transportFlight);
                 if (!checkinActivity.isFinished()) {
                     engine.stopActivity(checkinActivity);

@@ -15,7 +15,8 @@ public class AddAircraftFleet {
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
              Session session = sessionFactory.openSession()) {
 
-            AircraftOps.addAircrafts(session, "ZZ", "A320", "UUDD", "VP-A??", 30);
+//            AircraftOps.addAircrafts(session, "ZZ", "A320", "UUDD", "VP-A??", 30);
+            AircraftOps.addAircrafts(session, "ZZ", "A320", "EGLL", "G-AA??", 1);
 // todo find appropriate ICAOs for the hubs below           buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 800, 1500, "A320", 20);
 //            buildMidRangeHub(session, "ZZ", "United kingdom", "London", 100, 1500, "A320", 50);
 //            buildMidRangeHub(session, "ZZ", "United states", "New york", 100, 2000, "A320", 50);
@@ -28,9 +29,9 @@ public class AddAircraftFleet {
 //            buildMidRangeHub(session, "ZZ", "Australia", "Sydney", 100, 2000, "A320", 50);*/
 
             //B744
-            AircraftOps.addAircrafts(session, "WW", "B744", "EGLL", "G-BN??", 10);
-            AircraftOps.addAircrafts(session, "WW", "B744", "YSSY", "VH-B??", 10);
-            AircraftOps.addAircrafts(session, "WW", "B744", "ZSPD", "X-CB??", 10);
+//            AircraftOps.addAircrafts(session, "WW", "B744", "EGLL", "G-BN??", 10);
+//            AircraftOps.addAircrafts(session, "WW", "B744", "YSSY", "VH-B??", 10);
+//            AircraftOps.addAircrafts(session, "WW", "B744", "ZSPD", "X-CB??", 10);
         }
     }
 }

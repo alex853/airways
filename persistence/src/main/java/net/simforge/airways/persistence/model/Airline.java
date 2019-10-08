@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model;
 
 import net.simforge.commons.hibernate.Auditable;
@@ -79,5 +83,10 @@ public class Airline implements BaseEntity, Auditable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Airline{ " + name + " (" + iata + ", " + icao + ") }";
     }
 }

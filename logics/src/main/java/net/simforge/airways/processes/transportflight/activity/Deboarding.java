@@ -49,7 +49,7 @@ public class Deboarding implements Activity {
             List<Journey> journeysOnBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.OnBoard).collect(Collectors.toList());
 
             if (journeysOnBoard.isEmpty()) {
-                engine.fireEvent(session, DeboardingCompleted.class, transportFlight);
+                engine.fireEvent(DeboardingCompleted.class, transportFlight);
                 return Result.done();
             }
 

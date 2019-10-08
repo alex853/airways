@@ -64,7 +64,7 @@ public class OneFlightTest extends BaseEngineCaseTest {
             assertEquals(Flight.Status.Finished, flight.getStatus().intValue());
 
             TransportFlight transportFlight = flight.getTransportFlight();
-            // todo p3 uncomment that failing line assertEquals(TransportFlight.Status.Finished, transportFlight.getStatus());
+            assertEquals(TransportFlight.Status.Finished, transportFlight.getStatus());
         }
     }
 }

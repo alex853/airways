@@ -19,8 +19,7 @@ import net.simforge.airways.persistence.model.flight.PilotAssignment;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.processes.DurationConsts;
 import net.simforge.airways.processes.flight.activity.FlightContext;
-import net.simforge.airways.processes.flight.event.StartBoardingCommand;
-import net.simforge.airways.processes.flight.event.StartDeboardingCommand;
+import net.simforge.airways.processes.flight.event.*;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.airways.processengine.TimeMachine;
@@ -205,6 +204,8 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Departure);
                 flight.setActualDepartureTime(timeMachine.now());
 
+                engine.fireEvent(session, BlocksOff.class, flight);
+
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
                 aircraft.setStatus(Aircraft.Status.TaxiingOut);
@@ -233,6 +234,8 @@ public class PilotOnDuty implements Activity {
 
                 flight.setStatus(Flight.Status.Flying);
                 flight.setActualTakeoffTime(timeMachine.now());
+
+                engine.fireEvent(session, Takeoff.class, flight);
 
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -325,6 +328,8 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Arrival);
                 flight.setActualLandingTime(timeMachine.now());
 
+                engine.fireEvent(session, Landing.class, flight);
+
                 person.setLocationAirport(flight.getToAirport());
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -358,6 +363,8 @@ public class PilotOnDuty implements Activity {
 
                 flight.setStatus(Flight.Status.PostFlight);
                 flight.setActualArrivalTime(timeMachine.now());
+
+                engine.fireEvent(session, BlocksOn.class, flight);
 
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 

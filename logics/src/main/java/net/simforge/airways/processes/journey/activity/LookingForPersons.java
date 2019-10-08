@@ -4,6 +4,7 @@
 
 package net.simforge.airways.processes.journey.activity;
 
+import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
@@ -39,60 +40,79 @@ public class LookingForPersons implements Activity {
     public Result act() {
         BM.start("LookingForPersons.act");
         try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.transaction(session, () -> {
-                // Note: no expiration check here!
 
-                // journey is loaded via another session and it can cause issues later when journey will be updated
-                journey = session.load(Journey.class, journey.getId());
+            journey = session.load(Journey.class, journey.getId());
 
-                City originCity = journey.getC2cFlow().getFromFlow().getCity();
-                City fromCity = journey.getFromCity();
+            List<Person> journeyPersons = JourneyOps.getPersons(session, journey);
+            int currentGroupSize = journeyPersons.size();
 
-                List<Person> persons;
+            City originCity = journey.getC2cFlow().getFromFlow().getCity();
+            City fromCity = journey.getFromCity();
 
-                BM.start("LookingForPersons.act#query");
-                try {
-                    //noinspection unchecked
-                    persons = session
-                            .createQuery("from Person " +
-                                    "where type = :ordinal " +
-                                    "  and status = :readyToTravel " +
-                                    "  and locationCity = :fromCity")
-                            .setInteger("ordinal", Person.Type.Ordinal)
-                            .setInteger("readyToTravel", Person.Status.Idle)
-                            .setEntity("fromCity", fromCity)
-                            .setMaxResults(journey.getGroupSize())
-                            .list();
-                } finally {
-                    BM.stop();
+            List<Person> freePersons;
+
+            BM.start("LookingForPersons.act#query");
+            try {
+                //noinspection unchecked
+                freePersons = session
+                        .createQuery("from Person " +
+                                "where type = :ordinal " +
+                                "  and status = :readyToTravel " +
+                                "  and locationCity = :fromCity")
+                        .setInteger("ordinal", Person.Type.Ordinal)
+                        .setInteger("readyToTravel", Person.Status.Idle)
+                        .setEntity("fromCity", fromCity)
+                        .setMaxResults(journey.getGroupSize())
+                        .list();
+            } finally {
+                BM.stop();
+            }
+
+            for (Person freePerson : freePersons) {
+                if (currentGroupSize == journey.getGroupSize()) {
+                    break;
                 }
 
-                if (persons.size() < journey.getGroupSize()) {
-                    logger.debug("Journey {}-{} - found {} persons, while journey needs {} persons, creating insufficient persons", fromCity.getName(), journey.getToCity().getName(), persons.size(), journey.getGroupSize());
+                HibernateUtils.transaction(session, () -> {
+                    freePerson.setStatus(Person.Status.OnJourney);
+                    freePerson.setJourney(journey);
+                    session.update(freePerson);
+                    session.save(EventLog.make(freePerson, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
+                });
 
-                    while (persons.size() < journey.getGroupSize()) {
+                currentGroupSize++;
+            }
+
+            boolean returningJourney = originCity.getId().intValue() != fromCity.getId().intValue();
+            if (!returningJourney) {
+                while (currentGroupSize < journey.getGroupSize()) {
+                    HibernateUtils.transaction(session, () -> {
                         Person person = PersonOps.createOrdinalPerson(session, originCity);
-                        persons.add(person);
-                    }
-                } else {
-                    logger.debug("Journey {}-{} - all persons found", fromCity.getName(), journey.getToCity().getName(), persons.size());
+
+                        person.setStatus(Person.Status.OnJourney);
+                        person.setJourney(journey);
+                        session.update(person);
+                        session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
+                    });
+                    currentGroupSize++;
                 }
+            } // else - we do not create persons for returning journeys as persons should be created only in their city of origin
 
-                for (Person person : persons) {
-                    person.setStatus(Person.Status.OnJourney);
-                    person.setJourney(journey);
-                    session.update(person);
-                    session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
-                }
+            if (currentGroupSize == journey.getGroupSize()) {
+                logger.debug("Journey {}-{} - all persons found", fromCity.getName(), journey.getToCity().getName(), currentGroupSize);
 
-                journey.setStatus(Journey.Status.LookingForTickets);
-                session.update(journey);
-                session.save(EventLog.make(journey, "Looking for tickets"));
+                HibernateUtils.transaction(session, () -> {
+                    journey.setStatus(Journey.Status.LookingForTickets);
+                    session.update(journey);
+                    session.save(EventLog.make(journey, "Looking for tickets"));
 
-                engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(7));
-            });
+                    engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(7));
+                });
+                return Result.done();
+            } else {
+                return Result.resume(Result.When.NextDay);
+            }
 
-            return Result.done();
         } finally {
             BM.stop();
         }
@@ -100,6 +120,29 @@ public class LookingForPersons implements Activity {
 
     @Override
     public Result onExpiry() {
-        return Result.nothing(); // no op because no expiration expected
+        BM.start("LookingForPersons.onExpiry");
+        try (Session session = sessionFactory.openSession()) {
+            journey = session.load(Journey.class, journey.getId());
+
+            HibernateUtils.transaction(session, () -> {
+                journey.setStatus(Journey.Status.CouldNotFindPersons);
+                session.update(journey);
+
+                session.save(EventLog.make(journey, "Journey could not be populated in appropriate time"));
+
+                List<Person> persons = JourneyOps.getPersons(session, journey);
+                for (Person person : persons) {
+                    person.setStatus(Person.Status.Idle);
+                    person.setJourney(null);
+                    session.update(person);
+
+                    session.save(EventLog.make(person, "Journey expired during populating", journey));
+                }
+            });
+
+            return Result.nothing();
+        } finally {
+            BM.stop();
+        }
     }
 }

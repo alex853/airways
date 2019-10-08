@@ -213,7 +213,6 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
                 '}';
     }
 
-    // todo p3 implement all those statuses
     public class Status {
         public static final int Scheduled             =  100;
         public static final int Checkin               = 1000;

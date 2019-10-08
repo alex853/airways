@@ -12,6 +12,7 @@ import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
 import net.simforge.airways.persistence.model.flight.TimetableRow;
 import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.processes.DurationConsts;
 import net.simforge.airways.processes.flight.event.Planned;
 import net.simforge.airways.processes.transportflight.event.Scheduled;
 import net.simforge.airways.util.FlightTimeline;
@@ -27,6 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collection;
 import java.util.Map;
@@ -66,6 +68,9 @@ public class ScheduleFlight implements Activity {
             }
 
             LocalDate today = timeMachine.now().toLocalDate();
+            LocalDateTime todayFlightDeadline = today.atTime(LocalTime.parse(timetableRow.getDepartureTime())).minusHours(DurationConsts.DO_NOT_SCHEDULE_FLIGHTS_CLOSER_THAN_THAT_HOURS);
+            LocalDate fromDay = todayFlightDeadline.isAfter(timeMachine.now()) ? today : today.plusDays(1);
+
             LocalDate tillDay = today.plusDays(horizon);
 
             Collection<TransportFlight> transportFlights;
@@ -80,7 +85,7 @@ public class ScheduleFlight implements Activity {
             Weekdays weekdays = Weekdays.valueOf(timetableRow.getWeekdays());
 
             boolean someFlightFailed = false;
-            for (LocalDate curr = today; curr.isBefore(tillDay) || curr.isEqual(tillDay); curr = curr.plusDays(1)) {
+            for (LocalDate curr = fromDay; curr.isBefore(tillDay) || curr.isEqual(tillDay); curr = curr.plusDays(1)) {
                 if (!weekdays.isOn(curr.getDayOfWeek())) {
                     logger.debug("Date {} - skip due to weekdays config", curr);
                     continue;

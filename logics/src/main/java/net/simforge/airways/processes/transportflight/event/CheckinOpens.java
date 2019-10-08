@@ -39,6 +39,11 @@ public class CheckinOpens implements Event, Handler {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.transaction(session, () -> {
 
+                transportFlight = session.load(TransportFlight.class, transportFlight.getId());
+
+                transportFlight.setStatus(TransportFlight.Status.Checkin);
+                session.update(transportFlight);
+
                 engine.startActivity(session, Checkin.class, transportFlight);
 
                 LocalDateTime checkinClosesAt = transportFlight.getDepartureDt().minusMinutes(DurationConsts.END_OF_CHECKIN_TO_DEPARTURE_MINS);

@@ -1,3 +1,7 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.geo;
 
 import javax.persistence.*;
@@ -47,6 +51,11 @@ public class Country {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    @Override
+    public String toString() {
+        return "Country { " + name + " }";
     }
 
 }

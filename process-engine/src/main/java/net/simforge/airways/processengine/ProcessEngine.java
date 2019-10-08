@@ -10,6 +10,7 @@ import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Misc;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -32,6 +33,8 @@ public class ProcessEngine implements Runnable {
     TimeMachine timeMachine;
     SessionFactory sessionFactory;
 
+    private volatile boolean stopRequested = false;
+
     ProcessEngine() {
     }
 
@@ -41,12 +44,14 @@ public class ProcessEngine implements Runnable {
 
             tick();
 
-            Misc.sleepBM(100);
+            Misc.sleepBM(50);
+
+            BM.logPeriodically(true);
         }
     }
 
     private boolean isStopRequested() {
-        throw new UnsupportedOperationException("ProcessEngine.isStopRequested");
+        return stopRequested;
     }
 
     public void tick() {
@@ -86,7 +91,7 @@ public class ProcessEngine implements Runnable {
             Processor processor = Processor.create(_task, processorInjectionContext);
             processorInjectionContext.inject(processor);
 
-            HibernateUtils.transaction(session, () -> {
+            HibernateUtils.transaction(session, "ProcessEngine.tick#process", () -> {
                 processor.process();
 
                 session.update(_task);
@@ -101,19 +106,27 @@ public class ProcessEngine implements Runnable {
     }
 
     private void invalidateQueue() {
-        List<TaskEntity> tasks;
-        LocalDateTime now = timeMachine.now();
-        int maxResults = 1000;
+        if (!taskQueue.isEmpty()) {
+            return;
+        }
+
+        BM.start("ProcessEngine.invalidateQueue");
         try (Session session = sessionFactory.openSession()) {
+            List<TaskEntity> tasks;
+            LocalDateTime now = timeMachine.now();
+            int maxResults = 1000;
+
             //noinspection unchecked
             tasks = session
                     .createQuery("from EngineTask where taskTime <= :toTime order by taskTime")
                     .setParameter("toTime", now.plusMinutes(1))
                     .setMaxResults(maxResults)
                     .list();
-        }
 
-        taskQueue = new ArrayDeque<>(tasks); // very trivial way of queue management based on database query with sorting
+            taskQueue = new ArrayDeque<>(tasks); // very trivial way of queue management based on database query with sorting
+        } finally {
+            BM.stop();
+        }
     }
 
     private void buildInjectionContext() {
@@ -230,7 +243,7 @@ public class ProcessEngine implements Runnable {
                             "and entityId = :entityId " +
                             "order by status asc, id desc")
                     .setString("activityClass", activityClass.getName())
-                    .setString("entityClass", entity.getClass().getName())
+                    .setString("entityClass", Hibernate.getClass(entity).getName())
                     .setInteger("entityId", entity.getId())
                     .setMaxResults(1) // we are looking for one row only
                     .uniqueResult();

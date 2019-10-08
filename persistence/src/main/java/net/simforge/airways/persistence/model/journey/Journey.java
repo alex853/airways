@@ -155,6 +155,7 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
 
     public static class Status {
         public static final int LookingForPersons   = 1000;
+        public static final int CouldNotFindPersons = 1999;
         public static final int LookingForTickets   = 2000;
         public static final int CouldNotFindTickets = 2999;
         public static final int WaitingForFlight    = 3000;
