@@ -1,9 +1,13 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.geo;
 
 import javax.persistence.*;
 
-@Entity
-@Table(name="aw_airport2city")
+@Entity(name = "Airport2City")
+@Table(name = "aw_airport2city")
 public class Airport2City {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_airport_id_seq")

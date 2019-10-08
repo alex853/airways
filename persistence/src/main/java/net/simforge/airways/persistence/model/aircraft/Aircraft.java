@@ -30,9 +30,6 @@ public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
-
     @ManyToOne
     @JoinColumn(name = "aircraft_type_id")
     private AircraftType type;
@@ -84,16 +81,6 @@ public class Aircraft implements BaseEntity, Auditable, EventLog.Loggable {
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
-
-/*    @Override
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    @Override
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
 
     public AircraftType getType() {
         return type;

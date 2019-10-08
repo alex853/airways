@@ -87,7 +87,7 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
                     logger.info("City2CityFlow {}-{} - generating journey for group of {} persons, direct direction - {}", flow.getFromFlow().getCity().getName(), flow.getToFlow().getCity().getName(), flow.getNextGroupSize(), directOrBackDirection);
 
                     Journey journey = JourneyOps.create(session, flow, directOrBackDirection);
-                    engine.startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(3));
+                    engine.startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
 
                     flow.setAccumulatedFlow(flow.getAccumulatedFlow() - flow.getNextGroupSize());
                     flow.setNextGroupSize(CityFlowOps.randomGroupSize());

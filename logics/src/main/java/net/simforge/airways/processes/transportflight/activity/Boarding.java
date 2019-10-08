@@ -51,7 +51,7 @@ public class Boarding implements Activity {
             List<Journey> journeysWaitingToBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.WaitingForBoarding).collect(Collectors.toList());
 
             if (journeysWaitingToBoard.isEmpty()) {
-                engine.fireEvent(session, BoardingCompleted.class, transportFlight);
+                engine.fireEvent(BoardingCompleted.class, transportFlight);
                 return Result.done();
             }
 

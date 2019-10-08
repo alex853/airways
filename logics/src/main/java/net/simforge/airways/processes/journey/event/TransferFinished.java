@@ -4,6 +4,7 @@
 
 package net.simforge.airways.processes.journey.event;
 
+import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -24,6 +25,8 @@ public class TransferFinished implements Event, Handler {
     @Inject
     private Transfer transfer;
     @Inject
+    private ProcessEngine engine;
+    @Inject
     private SessionFactory sessionFactory;
 
     @Override
@@ -43,9 +46,18 @@ public class TransferFinished implements Event, Handler {
                     person.setLocationAirport(transfer.getToAirport());
                     session.update(person);
                 });
-
+// todo p2 event log
                 if (transfer.getOnFinishedStatus() != null) {
                     journey.setStatus(transfer.getOnFinishedStatus());
+                } if (transfer.getOnFinishedEvent() != null) {
+                    Class eventClass;
+                    try {
+                        eventClass = Class.forName(transfer.getOnFinishedEvent());
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException(e); // todo p5
+                    }
+                    //noinspection unchecked
+                    engine.fireEvent(session, eventClass, journey);
                 }
 
                 journey.setTransfer(null);

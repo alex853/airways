@@ -45,8 +45,6 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     private Integer groupSize;
     @Column
     private Integer status;
-    @Column(name = "expiration_dt")
-    private LocalDateTime expirationDt;
     @ManyToOne
     @JoinColumn(name = "itinerary_id")
     private Itinerary itinerary;
@@ -129,14 +127,6 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
         this.status = status;
     }
 
-    public LocalDateTime getExpirationDt() {
-        return expirationDt;
-    }
-
-    public void setExpirationDt(LocalDateTime expirationDt) {
-        this.expirationDt = expirationDt;
-    }
-
     public Itinerary getItinerary() {
         return itinerary;
     }
@@ -153,21 +143,30 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
         this.transfer = transfer;
     }
 
+    @Override
+    public String toString() {
+        return "Journey {" +
+                "id = " + id +
+                ", groupSize = " + groupSize +
+                ", status = " + status +
+                '}';
+    }
+
     public static class Status {
         public static final int LookingForPersons   = 1000;
-        public static final int CouldNotFindPersons = 1999;
         public static final int LookingForTickets   = 2000;
-        public static final int CouldNotFindTickets = 2999;
         public static final int WaitingForFlight    = 3000;
         public static final int TransferToAirport   = 3100;
         public static final int WaitingForCheckin   = 3200;
         public static final int WaitingForBoarding  = 3300;
-        public static final int TooLateToBoard      = 3999;
         public static final int OnBoard             = 4000;
         public static final int JustArrived         = 5000;
         public static final int TransferToCity      = 5100;
         public static final int ItinerariesDone     = 6000;
-        public static final int Done                = 9999;
-        // deprecated public static final int Died                = 9999;
+        public static final int Finished            = 7777;
+        public static final int CouldNotFindPersons = 9991;
+        public static final int CouldNotFindTickets = 9992;
+        public static final int TooLateToBoard      = 9993;
+        public static final int Terminated          = 9999;
     }
 }

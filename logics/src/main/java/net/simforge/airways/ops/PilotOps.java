@@ -54,7 +54,6 @@ public class PilotOps {
                 Pilot pilot = new Pilot();
                 pilot.setPerson(person);
                 pilot.setStatus(Pilot.Status.Idle);
-                //pilot.setHeartbeatDt(JavaTime.nowUtc());
                 session.save(pilot);
 
                 EventLog.saveLog(session, pilot, "Pilot created", person);

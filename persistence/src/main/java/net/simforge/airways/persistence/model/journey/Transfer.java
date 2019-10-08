@@ -50,6 +50,8 @@ public class Transfer implements BaseEntity, Auditable, EventLog.Loggable {
     private Integer onStartedStatus;
     @Column(name = "on_finished_status")
     private Integer onFinishedStatus;
+    @Column(name = "on_finished_event")
+    private String onFinishedEvent;
 
     @Override
     public String getEventLogCode() {
@@ -140,5 +142,13 @@ public class Transfer implements BaseEntity, Auditable, EventLog.Loggable {
 
     public void setOnFinishedStatus(Integer onFinishedStatus) {
         this.onFinishedStatus = onFinishedStatus;
+    }
+
+    public String getOnFinishedEvent() {
+        return onFinishedEvent;
+    }
+
+    public void setOnFinishedEvent(String onFinishedEvent) {
+        this.onFinishedEvent = onFinishedEvent;
     }
 }

@@ -106,7 +106,7 @@ public class LookingForPersons implements Activity {
                     session.update(journey);
                     session.save(EventLog.make(journey, "Looking for tickets"));
 
-                    engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(7));
+                    engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
                 });
                 return Result.done();
             } else {

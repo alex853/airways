@@ -44,7 +44,7 @@ public class ProcessEngine implements Runnable {
 
             tick();
 
-            Misc.sleepBM(50);
+            Misc.sleepBM(10);
 
             BM.logPeriodically(true);
         }

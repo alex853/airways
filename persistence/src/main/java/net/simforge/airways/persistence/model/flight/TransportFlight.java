@@ -33,9 +33,6 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
-
     @ManyToOne
     @JoinColumn(name = "timetable_row_id")
     private TimetableRow timetableRow;
@@ -97,16 +94,6 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
-
-/*    @Override
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    @Override
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
 
     public TimetableRow getTimetableRow() {
         return timetableRow;

@@ -83,7 +83,7 @@ public class PilotOnDuty implements Activity {
 
                     return Result.resume(NextMinute);
                 } else {
-                    logger.error("Pilot {} - Unable to find start the flight");
+                    logger.error("Pilot {} - Unable to start the flight");
                     // todo event log, cancellation?
                     return Result.done(); // todo error?
                 }
@@ -135,6 +135,8 @@ public class PilotOnDuty implements Activity {
                 case Flight.Status.PostFlight:
                     if (timeline.getFinish().getEstimatedTime().isBefore(now)) {
                         finishFlight(flightCtx);
+
+                        return Result.done();
                     }
                     break;
 

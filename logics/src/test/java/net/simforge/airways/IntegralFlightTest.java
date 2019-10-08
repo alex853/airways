@@ -7,6 +7,7 @@ package net.simforge.airways;
 import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.PersonOps;
 import net.simforge.airways.ops.PilotOps;
+import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.Pilot;
 import net.simforge.airways.persistence.model.aircraft.Aircraft;
@@ -16,6 +17,8 @@ import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import org.hibernate.Session;
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -72,19 +75,24 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
             assertEquals(Pilot.Status.Idle, pilot.getStatus().intValue());
 
             Assert.assertEquals(4, PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getLondonCity()).size());
-            assertEquals(6, PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getManchesterCity()).size());
+
+            List<Person> peopleOfManchester = PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getManchesterCity());
+            assertEquals(6, peopleOfManchester.size());
+            for (Person person : peopleOfManchester) {
+                assertEquals(Person.Status.Idle, person.getStatus().intValue());
+                assertNull(person.getJourney());
+            }
 
             journey1 = session.load(Journey.class, journey1.getId());
             journey2 = session.load(Journey.class, journey2.getId());
             journey3 = session.load(Journey.class, journey3.getId());
-            assertEquals(Journey.Status.Done, journey1.getStatus().intValue());
-            assertEquals(Journey.Status.Done, journey2.getStatus().intValue());
-            assertEquals(Journey.Status.Done, journey3.getStatus().intValue());
+            assertEquals(Journey.Status.Finished, journey1.getStatus().intValue());
+            assertEquals(Journey.Status.Finished, journey2.getStatus().intValue());
+            assertEquals(Journey.Status.Finished, journey3.getStatus().intValue());
             assertNull(journey1.getItinerary());
             assertNull(journey2.getItinerary());
             assertNull(journey3.getItinerary());
 
         }
     }
-
 }

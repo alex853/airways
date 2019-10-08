@@ -6,7 +6,7 @@ package net.simforge.airways.persistence.model.geo;
 
 import javax.persistence.*;
 
-@Entity
+@Entity(name = "Country")
 @Table(name = "aw_country")
 public class Country {
     @Id

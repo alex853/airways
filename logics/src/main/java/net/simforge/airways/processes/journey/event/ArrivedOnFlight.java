@@ -62,7 +62,7 @@ public class ArrivedOnFlight implements Event, Handler {
                     journey.setItinerary(null);
                     session.update(journey);
 
-                    TransferLauncher.startTransferToCity(engine, session, journey, journey.getToCity());
+                    TransferLauncher.startTransferToCityThenEvent(engine, session, journey, journey.getToCity(), FinishOnArrivalToCity.class);
 
                 });
 

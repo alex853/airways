@@ -10,7 +10,7 @@ import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.flight.Flight;
-import net.simforge.airways.processes.flight.event.Cancelled;
+import net.simforge.airways.processes.flight.event.CancelDueToNoAllocation;
 import net.simforge.airways.processes.flight.event.FullyAllocated;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
@@ -58,7 +58,7 @@ public class AllocateFlight implements Activity {
             if (isFullyAllocated) {
                 engine.fireEvent(FullyAllocated.class, flight);
             } else {
-                engine.fireEvent(Cancelled.class, flight); // todo p3 СancelDueToNoAllocation instead of Cancelled?
+                engine.fireEvent(CancelDueToNoAllocation.class, flight);
                 HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Unable to fully allocate the flight"));
             }
         }

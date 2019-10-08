@@ -27,7 +27,6 @@ public class JourneyOps {
             journey.setToCity(directDirection ? flow.getToFlow().getCity() : flow.getFromFlow().getCity());
             journey.setC2cFlow(flow);
             journey.setStatus(Journey.Status.LookingForPersons);
-            journey.setExpirationDt(JavaTime.nowUtc().plusDays(7));
 
             session.save(journey);
             EventLog.saveLog(session, journey, String.format("New journey is created, group contains %s person(s)", journey.getGroupSize()), flow.getFromFlow().getCity(), flow);
@@ -64,10 +63,6 @@ public class JourneyOps {
         }
     }
 
-    public static boolean isExpired(Journey journey) {
-        return journey.getExpirationDt().isBefore(JavaTime.nowUtc());
-    }
-
     public static Collection<Journey> loadJourneysForFlight(Session session, TransportFlight transportFlight) {
         BM.start("JourneyOps.loadJourneysForFlight");
         try {
@@ -77,6 +72,27 @@ public class JourneyOps {
                             "where j.itinerary.flight = :flight")
                     .setEntity("flight", transportFlight)
                     .list();
+        } finally {
+            BM.stop();
+        }
+    }
+
+    public static void terminateJourney(Session session, Journey journey) {
+        BM.start("JourneyOps.terminateJourney");
+        try {
+
+            journey.setStatus(Journey.Status.Terminated);
+            session.update(journey);
+
+            List<Person> persons = getPersons(session, journey);
+            persons.forEach(person -> {
+                person.setStatus(Person.Status.Idle);
+                person.setJourney(null);
+                session.update(person);
+            });
+
+            session.save(EventLog.make(journey, "Journey dissolved & TERMINATED"));
+
         } finally {
             BM.stop();
         }

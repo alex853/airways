@@ -1,0 +1,5 @@
+
+select distinct(to_char(heartbeat_dt, 'YYYY-MM-DD')), count(*) from aw_city2city_flow group by to_char(heartbeat_dt, 'YYYY-MM-DD') order by 1 limit 100
+
+select distinct(to_char(tasktime, 'YYYY-MM-DD HH24')), processorClassName, count(*) from engine_task group by to_char(tasktime, 'YYYY-MM-DD HH24'), processorClassName order by 1, 2 limit 100
+

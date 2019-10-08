@@ -9,7 +9,7 @@ import net.simforge.commons.misc.Geo;
 
 import javax.persistence.*;
 
-@Entity
+@Entity(name = "City")
 @Table(name = "aw_city")
 public class City implements EventLog.Loggable {
     public static final String EventLogCode = "city";
@@ -110,6 +110,6 @@ public class City implements EventLog.Loggable {
 
     @Override
     public String toString() {
-        return "City { " + name + " }";
+        return "City { " + name + ", population " + population + " }";
     }
 }

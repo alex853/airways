@@ -5,12 +5,16 @@
 package net.simforge.airways.processes.journey;
 
 import net.simforge.airways.ops.JourneyOps;
+import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Person;
 import net.simforge.airways.persistence.model.geo.Airport;
 import net.simforge.airways.persistence.model.geo.City;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.persistence.model.journey.Transfer;
 import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.event.Event;
+import net.simforge.airways.processes.journey.event.ArrivalToAirportFromCity;
+import net.simforge.airways.processes.journey.event.CancelOnArrivalToCity;
 import net.simforge.airways.processes.journey.event.TransferStarted;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Geo;
@@ -18,6 +22,7 @@ import org.hibernate.Session;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TransferLauncher {
     public static void scheduleTransferToAirport(ProcessEngine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
@@ -34,7 +39,7 @@ public class TransferLauncher {
             transfer.setDistance(distance);
             transfer.setDuration(durationMinutes);
             transfer.setOnStartedStatus(Journey.Status.TransferToAirport);
-            transfer.setOnFinishedStatus(Journey.Status.WaitingForCheckin);
+            transfer.setOnFinishedEvent(ArrivalToAirportFromCity.class.getName());
             session.save(transfer);
 
             journey.setTransfer(transfer);
@@ -46,8 +51,8 @@ public class TransferLauncher {
         }
     }
 
-    public static void startTransferToCity(ProcessEngine engine, Session session, Journey journey, City toCity) {
-        BM.start("TransferLauncher.startTransferToCity");
+    public static void startTransferToCityThenEvent(ProcessEngine engine, Session session, Journey journey, City toCity, Class<? extends Event> eventClass) {
+        BM.start("TransferLauncher.startTransferToCityThenEvent");
         try {
             journey = session.load(Journey.class, journey.getId());
 
@@ -60,13 +65,50 @@ public class TransferLauncher {
             transfer.setDistance(distance);
             transfer.setDuration(durationMinutes);
             transfer.setOnStartedStatus(Journey.Status.TransferToCity);
-            transfer.setOnFinishedStatus(Journey.Status.Done);
+            transfer.setOnFinishedEvent(eventClass.getName());
             session.save(transfer);
 
             journey.setTransfer(transfer);
             session.update(journey);
 
             engine.fireEvent(session, TransferStarted.class, transfer);
+        } finally {
+            BM.stop();
+        }
+    }
+
+    public static void startTransferToBiggestCityThenCancel(ProcessEngine engine, Session session, Journey journey) {
+        BM.start("TransferLauncher.startTransferToBiggestCityThenCancel");
+        try {
+            List<Person> persons = JourneyOps.getPersons(session, journey);
+            List<Airport> airports = persons.stream().map(Person::getLocationAirport).collect(Collectors.toList());
+            Airport currentAirport = airports.get(0);
+
+            //noinspection unchecked
+            List<City> cities = session
+                    .createQuery("select ac.city " +
+                            "from Airport2City ac " +
+                            "where ac.airport = :airport")
+                    .setEntity("airport", currentAirport)
+                    .list();
+
+            City theBiggestCity = null;
+            for (City city : cities) {
+                if (theBiggestCity == null) {
+                    theBiggestCity = city;
+                    continue;
+                }
+
+                if (theBiggestCity.getPopulation() < city.getPopulation()) {
+                    theBiggestCity = city;
+                }
+            }
+
+            //noinspection ConstantConditions
+            session.save(EventLog.make(journey, "Transfer & Cancel to city " + theBiggestCity.getName()));
+
+            TransferLauncher.startTransferToCityThenEvent(engine, session, journey, theBiggestCity, CancelOnArrivalToCity.class);
+
         } finally {
             BM.stop();
         }
