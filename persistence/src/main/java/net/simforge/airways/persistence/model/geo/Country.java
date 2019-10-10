@@ -10,8 +10,8 @@ import javax.persistence.*;
 @Table(name = "aw_country")
 public class Country {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_country_id_seq")
-    @SequenceGenerator(name = "aw_country_id_seq", sequenceName = "aw_country_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_country_id")
+    @SequenceGenerator(name = "aw_country_id", sequenceName = "aw_country_id_seq", allocationSize = 1)
     private Integer id;
     @Version
     private Integer version;

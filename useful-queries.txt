@@ -3,3 +3,12 @@ select distinct(to_char(heartbeat_dt, 'YYYY-MM-DD')), count(*) from aw_city2city
 
 select distinct(to_char(tasktime, 'YYYY-MM-DD HH24')), processorClassName, count(*) from engine_task group by to_char(tasktime, 'YYYY-MM-DD HH24'), processorClassName order by 1, 2 limit 100
 
+select ctr.name, c.name, c.population, c.id from aw_city c join aw_country ctr on ctr.id = c.country_id where dataset = 0 order by 1, 2
+
+select * from aw_city2city_flow where id in (57870, 46573)
+
+select * from aw_journey where c2c_flow_id in (57870, 46573) order by create_dt desc
+
+select sum(group_size) from aw_journey j join aw_journey_itinerary i on i.id = j.itinerary_id where j.status = 4000 and i.flight_id = 2
+
+select a.icao, a.name, ac.* from aw_airport2city ac join aw_airport a on a.id = ac.airport_id where city_id = 16631 order by 1

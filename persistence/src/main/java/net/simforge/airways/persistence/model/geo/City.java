@@ -15,8 +15,8 @@ public class City implements EventLog.Loggable {
     public static final String EventLogCode = "city";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_city_id_seq")
-    @SequenceGenerator(name = "aw_city_id_seq", sequenceName = "aw_city_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_city_id")
+    @SequenceGenerator(name = "aw_city_id", sequenceName = "aw_city_id_seq", allocationSize = 1)
     private Integer id;
     @Version
     private Integer version;

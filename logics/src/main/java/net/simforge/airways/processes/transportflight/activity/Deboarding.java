@@ -59,7 +59,7 @@ public class Deboarding implements Activity {
             for (Journey journey : journeysOnBoard) {
                 paxThisRun += journey.getGroupSize();
                 journeysToDeboardThisRun.add(journey);
-                if (paxThisRun > minPaxPerRun) {
+                if (paxThisRun >= minPaxPerRun) {
                     break;
                 }
             }

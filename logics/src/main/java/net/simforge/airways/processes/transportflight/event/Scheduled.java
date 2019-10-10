@@ -49,6 +49,8 @@ public class Scheduled implements Event, Handler {
                 logger.info(transportFlight + " - Check-in will open at " + checkinOpensAt);
 
             });
+        } finally {
+            BM.stop();
         }
     }
 }

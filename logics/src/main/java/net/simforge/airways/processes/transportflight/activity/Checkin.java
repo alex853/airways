@@ -52,7 +52,7 @@ public class Checkin implements Activity {
                 for (Journey journey : journeysWaitingToCheckin) {
                     paxThisRun += journey.getGroupSize();
                     journeysToCheckinThisRun.add(journey);
-                    if (paxThisRun > minPaxPerRun) {
+                    if (paxThisRun >= minPaxPerRun) {
                         break;
                     }
                 }

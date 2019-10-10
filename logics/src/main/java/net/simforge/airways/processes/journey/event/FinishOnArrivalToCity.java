@@ -4,9 +4,11 @@
 
 package net.simforge.airways.processes.journey.event;
 
+import net.simforge.airways.cityflows.CityFlowOps;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.persistence.model.Person;
+import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
 import net.simforge.airways.persistence.model.journey.Journey;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
@@ -46,6 +48,10 @@ public class FinishOnArrivalToCity implements Event, Handler {
                 });
 
                 session.save(EventLog.make(journey, "Journey FINISHED"));
+
+                City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
+                stats.setTravelled(stats.getTravelled() + journey.getGroupSize());
+                session.update(stats);
 
             });
 

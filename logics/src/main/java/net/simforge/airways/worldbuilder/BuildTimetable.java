@@ -61,10 +61,14 @@ public class BuildTimetable {
                     .withSessionFactory(sessionFactory)
                     .build();
 
-            addRoundtripTimetableRow(session, "ZZ", "A320",
-                    CommonOps.airportByIcao(session, "EGLL"),
-                    CommonOps.airportByIcao(session, "LFPG"),
-                    "08:00");
+//            addRoundtripTimetableRow(session, "ZZ", "A320",
+//                    CommonOps.airportByIcao(session, "EGLL"),
+//                    CommonOps.airportByIcao(session, "LFPG"),
+//                    "08:00");
+//            addRoundtripTimetableRow(session, "ZZ", "A320",
+//                    CommonOps.airportByIcao(session, "EGLL"),
+//                    CommonOps.airportByIcao(session, "EGPF"),
+//                    "12:00");
 
 /*            buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 200, 799,  "A320", 30);
             buildMidRangeHub(session, "ZZ", "Russia", "Moskva", 800, 1500, "A320", 20);
@@ -76,16 +80,16 @@ public class BuildTimetable {
             buildMidRangeHub(session, "ZZ", "India", "Dilli", 100, 2000, "A320", 50);
             buildMidRangeHub(session, "ZZ", "China", "Shanghai", 100, 2000, "A320", 50);
             buildMidRangeHub(session, "ZZ", "Singapore", "Singapore", 100, 2000, "A320", 50);
-            buildMidRangeHub(session, "ZZ", "Australia", "Sydney", 100, 2000, "A320", 50);
+            buildMidRangeHub(session, "ZZ", "Australia", "Sydney", 100, 2000, "A320", 50);*/
 
             //B744
             //"United kingdom", "London" -> "United states", "New york"
             addRoundtripTimetableRow(session, "WW", "B744",
                     findAirportForCity(session, "United kingdom", "London"),
                     findAirportForCity(session, "United states", "New york"),
-                    "05:00");
+                    "05:00", 300);
             //"United kingdom", "London" -> "United states", "Los angeles"
-            addRoundtripTimetableRow(session, "WW", "B744",
+/*            addRoundtripTimetableRow(session, "WW", "B744",
                     findAirportForCity(session, "United kingdom", "London"),
                     findAirportForCity(session, "United states", "Los angeles"),
                     "05:10");
@@ -174,7 +178,7 @@ public class BuildTimetable {
                 logger.info("Flight {}, {} -> {}, {} [{}-{}]", city.getName(), country.getName(), eachCity.getName(), eachCity.getCountry().getName(), cityAirport.getIcao(), eachCityAirport.getIcao());
 
                 String departureTime = JavaTime.toHhmm(LocalTime.of(random.nextInt(24), 5 * random.nextInt(12)));
-                addRoundtripTimetableRow(session, airlineIata, aircraftType, cityAirport, eachCityAirport, departureTime);
+                addRoundtripTimetableRow(session, airlineIata, aircraftType, cityAirport, eachCityAirport, departureTime, 90);
             } else {
                 logger.info("Flight {}, {} -> {}, {} AIRPORT NOT FOUND", city.getName(), country.getName(), eachCity.getName(), eachCity.getCountry().getName());
             }
@@ -195,7 +199,7 @@ public class BuildTimetable {
         return findAirportForCity(session, city);
     }
 
-    private static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime) {
+    private static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime, int turnaroundTime) {
         session.getTransaction().begin();
 
         Airline airline = CommonOps.airlineByIata(session, airlineIata);
@@ -240,7 +244,7 @@ public class BuildTimetable {
         engine.startActivity(session, ScheduleFlight.class, flight1row);
 
 
-        LocalTime flight2departureTime = LocalTime.parse(departureTime).plus(flightDuration).plusMinutes(90);
+        LocalTime flight2departureTime = LocalTime.parse(departureTime).plus(flightDuration).plusMinutes(turnaroundTime);
         int step = 5;
         int remainder = flight2departureTime.getMinute() % step;
         flight2departureTime = flight2departureTime.plusMinutes(remainder != 0 ? (step - remainder) : 0);

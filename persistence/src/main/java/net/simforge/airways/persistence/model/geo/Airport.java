@@ -16,8 +16,8 @@ public class Airport implements BaseEntity, EventLog.Loggable {
     public static final String EventLogCode = "airport";
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_airport_id_seq")
-    @SequenceGenerator(name = "aw_airport_id_seq", sequenceName = "aw_airport_id_seq", allocationSize = 1)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_airport_id")
+    @SequenceGenerator(name = "aw_airport_id", sequenceName = "aw_airport_id_seq", allocationSize = 1)
     private Integer id;
     @Version
     private Integer version;

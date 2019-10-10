@@ -22,6 +22,7 @@ public class RunProcessEngine {
                 .build();
 
         BM.init("RunProcessEngine");
+        BM.setLoggingPeriod(600000);
 
         engine.run();
     }

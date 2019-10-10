@@ -61,7 +61,7 @@ public class Boarding implements Activity {
             for (Journey journey : journeysWaitingToBoard) {
                 paxThisRun += journey.getGroupSize();
                 journeysToBoardThisRun.add(journey);
-                if (paxThisRun > minPaxPerRun) {
+                if (paxThisRun >= minPaxPerRun) {
                     break;
                 }
             }

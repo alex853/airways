@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "Flight")
 @Table(name = "aw_flight")
-public class Flight implements BaseEntity, Auditable/*, HeartbeatObject*/, EventLog.Loggable {
+public class Flight implements BaseEntity, Auditable, EventLog.Loggable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "flight";
 
@@ -33,9 +33,6 @@ public class Flight implements BaseEntity, Auditable/*, HeartbeatObject*/, Event
     @SuppressWarnings("unused")
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
-
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
 
     @Column(name = "date_of_flight")
     private LocalDate dateOfFlight;
@@ -117,16 +114,6 @@ public class Flight implements BaseEntity, Auditable/*, HeartbeatObject*/, Event
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
-
-/*    @Override
-    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    @Override
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
 
     public LocalDate getDateOfFlight() {
         return dateOfFlight;
