@@ -1,0 +1,18 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
+apply plugin: 'java'
+apply plugin: 'war'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url System.getenv('SIMFORGE_REPO_READ_URL')
+    }
+}
+
+dependencies {
+    compileOnly group: 'javax.servlet', name: 'servlet-api', version: '2.5'
+}
