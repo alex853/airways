@@ -6,7 +6,7 @@
 
 <head>
 
-    <title>Airways - Transport Flight ....</title>
+    <title>Airways - Person ....</title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -26,15 +26,15 @@
 
         $(document).ready(function () {
             $.ajax({
-                url: 'http://localhost:9100/misc/transport-flight?id=' + id,
+                url: 'http://localhost:9100/misc/person?id=' + id,
                 //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#journeys').bootstrapTable({
-                        data: response.journeys
+                    $('#log').bootstrapTable({
+                        data: response.log
                     });
-                    $('#journeys').bootstrapTable('resetView', {
-                        height: $('#journeys').height() + 30
+                    $('#log').bootstrapTable('resetView', {
+                        height: $('#log').height() + 30
                     });
                 },
                 error: function (e) {
@@ -42,10 +42,6 @@
                 }
             });
         });
-
-        function actionsCell(value, row) {
-            return '<a href="journey.html?id=' + row.id + '">Details</a>';
-        }
 
     </script>
 
@@ -59,18 +55,14 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Transport Flight ....</h1>
+    <h1>Airways - Person ....</h1>
 
-    <h3>Journeys</h3>
-    <table id="journeys" class="table table-no-bordered">
+    <h3>Event log</h3>
+    <table id="log" class="table table-no-bordered">
         <thead>
         <tr>
-            <th data-field="fromCity">From</th>
-            <th data-field="toCity">To</th>
-            <th data-field="groupSize">Size</th>
-            <th data-field="status">Status</th>
-            <th data-field="itineraryCheck">Itinerary</th>
-            <th data-formatter="actionsCell"></th>
+            <th data-field="dt">Date/Time</th>
+            <th data-field="msg">Message</th>
         </tr>
         </thead>
         <tbody>
