@@ -164,6 +164,11 @@ public class Person implements BaseEntity, EventLog.Loggable, Auditable {
         this.locationAirport = locationAirport;
     }
 
+    @Override
+    public String toString() {
+        return "Person{id = " + id + ", name=" + name + " " + surname + "}";
+    }
+
     public static class Type {
         public static final int Ordinal  = 0;
         public static final int Excluded = 1;

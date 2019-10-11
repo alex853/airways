@@ -45,6 +45,8 @@ public class FinishOnArrivalToCity implements Event, Handler {
                     person.setStatus(Person.Status.Idle);
                     person.setJourney(null);
                     session.update(person);
+
+                    session.save(EventLog.make(person, "Journey FINISHED", journey));
                 });
 
                 session.save(EventLog.make(journey, "Journey FINISHED"));

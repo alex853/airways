@@ -36,8 +36,8 @@ public class DeboardingCompleted implements Event, Handler {
                 transportFlight.setStatus(TransportFlight.Status.Finished);
                 session.update(transportFlight);
 
-                session.save(EventLog.make(transportFlight, "Boarding completed, FLIGHT FINISHED"));
-                logger.info(transportFlight + " - Boarding completed, FLIGHT FINISHED");
+                session.save(EventLog.make(transportFlight, "Deboarding completed, FLIGHT FINISHED"));
+                logger.info(transportFlight + " - Deboarding completed, FLIGHT FINISHED");
 
             });
         }

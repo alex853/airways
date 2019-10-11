@@ -112,4 +112,8 @@ public class City implements EventLog.Loggable {
     public String toString() {
         return "City { " + name + ", population " + population + " }";
     }
+
+    public String getCityWithCountryName() {
+        return name + ", " + getCountry().getName();
+    }
 }

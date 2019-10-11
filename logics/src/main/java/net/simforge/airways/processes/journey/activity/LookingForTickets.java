@@ -78,6 +78,10 @@ public class LookingForTickets implements Activity {
                 session.update(journey);
 
                 session.save(EventLog.make(journey, "Tickets bought"));
+                List<Person> persons = JourneyOps.getPersons(session, journey);
+                persons.forEach(person -> {
+                    session.save(EventLog.make(person, "Tickets bought", journey));
+                });
 
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setTicketsBought(stats.getTicketsBought() + journey.getGroupSize());
@@ -104,7 +108,7 @@ public class LookingForTickets implements Activity {
                 journey.setStatus(Journey.Status.CouldNotFindTickets);
                 session.update(journey);
 
-                session.save(EventLog.make(journey, "Journey could not find tickets in appropriate time"));
+                session.save(EventLog.make(journey, "No tickets found - CANCELLED"));
 
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setNoTickets(stats.getNoTickets() + journey.getGroupSize());
@@ -116,7 +120,7 @@ public class LookingForTickets implements Activity {
                     person.setJourney(null);
                     session.update(person);
 
-                    session.save(EventLog.make(person, "Journey expired during ticketing", journey));
+                    session.save(EventLog.make(person, "No tickets found - CANCELLED", journey));
                 }
             });
 

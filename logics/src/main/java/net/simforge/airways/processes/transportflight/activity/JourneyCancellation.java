@@ -23,7 +23,7 @@ import javax.inject.Inject;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class JourneyCancellation implements Activity {
+public class JourneyCancellation implements Activity { // todo p1 checkin can start even if flight is cancelled
     private static Logger logger = LoggerFactory.getLogger(JourneyCancellation.class);
 
     @Inject

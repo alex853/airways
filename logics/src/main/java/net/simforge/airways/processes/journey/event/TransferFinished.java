@@ -4,6 +4,7 @@
 
 package net.simforge.airways.processes.journey.event;
 
+import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
@@ -40,13 +41,19 @@ public class TransferFinished implements Event, Handler {
 
                 Journey journey = transfer.getJourney();
 
+                String to = transfer.getToCity() != null ? transfer.getToCity().getName() : transfer.getToAirport().getIcao();
+
                 List<Person> persons = JourneyOps.getPersons(session, journey);
                 persons.forEach(person -> {
                     person.setLocationCity(transfer.getToCity());
                     person.setLocationAirport(transfer.getToAirport());
                     session.update(person);
+
+                    session.save(EventLog.make(person, "At " + to, journey));
                 });
-// todo p2 event log
+
+                session.save(EventLog.make(journey, "At " + to));
+
                 if (transfer.getOnFinishedStatus() != null) {
                     journey.setStatus(transfer.getOnFinishedStatus());
                 } if (transfer.getOnFinishedEvent() != null) {

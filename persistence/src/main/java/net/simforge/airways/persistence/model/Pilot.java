@@ -100,10 +100,7 @@ public class Pilot implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable
 
     @Override
     public String toString() {
-        return "Pilot{" +
-                "id=" + id +
-                ", status=" + status +
-                '}';
+        return "Pilot{id=" + id + ", status=" + status + '}';
     }
 
     public static class Status {

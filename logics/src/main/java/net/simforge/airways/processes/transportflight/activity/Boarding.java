@@ -80,6 +80,8 @@ public class Boarding implements Activity {
                         person.setLocationAirport(null);
                         session.update(person);
 
+                        session.save(EventLog.make(person, "On board", transportFlight, journey));
+
                     });
                 });
 

@@ -89,6 +89,8 @@ public class JourneyOps {
                 person.setStatus(Person.Status.Idle);
                 person.setJourney(null);
                 session.update(person);
+
+                session.save(EventLog.make(person, "Journey dissolved & TERMINATED", journey));
             });
 
             session.save(EventLog.make(journey, "Journey dissolved & TERMINATED"));

@@ -77,6 +77,7 @@ public class LookingForPersons implements Activity {
                     freePerson.setStatus(Person.Status.OnJourney);
                     freePerson.setJourney(journey);
                     session.update(freePerson);
+
                     session.save(EventLog.make(freePerson, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
                 });
 
@@ -92,6 +93,7 @@ public class LookingForPersons implements Activity {
                         person.setStatus(Person.Status.OnJourney);
                         person.setJourney(journey);
                         session.update(person);
+
                         session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
                     });
                     currentGroupSize++;
@@ -128,7 +130,7 @@ public class LookingForPersons implements Activity {
                 journey.setStatus(Journey.Status.CouldNotFindPersons);
                 session.update(journey);
 
-                session.save(EventLog.make(journey, "Journey could not be populated in appropriate time"));
+                session.save(EventLog.make(journey, "No persons found - CANCELLED"));
 
                 List<Person> persons = JourneyOps.getPersons(session, journey);
                 for (Person person : persons) {
@@ -136,7 +138,7 @@ public class LookingForPersons implements Activity {
                     person.setJourney(null);
                     session.update(person);
 
-                    session.save(EventLog.make(person, "Journey expired during populating", journey));
+                    session.save(EventLog.make(person, "No persons found - CANCELLED", journey));
                 }
             });
 

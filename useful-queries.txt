@@ -12,3 +12,5 @@ select * from aw_journey where c2c_flow_id in (57870, 46573) order by create_dt 
 select sum(group_size) from aw_journey j join aw_journey_itinerary i on i.id = j.itinerary_id where j.status = 4000 and i.flight_id = 2
 
 select a.icao, a.name, ac.* from aw_airport2city ac join aw_airport a on a.id = ac.airport_id where city_id = 16631 order by 1
+
+select distinct(status), count(*) from aw_person group by status

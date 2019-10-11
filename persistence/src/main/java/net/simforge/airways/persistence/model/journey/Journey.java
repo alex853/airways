@@ -145,7 +145,7 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
 
     @Override
     public String toString() {
-        return "Journey {" +
+        return "Journey{" +
                 "id = " + id +
                 ", groupSize = " + groupSize +
                 ", status = " + status +

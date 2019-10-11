@@ -70,13 +70,15 @@ public class Deboarding implements Activity {
                 journeysToDeboardThisRun.forEach(journey -> {
 
                     journey.setStatus(Journey.Status.JustArrived);
-                    session.save(EventLog.make(journey, "Deboarded", transportFlight));
+                    session.save(EventLog.make(journey, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight));
 
                     List<Person> persons = JourneyOps.getPersons(session, journey);
                     persons.forEach(person -> {
 
                         person.setLocationAirport(transportFlight.getToAirport());
                         session.update(person);
+
+                        session.save(EventLog.make(person, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight, journey));
 
                     });
 

@@ -4,6 +4,7 @@
 
 package net.simforge.airways.processes.journey.event;
 
+import net.simforge.airways.persistence.EventLog;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
@@ -44,12 +45,23 @@ public class TransferStarted implements Event, Handler {
 
                 Journey journey = transfer.getJourney();
 
+                String to = transfer.getToCity() != null ? transfer.getToCity().getName() : transfer.getToAirport().getIcao();
+
                 List<Person> persons = JourneyOps.getPersons(session, journey);
                 persons.forEach(person -> {
+                    String from = person.getLocationCity() != null
+                            ? person.getLocationCity().getName()
+                            : person.getLocationAirport() != null
+                            ? person.getLocationAirport().getIcao()
+                            : "UNKNOWN";
+                    session.save(EventLog.make(person, "Transferring from " + from + " to " + to, journey));
+
                     person.setLocationCity(null);
                     person.setLocationAirport(null);
                     session.update(person);
                 });
+
+                session.save(EventLog.make(journey, "Transferring to " + to));
 
                 LocalDateTime transferWillFinishAt = timeMachine.now().plusMinutes(transfer.getDuration());
                 engine.scheduleEvent(session, TransferFinished.class, transfer, transferWillFinishAt);
