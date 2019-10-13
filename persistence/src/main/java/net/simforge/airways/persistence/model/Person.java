@@ -92,20 +92,20 @@ public class Person implements BaseEntity, EventLog.Loggable, Auditable {
         return modifyDt;
     }
 
-    public Integer getType() {
-        return type;
+    public Type getType() {
+        return type != null ? Type.byCode(type) : null;
     }
 
-    public void setType(Integer type) {
-        this.type = type;
+    public void setType(Type type) {
+        this.type = type != null ? type.code() : null;
     }
 
-    public Integer getStatus() {
-        return status;
+    public Status getStatus() {
+        return status != null ? Status.byCode(status) : null;
     }
 
-    public void setStatus(Integer status) {
-        this.status = status;
+    public void setStatus(Status status) {
+        this.status = status != null ? status.code() : null;
     }
 
     public String getName() {
@@ -169,13 +169,61 @@ public class Person implements BaseEntity, EventLog.Loggable, Auditable {
         return "Person{id = " + id + ", name=" + name + " " + surname + "}";
     }
 
-    public static class Type {
-        public static final int Ordinal  = 0;
-        public static final int Excluded = 1;
+    public enum Type {
+        Ordinal(0),
+        Excluded(1);
+
+        private final int code;
+
+        Type(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Type byCode(int code) {
+            for (Type value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
     }
 
-    public static class Status {
-        public static final int Idle      = 0;
-        public static final int OnJourney = 1;
+    public enum Status {
+        Idle(0),
+        OnJourney(1);
+
+        private final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Status byCode(int code) {
+            for (Status value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
     }
 }

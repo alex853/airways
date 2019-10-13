@@ -79,7 +79,7 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
             List<Person> peopleOfManchester = PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getManchesterCity());
             assertEquals(6, peopleOfManchester.size());
             for (Person person : peopleOfManchester) {
-                assertEquals(Person.Status.Idle, person.getStatus().intValue());
+                assertEquals(Person.Status.Idle, person.getStatus());
                 assertNull(person.getJourney());
             }
 

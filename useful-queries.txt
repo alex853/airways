@@ -14,3 +14,19 @@ select sum(group_size) from aw_journey j join aw_journey_itinerary i on i.id = j
 select a.icao, a.name, ac.* from aw_airport2city ac join aw_airport a on a.id = ac.airport_id where city_id = 16631 order by 1
 
 select distinct(status), count(*) from aw_person group by status
+
+select distinct(origin_city_id), ctry.name, c.name, count(*)
+from aw_person p
+join aw_city c on c.id = p.origin_city_id
+join aw_country ctry on ctry.id = c.country_id
+group by origin_city_id, ctry.name, c.name order by 2, 3
+
+select fc.name, tc.name, c2c.availability, c2c.next_group_size, c2c.accumulated_flow, c2c.accumulated_flow_dt, c2c.heartbeat_dt, c2c.id
+	from aw_city2city_flow c2c
+		join aw_city_flow fcf on fcf.id = c2c.from_flow_id
+		join aw_city_flow tcf on tcf.id = c2c.to_flow_id
+		join aw_city fc on fcf.city_id = fc.id
+		join aw_city tc on tcf.city_id = tc.id
+where fcf.city_id in (2497, 5099, 16630, 16631, 16632, 16930, 16934) and tcf.city_id in (2497, 5099, 16630, 16631, 16632, 16930, 16934)
+order by fc.name, tc.name
+

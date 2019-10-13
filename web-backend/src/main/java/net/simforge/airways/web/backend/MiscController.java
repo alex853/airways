@@ -4,6 +4,7 @@
 
 package net.simforge.airways.web.backend;
 
+import com.google.common.collect.Lists;
 import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.persistence.model.EventLogEntry;
 import net.simforge.airways.persistence.model.Person;
@@ -104,19 +105,7 @@ public class MiscController {
             List<Map<String, Object>> personsList = new ArrayList<>();
 
             for (Person person : persons) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", person.getId());
-                map.put("name", person.getName() + ' ' + person.getSurname());
-                map.put("sex", person.getSex());
-                map.put("type", person.getType());
-                map.put("status", person.getStatus());
-                map.put("origin", person.getOriginCity().getCityWithCountryName());
-                map.put("location", person.getLocationCity() != null
-                        ? person.getLocationCity().getCityWithCountryName()
-                        : (person.getLocationAirport() != null
-                        ? person.getLocationAirport().getIcao()
-                        : null));
-                personsList.add(map);
+                personsList.add(person2map(person));
             }
 
             result.put("persons", personsList);
@@ -125,8 +114,65 @@ public class MiscController {
         return result;
     }
 
+    private Map<String, Object> person2map(Person person) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", person.getId());
+        map.put("name", person.getName() + ' ' + person.getSurname());
+        map.put("sex", person.getSex());
+        map.put("type", person.getType().toString());
+        map.put("status", person.getStatus().toString());
+        map.put("origin", person.getOriginCity().getCityWithCountryName());
+        map.put("location", person.getLocationCity() != null
+                ? person.getLocationCity().getCityWithCountryName()
+                : (person.getLocationAirport() != null
+                ? person.getLocationAirport().getIcao()
+                : null));
+        return map;
+    }
+
     @RequestMapping("/person")
     public Map<String, Object> getPersonData(@RequestParam(value = "id") int id) {
+        Map<String, Object> result = new HashMap<>();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            Person person = session.load(Person.class, id);
+            result.put("person", person2map(person));
+
+            //noinspection unchecked,JpaQlInspection
+            List<EventLogEntry> logEntries = session
+                    .createQuery("from EventLogEntry " +
+                            "where primary_id = :id " +
+                            "order by dt desc")
+                    .setMaxResults(16)
+                    .setParameter("id", Person.EventLogCode + ':' + id)
+                    .list();
+
+            List<EventLogEntry> normalOrder = Lists.reverse(logEntries);
+            boolean hasMore = normalOrder.size() >= 16;
+            if (hasMore) {
+                normalOrder.remove(0);
+            }
+
+            result.put("log", logEntries2list(normalOrder));
+            result.put("logHasMore", hasMore);
+        }
+
+        return result;
+    }
+
+    private List<Map<String, Object>> logEntries2list(List<EventLogEntry> normalOrder) {
+        List<Map<String, Object>> log = new ArrayList<>();
+        for (EventLogEntry logEntry : normalOrder) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("dt", logEntry.getDt().toString());
+            map.put("msg", logEntry.getMsg());
+            log.add(map);
+        }
+        return log;
+    }
+
+    @RequestMapping("/get-full-log")
+    public Map<String, Object> getPersonData(@RequestParam(value = "primary_id") String primaryId) {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
@@ -135,19 +181,10 @@ public class MiscController {
                     .createQuery("from EventLogEntry " +
                             "where primary_id = :id " +
                             "order by dt")
-                    .setParameter("id", Person.EventLogCode + ':' + id)
+                    .setParameter("id", primaryId)
                     .list();
 
-            List<Map<String, Object>> log = new ArrayList<>();
-
-            for (EventLogEntry logEntry : logEntries) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("dt", logEntry.getDt().toString());
-                map.put("msg", logEntry.getMsg());
-                log.add(map);
-            }
-
-            result.put("log", log);
+            result.put("log", logEntries2list(logEntries));
         }
 
         return result;

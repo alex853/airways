@@ -34,7 +34,7 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
     private SessionFactory sessionFactory;
 
     @Override
-    public Result act() {
+    public Result act() { // todo p1 cancel all remaining tasks!
         BM.start("JourneyCancellation.act");
         try (Session session = sessionFactory.openSession()) {
 

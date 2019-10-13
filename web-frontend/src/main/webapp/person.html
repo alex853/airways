@@ -6,7 +6,7 @@
 
 <head>
 
-    <title>Airways - Person ....</title>
+    <title>Airways - Person ##person-id - #person-name</title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -23,24 +23,52 @@
         }
         var id = captured;
 
-
         $(document).ready(function () {
             $.ajax({
                 url: 'http://localhost:9100/misc/person?id=' + id,
-                //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#log').bootstrapTable({
-                        data: response.log
+                    $.each(response.person, function (field, value) {
+                        $("#person-" + field).text(value);
                     });
-                    $('#log').bootstrapTable('resetView', {
-                        height: $('#log').height() + 30
-                    });
+
+                    document.title = document.title
+                        .replace('#person-id', response.person.id)
+                        .replace('#person-name', response.person.name);
+
+                    var logTable = $('#log');
+                    logTable.bootstrapTable({ data: response.log });
+
+                    if (response.logHasMore) {
+                        logTable.bootstrapTable('insertRow', { index: 0,
+                            row: {
+                                dt: '',
+                                msg: '<button type="button" class="btn btn-secondary" id="showAllEvents">Show all events</button>'
+                            }
+                        });
+
+                        $('#showAllEvents').click( function () {
+                            $.ajax({
+                                url: 'http://localhost:9100/misc/get-full-log?primary_id=person:' + id,
+                                dataType: 'json',
+                                success: function (response) {
+                                    var logTable = $('#log');
+                                    logTable.bootstrapTable('load', response.log);
+                                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
+                                },
+                                error: function (e) {
+                                    console.log(e.responseText);
+                                }
+                            });
+                        });
+                    }
+                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
                 },
                 error: function (e) {
                     console.log(e.responseText);
                 }
             });
+
         });
 
     </script>
@@ -55,7 +83,27 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Person ....</h1>
+    <h1>Airways - Person #<span id="person-id"></span></h1>
+    <form>
+        <div class="form-group row">
+            <label for="person-name" class="col-sm-2 col-form-label">Name</label>
+            <span class="col-sm-4 col-form-label" id="person-name"></span>
+            <label for="person-sex" class="col-sm-2 col-form-label">Sex</label>
+            <span class="col-sm-4 col-form-label" id="person-sex"></span>
+        </div>
+        <div class="form-group row">
+            <label for="person-type" class="col-sm-2 col-form-label">Type</label>
+            <span class="col-sm-4 col-form-label" id="person-type"></span>
+            <label for="person-status" class="col-sm-2 col-form-label">Status</label>
+            <span class="col-sm-4 col-form-label" id="person-status"></span>
+        </div>
+        <div class="form-group row">
+            <label for="person-origin" class="col-sm-2 col-form-label">Origin</label>
+            <span class="col-sm-4 col-form-label" id="person-origin"></span>
+            <label for="person-location" class="col-sm-2 col-form-label">Location</label>
+            <span class="col-sm-4 col-form-label" id="person-location"></span>
+        </div>
+    </form>
 
     <h3>Event log</h3>
     <table id="log" class="table table-no-bordered">

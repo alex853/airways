@@ -95,7 +95,7 @@ public class PersonOps {
                     .createQuery("from Person " +
                             "where type = :ordinal " +
                             " and locationCity = :locationCity")
-                    .setInteger("ordinal", Person.Type.Ordinal)
+                    .setInteger("ordinal", Person.Type.Ordinal.code())
                     .setEntity("locationCity", locationCity)
                     .list();
 

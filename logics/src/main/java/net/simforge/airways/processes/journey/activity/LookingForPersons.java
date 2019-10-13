@@ -59,8 +59,8 @@ public class LookingForPersons implements Activity {
                                 "where type = :ordinal " +
                                 "  and status = :readyToTravel " +
                                 "  and locationCity = :fromCity")
-                        .setInteger("ordinal", Person.Type.Ordinal)
-                        .setInteger("readyToTravel", Person.Status.Idle)
+                        .setInteger("ordinal", Person.Type.Ordinal.code())
+                        .setInteger("readyToTravel", Person.Status.Idle.code())
                         .setEntity("fromCity", fromCity)
                         .setMaxResults(journey.getGroupSize())
                         .list();
