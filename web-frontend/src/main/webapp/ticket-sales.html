@@ -1,6 +1,14 @@
+<%--
+~ Airways Project (c) Alexey Kornev, 2015-2019
+--%>
+
 <!--
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   -->
+
+<%
+String backendURL = application.getInitParameter("BackendURL");
+%>
 
 <html>
 
@@ -17,7 +25,7 @@
     <script>
         $(document).ready(function () {
             $.ajax({
-                url: 'http://localhost:9100/misc/ticket-sales',
+                url: '<%=backendURL%>/misc/ticket-sales',
                 //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
