@@ -15,5 +15,9 @@ repositories {
 }
 
 dependencies {
+    compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.2'
+
+//    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.0.1.Final'
+    compile group: 'org.hibernate', name: 'hibernate-java8', version: '5.0.1.Final'
 }
