@@ -170,10 +170,9 @@ public class ScheduleFlight implements Activity {
         flight.setDateOfFlight(transportFlight.getDateOfFlight());
         flight.setCallsign("TODO"); // todo AK
         flight.setAircraftType(timetableRow.getAircraftType());
-        flight.setNumber(transportFlight.getNumber());
+        flight.setFlightNumber(transportFlight.getFlightNumber());
         flight.setFromAirport(transportFlight.getFromAirport());
         flight.setToAirport(transportFlight.getToAirport());
-        flight.setAlternativeAirport(null); // todo AK from kind of typical flights
 
         flight.setScheduledDepartureTime(transportFlight.getDepartureDt());
         flight.setScheduledArrivalTime(transportFlight.getArrivalDt());

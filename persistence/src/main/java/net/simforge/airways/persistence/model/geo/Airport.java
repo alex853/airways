@@ -5,14 +5,16 @@
 package net.simforge.airways.persistence.model.geo;
 
 import net.simforge.airways.persistence.EventLog;
+import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.misc.Geo;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity(name = "Airport")
 @Table(name="aw_airport")
-public class Airport implements BaseEntity, EventLog.Loggable {
+public class Airport implements BaseEntity, EventLog.Loggable, Auditable {
     public static final String EventLogCode = "airport";
 
     @Id
@@ -21,6 +23,13 @@ public class Airport implements BaseEntity, EventLog.Loggable {
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @Column
     private String iata;
@@ -34,6 +43,11 @@ public class Airport implements BaseEntity, EventLog.Loggable {
     private Double longitude;
     @Column
     private Integer dataset;
+
+    @Override
+    public String getEventLogCode() {
+        return EventLogCode;
+    }
 
     @Override
     public Integer getId() {
@@ -56,8 +70,13 @@ public class Airport implements BaseEntity, EventLog.Loggable {
     }
 
     @Override
-    public String getEventLogCode() {
-        return EventLogCode;
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public String getIata() {

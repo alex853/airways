@@ -43,16 +43,14 @@ public class Flight implements BaseEntity, Auditable, EventLog.Loggable {
     @ManyToOne
     @JoinColumn(name = "transport_flight_id")
     private TransportFlight transportFlight;
-    private String number;
+    @Column(name = "flight_number")
+    private String flightNumber;
     @ManyToOne
     @JoinColumn(name = "from_airport_id")
     private Airport fromAirport;
     @ManyToOne
     @JoinColumn(name = "to_airport_id")
     private Airport toAirport;
-    @ManyToOne
-    @JoinColumn(name = "alternative_airport_id")
-    private Airport alternativeAirport;
 
     @Column(name = "scheduled_departure_time")
     private LocalDateTime scheduledDepartureTime;
@@ -147,12 +145,12 @@ public class Flight implements BaseEntity, Auditable, EventLog.Loggable {
         this.transportFlight = transportFlight;
     }
 
-    public String getNumber() {
-        return number;
+    public String getFlightNumber() {
+        return flightNumber;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
+    public void setFlightNumber(String flightNumber) {
+        this.flightNumber = flightNumber;
     }
 
     public Airport getFromAirport() {
@@ -169,14 +167,6 @@ public class Flight implements BaseEntity, Auditable, EventLog.Loggable {
 
     public void setToAirport(Airport toAirport) {
         this.toAirport = toAirport;
-    }
-
-    public Airport getAlternativeAirport() {
-        return alternativeAirport;
-    }
-
-    public void setAlternativeAirport(Airport alternativeAirport) {
-        this.alternativeAirport = alternativeAirport;
     }
 
     public LocalDateTime getScheduledDepartureTime() {
@@ -263,7 +253,7 @@ public class Flight implements BaseEntity, Auditable, EventLog.Loggable {
     public String toString() {
         return "Flight{" +
                 "id=" + id +
-                ", number='" + number + '\'' +
+                ", number='" + flightNumber + '\'' +
                 ", scheduledDepartureTime=" + scheduledDepartureTime +
                 '}';
     }

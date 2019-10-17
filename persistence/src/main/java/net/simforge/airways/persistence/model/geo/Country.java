@@ -4,11 +4,15 @@
 
 package net.simforge.airways.persistence.model.geo;
 
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
+
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity(name = "Country")
 @Table(name = "aw_country")
-public class Country {
+public class Country implements BaseEntity, Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_country_id")
     @SequenceGenerator(name = "aw_country_id", sequenceName = "aw_country_id_seq", allocationSize = 1)
@@ -16,25 +20,46 @@ public class Country {
     @Version
     private Integer version;
 
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
+
     @Column
     private String name;
     @Column
     private String code;
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public String getName() {

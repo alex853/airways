@@ -40,7 +40,7 @@ public class MiscController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("id", transportFlight.getId());
                 map.put("dateOfFlight", transportFlight.getDateOfFlight().toString());
-                map.put("flightNumber", transportFlight.getNumber());
+                map.put("flightNumber", transportFlight.getFlightNumber());
                 map.put("departureDt", transportFlight.getDepartureDt().toString());
                 map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
                 map.put("fromIcao", transportFlight.getFromAirport().getIcao());

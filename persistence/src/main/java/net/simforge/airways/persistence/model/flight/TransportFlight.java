@@ -41,7 +41,8 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
     private Flight flight;
     @Column(name = "date_of_flight")
     private LocalDate dateOfFlight;
-    private String number;
+    @Column(name = "flight_number")
+    private String flightNumber;
     @ManyToOne
     @JoinColumn(name = "from_airport_id")
     private Airport fromAirport;
@@ -119,12 +120,12 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
         this.dateOfFlight = dateOfFlight;
     }
 
-    public String getNumber() {
-        return number;
+    public String getFlightNumber() {
+        return flightNumber;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
+    public void setNumber(String flightNumber) {
+        this.flightNumber = flightNumber;
     }
 
     public Airport getFromAirport() {
@@ -195,7 +196,7 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
     public String toString() {
         return "TransportFlight{" +
                 "id=" + id +
-                ", number='" + number + '\'' +
+                ", number='" + flightNumber + '\'' +
                 ", dateOfFlight=" + dateOfFlight +
                 '}';
     }

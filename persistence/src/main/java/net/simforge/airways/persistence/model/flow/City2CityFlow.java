@@ -1,14 +1,20 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.flow;
 
 import net.simforge.airways.persistence.EventLog;
 import net.simforge.commons.HeartbeatObject;
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name="aw_city2city_flow")
-public class City2CityFlow implements HeartbeatObject, EventLog.Loggable {
+public class City2CityFlow implements BaseEntity, HeartbeatObject, EventLog.Loggable, Auditable {
     public static final String EventLogCode = "c2cFlow";
 
     @Id
@@ -17,6 +23,13 @@ public class City2CityFlow implements HeartbeatObject, EventLog.Loggable {
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @ManyToOne
     @JoinColumn(name = "from_flow_id")
@@ -46,20 +59,34 @@ public class City2CityFlow implements HeartbeatObject, EventLog.Loggable {
         return EventLogCode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public CityFlow getFromFlow() {
@@ -78,10 +105,12 @@ public class City2CityFlow implements HeartbeatObject, EventLog.Loggable {
         this.toFlow = toFlow;
     }
 
+    @Override
     public LocalDateTime getHeartbeatDt() {
         return heartbeatDt;
     }
 
+    @Override
     public void setHeartbeatDt(LocalDateTime heartbeatDt) {
         this.heartbeatDt = heartbeatDt;
     }

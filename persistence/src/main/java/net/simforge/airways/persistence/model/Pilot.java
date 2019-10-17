@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "Pilot")
 @Table(name = "aw_pilot")
-public class Pilot implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable, Auditable {
+public class Pilot implements BaseEntity, EventLog.Loggable, Auditable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "pilot";
 
@@ -30,9 +30,6 @@ public class Pilot implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable
     @SuppressWarnings("unused")
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
-
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
 
     private Integer status;
     @ManyToOne
@@ -73,14 +70,6 @@ public class Pilot implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable
     public LocalDateTime getModifyDt() {
         return modifyDt;
     }
-
-/*    public LocalDateTime getHeartbeatDt() {
-        return heartbeatDt;
-    }
-
-    public void setHeartbeatDt(LocalDateTime heartbeatDt) {
-        this.heartbeatDt = heartbeatDt;
-    }*/
 
     public Integer getStatus() {
         return status;

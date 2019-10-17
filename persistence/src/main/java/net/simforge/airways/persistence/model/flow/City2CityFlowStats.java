@@ -1,6 +1,12 @@
+/*
+ * Airways Project (c) Alexey Kornev, 2015-2019
+ */
+
 package net.simforge.airways.persistence.model.flow;
 
 import net.simforge.commons.HeartbeatObject;
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
 import java.time.LocalDate;
@@ -8,7 +14,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name="aw_city2city_flow_stats")
-public class City2CityFlowStats implements HeartbeatObject {
+public class City2CityFlowStats implements BaseEntity, HeartbeatObject, Auditable {
     public static final String EventLogCode = "c2cFStats";
 
     @Id
@@ -17,6 +23,13 @@ public class City2CityFlowStats implements HeartbeatObject {
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @ManyToOne
     @JoinColumn(name = "c2c_flow_id")
@@ -38,20 +51,35 @@ public class City2CityFlowStats implements HeartbeatObject {
     @Column
     private Integer travelled;
 
+
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public City2CityFlow getC2cFlow() {
@@ -70,10 +98,12 @@ public class City2CityFlowStats implements HeartbeatObject {
         this.date = date;
     }
 
+    @Override
     public LocalDateTime getHeartbeatDt() {
         return heartbeatDt;
     }
 
+    @Override
     public void setHeartbeatDt(LocalDateTime heartbeatDt) {
         this.heartbeatDt = heartbeatDt;
     }

@@ -5,13 +5,16 @@
 package net.simforge.airways.persistence.model.geo;
 
 import net.simforge.airways.persistence.EventLog;
+import net.simforge.commons.hibernate.Auditable;
+import net.simforge.commons.hibernate.BaseEntity;
 import net.simforge.commons.misc.Geo;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity(name = "City")
 @Table(name = "aw_city")
-public class City implements EventLog.Loggable {
+public class City implements BaseEntity, EventLog.Loggable, Auditable {
     public static final String EventLogCode = "city";
 
     @Id
@@ -20,6 +23,13 @@ public class City implements EventLog.Loggable {
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @ManyToOne
     @JoinColumn(name = "country_id")
@@ -40,20 +50,34 @@ public class City implements EventLog.Loggable {
         return EventLogCode;
     }
 
+    @Override
     public Integer getId() {
         return id;
     }
 
+    @Override
     public void setId(Integer id) {
         this.id = id;
     }
 
+    @Override
     public Integer getVersion() {
         return version;
     }
 
+    @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public Country getCountry() {
