@@ -1,0 +1,2 @@
+# Airways Project
+Economy simulation of transportation by air for flight simmers. Cities generate some flow of passengers, passengers look for tickets, airlines open flights between airports, pilots take aircrafts and fly flights. There will be computer-driven pilots and human-driven pilots. Later it will support flights in VATSIM. Simmer will be able to declare some flight from A to B and passengers will buy tickets and board on the flight. Simmer will gain some money for completion of the flight. Stay with the project!
