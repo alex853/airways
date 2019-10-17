@@ -1,12 +1,21 @@
+<%--
+  ~ Airways Project (c) Alexey Kornev, 2015-2019
+  --%>
+
 <!--
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   -->
+
+<%
+    String backendURL = application.getInitParameter("BackendURL");
+
+%>
 
 <html>
 
 <head>
 
-    <title>Airways - Journey ....</title>
+    <title>Airways - Transport Flight ....</title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -26,15 +35,15 @@
 
         $(document).ready(function () {
             $.ajax({
-                url: 'http://localhost:9100/misc/journey?id=' + id,
+                url: '<%=backendURL%>/misc/transport-flight?id=' + id,
                 //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#persons').bootstrapTable({
-                        data: response.persons
+                    $('#journeys').bootstrapTable({
+                        data: response.journeys
                     });
-                    $('#persons').bootstrapTable('resetView', {
-                        height: $('#persons').height() + 30
+                    $('#journeys').bootstrapTable('resetView', {
+                        height: $('#journeys').height() + 30
                     });
                 },
                 error: function (e) {
@@ -44,7 +53,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a href="person.html?id=' + row.id + '">Details</a>';
+            return '<a href="journey.jsp?id=' + row.id + '">Details</a>';
         }
 
     </script>
@@ -59,18 +68,17 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Journey ....</h1>
+    <h1>Airways - Transport Flight ....</h1>
 
-    <h3>Persons</h3>
-    <table id="persons" class="table table-no-bordered">
+    <h3>Journeys</h3>
+    <table id="journeys" class="table table-no-bordered">
         <thead>
         <tr>
-            <th data-field="name">Name</th>
-            <th data-field="sex">Sex</th>
-            <th data-field="type">Type</th>
+            <th data-field="fromCity">From</th>
+            <th data-field="toCity">To</th>
+            <th data-field="groupSize">Size</th>
             <th data-field="status">Status</th>
-            <th data-field="origin">Origin</th>
-            <th data-field="location">Location</th>
+            <th data-field="itineraryCheck">Itinerary</th>
             <th data-formatter="actionsCell"></th>
         </tr>
         </thead>

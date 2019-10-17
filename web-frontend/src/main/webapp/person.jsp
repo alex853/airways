@@ -1,6 +1,15 @@
+<%--
+  ~ Airways Project (c) Alexey Kornev, 2015-2019
+  --%>
+
 <!--
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   -->
+
+<%
+    String backendURL = application.getInitParameter("BackendURL");
+
+%>
 
 <html>
 
@@ -25,7 +34,7 @@
 
         $(document).ready(function () {
             $.ajax({
-                url: 'http://localhost:9100/misc/person?id=' + id,
+                url: '<%=backendURL%>/misc/person?id=' + id,
                 dataType: 'json',
                 success: function (response) {
                     $.each(response.person, function (field, value) {
@@ -49,7 +58,7 @@
 
                         $('#showAllEvents').click( function () {
                             $.ajax({
-                                url: 'http://localhost:9100/misc/get-full-log?primary_id=person:' + id,
+                                url: '<%=backendURL%>/misc/get-full-log?primary_id=person:' + id,
                                 dataType: 'json',
                                 success: function (response) {
                                     var logTable = $('#log');

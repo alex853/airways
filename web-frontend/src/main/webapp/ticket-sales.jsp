@@ -1,12 +1,21 @@
-<!--
+<%--
   ~ Airways Project (c) Alexey Kornev, 2015-2019
-  -->
+  --%>
+
+<!--
+~ Airways Project (c) Alexey Kornev, 2015-2019
+-->
+
+<%
+    String backendURL = application.getInitParameter("BackendURL");
+
+%>
 
 <html>
 
 <head>
 
-    <title>Airways - Transport Flight ....</title>
+    <title>Airways - Ticket Sales</title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -15,26 +24,17 @@
     <script src="js/bootstrap-table.min.js"></script>
 
     <script>
-        var url = window.location.href;
-        var captured = /id=([^&]+)/.exec(url)[1];
-        if (!captured) {
-            alert('No ID specified');
-            window.close();
-        }
-        var id = captured;
-
-
         $(document).ready(function () {
             $.ajax({
-                url: 'http://localhost:9100/misc/transport-flight?id=' + id,
+                url: '<%=backendURL%>/misc/ticket-sales',
                 //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#journeys').bootstrapTable({
-                        data: response.journeys
+                    $('#ticket-sales').bootstrapTable({
+                        data: response
                     });
-                    $('#journeys').bootstrapTable('resetView', {
-                        height: $('#journeys').height() + 30
+                    $('#ticket-sales').bootstrapTable('resetView', {
+                        height: $('#ticket-sales').height() + 30
                     });
                 },
                 error: function (e) {
@@ -44,7 +44,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a href="journey.html?id=' + row.id + '">Details</a>';
+            return '<a href="transport-flight.jsp?id=' + row.id + '">Details</a>';
         }
 
     </script>
@@ -59,17 +59,20 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Transport Flight ....</h1>
+    <h1>Airways - Ticket Sales</h1>
 
-    <h3>Journeys</h3>
-    <table id="journeys" class="table table-no-bordered">
+    <table id="ticket-sales" class="table table-no-bordered">
         <thead>
         <tr>
-            <th data-field="fromCity">From</th>
-            <th data-field="toCity">To</th>
-            <th data-field="groupSize">Size</th>
+            <th data-field="dateOfFlight">DOF</th>
+            <th data-field="departureTime">Time</th>
+            <th data-field="flightNumber">Flight #</th>
+            <th data-field="fromIcao">From</th>
+            <th data-field="toIcao">To</th>
             <th data-field="status">Status</th>
-            <th data-field="itineraryCheck">Itinerary</th>
+            <th data-field="soldTickets">Sold</th>
+            <th data-field="freeTickets">Available</th>
+            <th data-field="totalTickets">Total</th>
             <th data-formatter="actionsCell"></th>
         </tr>
         </thead>
