@@ -11,49 +11,49 @@ import java.util.List;
 import java.util.ArrayList;
 
 import net.simforge.airways.Airways;
-import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.geo.Country;
-import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.html.Html;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TageoCom {
-    private static final Logger logger = LoggerFactory.getLogger(TageoCom.class.getName());
+public class TageoComToCityPopulation {
+    private static final Logger logger = LoggerFactory.getLogger(TageoComToCityPopulation.class.getName());
 
     private static final String LOCAL_ROOT = "./data/tageo.com/";
     private static final String TAGEO_ROOT = "http://www.tageo.com/";
     private static final int DEPTH = 4;
 
-    private static Session session;
-
     public static void main(String[] args) throws IOException, SQLException {
         logger.info("Importing Tageo.com data");
 
-        try (SessionFactory sessionFactory = Airways.buildSessionFactory();
-            Session _session = sessionFactory.openSession()) {
-            session = _session;
+        Csv csv = Csv.empty();
+        csv.addColumn("CountryName");
+        csv.addColumn("CountryCode");
+        csv.addColumn("CityName");
+        csv.addColumn("CityPopulation");
+        csv.addColumn("CityLatitude");
+        csv.addColumn("CityLongitude");
 
-            String countriesStr = IOHelper.loadFile(new File(LOCAL_ROOT + "_countries.txt"));
-            String[] countriesStrs = countriesStr.split(";");
+        String countriesStr = IOHelper.loadFile(new File(LOCAL_ROOT + "_countries.txt"));
+        String[] countriesStrs = countriesStr.split(";");
 
-            for (int i = 0; i < countriesStrs.length / 2; i++) {
-                String countryName = countriesStrs[i * 2 + 1];
-                String countryUrl = countriesStrs[i * 2];
+        for (int i = 0; i < countriesStrs.length / 2; i++) {
+            String countryName = countriesStrs[i * 2 + 1];
+            String countryUrl = countriesStrs[i * 2];
 
-                logger.info("Processing '{}' using {} URL", countryName, countryUrl);
+            logger.info("Processing '{}' using {} URL", countryName, countryUrl);
 
 //                downloadCountry(countryUrl);
-                importCountry(countryName, countryUrl);
-            }
+            importCountry(countryName, countryUrl, csv);
         }
+
+        IOHelper.saveFile(new File("./data/city-population.csv"), csv.getContent());
     }
 
-    private static void importCountry(String countryName, String countryUrl) throws SQLException, IOException {
+    private static void importCountry(String countryName, String countryUrl, Csv csv) throws SQLException, IOException {
         countryName = mask(countryName);
 
         logger.info("Importing data for '{}'", countryName);
@@ -61,20 +61,14 @@ public class TageoCom {
         String countryContent = getContent(countryUrl);
         String citiesUrl = getCitiesUrl(countryContent);
 
-        Country country = CommonOps.countryByName(session, countryName);
+        int idx = citiesUrl.lastIndexOf(".htm");
+        String code = citiesUrl.substring(idx - 2, idx);
 
-        if (country == null) {
-            int index = citiesUrl.lastIndexOf(".htm");
-            String code = citiesUrl.substring(index-2, index);
+        Country country = new Country();
+        country.setName(countryName);
+        country.setCode(code);
 
-            country = new Country();
-            country.setName(countryName);
-            country.setCode(code);
-
-            HibernateUtils.saveAndCommit(session, country);
-
-            logger.info("Country {} imported", countryName);
-        }
+        logger.info("Country {} imported", countryName);
 
         List<String> dataUrls = new ArrayList<>();
         dataUrls.add(citiesUrl);
@@ -117,20 +111,23 @@ public class TageoCom {
                     continue;
                 }
 
-                City city = CommonOps.cityByNameAndCountry(session, cityName, country);
-                if (city == null) {
-                    city = new City();
-                    city.setCountry(country);
-                    city.setName(cityName);
-                    city.setPopulation(population);
-                    city.setLatitude(lat);
-                    city.setLongitude(lon);
-                    city.setDataset(Airways.TAGEO_COM_DATASET);
+                City city = new City();
+                city.setCountry(country);
+                city.setName(cityName);
+                city.setPopulation(population);
+                city.setLatitude(lat);
+                city.setLongitude(lon);
+                city.setDataset(Airways.TAGEO_COM_DATASET);
 
-                    HibernateUtils.saveAndCommit(session, city);
+                logger.info("    City {} with population {} imported", cityName, population);
 
-                    logger.info("    City {} with population {} imported", cityName, population);
-                }
+                int row = csv.addRow();
+                csv.set(row, "CountryName", country.getName());
+                csv.set(row, "CountryCode", country.getCode());
+                csv.set(row, "CityName", city.getName());
+                csv.set(row, "CityPopulation", String.valueOf(city.getPopulation()));
+                csv.set(row, "CityLatitude", String.valueOf(city.getLatitude()));
+                csv.set(row, "CityLongitude", String.valueOf(city.getLongitude()));
             }
         }
     }

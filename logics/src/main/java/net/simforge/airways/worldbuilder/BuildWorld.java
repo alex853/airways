@@ -18,7 +18,7 @@ public class BuildWorld {
                 .createSchemaIfNeeded()
                 .build();
 
-        TageoCom.main(args);
+        TageoComToCityPopulation.main(args);
         ImportFSEconomyAirports.main(args);
 
         ActivateCities.main(args);
