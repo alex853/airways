@@ -18,8 +18,8 @@ dependencies {
     compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'
     compile group: 'net.simforge', name: 'simforge-commons-ext', version: '1.0.2'
 
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.21'
+
 //    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.0.1.Final'
     compile group: 'org.hibernate', name: 'hibernate-java8', version: '5.0.1.Final'
-
-    compile group: 'ch.qos.logback', name: 'logback-core', version: '1.1.7'
 }
