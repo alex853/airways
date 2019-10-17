@@ -19,7 +19,6 @@ apply plugin: 'io.spring.dependency-management'
 
 bootJar {
     baseName = 'airways-web-backend'
-//    version =  '0.1.0'
     from('./') {
         include 'simforge.properties'
 //        include 'logback.xml'
