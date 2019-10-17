@@ -20,4 +20,6 @@ dependencies {
 
 //    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.0.1.Final'
     compile group: 'org.hibernate', name: 'hibernate-java8', version: '5.0.1.Final'
+
+    compile group: 'ch.qos.logback', name: 'logback-core', version: '1.1.7'
 }
