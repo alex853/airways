@@ -4,10 +4,9 @@
 
 package net.simforge.airways.ops;
 
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.flight.PilotAssignment;
-import net.simforge.airways.persistence.model.geo.City;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.geo.City;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.BM;

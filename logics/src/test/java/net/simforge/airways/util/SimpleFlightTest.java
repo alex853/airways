@@ -6,7 +6,7 @@ package net.simforge.airways.util;
 
 import junit.framework.TestCase;
 import net.simforge.airways.TestRefData;
-import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.model.aircraft.AircraftType;
 import net.simforge.commons.gckls2com.GC;
 import net.simforge.commons.gckls2com.GCAirport;
 import net.simforge.commons.misc.Geo;

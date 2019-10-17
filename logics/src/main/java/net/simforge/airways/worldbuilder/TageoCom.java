@@ -12,8 +12,8 @@ import java.util.ArrayList;
 
 import net.simforge.airways.Airways;
 import net.simforge.airways.ops.CommonOps;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.geo.Country;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.html.Html;

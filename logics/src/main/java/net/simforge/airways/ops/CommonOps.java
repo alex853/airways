@@ -4,11 +4,11 @@
 
 package net.simforge.airways.ops;
 
-import net.simforge.airways.persistence.model.Airline;
-import net.simforge.airways.persistence.model.aircraft.AircraftType;
-import net.simforge.airways.persistence.model.geo.Airport;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.model.Airline;
+import net.simforge.airways.model.aircraft.AircraftType;
+import net.simforge.airways.model.geo.Airport;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.geo.Country;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 

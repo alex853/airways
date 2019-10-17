@@ -4,11 +4,11 @@
 
 package net.simforge.airways.processes.flight.activity;
 
-import net.simforge.airways.persistence.model.Pilot;
-import net.simforge.airways.persistence.model.aircraft.Aircraft;
-import net.simforge.airways.persistence.model.flight.AircraftAssignment;
-import net.simforge.airways.persistence.model.flight.Flight;
-import net.simforge.airways.persistence.model.flight.PilotAssignment;
+import net.simforge.airways.model.Pilot;
+import net.simforge.airways.model.aircraft.Aircraft;
+import net.simforge.airways.model.flight.AircraftAssignment;
+import net.simforge.airways.model.flight.Flight;
+import net.simforge.airways.model.flight.PilotAssignment;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 

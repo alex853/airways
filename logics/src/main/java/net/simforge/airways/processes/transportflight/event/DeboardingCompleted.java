@@ -4,8 +4,8 @@
 
 package net.simforge.airways.processes.transportflight.event;
 
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;

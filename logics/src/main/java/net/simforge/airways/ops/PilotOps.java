@@ -4,13 +4,13 @@
 
 package net.simforge.airways.ops;
 
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.Pilot;
-import net.simforge.airways.persistence.model.flight.PilotAssignment;
-import net.simforge.airways.persistence.model.geo.Airport;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.geo.Country;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.Pilot;
+import net.simforge.airways.model.flight.PilotAssignment;
+import net.simforge.airways.model.geo.Airport;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.geo.Country;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;

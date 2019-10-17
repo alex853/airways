@@ -6,9 +6,9 @@ package net.simforge.airways;
 
 import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.Itinerary;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.journey.Itinerary;
+import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
 import org.hibernate.Session;

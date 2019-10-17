@@ -4,7 +4,7 @@
 
 package net.simforge.airways.util;
 
-import net.simforge.airways.persistence.model.flight.Flight;
+import net.simforge.airways.model.flight.Flight;
 
 import java.time.Duration;
 import java.time.LocalDateTime;

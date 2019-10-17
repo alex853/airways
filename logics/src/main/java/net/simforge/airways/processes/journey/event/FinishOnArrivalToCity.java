@@ -6,10 +6,10 @@ package net.simforge.airways.processes.journey.event;
 
 import net.simforge.airways.cityflows.CityFlowOps;
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
-import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.flow.City2CityFlowStats;
+import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;

@@ -15,7 +15,7 @@ repositories {
 }
 
 dependencies {
-    compile project(':persistence')
+    compile project(':model')
     compile project(':process-engine')
     
     compile group: 'net.simforge', name: 'simforge-commons', version: '1.0.5'

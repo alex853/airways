@@ -8,7 +8,7 @@ import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
-import net.simforge.airways.persistence.model.Pilot;
+import net.simforge.airways.model.Pilot;
 import net.simforge.airways.processes.pilot.activity.PilotOnDuty;
 import org.hibernate.SessionFactory;
 

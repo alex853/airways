@@ -4,20 +4,20 @@
 
 package net.simforge.airways;
 
-import net.simforge.airways.persistence.model.*;
-import net.simforge.airways.persistence.model.aircraft.Aircraft;
-import net.simforge.airways.persistence.model.aircraft.AircraftType;
-import net.simforge.airways.persistence.model.flight.*;
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
-import net.simforge.airways.persistence.model.flow.CityFlow;
-import net.simforge.airways.persistence.model.geo.Airport;
-import net.simforge.airways.persistence.model.geo.Airport2City;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.geo.Country;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.Itinerary;
-import net.simforge.airways.persistence.model.journey.Transfer;
+import net.simforge.airways.model.*;
+import net.simforge.airways.model.aircraft.Aircraft;
+import net.simforge.airways.model.aircraft.AircraftType;
+import net.simforge.airways.model.flight.*;
+import net.simforge.airways.model.flow.City2CityFlow;
+import net.simforge.airways.model.flow.City2CityFlowStats;
+import net.simforge.airways.model.flow.CityFlow;
+import net.simforge.airways.model.geo.Airport;
+import net.simforge.airways.model.geo.Airport2City;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.geo.Country;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.journey.Itinerary;
+import net.simforge.airways.model.journey.Transfer;
 import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
 import org.hibernate.SessionFactory;

@@ -4,11 +4,10 @@
 
 package net.simforge.airways.cityflows;
 
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
-import net.simforge.airways.persistence.model.flow.CityFlow;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.airways.model.flow.City2CityFlow;
+import net.simforge.airways.model.flow.City2CityFlowStats;
+import net.simforge.airways.model.flow.CityFlow;
+import net.simforge.airways.model.geo.City;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;

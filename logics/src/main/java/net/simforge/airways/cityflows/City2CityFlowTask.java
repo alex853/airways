@@ -6,10 +6,10 @@ package net.simforge.airways.cityflows;
 
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.AirwaysApp;
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.flow.CityFlow;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.model.flow.City2CityFlow;
+import net.simforge.airways.model.flow.CityFlow;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.RealTimeMachine;

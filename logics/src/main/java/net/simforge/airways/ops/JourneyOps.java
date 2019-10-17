@@ -4,14 +4,13 @@
 
 package net.simforge.airways.ops;
 
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.journey.Itinerary;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.journey.Itinerary;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.model.flow.City2CityFlow;
 import net.simforge.commons.legacy.BM;
-import net.simforge.commons.misc.JavaTime;
 import org.hibernate.Session;
 
 import java.util.Collection;

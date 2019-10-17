@@ -6,8 +6,8 @@ package net.simforge.airways.ticketing;
 
 import net.simforge.airways.TestWorld;
 import net.simforge.airways.Airways;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processengine.SimulatedTimeMachine;
 import net.simforge.airways.processengine.TimeMachine;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;

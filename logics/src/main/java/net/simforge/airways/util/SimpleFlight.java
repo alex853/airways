@@ -4,7 +4,7 @@
 
 package net.simforge.airways.util;
 
-import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.model.aircraft.AircraftType;
 import net.simforge.commons.misc.Geo;
 
 import java.time.Duration;

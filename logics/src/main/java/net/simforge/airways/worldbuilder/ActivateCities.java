@@ -5,7 +5,7 @@
 package net.simforge.airways.worldbuilder;
 
 import net.simforge.airways.Airways;
-import net.simforge.airways.persistence.model.geo.City;
+import net.simforge.airways.model.geo.City;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;

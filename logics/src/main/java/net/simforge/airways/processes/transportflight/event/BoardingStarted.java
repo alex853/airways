@@ -4,15 +4,13 @@
 
 package net.simforge.airways.processes.transportflight.event;
 
-import net.simforge.airways.persistence.EventLog;
+import net.simforge.airways.EventLog;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
-import net.simforge.airways.processes.DurationConsts;
+import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processes.transportflight.activity.Boarding;
-import net.simforge.airways.processes.transportflight.activity.Checkin;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -20,8 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.xml.bind.annotation.XmlInlineBinaryData;
-import java.time.LocalDateTime;
 
 /**
  * This event is sourced by Pilot. TransportFlight reacts and does its job - board passengers.

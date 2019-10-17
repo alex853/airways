@@ -6,8 +6,8 @@ package net.simforge.airways;
 
 import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.Person;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.Person;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import org.hibernate.Session;
 import org.junit.Test;

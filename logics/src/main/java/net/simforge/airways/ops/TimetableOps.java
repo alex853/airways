@@ -4,8 +4,8 @@
 
 package net.simforge.airways.ops;
 
-import net.simforge.airways.persistence.model.flight.TimetableRow;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
+import net.simforge.airways.model.flight.TimetableRow;
+import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 

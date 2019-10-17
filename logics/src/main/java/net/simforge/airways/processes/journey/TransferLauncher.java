@@ -5,12 +5,12 @@
 package net.simforge.airways.processes.journey;
 
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.persistence.EventLog;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.geo.Airport;
-import net.simforge.airways.persistence.model.geo.City;
-import net.simforge.airways.persistence.model.journey.Journey;
-import net.simforge.airways.persistence.model.journey.Transfer;
+import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.geo.Airport;
+import net.simforge.airways.model.geo.City;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.model.journey.Transfer;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processes.journey.event.ArrivalToAirportFromCity;

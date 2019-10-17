@@ -4,7 +4,7 @@
 
 package net.simforge.airways.ticketing;
 
-import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.processengine.TimeMachine;
 import org.hibernate.Session;
 

@@ -6,10 +6,10 @@ package net.simforge.airways.web.backend;
 
 import com.google.common.collect.Lists;
 import net.simforge.airways.AirwaysApp;
-import net.simforge.airways.persistence.model.EventLogEntry;
-import net.simforge.airways.persistence.model.Person;
-import net.simforge.airways.persistence.model.flight.TransportFlight;
-import net.simforge.airways.persistence.model.journey.Journey;
+import net.simforge.airways.model.EventLogEntry;
+import net.simforge.airways.model.Person;
+import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.model.journey.Journey;
 import org.hibernate.Session;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMapping;

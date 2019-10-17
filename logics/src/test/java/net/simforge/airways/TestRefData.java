@@ -4,7 +4,7 @@
 
 package net.simforge.airways;
 
-import net.simforge.airways.persistence.model.aircraft.AircraftType;
+import net.simforge.airways.model.aircraft.AircraftType;
 
 public class TestRefData {
     public static AircraftType getA320Data() {

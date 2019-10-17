@@ -5,8 +5,8 @@
 package net.simforge.airways.cityflows;
 
 import net.simforge.airways.AirwaysApp;
-import net.simforge.airways.persistence.model.flow.City2CityFlow;
-import net.simforge.airways.persistence.model.flow.City2CityFlowStats;
+import net.simforge.airways.model.flow.City2CityFlow;
+import net.simforge.airways.model.flow.City2CityFlowStats;
 import net.simforge.commons.HeartbeatTask;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
