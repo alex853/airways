@@ -2,8 +2,9 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.worldbuilder;
+package net.simforge.airways.worldbuilder.tools;
 
+import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.Airways;
 import net.simforge.airways.model.Airline;
@@ -198,15 +199,34 @@ public class BuildTimetable {
         return findAirportForCity(session, city);
     }
 
-    private static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime, int turnaroundTime) {
-        session.getTransaction().begin();
+    public static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime, int turnaroundTime) {
+        ProcessEngine engine = ProcessEngineBuilder.create()
+                .withTimeMachine(new RealTimeMachine())
+                .withSessionFactory(AirwaysApp.getSessionFactory())
+                .build();
 
         Airline airline = CommonOps.airlineByIata(session, airlineIata);
 
+        TimetableRow existingTimetableRow = (TimetableRow) session
+                .createQuery("from TimetableRow t " +
+                        "where t.airline = :airline " +
+                        " and t.fromAirport = :fromAirport " +
+                        " and t.toAirport = :toAirport " +
+                        " and t.departureTime = :departureTime")
+                .setEntity("airline", airline)
+                .setEntity("fromAirport", fromAirport)
+                .setEntity("toAirport", toAirport)
+                .setString("departureTime", departureTime)
+                .setMaxResults(1)
+                .uniqueResult();
+        if (existingTimetableRow != null) {
+            logger.info("Timetable row {} -> {} at {} by {} exists", fromAirport, toAirport, departureTime, airline);
+            return;
+        }
 
         //noinspection JpaQlInspection
         TimetableRow latestAirlineTimetableRow = (TimetableRow) session
-                .createQuery("select t from TimetableRow t where t.airline = :airline order by t.number desc")
+                .createQuery("from TimetableRow t where t.airline = :airline order by t.number desc")
                 .setEntity("airline", airline)
                 .setMaxResults(1)
                 .uniqueResult();
@@ -225,6 +245,8 @@ public class BuildTimetable {
         Duration flyingTime = simpleFlight.getTotalTime();
         FlightTimeline timeline = FlightTimeline.byFlyingTime(flyingTime);
         Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
+
+        session.getTransaction().begin();
 
         TimetableRow flight1row = new TimetableRow();
         flight1row.setAirline(airline);
@@ -263,7 +285,6 @@ public class BuildTimetable {
 
         session.save(flight2row);
         engine.startActivity(session, ScheduleFlight.class, flight2row);
-
 
         session.getTransaction().commit();
     }

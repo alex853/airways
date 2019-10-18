@@ -18,8 +18,21 @@ public class CommonOps {
         BM.start("Airways.countryByName");
         try {
             return (Country) session
-                    .createQuery("from Country c where name = :name")
-                    .setString("name", countryName)
+                    .createQuery("from Country c where upper(name) = :name")
+                    .setString("name", countryName.toUpperCase())
+                    .setMaxResults(1)
+                    .uniqueResult();
+        } finally {
+            BM.stop();
+        }
+    }
+
+    public static Country countryByCode(Session session, String countryCode) {
+        BM.start("Airways.countryByCode");
+        try {
+            return (Country) session
+                    .createQuery("from Country c where upper(code) = :code")
+                    .setString("code", countryCode.toUpperCase())
                     .setMaxResults(1)
                     .uniqueResult();
         } finally {
@@ -31,8 +44,8 @@ public class CommonOps {
         BM.start("Airways.cityByNameAndCountry");
         try {
             return (City) session
-                    .createQuery("from City c where name = :name and country = :country")
-                    .setString("name", cityName)
+                    .createQuery("from City c where upper(name) = :name and country = :country")
+                    .setString("name", cityName.toUpperCase())
                     .setEntity("country", country)
                     .setMaxResults(1)
                     .uniqueResult();

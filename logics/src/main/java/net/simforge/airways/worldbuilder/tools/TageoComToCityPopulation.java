@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.worldbuilder;
+package net.simforge.airways.worldbuilder.tools;
 
 import java.io.File;
 import java.io.IOException;

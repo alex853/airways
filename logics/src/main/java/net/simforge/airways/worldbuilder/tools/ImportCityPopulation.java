@@ -2,11 +2,18 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.worldbuilder;
+package net.simforge.airways.worldbuilder.tools;
 
+import net.simforge.airways.Airways;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.geo.Country;
+import net.simforge.airways.ops.CommonOps;
+import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.io.Csv;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,28 +21,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ImportCityPopulation {
+    private static final Logger logger = LoggerFactory.getLogger(ImportCityPopulation.class.getName());
+
     public static void main(String[] args) throws IOException {
         Csv csv = Csv.load(new File("./data/city-population.csv"));
 
         List<Filter> filters = toFilters(args);
 
-        for (int row = 0; row < csv.rowCount(); row++) {
-            Country country = new Country();
-            country.setName(csv.value(row, "CountryName"));
-            country.setCode(csv.value(row, "CountryCode"));
+        try (SessionFactory sessionFactory = Airways.buildSessionFactory();
+             Session session = sessionFactory.openSession()) {
 
-            City city = new City();
-            city.setName(csv.value(row, "CityName"));
-            city.setPopulation(Integer.valueOf(csv.value(row, "CityPopulation")));
-            city.setLatitude(Double.valueOf(csv.value(row, "CityLatitude")));
-            city.setLongitude(Double.valueOf(csv.value(row, "CityLongitude")));
 
-            if (!check(filters, country, city)) {
-                continue;
+            for (int row = 0; row < csv.rowCount(); row++) {
+                Country country = new Country();
+                country.setName(csv.value(row, "CountryName"));
+                country.setCode(csv.value(row, "CountryCode"));
+
+                City city = new City();
+                city.setName(csv.value(row, "CityName"));
+                city.setPopulation(Integer.valueOf(csv.value(row, "CityPopulation")));
+                city.setLatitude(Double.valueOf(csv.value(row, "CityLatitude")));
+                city.setLongitude(Double.valueOf(csv.value(row, "CityLongitude")));
+
+                if (!check(filters, country, city)) {
+                    continue;
+                }
+
+                // put it into database
+                logger.info("Processing {} -> {}", country, city);
+
+                Country dbCountry = CommonOps.countryByCode(session, country.getCode());
+                if (dbCountry == null) {
+                    dbCountry = country;
+                    HibernateUtils.saveAndCommit(session, dbCountry);
+                    logger.info("\tCountry {} created", dbCountry);
+                }
+
+                City dbCity = CommonOps.cityByNameAndCountry(session, city.getName(), dbCountry);
+                if (dbCity == null) {
+                    dbCity = city;
+                    dbCity.setCountry(dbCountry);
+                    dbCity.setDataset(Airways.ACTIVE_DATASET);
+                    HibernateUtils.saveAndCommit(session, dbCity);
+                    logger.info("\tCity {} created", dbCity);
+                }
             }
-
-            // put it into database
-            System.out.println(country + "\t\t\t" + city);
         }
     }
 

@@ -2,7 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
-package net.simforge.airways.worldbuilder;
+package net.simforge.airways.worldbuilder.tools;
 
 import net.simforge.airways.Airways;
 import net.simforge.airways.model.geo.Airport;
@@ -18,13 +18,13 @@ import java.util.List;
 public class ActivateAirports {
     private static final Logger logger = LoggerFactory.getLogger(ActivateAirports.class.getName());
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         logger.info("Activate airports");
 
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
              Session session = sessionFactory.openSession()) {
 
-            //noinspection JpaQlInspection,unchecked
+            //noinspection unchecked
             List<Airport> airports = session
                     .createQuery("from Airport where dataset != :activeDataset")
                     .setInteger("activeDataset", Airways.ACTIVE_DATASET)
