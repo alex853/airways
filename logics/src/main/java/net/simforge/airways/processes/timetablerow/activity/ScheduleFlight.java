@@ -41,7 +41,7 @@ import static net.simforge.airways.processengine.Result.When.NextHour;
 /**
  * It creates TransportFlight and Flight for the according to the timetable and date.
  */
-public class ScheduleFlight implements Activity {
+public class ScheduleFlight implements Activity { // todo p1 convert it back into heartbeat-based task
     private static Logger logger = LoggerFactory.getLogger(ScheduleFlight.class);
 
     @Inject
