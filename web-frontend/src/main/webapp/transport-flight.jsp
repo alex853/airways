@@ -2,10 +2,6 @@
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   --%>
 
-<!--
-  ~ Airways Project (c) Alexey Kornev, 2015-2019
-  -->
-
 <%
     String backendURL = application.getInitParameter("BackendURL");
 
@@ -15,7 +11,7 @@
 
 <head>
 
-    <title>Airways - Transport Flight ....</title>
+    <title>Airways - Transport Flight #flight </title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -36,14 +32,18 @@
         $(document).ready(function () {
             $.ajax({
                 url: '<%=backendURL%>/misc/transport-flight?id=' + id,
-                //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#journeys').bootstrapTable({
+                    $.each(response.transportFlight, function (field, value) {
+                        $("#transportFlight-" + field).text(value);
+                    });
+
+                    var journeysTable = $('#journeys');
+                    journeysTable.bootstrapTable({
                         data: response.journeys
                     });
-                    $('#journeys').bootstrapTable('resetView', {
-                        height: $('#journeys').height() + 30
+                    journeysTable.bootstrapTable('resetView', {
+                        height: journeysTable.height() + 30
                     });
                 },
                 error: function (e) {
@@ -68,7 +68,39 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Transport Flight ....</h1>
+    <h1>Airways - Transport Flight <span id="header-info"></span></h1>
+    <div class="alert alert-info" role="alert">TODO - timetable row</div>
+    <form>
+        <div class="form-group row">
+            <label for="transportFlight-flightNumber" class="col-sm-2 col-form-label">Flight #</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-flightNumber"></span>
+            <label for="transportFlight-dateOfFlight" class="col-sm-2 col-form-label">Date of Flight</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-dateOfFlight"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-fromIcao" class="col-sm-2 col-form-label">From</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-fromIcao"></span>
+            <label for="transportFlight-toIcao" class="col-sm-2 col-form-label">To</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-toIcao"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-departureTime" class="col-sm-2 col-form-label">Departure Time</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-departureTime"></span>
+            <label for="transportFlight-arrivalTime" class="col-sm-2 col-form-label">Arrival Time</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-arrivalTime"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-status" class="col-sm-2 col-form-label">Status</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-status"></span>
+            <span class="col-sm-6 col-form-label"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-freeTickets" class="col-sm-2 col-form-label">Free Tickets</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-freeTickets"></span>
+            <label for="transportFlight-totalTickets" class="col-sm-2 col-form-label">Total Tickets</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-totalTickets"></span>
+        </div>
+    </form>
 
     <h3>Journeys</h3>
     <table id="journeys" class="table table-no-bordered">
@@ -85,6 +117,8 @@
         <tbody>
         </tbody>
     </table>
+
+    <div class="alert alert-info" role="alert">TODO - event log</div>
 </div>
 
 </body>
