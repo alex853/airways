@@ -37,23 +37,27 @@ public class MiscController {
                     .list();
 
             for (TransportFlight transportFlight : transportFlights) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", transportFlight.getId());
-                map.put("dateOfFlight", transportFlight.getDateOfFlight().toString());
-                map.put("flightNumber", transportFlight.getFlightNumber());
-                map.put("departureDt", transportFlight.getDepartureDt().toString());
-                map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
-                map.put("fromIcao", transportFlight.getFromAirport().getIcao());
-                map.put("toIcao", transportFlight.getToAirport().getIcao());
-                map.put("status", transportFlight.getStatus());
-                map.put("soldTickets", transportFlight.getTotalTickets() - transportFlight.getFreeTickets());
-                map.put("freeTickets", transportFlight.getFreeTickets());
-                map.put("totalTickets", transportFlight.getTotalTickets());
-                result.add(map);
+                result.add(transportFlight2map(transportFlight));
             }
         }
 
         return result;
+    }
+
+    private Map<String, Object> transportFlight2map(TransportFlight transportFlight) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", transportFlight.getId());
+        map.put("dateOfFlight", transportFlight.getDateOfFlight().toString());
+        map.put("flightNumber", transportFlight.getFlightNumber());
+        map.put("departureDt", transportFlight.getDepartureDt().toString());
+        map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
+        map.put("fromIcao", transportFlight.getFromAirport().getIcao());
+        map.put("toIcao", transportFlight.getToAirport().getIcao());
+        map.put("status", transportFlight.getStatus().toString());
+        map.put("soldTickets", transportFlight.getTotalTickets() - transportFlight.getFreeTickets());
+        map.put("freeTickets", transportFlight.getFreeTickets());
+        map.put("totalTickets", transportFlight.getTotalTickets());
+        return map;
     }
 
     @RequestMapping("/transport-flight")
@@ -61,6 +65,9 @@ public class MiscController {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            TransportFlight transportFlight = session.load(TransportFlight.class, id);
+            result.put("transportFlight", transportFlight2map(transportFlight));
+
             //noinspection unchecked,JpaQlInspection
             List<Journey> journeys = session
                     .createQuery("select i.journey from JourneyItinerary i " +
@@ -172,7 +179,7 @@ public class MiscController {
     }
 
     @RequestMapping("/get-full-log")
-    public Map<String, Object> getPersonData(@RequestParam(value = "primary_id") String primaryId) {
+    public Map<String, Object> getFullLog(@RequestParam(value = "primary_id") String primaryId) {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {

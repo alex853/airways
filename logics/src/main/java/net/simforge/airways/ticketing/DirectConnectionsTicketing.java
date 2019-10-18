@@ -33,7 +33,7 @@ public class DirectConnectionsTicketing {
                     .setEntity("fromCity", journey.getFromCity())
                     .setEntity("toCity", journey.getToCity())
                     .setParameter("departureTimeSince", timeMachine.now().plusHours(3)) // three hours as reserve for all organizational matter
-                    .setInteger("scheduled", TransportFlight.Status.Scheduled)
+                    .setInteger("scheduled", TransportFlight.Status.Scheduled.code())
                     .setInteger("groupSize", journey.getGroupSize())
                     .list();
 

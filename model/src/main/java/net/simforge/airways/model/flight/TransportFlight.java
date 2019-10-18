@@ -5,6 +5,7 @@
 package net.simforge.airways.model.flight;
 
 import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Person;
 import net.simforge.airways.model.geo.Airport;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
@@ -160,12 +161,12 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
         this.arrivalDt = arrivalDt;
     }
 
-    public int getStatus() {
-        return status;
+    public Status getStatus() {
+        return status != null ? Status.byCode(status) : null;
     }
 
-    public void setStatus(int status) {
-        this.status = status;
+    public void setStatus(Status status) {
+        this.status = status != null ? status.code() : null;
     }
 
     public LocalDateTime getStatusDt() {
@@ -201,19 +202,43 @@ public class TransportFlight implements BaseEntity, EventLog.Loggable, Auditable
                 '}';
     }
 
-    public class Status {
-        public static final int Scheduled             =  100;
-        public static final int Checkin               = 1000;
-        public static final int WaitingForBoarding    = 1100;
-        public static final int Boarding              = 1200;
-        public static final int WaitingForDeparture   = 1300;
-        public static final int Departure             = 1400;
-        public static final int Flying                = 2000;
-        public static final int Arrival               = 3000;
-        public static final int WaitingForDeboarding  = 3100;
-        public static final int Deboarding            = 3200;
-        public static final int Finished              = 7777;
-        public static final int CancellationRequested = 9001;
-        public static final int Cancelled             = 9999;
+    public enum Status {
+        Scheduled(100),
+        Checkin(1000),
+        WaitingForBoarding(1100),
+        Boarding(1200),
+        WaitingForDeparture(1300),
+        Departure(1400),
+        Flying(2000),
+        Arrival(3000),
+        WaitingForDeboarding(3100),
+        Deboarding(3200),
+        Finished(7777),
+        CancellationRequested(9001),
+        Cancelled(9999);
+
+        private final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Status byCode(int code) {
+            for (Status value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
     }
 }
