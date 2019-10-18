@@ -67,8 +67,7 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
                 LocalDateTime now = JavaTime.nowUtc();
 
                 CityFlow fromCityFlow = flow.getFromFlow();
-                City city = fromCityFlow.getCity();
-                int dailyFlow = CityFlowOps.getDailyFlow(city);
+                int dailyFlow = CityFlowOps.getDailyFlow(fromCityFlow);
 
                 double flowToDistribute = dailyFlow * (Duration.between(flow.getAccumulatedFlowDt(), now).toMillis() / (double) CityFlowOps.DAY);
 

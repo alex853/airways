@@ -82,7 +82,8 @@ CREATE TABLE aw_city_flow (
     last_redistribution_dt timestamp without time zone,
     attraction real,
     units_threshold real,
-    default_availability real
+    default_availability real,
+    mobility real
 );
 
 

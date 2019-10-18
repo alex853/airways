@@ -31,8 +31,12 @@ public class CityFlowOps {
 
     private static final Random random = new Random();
 
-    public static int getDailyFlow(City city) {
-        return (int) (city.getPopulation() * 0.001);
+    public static int getDailyFlow(CityFlow cityFlow) {
+        Double mobility = cityFlow.getMobility();
+        if (mobility == null) {
+            mobility = 1.0;
+        }
+        return (int) (cityFlow.getCity().getPopulation() * 0.001 * mobility);
     }
 
     public static double boundAvailability(double availability) {
@@ -81,8 +85,7 @@ public class CityFlowOps {
             }
 
             CityFlow fromCityFlow = flow.getFromFlow();
-            City city = fromCityFlow.getCity();
-            int dailyFlow = CityFlowOps.getDailyFlow(city);
+            int dailyFlow = CityFlowOps.getDailyFlow(fromCityFlow);
 
             double requiredFlowToDistribute = (flow.getNextGroupSize() - flow.getAccumulatedFlow()) / flow.getPercentage() / CityFlowOps.boundAvailability(flow.getAvailability());
             long requiredMillis = (long) (requiredFlowToDistribute * DAY / dailyFlow);
@@ -134,7 +137,7 @@ public class CityFlowOps {
 
     public static double calcAvailabilityDelta(City2CityFlow c2cFlow, City2CityFlowStats stats) {
         CityFlow cityFlow = c2cFlow.getFromFlow();
-        double dailyFlow = CityFlowOps.getDailyFlow(cityFlow.getCity());
+        double dailyFlow = CityFlowOps.getDailyFlow(cityFlow);
 
         int noTickets = stats.getNoTickets();
         int ticketsBought = stats.getTicketsBought();

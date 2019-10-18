@@ -45,6 +45,8 @@ public class CityFlow implements BaseEntity, HeartbeatObject, EventLog.Loggable,
     private Double unitsThreshold;
     @Column(name = "default_availability")
     private Double defaultAvailability;
+    @Column
+    private Double mobility;
 
     @Override
     public String getEventLogCode() {
@@ -137,6 +139,14 @@ public class CityFlow implements BaseEntity, HeartbeatObject, EventLog.Loggable,
 
     public void setDefaultAvailability(Double defaultAvailability) {
         this.defaultAvailability = defaultAvailability;
+    }
+
+    public Double getMobility() {
+        return mobility;
+    }
+
+    public void setMobility(Double mobility) {
+        this.mobility = mobility;
     }
 
     public static class Status {
