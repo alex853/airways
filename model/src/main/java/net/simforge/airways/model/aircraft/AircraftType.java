@@ -4,19 +4,28 @@
 
 package net.simforge.airways.model.aircraft;
 
+import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity(name = "AircraftType")
 @Table(name = "aw_aircraft_type")
-public class AircraftType implements BaseEntity {
+public class AircraftType implements BaseEntity, Auditable {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "aw_aircraft_type_id")
     @SequenceGenerator(name = "aw_aircraft_type_id", sequenceName = "aw_aircraft_type_id_seq", allocationSize = 1)
     private Integer id;
     @Version
     private Integer version;
+
+    @SuppressWarnings("unused")
+    @Column(name = "create_dt")
+    private LocalDateTime createDt;
+    @SuppressWarnings("unused")
+    @Column(name = "modify_dt")
+    private LocalDateTime modifyDt;
 
     @Column
     private String icao;
@@ -53,6 +62,16 @@ public class AircraftType implements BaseEntity {
     @Override
     public void setVersion(Integer version) {
         this.version = version;
+    }
+
+    @Override
+    public LocalDateTime getCreateDt() {
+        return createDt;
+    }
+
+    @Override
+    public LocalDateTime getModifyDt() {
+        return modifyDt;
     }
 
     public String getIcao() {
