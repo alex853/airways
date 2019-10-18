@@ -2,6 +2,7 @@
  * Airways Project (c) Alexey Kornev, 2015-2019
  */
 
+apply plugin: 'application'
 apply plugin: 'java'
 
 archivesBaseName = 'airways-logics'
@@ -37,3 +38,6 @@ dependencies {
     testCompile group: 'ch.qos.logback', name: 'logback-core', version: '1.1.7'
     testCompile group: 'ch.qos.logback', name: 'logback-classic', version: '1.1.7'
 }
+
+applicationName = 'airways-logics'
+mainClassName = 'net.simforge.commons.runtime.TaskExecutor'
