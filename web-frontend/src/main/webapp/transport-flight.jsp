@@ -11,7 +11,7 @@
 
 <head>
 
-    <title>Airways - Transport Flight #flight </title>
+    <title>Airways - Transport Flight #flight-info </title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -34,9 +34,14 @@
                 url: '<%=backendURL%>/misc/transport-flight?id=' + id,
                 dataType: 'json',
                 success: function (response) {
-                    $.each(response.transportFlight, function (field, value) {
+                    var transportFlight = response.transportFlight;
+                    $.each(transportFlight, function (field, value) {
                         $("#transportFlight-" + field).text(value);
                     });
+
+                    var flightInfo = '#' + transportFlight.id + ' ' + transportFlight.flightNumber + ' ' + transportFlight.dateOfFlight;
+                    $('#flight-info').text(flightInfo);
+                    document.title = document.title.replace('#flight-info', flightInfo);
 
                     var journeysTable = $('#journeys');
                     journeysTable.bootstrapTable({
@@ -53,7 +58,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a href="journey.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href="journey.jsp?id=' + row.id + '">Details</a>';
         }
 
     </script>
@@ -68,8 +73,11 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Transport Flight <span id="header-info"></span></h1>
-    <div class="alert alert-info" role="alert">TODO - timetable row</div>
+    <h1>Airways - Transport Flight <span id="flight-info"></span></h1>
+
+    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Flight</a>
+    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Timetable</a>
+
     <form>
         <div class="form-group row">
             <label for="transportFlight-flightNumber" class="col-sm-2 col-form-label">Flight #</label>
@@ -118,7 +126,7 @@
         </tbody>
     </table>
 
-    <div class="alert alert-info" role="alert">TODO - event log</div>
+    <div class="alert alert-warning" role="alert">TODO - event log</div>
 </div>
 
 </body>
