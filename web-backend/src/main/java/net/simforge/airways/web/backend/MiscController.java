@@ -93,6 +93,8 @@ public class MiscController {
             }
 
             result.put("journeys", journeysList);
+
+            loadEventLogTail(session, TransportFlight.EventLogCode + ':' + id, result);
         }
 
         return result;
@@ -146,26 +148,30 @@ public class MiscController {
             Person person = session.load(Person.class, id);
             result.put("person", person2map(person));
 
-            //noinspection unchecked,JpaQlInspection
-            List<EventLogEntry> logEntries = session
-                    .createQuery("from EventLogEntry " +
-                            "where primary_id = :id " +
-                            "order by dt desc")
-                    .setMaxResults(16)
-                    .setParameter("id", Person.EventLogCode + ':' + id)
-                    .list();
-
-            List<EventLogEntry> normalOrder = Lists.reverse(logEntries);
-            boolean hasMore = normalOrder.size() >= 16;
-            if (hasMore) {
-                normalOrder.remove(0);
-            }
-
-            result.put("log", logEntries2list(normalOrder));
-            result.put("logHasMore", hasMore);
+            loadEventLogTail(session, Person.EventLogCode + ':' + id, result);
         }
 
         return result;
+    }
+
+    private void loadEventLogTail(Session session, String primaryId, Map<String, Object> result) {
+        //noinspection unchecked,JpaQlInspection
+        List<EventLogEntry> logEntries = session
+                .createQuery("from EventLogEntry " +
+                        "where primary_id = :id " +
+                        "order by dt desc")
+                .setMaxResults(16)
+                .setParameter("id", primaryId)
+                .list();
+
+        List<EventLogEntry> normalOrder = Lists.reverse(logEntries);
+        boolean hasMore = normalOrder.size() >= 16;
+        if (hasMore) {
+            normalOrder.remove(0);
+        }
+
+        result.put("log", logEntries2list(normalOrder));
+        result.put("logHasMore", hasMore);
     }
 
     private List<Map<String, Object>> logEntries2list(List<EventLogEntry> normalOrder) {

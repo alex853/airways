@@ -44,12 +44,36 @@
                     document.title = document.title.replace('#flight-info', flightInfo);
 
                     var journeysTable = $('#journeys');
-                    journeysTable.bootstrapTable({
-                        data: response.journeys
-                    });
-                    journeysTable.bootstrapTable('resetView', {
-                        height: journeysTable.height() + 30
-                    });
+                    journeysTable.bootstrapTable({ data: response.journeys });
+                    journeysTable.bootstrapTable('resetView', { height: journeysTable.height() + 30 });
+
+                    var logTable = $('#log');
+                    logTable.bootstrapTable({ data: response.log });
+
+                    if (response.logHasMore) {
+                        logTable.bootstrapTable('insertRow', { index: 0,
+                            row: {
+                                dt: '',
+                                msg: '<button type="button" class="btn btn-secondary" id="showAllEvents">Show all events</button>'
+                            }
+                        });
+
+                        $('#showAllEvents').click( function () {
+                            $.ajax({
+                                url: '<%=backendURL%>/misc/get-full-log?primary_id=trFlight:' + id,
+                                dataType: 'json',
+                                success: function (response) {
+                                    var logTable = $('#log');
+                                    logTable.bootstrapTable('load', response.log);
+                                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
+                                },
+                                error: function (e) {
+                                    console.log(e.responseText);
+                                }
+                            });
+                        });
+                    }
+                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
                 },
                 error: function (e) {
                     console.log(e.responseText);
@@ -126,7 +150,17 @@
         </tbody>
     </table>
 
-    <div class="alert alert-warning" role="alert">TODO - event log</div>
+    <h3>Event log</h3>
+    <table id="log" class="table table-no-bordered">
+        <thead>
+        <tr>
+            <th data-field="dt">Date/Time</th>
+            <th data-field="msg">Message</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
 </div>
 
 </body>
