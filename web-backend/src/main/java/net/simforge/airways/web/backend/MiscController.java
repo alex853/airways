@@ -51,6 +51,7 @@ public class MiscController {
         map.put("flightNumber", transportFlight.getFlightNumber());
         map.put("departureDt", transportFlight.getDepartureDt().toString());
         map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
+        map.put("arrivalTime", transportFlight.getArrivalDt().toLocalTime().toString());
         map.put("fromIcao", transportFlight.getFromAirport().getIcao());
         map.put("toIcao", transportFlight.getToAirport().getIcao());
         map.put("status", transportFlight.getStatus().toString());
