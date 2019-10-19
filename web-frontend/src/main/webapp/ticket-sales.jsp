@@ -2,10 +2,6 @@
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   --%>
 
-<!--
-~ Airways Project (c) Alexey Kornev, 2015-2019
--->
-
 <%
     String backendURL = application.getInitParameter("BackendURL");
 
@@ -44,7 +40,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a href="transport-flight.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href="transport-flight.jsp?id=' + row.id + '">Details</a>';
         }
 
     </script>

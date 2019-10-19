@@ -2,10 +2,6 @@
   ~ Airways Project (c) Alexey Kornev, 2015-2019
   --%>
 
-<!--
-  ~ Airways Project (c) Alexey Kornev, 2015-2019
-  -->
-
 <%
     String backendURL = application.getInitParameter("BackendURL");
 
@@ -15,7 +11,7 @@
 
 <head>
 
-    <title>Airways - Transport Flight ....</title>
+    <title>Airways - Transport Flight #flight-info </title>
 
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-table.min.css">
@@ -36,15 +32,48 @@
         $(document).ready(function () {
             $.ajax({
                 url: '<%=backendURL%>/misc/transport-flight?id=' + id,
-                //method: 'POST',
                 dataType: 'json',
                 success: function (response) {
-                    $('#journeys').bootstrapTable({
-                        data: response.journeys
+                    var transportFlight = response.transportFlight;
+                    $.each(transportFlight, function (field, value) {
+                        $("#transportFlight-" + field).text(value);
                     });
-                    $('#journeys').bootstrapTable('resetView', {
-                        height: $('#journeys').height() + 30
-                    });
+
+                    var flightInfo = '#' + transportFlight.id + ' ' + transportFlight.flightNumber + ' ' + transportFlight.dateOfFlight;
+                    $('#flight-info').text(flightInfo);
+                    document.title = document.title.replace('#flight-info', flightInfo);
+
+                    var journeysTable = $('#journeys');
+                    journeysTable.bootstrapTable({ data: response.journeys });
+                    journeysTable.bootstrapTable('resetView', { height: journeysTable.height() + 30 });
+
+                    var logTable = $('#log');
+                    logTable.bootstrapTable({ data: response.log });
+
+                    if (response.logHasMore) {
+                        logTable.bootstrapTable('insertRow', { index: 0,
+                            row: {
+                                dt: '',
+                                msg: '<button type="button" class="btn btn-secondary" id="showAllEvents">Show all events</button>'
+                            }
+                        });
+
+                        $('#showAllEvents').click( function () {
+                            $.ajax({
+                                url: '<%=backendURL%>/misc/get-full-log?primary_id=trFlight:' + id,
+                                dataType: 'json',
+                                success: function (response) {
+                                    var logTable = $('#log');
+                                    logTable.bootstrapTable('load', response.log);
+                                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
+                                },
+                                error: function (e) {
+                                    console.log(e.responseText);
+                                }
+                            });
+                        });
+                    }
+                    logTable.bootstrapTable('resetView', { height: logTable.height() + 30 });
                 },
                 error: function (e) {
                     console.log(e.responseText);
@@ -53,7 +82,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a href="journey.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href="journey.jsp?id=' + row.id + '">Details</a>';
         }
 
     </script>
@@ -68,7 +97,42 @@
 <body>
 
 <div class="container">
-    <h1>Airways - Transport Flight ....</h1>
+    <h1>Airways - Transport Flight <span id="flight-info"></span></h1>
+
+    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Flight</a>
+    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Timetable</a>
+
+    <form>
+        <div class="form-group row">
+            <label for="transportFlight-flightNumber" class="col-sm-2 col-form-label">Flight #</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-flightNumber"></span>
+            <label for="transportFlight-dateOfFlight" class="col-sm-2 col-form-label">Date of Flight</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-dateOfFlight"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-fromIcao" class="col-sm-2 col-form-label">From</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-fromIcao"></span>
+            <label for="transportFlight-toIcao" class="col-sm-2 col-form-label">To</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-toIcao"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-departureTime" class="col-sm-2 col-form-label">Departure Time</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-departureTime"></span>
+            <label for="transportFlight-arrivalTime" class="col-sm-2 col-form-label">Arrival Time</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-arrivalTime"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-status" class="col-sm-2 col-form-label">Status</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-status"></span>
+            <span class="col-sm-6 col-form-label"></span>
+        </div>
+        <div class="form-group row">
+            <label for="transportFlight-freeTickets" class="col-sm-2 col-form-label">Free Tickets</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-freeTickets"></span>
+            <label for="transportFlight-totalTickets" class="col-sm-2 col-form-label">Total Tickets</label>
+            <span class="col-sm-4 col-form-label" id="transportFlight-totalTickets"></span>
+        </div>
+    </form>
 
     <h3>Journeys</h3>
     <table id="journeys" class="table table-no-bordered">
@@ -80,6 +144,18 @@
             <th data-field="status">Status</th>
             <th data-field="itineraryCheck">Itinerary</th>
             <th data-formatter="actionsCell"></th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <h3>Event log</h3>
+    <table id="log" class="table table-no-bordered">
+        <thead>
+        <tr>
+            <th data-field="dt">Date/Time</th>
+            <th data-field="msg">Message</th>
         </tr>
         </thead>
         <tbody>

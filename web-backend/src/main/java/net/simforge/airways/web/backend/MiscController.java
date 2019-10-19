@@ -37,23 +37,28 @@ public class MiscController {
                     .list();
 
             for (TransportFlight transportFlight : transportFlights) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", transportFlight.getId());
-                map.put("dateOfFlight", transportFlight.getDateOfFlight().toString());
-                map.put("flightNumber", transportFlight.getFlightNumber());
-                map.put("departureDt", transportFlight.getDepartureDt().toString());
-                map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
-                map.put("fromIcao", transportFlight.getFromAirport().getIcao());
-                map.put("toIcao", transportFlight.getToAirport().getIcao());
-                map.put("status", transportFlight.getStatus());
-                map.put("soldTickets", transportFlight.getTotalTickets() - transportFlight.getFreeTickets());
-                map.put("freeTickets", transportFlight.getFreeTickets());
-                map.put("totalTickets", transportFlight.getTotalTickets());
-                result.add(map);
+                result.add(transportFlight2map(transportFlight));
             }
         }
 
         return result;
+    }
+
+    private Map<String, Object> transportFlight2map(TransportFlight transportFlight) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", transportFlight.getId());
+        map.put("dateOfFlight", transportFlight.getDateOfFlight().toString());
+        map.put("flightNumber", transportFlight.getFlightNumber());
+        map.put("departureDt", transportFlight.getDepartureDt().toString());
+        map.put("departureTime", transportFlight.getDepartureDt().toLocalTime().toString());
+        map.put("arrivalTime", transportFlight.getArrivalDt().toLocalTime().toString());
+        map.put("fromIcao", transportFlight.getFromAirport().getIcao());
+        map.put("toIcao", transportFlight.getToAirport().getIcao());
+        map.put("status", transportFlight.getStatus().toString());
+        map.put("soldTickets", transportFlight.getTotalTickets() - transportFlight.getFreeTickets());
+        map.put("freeTickets", transportFlight.getFreeTickets());
+        map.put("totalTickets", transportFlight.getTotalTickets());
+        return map;
     }
 
     @RequestMapping("/transport-flight")
@@ -61,6 +66,9 @@ public class MiscController {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            TransportFlight transportFlight = session.load(TransportFlight.class, id);
+            result.put("transportFlight", transportFlight2map(transportFlight));
+
             //noinspection unchecked,JpaQlInspection
             List<Journey> journeys = session
                     .createQuery("select i.journey from JourneyItinerary i " +
@@ -85,6 +93,8 @@ public class MiscController {
             }
 
             result.put("journeys", journeysList);
+
+            loadEventLogTail(session, TransportFlight.EventLogCode + ':' + id, result);
         }
 
         return result;
@@ -138,26 +148,30 @@ public class MiscController {
             Person person = session.load(Person.class, id);
             result.put("person", person2map(person));
 
-            //noinspection unchecked,JpaQlInspection
-            List<EventLogEntry> logEntries = session
-                    .createQuery("from EventLogEntry " +
-                            "where primary_id = :id " +
-                            "order by dt desc")
-                    .setMaxResults(16)
-                    .setParameter("id", Person.EventLogCode + ':' + id)
-                    .list();
-
-            List<EventLogEntry> normalOrder = Lists.reverse(logEntries);
-            boolean hasMore = normalOrder.size() >= 16;
-            if (hasMore) {
-                normalOrder.remove(0);
-            }
-
-            result.put("log", logEntries2list(normalOrder));
-            result.put("logHasMore", hasMore);
+            loadEventLogTail(session, Person.EventLogCode + ':' + id, result);
         }
 
         return result;
+    }
+
+    private void loadEventLogTail(Session session, String primaryId, Map<String, Object> result) {
+        //noinspection unchecked,JpaQlInspection
+        List<EventLogEntry> logEntries = session
+                .createQuery("from EventLogEntry " +
+                        "where primary_id = :id " +
+                        "order by dt desc")
+                .setMaxResults(16)
+                .setParameter("id", primaryId)
+                .list();
+
+        List<EventLogEntry> normalOrder = Lists.reverse(logEntries);
+        boolean hasMore = normalOrder.size() >= 16;
+        if (hasMore) {
+            normalOrder.remove(0);
+        }
+
+        result.put("log", logEntries2list(normalOrder));
+        result.put("logHasMore", hasMore);
     }
 
     private List<Map<String, Object>> logEntries2list(List<EventLogEntry> normalOrder) {
@@ -172,7 +186,7 @@ public class MiscController {
     }
 
     @RequestMapping("/get-full-log")
-    public Map<String, Object> getPersonData(@RequestParam(value = "primary_id") String primaryId) {
+    public Map<String, Object> getFullLog(@RequestParam(value = "primary_id") String primaryId) {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
