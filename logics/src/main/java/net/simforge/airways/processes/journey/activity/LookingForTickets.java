@@ -56,13 +56,13 @@ public class LookingForTickets implements Activity {
             HibernateUtils.transaction(session, () -> {
                 Itinerary firstItinerary = null;
 
-                for (int i = 1; i <= foundFlights.size(); i++) {
+                for (int i = 0; i < foundFlights.size(); i++) {
                     TransportFlight foundFlight = foundFlights.get(i);
 
                     Itinerary itinerary = new Itinerary();
                     itinerary.setJourney(journey);
                     itinerary.setFlight(foundFlight);
-                    itinerary.setItemOrder(i);
+                    itinerary.setItemOrder(i + 1);
                     session.save(itinerary);
 
                     if (firstItinerary == null) {
