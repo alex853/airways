@@ -9,6 +9,7 @@ import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.model.EventLogEntry;
 import net.simforge.airways.model.Person;
 import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.model.journey.Itinerary;
 import net.simforge.airways.model.journey.Journey;
 import org.hibernate.Session;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/misc")
@@ -36,9 +38,30 @@ public class MiscController {
                     .createQuery("from TransportFlight order by departureDt")
                     .list();
 
-            for (TransportFlight transportFlight : transportFlights) {
-                result.add(transportFlight2map(transportFlight));
-            }
+            transportFlights.forEach(transportFlight -> result.add(transportFlight2map(transportFlight)));
+        }
+
+        return result;
+    }
+
+    @RequestMapping("/transport-flight")
+    public Map<String, Object> getTransportFlightData(@RequestParam(value = "id") int id) {
+        Map<String, Object> result = new HashMap<>();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            TransportFlight transportFlight = session.load(TransportFlight.class, id);
+            result.put("transportFlight", transportFlight2map(transportFlight));
+
+            //noinspection unchecked,JpaQlInspection
+            List<Journey> journeys = session
+                    .createQuery("select i.journey from JourneyItinerary i " +
+                            "where i.flight.id = :flightId")
+                    .setParameter("flightId", id)
+                    .list();
+
+            result.put("journeys", journeys.stream().map(this::journey2map).collect(Collectors.toList()));
+
+            loadEventLogTail(session, TransportFlight.EventLogCode + ':' + id, result);
         }
 
         return result;
@@ -61,50 +84,14 @@ public class MiscController {
         return map;
     }
 
-    @RequestMapping("/transport-flight")
-    public Map<String, Object> getTransportFlightData(@RequestParam(value = "id") int id) {
-        Map<String, Object> result = new HashMap<>();
-
-        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
-            TransportFlight transportFlight = session.load(TransportFlight.class, id);
-            result.put("transportFlight", transportFlight2map(transportFlight));
-
-            //noinspection unchecked,JpaQlInspection
-            List<Journey> journeys = session
-                    .createQuery("select i.journey from JourneyItinerary i " +
-                            "where i.flight.id = :flightId")
-                    .setParameter("flightId", id)
-                    .list();
-
-            List<Map<String, Object>> journeysList = new ArrayList<>();
-
-            for (Journey journey : journeys) {
-                Map<String, Object> map = new HashMap<>();
-                map.put("id", journey.getId());
-                map.put("fromCity", journey.getFromCity().getName());
-                map.put("toCity", journey.getToCity().getName());
-                map.put("groupSize", journey.getGroupSize());
-                map.put("status", journey.getStatus());
-                map.put("itineraryCheck", journey.getItinerary() == null
-                        ? "EMPTY"
-                        : (journey.getItinerary().getFlight().getId() == id
-                        ? "ID OK" : "Another ID"));
-                journeysList.add(map);
-            }
-
-            result.put("journeys", journeysList);
-
-            loadEventLogTail(session, TransportFlight.EventLogCode + ':' + id, result);
-        }
-
-        return result;
-    }
-
     @RequestMapping("/journey")
     public Map<String, Object> getJourneyData(@RequestParam(value = "id") int id) {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            Journey journey = session.load(Journey.class, id);
+            result.put("journey", journey2map(journey));
+
             //noinspection unchecked,JpaQlInspection
             List<Person> persons = session
                     .createQuery("from Person " +
@@ -112,13 +99,53 @@ public class MiscController {
                     .setParameter("journeyId", id)
                     .list();
 
-            List<Map<String, Object>> personsList = new ArrayList<>();
+            result.put("persons", persons.stream().map(this::person2map).collect(Collectors.toList()));
 
-            for (Person person : persons) {
-                personsList.add(person2map(person));
-            }
+            //noinspection unchecked,JpaQlInspection
+            List<Itinerary> itineraries = session
+                    .createQuery("from JourneyItinerary " +
+                            "where journey.id = :journeyId " +
+                            "order by itemOrder")
+                    .setParameter("journeyId", id)
+                    .list();
 
-            result.put("persons", personsList);
+            result.put("itineraries", itineraries.stream().map(itinerary -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("itemOrder", itinerary.getItemOrder());
+                map.put("flight-dateOfFlight", itinerary.getFlight().getDateOfFlight());
+                map.put("flight-number", itinerary.getFlight().getFlightNumber());
+                map.put("flight-fromAirport", itinerary.getFlight().getFromAirport().getIcao());
+                map.put("flight-toAirport", itinerary.getFlight().getToAirport().getIcao());
+                map.put("flight-status", itinerary.getFlight().getStatus().toString());
+                return map;
+            }).collect(Collectors.toList()));
+
+            loadEventLogTail(session, Journey.EventLogCode + ':' + id, result);
+        }
+
+        return result;
+    }
+
+    private Map<String, Object> journey2map(Journey journey) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id", journey.getId());
+        map.put("fromCity", journey.getFromCity().getName());
+        map.put("toCity", journey.getToCity().getName());
+        map.put("groupSize", journey.getGroupSize());
+        map.put("status", journey.getStatus().toString());
+        map.put("itineraryCheck", journey.getItinerary() == null ? "Empty" : "Presented");
+        return map;
+    }
+
+    @RequestMapping("/person")
+    public Map<String, Object> getPersonData(@RequestParam(value = "id") int id) {
+        Map<String, Object> result = new HashMap<>();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            Person person = session.load(Person.class, id);
+            result.put("person", person2map(person));
+
+            loadEventLogTail(session, Person.EventLogCode + ':' + id, result);
         }
 
         return result;
@@ -140,15 +167,20 @@ public class MiscController {
         return map;
     }
 
-    @RequestMapping("/person")
-    public Map<String, Object> getPersonData(@RequestParam(value = "id") int id) {
+    @RequestMapping("/get-full-log")
+    public Map<String, Object> getFullLog(@RequestParam(value = "primary_id") String primaryId) {
         Map<String, Object> result = new HashMap<>();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
-            Person person = session.load(Person.class, id);
-            result.put("person", person2map(person));
+            //noinspection unchecked,JpaQlInspection
+            List<EventLogEntry> logEntries = session
+                    .createQuery("from EventLogEntry " +
+                            "where primary_id = :id " +
+                            "order by dt")
+                    .setParameter("id", primaryId)
+                    .list();
 
-            loadEventLogTail(session, Person.EventLogCode + ':' + id, result);
+            result.put("log", logEntries2list(logEntries));
         }
 
         return result;
@@ -183,24 +215,5 @@ public class MiscController {
             log.add(map);
         }
         return log;
-    }
-
-    @RequestMapping("/get-full-log")
-    public Map<String, Object> getFullLog(@RequestParam(value = "primary_id") String primaryId) {
-        Map<String, Object> result = new HashMap<>();
-
-        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
-            //noinspection unchecked,JpaQlInspection
-            List<EventLogEntry> logEntries = session
-                    .createQuery("from EventLogEntry " +
-                            "where primary_id = :id " +
-                            "order by dt")
-                    .setParameter("id", primaryId)
-                    .list();
-
-            result.put("log", logEntries2list(logEntries));
-        }
-
-        return result;
     }
 }

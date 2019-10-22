@@ -17,6 +17,7 @@ public class World1 {
     public static void main(String[] args) throws IOException {
         ImportCityPopulation.main(new String[]{"country-code:GB", "min-population:1000000"});
         ImportCityPopulation.main(new String[]{"country-code:US", "min-population:1000000"});
+        ImportCityPopulation.main(new String[]{"country-code:FR", "min-population:1000000"});
         UpdateCityFlows.main(null);
 
         ImportFSEconomyAirports.main(args);

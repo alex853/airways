@@ -128,20 +128,20 @@ public class Transfer implements BaseEntity, Auditable, EventLog.Loggable {
         this.duration = duration;
     }
 
-    public Integer getOnStartedStatus() {
-        return onStartedStatus;
+    public Journey.Status getOnStartedStatus() {
+        return onStartedStatus != null ? Journey.Status.byCode(onStartedStatus) : null;
     }
 
-    public void setOnStartedStatus(Integer onStartedStatus) {
-        this.onStartedStatus = onStartedStatus;
+    public void setOnStartedStatus(Journey.Status onStartedStatus) {
+        this.onStartedStatus = onStartedStatus != null ? onStartedStatus.code() : null;
     }
 
-    public Integer getOnFinishedStatus() {
-        return onFinishedStatus;
+    public Journey.Status getOnFinishedStatus() {
+        return onFinishedStatus != null ? Journey.Status.byCode(onFinishedStatus) : null;
     }
 
-    public void setOnFinishedStatus(Integer onFinishedStatus) {
-        this.onFinishedStatus = onFinishedStatus;
+    public void setOnFinishedStatus(Journey.Status onFinishedStatus) {
+        this.onFinishedStatus = onFinishedStatus != null ? onFinishedStatus.code() : null;
     }
 
     public String getOnFinishedEvent() {

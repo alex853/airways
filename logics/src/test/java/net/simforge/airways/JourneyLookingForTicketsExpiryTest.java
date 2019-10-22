@@ -46,7 +46,7 @@ public class JourneyLookingForTicketsExpiryTest extends BaseEngineCaseTest {
 
         try (Session session = sessionFactory.openSession()) {
             journey = session.load(Journey.class, journey.getId());
-            assertEquals(Journey.Status.CouldNotFindTickets, journey.getStatus().intValue());
+            assertEquals(Journey.Status.CouldNotFindTickets, journey.getStatus());
 
             List<Person> persons = JourneyOps.getPersons(session, journey);
             assertEquals(0, persons.size());

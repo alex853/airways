@@ -14,7 +14,7 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity(name = "Journey")
-@Table(name="aw_journey")
+@Table(name = "aw_journey")
 public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
     public static final String EventLogCode = "journey";
 
@@ -119,12 +119,12 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
         this.groupSize = groupSize;
     }
 
-    public Integer getStatus() {
-        return status;
+    public Status getStatus() {
+        return status != null ? Status.byCode(status) : null;
     }
 
-    public void setStatus(Integer status) {
-        this.status = status;
+    public void setStatus(Status status) {
+        this.status = status != null ? status.code() : null;
     }
 
     public Itinerary getItinerary() {
@@ -152,21 +152,46 @@ public class Journey implements BaseEntity, Auditable, EventLog.Loggable {
                 '}';
     }
 
-    public static class Status {
-        public static final int LookingForPersons   = 1000;
-        public static final int LookingForTickets   = 2000;
-        public static final int WaitingForFlight    = 3000;
-        public static final int TransferToAirport   = 3100;
-        public static final int WaitingForCheckin   = 3200;
-        public static final int WaitingForBoarding  = 3300;
-        public static final int OnBoard             = 4000;
-        public static final int JustArrived         = 5000;
-        public static final int TransferToCity      = 5100;
-        public static final int ItinerariesDone     = 6000;
-        public static final int Finished            = 7777;
-        public static final int CouldNotFindPersons = 9991;
-        public static final int CouldNotFindTickets = 9992;
-        public static final int TooLateToBoard      = 9993;
-        public static final int Terminated          = 9999;
+    public enum Status {
+        LookingForPersons(1000),
+        LookingForTickets(2000),
+        WaitingForFlight(3000),
+        TransferToAirport(3100),
+        WaitingForCheckin(3200),
+        WaitingForBoarding(3300),
+        OnBoard(4000),
+        JustArrived(5000),
+        TransferToCity(5100),
+        ItinerariesDone(6000),
+        Finished(7777),
+        CouldNotFindPersons(9991),
+        CouldNotFindTickets(9992),
+        TooLateToBoard(9993),
+        Terminated(9999);
+
+        private final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Status byCode(int code) {
+            for (Status value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
+
     }
 }
