@@ -54,7 +54,7 @@ public class JourneyLookingForTicketsTest extends BaseEngineCaseTest {
 
         try (Session session = sessionFactory.openSession()) {
             journey = session.load(Journey.class, journey.getId());
-            assertEquals(Journey.Status.WaitingForFlight, journey.getStatus().intValue());
+            assertEquals(Journey.Status.WaitingForFlight, journey.getStatus());
 
             List<Itinerary> itineraryList = JourneyOps.getItineraries(session, journey);
             assertEquals(1, itineraryList.size());

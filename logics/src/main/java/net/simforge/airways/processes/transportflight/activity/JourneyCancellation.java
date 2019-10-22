@@ -61,23 +61,23 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
             journeysToCancel.forEach(journey -> {
                 HibernateUtils.transaction(session, () -> {
 
-                    statusToCount.put(journey.getStatus(), statusToCount.getOrDefault(journey.getStatus(), 0) + 1);
+                    statusToCount.put(journey.getStatus().code(), statusToCount.getOrDefault(journey.getStatus().code(), 0) + 1);
 
                     switch (journey.getStatus()) {
-                        case Journey.Status.LookingForPersons:
-                        case Journey.Status.LookingForTickets:
-                        case Journey.Status.WaitingForFlight:
+                        case LookingForPersons:
+                        case LookingForTickets:
+                        case WaitingForFlight:
                             JourneyOps.terminateJourney(session, journey);
                             logger.info("{} - Terminating journey {}", transportFlight, journey);
 
                             break;
 
-                        case Journey.Status.TransferToAirport:
+                        case TransferToAirport:
                             // no op - the journey will initiate cancellation by itself or we will do it once it reachs airport
                             break;
 
-                        case Journey.Status.WaitingForCheckin:
-                        case Journey.Status.WaitingForBoarding:
+                        case WaitingForCheckin:
+                        case WaitingForBoarding:
                             journey.setStatus(journey.getStatus()); // this is to update journey and to prevent interferring updates
                             session.update(journey);
 
@@ -86,7 +86,7 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
 
                             break;
 
-                        case Journey.Status.TransferToCity:
+                        case TransferToCity:
                             // no op - this journey should cancel by itself
                             break;
                     }

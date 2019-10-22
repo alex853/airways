@@ -86,9 +86,9 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
             journey1 = session.load(Journey.class, journey1.getId());
             journey2 = session.load(Journey.class, journey2.getId());
             journey3 = session.load(Journey.class, journey3.getId());
-            assertEquals(Journey.Status.Finished, journey1.getStatus().intValue());
-            assertEquals(Journey.Status.Finished, journey2.getStatus().intValue());
-            assertEquals(Journey.Status.Finished, journey3.getStatus().intValue());
+            assertEquals(Journey.Status.Finished, journey1.getStatus());
+            assertEquals(Journey.Status.Finished, journey2.getStatus());
+            assertEquals(Journey.Status.Finished, journey3.getStatus());
             assertNull(journey1.getItinerary());
             assertNull(journey2.getItinerary());
             assertNull(journey3.getItinerary());
