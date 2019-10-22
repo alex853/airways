@@ -5,7 +5,6 @@
 package net.simforge.airways.model.flight;
 
 import net.simforge.airways.EventLog;
-import net.simforge.airways.model.Person;
 import net.simforge.airways.model.geo.Airport;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
