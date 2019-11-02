@@ -87,7 +87,7 @@ public class BuildTimetable {
             addRoundtripTimetableRow(session, "WW", "B744",
                     findAirportForCity(session, "United kingdom", "London"),
                     findAirportForCity(session, "United states", "New york"),
-                    "05:00", 300);
+                    "05:00", 350, 300);
             //"United kingdom", "London" -> "United states", "Los angeles"
 /*            addRoundtripTimetableRow(session, "WW", "B744",
                     findAirportForCity(session, "United kingdom", "London"),
@@ -178,7 +178,7 @@ public class BuildTimetable {
                 logger.info("Flight {}, {} -> {}, {} [{}-{}]", city.getName(), country.getName(), eachCity.getName(), eachCity.getCountry().getName(), cityAirport.getIcao(), eachCityAirport.getIcao());
 
                 String departureTime = JavaTime.toHhmm(LocalTime.of(random.nextInt(24), 5 * random.nextInt(12)));
-                addRoundtripTimetableRow(session, airlineIata, aircraftType, cityAirport, eachCityAirport, departureTime, 90);
+                addRoundtripTimetableRow(session, airlineIata, aircraftType, cityAirport, eachCityAirport, departureTime, 160, 90);
             } else {
                 logger.info("Flight {}, {} -> {}, {} AIRPORT NOT FOUND", city.getName(), country.getName(), eachCity.getName(), eachCity.getCountry().getName());
             }
@@ -199,7 +199,7 @@ public class BuildTimetable {
         return findAirportForCity(session, city);
     }
 
-    public static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime, int turnaroundTime) {
+    public static void addRoundtripTimetableRow(Session session, String airlineIata, String aircraftTypeIcao, Airport fromAirport, Airport toAirport, String departureTime, int tickets, int turnaroundTime) {
         ProcessEngine engine = ProcessEngineBuilder.create()
                 .withTimeMachine(new RealTimeMachine())
                 .withSessionFactory(AirwaysApp.getSessionFactory())
@@ -259,7 +259,7 @@ public class BuildTimetable {
         flight1row.setDuration(JavaTime.toHhmm(flightDuration));
         flight1row.setStatus(TimetableRow.Status.Active);
         //flight1row.setHeartbeatDt(JavaTime.nowUtc());
-        flight1row.setTotalTickets(aircraftTypeIcao.equals("B744") ? 350 : 160); // todo AK
+        flight1row.setTotalTickets(tickets);
 
         session.save(flight1row);
         engine.startActivity(session, ScheduleFlight.class, flight1row);
@@ -281,7 +281,7 @@ public class BuildTimetable {
         flight2row.setDuration(JavaTime.toHhmm(flightDuration));
         flight2row.setStatus(TimetableRow.Status.Active);
         //flight2row.setHeartbeatDt(JavaTime.nowUtc());
-        flight2row.setTotalTickets(aircraftTypeIcao.equals("B744") ? 350 : 160); // todo AK
+        flight2row.setTotalTickets(tickets);
 
         session.save(flight2row);
         engine.startActivity(session, ScheduleFlight.class, flight2row);

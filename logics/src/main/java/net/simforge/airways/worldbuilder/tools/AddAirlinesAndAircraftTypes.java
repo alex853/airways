@@ -30,6 +30,7 @@ public class AddAirlinesAndAircraftTypes {
 
                 addAircraftType(session, "A320", "320", 36000, 444, 160, 150, 2000, 1200);
                 addAircraftType(session, "B744", "744", 36000, 480, 160, 150, 1800, 1000);
+                addAircraftType(session, "E170", "170", 36000, 430, 150, 130, 2000, 1200);
             });
         }
     }
