@@ -30,7 +30,7 @@ repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        url System.getenv('SIMFORGE_REPO_READ_URL')
+        url 'https://mymavenrepo.com/repo/9k6aQjU4o2RPUv5zfolv/'
     }
 }
 
