@@ -62,7 +62,7 @@ public class PilotOnDuty implements Activity {
                 pilotAssignment = !upcomingAssignments.isEmpty() ? upcomingAssignments.get(0) : null;
 
                 if (pilotAssignment == null) {
-                    logger.error("Pilot {} - Unable to find pilot assignment suitable for flight start");
+                    logger.error("Pilot {} - Unable to find pilot assignment suitable for flight start", pilot);
                     // todo event log, cancellation?
                     return Result.done();
                 }
@@ -83,7 +83,7 @@ public class PilotOnDuty implements Activity {
 
                     return Result.resume(NextMinute);
                 } else {
-                    logger.error("Pilot {} - Unable to start the flight");
+                    logger.error("Pilot {} - Unable to start the flight", pilot);
                     // todo event log, cancellation?
                     return Result.done(); // todo error?
                 }

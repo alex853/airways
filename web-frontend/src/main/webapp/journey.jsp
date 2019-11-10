@@ -39,7 +39,6 @@
                         $("#journey-" + field).text(value);
                     });
 
-                    // todo fill header & title
                     var journeyInfo = '#' + journey.id;
                     $('#journey-info').text(journeyInfo);
                     document.title = document.title.replace('#journey-info', journeyInfo);
