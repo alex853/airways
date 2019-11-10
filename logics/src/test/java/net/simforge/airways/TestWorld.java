@@ -4,6 +4,7 @@
 
 package net.simforge.airways;
 
+import net.simforge.airways.model.Airline;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.ops.PersonOps;
@@ -42,6 +43,7 @@ public class TestWorld {
     private Airport egllAirport;
     private Airport egccAirport;
     private AircraftType a320type;
+    private Airline abAirline;
 
     public TestWorld(SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -65,6 +67,18 @@ public class TestWorld {
         a320type = TestRefData.getA320Data();
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, a320type);
+        }
+    }
+
+    public void createAirlines() {
+        try (Session session = sessionFactory.openSession()) {
+            Airline airline = new Airline();
+            airline.setIata("AB");
+            airline.setIcao("ABC");
+            airline.setName("ABC Airlines");
+            HibernateUtils.saveAndCommit(session, airline);
+
+            abAirline = airline;
         }
     }
 
@@ -94,6 +108,10 @@ public class TestWorld {
 
     public AircraftType getA320Type() {
         return a320type;
+    }
+
+    public Airline getAbAirline() {
+        return abAirline;
     }
 
     @SuppressWarnings("SameParameterValue")
@@ -149,7 +167,7 @@ public class TestWorld {
         }
     }
 
-    public TimetableRow createTimetableRow(String flightNumber, Airport egll, Airport egcc, String departureTime, AircraftType a320type) {
+    public TimetableRow createTimetableRow(Airline airline, String flightNumber, Airport egll, Airport egcc, String departureTime, AircraftType a320type) {
         SimpleFlight simpleFlight = SimpleFlight.forRoute(egll.getCoords(), egcc.getCoords(), a320type);
 
         Duration flyingTime = simpleFlight.getTotalTime();
@@ -157,6 +175,7 @@ public class TestWorld {
         Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
 
         TimetableRow timetableRow = new TimetableRow();
+        timetableRow.setAirline(airline);
         timetableRow.setNumber(flightNumber);
         timetableRow.setFromAirport(egll);
         timetableRow.setToAirport(egcc);

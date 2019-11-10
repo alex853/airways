@@ -18,6 +18,7 @@ import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.RealTimeMachine;
 import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
+import net.simforge.airways.util.FlightNumbers;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.commons.io.Csv;
@@ -224,15 +225,14 @@ public class BuildTimetable {
             return;
         }
 
-        //noinspection JpaQlInspection
         TimetableRow latestAirlineTimetableRow = (TimetableRow) session
                 .createQuery("from TimetableRow t where t.airline = :airline order by t.number desc")
                 .setEntity("airline", airline)
                 .setMaxResults(1)
                 .uniqueResult();
         String number = latestAirlineTimetableRow != null
-                ? CommonOps.increaseFlightNumber(latestAirlineTimetableRow.getNumber())
-                : CommonOps.makeFlightNumber(airlineIata, 100);
+                ? FlightNumbers.increaseFlightNumber(latestAirlineTimetableRow.getNumber())
+                : FlightNumbers.makeFlightNumber(airlineIata, 100);
 
 
         AircraftType aircraftType = CommonOps.aircraftTypeByIcao(session, aircraftTypeIcao);
@@ -272,7 +272,7 @@ public class BuildTimetable {
 
         TimetableRow flight2row = new TimetableRow();
         flight2row.setAirline(airline);
-        flight2row.setNumber(CommonOps.increaseFlightNumber(number));
+        flight2row.setNumber(FlightNumbers.increaseFlightNumber(number));
         flight2row.setFromAirport(toAirport);
         flight2row.setToAirport(fromAirport);
         flight2row.setAircraftType(aircraftType);
@@ -291,7 +291,7 @@ public class BuildTimetable {
 
 
     private static Airport findAirportForCity(Session session, City city) {
-        //noinspection JpaQlInspection,unchecked
+        //noinspection unchecked
         List<Airport2City> airport2cityList = session
                 .createQuery("from Airport2City where city = :city and dataset = :active")
                 .setEntity("city", city)

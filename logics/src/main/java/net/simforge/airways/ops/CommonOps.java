@@ -93,16 +93,4 @@ public class CommonOps {
             BM.stop();
         }
     }
-
-    public static String makeFlightNumber(String iataCode, int number) {
-        return iataCode + String.valueOf(number);
-    }
-
-    public static String increaseFlightNumber(String number) {
-        String iataCode = number.substring(0, 2);
-        String digits = number.substring(2);
-        int flightNumber = Integer.parseInt(digits);
-        return makeFlightNumber(iataCode, flightNumber + 1);
-    }
-
 }

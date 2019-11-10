@@ -44,14 +44,16 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
         journey3 = testWorld.createJourney(testWorld.getLondonCity(), testWorld.getManchesterCity(), 3);
 
         testWorld.createAircraftTypes();
+        testWorld.createAirlines();
 
         try (Session session = sessionFactory.openSession()) {
             AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);
 
             PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 1);
+            //todo PilotOps.addNPCPilots(session, "United kingdom", "London", "EGLL", 1);
         }
 
-        timetableRow = testWorld.createTimetableRow("AB101", testWorld.getEgllAirport(), testWorld.getEgccAirport(), "12:00", testWorld.getA320Type());
+        timetableRow = testWorld.createTimetableRow(testWorld.getAbAirline(),"AB101", testWorld.getEgllAirport(), testWorld.getEgccAirport(), "12:00", testWorld.getA320Type());
     }
 
     @Test
@@ -72,7 +74,7 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
 
             Pilot pilot = PilotOps.loadAllPilots(session).get(0);
             assertEquals("EGCC", pilot.getPerson().getLocationAirport().getIcao());
-            assertEquals(Pilot.Status.Idle, pilot.getStatus().intValue());
+            assertEquals(Pilot.Status.Idle, pilot.getStatus());
 
             Assert.assertEquals(4, PersonOps.loadOrdinalPersonsByLocationCity(session, testWorld.getLondonCity()).size());
 

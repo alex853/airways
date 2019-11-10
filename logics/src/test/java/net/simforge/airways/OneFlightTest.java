@@ -32,14 +32,16 @@ public class OneFlightTest extends BaseEngineCaseTest {
         Airport egcc = testWorld.getEgccAirport();
 
         testWorld.createAircraftTypes();
+        testWorld.createAirlines();
 
         try (Session session = sessionFactory.openSession()) {
             AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);
 
             PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 1);
+            //todo PilotOps.addNPCPilots(session, "United kingdom", "London", "EGLL", 1);
         }
 
-        timetableRow = testWorld.createTimetableRow("AB101", egll, egcc, "12:00", testWorld.getA320Type());
+        timetableRow = testWorld.createTimetableRow(testWorld.getAbAirline(),"AB101", egll, egcc, "12:00", testWorld.getA320Type());
     }
 
     @Test
@@ -54,6 +56,7 @@ public class OneFlightTest extends BaseEngineCaseTest {
         try (Session session = sessionFactory.openSession()) {
             Pilot pilot = session.load(Pilot.class, 1);
             assertEquals(Pilot.Status.Idle, pilot.getStatus().intValue());
+            //todo assertEquals(Pilot.Status.Idle, pilot.getStatus());
             assertEquals("EGCC", pilot.getPerson().getLocationAirport().getIcao());
 
             Aircraft aircraft = session.load(Aircraft.class, 1);

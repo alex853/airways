@@ -15,6 +15,7 @@ import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processes.DurationConsts;
 import net.simforge.airways.processes.flight.event.Planned;
 import net.simforge.airways.processes.transportflight.event.Scheduled;
+import net.simforge.airways.util.FlightNumbers;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.processengine.TimeMachine;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -48,8 +49,6 @@ public class ScheduleFlight implements Activity { // todo p1 convert it back int
     private TimetableRow timetableRow;
     @Inject
     private SessionFactory sessionFactory;
-    @Inject
-    private TimetableOps timetableService;
     @Inject
     private ProcessEngine engine;
     @Inject
@@ -168,7 +167,7 @@ public class ScheduleFlight implements Activity { // todo p1 convert it back int
         Flight flight = new Flight();
 
         flight.setDateOfFlight(transportFlight.getDateOfFlight());
-        flight.setCallsign("TODO"); // todo AK
+        flight.setCallsign(FlightNumbers.makeCallsign(transportFlight.getTimetableRow().getAirline(), transportFlight.getFlightNumber()));
         flight.setAircraftType(timetableRow.getAircraftType());
         flight.setFlightNumber(transportFlight.getFlightNumber());
         flight.setFromAirport(transportFlight.getFromAirport());
