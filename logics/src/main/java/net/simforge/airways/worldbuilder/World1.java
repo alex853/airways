@@ -29,8 +29,8 @@ public class World1 {
         new AirwaysApp.StartupAction().run();
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
 
-            PilotOps.addPilots(session, "United Kingdom", "London", "EGLL", 10);
-            PilotOps.addPilots(session, "United Kingdom", "London", "EGSS", 10);
+            PilotOps.addNPCPilots(session, "United Kingdom", "London", "EGLL", 10);
+            PilotOps.addNPCPilots(session, "United Kingdom", "London", "EGSS", 10);
 
             AircraftOps.addAircrafts(session, "ZZ", "A320", "EGLL", "G-AA??", 5);
             AircraftOps.addAircrafts(session, "WW", "B744", "EGLL", "G-BN??", 1);

@@ -15,7 +15,7 @@ public class AddPilots {
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
              Session session = sessionFactory.openSession()) {
 
-            PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 10);
+            PilotOps.addNPCPilots(session, "United kingdom", "London", "EGLL", 10);
 //            PilotOps.addPilots(session, "Australia", "Sydney", "YSSY", 20);
 //            PilotOps.addPilots(session, "China", "Shanghai", "ZSPD", 20);
         }

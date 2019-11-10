@@ -18,7 +18,7 @@ import org.hibernate.Session;
 import java.util.List;
 
 public class PilotOps {
-    public static void addPilots(Session session, String countryName, String cityName, String airportIcao, int count) {
+    public static void addNPCPilots(Session session, String countryName, String cityName, String airportIcao, int count) {
         Country country = CommonOps.countryByName(session, countryName);
         if (country == null) {
             throw new IllegalArgumentException("Could not find country '" + countryName + "'");
@@ -53,6 +53,7 @@ public class PilotOps {
 
                 Pilot pilot = new Pilot();
                 pilot.setPerson(person);
+                pilot.setType(Pilot.Type.NonPlayerCharacter);
                 pilot.setStatus(Pilot.Status.Idle);
                 session.save(pilot);
 

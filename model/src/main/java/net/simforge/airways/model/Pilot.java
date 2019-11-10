@@ -31,7 +31,9 @@ public class Pilot implements BaseEntity, EventLog.Loggable, Auditable {
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
+    private Integer type;
     private Integer status;
+
     @ManyToOne
     @JoinColumn(name = "person_id")
     private Person person;
@@ -71,12 +73,20 @@ public class Pilot implements BaseEntity, EventLog.Loggable, Auditable {
         return modifyDt;
     }
 
-    public Integer getStatus() {
-        return status;
+    public Type getType() {
+        return type != null ? Type.byCode(type) : null;
     }
 
-    public void setStatus(Integer status) {
-        this.status = status;
+    public void setType(Type type) {
+        this.type = type != null ? type.code() : null;
+    }
+
+    public Status getStatus() {
+        return status != null ? Status.byCode(status) : null;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status != null ? status.code() : null;
     }
 
     public Person getPerson() {
@@ -92,10 +102,63 @@ public class Pilot implements BaseEntity, EventLog.Loggable, Auditable {
         return "Pilot{id=" + id + ", status=" + status + '}';
     }
 
-    public static class Status {
-        public static final int Idle = 100;
-        public static final int IdlePlanned = 101; // temporarily added status for stupid allocation needs
-        public static final int OnDuty = 200;
+    public enum Type {
+        NonPlayerCharacter(0),
+        PlayerCharacter(1);
+
+        private final int code;
+
+        Type(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Type byCode(int code) {
+            for (Type value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
+    }
+
+    public enum Status {
+        Idle(100),
+        IdlePlanned(101), // temporarily added status for stupid allocation needs
+        OnDuty(200);
+
+        private final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Status byCode(int code) {
+            for (Status value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
     }
 
 }

@@ -49,8 +49,7 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
         try (Session session = sessionFactory.openSession()) {
             AircraftOps.addAircrafts(session, "AB", "A320", "EGLL", "G-BA??", 1);
 
-            PilotOps.addPilots(session, "United kingdom", "London", "EGLL", 1);
-            //todo PilotOps.addNPCPilots(session, "United kingdom", "London", "EGLL", 1);
+            PilotOps.addNPCPilots(session, "United kingdom", "London", "EGLL", 1);
         }
 
         timetableRow = testWorld.createTimetableRow(testWorld.getAbAirline(),"AB101", testWorld.getEgllAirport(), testWorld.getEgccAirport(), "12:00", testWorld.getA320Type());

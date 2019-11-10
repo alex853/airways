@@ -83,9 +83,11 @@ public class TrivialAllocation implements Activity {
                     Pilot pilot = (Pilot) session
                             .createQuery("from Pilot p " +
                                     "where p.person.locationAirport = :fromAirport" +
+                                    " and p.type = :npc" +
                                     " and p.status = :idle")
                             .setParameter("fromAirport", flight.getFromAirport())
-                            .setInteger("idle", Pilot.Status.Idle)
+                            .setInteger("npc", Pilot.Type.NonPlayerCharacter.code())
+                            .setInteger("idle", Pilot.Status.Idle.code())
                             .setMaxResults(1)
                             .uniqueResult();
                     if (pilot != null) {
