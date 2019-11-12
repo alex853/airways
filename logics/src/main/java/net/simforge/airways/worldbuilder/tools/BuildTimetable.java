@@ -17,7 +17,6 @@ import net.simforge.airways.model.geo.Country;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.RealTimeMachine;
-import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import net.simforge.airways.util.FlightNumbers;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
@@ -40,7 +39,6 @@ public class BuildTimetable {
     private static Map<String, Integer> icao2size;
 
     private static Random random = new Random();
-    private static ProcessEngine engine;
 
     public static void main(String[] args) throws IOException {
         Csv csv = Csv.load(new File("./data/icaodata.csv"));
@@ -56,11 +54,6 @@ public class BuildTimetable {
 
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
             Session session = sessionFactory.openSession()) {
-
-            engine = ProcessEngineBuilder.create()
-                    .withTimeMachine(new RealTimeMachine())
-                    .withSessionFactory(sessionFactory)
-                    .build();
 
 //            addRoundtripTimetableRow(session, "ZZ", "A320",
 //                    CommonOps.airportByIcao(session, "EGLL"),
@@ -258,11 +251,10 @@ public class BuildTimetable {
         flight1row.setDepartureTime(departureTime);
         flight1row.setDuration(JavaTime.toHhmm(flightDuration));
         flight1row.setStatus(TimetableRow.Status.Active);
-        //flight1row.setHeartbeatDt(JavaTime.nowUtc());
         flight1row.setTotalTickets(tickets);
+        flight1row.setHeartbeatDt(JavaTime.nowUtc());
 
         session.save(flight1row);
-        engine.startActivity(session, ScheduleFlight.class, flight1row);
 
 
         LocalTime flight2departureTime = LocalTime.parse(departureTime).plus(flightDuration).plusMinutes(turnaroundTime);
@@ -280,11 +272,11 @@ public class BuildTimetable {
         flight2row.setDepartureTime(JavaTime.toHhmm(flight2departureTime));
         flight2row.setDuration(JavaTime.toHhmm(flightDuration));
         flight2row.setStatus(TimetableRow.Status.Active);
-        //flight2row.setHeartbeatDt(JavaTime.nowUtc());
         flight2row.setTotalTickets(tickets);
+        flight2row.setHeartbeatDt(JavaTime.nowUtc());
 
         session.save(flight2row);
-        engine.startActivity(session, ScheduleFlight.class, flight2row);
+
 
         session.getTransaction().commit();
     }

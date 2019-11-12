@@ -27,7 +27,7 @@ public class JourneyLookingForTicketsTest extends BaseEngineCaseTest {
     private TransportFlight ab101_today;
 
     protected void buildWorld() {
-        TestWorld testWorld = new TestWorld(sessionFactory);
+        TestWorld testWorld = new TestWorld(sessionFactory, timeMachine);
         testWorld.createGeo();
 
         journey = testWorld.createJourney(testWorld.getLondonCity(), testWorld.getManchesterCity(), GROUP_SIZE);

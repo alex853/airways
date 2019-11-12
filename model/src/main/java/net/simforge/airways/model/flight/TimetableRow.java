@@ -8,6 +8,7 @@ import net.simforge.airways.model.Airline;
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.aircraft.AircraftType;
 import net.simforge.airways.model.geo.Airport;
+import net.simforge.commons.HeartbeatObject;
 import net.simforge.commons.hibernate.Auditable;
 import net.simforge.commons.hibernate.BaseEntity;
 
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 
 @Entity(name = "TimetableRow")
 @Table(name = "aw_timetable_row")
-public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.Loggable, Auditable {
+public class TimetableRow implements BaseEntity, HeartbeatObject, EventLog.Loggable, Auditable {
     @SuppressWarnings("unused")
     public static final String EventLogCode = "ttRow";
 
@@ -34,8 +35,8 @@ public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.L
     @Column(name = "modify_dt")
     private LocalDateTime modifyDt;
 
-//    @Column(name = "heartbeat_dt")
-//    private LocalDateTime heartbeatDt;
+    @Column(name = "heartbeat_dt")
+    private LocalDateTime heartbeatDt;
 
     @ManyToOne
     @JoinColumn(name = "airline_id")
@@ -94,7 +95,7 @@ public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.L
         return modifyDt;
     }
 
-    /*    @Override
+    @Override
     public LocalDateTime getHeartbeatDt() {
         return heartbeatDt;
     }
@@ -102,7 +103,7 @@ public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.L
     @Override
     public void setHeartbeatDt(LocalDateTime heartbeatDt) {
         this.heartbeatDt = heartbeatDt;
-    }*/
+    }
 
     public Airline getAirline() {
         return airline;
@@ -168,12 +169,12 @@ public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.L
         this.duration = duration;
     }
 
-    public Integer getStatus() {
-        return status;
+    public Status getStatus() {
+        return status != null ? Status.byCode(status) : null;
     }
 
-    public void setStatus(Integer status) {
-        this.status = status;
+    public void setStatus(Status status) {
+        this.status = status != null ? status.code() : null;
     }
 
     public Integer getTotalTickets() {
@@ -200,8 +201,32 @@ public class TimetableRow implements BaseEntity, /*HeartbeatObject,*/ EventLog.L
                 '}';
     }
 
-    public static class Status {
-        public static final int Active = 0;
-        public static final int Stopped = 1;
+    public enum Status {
+        Active(0),
+        Stopped(1);
+
+        private final int code;
+
+        Status(int code) {
+            this.code = code;
+        }
+
+        public int code() {
+            return code;
+        }
+
+        public static Status byCode(int code) {
+            for (Status value : values()) {
+                if (value.code == code) {
+                    return value;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return code + " - " + name();
+        }
     }
 }

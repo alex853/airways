@@ -25,7 +25,7 @@ public class JourneyLookingForPersonsTest extends BaseEngineCaseTest {
 
     @Override
     protected void buildWorld() {
-        TestWorld testWorld = new TestWorld(sessionFactory);
+        TestWorld testWorld = new TestWorld(sessionFactory, timeMachine);
         testWorld.createGeo();
 
         journey = testWorld.createJourney(testWorld.getLondonCity(), testWorld.getManchesterCity(), GROUP_SIZE);

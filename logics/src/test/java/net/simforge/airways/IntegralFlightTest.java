@@ -12,8 +12,8 @@ import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.Pilot;
 import net.simforge.airways.model.aircraft.Aircraft;
 import net.simforge.airways.model.flight.TimetableRow;
+import net.simforge.airways.ops.TimetableOps;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
-import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import org.hibernate.Session;
 import org.junit.Assert;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
 
     @Override
     protected void buildWorld() {
-        testWorld = new TestWorld(sessionFactory);
+        testWorld = new TestWorld(sessionFactory, timeMachine);
         testWorld.createGeo();
 
         for (int i = 0; i < 10; i++) {
@@ -57,7 +57,9 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
 
     @Test
     public void testCase() {
-        engine.startActivity(ScheduleFlight.class, timetableRow);
+        try (Session session = sessionFactory.openSession()) {
+            TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
+        }
 
         engine.startActivity(LookingForPersons.class, journey1);
         engine.startActivity(LookingForPersons.class, journey2);

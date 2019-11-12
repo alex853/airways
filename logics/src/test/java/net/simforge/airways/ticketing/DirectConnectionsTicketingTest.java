@@ -44,8 +44,8 @@ public class DirectConnectionsTicketingTest {
         sessionFactory = null;
     }
 
-    protected void buildWorld() {
-        testWorld = new TestWorld(sessionFactory);
+    private void buildWorld() {
+        testWorld = new TestWorld(sessionFactory, timeMachine);
         testWorld.createGeo();
         testWorld.createAircraftTypes();
 

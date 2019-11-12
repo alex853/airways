@@ -18,6 +18,7 @@ import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.Airport2City;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.geo.Country;
+import net.simforge.airways.processengine.TimeMachine;
 import net.simforge.airways.util.FlightTimeline;
 import net.simforge.airways.util.SimpleFlight;
 import net.simforge.commons.gckls2com.GC;
@@ -36,6 +37,8 @@ public class TestWorld {
     public static final LocalDateTime BEGINNING_OF_TIME = LocalDateTime.of(2018, 1, 1, 0, 0);
 
     private SessionFactory sessionFactory;
+    private TimeMachine timeMachine;
+
     private Country ukCountry;
     private City londonCity;
     private City manchesterCity;
@@ -45,8 +48,9 @@ public class TestWorld {
     private AircraftType a320type;
     private Airline abAirline;
 
-    public TestWorld(SessionFactory sessionFactory) {
+    public TestWorld(SessionFactory sessionFactory, TimeMachine timeMachine) {
         this.sessionFactory = sessionFactory;
+        this.timeMachine = timeMachine;
     }
 
     public void createGeo() {
@@ -185,6 +189,7 @@ public class TestWorld {
         timetableRow.setAircraftType(a320type);
         timetableRow.setTotalTickets(160);
         timetableRow.setHorizon(0);
+        timetableRow.setHeartbeatDt(timeMachine.now());
 
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.saveAndCommit(session, timetableRow);

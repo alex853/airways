@@ -4,7 +4,7 @@
 
 package net.simforge.airways;
 
-import net.simforge.airways.processengine.activity.ActivityInfo;
+import net.simforge.airways.ops.TimetableOps;
 import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.model.Pilot;
@@ -13,19 +13,17 @@ import net.simforge.airways.model.flight.Flight;
 import net.simforge.airways.model.flight.TimetableRow;
 import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.model.geo.Airport;
-import net.simforge.airways.processes.timetablerow.activity.ScheduleFlight;
 import org.hibernate.Session;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
 public class OneFlightTest extends BaseEngineCaseTest {
 
     private TimetableRow timetableRow;
 
     protected void buildWorld() {
-        TestWorld testWorld = new TestWorld(sessionFactory);
+        TestWorld testWorld = new TestWorld(sessionFactory, timeMachine);
         testWorld.createGeo();
 
         Airport egll = testWorld.getEgllAirport();
@@ -45,12 +43,14 @@ public class OneFlightTest extends BaseEngineCaseTest {
 
     @Test
     public void testCase() {
-        engine.startActivity(ScheduleFlight.class, timetableRow);
+        try (Session session = sessionFactory.openSession()) {
+            TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
+        }
 
         runEngine(1000);
 
-        ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
-        assertFalse(status.isFinished());
+//        ActivityInfo status = engine.findActivity(ScheduleFlight.class, timetableRow);
+//        assertFalse(status.isFinished());
 
         try (Session session = sessionFactory.openSession()) {
             Pilot pilot = session.load(Pilot.class, 1);
