@@ -29,7 +29,7 @@ import static net.simforge.airways.processengine.Result.When.NextMinute;
  * 'Checkin' activity starts in 'CheckinStarted' event.
  */
 public class Checkin implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(Checkin.class);
+    private static final Logger log = LoggerFactory.getLogger(Checkin.class);
 
     @Inject
     private TransportFlight transportFlight;
@@ -40,6 +40,14 @@ public class Checkin implements Activity {
     public Result act() {
         BM.start("Checkin.act");
         try (Session session = sessionFactory.openSession()) {
+
+            transportFlight = session.load(TransportFlight.class, transportFlight.getId());
+            if (transportFlight.getStatus() != TransportFlight.Status.Checkin) {
+                log.warn("{} - Check-in terminated as Transport Flight is in '{}' status", transportFlight, transportFlight.getStatus());
+                HibernateUtils.saveAndCommit(session, EventLog.make(transportFlight, String.format("Check-in terminated as Transport Flight is in '%s' status", transportFlight.getStatus())));
+                return Result.done();
+            }
+
             HibernateUtils.transaction(session, () -> {
 
                 Collection<Journey> journeys = JourneyOps.loadJourneysForFlight(session, transportFlight);
@@ -64,8 +72,8 @@ public class Checkin implements Activity {
 
                 });
 
-                session.save(EventLog.make(transportFlight, "Check-in is in progress, processed " + paxThisRun + " PAX"));
-                logger.info(transportFlight + " - Check-in is in progress, processed " + paxThisRun + " PAX");
+                session.save(EventLog.make(transportFlight, String.format("Check-in is in progress, processed %d PAX", paxThisRun)));
+                log.info("{} - Check-in is in progress, processed {} PAX", transportFlight, paxThisRun);
 
             });
         } finally {
