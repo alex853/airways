@@ -24,7 +24,6 @@ public class AddAirlinesAndAircraftTypes {
              Session session = sessionFactory.openSession()) {
 
             HibernateUtils.transaction(session, () -> {
-                addAirline(session, "ZZ", "ZZA", "ZZ Airways");
                 addAirline(session, "WW", "WWA", "Worldwide Airways");
                 addAirline(session, "PH", "PHA", "PhantomAir");
 

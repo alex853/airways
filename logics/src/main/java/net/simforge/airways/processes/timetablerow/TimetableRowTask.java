@@ -50,12 +50,12 @@ public class TimetableRowTask extends HeartbeatTask<TimetableRow> {
 
             // todo think about time machine for HeartbeatTask
 
-            boolean someFlightFailed = TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
+            boolean allFlightsOk = TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
 
-            if (someFlightFailed) {
-                timetableRow.setHeartbeatDt(timeMachine.now().plusHours(1));
-            } else {
+            if (allFlightsOk) {
                 timetableRow.setHeartbeatDt(timeMachine.now().plusDays(1));
+            } else {
+                timetableRow.setHeartbeatDt(timeMachine.now().plusHours(1));
             }
 
             HibernateUtils.updateAndCommit(session, timetableRow);

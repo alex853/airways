@@ -25,7 +25,7 @@ import java.util.Queue;
 
 public class ProcessEngine implements Runnable {
 
-    private static Logger logger = LoggerFactory.getLogger(ProcessEngine.class);
+    private static Logger log = LoggerFactory.getLogger(ProcessEngine.class);
 
     private Queue<TaskEntity> taskQueue = new ArrayDeque<>(); // very trivial way of queue management based on database
 
@@ -75,12 +75,13 @@ public class ProcessEngine implements Runnable {
 
         try (Session session = sessionFactory.openSession()) {
             TaskEntity _task = session.get(TaskEntity.class, task.getId());
+            log.debug("Task {} - Processing for '{}' ID {} - processor '{}'", task.getId(), task.getEntityClassName(), task.getEntityId(), task.getProcessorClassName());
             if (!_task.getVersion().equals(task.getVersion())) {
-                logger.warn("Task {} - Version is outdated, skipped", _task.getId());
+                log.warn("Task {} - Version is outdated, skipped", _task.getId());
                 return;
             }
             if (_task.getStatus() != TaskEntity.Status.ACTIVE) {
-                logger.warn("Task {} - Status is {}, it is not ACTIVE, skipped", _task.getId(), _task.getStatus());
+                log.warn("Task {} - Status is {}, it is not ACTIVE, skipped", _task.getId(), _task.getStatus());
                 _task.setTaskTime(null);
                 HibernateUtils.updateAndCommit(session, _task);
                 return;
@@ -98,8 +99,8 @@ public class ProcessEngine implements Runnable {
             });
 
         } catch (Throwable t) {
-            logger.error("Error on processing: {}, message '{}', see details in stacktrace log", t.getClass(), t.getMessage());
-            logger.error("Error details", t); // todo another logger dedicated for stacktraces
+            log.error("Error on processing: {}, message '{}', see details in stacktrace log", t.getClass(), t.getMessage());
+            log.error("Error details", t); // todo another logger dedicated for stacktraces
 
             // todo to do emergency update of the task
         }
