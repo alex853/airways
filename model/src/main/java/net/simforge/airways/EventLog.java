@@ -16,7 +16,7 @@ public class EventLog {
     }
 
     public static EventLogEntry info(Session session, Logger log, Loggable primaryObject, String msg, Loggable... secondaryObjects) {
-        BM.start("EventLogOps.saveLog");
+        BM.start("EventLog.info");
         try {
             EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
             session.save(entry);
@@ -28,7 +28,7 @@ public class EventLog {
     }
 
     public static EventLogEntry warn(Session session, Logger log, Loggable primaryObject, String msg, Loggable... secondaryObjects) {
-        BM.start("EventLogOps.saveLog");
+        BM.start("EventLog.warn");
         try {
             EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
             session.save(entry);
@@ -47,7 +47,7 @@ public class EventLog {
     }
 
     private static EventLogEntry _make(Loggable primaryObject, String msg, Loggable... secondaryObjects) {
-        BM.start("EventLogOps.make");
+        BM.start("EventLog._make");
         try {
             EventLogEntry entry = new EventLogEntry();
 
@@ -66,7 +66,7 @@ public class EventLog {
     }
 
     private static String getId(Loggable object) {
-        BM.start("EventLogOps.getId");
+        BM.start("EventLog.getId");
         try {
             int id = object.getId();
             String objectType = object.getEventLogCode();
