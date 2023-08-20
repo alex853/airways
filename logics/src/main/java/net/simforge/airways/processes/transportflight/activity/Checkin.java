@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.activity;
 
 import net.simforge.airways.processengine.Result;
@@ -43,8 +39,8 @@ public class Checkin implements Activity {
 
             transportFlight = session.load(TransportFlight.class, transportFlight.getId());
             if (transportFlight.getStatus() != TransportFlight.Status.Checkin) {
-                log.warn("{} - Check-in terminated as Transport Flight is in '{}' status", transportFlight, transportFlight.getStatus());
-                HibernateUtils.saveAndCommit(session, EventLog.make(transportFlight, String.format("Check-in terminated as Transport Flight is in '%s' status", transportFlight.getStatus())));
+                HibernateUtils.transaction(session, () -> EventLog.warn(session, log, transportFlight,
+                            String.format("Check-in terminated as Transport Flight is in '%s' status", transportFlight.getStatus())));
                 return Result.done();
             }
 
@@ -68,12 +64,11 @@ public class Checkin implements Activity {
                 journeysToCheckinThisRun.forEach(journey -> {
 
                     journey.setStatus(Journey.Status.WaitingForBoarding);
-                    session.save(EventLog.make(journey, "Check-in is done", transportFlight));
+                    EventLog.info(session, log, journey, "Check-in is done", transportFlight);
 
                 });
 
-                session.save(EventLog.make(transportFlight, String.format("Check-in is in progress, processed %d PAX", paxThisRun)));
-                log.info("{} - Check-in is in progress, processed {} PAX", transportFlight, paxThisRun);
+                EventLog.info(session, log, transportFlight, String.format("Check-in is in progress, processed %d PAX", paxThisRun));
 
             });
         } finally {

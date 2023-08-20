@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.model.EventLogEntry;
@@ -12,27 +8,45 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EventLog {
-    private static Logger logger = LoggerFactory.getLogger(EventLog.class);
+    private static final Logger log = LoggerFactory.getLogger(EventLog.class);
 
     public interface Loggable {
         Integer getId();
         String getEventLogCode();
     }
 
-    public static EventLogEntry saveLog(Session session, Loggable primaryObject, String msg, Loggable... secondaryObjects) {
+    public static EventLogEntry info(Session session, Logger log, Loggable primaryObject, String msg, Loggable... secondaryObjects) {
         BM.start("EventLogOps.saveLog");
         try {
-            EventLogEntry entry = make(primaryObject, msg, secondaryObjects);
-
+            EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
             session.save(entry);
-
+            log.info("{} - {}", primaryObject, msg);
             return entry;
         } finally {
             BM.stop();
         }
     }
 
+    public static EventLogEntry warn(Session session, Logger log, Loggable primaryObject, String msg, Loggable... secondaryObjects) {
+        BM.start("EventLogOps.saveLog");
+        try {
+            EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
+            session.save(entry);
+            log.warn("{} - {}", primaryObject, msg);
+            return entry;
+        } finally {
+            BM.stop();
+        }
+    }
+
+    @Deprecated
     public static EventLogEntry make(Loggable primaryObject, String msg, Loggable... secondaryObjects) {
+        final EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
+        log.info("{} - {}", primaryObject, msg);
+        return entry;
+    }
+
+    private static EventLogEntry _make(Loggable primaryObject, String msg, Loggable... secondaryObjects) {
         BM.start("EventLogOps.make");
         try {
             EventLogEntry entry = new EventLogEntry();
@@ -44,8 +58,6 @@ public class EventLog {
             if (secondaryObjects.length > 0) entry.setSecondaryId1(getId(secondaryObjects[0]));
             if (secondaryObjects.length > 1) entry.setSecondaryId2(getId(secondaryObjects[1]));
             if (secondaryObjects.length > 2) entry.setSecondaryId3(getId(secondaryObjects[2]));
-
-            logger.info("{} - {}", primaryObject, msg);
 
             return entry;
         } finally {

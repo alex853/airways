@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.EventLog;
@@ -12,11 +8,15 @@ import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.model.flow.City2CityFlow;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
 
 public class JourneyOps {
+    private static final Logger log = LoggerFactory.getLogger(JourneyOps.class);
+
     public static Journey create(Session session, City2CityFlow flow, boolean directDirection) {
         BM.start("JourneyOps.create");
         try {
@@ -28,7 +28,7 @@ public class JourneyOps {
             journey.setStatus(Journey.Status.LookingForPersons);
 
             session.save(journey);
-            EventLog.saveLog(session, journey, String.format("New journey is created, group contains %s person(s)", journey.getGroupSize()), flow.getFromFlow().getCity(), flow);
+            EventLog.info(session, log, journey, String.format("New journey is created, group contains %s person(s)", journey.getGroupSize()), flow.getFromFlow().getCity(), flow);
 
             return journey;
         } finally {
@@ -89,10 +89,10 @@ public class JourneyOps {
                 person.setJourney(null);
                 session.update(person);
 
-                session.save(EventLog.make(person, "Journey dissolved & TERMINATED", journey));
+                EventLog.info(session, log, person, "Journey dissolved & TERMINATED", journey);
             });
 
-            session.save(EventLog.make(journey, "Journey dissolved & TERMINATED"));
+            EventLog.info(session, log, journey, "Journey dissolved & TERMINATED");
 
         } finally {
             BM.stop();

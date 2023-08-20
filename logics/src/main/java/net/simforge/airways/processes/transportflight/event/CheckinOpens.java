@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
 import net.simforge.airways.processengine.ProcessEngine;
@@ -26,7 +22,7 @@ import java.time.LocalDateTime;
  */
 @Subscribe(CheckinOpens.class)
 public class CheckinOpens implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(CheckinOpens.class);
+    private static final Logger log = LoggerFactory.getLogger(CheckinOpens.class);
 
     @Inject
     private TransportFlight transportFlight;
@@ -41,6 +37,12 @@ public class CheckinOpens implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
+                if (transportFlight.getStatus().code() > TransportFlight.Status.Checkin.code()) {
+                    EventLog.warn(session, log, transportFlight,
+                            String.format("Check-in terminated as Transport Flight is in '%s' status", transportFlight.getStatus()));
+                    return;
+                } // todo AK cancellation needs to cancel and stop all related events and activities
+
                 transportFlight.setStatus(TransportFlight.Status.Checkin);
                 session.update(transportFlight);
 
@@ -49,8 +51,8 @@ public class CheckinOpens implements Event, Handler {
                 LocalDateTime checkinClosesAt = transportFlight.getDepartureDt().minusMinutes(DurationConsts.END_OF_CHECKIN_TO_DEPARTURE_MINS);
                 engine.scheduleEvent(session, CheckinClosed.class, transportFlight, checkinClosesAt);
 
-                session.save(EventLog.make(transportFlight, "Check-in open, it will close at " + checkinClosesAt));
-                logger.info(transportFlight + " - Check-in open, it will close at  " + checkinClosesAt);
+                EventLog.info(session, log, transportFlight,
+                        String.format("Check-in open, it will close at %s", checkinClosesAt));
 
             });
         }

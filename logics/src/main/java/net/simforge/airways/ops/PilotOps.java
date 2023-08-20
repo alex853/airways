@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.EventLog;
@@ -14,10 +10,14 @@ import net.simforge.airways.model.geo.Country;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class PilotOps {
+    private static final Logger log = LoggerFactory.getLogger(PilotOps.class);
+
     public static void addNPCPilots(Session session, String countryName, String cityName, String airportIcao, int count) {
         Country country = CommonOps.countryByName(session, countryName);
         if (country == null) {
@@ -57,7 +57,7 @@ public class PilotOps {
                 pilot.setStatus(Pilot.Status.Idle);
                 session.save(pilot);
 
-                EventLog.saveLog(session, pilot, "Pilot created", person);
+                EventLog.info(session, log, pilot, "Pilot created", person);
             });
         }
     }

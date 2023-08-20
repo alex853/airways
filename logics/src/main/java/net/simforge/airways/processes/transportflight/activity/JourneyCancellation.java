@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.activity;
 
 import net.simforge.airways.ops.JourneyOps;
@@ -24,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class JourneyCancellation implements Activity { // todo p1 checkin can start even if flight is cancelled
-    private static Logger logger = LoggerFactory.getLogger(JourneyCancellation.class);
+    private static final Logger log = LoggerFactory.getLogger(JourneyCancellation.class);
 
     @Inject
     private TransportFlight transportFlight;
@@ -34,7 +30,7 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
     private SessionFactory sessionFactory;
 
     @Override
-    public Result act() { // todo p1 cancel all remaining tasks!
+    public Result act() { // todo p1 cancel all remaining tasks!  // todo AK cancellation needs to cancel and stop all related events and activities
         BM.start("JourneyCancellation.act");
         try (Session session = sessionFactory.openSession()) {
 
@@ -52,8 +48,8 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
             ).collect(Collectors.toList());
 
             if (journeysToCancel.isEmpty()) {
-                HibernateUtils.saveAndCommit(session, EventLog.make(transportFlight, "Journey cancellation COMPLETED"));
-                logger.info("{} - Journey cancellation COMPLETED", transportFlight);
+                HibernateUtils.transaction(session, () -> EventLog.info(session, log, transportFlight,
+                        "Journey cancellation COMPLETED"));
                 return Result.done();
             }
 
@@ -66,8 +62,8 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
                     case LookingForPersons:
                     case LookingForTickets:
                     case WaitingForFlight:
+                        EventLog.info(session, log, transportFlight, "Terminating journey", journey);
                         JourneyOps.terminateJourney(session, journey);
-                        logger.info("{} - Terminating journey {}", transportFlight, journey);
 
                         break;
 
@@ -80,8 +76,8 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
                         journey.setStatus(journey.getStatus()); // this is to update journey and to prevent interferring updates
                         session.update(journey);
 
+                        EventLog.info(session, log, transportFlight, "Initiating transfer to city for journey due to cancellation", journey);
                         TransferLauncher.startTransferToBiggestCityThenCancel(engine, session, journey);
-                        logger.info("{} - Initiating transfer to city for journey {}", transportFlight, journey);
 
                         break;
 
@@ -92,7 +88,7 @@ public class JourneyCancellation implements Activity { // todo p1 checkin can st
 
             }));
 
-            logger.info("{} - Journey cancellation is in progress, stats data {}", transportFlight, statusToCount);
+            EventLog.info(session, log, transportFlight, String.format("Journey cancellation is in progress, stats data %s", statusToCount));
 
             return Result.resume(Result.When.FewTimesPerHour);
         } finally {
