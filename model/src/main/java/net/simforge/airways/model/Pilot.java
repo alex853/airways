@@ -134,7 +134,8 @@ public class Pilot implements BaseEntity, EventLog.Loggable, Auditable {
     public enum Status {
         Idle(100),
         IdlePlanned(101), // temporarily added status for stupid allocation needs
-        OnDuty(200);
+        OnDuty(200),
+        Travelling(300);
 
         private final int code;
 

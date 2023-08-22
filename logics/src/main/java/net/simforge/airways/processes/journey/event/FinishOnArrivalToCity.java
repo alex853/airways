@@ -1,10 +1,7 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.event;
 
 import net.simforge.airways.cityflows.CityFlowOps;
+import net.simforge.airways.model.Pilot;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.Person;
@@ -17,12 +14,16 @@ import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
 
 @Subscribe(FinishOnArrivalToCity.class)
 public class FinishOnArrivalToCity implements Event, Handler {
+    private static final Logger log = LoggerFactory.getLogger(FinishOnArrivalToCity.class);
+
     @Inject
     private Journey journey;
     @Inject
@@ -45,11 +46,22 @@ public class FinishOnArrivalToCity implements Event, Handler {
                     person.setStatus(Person.Status.Idle);
                     person.setJourney(null);
                     session.update(person);
+                    EventLog.info(session, log, person, "Journey FINISHED", journey);
 
-                    session.save(EventLog.make(person, "Journey FINISHED", journey));
+                    if (person.getType() == Person.Type.Excluded) {
+                        final Pilot pilot = (Pilot) session
+                                .createQuery("from Pilot where person = :person")
+                                .setParameter("person", person)
+                                .uniqueResult();
+                        if (pilot != null) {
+                            pilot.setStatus(Pilot.Status.Idle);
+                            session.update(pilot);
+                            EventLog.info(session, log, pilot, "PILOT TRAVEL - Journey FINISHED", journey);
+                        }
+                    }
                 });
 
-                session.save(EventLog.make(journey, "Journey FINISHED"));
+                EventLog.info(session, log, journey, "Journey FINISHED");
 
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setTravelled(stats.getTravelled() + journey.getGroupSize());

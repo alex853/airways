@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.model.Airline;
@@ -66,7 +62,6 @@ public class CommonOps {
             BM.stop();
         }
     }
-
 
     public static Airline airlineByIata(Session session, String iata) {
         BM.start("Airways.airlineByIata");

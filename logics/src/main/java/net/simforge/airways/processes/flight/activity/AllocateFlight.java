@@ -58,7 +58,7 @@ public class AllocateFlight implements Activity {
             if (isFullyAllocated) {
                 engine.fireEvent(FullyAllocated.class, flight);
             } else {
-                engine.fireEvent(CancelDueToNoAllocation.class, flight);
+                engine.fireEvent(CancelDueToNoAllocation.class, flight); // todo AK add some explanation why it is not fully allocated
                 HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Unable to fully allocate the flight"));
             }
         }
