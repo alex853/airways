@@ -18,10 +18,7 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
@@ -52,8 +49,8 @@ public class PilotController {
         }
     }
 
-    @GetMapping("/travel/book")
-    public void bookTravel() {
+    @GetMapping("/travel/book") // todo POST not GET
+    public void bookTravel(@RequestParam(value = "destinationCityId") final int destinationCityId) {
         final SessionInfo sessionInfo = SessionInfo.get();
 
         // todo rework it!
@@ -62,8 +59,6 @@ public class PilotController {
                 .withTimeMachine(timeMachine)
                 .withSessionFactory(AirwaysApp.getSessionFactory())
                 .build();
-
-        final int destinationCityId = 13;
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
