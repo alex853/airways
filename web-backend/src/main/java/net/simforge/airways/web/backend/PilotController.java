@@ -71,11 +71,17 @@ public class PilotController {
                 final Person person = session.get(Person.class, sessionInfo.getPersonId());
                 final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-                // todo check person status
-                // todo check pilot status
-                // todo check if person journey is absent
+                if (person.getType() != Person.Type.Excluded
+                        || pilot.getType() != Pilot.Type.PlayerCharacter) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
+                }
 
-                // find origin city
+                if (person.getStatus() != Person.Status.Idle
+                        || person.getJourney() != null
+                        || pilot.getStatus() != Pilot.Status.Idle) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
+                }
+
                 final City originCity;
                 if (person.getLocationCity() != null) {
                     originCity = person.getLocationCity();
@@ -100,7 +106,6 @@ public class PilotController {
                         .setParameter("toCity", destinationCity)
                         .uniqueResult();
 
-                // todo refactor it into JourneyOps?
                 final Journey journey = new Journey();
                 journey.setGroupSize(1);
                 journey.setFromCity(originCity);
