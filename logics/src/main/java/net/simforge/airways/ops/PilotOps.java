@@ -113,4 +113,16 @@ public class PilotOps {
             BM.stop();
         }
     }
+
+    public static Pilot loadPilotByPersonId(Session session, int personId) {
+        BM.start("PilotOps.loadPilotByPersonId");
+        try {
+            return (Pilot) session
+                    .createQuery("from Pilot where person.id = :personId")
+                    .setParameter("personId", personId)
+                    .uniqueResult();
+        } finally {
+            BM.stop();
+        }
+    }
 }

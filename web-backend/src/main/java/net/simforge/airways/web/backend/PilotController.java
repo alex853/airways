@@ -6,9 +6,9 @@ import net.simforge.airways.model.Person;
 import net.simforge.airways.model.Pilot;
 import net.simforge.airways.model.flow.City2CityFlow;
 import net.simforge.airways.model.geo.Airport;
-import net.simforge.airways.model.geo.Airport2City;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.ops.GeoOps;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.RealTimeMachine;
@@ -17,10 +17,12 @@ import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/pilot")
@@ -35,19 +37,12 @@ public class PilotController {
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
 
-            Person person = (Person) session
-                    .createQuery("from Person where id = :personId")
-                    .setParameter("personId", sessionInfo.getPersonId())
-                    .uniqueResult();
-
-            Pilot pilot = (Pilot) session
-                    .createQuery("from Pilot where id = :pilotId")
-                    .setParameter("pilotId", sessionInfo.getPilotId())
-                    .uniqueResult();
+            final Person person = session.get(Person.class, sessionInfo.getPersonId());
+            final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
             if (person.getType() != Person.Type.Excluded
                 || pilot.getType() != Pilot.Type.PlayerCharacter) {
-                throw new IllegalArgumentException("Invalid person or pilot loaded");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
             }
 
             return new PilotStatusDto(
@@ -68,20 +63,13 @@ public class PilotController {
                 .withSessionFactory(AirwaysApp.getSessionFactory())
                 .build();
 
-        final int destinationCityId = 1;
+        final int destinationCityId = 13;
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
 
-                final Person person = (Person) session
-                        .createQuery("from Person where id = :personId")
-                        .setParameter("personId", sessionInfo.getPersonId())
-                        .uniqueResult();
-
-                final Pilot pilot = (Pilot) session
-                        .createQuery("from Pilot where id = :pilotId")
-                        .setParameter("pilotId", sessionInfo.getPilotId())
-                        .uniqueResult();
+                final Person person = session.get(Person.class, sessionInfo.getPersonId());
+                final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
                 // todo check person status
                 // todo check pilot status
@@ -93,25 +81,15 @@ public class PilotController {
                     originCity = person.getLocationCity();
                 } else {
                     final Airport locationAirport = person.getLocationAirport();
-                    final Airport2City airport2City = (Airport2City) session
-                            .createQuery("from Airport2City a2c " +
-                                    "where airport = :locationAirport " +
-                                    "order by city.population desc")
-                            .setParameter("locationAirport", locationAirport)
-                            .setMaxResults(1)
-                            .uniqueResult();
-                    if (airport2City == null) {
-                        throw new IllegalArgumentException("Unable to find origin city");
+                    originCity = GeoOps.loadBiggestCityLinkedToAirport(session, locationAirport);
+                    if (originCity == null) {
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to find origin city");
                     }
-                    originCity = airport2City.getCity();
                 }
 
-                final City destinationCity = (City) session
-                        .createQuery("from City where id = :destinationCityId")
-                        .setParameter("destinationCityId", destinationCityId)
-                        .uniqueResult();
+                final City destinationCity = session.get(City.class, destinationCityId);
                 if (destinationCity == null) {
-                    throw new IllegalArgumentException("Unable to find destination city");
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unable to find destination city");
                 }
 
                 final City2CityFlow c2cFlow = (City2CityFlow) session

@@ -1,9 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey;
 
+import net.simforge.airways.ops.GeoOps;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.Person;
@@ -19,12 +16,16 @@ import net.simforge.airways.processes.journey.event.TransferStarted;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Geo;
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TransferLauncher {
+    private static final Logger log = LoggerFactory.getLogger(TransferLauncher.class);
+
     public static void scheduleTransferToAirport(ProcessEngine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
         BM.start("TransferLauncher.scheduleTransferToAirport");
         try {
@@ -84,28 +85,10 @@ public class TransferLauncher {
             List<Airport> airports = persons.stream().map(Person::getLocationAirport).collect(Collectors.toList());
             Airport currentAirport = airports.get(0);
 
-            //noinspection unchecked
-            List<City> cities = session
-                    .createQuery("select ac.city " +
-                            "from Airport2City ac " +
-                            "where ac.airport = :airport")
-                    .setEntity("airport", currentAirport)
-                    .list();
-
-            City theBiggestCity = null;
-            for (City city : cities) {
-                if (theBiggestCity == null) {
-                    theBiggestCity = city;
-                    continue;
-                }
-
-                if (theBiggestCity.getPopulation() < city.getPopulation()) {
-                    theBiggestCity = city;
-                }
-            }
+            City theBiggestCity = GeoOps.loadBiggestCityLinkedToAirport(session, currentAirport);
 
             //noinspection ConstantConditions
-            session.save(EventLog.make(journey, "Transfer & Cancel to city " + theBiggestCity.getName()));
+            EventLog.info(session, log, journey, "Transfer & Cancel to city " + theBiggestCity.getName());
 
             TransferLauncher.startTransferToCityThenEvent(engine, session, journey, theBiggestCity, CancelOnArrivalToCity.class);
 
@@ -123,7 +106,8 @@ public class TransferLauncher {
         try {
 
             List<Person> persons = JourneyOps.getPersons(session, journey);
-            double maxDistance = persons.stream().mapToDouble(person -> {
+            //noinspection UnnecessaryLocalVariable
+            final double maxDistance = persons.stream().mapToDouble(person -> {
                 if (person.getLocationCity() != null)
                     return Geo.distance(person.getLocationCity().getCoords(), toCoords);
                 if (person.getLocationAirport() != null)

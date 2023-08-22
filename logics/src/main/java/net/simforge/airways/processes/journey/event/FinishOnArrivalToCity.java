@@ -7,6 +7,7 @@ import net.simforge.airways.EventLog;
 import net.simforge.airways.model.Person;
 import net.simforge.airways.model.flow.City2CityFlowStats;
 import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.ops.PilotOps;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -49,10 +50,7 @@ public class FinishOnArrivalToCity implements Event, Handler {
                     EventLog.info(session, log, person, "Journey FINISHED", journey);
 
                     if (person.getType() == Person.Type.Excluded) {
-                        final Pilot pilot = (Pilot) session
-                                .createQuery("from Pilot where person = :person")
-                                .setParameter("person", person)
-                                .uniqueResult();
+                        final Pilot pilot = PilotOps.loadPilotByPersonId(session, person.getId());
                         if (pilot != null) {
                             pilot.setStatus(Pilot.Status.Idle);
                             session.update(pilot);

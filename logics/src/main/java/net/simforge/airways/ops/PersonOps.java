@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.EventLog;
@@ -11,12 +7,16 @@ import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
 public class PersonOps {
+    private static final Logger log = LoggerFactory.getLogger(PersonOps.class);
+
     public static Person createOrdinalPerson(Session session, City originCity) {
         BM.start("PersonOps.createOrdinalPerson");
 
@@ -31,7 +31,7 @@ public class PersonOps {
             person.setStatus(Person.Status.Idle);
 
             session.save(person);
-            session.save(EventLog.make(person, "New person created", originCity));
+            EventLog.info(session, log, person, "New person created", originCity);
 
             return person;
         } finally {
@@ -76,11 +76,17 @@ public class PersonOps {
 
     private static Csv loadCsv(String csvName) {
         InputStream resourceAsStream = PersonOps.class.getResourceAsStream(csvName);
+        if (resourceAsStream == null) {
+            log.error("Unable to load " + csvName + " CSV file");
+            throw new IllegalStateException("Unable to load " + csvName + " CSV file");
+        }
+
         String content = null;
         try {
             content = IOHelper.readInputStream(resourceAsStream);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Unable to load data from " + csvName + " CSV file", e);
+            throw new RuntimeException("Unable to load data from " + csvName + " CSV file", e);
         }
         return Csv.fromContent(content);
     }
