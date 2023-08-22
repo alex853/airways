@@ -68,7 +68,7 @@ public class PilotController {
                 .withSessionFactory(AirwaysApp.getSessionFactory())
                 .build();
 
-        final int destinationCityId = 13;
+        final int destinationCityId = 1;
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
@@ -129,11 +129,10 @@ public class PilotController {
                 journey.setToCity(destinationCity);
                 journey.setC2cFlow(c2cFlow);
                 journey.setStatus(Journey.Status.LookingForTickets);
-
-                engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
-
                 session.save(journey);
                 EventLog.info(session, log, journey, String.format("PILOT TRAVEL - New journey from %s to %s", originCity.getName(), destinationCity.getName()), c2cFlow, originCity, destinationCity);
+
+                engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
 
                 person.setStatus(Person.Status.OnJourney);
                 person.setJourney(journey);
