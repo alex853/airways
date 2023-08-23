@@ -32,26 +32,20 @@ public class GeoController {
     }
 
     private static class CityDto {
-        private final int cityId;
-        private final String cityName;
-        private final String countryName;
+        private final int id;
+        private final String name;
 
         public CityDto(City city) {
-            this.cityId = city.getId();
-            this.cityName = city.getName();
-            this.countryName = city.getCountry().getName();
+            this.id = city.getId();
+            this.name = city.getCityWithCountryName();
         }
 
-        public int getCityId() {
-            return cityId;
+        public int getId() {
+            return id;
         }
 
-        public String getCityName() {
-            return cityName;
-        }
-
-        public String getCountryName() {
-            return countryName;
+        public String getName() {
+            return name;
         }
     }
 }

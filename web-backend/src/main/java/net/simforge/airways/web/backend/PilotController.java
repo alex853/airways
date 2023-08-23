@@ -49,7 +49,7 @@ public class PilotController {
         }
     }
 
-    @GetMapping("/travel/book") // todo POST not GET
+    @PostMapping("/travel/book")
     public void bookTravel(@RequestParam(value = "destinationCityId") final int destinationCityId) {
         final SessionInfo sessionInfo = SessionInfo.get();
 
@@ -143,40 +143,32 @@ public class PilotController {
     }
 
     private static class PersonDto {
-        private final String name;
-        private final String surname;
-        private final int originCityId;
-        private final int statusCode;
+        private final String fullName;
+        private final String originCityName;
         private final String statusName;
         private final Integer locationCityId;
+        private final String locationCityName;
         private final Integer locationAirportId;
+        private final String locationAirportName;
         private final Integer journeyId;
 
         public PersonDto(Person person) {
-            this.name = person.getName();
-            this.surname = person.getSurname();
-            this.originCityId = person.getOriginCity().getId();
-            this.statusCode = person.getStatus().code();
-            this.statusName = person.getStatus().name();
+            this.fullName = person.getName() + " " + person.getSurname();
+            this.originCityName = person.getOriginCity().getCityWithCountryName();
+            this.statusName = person.getStatus().toString();
             this.locationCityId = person.getLocationCity() != null ? person.getLocationCity().getId() : null;
+            this.locationCityName = person.getLocationCity() != null ? person.getLocationCity().getCityWithCountryName() : null;
             this.locationAirportId = person.getLocationAirport() != null ? person.getLocationAirport().getId() : null;
+            this.locationAirportName = person.getLocationAirport() != null ? person.getLocationAirport().getIcao() + " " + person.getLocationAirport().getName() : null;
             this.journeyId = person.getJourney() != null ? person.getJourney().getId() : null;
         }
 
-        public String getName() {
-            return name;
+        public String getFullName() {
+            return fullName;
         }
 
-        public String getSurname() {
-            return surname;
-        }
-
-        public int getOriginCityId() {
-            return originCityId;
-        }
-
-        public int getStatusCode() {
-            return statusCode;
+        public String getOriginCityName() {
+            return originCityName;
         }
 
         public String getStatusName() {
@@ -187,8 +179,16 @@ public class PilotController {
             return locationCityId;
         }
 
+        public String getLocationCityName() {
+            return locationCityName;
+        }
+
         public Integer getLocationAirportId() {
             return locationAirportId;
+        }
+
+        public String getLocationAirportName() {
+            return locationAirportName;
         }
 
         public Integer getJourneyId() {
@@ -197,16 +197,10 @@ public class PilotController {
     }
 
     private static class PilotDto {
-        private final int statusCode;
         private final String statusName;
 
         public PilotDto(Pilot pilot) {
-            statusCode = pilot.getStatus().code();
-            statusName = pilot.getStatus().name();
-        }
-
-        public int getStatusCode() {
-            return statusCode;
+            statusName = pilot.getStatus().toString();
         }
 
         public String getStatusName() {
