@@ -178,6 +178,59 @@
             dialog.modal('hide');
         }
 
+        function openTransferToCityDialog() {
+            var dialog = $('#transferToCityModal');
+
+            $('#transferToCityModal-location').val(person.locationAirportName);
+
+            $('#transferToCityModal-transferTo').empty();
+            $.ajax({
+                url: '<%=backendURL%>/geo/city/by/airport',
+                data: {
+                    airportId: person.locationAirportId
+                },
+                success: function (response) {
+                    response.forEach((city) => {
+                        $('#transferToCityModal-transferTo')
+                            .append('<option value="#id#">#name#</option>'
+                                .replace('#id#', city.id)
+                                .replace('#name#', city.name));
+                    });
+                },
+                error: function (e) {
+                    console.log(e.responseText);
+                }
+            });
+
+            $('#transferToCityModal-transferTo').val('');
+
+            dialog.modal();
+        }
+
+        function transferToCity() {
+            let dialog = $('#transferToCityModal');
+
+            let destinationCityId = $("#transferToCityModal-transferTo").val();
+
+            $.ajax({
+                url: '<%=backendURL%>/pilot/transfer/to/city',
+                method: 'POST',
+                data: {
+                    destinationCityId: destinationCityId
+                },
+                success: function () {
+                    showAlert("Transfer to City started successfully", "success", 5000);
+                    loadPilotStatus();
+                },
+                error: function (e) {
+                    showAlert("Error happened - " + e.responseText, "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+
+            dialog.modal('hide');
+        }
+
 
     </script>
 </head>
@@ -208,7 +261,7 @@
     </form>
 
     <a class="btn btn-outline-primary btn-sm" id="action-book-travel" href="javascript:openBookTravelDialog()" role="button">Book Travel</a>
-    <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-city" href="javascript:alert('TODO')" role="button">Transfer to City</a>
+    <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-city" href="javascript:openTransferToCityDialog()" role="button">Transfer to City</a>
     <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-airport" href="javascript:openTransferToAirportDialog()" role="button">Transfer to Airport</a>
 
 </div>
@@ -276,6 +329,40 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="transferToAirport()">Transfer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="transferToCityModal" tabindex="-1" role="dialog" aria-labelledby="transferToCityModalLabel"
+     aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferToCityModalLabel">Transfer to City</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="transferToCityModal-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="transferToCityModal-location">Now located at</label>
+                            <input type="text" class="form-control" id="transferToCityModal-location" disabled>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="transferToCityModal-transferTo">Transfer To</label>
+                            <select class="form-control" id="transferToCityModal-transferTo" required></select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="transferToCity()">Transfer</button>
             </div>
         </div>
     </div>

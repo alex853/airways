@@ -165,6 +165,46 @@ public class PilotController {
         }
     }
 
+    @PostMapping("/transfer/to/city")
+    public void transferToCity(@RequestParam(value = "destinationCityId") final int destinationCityId) {
+        final SessionInfo sessionInfo = SessionInfo.get();
+
+        // todo rework it!
+        RealTimeMachine timeMachine = new RealTimeMachine();
+        ProcessEngine engine = ProcessEngineBuilder.create()
+                .withTimeMachine(timeMachine)
+                .withSessionFactory(AirwaysApp.getSessionFactory())
+                .build();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            HibernateUtils.transaction(session, () -> {
+
+                final Person person = session.get(Person.class, sessionInfo.getPersonId());
+                final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
+
+                if (!isSuitablePilot(person, pilot)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
+                }
+
+                if (!canTransferToCity(person, pilot)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
+                }
+
+                final Airport originAirport = person.getLocationAirport();
+
+                final List<City> airports = GeoOps.loadCitiesLinkedToAirport(session, originAirport.getId());
+                Optional<City> destinationCity = airports.stream().filter(city -> city.getId() == destinationCityId).findFirst();
+
+                if (!destinationCity.isPresent()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid city provided");
+                }
+
+                PilotTransferLauncher.transferToCity(engine, session, person, destinationCity.get());
+
+            });
+        }
+    }
+
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean isSuitablePilot(Person person, Pilot pilot) {
         return person.getType() == Person.Type.Excluded
@@ -234,7 +274,9 @@ public class PilotController {
             Journey journey = person.getJourney();
             if (journey != null) {
                 this.journeyId = journey.getId();
-                this.journeyDesc = "Travelling to " + journey.getToCity().getCityWithCountryName() + ", " + journey.getStatus().toString();
+                this.journeyDesc = "Travelling to "
+                        + (journey.getToCity() != null ? journey.getToCity().getCityWithCountryName() : "'no city info'")
+                        + ", " + journey.getStatus().toString();
             } else {
                 this.journeyId = null;
                 this.journeyDesc = null;
