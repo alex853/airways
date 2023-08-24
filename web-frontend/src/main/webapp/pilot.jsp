@@ -24,7 +24,7 @@
         let allCities;
 
         $(document).ready(function () {
-            loadPilotStatus();
+            reloadPilotStatus();
 
             $.ajax({
                 url: '<%=backendURL%>/geo/city/all',
@@ -50,26 +50,32 @@
                     $("#person-origin").text(person.originCityName);
                     $("#person-status").text(person.statusName);
 
+                    let location = '';
                     if (person.locationCityId) {
-                        $("#person-location").text(person.locationCityName);
+                        location = person.locationCityName;
                     } else if (person.locationAirportId) {
-                        $("#person-location").text(person.locationAirportName);
+                        location = person.locationAirportName;
                     }
+                    $("#person-location").text(location);
 
-                    if (person.journeyId) {
-                        $("#person-journey").text("Journey #" + person.journeyId);
-                    }
+                    $("#person-journey").text(person.journeyDesc);
 
                     $("#pilot-status").text(pilot.statusName);
 
-                    let actions = { canTravel: true };
-
-
+                    let actions = response.actions;
+                    enableButton('#action-book-travel', actions.canTravel);
+                    enableButton('#action-transfer-to-city', actions.canTransferToCity);
+                    enableButton('#action-transfer-to-airport', actions.canTransferToAirport);
                 },
                 error: function (e) {
                     console.log(e.responseText);
                 }
             });
+        }
+
+        function reloadPilotStatus() {
+            loadPilotStatus();
+            setTimeout(function () { reloadPilotStatus(); }, 60000);
         }
 
         function openBookTravelDialog() {
@@ -103,7 +109,6 @@
             $.ajax({
                 url: '<%=backendURL%>/pilot/travel/book',
                 method: 'POST',
-                //dataType: 'json',
                 data: {
                     destinationCityId: destinationCityId
                 },
@@ -119,6 +124,60 @@
 
             dialog.modal('hide');
         }
+
+        function openTransferToAirportDialog() {
+            var dialog = $('#transferToAirportModal');
+
+            $('#transferToAirportModal-location').val(person.locationCityName);
+
+            $('#transferToAirportModal-transferTo').empty();
+            $.ajax({
+                url: '<%=backendURL%>/geo/airport/by/city',
+                data: {
+                    cityId: person.locationCityId
+                },
+                success: function (response) {
+                    response.forEach((airport) => {
+                        $('#transferToAirportModal-transferTo')
+                            .append('<option value="#id#">#name#</option>'
+                                .replace('#id#', airport.id)
+                                .replace('#name#', airport.name));
+                    });
+                },
+                error: function (e) {
+                    console.log(e.responseText);
+                }
+            });
+
+            $('#transferToAirportModal-transferTo').val('');
+
+            dialog.modal();
+        }
+
+        function transferToAirport() {
+            let dialog = $('#transferToAirportModal');
+
+            let destinationAirportId = $("#transferToAirportModal-transferTo").val();
+
+            $.ajax({
+                url: '<%=backendURL%>/pilot/transfer/to/airport',
+                method: 'POST',
+                data: {
+                    destinationAirportId: destinationAirportId
+                },
+                success: function () {
+                    showAlert("Transfer to Airport started successfully", "success", 5000);
+                    loadPilotStatus();
+                },
+                error: function (e) {
+                    showAlert("Error happened - " + e.responseText, "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+
+            dialog.modal('hide');
+        }
+
 
     </script>
 </head>
@@ -148,11 +207,12 @@
         </div>
     </form>
 
-    <a class="btn btn-outline-primary btn-sm" href="javascript:openBookTravelDialog()" role="button">Book Travel</a>
-    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Transfer to City</a>
-    <a class="btn btn-outline-primary btn-sm" href="javascript:alert('TODO')" role="button">Transfer to Airport</a>
+    <a class="btn btn-outline-primary btn-sm" id="action-book-travel" href="javascript:openBookTravelDialog()" role="button">Book Travel</a>
+    <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-city" href="javascript:alert('TODO')" role="button">Transfer to City</a>
+    <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-airport" href="javascript:openTransferToAirportDialog()" role="button">Transfer to Airport</a>
 
 </div>
+
 
 
 <div class="modal fade" id="bookTravelModal" tabindex="-1" role="dialog" aria-labelledby="bookTravelModalLabel"
@@ -182,6 +242,40 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="bookTravel()">Book Travel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="transferToAirportModal" tabindex="-1" role="dialog" aria-labelledby="transferToAirportModalLabel"
+     aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferToAirportModalLabel">Transfer to Airport</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="transferToAirportModal-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="transferToAirportModal-location">Now located at</label>
+                            <input type="text" class="form-control" id="transferToAirportModal-location" disabled>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="transferToAirportModal-transferTo">Transfer To</label>
+                            <select class="form-control" id="transferToAirportModal-transferTo" required></select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="transferToAirport()">Transfer</button>
             </div>
         </div>
     </div>

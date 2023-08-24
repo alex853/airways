@@ -12,7 +12,7 @@ import net.simforge.airways.model.journey.Itinerary;
 import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.processes.DurationConsts;
-import net.simforge.airways.processes.journey.TransferLauncher;
+import net.simforge.airways.processes.transfer.journey.TransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;

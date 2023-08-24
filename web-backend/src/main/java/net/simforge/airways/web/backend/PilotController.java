@@ -13,6 +13,7 @@ import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.RealTimeMachine;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
+import net.simforge.airways.processes.transfer.pilot.PilotTransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.slf4j.Logger;
@@ -20,6 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/pilot")
@@ -37,14 +41,14 @@ public class PilotController {
             final Person person = session.get(Person.class, sessionInfo.getPersonId());
             final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-            if (person.getType() != Person.Type.Excluded
-                || pilot.getType() != Pilot.Type.PlayerCharacter) {
+            if (!isSuitablePilot(person, pilot)) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
             }
 
             return new PilotStatusDto(
                     new PersonDto(person),
-                    new PilotDto(pilot)
+                    new PilotDto(pilot),
+                    new PilotActionsDto(person, pilot)
             );
         }
     }
@@ -66,14 +70,11 @@ public class PilotController {
                 final Person person = session.get(Person.class, sessionInfo.getPersonId());
                 final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-                if (person.getType() != Person.Type.Excluded
-                        || pilot.getType() != Pilot.Type.PlayerCharacter) {
+                if (!isSuitablePilot(person, pilot)) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
                 }
 
-                if (person.getStatus() != Person.Status.Idle
-                        || person.getJourney() != null
-                        || pilot.getStatus() != Pilot.Status.Idle) {
+                if (!canTravel(person, pilot)) {
                     throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
                 }
 
@@ -124,13 +125,77 @@ public class PilotController {
         }
     }
 
+    @PostMapping("/transfer/to/airport")
+    public void transferToAirport(@RequestParam(value = "destinationAirportId") final int destinationAirportId) {
+        final SessionInfo sessionInfo = SessionInfo.get();
+
+        // todo rework it!
+        RealTimeMachine timeMachine = new RealTimeMachine();
+        ProcessEngine engine = ProcessEngineBuilder.create()
+                .withTimeMachine(timeMachine)
+                .withSessionFactory(AirwaysApp.getSessionFactory())
+                .build();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            HibernateUtils.transaction(session, () -> {
+
+                final Person person = session.get(Person.class, sessionInfo.getPersonId());
+                final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
+
+                if (!isSuitablePilot(person, pilot)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
+                }
+
+                if (!canTransferToAirport(person, pilot)) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
+                }
+
+                final City originCity = person.getLocationCity();
+
+                final List<Airport> airports = GeoOps.loadAirportsLinkedToCity(session, originCity.getId());
+                Optional<Airport> destinationAirport = airports.stream().filter(airport -> airport.getId() == destinationAirportId).findFirst();
+
+                if (!destinationAirport.isPresent()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid airport provided");
+                }
+
+                PilotTransferLauncher.transferToAirport(engine, session, person, destinationAirport.get());
+
+            });
+        }
+    }
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private static boolean isSuitablePilot(Person person, Pilot pilot) {
+        return person.getType() == Person.Type.Excluded
+                && pilot.getType() == Pilot.Type.PlayerCharacter;
+    }
+
+    private static boolean canTravel(Person person, Pilot pilot) {
+        return person.getStatus() == Person.Status.Idle
+                && person.getJourney() == null
+                && pilot.getStatus() == Pilot.Status.Idle;
+    }
+
+    private static boolean canTransferToCity(Person person, Pilot pilot) {
+        return canTravel(person, pilot)
+                && person.getLocationAirport() != null;
+    }
+
+    private static boolean canTransferToAirport(Person person, Pilot pilot) {
+        return canTravel(person, pilot)
+                && person.getLocationCity() != null;
+    }
+
     private static class PilotStatusDto {
         private final PersonDto person;
         private final PilotDto pilot;
+        private final PilotActionsDto actions;
 
-        public PilotStatusDto(PersonDto person, PilotDto pilot) {
+        public PilotStatusDto(PersonDto person, PilotDto pilot, PilotActionsDto actions) {
             this.person = person;
             this.pilot = pilot;
+            this.actions = actions;
         }
 
         public PersonDto getPerson() {
@@ -139,6 +204,10 @@ public class PilotController {
 
         public PilotDto getPilot() {
             return pilot;
+        }
+
+        public PilotActionsDto getActions() {
+            return actions;
         }
     }
 
@@ -151,6 +220,7 @@ public class PilotController {
         private final Integer locationAirportId;
         private final String locationAirportName;
         private final Integer journeyId;
+        private final String journeyDesc;
 
         public PersonDto(Person person) {
             this.fullName = person.getName() + " " + person.getSurname();
@@ -160,7 +230,15 @@ public class PilotController {
             this.locationCityName = person.getLocationCity() != null ? person.getLocationCity().getCityWithCountryName() : null;
             this.locationAirportId = person.getLocationAirport() != null ? person.getLocationAirport().getId() : null;
             this.locationAirportName = person.getLocationAirport() != null ? person.getLocationAirport().getIcao() + " " + person.getLocationAirport().getName() : null;
-            this.journeyId = person.getJourney() != null ? person.getJourney().getId() : null;
+
+            Journey journey = person.getJourney();
+            if (journey != null) {
+                this.journeyId = journey.getId();
+                this.journeyDesc = "Travelling to " + journey.getToCity().getCityWithCountryName() + ", " + journey.getStatus().toString();
+            } else {
+                this.journeyId = null;
+                this.journeyDesc = null;
+            }
         }
 
         public String getFullName() {
@@ -194,6 +272,10 @@ public class PilotController {
         public Integer getJourneyId() {
             return journeyId;
         }
+
+        public String getJourneyDesc() {
+            return journeyDesc;
+        }
     }
 
     private static class PilotDto {
@@ -205,6 +287,30 @@ public class PilotController {
 
         public String getStatusName() {
             return statusName;
+        }
+    }
+
+    private static class PilotActionsDto {
+        private final boolean canTravel;
+        private final boolean canTransferToCity;
+        private final boolean canTransferToAirport;
+
+        public PilotActionsDto(Person person, Pilot pilot) {
+            this.canTravel = canTravel(person, pilot);
+            this.canTransferToCity = canTransferToCity(person, pilot);
+            this.canTransferToAirport = canTransferToAirport(person, pilot);
+        }
+
+        public boolean isCanTravel() {
+            return canTravel;
+        }
+
+        public boolean isCanTransferToCity() {
+            return canTransferToCity;
+        }
+
+        public boolean isCanTransferToAirport() {
+            return canTransferToAirport;
         }
     }
 }

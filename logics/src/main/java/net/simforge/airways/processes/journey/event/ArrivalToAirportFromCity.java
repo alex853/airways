@@ -12,7 +12,7 @@ import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
-import net.simforge.airways.processes.journey.TransferLauncher;
+import net.simforge.airways.processes.transfer.journey.TransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;

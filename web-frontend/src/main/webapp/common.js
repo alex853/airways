@@ -33,3 +33,11 @@ function showAlert(message, type, closeDelay) {
     if (closeDelay)
         window.setTimeout(function() { alert.alert("close") }, closeDelay);
 }
+
+function enableButton(id, enableStatus) {
+    if (enableStatus) {
+        $(id).removeClass('disabled');
+    } else {
+        $(id).addClass('disabled');
+    }
+}

@@ -11,7 +11,7 @@ import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.journey.Itinerary;
-import net.simforge.airways.processes.journey.TransferLauncher;
+import net.simforge.airways.processes.transfer.journey.TransferLauncher;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
