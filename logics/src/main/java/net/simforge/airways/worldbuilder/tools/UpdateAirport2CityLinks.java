@@ -9,21 +9,36 @@ import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.Airport2City;
 import net.simforge.airways.model.geo.City;
 import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.io.Csv;
 import net.simforge.commons.misc.Geo;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 public class UpdateAirport2CityLinks {
     private static final Logger logger = LoggerFactory.getLogger(UpdateAirport2CityLinks.class.getName());
+    public static final int maxDistance = 100;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         logger.info("Update Airport2City links");
+
+        Map<String, Integer> icao2size = new HashMap<>();
+
+        Csv csv = Csv.load(new File("./data/icaodata.csv"));
+        logger.info("source dataset contains {} airports", csv.rowCount());
+
+        icao2size = new HashMap<>();
+
+        for (int i = 0; i < csv.rowCount(); i++) {
+            String icao = csv.value(i, "icao");
+            String sizeStr = csv.value(i, "size");
+            icao2size.put(icao, Integer.parseInt(sizeStr));
+        }
 
         try (SessionFactory sessionFactory = Airways.buildSessionFactory();
              Session session = sessionFactory.openSession()) {
@@ -44,8 +59,7 @@ public class UpdateAirport2CityLinks {
 
             //noinspection unchecked
             List<Airport2City> existingLinks = session
-                    .createQuery("from Airport2City where dataset = :activeDataset")
-                    .setInteger("activeDataset", Airways.ACTIVE_DATASET)
+                    .createQuery("from Airport2City")
                     .list();
             logger.info("loaded {} links", existingLinks.size());
 
@@ -65,49 +79,84 @@ public class UpdateAirport2CityLinks {
                     distanceToAirport.put(distance, airport);
                 }
 
-                double maxDistanceToAirport = 100;
                 for (Map.Entry<Double, Airport> entry : distanceToAirport.entrySet()) {
-                    double distance = entry.getKey();
-                    if (distance > maxDistanceToAirport) {
-                        break;
-                    }
-
                     Airport airport = entry.getValue();
 
                     logger.info("checking link {} -> {}", city.getName(), airport.getIcao());
-                    Airport2City existingLink = null;
-                    for (Airport2City each : existingLinks) {
-                        if (airport.getId().equals(each.getAirport().getId())
-                                && city.getId().equals(each.getCity().getId())) {
-                            existingLink = each;
-                            break;
-                        }
+                    Airport2City existingLink = existingLinks.stream()
+                            .filter(each -> airport.getId().equals(each.getAirport().getId())
+                                    && city.getId().equals(each.getCity().getId()))
+                            .findFirst().orElse(null);
+
+                    Integer size = icao2size.get(airport.getIcao());
+                    double distance = entry.getKey();
+
+                    if (distance > maxDistance + 1) {
+                        break;
                     }
 
-                    if (existingLink != null) {
-                        if (!existingLink.getDataset().equals(Airways.ACTIVE_DATASET)) {
-                            existingLink.setDataset(Airways.ACTIVE_DATASET);
+                    double maxDistanceDueSize = maxDistanceDueSize(size);
+                    boolean linkShouldBeActive = distance < maxDistanceDueSize;
+                    logger.info("    distance {}, size {}, max distance due size {}, should be active {}, existing link {}", distance, size, maxDistanceDueSize, linkShouldBeActive, existingLink);
 
-                            HibernateUtils.updateAndCommit(session, existingLink);
+                    if (linkShouldBeActive) {
+                        if (existingLink != null) {
+                            if (!existingLink.getDataset().equals(Airways.ACTIVE_DATASET)) {
+                                existingLink.setDataset(Airways.ACTIVE_DATASET);
 
-                            logger.info("    dataset changed to active in exising link");
+                                HibernateUtils.updateAndCommit(session, existingLink);
+
+                                logger.info("    dataset changed to active in existing link");
+                            } else {
+                                logger.info("    link is ACTIVE and should be active");
+                            }
+
+                            existingLinks.remove(existingLink);
                         } else {
-                            logger.info("    link is fine");
+                            Airport2City newLink = new Airport2City();
+                            newLink.setAirport(airport);
+                            newLink.setCity(city);
+                            newLink.setDataset(Airways.ACTIVE_DATASET);
+
+                            HibernateUtils.saveAndCommit(session, newLink);
+
+                            logger.info("    new active link saved");
                         }
-
-                        existingLinks.remove(existingLink);
                     } else {
-                        Airport2City newLink = new Airport2City();
-                        newLink.setAirport(airport);
-                        newLink.setCity(city);
-                        newLink.setDataset(Airways.ACTIVE_DATASET);
+                        if (existingLink != null) {
+                            if (existingLink.getDataset().equals(Airways.ACTIVE_DATASET)) {
+                                existingLink.setDataset(Airways.INACTIVE_DATASET);
 
-                        HibernateUtils.saveAndCommit(session, newLink);
+                                HibernateUtils.updateAndCommit(session, existingLink);
 
-                        logger.info("    new link saved");
+                                logger.info("    dataset changed to INACTIVE in existing link");
+                            } else {
+                                logger.info("    link is INACTIVE and should be inactive");
+                            }
+
+                            existingLinks.remove(existingLink);
+                        } else {
+                            logger.info("    link does not exist and should not be created");
+                        }
                     }
                 }
             }
+        }
+    }
+
+    private static double maxDistanceDueSize(Integer size) {
+        if (size == null) {
+            return 0;
+        } else if (size < 2500) {
+            return 10;
+        } else if (size < 4000) {
+            return 20;
+        } else if (size < 6000) {
+            return 35;
+        } else if (size < 9000) {
+            return 65;
+        } else {
+            return maxDistance;
         }
     }
 }

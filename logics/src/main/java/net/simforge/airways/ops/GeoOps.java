@@ -1,5 +1,6 @@
 package net.simforge.airways.ops;
 
+import net.simforge.airways.Airways;
 import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.City;
 import net.simforge.commons.legacy.BM;
@@ -15,8 +16,10 @@ public class GeoOps {
                     .createQuery("select a2c.city " +
                             "from Airport2City a2c " +
                             "where a2c.airport = :airport " +
+                            "  and a2c.dataset = :active " +
                             "order by a2c.city.population desc")
                     .setParameter("airport", airport)
+                    .setParameter("active", Airways.ACTIVE_DATASET)
                     .setMaxResults(1)
                     .uniqueResult();
         } finally {
@@ -32,8 +35,10 @@ public class GeoOps {
                     .createQuery("select a2c.city " +
                             "from Airport2City a2c " +
                             "where a2c.airport.id = :airportId " +
+                            "  and a2c.dataset = :active " +
                             "order by a2c.city.population desc")
                     .setParameter("airportId", airportId)
+                    .setParameter("active", Airways.ACTIVE_DATASET)
                     .list();
         } finally {
             BM.stop();
@@ -48,8 +53,10 @@ public class GeoOps {
                     .createQuery("select a2c.airport " +
                             "from Airport2City a2c " +
                             "where a2c.city.id = :cityId " +
+                            "  and a2c.dataset = :active " +
                             "order by a2c.airport.icao")
                     .setParameter("cityId", cityId)
+                    .setParameter("active", Airways.ACTIVE_DATASET)
                     .list();
         } finally {
             BM.stop();
