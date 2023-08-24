@@ -47,6 +47,7 @@ public class PilotTransferFinished implements Event, Handler {
                     person.setStatus(Person.Status.Idle);
                     person.setLocationCity(transfer.getToCity());
                     person.setLocationAirport(transfer.getToAirport());
+                    person.setJourney(null);
                     session.update(person);
 
                     Pilot pilot = PilotOps.loadPilotByPersonId(session, person.getId());
