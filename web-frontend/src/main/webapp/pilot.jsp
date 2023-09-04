@@ -231,6 +231,38 @@
             dialog.modal('hide');
         }
 
+        function openDeclareFlightDialog() {
+            var dialog = $('#declareFlightModal');
+
+            dialog.modal();
+        }
+
+        function declareFlight() {
+            let dialog = $('#declareFlightModal');
+
+            $.ajax({
+                url: '<%=backendURL%>/pilot/declare/flight',
+                method: 'POST',
+                data: {
+                    dateOfFlight: 'today',
+                    blocksOff: $('#declareFlightModal-blocksOff').val(),
+                    aircraftTypeId: $('#declareFlightModal-typeOfAircraft').val(),
+                    aircraftId: $('#declareFlightModal-aircraftRegNo').val(),
+                    departureIcao: $('#declareFlightModal-departureAirportIcao').val(),
+                    destinationIcao: $('#declareFlightModal-destinationAirportIcao').val()
+                },
+                success: function () {
+                    showAlert("Flight booked successfully", "success", 5000);
+                    loadPilotStatus();
+                },
+                error: function (e) {
+                    showAlert("Error happened - " + e.responseText, "danger", 15000);
+                    console.log(e.responseText);
+                }
+            });
+
+            dialog.modal('hide');
+        }
 
     </script>
 </head>
@@ -263,6 +295,7 @@
     <a class="btn btn-outline-primary btn-sm" id="action-book-travel" href="javascript:openBookTravelDialog()" role="button">Book Travel</a>
     <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-city" href="javascript:openTransferToCityDialog()" role="button">Transfer to City</a>
     <a class="btn btn-outline-primary btn-sm" id="action-transfer-to-airport" href="javascript:openTransferToAirportDialog()" role="button">Transfer to Airport</a>
+    <a class="btn btn-outline-primary btn-sm" id="action-declare-flight" href="javascript:openDeclareFlightDialog()" role="button">Declare Flight</a>
 
 </div>
 
@@ -363,6 +396,114 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="transferToCity()">Transfer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="declareFlightModal" tabindex="-1" role="dialog" aria-labelledby="declareFlightModalLabel"
+     aria-hidden="true" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="declareFlightModalLabel">Declare Flight</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="declareFlightModal-form">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-dateOfFlight">Date of Flight</label>
+                            <div class="btn-group" role="group" id="declareFlightModal-dateOfFlight">
+                                <button type="button" class="btn btn-primary">Today</button>
+                                <button type="button" class="btn btn-info">Tomorrow</button>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-flightNumber">Flight Number</label>
+                            <input type="text" class="form-control" id="declareFlightModal-flightNumber" placeholder="PHxxxx" readonly>
+                            <small class="form-text text-muted">PhantomAir flight number will be assigned automatically.</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-typeOfAircraft">Type Of Aircraft</label>
+                            <select class="form-control" id="declareFlightModal-typeOfAircraft">
+                                <option value="1">A320</option>
+                                <option value="2">B744</option>
+                                <option value="3">E170</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-aircraftRegNo">Aircraft Identification</label>
+                            <select class="form-control" id="declareFlightModal-aircraftRegNo">
+                                <option value="0" selected>PA-xxx</option>
+                            </select>
+                            <small class="form-text text-muted">PhantomAir aircraft will be added if there is no aircraft available at the departure airport.</small>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-departureAirportIcao">Departure</label>
+                            <input type="text" class="form-control" id="declareFlightModal-departureAirportIcao" required value="EGLL">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-departureAirportName">Airport</label>
+                            <input type="text" class="form-control" id="declareFlightModal-departureAirportName" readonly>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-blocksOff">Blocks Off</label>
+                            <input type="text" class="form-control" id="declareFlightModal-blocksOff" required value="18:00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-9"></div>
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-taxiOut">Taxi Out</label>
+                            <input type="text" class="form-control" id="declareFlightModal-taxiOut" value="10 mins" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-distance">Distance</label>
+                            <input type="text" class="form-control" id="declareFlightModal-distance" readonly>
+                        </div>
+                        <div class="form-group col-md-6"></div>
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-airTime">Air Time</label>
+                            <input type="text" class="form-control" id="declareFlightModal-airTime" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-9"></div>
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-taxiIn">Taxi In</label>
+                            <input type="text" class="form-control" id="declareFlightModal-taxiIn" value="10 mins" readonly>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-destinationAirportIcao">Destination</label>
+                            <input type="text" class="form-control" id="declareFlightModal-destinationAirportIcao" required value="EGBB">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="declareFlightModal-destinationAirportName">Airport</label>
+                            <input type="text" class="form-control" id="declareFlightModal-destinationAirportName" readonly>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label for="declareFlightModal-blocksOnEst">Blocks On Est</label>
+                            <input type="text" class="form-control" id="declareFlightModal-blocksOnEst" readonly>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="declareFlight()">Declare Flight</button>
             </div>
         </div>
     </div>

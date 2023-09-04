@@ -2,19 +2,31 @@ package net.simforge.airways.web.backend;
 
 import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.EventLog;
+import net.simforge.airways.model.Airline;
 import net.simforge.airways.model.Person;
 import net.simforge.airways.model.Pilot;
+import net.simforge.airways.model.aircraft.Aircraft;
+import net.simforge.airways.model.aircraft.AircraftType;
+import net.simforge.airways.model.flight.AircraftAssignment;
+import net.simforge.airways.model.flight.Flight;
+import net.simforge.airways.model.flight.PilotAssignment;
 import net.simforge.airways.model.flow.City2CityFlow;
 import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.ops.AircraftOps;
+import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.GeoOps;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
 import net.simforge.airways.processengine.RealTimeMachine;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
 import net.simforge.airways.processes.transfer.pilot.PilotTransferLauncher;
+import net.simforge.airways.util.FlightNumbers;
+import net.simforge.airways.util.FlightTimeline;
+import net.simforge.airways.util.SimpleFlight;
 import net.simforge.commons.hibernate.HibernateUtils;
+import net.simforge.commons.misc.JavaTime;
 import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +34,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,9 +56,7 @@ public class PilotController {
             final Person person = session.get(Person.class, sessionInfo.getPersonId());
             final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-            if (!isSuitablePilot(person, pilot)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
-            }
+            check(isSuitablePilot(person, pilot), "Invalid person or pilot loaded");
 
             return new PilotStatusDto(
                     new PersonDto(person),
@@ -70,13 +83,8 @@ public class PilotController {
                 final Person person = session.get(Person.class, sessionInfo.getPersonId());
                 final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-                if (!isSuitablePilot(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
-                }
-
-                if (!canTravel(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
-                }
+                check(isSuitablePilot(person, pilot), "Invalid person or pilot loaded");
+                check(canTravel(person, pilot), "Invalid status of person or pilot");
 
                 final City originCity;
                 if (person.getLocationCity() != null) {
@@ -142,22 +150,15 @@ public class PilotController {
                 final Person person = session.get(Person.class, sessionInfo.getPersonId());
                 final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-                if (!isSuitablePilot(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
-                }
-
-                if (!canTransferToAirport(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
-                }
+                check(isSuitablePilot(person, pilot), "Invalid person or pilot loaded");
+                check(canTransferToAirport(person, pilot), "Invalid status of person or pilot");
 
                 final City originCity = person.getLocationCity();
 
                 final List<Airport> airports = GeoOps.loadAirportsLinkedToCity(session, originCity.getId());
                 Optional<Airport> destinationAirport = airports.stream().filter(airport -> airport.getId() == destinationAirportId).findFirst();
 
-                if (!destinationAirport.isPresent()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid airport provided");
-                }
+                check(destinationAirport.isPresent(), "Invalid airport provided");
 
                 PilotTransferLauncher.transferToAirport(engine, session, person, destinationAirport.get());
 
@@ -182,26 +183,149 @@ public class PilotController {
                 final Person person = session.get(Person.class, sessionInfo.getPersonId());
                 final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
 
-                if (!isSuitablePilot(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid person or pilot loaded");
-                }
-
-                if (!canTransferToCity(person, pilot)) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid status of person or pilot");
-                }
+                check(isSuitablePilot(person, pilot), "Invalid person or pilot loaded");
+                check(canTransferToCity(person, pilot), "Invalid status of person or pilot");
 
                 final Airport originAirport = person.getLocationAirport();
 
                 final List<City> airports = GeoOps.loadCitiesLinkedToAirport(session, originAirport.getId());
                 Optional<City> destinationCity = airports.stream().filter(city -> city.getId() == destinationCityId).findFirst();
 
-                if (!destinationCity.isPresent()) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid city provided");
-                }
+                check(destinationCity.isPresent(), "Invalid city provided");
 
                 PilotTransferLauncher.transferToCity(engine, session, person, destinationCity.get());
 
             });
+        }
+    }
+
+    @PostMapping("/flight/book")
+    public void bookFlight(@RequestParam(value = "dateOfFlight") final String dateOfFlightFromUI,
+                           @RequestParam(value = "blocksOff") final String blocksOff,
+                           @RequestParam(value = "aircraftTypeId") final int aircraftTypeId,
+                           @RequestParam(value = "aircraftId") final int aircraftId,
+                           @RequestParam(value = "departureIcao") final String departureIcao,
+                           @RequestParam(value = "destinationIcao") final String destinationIcao) {
+        final SessionInfo sessionInfo = SessionInfo.get();
+
+        // todo rework it!
+        RealTimeMachine timeMachine = new RealTimeMachine();
+        ProcessEngine engine = ProcessEngineBuilder.create()
+                .withTimeMachine(timeMachine)
+                .withSessionFactory(AirwaysApp.getSessionFactory())
+                .build();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            HibernateUtils.transaction(session, () -> {
+
+                final Person person = session.get(Person.class, sessionInfo.getPersonId());
+                final Pilot pilot = session.get(Pilot.class, sessionInfo.getPilotId());
+
+                check(isSuitablePilot(person, pilot), "Invalid person or pilot loaded");
+
+                LocalDate dateOfFlight = ("today".equals(dateOfFlightFromUI) ? LocalDate.now() :
+                        ("tomorrow".equals(dateOfFlightFromUI) ? LocalDate.now().plusDays(1) : null));
+                checkNotNull(dateOfFlight, "Invalid aircraft type");
+
+                // todo check 'book flight' action's availability
+
+                Airport departureAirport = GeoOps.loadAirportByIcao(session, departureIcao);
+                Airport destinationAirport = GeoOps.loadAirportByIcao(session, destinationIcao);
+                Airline airline = CommonOps.airlineByIata(session, "PH");
+                AircraftType aircraftType = session.get(AircraftType.class, aircraftTypeId);
+
+                checkNotNull(departureAirport, "Invalid departure airport");
+                checkNotNull(destinationAirport, "Invalid destination airport");
+                checkNotNull(airline, "Invalid airline");
+                checkNotNull(airline, "Invalid aircraft type");
+
+                Aircraft aircraft;
+                if (aircraftId == 0) { // when 'auto' selected
+                    aircraft = AircraftOps.findAvailableAircraftAtAirport(session, airline, aircraftType, departureAirport);
+
+                    if (aircraft == null) {
+                        aircraft = AircraftOps.createAircraft(session, airline, aircraftType, departureAirport, "PA-???");
+                        checkNotNull(aircraft, "Unable to create aircraft");
+                    }
+                } else {
+                    aircraft = session.get(Aircraft.class, aircraftId);
+                    checkNotNull(aircraft, "Invalid aircraft specified");
+                    check(aircraft.getAirline().getId().equals(airline.getId()), "Aircraft belongs to another airline");
+                    check(aircraft.getType().getId().equals(aircraftTypeId), "Aircraft is of another aircraft type");
+                    check(aircraft.getStatus() == Aircraft.Status.Idle, "Aircraft is occupied");
+                }
+
+                String flightNumber = FlightNumbers.randomFlightNumber4Digits(airline);
+
+                LocalDateTime departureTime = dateOfFlight.atTime(JavaTime.hhmmToLocalTime(blocksOff));
+                check(LocalDateTime.now().isBefore(departureTime), "Departure time is already passed");
+
+                SimpleFlight simpleFlight = SimpleFlight.forRoute(departureAirport.getCoords(), destinationAirport.getCoords(), aircraftType);
+
+                Duration flyingTime = simpleFlight.getTotalTime();
+                FlightTimeline timeline = FlightTimeline.byFlyingTime(flyingTime);
+                Duration flightDuration = timeline.getScheduledDuration(timeline.getBlocksOff(), timeline.getBlocksOn());
+
+                LocalDateTime arrivalTime = departureTime.plus(flightDuration);
+
+
+                Flight flight = new Flight();
+
+                flight.setDateOfFlight(dateOfFlight);
+                flight.setCallsign(FlightNumbers.makeCallsign(airline, flightNumber));
+                flight.setAircraftType(aircraftType);
+                flight.setFlightNumber(flightNumber);
+                flight.setFromAirport(departureAirport);
+                flight.setToAirport(destinationAirport);
+
+                flight.setScheduledDepartureTime(departureTime);
+                flight.setScheduledArrivalTime(arrivalTime);
+
+                FlightTimeline flightTimeline = FlightTimeline.byScheduledDepartureArrivalTime(departureTime, arrivalTime);
+
+                flight.setScheduledTakeoffTime(flightTimeline.getTakeoff().getScheduledTime());
+                flight.setScheduledLandingTime(flightTimeline.getLanding().getScheduledTime());
+
+                flight.setStatus(Flight.Status.Planned);
+                session.save(flight);
+
+
+                AircraftAssignment aircraftAssignment = new AircraftAssignment();
+                aircraftAssignment.setFlight(flight);
+                aircraftAssignment.setAircraft(aircraft);
+                aircraftAssignment.setStatus(AircraftAssignment.Status.Assigned);
+                session.save(aircraftAssignment);
+
+
+                aircraft.setStatus(Aircraft.Status.IdlePlanned);
+                session.update(aircraft);
+
+
+                PilotAssignment pilotAssignment = new PilotAssignment();
+                pilotAssignment.setFlight(flight);
+                pilotAssignment.setPilot(pilot);
+                pilotAssignment.setStatus(PilotAssignment.Status.Assigned);
+                session.save(pilotAssignment);
+
+
+                flight.setStatus(Flight.Status.Assigned);
+                session.update(flight);
+
+                // todo EVENT LOG FOR ALL ENTITIES!
+
+            });
+        }
+    }
+
+    private static void check(boolean expectedCondition, String msg) {
+        if (!expectedCondition) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
+        }
+    }
+
+    private static void checkNotNull(Object obj, String msg) {
+        if (obj == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, msg);
         }
     }
 

@@ -50,17 +50,9 @@ public class CommonOps {
         }
     }
 
+    @Deprecated
     public static Airport airportByIcao(Session session, String icao) {
-        BM.start("Airways.airportByIcao");
-        try {
-            return (Airport) session
-                    .createQuery("from Airport c where icao = :icao")
-                    .setString("icao", icao)
-                    .setMaxResults(1)
-                    .uniqueResult();
-        } finally {
-            BM.stop();
-        }
+        return GeoOps.loadAirportByIcao(session, icao);
     }
 
     public static Airline airlineByIata(Session session, String iata) {

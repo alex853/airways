@@ -1,9 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.flight.activity;
 
+import net.simforge.airways.model.Airline;
+import net.simforge.airways.ops.AircraftOps;
+import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
@@ -45,17 +44,8 @@ public class TrivialAllocation implements Activity {
 
                 AircraftAssignment aircraftAssignment = flightContext.getAircraftAssignment();
                 if (aircraftAssignment == null) {
-                    // todo nov17 airline check && aircraft.getAirline().getId().equals(_flight.get?????????)
-                    Aircraft aircraft = (Aircraft) session
-                            .createQuery("from Aircraft a" +
-                                    " where a.type = :type" +
-                                    " and a.locationAirport = :fromAirport" +
-                                    " and a.status = :idle")
-                            .setParameter("type", flight.getAircraftType())
-                            .setParameter("fromAirport", flight.getFromAirport())
-                            .setInteger("idle", Aircraft.Status.Idle)
-                            .setMaxResults(1)
-                            .uniqueResult();
+                    Airline airline = CommonOps.airlineByIata(session, "WW");
+                    Aircraft aircraft = AircraftOps.findAvailableAircraftAtAirport(session, airline, flight.getAircraftType(), flight.getFromAirport());
                     if (aircraft != null) {
                         aircraft.setStatus(Aircraft.Status.IdlePlanned);
                         session.update(aircraft);

@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.model.Airline;
@@ -15,12 +11,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AircraftOps {
-    private static Logger logger = LoggerFactory.getLogger(AircraftOps.class);
+    private static final Logger log = LoggerFactory.getLogger(AircraftOps.class);
 
     public static void addAircrafts(Session session, String airlineIata, String aircraftTypeIcao, String airportIcao, String regNoPattern, int count) {
         Airline airline = CommonOps.airlineByIata(session, airlineIata);
         AircraftType aircraftType = CommonOps.aircraftTypeByIcao(session, aircraftTypeIcao);
-        Airport airport = CommonOps.airportByIcao(session, airportIcao);
+        Airport airport = GeoOps.loadAirportByIcao(session, airportIcao);
 
         for (int number = 0; number < count; number++) {
             String regNo = regNoPattern;
@@ -33,12 +29,12 @@ public class AircraftOps {
                 regNo = regNo.substring(0, index) + (char) ('A' + letterCode) + regNo.substring(index + 1);
             }
 
-            logger.info("Aircraft Reg No: " + regNo);
+            log.info("Aircraft Reg No: " + regNo);
 
             Aircraft aircraft = loadByRegNo(session, regNo);
 
             if (aircraft != null) {
-                logger.info("Aircraft " + regNo + " exists");
+                log.info("Aircraft " + regNo + " exists");
                 continue;
             }
 
@@ -64,5 +60,76 @@ public class AircraftOps {
         } finally {
             BM.stop();
         }
+    }
+
+    public static Aircraft createAircraft(Session session, Airline airline, AircraftType aircraftType, Airport locationAirport, String regNoPattern) {
+        Aircraft aircraft;
+
+        String regNo = getFirstRegNo(regNoPattern);
+        while (true) {
+            aircraft = loadByRegNo(session, regNo);
+            if (aircraft == null) {
+                break;
+            }
+
+            regNo = getNextRegNo(regNoPattern, regNo);
+            if (regNo == null) {
+                return null;
+            }
+        }
+
+        aircraft = new Aircraft();
+        aircraft.setType(aircraftType);
+        aircraft.setRegNo(regNo);
+        aircraft.setAirline(airline);
+        aircraft.setLocationAirport(locationAirport);
+        aircraft.setStatus(Aircraft.Status.Idle);
+
+        session.save(aircraft);
+
+        return aircraft;
+    }
+
+    private static String getFirstRegNo(String regNoPattern) {
+        return regNoPattern.replace('?', 'A');
+    }
+
+    private static String getNextRegNo(String regNoPattern, String prevRegNo) {
+        String regNo = regNoPattern;
+
+        int nextRegNoCharAddition = 0;
+        while (true) {
+            int index = regNo.lastIndexOf('?');
+            if (index == -1) {
+                if (nextRegNoCharAddition != 0) {
+                    return null;
+                } else {
+                    return regNo;
+                }
+            }
+
+            int prevRegNoChar = prevRegNo.charAt(index) - 'A';
+            int regNoChar = prevRegNoChar + 1 + nextRegNoCharAddition;
+
+            nextRegNoCharAddition = regNoChar / 26;
+            regNoChar = regNoChar % 26;
+
+            regNo = regNo.substring(0, index) + (char) ('A' + regNoChar) + regNo.substring(index + 1);
+        }
+    }
+
+    public static Aircraft findAvailableAircraftAtAirport(Session session, Airline airline, AircraftType aircraftType, Airport locationAirport) {
+        return  (Aircraft) session
+                .createQuery("from Aircraft a" +
+                        " where a.type = :type" +
+                        " and a.airline = :airline" +
+                        " and a.locationAirport = :locationAirport" +
+                        " and a.status = :idle")
+                .setParameter("type", aircraftType)
+                .setParameter("airline", airline)
+                .setParameter("locationAirport", locationAirport)
+                .setInteger("idle", Aircraft.Status.Idle)
+                .setMaxResults(1)
+                .uniqueResult();
     }
 }

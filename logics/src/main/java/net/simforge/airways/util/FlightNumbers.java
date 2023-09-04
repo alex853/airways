@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.util;
 
 import net.simforge.airways.model.Airline;
@@ -21,5 +17,10 @@ public class FlightNumbers {
     public static String makeCallsign(Airline airline, String flightNumber) {
         String digits = flightNumber.substring(2);
         return airline.getIcao() + Integer.parseInt(digits);
+    }
+
+    public static String randomFlightNumber4Digits(Airline airline) {
+        int flightNumber = (int) (Math.random() * (9999 - 1000)) + 1000;
+        return makeFlightNumber(airline.getIata(), flightNumber);
     }
 }

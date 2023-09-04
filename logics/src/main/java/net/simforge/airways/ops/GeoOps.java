@@ -9,6 +9,19 @@ import org.hibernate.Session;
 import java.util.List;
 
 public class GeoOps {
+    public static Airport loadAirportByIcao(Session session, String icao) {
+        BM.start("GeoOps.loadAirportByIcao");
+        try {
+            return (Airport) session
+                    .createQuery("from Airport c where icao = :icao")
+                    .setString("icao", icao)
+                    .setMaxResults(1)
+                    .uniqueResult();
+        } finally {
+            BM.stop();
+        }
+    }
+
     public static City loadBiggestCityLinkedToAirport(Session session, Airport airport) {
         BM.start("GeoOps.loadBiggestCityLinkedToAirport");
         try {
