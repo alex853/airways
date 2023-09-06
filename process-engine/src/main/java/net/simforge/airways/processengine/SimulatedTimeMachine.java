@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processengine;
 
 import org.slf4j.Logger;
@@ -10,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDateTime;
 
 public class SimulatedTimeMachine implements TimeMachine {
-    private static Logger logger = LoggerFactory.getLogger(SimulatedTimeMachine.class);
+    private static final Logger log = LoggerFactory.getLogger(SimulatedTimeMachine.class);
 
     private LocalDateTime time;
 
@@ -23,9 +19,14 @@ public class SimulatedTimeMachine implements TimeMachine {
         return time;
     }
 
+    @Override
+    public void nothingToProcess() {
+        // noop todo plusMinutes can be reworked as nothingToProcess!
+    }
+
     public void plusMinutes(long minutes) {
         time = time.plusMinutes(minutes);
 
-        logger.info("Current time is " + time);
+        log.info("Current time is " + time);
     }
 }

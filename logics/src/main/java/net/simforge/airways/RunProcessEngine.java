@@ -1,12 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
-import net.simforge.airways.processengine.RealTimeMachine;
+import net.simforge.airways.processengine.SemiRealTimeMachine;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.SessionFactory;
 
@@ -17,7 +13,7 @@ public class RunProcessEngine {
         SessionFactory sessionFactory = AirwaysApp.getSessionFactory();
 
         ProcessEngine engine = ProcessEngineBuilder.create()
-                .withTimeMachine(new RealTimeMachine())
+                .withTimeMachine(new SemiRealTimeMachine())
                 .withSessionFactory(sessionFactory)
                 .build();
 

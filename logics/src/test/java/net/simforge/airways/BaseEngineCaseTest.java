@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.processengine.ProcessEngine;
@@ -58,7 +54,7 @@ public abstract class BaseEngineCaseTest {
     @SuppressWarnings("SameParameterValue")
     protected void runEngine(int minutesToRun) {
         for (int i = 0; i < minutesToRun; i++) {
-            timeMachine.plusMinutes(1);
+            timeMachine.plusMinutes(1); // todo this can be reworked using nothingToProcess
 
             // ten ticks for each minute
             for (int j = 0; j < 10; j++) {

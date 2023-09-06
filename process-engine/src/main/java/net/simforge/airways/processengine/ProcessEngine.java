@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processengine;
 
 import net.simforge.airways.processengine.activity.Activity;
@@ -25,7 +21,7 @@ import java.util.Queue;
 
 public class ProcessEngine implements Runnable {
 
-    private static Logger log = LoggerFactory.getLogger(ProcessEngine.class);
+    private static final Logger log = LoggerFactory.getLogger(ProcessEngine.class);
 
     private Queue<TaskEntity> taskQueue = new ArrayDeque<>(); // very trivial way of queue management based on database
 
@@ -62,10 +58,12 @@ public class ProcessEngine implements Runnable {
         TaskEntity task = taskQueue.peek();
 
         if (task == null) {
+            timeMachine.nothingToProcess();
             return;
         }
 
         if (task.getTaskTime().isAfter(timeMachine.now())) {
+            timeMachine.nothingToProcess();
             return;
         } else {
             taskQueue.remove(task);
