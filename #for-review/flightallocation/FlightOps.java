@@ -135,7 +135,7 @@ public class FlightOps {
                 Flight flight = assignment.getFlight();
                 FlightTimeline timeline = FlightTimeline.byFlight(flight);
 
-                LocalDateTime startTime = timeline.getStart().getEstimatedTime(); // todo AK estimated / actual time in relation with flight status
+                LocalDateTime startTime = timeline.getStart().getEstimatedTime(); // 1todo AK estimated / actual time in relation with flight status
                 LocalDateTime finishTime = timeline.getFinish().getEstimatedTime();
 
                 Activity activity = Activity.forFlight(flight.getFromAirport(), startTime, flight.getToAirport(), finishTime);
@@ -238,7 +238,7 @@ public class FlightOps {
                 Flight flight = assignment.getFlight();
                 FlightTimeline timeline = FlightTimeline.byFlight(flight);
 
-                LocalDateTime startTime = timeline.getStart().getEstimatedTime(); // todo AK estimated / actual time in relation with flight status
+                LocalDateTime startTime = timeline.getStart().getEstimatedTime(); // 1todo AK estimated / actual time in relation with flight status
                 LocalDateTime finishTime = timeline.getFinish().getEstimatedTime();
 
                 Activity activity = Activity.forFlight(flight.getFromAirport(), startTime, flight.getToAirport(), finishTime);
