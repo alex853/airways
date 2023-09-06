@@ -57,7 +57,7 @@ public abstract class BaseEngineCaseTest {
     @SuppressWarnings("SameParameterValue")
     protected void runEngine(int minutesToRun) {
         for (int i = 0; i < minutesToRun; i++) {
-            timeMachine.plusMinutes(1); // todo this can be reworked using nothingToProcess
+            timeMachine.plusMinutes(1); // todo AK this can be reworked using nothingToProcess
 
             // ten ticks for each minute
             for (int j = 0; j < 10; j++) {
