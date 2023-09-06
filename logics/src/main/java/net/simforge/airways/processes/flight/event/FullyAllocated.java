@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.flight.event;
 
 import net.simforge.airways.processengine.event.Event;
@@ -13,11 +9,15 @@ import net.simforge.airways.processes.flight.activity.FlightContext;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 @Subscribe(FullyAllocated.class)
 public class FullyAllocated implements Event, Handler {
+    private static final Logger log = LoggerFactory.getLogger(FullyAllocated.class);
+
     @Inject
     private Flight flight;
     @Inject
@@ -33,7 +33,7 @@ public class FullyAllocated implements Event, Handler {
                 flight.setStatus(Flight.Status.Assigned);
                 session.update(flight);
 
-                session.save(EventLog.make(this.flight, "Flight is fully allocated"));
+                EventLog.info(session, log, this.flight, "Flight is fully allocated");
             });
         }
     }

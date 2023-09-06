@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -26,12 +22,12 @@ import java.time.LocalDateTime;
  */
 @Subscribe(Scheduled.class)
 public class Scheduled implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(Scheduled.class);
+    private static final Logger log = LoggerFactory.getLogger(Scheduled.class);
 
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -43,10 +39,9 @@ public class Scheduled implements Event, Handler {
 
                 LocalDateTime checkinOpensAt = transportFlight.getDepartureDt().minusMinutes(DurationConsts.START_OF_CHECKIN_TO_DEPARTURE_MINS);
 
-                engine.scheduleEvent(session, CheckinOpens.class, transportFlight, checkinOpensAt);
+                scheduling.scheduleEvent(session, CheckinOpens.class, transportFlight, checkinOpensAt);
 
-                session.save(EventLog.make(transportFlight, "Check-in will open at " + checkinOpensAt));
-                logger.info(transportFlight + " - Check-in will open at " + checkinOpensAt);
+                EventLog.info(session, log, transportFlight, "Check-in will open at " + checkinOpensAt);
 
             });
         } finally {

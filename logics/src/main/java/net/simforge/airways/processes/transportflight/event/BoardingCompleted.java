@@ -1,11 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.ops.TransportFlightOps;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -19,7 +16,7 @@ import javax.inject.Inject;
 
 @Subscribe(BoardingCompleted.class)
 public class BoardingCompleted implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(BoardingCompleted.class);
+    private static final Logger log = LoggerFactory.getLogger(BoardingCompleted.class);
 
     @Inject
     private TransportFlight transportFlight;
@@ -33,11 +30,10 @@ public class BoardingCompleted implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
-                transportFlight.setStatus(TransportFlight.Status.WaitingForDeparture);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.WaitingForDeparture);
                 session.update(transportFlight);
 
-                session.save(EventLog.make(transportFlight, "Boarding completed"));
-                logger.info(transportFlight + " - Boarding completed");
+                EventLog.info(session, log, transportFlight, "Boarding completed");
 
             });
         }

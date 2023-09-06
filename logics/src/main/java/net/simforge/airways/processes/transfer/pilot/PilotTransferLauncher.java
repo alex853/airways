@@ -8,41 +8,38 @@ import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.journey.Transfer;
 import net.simforge.airways.ops.GeoOps;
 import net.simforge.airways.ops.PilotOps;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.Geo;
 import org.hibernate.Session;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class PilotTransferLauncher {
-    private static final Logger log = LoggerFactory.getLogger(PilotTransferLauncher.class);
 
-    public static void transferToAirport(ProcessEngine engine, Session session, Person person, Airport toAirport) {
+    public static void transferToAirport(ProcessEngineScheduling scheduling, Session session, Person person, Airport toAirport) {
         BM.start("PilotTransferLauncher.transferToAirport");
         try {
             double distance = Geo.distance(person.getLocationCity().getCoords(), toAirport.getCoords());
             int durationMinutes = GeoOps.calcTransferDurationMinutes(distance);
 
-            transfer(engine, session, person, distance, durationMinutes, toAirport, null, Journey.Status.TransferToAirport);
+            transfer(scheduling, session, person, distance, durationMinutes, toAirport, null, Journey.Status.TransferToAirport);
         } finally {
             BM.stop();
         }
     }
 
-    public static void transferToCity(ProcessEngine engine, Session session, Person person, City toCity) {
+    public static void transferToCity(ProcessEngineScheduling scheduling, Session session, Person person, City toCity) {
         BM.start("PilotTransferLauncher.transferToCity");
         try {
             double distance = Geo.distance(person.getLocationAirport().getCoords(), toCity.getCoords());
             int durationMinutes = GeoOps.calcTransferDurationMinutes(distance);
 
-            transfer(engine, session, person, distance, durationMinutes, null, toCity, Journey.Status.TransferToCity);
+            transfer(scheduling, session, person, distance, durationMinutes, null, toCity, Journey.Status.TransferToCity);
         } finally {
             BM.stop();
         }
     }
 
-    private static void transfer(ProcessEngine engine,
+    private static void transfer(ProcessEngineScheduling scheduling,
                                  Session session,
                                  Person person,
                                  double distance,
@@ -74,6 +71,6 @@ public class PilotTransferLauncher {
         pilot.setStatus(Pilot.Status.Travelling);
         session.update(pilot);
 
-        engine.fireEvent(session, PilotTransferStarted.class, transfer);
+        scheduling.fireEvent(session, PilotTransferStarted.class, transfer);
     }
 }

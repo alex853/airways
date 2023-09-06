@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processengine;
 
 import org.hibernate.SessionFactory;
@@ -36,6 +32,7 @@ public class ProcessEngineBuilder {
 
         ProcessEngine engine = this.engine;
         this.engine = null;
+        engine.scheduling = new ProcessEngineScheduling(engine.sessionFactory, engine.timeMachine);
         return engine;
     }
 

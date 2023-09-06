@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -25,7 +21,7 @@ public class ArrivedOnFlight implements Event, Handler {
     @Inject
     private Journey journey;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -62,7 +58,7 @@ public class ArrivedOnFlight implements Event, Handler {
                     journey.setItinerary(null);
                     session.update(journey);
 
-                    TransferLauncher.startTransferToCityThenEvent(engine, session, journey, journey.getToCity(), FinishOnArrivalToCity.class);
+                    TransferLauncher.startTransferToCityThenEvent(scheduling, session, journey, journey.getToCity(), FinishOnArrivalToCity.class);
 
                 });
 

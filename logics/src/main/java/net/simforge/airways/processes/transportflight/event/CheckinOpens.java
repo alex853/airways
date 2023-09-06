@@ -1,6 +1,7 @@
 package net.simforge.airways.processes.transportflight.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.ops.TransportFlightOps;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -27,7 +28,7 @@ public class CheckinOpens implements Event, Handler {
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -43,13 +44,13 @@ public class CheckinOpens implements Event, Handler {
                     return;
                 } // todo AK cancellation needs to cancel and stop all related events and activities
 
-                transportFlight.setStatus(TransportFlight.Status.Checkin);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.Checkin);
                 session.update(transportFlight);
 
-                engine.startActivity(session, Checkin.class, transportFlight);
+                scheduling.startActivity(session, Checkin.class, transportFlight);
 
                 LocalDateTime checkinClosesAt = transportFlight.getDepartureDt().minusMinutes(DurationConsts.END_OF_CHECKIN_TO_DEPARTURE_MINS);
-                engine.scheduleEvent(session, CheckinClosed.class, transportFlight, checkinClosesAt);
+                scheduling.scheduleEvent(session, CheckinClosed.class, transportFlight, checkinClosesAt);
 
                 EventLog.info(session, log, transportFlight,
                         String.format("Check-in open, it will close at %s", checkinClosesAt));

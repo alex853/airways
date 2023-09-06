@@ -1,14 +1,10 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.ops;
 
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.flight.Flight;
 import net.simforge.airways.model.flight.TimetableRow;
 import net.simforge.airways.model.flight.TransportFlight;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.TimeMachine;
 import net.simforge.airways.processes.DurationConsts;
 import net.simforge.airways.processes.flight.event.Planned;
@@ -32,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class TimetableOps {
-    private static Logger logger = LoggerFactory.getLogger(TimetableOps.class);
+    private static final Logger log = LoggerFactory.getLogger(TimetableOps.class);
 
     @SuppressWarnings("WeakerAccess")
     public static Collection<TransportFlight> loadTransportFlights(Session session, TimetableRow timetableRow, LocalDate fromDate, LocalDate toDate) {
@@ -52,11 +48,11 @@ public class TimetableOps {
         }
     }
 
-    public static boolean scheduleFlights(TimetableRow timetableRow, Session session, ProcessEngine engine, TimeMachine timeMachine) {
+    public static boolean scheduleFlights(TimetableRow timetableRow, Session session, ProcessEngineScheduling scheduling, TimeMachine timeMachine) {
         BM.start("ScheduleFlight.act");
         try {
 
-            logger.debug("Scheduling flights for {} ...", timetableRow);
+            log.debug("Scheduling flights for {} ...", timetableRow);
 
             Integer horizon = timetableRow.getHorizon();
             if (horizon == null) {
@@ -71,7 +67,7 @@ public class TimetableOps {
 
             Collection<TransportFlight> transportFlights = TimetableOps.loadTransportFlights(session, timetableRow, today, tillDay);
 
-            logger.debug("Loaded " + transportFlights.size() + " flights for horizon " + horizon + " days");
+            log.debug("Loaded " + transportFlights.size() + " flights for horizon " + horizon + " days");
 
             Map<LocalDate, TransportFlight> flightByDate = transportFlights.stream().collect(Collectors.toMap(TransportFlight::getDateOfFlight, Function.identity()));
 
@@ -80,17 +76,17 @@ public class TimetableOps {
             boolean someFlightFailed = false;
             for (LocalDate curr = fromDay; curr.isBefore(tillDay) || curr.isEqual(tillDay); curr = curr.plusDays(1)) {
                 if (!weekdays.isOn(curr.getDayOfWeek())) {
-                    logger.debug("Date {} - skip due to weekdays config", curr);
+                    log.debug("Date {} - skip due to weekdays config", curr);
                     continue;
                 }
 
                 TransportFlight existingTransportFlight = flightByDate.get(curr);
                 if (existingTransportFlight != null) {
-                    logger.debug("Date {} - flight exists", curr);
+                    log.debug("Date {} - flight exists", curr);
                     continue;
                 }
 
-                logger.debug("Date {} - creating...", curr);
+                log.debug("Date {} - creating...", curr);
 
                 TransportFlight transportFlight = initTransportFlight(curr, timetableRow);
                 Flight flight = initFlight(transportFlight, timetableRow);
@@ -107,21 +103,21 @@ public class TimetableOps {
                         flight.setTransportFlight(transportFlight);
                         session.update(flight);
 
-                        session.save(EventLog.make(timetableRow, msg, flight, transportFlight));
-                        session.save(EventLog.make(flight, "Scheduled", timetableRow, transportFlight));
-                        session.save(EventLog.make(transportFlight, "Scheduled", timetableRow, flight));
+                        EventLog.info(session, log, timetableRow, msg, flight, transportFlight);
+                        EventLog.info(session, log, flight, "Scheduled", timetableRow, transportFlight);
+                        EventLog.info(session, log, transportFlight, "Scheduled", timetableRow, flight);
 
-                        engine.fireEvent(session, Scheduled.class, transportFlight);
-                        engine.fireEvent(session, Planned.class, flight);
+                        scheduling.fireEvent(session, Scheduled.class, transportFlight);
+                        scheduling.fireEvent(session, Planned.class, flight);
                     });
 
-                    logger.info("Flight {} {}-{} departing at {} is scheduled",
+                    log.info("Flight {} {}-{} departing at {} is scheduled",
                             timetableRow.getNumber(),
                             timetableRow.getFromAirport().getIcao(),
                             timetableRow.getToAirport().getIcao(),
                             timetableRow.getDepartureTime());
                 } catch (RuntimeException e) {
-                    logger.error("Unable to create a flight, timetableRow " + timetableRow, e);
+                    log.error("Unable to create a flight, timetableRow " + timetableRow, e);
                     someFlightFailed = true;
                 }
             }

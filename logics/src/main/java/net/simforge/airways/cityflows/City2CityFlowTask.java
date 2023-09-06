@@ -1,18 +1,10 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.cityflows;
 
-import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.AirwaysApp;
 import net.simforge.airways.model.flow.City2CityFlow;
 import net.simforge.airways.model.flow.CityFlow;
-import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.journey.Journey;
-import net.simforge.airways.processengine.ProcessEngineBuilder;
-import net.simforge.airways.processengine.ProcessEngine;
-import net.simforge.airways.processengine.RealTimeMachine;
+import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.processes.journey.activity.LookingForPersons;
 import net.simforge.commons.HeartbeatTask;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -28,26 +20,16 @@ import java.time.temporal.ChronoUnit;
 public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
 
     private final SessionFactory sessionFactory;
-    private ProcessEngine engine;
 
+    @SuppressWarnings("unused") // used via reflection
     public City2CityFlowTask() {
-        this(AirwaysApp.getSessionFactory());
-    }
-
-    public City2CityFlowTask(SessionFactory sessionFactory) {
-        super("City2CityFlow", sessionFactory);
-        this.sessionFactory = sessionFactory;
+        super("City2CityFlow", AirwaysApp.getSessionFactory());
+        this.sessionFactory = AirwaysApp.getSessionFactory();
     }
 
     @Override
     protected void startup() {
         super.startup();
-
-        engine = ProcessEngineBuilder.create()
-                .withTimeMachine(new RealTimeMachine())
-                .withSessionFactory(sessionFactory)
-                .build();
-
         BM.setLoggingPeriod(ChronoUnit.HOURS.getDuration().toMillis());
     }
 
@@ -86,7 +68,7 @@ public class City2CityFlowTask extends HeartbeatTask<City2CityFlow> {
                     logger.info("City2CityFlow {}-{} - generating journey for group of {} persons, direct direction - {}", flow.getFromFlow().getCity().getName(), flow.getToFlow().getCity().getName(), flow.getNextGroupSize(), directOrBackDirection);
 
                     Journey journey = JourneyOps.create(session, flow, directOrBackDirection);
-                    engine.startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
+                    AirwaysApp.getScheduling().startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
 
                     flow.setAccumulatedFlow(flow.getAccumulatedFlow() - flow.getNextGroupSize());
                     flow.setNextGroupSize(CityFlowOps.randomGroupSize());

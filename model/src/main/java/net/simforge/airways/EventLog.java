@@ -5,10 +5,8 @@ import net.simforge.commons.legacy.BM;
 import net.simforge.commons.misc.JavaTime;
 import org.hibernate.Session;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EventLog {
-    private static final Logger log = LoggerFactory.getLogger(EventLog.class);
 
     public interface Loggable {
         Integer getId();
@@ -37,13 +35,6 @@ public class EventLog {
         } finally {
             BM.stop();
         }
-    }
-
-    @Deprecated
-    public static EventLogEntry make(Loggable primaryObject, String msg, Loggable... secondaryObjects) {
-        final EventLogEntry entry = _make(primaryObject, msg, secondaryObjects);
-        log.info("{} - {}", primaryObject, msg);
-        return entry;
     }
 
     private static EventLogEntry _make(Loggable primaryObject, String msg, Loggable... secondaryObjects) {

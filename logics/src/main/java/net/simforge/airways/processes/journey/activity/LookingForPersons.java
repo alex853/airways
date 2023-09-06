@@ -1,11 +1,7 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.activity;
 
 import net.simforge.airways.ops.JourneyOps;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.PersonOps;
@@ -25,12 +21,12 @@ import javax.inject.Inject;
 import java.util.List;
 
 public class LookingForPersons implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(LookingForPersons.class);
+    private static final Logger log = LoggerFactory.getLogger(LookingForPersons.class);
 
     @Inject
     private Journey journey;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
     @Inject
@@ -78,7 +74,7 @@ public class LookingForPersons implements Activity {
                     freePerson.setJourney(journey);
                     session.update(freePerson);
 
-                    session.save(EventLog.make(freePerson, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
+                    EventLog.info(session, log, freePerson, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey);
                 });
 
                 currentGroupSize++;
@@ -94,21 +90,21 @@ public class LookingForPersons implements Activity {
                         person.setJourney(journey);
                         session.update(person);
 
-                        session.save(EventLog.make(person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey));
+                        EventLog.info(session, log, person, String.format("Decided to travel from %s to %s", fromCity.getName(), journey.getToCity().getName()), journey);
                     });
                     currentGroupSize++;
                 }
             } // else - we do not create persons for returning journeys as persons should be created only in their city of origin
 
             if (currentGroupSize == journey.getGroupSize()) {
-                logger.debug("Journey {}-{} - all persons found", fromCity.getName(), journey.getToCity().getName(), currentGroupSize);
+                log.debug("Journey {}-{} - all {} persons found", fromCity.getName(), journey.getToCity().getName(), currentGroupSize);
 
                 HibernateUtils.transaction(session, () -> {
                     journey.setStatus(Journey.Status.LookingForTickets);
                     session.update(journey);
-                    session.save(EventLog.make(journey, "Looking for tickets"));
+                    EventLog.info(session, log, journey, "Looking for tickets");
 
-                    engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
+                    scheduling.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
                 });
                 return Result.done();
             } else {
@@ -130,7 +126,7 @@ public class LookingForPersons implements Activity {
                 journey.setStatus(Journey.Status.CouldNotFindPersons);
                 session.update(journey);
 
-                session.save(EventLog.make(journey, "No persons found - CANCELLED"));
+                EventLog.info(session, log, journey, "No persons found - CANCELLED");
 
                 List<Person> persons = JourneyOps.getPersons(session, journey);
                 for (Person person : persons) {
@@ -138,7 +134,7 @@ public class LookingForPersons implements Activity {
                     person.setJourney(null);
                     session.update(person);
 
-                    session.save(EventLog.make(person, "No persons found - CANCELLED", journey));
+                    EventLog.info(session, log, person, "No persons found - CANCELLED", journey);
                 }
             });
 

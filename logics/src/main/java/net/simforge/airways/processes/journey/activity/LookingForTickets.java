@@ -1,11 +1,7 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.activity;
 
 import net.simforge.airways.cityflows.CityFlowOps;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
@@ -23,15 +19,19 @@ import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import java.util.List;
 
 public class LookingForTickets implements Activity {
+    private static final Logger log = LoggerFactory.getLogger(LookingForTickets.class);
+
     @Inject
     private Journey journey;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
     @Inject
@@ -77,17 +77,15 @@ public class LookingForTickets implements Activity {
                 journey.setItinerary(firstItinerary);
                 session.update(journey);
 
-                session.save(EventLog.make(journey, "Tickets bought"));
+                EventLog.info(session, log, journey, "Tickets bought");
                 List<Person> persons = JourneyOps.getPersons(session, journey);
-                persons.forEach(person -> {
-                    session.save(EventLog.make(person, "Tickets bought", journey));
-                });
+                persons.forEach(person -> EventLog.info(session, log, person, "Tickets bought", journey));
 
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setTicketsBought(stats.getTicketsBought() + journey.getGroupSize());
                 session.update(stats);
 
-                engine.fireEvent(session, TicketsBought.class, journey);
+                scheduling.fireEvent(session, TicketsBought.class, journey);
             });
 
             return Result.done();
@@ -108,7 +106,7 @@ public class LookingForTickets implements Activity {
                 journey.setStatus(Journey.Status.CouldNotFindTickets);
                 session.update(journey);
 
-                session.save(EventLog.make(journey, "No tickets found - CANCELLED"));
+                EventLog.info(session, log, journey, "No tickets found - CANCELLED");
 
                 City2CityFlowStats stats = CityFlowOps.getCurrentStats(session, journey.getC2cFlow());
                 stats.setNoTickets(stats.getNoTickets() + journey.getGroupSize());
@@ -120,7 +118,7 @@ public class LookingForTickets implements Activity {
                     person.setJourney(null);
                     session.update(person);
 
-                    session.save(EventLog.make(person, "No tickets found - CANCELLED", journey));
+                    EventLog.info(session, log, person, "No tickets found - CANCELLED", journey);
                 }
             });
 

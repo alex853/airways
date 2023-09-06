@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.processengine.activity.ActivityInfo;
@@ -37,11 +33,11 @@ public class JourneyLookingForTicketsExpiryTest extends BaseEngineCaseTest {
 
     @Test
     public void testCase() {
-        engine.startActivity(LookingForPersons.class, journey);
+        scheduling.startActivity(LookingForPersons.class, journey);
 
         runEngine(1440*7 + 10);
 
-        ActivityInfo status = engine.findActivity(LookingForTickets.class, journey);
+        ActivityInfo status = scheduling.findActivity(LookingForTickets.class, journey);
         assertTrue(status.isExpired());
 
         try (Session session = sessionFactory.openSession()) {

@@ -44,7 +44,7 @@ public class OneFlightTest extends BaseEngineCaseTest {
     @Test
     public void testCase() {
         try (Session session = sessionFactory.openSession()) {
-            TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
+            TimetableOps.scheduleFlights(timetableRow, session, scheduling, timeMachine);
         }
 
         runEngine(1000);

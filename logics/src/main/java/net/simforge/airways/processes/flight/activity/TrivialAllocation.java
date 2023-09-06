@@ -3,7 +3,7 @@ package net.simforge.airways.processes.flight.activity;
 import net.simforge.airways.model.Airline;
 import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.CommonOps;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.EventLog;
@@ -25,12 +25,12 @@ import javax.inject.Inject;
 import static net.simforge.airways.processengine.Result.When.FewTimesPerHour;
 
 public class TrivialAllocation implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(TrivialAllocation.class);
+    private static final Logger log = LoggerFactory.getLogger(TrivialAllocation.class);
 
     @Inject
     private Flight flight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -38,7 +38,7 @@ public class TrivialAllocation implements Activity {
     public Result act() {
         try (Session session = sessionFactory.openSession()) {
             HibernateUtils.transaction(session, "TrivialAllocation.act", () -> {
-                logger.debug("{} - Doing trivial allocation", flight);
+                log.debug("{} - Doing trivial allocation", flight);
 
                 FlightContext flightContext = FlightContext.load(session, flight);
 
@@ -57,12 +57,12 @@ public class TrivialAllocation implements Activity {
 
                         session.save(aircraftAssignment);
 
-                        session.save(EventLog.make(flight, "Aircraft is allocated to flight", aircraft));
-                        session.save(EventLog.make(aircraft, "Aircraft is allocated to flight", flight));
+                        EventLog.info(session, log, flight, "Aircraft is allocated to flight", aircraft);
+                        EventLog.info(session, log, aircraft, "Aircraft is allocated to flight", flight);
 
-                        logger.info("{} - Aircraft {} allocated", flight, aircraft.getRegNo());
+                        log.info("{} - Aircraft {} allocated", flight, aircraft.getRegNo());
 
-                        engine.fireEvent(session, AircraftAllocated.class, flight);
+                        scheduling.fireEvent(session, AircraftAllocated.class, flight);
                     }
                 }
 
@@ -91,12 +91,12 @@ public class TrivialAllocation implements Activity {
 
                         session.save(pilotAssignment);
 
-                        session.save(EventLog.make(flight, "Pilot is allocated to flight", pilot));
-                        session.save(EventLog.make(pilot, "Pilot is allocated to flight", flight));
+                        EventLog.info(session, log, flight, "Pilot is allocated to flight", pilot);
+                        EventLog.info(session, log, pilot, "Pilot is allocated to flight", flight);
 
-                        logger.info("{} - Pilot {} allocated", flight, pilot);
+                        log.info("{} - Pilot {} allocated", flight, pilot);
 
-                        engine.fireEvent(session, PilotAllocated.class, flight);
+                        scheduling.fireEvent(session, PilotAllocated.class, flight);
                     }
                 }
             });

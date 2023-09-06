@@ -17,9 +17,7 @@ import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.ops.AircraftOps;
 import net.simforge.airways.ops.CommonOps;
 import net.simforge.airways.ops.GeoOps;
-import net.simforge.airways.processengine.ProcessEngine;
-import net.simforge.airways.processengine.ProcessEngineBuilder;
-import net.simforge.airways.processengine.RealTimeMachine;
+import net.simforge.airways.processengine.*;
 import net.simforge.airways.processes.journey.activity.LookingForTickets;
 import net.simforge.airways.processes.transfer.pilot.PilotTransferLauncher;
 import net.simforge.airways.util.FlightNumbers;
@@ -70,12 +68,8 @@ public class PilotController {
     public void bookTravel(@RequestParam(value = "destinationCityId") final int destinationCityId) {
         final SessionInfo sessionInfo = SessionInfo.get();
 
-        // todo rework it!
-        RealTimeMachine timeMachine = new RealTimeMachine();
-        ProcessEngine engine = ProcessEngineBuilder.create()
-                .withTimeMachine(timeMachine)
-                .withSessionFactory(AirwaysApp.getSessionFactory())
-                .build();
+        final TimeMachine timeMachine = AirwaysApp.getTimeMachine();
+        final ProcessEngineScheduling scheduling = AirwaysApp.getScheduling();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
@@ -119,7 +113,7 @@ public class PilotController {
                 session.save(journey);
                 EventLog.info(session, log, journey, String.format("PILOT TRAVEL - New journey from %s to %s", originCity.getName(), destinationCity.getName()), c2cFlow, originCity, destinationCity);
 
-                engine.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
+                scheduling.startActivity(session, LookingForTickets.class, journey, timeMachine.now().plusDays(1));
 
                 person.setStatus(Person.Status.OnJourney);
                 person.setJourney(journey);
@@ -137,12 +131,7 @@ public class PilotController {
     public void transferToAirport(@RequestParam(value = "destinationAirportId") final int destinationAirportId) {
         final SessionInfo sessionInfo = SessionInfo.get();
 
-        // todo rework it!
-        RealTimeMachine timeMachine = new RealTimeMachine();
-        ProcessEngine engine = ProcessEngineBuilder.create()
-                .withTimeMachine(timeMachine)
-                .withSessionFactory(AirwaysApp.getSessionFactory())
-                .build();
+        final ProcessEngineScheduling scheduling = AirwaysApp.getScheduling();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
@@ -160,7 +149,7 @@ public class PilotController {
 
                 check(destinationAirport.isPresent(), "Invalid airport provided");
 
-                PilotTransferLauncher.transferToAirport(engine, session, person, destinationAirport.get());
+                PilotTransferLauncher.transferToAirport(scheduling, session, person, destinationAirport.get());
 
             });
         }
@@ -170,12 +159,7 @@ public class PilotController {
     public void transferToCity(@RequestParam(value = "destinationCityId") final int destinationCityId) {
         final SessionInfo sessionInfo = SessionInfo.get();
 
-        // todo rework it!
-        RealTimeMachine timeMachine = new RealTimeMachine();
-        ProcessEngine engine = ProcessEngineBuilder.create()
-                .withTimeMachine(timeMachine)
-                .withSessionFactory(AirwaysApp.getSessionFactory())
-                .build();
+        final ProcessEngineScheduling scheduling = AirwaysApp.getScheduling();
 
         try (Session session = AirwaysApp.getSessionFactory().openSession()) {
             HibernateUtils.transaction(session, () -> {
@@ -193,7 +177,7 @@ public class PilotController {
 
                 check(destinationCity.isPresent(), "Invalid city provided");
 
-                PilotTransferLauncher.transferToCity(engine, session, person, destinationCity.get());
+                PilotTransferLauncher.transferToCity(scheduling, session, person, destinationCity.get());
 
             });
         }

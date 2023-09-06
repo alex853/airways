@@ -1,11 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.flight.event;
 
 import net.simforge.airways.model.flight.Flight;
 import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.ops.TransportFlightOps;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -35,7 +32,7 @@ public class BlocksOn implements Event, Handler {
                 return;
             }
 
-            transportFlight.setStatus(TransportFlight.Status.WaitingForDeboarding);
+            TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.WaitingForDeboarding);
             HibernateUtils.updateAndCommit(session, transportFlight);
 
         } finally {

@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.pilot.handler;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.model.Pilot;
@@ -18,12 +14,13 @@ import org.hibernate.SessionFactory;
 import javax.inject.Inject;
 import java.time.LocalDateTime;
 
-@Subscribe(PilotAllocated.class)
+@SuppressWarnings("unused")
+@Subscribe(PilotAllocated.class) // used via reflection
 public class OnPilotAllocated implements Handler {
     @Inject
     private Flight flight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -35,7 +32,7 @@ public class OnPilotAllocated implements Handler {
 
             LocalDateTime pilotChecksInAt = flight.getScheduledDepartureTime().minusMinutes(120);
 
-            engine.scheduleEvent(PilotCheckin.class, pilot, pilotChecksInAt);
+            scheduling.scheduleEvent(PilotCheckin.class, pilot, pilotChecksInAt);
         }
     }
 }

@@ -1,11 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
 import net.simforge.airways.EventLog;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.ops.TransportFlightOps;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -24,12 +21,12 @@ import javax.inject.Inject;
  */
 @Subscribe(BoardingStarted.class)
 public class BoardingStarted implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(BoardingStarted.class);
+    private static final Logger log = LoggerFactory.getLogger(BoardingStarted.class);
 
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -40,13 +37,12 @@ public class BoardingStarted implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
-                transportFlight.setStatus(TransportFlight.Status.Boarding);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.Boarding);
                 session.update(transportFlight);
 
-                engine.startActivity(Boarding.class, transportFlight);
+                scheduling.startActivity(Boarding.class, transportFlight);
 
-                session.save(EventLog.make(transportFlight, "Boarding started"));
-                logger.info(transportFlight + " - Boarding started");
+                EventLog.info(session, log, transportFlight, "Boarding started");
 
             });
         }

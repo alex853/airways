@@ -1,11 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
 import net.simforge.airways.EventLog;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.ops.TransportFlightOps;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -21,12 +18,12 @@ import javax.inject.Inject;
 
 @Subscribe(DeboardingStarted.class)
 public class DeboardingStarted implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(DeboardingStarted.class);
+    private static final Logger log = LoggerFactory.getLogger(DeboardingStarted.class);
 
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -37,13 +34,12 @@ public class DeboardingStarted implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
-                transportFlight.setStatus(TransportFlight.Status.Deboarding);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.Deboarding);
                 session.update(transportFlight);
 
-                engine.startActivity(Deboarding.class, transportFlight);
+                scheduling.startActivity(Deboarding.class, transportFlight);
 
-                session.save(EventLog.make(transportFlight, "Deboarding started"));
-                logger.info(transportFlight + " - Deboarding started");
+                EventLog.info(session, log, transportFlight, "Deboarding started");
 
             });
         }

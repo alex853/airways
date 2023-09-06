@@ -1,17 +1,13 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.activity;
 
-import net.simforge.airways.processengine.ProcessEngine;
-import net.simforge.airways.processengine.Result;
-import net.simforge.airways.processengine.activity.Activity;
-import net.simforge.airways.ops.JourneyOps;
 import net.simforge.airways.EventLog;
-import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.Person;
 import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.model.journey.Journey;
+import net.simforge.airways.ops.JourneyOps;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
+import net.simforge.airways.processengine.Result;
+import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.processes.journey.event.ArrivedOnFlight;
 import net.simforge.airways.processes.transportflight.event.DeboardingCompleted;
 import net.simforge.commons.hibernate.HibernateUtils;
@@ -30,12 +26,12 @@ import java.util.stream.Collectors;
 import static net.simforge.airways.processengine.Result.When.NextMinute;
 
 public class Deboarding implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(Boarding.class);
+    private static final Logger log = LoggerFactory.getLogger(Boarding.class);
 
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -49,7 +45,7 @@ public class Deboarding implements Activity {
             List<Journey> journeysOnBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.OnBoard).collect(Collectors.toList());
 
             if (journeysOnBoard.isEmpty()) {
-                engine.fireEvent(DeboardingCompleted.class, transportFlight);
+                scheduling.fireEvent(DeboardingCompleted.class, transportFlight);
                 return Result.done();
             }
 
@@ -70,7 +66,7 @@ public class Deboarding implements Activity {
                 journeysToDeboardThisRun.forEach(journey -> {
 
                     journey.setStatus(Journey.Status.JustArrived);
-                    session.save(EventLog.make(journey, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight));
+                    EventLog.info(session, log, journey, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight);
 
                     List<Person> persons = JourneyOps.getPersons(session, journey);
                     persons.forEach(person -> {
@@ -78,16 +74,15 @@ public class Deboarding implements Activity {
                         person.setLocationAirport(transportFlight.getToAirport());
                         session.update(person);
 
-                        session.save(EventLog.make(person, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight, journey));
+                        EventLog.info(session, log, person, "Deboarded at " + transportFlight.getToAirport().getIcao(), transportFlight, journey);
 
                     });
 
-                    engine.fireEvent(session, ArrivedOnFlight.class, journey);
+                    scheduling.fireEvent(session, ArrivedOnFlight.class, journey);
 
                 });
 
-                session.save(EventLog.make(transportFlight, "Deboarding is in progress, processed " + _paxThisRun + " PAX"));
-                logger.info(transportFlight + " - Deboarding is in progress, processed " + _paxThisRun + " PAX");
+                EventLog.info(session, log, transportFlight, "Deboarding is in progress, processed " + _paxThisRun + " PAX");
 
             });
         } finally {

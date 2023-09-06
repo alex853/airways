@@ -1,14 +1,10 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.event;
 
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.flight.TransportFlight;
 import net.simforge.airways.model.journey.Itinerary;
 import net.simforge.airways.model.journey.Journey;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -17,15 +13,19 @@ import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 
 @Subscribe(ArrivalToAirportFromCity.class)
 public class ArrivalToAirportFromCity implements Event, Handler {
+    private static final Logger log = LoggerFactory.getLogger(ArrivalToAirportFromCity.class);
+
     @Inject
     private Journey journey;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -48,7 +48,7 @@ public class ArrivalToAirportFromCity implements Event, Handler {
                     journey.setStatus(Journey.Status.WaitingForCheckin);
                     session.update(journey);
 
-                    session.save(EventLog.make(journey, "At airport, waiting for check-in"));
+                    EventLog.info(session, log, journey, "At airport, waiting for check-in");
 
                 });
 
@@ -57,11 +57,7 @@ public class ArrivalToAirportFromCity implements Event, Handler {
 
             // it seems we have late or something else
             // anyway we are cancelling our journey and returning to city
-            HibernateUtils.transaction(session, () -> {
-
-                TransferLauncher.startTransferToBiggestCityThenCancel(engine, session, journey);
-
-            });
+            HibernateUtils.transaction(session, () -> TransferLauncher.startTransferToBiggestCityThenCancel(scheduling, session, journey));
 
         } finally {
             BM.stop();

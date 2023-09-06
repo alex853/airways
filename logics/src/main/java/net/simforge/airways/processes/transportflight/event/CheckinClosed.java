@@ -1,17 +1,11 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
-import net.simforge.airways.processengine.activity.ActivityInfo;
+import net.simforge.airways.ops.TransportFlightOps;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.flight.TransportFlight;
-import net.simforge.airways.processes.transportflight.activity.Checkin;
 import net.simforge.commons.hibernate.HibernateUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -25,12 +19,10 @@ import javax.inject.Inject;
  */
 @Subscribe(CheckinClosed.class)
 public class CheckinClosed implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(CheckinClosed.class);
+    private static final Logger log = LoggerFactory.getLogger(CheckinClosed.class);
 
     @Inject
     private TransportFlight transportFlight;
-    @Inject
-    private ProcessEngine engine;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -40,16 +32,10 @@ public class CheckinClosed implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
-                transportFlight.setStatus(TransportFlight.Status.WaitingForBoarding);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.WaitingForBoarding);
                 session.update(transportFlight);
 
-                ActivityInfo checkinActivity = engine.findActivity(Checkin.class, transportFlight);
-                if (!checkinActivity.isFinished()) {
-                    engine.stopActivity(checkinActivity);
-                }
-
-                session.save(EventLog.make(transportFlight, "Check-in closed"));
-                logger.info(transportFlight + " - Check-in closed");
+                EventLog.info(session, log, transportFlight, "Check-in closed");
 
             });
         }

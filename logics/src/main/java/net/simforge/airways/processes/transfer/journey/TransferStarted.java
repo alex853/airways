@@ -1,7 +1,7 @@
 package net.simforge.airways.processes.transfer.journey;
 
 import net.simforge.airways.EventLog;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -28,7 +28,7 @@ public class TransferStarted implements Event, Handler {
     @Inject
     private Transfer transfer;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
     @Inject
@@ -64,7 +64,7 @@ public class TransferStarted implements Event, Handler {
                 EventLog.info(session, log, journey, "Transferring to " + to);
 
                 LocalDateTime transferWillFinishAt = timeMachine.now().plusMinutes(transfer.getDuration());
-                engine.scheduleEvent(session, TransferFinished.class, transfer, transferWillFinishAt);
+                scheduling.scheduleEvent(session, TransferFinished.class, transfer, transferWillFinishAt);
 
                 if (transfer.getOnStartedStatus() != null) {
                     journey.setStatus(transfer.getOnStartedStatus());

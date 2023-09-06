@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.pilot.activity;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.PilotOps;
@@ -39,12 +35,12 @@ import java.util.List;
 import static net.simforge.airways.processengine.Result.When.NextMinute;
 
 public class PilotOnDuty implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(PilotOnDuty.class);
+    private static final Logger log = LoggerFactory.getLogger(PilotOnDuty.class);
 
     @Inject
     private Pilot pilot;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
     @Inject
@@ -62,7 +58,7 @@ public class PilotOnDuty implements Activity {
                 pilotAssignment = !upcomingAssignments.isEmpty() ? upcomingAssignments.get(0) : null;
 
                 if (pilotAssignment == null) {
-                    logger.error("Pilot {} - Unable to find pilot assignment suitable for flight start", pilot);
+                    log.error("Pilot {} - Unable to find pilot assignment suitable for flight start", pilot);
                     // todo event log, cancellation?
                     return Result.done();
                 }
@@ -79,11 +75,11 @@ public class PilotOnDuty implements Activity {
                     /*&& preflightStartsAtDt.isBefore(timeMachine.now())*/) {
                     startFlight(flightCtx);
 
-                    engine.scheduleEvent(StartBoardingCommand.class, flight, flight.getScheduledDepartureTime().minusMinutes(DurationConsts.START_OF_BOARDING_TO_DEPARTURE_MINS));
+                    scheduling.scheduleEvent(StartBoardingCommand.class, flight, flight.getScheduledDepartureTime().minusMinutes(DurationConsts.START_OF_BOARDING_TO_DEPARTURE_MINS));
 
                     return Result.resume(NextMinute);
                 } else {
-                    logger.error("Pilot {} - Unable to start the flight", pilot);
+                    log.error("Pilot {} - Unable to start the flight", pilot);
                     // todo event log, cancellation?
                     return Result.done(); // todo error?
                 }
@@ -128,7 +124,7 @@ public class PilotOnDuty implements Activity {
                     if (timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                         blocksOn(flightCtx);
 
-                        engine.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
+                        scheduling.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
                     }
                     break;
 
@@ -185,9 +181,9 @@ public class PilotOnDuty implements Activity {
                 session.update(pilotAssignment);
                 session.update(aircraftAssignment);
 
-                session.save(EventLog.make(pilot, "Pilot has started flight", flight));
+                EventLog.info(session, log, pilot, "Pilot has started flight", flight);
 
-                logger.info("Pilot {}, flight {} - flight started", pilot, flight);
+                log.info("Pilot {}, flight {} - flight started", pilot, flight);
 
             });
         }
@@ -206,7 +202,7 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Departure);
                 flight.setActualDepartureTime(timeMachine.now());
 
-                engine.fireEvent(session, BlocksOff.class, flight);
+                scheduling.fireEvent(session, BlocksOff.class, flight);
 
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -216,9 +212,9 @@ public class PilotOnDuty implements Activity {
                 session.update(pilot);
                 session.update(aircraft);
 
-                session.save(EventLog.make(pilot, "Aircraft departed from gate", flight, aircraft, flight.getFromAirport()));
+                EventLog.info(session, log, pilot, "Aircraft departed from gate", flight, aircraft, flight.getFromAirport());
 
-                logger.info("Pilot {}, flight {} - aircraft {} departed from gate at {}", pilot, flight, aircraft, flight.getFromAirport());
+                log.info("Pilot {}, flight {} - aircraft {} departed from gate at {}", pilot, flight, aircraft, flight.getFromAirport());
 
             });
         }
@@ -237,7 +233,7 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Flying);
                 flight.setActualTakeoffTime(timeMachine.now());
 
-                engine.fireEvent(session, Takeoff.class, flight);
+                scheduling.fireEvent(session, Takeoff.class, flight);
 
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -255,9 +251,9 @@ public class PilotOnDuty implements Activity {
                 session.update(person);
                 session.update(aircraft);
 
-                session.save(EventLog.make(pilot, "Takeoff", flight, aircraft, flight.getFromAirport()));
+                EventLog.info(session, log, pilot, "Takeoff", flight, aircraft, flight.getFromAirport());
 
-                logger.info("Pilot {}, flight {} - aircraft {} took off at {}", pilot, flight, aircraft, flight.getFromAirport());
+                log.info("Pilot {}, flight {} - aircraft {} took off at {}", pilot, flight, aircraft, flight.getFromAirport());
 
             });
         }
@@ -330,7 +326,7 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.Arrival);
                 flight.setActualLandingTime(timeMachine.now());
 
-                engine.fireEvent(session, Landing.class, flight);
+                scheduling.fireEvent(session, Landing.class, flight);
 
                 person.setLocationAirport(flight.getToAirport());
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
@@ -345,9 +341,9 @@ public class PilotOnDuty implements Activity {
                 session.update(person);
                 session.update(aircraft);
 
-                session.save(EventLog.make(pilot, "Landing", flight, aircraft, flight.getToAirport()));
+                EventLog.info(session, log, pilot, "Landing", flight, aircraft, flight.getToAirport());
 
-                logger.info("Pilot {}, flight {} - aircraft {} landed at {}", pilot, flight, aircraft, flight.getToAirport());
+                log.info("Pilot {}, flight {} - aircraft {} landed at {}", pilot, flight, aircraft, flight.getToAirport());
 
             });
         }
@@ -366,7 +362,7 @@ public class PilotOnDuty implements Activity {
                 flight.setStatus(Flight.Status.PostFlight);
                 flight.setActualArrivalTime(timeMachine.now());
 
-                engine.fireEvent(session, BlocksOn.class, flight);
+                scheduling.fireEvent(session, BlocksOn.class, flight);
 
 //                pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -376,9 +372,9 @@ public class PilotOnDuty implements Activity {
                 session.update(pilot);
                 session.update(aircraft);
 
-                session.save(EventLog.make(pilot, "Aircraft arrived to gate", flight, aircraft, flight.getToAirport()));
+                EventLog.info(session, log, pilot, "Aircraft arrived to gate", flight, aircraft, flight.getToAirport());
 
-                logger.info("Pilot {}, flight {} - aircraft {} arrived to gate", pilot, flight, aircraft);
+                log.info("Pilot {}, flight {} - aircraft {} arrived to gate", pilot, flight, aircraft);
 
             });
         }
@@ -413,9 +409,9 @@ public class PilotOnDuty implements Activity {
                 session.update(pilotAssignment);
                 session.update(aircraftAssignment);
 
-                session.save(EventLog.make(pilot, "Flight finished", flight, aircraft, flight.getToAirport()));
+                EventLog.info(session, log, pilot, "Flight finished", flight, aircraft, flight.getToAirport());
 
-                logger.info("Pilot {}, flight {} - flight finished", pilot, flight);
+                log.info("Pilot {}, flight {} - flight finished", pilot, flight);
 
             });
         }

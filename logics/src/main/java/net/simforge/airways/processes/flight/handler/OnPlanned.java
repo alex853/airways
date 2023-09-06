@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.flight.handler;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
 import net.simforge.airways.EventLog;
@@ -24,21 +20,20 @@ import javax.inject.Inject;
  */
 @Subscribe(Planned.class)
 public class OnPlanned implements Handler {
-    private static Logger logger = LoggerFactory.getLogger(OnPlanned.class);
+    private static final Logger log = LoggerFactory.getLogger(OnPlanned.class);
 
     @Inject
     private Flight flight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
     public void process() {
-        engine.startActivity(AllocateFlight.class, flight, flight.getScheduledDepartureTime().minusHours(2));
+        scheduling.startActivity(AllocateFlight.class, flight, flight.getScheduledDepartureTime().minusHours(2));
 
         try (Session session = sessionFactory.openSession()) {
-            HibernateUtils.saveAndCommit(session, EventLog.make(flight, "Flight Allocation initiated"));
+            HibernateUtils.transaction(session, () -> EventLog.info(session, log, flight, "Flight Allocation initiated"));
         }
-        logger.info(flight + " - Flight Allocation initiated");
     }
 }

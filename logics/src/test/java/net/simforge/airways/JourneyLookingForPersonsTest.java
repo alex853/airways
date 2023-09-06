@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.processengine.activity.ActivityInfo;
@@ -33,11 +29,11 @@ public class JourneyLookingForPersonsTest extends BaseEngineCaseTest {
 
     @Test
     public void testCase() {
-        engine.startActivity(LookingForPersons.class, journey);
+        scheduling.startActivity(LookingForPersons.class, journey);
 
         runEngine(1);
 
-        ActivityInfo status = engine.findActivity(LookingForPersons.class, journey);
+        ActivityInfo status = scheduling.findActivity(LookingForPersons.class, journey);
         assertTrue(status.isDone());
 
         try (Session session = sessionFactory.openSession()) {

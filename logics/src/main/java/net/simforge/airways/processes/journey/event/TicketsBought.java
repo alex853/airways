@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.journey.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -33,7 +29,7 @@ public class TicketsBought implements Event, Handler {
     @Inject
     private Journey journey;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -46,11 +42,7 @@ public class TicketsBought implements Event, Handler {
             TransportFlight transportFlight = itinerary.getFlight();
             LocalDateTime checkinStartsAt = transportFlight.getDepartureDt().minusMinutes(DurationConsts.START_OF_CHECKIN_TO_DEPARTURE_MINS);
 
-            HibernateUtils.transaction(session, () -> {
-
-                TransferLauncher.scheduleTransferToAirport(engine, session, journey, transportFlight.getFromAirport(), checkinStartsAt);
-
-            });
+            HibernateUtils.transaction(session, () -> TransferLauncher.scheduleTransferToAirport(scheduling, session, journey, transportFlight.getFromAirport(), checkinStartsAt));
 
         } finally {
             BM.stop();

@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways;
 
 import net.simforge.airways.ops.AircraftOps;
@@ -58,12 +54,12 @@ public class IntegralFlightTest extends BaseEngineCaseTest {
     @Test
     public void testCase() {
         try (Session session = sessionFactory.openSession()) {
-            TimetableOps.scheduleFlights(timetableRow, session, engine, timeMachine);
+            TimetableOps.scheduleFlights(timetableRow, session, scheduling, timeMachine);
         }
 
-        engine.startActivity(LookingForPersons.class, journey1);
-        engine.startActivity(LookingForPersons.class, journey2);
-        engine.startActivity(LookingForPersons.class, journey3);
+        scheduling.startActivity(LookingForPersons.class, journey1);
+        scheduling.startActivity(LookingForPersons.class, journey2);
+        scheduling.startActivity(LookingForPersons.class, journey3);
 
         runEngine(1000);
 

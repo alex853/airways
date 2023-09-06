@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.activity;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.Result;
 import net.simforge.airways.processengine.activity.Activity;
 import net.simforge.airways.ops.JourneyOps;
@@ -32,12 +28,12 @@ import static net.simforge.airways.processengine.Result.When.NextMinute;
  * It boards passengers to the aircraft. Boarding started by BoardingStarted event which initiated by pilot's command.
  */
 public class Boarding implements Activity {
-    private static Logger logger = LoggerFactory.getLogger(Boarding.class);
+    private static final Logger log = LoggerFactory.getLogger(Boarding.class);
 
     @Inject
     private TransportFlight transportFlight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
     @Inject
     private SessionFactory sessionFactory;
 
@@ -51,7 +47,7 @@ public class Boarding implements Activity {
             List<Journey> journeysWaitingToBoard = journeys.stream().filter(journey -> journey.getStatus() == Journey.Status.WaitingForBoarding).collect(Collectors.toList());
 
             if (journeysWaitingToBoard.isEmpty()) {
-                engine.fireEvent(BoardingCompleted.class, transportFlight);
+                scheduling.fireEvent(BoardingCompleted.class, transportFlight);
                 return Result.done();
             }
 
@@ -72,7 +68,7 @@ public class Boarding implements Activity {
                 journeysToBoardThisRun.forEach(journey -> {
 
                     journey.setStatus(Journey.Status.OnBoard);
-                    session.save(EventLog.make(journey, "On board", transportFlight));
+                    EventLog.info(session, log, journey, "On board", transportFlight);
 
                     List<Person> persons = JourneyOps.getPersons(session, journey);
                     persons.forEach(person -> {
@@ -80,13 +76,13 @@ public class Boarding implements Activity {
                         person.setLocationAirport(null);
                         session.update(person);
 
-                        session.save(EventLog.make(person, "On board", transportFlight, journey));
+                        EventLog.info(session, log, person, "On board", transportFlight, journey);
 
                     });
                 });
 
-                session.save(EventLog.make(transportFlight, "Boarding is in progress, processed " + _paxThisRun + " PAX"));
-                logger.info(transportFlight + " - Boarding is in progress, processed " + _paxThisRun + " PAX");
+                EventLog.info(session, log, transportFlight, "Boarding is in progress, processed " + _paxThisRun + " PAX");
+                log.info(transportFlight + " - Boarding is in progress, processed " + _paxThisRun + " PAX");
 
             });
         } finally {

@@ -2,6 +2,7 @@ package net.simforge.airways;
 
 import net.simforge.airways.processengine.ProcessEngine;
 import net.simforge.airways.processengine.ProcessEngineBuilder;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.airways.processengine.SimulatedTimeMachine;
 import net.simforge.commons.hibernate.SessionFactoryBuilder;
@@ -17,6 +18,7 @@ public abstract class BaseEngineCaseTest {
 
     protected SimulatedTimeMachine timeMachine;
     protected ProcessEngine engine;
+    protected ProcessEngineScheduling scheduling;
 
     @BeforeClass
     public static void beforeClass() {
@@ -41,6 +43,7 @@ public abstract class BaseEngineCaseTest {
                 .withTimeMachine(timeMachine)
                 .withSessionFactory(sessionFactory)
                 .build();
+        scheduling = new ProcessEngineScheduling(sessionFactory, timeMachine);
 
         buildWorld();
     }

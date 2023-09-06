@@ -8,7 +8,7 @@ import net.simforge.airways.model.geo.Airport;
 import net.simforge.airways.model.geo.City;
 import net.simforge.airways.model.journey.Journey;
 import net.simforge.airways.model.journey.Transfer;
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processes.journey.event.ArrivalToAirportFromCity;
 import net.simforge.airways.processes.journey.event.CancelOnArrivalToCity;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class TransferLauncher {
     private static final Logger log = LoggerFactory.getLogger(TransferLauncher.class);
 
-    public static void scheduleTransferToAirport(ProcessEngine engine, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
+    public static void scheduleTransferToAirport(ProcessEngineScheduling scheduling, Session session, Journey journey, Airport toAirport, LocalDateTime deadline) {
         BM.start("TransferLauncher.scheduleTransferToAirport");
         try {
             journey = session.load(Journey.class, journey.getId());
@@ -45,13 +45,13 @@ public class TransferLauncher {
             journey.setTransfer(transfer);
             session.update(journey);
 
-            engine.scheduleEvent(session, TransferStarted.class, transfer, deadline.minusMinutes(durationMinutes));
+            scheduling.scheduleEvent(session, TransferStarted.class, transfer, deadline.minusMinutes(durationMinutes));
         } finally {
             BM.stop();
         }
     }
 
-    public static void startTransferToCityThenEvent(ProcessEngine engine, Session session, Journey journey, City toCity, Class<? extends Event> eventClass) {
+    public static void startTransferToCityThenEvent(ProcessEngineScheduling scheduling, Session session, Journey journey, City toCity, Class<? extends Event> eventClass) {
         BM.start("TransferLauncher.startTransferToCityThenEvent");
         try {
             journey = session.load(Journey.class, journey.getId());
@@ -71,13 +71,13 @@ public class TransferLauncher {
             journey.setTransfer(transfer);
             session.update(journey);
 
-            engine.fireEvent(session, TransferStarted.class, transfer);
+            scheduling.fireEvent(session, TransferStarted.class, transfer);
         } finally {
             BM.stop();
         }
     }
 
-    public static void startTransferToBiggestCityThenCancel(ProcessEngine engine, Session session, Journey journey) {
+    public static void startTransferToBiggestCityThenCancel(ProcessEngineScheduling scheduling, Session session, Journey journey) {
         BM.start("TransferLauncher.startTransferToBiggestCityThenCancel");
         try {
             List<Person> persons = JourneyOps.getPersons(session, journey);
@@ -86,10 +86,9 @@ public class TransferLauncher {
 
             City theBiggestCity = GeoOps.loadBiggestCityLinkedToAirport(session, currentAirport);
 
-            //noinspection ConstantConditions
             EventLog.info(session, log, journey, "Transfer & Cancel to city " + theBiggestCity.getName());
 
-            TransferLauncher.startTransferToCityThenEvent(engine, session, journey, theBiggestCity, CancelOnArrivalToCity.class);
+            TransferLauncher.startTransferToCityThenEvent(scheduling, session, journey, theBiggestCity, CancelOnArrivalToCity.class);
 
         } finally {
             BM.stop();

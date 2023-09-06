@@ -1,10 +1,6 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.flight.event;
 
-import net.simforge.airways.processengine.ProcessEngine;
+import net.simforge.airways.processengine.ProcessEngineScheduling;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -19,7 +15,7 @@ public class StartBoardingCommand implements Event, Handler {
     @Inject
     private Flight flight;
     @Inject
-    private ProcessEngine engine;
+    private ProcessEngineScheduling scheduling;
 
     @Override
     public void process() {
@@ -27,6 +23,6 @@ public class StartBoardingCommand implements Event, Handler {
         if (transportFlight == null) {
             return;
         }
-        engine.fireEvent(BoardingStarted.class, transportFlight);
+        scheduling.fireEvent(BoardingStarted.class, transportFlight);
     }
 }

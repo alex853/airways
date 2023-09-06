@@ -1,11 +1,8 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.processes.transportflight.event;
 
 import net.simforge.airways.EventLog;
 import net.simforge.airways.model.flight.TransportFlight;
+import net.simforge.airways.ops.TransportFlightOps;
 import net.simforge.airways.processengine.event.Event;
 import net.simforge.airways.processengine.event.Handler;
 import net.simforge.airways.processengine.event.Subscribe;
@@ -19,7 +16,7 @@ import javax.inject.Inject;
 
 @Subscribe(DeboardingCompleted.class)
 public class DeboardingCompleted implements Event, Handler {
-    private static Logger logger = LoggerFactory.getLogger(DeboardingCompleted.class);
+    private static final Logger log = LoggerFactory.getLogger(DeboardingCompleted.class);
 
     @Inject
     private TransportFlight transportFlight;
@@ -33,11 +30,10 @@ public class DeboardingCompleted implements Event, Handler {
 
                 transportFlight = session.load(TransportFlight.class, transportFlight.getId());
 
-                transportFlight.setStatus(TransportFlight.Status.Finished);
+                TransportFlightOps.checkAndSetStatus(transportFlight, TransportFlight.Status.Finished);
                 session.update(transportFlight);
 
-                session.save(EventLog.make(transportFlight, "Deboarding completed, FLIGHT FINISHED"));
-                logger.info(transportFlight + " - Deboarding completed, FLIGHT FINISHED");
+                EventLog.info(session, log, transportFlight, "Deboarding completed, FLIGHT FINISHED");
 
             });
         }
