@@ -139,17 +139,4 @@ public class ProcessEngine implements Runnable {
     }
 
     // todo ak p3 add audit event log entries
-
-    // todo ak1 rework this method, it looks weird
-    public void stopActivity(ActivityInfo activityInfo) {
-        try (Session session = sessionFactory.openSession()) {
-            TaskEntity _task = session.load(TaskEntity.class, activityInfo.getTaskId());
-            _task.setTaskTime(null);
-            _task.setStatus(TaskEntity.Status.STOPPED);
-            HibernateUtils.updateAndCommit(session, _task);
-        }
-
-        // todo ak queue lock
-        taskQueue.removeIf(task -> task.getId().equals(activityInfo.getTaskId()));
-    }
 }
