@@ -1,7 +1,3 @@
-<%--
-  ~ Airways Project (c) Alexey Kornev, 2015-2019
-  --%>
-
 <%
     String backendURL = application.getInitParameter("BackendURL");
 

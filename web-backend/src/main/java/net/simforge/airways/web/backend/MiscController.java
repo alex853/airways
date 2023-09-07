@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,25 @@ public class MiscController {
             //noinspection unchecked,JpaQlInspection
             List<TransportFlight> transportFlights = session
                     .createQuery("from TransportFlight order by departureDt")
+                    .list();
+
+            transportFlights.forEach(transportFlight -> result.add(transportFlight2map(transportFlight)));
+        }
+
+        return result;
+    }
+
+    @RequestMapping("/ticket-sales/date")
+    public List<Map<String, Object>> getTicketSalesByDay(@RequestParam(value = "date") String date) {
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        try (Session session = AirwaysApp.getSessionFactory().openSession()) {
+            //noinspection unchecked,JpaQlInspection
+            List<TransportFlight> transportFlights = session
+                    .createQuery("from TransportFlight " +
+                            "where dateOfFlight = :date " +
+                            "order by departureDt")
+                    .setParameter("date", LocalDate.parse(date))
                     .list();
 
             transportFlights.forEach(transportFlight -> result.add(transportFlight2map(transportFlight)));
