@@ -9,7 +9,7 @@ public class TransportFlightOps {
     public static void checkAndSetStatus(TransportFlight transportFlight, TransportFlight.Status newStatus) {
         final TransportFlight.Status currStatus = transportFlight.getStatus();
         if (currStatus == Finished || currStatus == Cancelled) {
-            throw new IllegalStateException("Can't update terminal status " + currStatus);
+            throw new IllegalStateException("Can't update terminal status " + currStatus + " to " + newStatus);
         }
 
         if (currStatus.code() > newStatus.code()) {

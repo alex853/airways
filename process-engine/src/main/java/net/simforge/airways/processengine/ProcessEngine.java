@@ -1,6 +1,5 @@
 package net.simforge.airways.processengine;
 
-import net.simforge.airways.processengine.activity.ActivityInfo;
 import net.simforge.airways.processengine.entities.TaskEntity;
 import net.simforge.commons.hibernate.HibernateUtils;
 import net.simforge.commons.legacy.BM;
@@ -96,9 +95,25 @@ public class ProcessEngine implements Runnable {
 
         } catch (Throwable t) {
             log.error("Error on processing: {}, message '{}', see details in stacktrace log", t.getClass(), t.getMessage());
-            log.error("Error details", t); // todo another logger dedicated for stacktraces
+            log.error("Error details", t);
 
-            // todo to do emergency update of the task
+            retryOrFail(task);
+        }
+    }
+
+    private void retryOrFail(TaskEntity task) {
+        try (Session session = sessionFactory.openSession()) {
+            TaskEntity _task = session.get(TaskEntity.class, task.getId());
+            if (_task.getRetryCount() < 3) {
+                _task.setRetryCount(_task.getRetryCount() + 1);
+                log.warn("Task {} - Retry will be attempted, retry counter is {}", _task.getStatus(), _task.getRetryCount());
+            } else {
+                _task.setStatus(TaskEntity.Status.FAILED);
+                log.warn("Task {} - All retry attempts failed, task goes to FAILED state", _task.getId());
+            }
+            HibernateUtils.updateAndCommit(session, _task);
+        } catch (Throwable t) {
+            log.error("UNABLE TO RETRY-OR-FAIL: {}, message '{}'", t.getClass(), t.getMessage(), t);
         }
     }
 
