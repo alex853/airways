@@ -33,8 +33,8 @@ public class PilotOps {
 
         //noinspection unchecked
         List<Pilot> pilots = session
-                .createQuery("from Pilot pilot where pilot.person.originCity = :city")
-                .setEntity("city", city)
+                .createQuery("from Pilot pilot where pilot.person.locationAirport = :airport")
+                .setEntity("airport", airport)
                 .list();
 
         if (pilots.size() >= count) {

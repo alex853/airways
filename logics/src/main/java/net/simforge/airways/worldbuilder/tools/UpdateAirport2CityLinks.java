@@ -1,7 +1,3 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
-
 package net.simforge.airways.worldbuilder.tools;
 
 import net.simforge.airways.Airways;
@@ -31,8 +27,6 @@ public class UpdateAirport2CityLinks {
 
         Csv csv = Csv.load(new File("./data/icaodata.csv"));
         logger.info("source dataset contains {} airports", csv.rowCount());
-
-        icao2size = new HashMap<>();
 
         for (int i = 0; i < csv.rowCount(); i++) {
             String icao = csv.value(i, "icao");

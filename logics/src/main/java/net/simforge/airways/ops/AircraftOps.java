@@ -18,7 +18,11 @@ public class AircraftOps {
         AircraftType aircraftType = CommonOps.aircraftTypeByIcao(session, aircraftTypeIcao);
         Airport airport = GeoOps.loadAirportByIcao(session, airportIcao);
 
-        for (int number = 0; number < count; number++) {
+        int created = 0;
+        int number = -1;
+        while (created < count) {
+            number++;
+
             String regNo = regNoPattern;
             int remainder = number;
             int index;
@@ -46,6 +50,8 @@ public class AircraftOps {
             aircraft.setStatus(Aircraft.Status.Idle);
 
             HibernateUtils.saveAndCommit(session, aircraft);
+
+            created++;
         }
     }
 
