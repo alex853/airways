@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class StorageDataFieldsTest {
-    private final Storage storage = Storage.builder()
+    private final Storage<Object> storage = Storage.builder()
             .withDataField(DataField.of(DataType.Signed32bit))
             .withDataField(DataField.of(DataType.LatLong24bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
