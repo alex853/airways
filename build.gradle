@@ -1,7 +1,45 @@
-/*
- * Airways Project (c) Alexey Kornev, 2015-2019
- */
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.7.14'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
 
-subprojects {
-    version = '0.2.4'
+group = 'net.simforge'
+version repositoryVersion
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    maven {
+        url 'https://mymavenrepo.com/repo/9k6aQjU4o2RPUv5zfolv/' // simforge repo read url
+    }
+}
+
+dependencies {
+    implementation 'net.simforge:simforge-commons:latest.release'
+//    implementation 'net.simforge:simforge-commons-ext:latest.release'
+//    implementation 'net.simforge:simforge-atmosphere:latest.release'
+//    implementation 'net.simforge:refdata-aircrafts:latest.release'
+//    implementation 'net.simforge:refdata-airports:latest.release'
+//    implementation 'net.simforge:network-view-core:latest.release'
+
+//    implementation 'postgresql:postgresql:9.1-901-1.jdbc4'
+    implementation group: 'com.google.guava', name: 'guava', version: '33.3.1-jre'
+//    implementation group: 'commons-collections', name: 'commons-collections', version: '3.2.2'
+
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+
+}
+
+test {
+    useJUnitPlatform()
 }
