@@ -11,6 +11,9 @@ import java.util.LinkedList;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class Storage<T> {
     private static final Path rootPath = Paths.get("./storage");
 
@@ -115,7 +118,8 @@ public class Storage<T> {
     public int getAsInt(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         // todo ak check if record deleted
-        checkDataField(dataField);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
@@ -132,93 +136,109 @@ public class Storage<T> {
     public float getAsFloat(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         // todo ak check if record deleted
-        checkDataField(dataField);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
         switch (dataField.dataType()) {
-            case LatLong24bit:
-                final int maxValue = 128*256*256 - 1;
+            case LatLong24bit -> {
+                final int maxValue = 128 * 256 * 256 - 1;
                 final int intValue = (data[fieldOffset] << 16)
                         + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 8)
                         + (Byte.toUnsignedInt(data[fieldOffset + 2]));
                 return (180.0f * intValue) / maxValue;
-            default:
-                throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+            }
+            case LatLong16bit -> {
+                final int maxValue = 128 * 256 - 1;
+                final int intValue = (data[fieldOffset] << 8)
+                        + (Byte.toUnsignedInt(data[fieldOffset + 1]));
+                return (180.0f * intValue) / maxValue;
+            }
+            default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
 
     public String getAsString(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         // todo ak check if record deleted
-        checkDataField(dataField);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
+        //noinspection SwitchStatementWithTooFewBranches
         switch (dataField.dataType()) {
-            case PlainString:
+            case PlainString -> {
                 final int len = data[fieldOffset] & 0xFF;
                 if (len == 255) {
                     return null;
                 }
-                return new String(data, fieldOffset+1, len);
-            default:
-                throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+                return new String(data, fieldOffset + 1, len);
+            }
+            default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
 
     public void set(final int recordId, final DataField dataField, final int value) {
         checkRecordIdInBounds(recordId);
         // todo ak check if record deleted
-        checkDataField(dataField);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
         switch (dataField.dataType()) {
-            case Unsigned8bit:
+            case Unsigned8bit -> {
                 if (value < 0 || value > 255) {
                     throw new IllegalArgumentException("Value out of range: " + value);
                 }
                 data[fieldOffset] = (byte) value;
-                break;
-            case Signed32bit:
+            }
+            case Signed32bit -> {
                 // no need to check if value is within limits
                 data[fieldOffset] = (byte) (value >> 24);
-                data[fieldOffset+1] = (byte) (value >> 16);
-                data[fieldOffset+2] = (byte) (value >> 8);
-                data[fieldOffset+3] = (byte) value;
-                break;
-            default:
-                throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+                data[fieldOffset + 1] = (byte) (value >> 16);
+                data[fieldOffset + 2] = (byte) (value >> 8);
+                data[fieldOffset + 3] = (byte) value;
+            }
+            default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
 
     public void set(final int recordId, final DataField dataField, final float value) {
         checkRecordIdInBounds(recordId);
         // todo ak check if record deleted
-        checkDataField(dataField);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
         switch (dataField.dataType()) {
-            case LatLong24bit:
-                if (value < -180 || value > 180) {
-                    throw new IllegalArgumentException("Lat/Long Value out of range: " + value);
-                }
-                final int maxValue = 128*256*256 - 1;
+            case LatLong24bit -> {
+                checkArgument(-180 <= value && value <= 180, "Lat/Long Value out of range: " + value);
+                final int maxValue = 128 * 256 * 256 - 1;
                 final int intValue = (int) (value / 180.0 * maxValue);
                 data[fieldOffset] = (byte) (intValue >> 16);
-                data[fieldOffset+1] = (byte) (intValue >> 8);
-                data[fieldOffset+2] = (byte) intValue;
-                break;
-            default:
-                throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+                data[fieldOffset + 1] = (byte) (intValue >> 8);
+                data[fieldOffset + 2] = (byte) intValue;
+            }
+            case LatLong16bit -> {
+                checkArgument(-180 <= value && value <= 180, "Lat/Long Value out of range: " + value);
+                final int maxValue = 128 * 256 - 1;
+                final int intValue = (int) (value / 180.0 * maxValue);
+                data[fieldOffset] = (byte) (intValue >> 8);
+                data[fieldOffset + 1] = (byte) intValue;
+            }
+            default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
 
     public void set(final int recordId, final DataField dataField, final String value) {
         checkRecordIdInBounds(recordId);
-        checkDataField(dataField);
+        // todo ak check if record deleted
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
 
         final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
 
@@ -240,10 +260,7 @@ public class Storage<T> {
         }
     }
 
-    private void checkDataField(final DataField dataField) {
-        if (dataField == null) {
-            throw new IllegalArgumentException("dataField is null");
-        }
+    private void checkDataFieldIsInStorage(final DataField dataField) {
         final int hash = dataField.hashCode();
         final int index = Arrays.binarySearch(sortedDataFieldHashs, hash);
         if (index < 0) {

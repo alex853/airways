@@ -7,17 +7,19 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class StorageDataTypesTest {
-    private final Storage storage = Storage.builder()
+    private final Storage<Object> storage = Storage.builder()
             .withDataField(DataField.of(DataType.Signed32bit))
             .withDataField(DataField.of(DataType.Unsigned8bit))
             .withDataField(DataField.of(DataType.LatLong24bit))
+            .withDataField(DataField.of(DataType.LatLong16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
             .build();
 
     private final DataField signed32bitField = storage.getDataField(0);
     private final DataField unsigned8bitField = storage.getDataField(1);
     private final DataField latLong24bitField = storage.getDataField(2);
-    private final DataField plainString20Field = storage.getDataField(3);
+    private final DataField latLong16bitField = storage.getDataField(3);
+    private final DataField plainString20Field = storage.getDataField(4);
 
     private final int recordId = storage.addRecord();
 
@@ -52,6 +54,19 @@ class StorageDataTypesTest {
     public void test_latLong24bit_out_of_bounds() {
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, latLong24bitField, -181.0f));
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, latLong24bitField, 181.0f));
+    }
+
+    @ParameterizedTest
+    @ValueSource(floats = {-180, -179.9f, -90, -1, 0, 1, 90, 179.9f, 180})
+    public void test_latLong16bit(final float value) {
+        storage.set(recordId, latLong16bitField, value);
+        assertEquals(value, storage.getAsFloat(recordId, latLong16bitField), 0.01);
+    }
+
+    @Test
+    public void test_latLong16bit_out_of_bounds() {
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, latLong16bitField, -181.0f));
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, latLong16bitField, 181.0f));
     }
 
     @ParameterizedTest
