@@ -88,7 +88,7 @@
         }
 
         function actionsCell(row) {
-            return '<a class="btn btn-outline-info btn-sm" href="transport-flight.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href=' + row.id + '"transport-flight.jsp?id=">Details</a>';
         }
 
     </script>

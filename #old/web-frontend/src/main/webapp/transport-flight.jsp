@@ -78,7 +78,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a class="btn btn-outline-info btn-sm" href="journey.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href=' + row.id + '"journey.jsp?id=">Details</a>';
         }
 
     </script>

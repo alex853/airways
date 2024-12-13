@@ -82,7 +82,7 @@
         });
 
         function actionsCell(value, row) {
-            return '<a class="btn btn-outline-info btn-sm" href="person.jsp?id=' + row.id + '">Details</a>';
+            return '<a class="btn btn-outline-info btn-sm" href=' + row.id + '"person.jsp?id=">Details</a>';
         }
 
     </script>
