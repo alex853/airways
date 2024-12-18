@@ -1,5 +1,7 @@
 package net.simforge.airways2.world;
 
+import net.simforge.airways2.storage.Strings;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,7 +17,7 @@ public class World {
     private World(final String worldName) throws IOException {
         this.worldName = worldName;
 
-        this.strings = new Strings();
+        this.strings = Strings.loadOrCreate(getRootPath());
 
         this.countries = Countries.loadOrCreate(this);
         this.cities = Cities.loadOrCreate(this);
