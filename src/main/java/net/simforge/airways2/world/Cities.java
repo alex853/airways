@@ -10,6 +10,9 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Cities {
+    private final World world;
+    private final Strings strings;
+
     private final Storage<City> storage = Storage.<City>builder()
             .name("cities")
             .withInstantiator(City::new)
@@ -18,24 +21,27 @@ public class Cities {
             .withDataField(DataField.of(DataType.LatLong24bit)) // latitude
             .withDataField(DataField.of(DataType.LatLong24bit)) // longitude
             .withDataField(DataField.of(DataType.Signed32bit)) // population
-            .withDataField(DataField.of(DataType.PlainString).length(20)) // name
+            .withDataField(DataField.of(DataType.Signed32bit)) // nameId
             .build();
 
     private final DataField countryIdField = storage.getDataField(0);
     private final DataField latitudeField = storage.getDataField(1);
     private final DataField longitudeField = storage.getDataField(2);
     private final DataField populationField = storage.getDataField(3);
-    private final DataField nameField = storage.getDataField(4);
+    private final DataField nameIdField = storage.getDataField(4);
 
-    private Cities() {}
-
-    public static Cities loadOrCreate() throws IOException {
-        final Cities cities = new Cities();
-        cities.storage.loadIfExists();
-        return cities;
+    private Cities(final World world) throws IOException {
+        this.world = world;
+        this.strings = world.strings();
+        this.storage.setRootPath(world.getRootPath());
+        this.storage.loadIfExists();
     }
 
-    public void save() throws IOException {
+    public static Cities loadOrCreate(final World world) throws IOException {
+        return new Cities(world);
+    }
+
+    void save() throws IOException {
         storage.save();
     }
 
@@ -58,7 +64,7 @@ public class Cities {
         storage.set(recordId, latitudeField, (float) latitude);
         storage.set(recordId, longitudeField, (float) longitude);
         storage.set(recordId, populationField, population);
-        storage.set(recordId, nameField, name);
+        storage.set(recordId, nameIdField, strings.findOrAdd(name));
         return new City(recordId);
     }
 
@@ -90,7 +96,7 @@ public class Cities {
         }
 
         public String getName() {
-            return storage.getAsString(id, nameField);
+            return strings.byId(storage.getAsInt(id, nameIdField));
         }
     }
 }

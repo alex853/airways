@@ -62,7 +62,7 @@ public class DataField {
     private static int calcSize(final DataType dataType, final int length) {
         return switch (dataType) {
             case Signed32bit -> 4;
-            //case Unsigned24bit -> 3;
+            case Unsigned24bit -> 3;
             case Unsigned16bit -> 2;
             case Unsigned8bit -> 1;
             case LatLong24bit -> 3;

@@ -15,10 +15,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Storage<T> {
-    private static final Path rootPath = Paths.get("./storage");
+    private Path rootPath = Paths.get("./storage");
+    private Path dataPath;
 
     private final String name;
-    private final Path dataPath;
     private final Instantiator<T> instantiator;
     private final DataType idDataType;
     private final DataField[] dataFields;
@@ -60,6 +60,11 @@ public class Storage<T> {
         return new Builder<T>();
     }
 
+    public void setRootPath(final Path rootPath) {
+        this.rootPath = rootPath;
+        this.dataPath = name != null ? rootPath.resolve(name) : null;
+    }
+
     public void loadIfExists() throws IOException {
         if (!Files.exists(dataPath)) {
             return;
@@ -73,6 +78,9 @@ public class Storage<T> {
         //   rename ./data/cities to ./data/cities.<millis from the header!!!>
         //   rename ./data/cities.<current millis> to ./data/cities
         // todo ak update header accordingly
+        if (!Files.exists(rootPath)) {
+            Files.createDirectories(rootPath);
+        }
         Files.write(dataPath, data,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE);
     }
 

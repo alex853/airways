@@ -10,26 +10,32 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Countries {
+    private final World world;
+    private final Strings strings;
+
     private final Storage<Country> storage = Storage.<Country>builder()
             .name("countries")
             .withInstantiator(Country::new)
             .withIdOf(DataType.Unsigned16bit)
             .withDataField(DataField.of(DataType.PlainString).length(2)) // code
-            .withDataField(DataField.of(DataType.PlainString).length(20)) // name
+            .withDataField(DataField.of(DataType.Signed32bit)) // nameId
             .build();
 
     private final DataField codeField = storage.getDataField(0);
-    private final DataField nameField = storage.getDataField(1);
+    private final DataField nameIdField = storage.getDataField(1);
 
-    private Countries() {}
-
-    public static Countries loadOrCreate() throws IOException {
-        final Countries countries = new Countries();
-        countries.storage.loadIfExists();
-        return countries;
+    private Countries(final World world) throws IOException {
+        this.world = world;
+        this.strings = world.strings();
+        this.storage.setRootPath(world.getRootPath());
+        this.storage.loadIfExists();
     }
 
-    public void save() throws IOException {
+    public static Countries loadOrCreate(final World world) throws IOException {
+        return new Countries(world);
+    }
+
+    void save() throws IOException {
         storage.save();
     }
 
@@ -46,7 +52,7 @@ public class Countries {
                           final String name) {
         final int recordId = storage.addRecord();
         storage.set(recordId, codeField, code);
-        storage.set(recordId, nameField, name);
+        storage.set(recordId, nameIdField, strings.findOrAdd(name));
         return new Country(recordId);
     }
 
@@ -66,7 +72,7 @@ public class Countries {
         }
 
         public String getName() {
-            return storage.getAsString(id, nameField);
+            return strings.byId(storage.getAsInt(id, nameIdField));
         }
     }
 }

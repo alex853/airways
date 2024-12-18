@@ -2,6 +2,8 @@ package net.simforge.airways2.worldbuilder.tools;
 
 import net.simforge.airways2.world.Cities;
 import net.simforge.airways2.world.Countries;
+import net.simforge.airways2.world.World;
+import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,8 +18,9 @@ public class ImportCities {
     private static final Logger logger = LoggerFactory.getLogger(ImportCities.class.getName());
 
     public static void main(final String[] args) throws IOException {
-        final Countries countries = Countries.loadOrCreate();
-        final Cities cities = Cities.loadOrCreate();
+        final World world = World.loadOrCreate(World25.name);
+        final Countries countries = world.countries();
+        final Cities cities = world.cities();
 
         final Csv csv = Csv.load(new File("./data/city-population.csv"));
 
@@ -55,8 +58,7 @@ public class ImportCities {
             logger.info("\tCity {} created", cityName);
         }
 
-        countries.save();
-        cities.save();
+        world.save();
     }
 
     private static List<Filter> toFilters(final String[] args) {
