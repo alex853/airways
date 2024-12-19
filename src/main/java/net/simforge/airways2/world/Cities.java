@@ -6,6 +6,7 @@ import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,6 +45,10 @@ public class Cities {
 
     void save() throws IOException {
         storage.save();
+    }
+
+    public Collection<City> all() {
+        return storage.all();
     }
 
     public Optional<City> byId(final int cityId) {

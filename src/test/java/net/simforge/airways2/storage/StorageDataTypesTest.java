@@ -10,6 +10,7 @@ class StorageDataTypesTest {
     private final Storage<Object> storage = Storage.builder()
             .withDataField(DataField.of(DataType.Signed32bit))
             .withDataField(DataField.of(DataType.Unsigned8bit))
+            .withDataField(DataField.of(DataType.Unsigned16bit))
             .withDataField(DataField.of(DataType.LatLong24bit))
             .withDataField(DataField.of(DataType.LatLong16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
@@ -17,9 +18,10 @@ class StorageDataTypesTest {
 
     private final DataField signed32bitField = storage.getDataField(0);
     private final DataField unsigned8bitField = storage.getDataField(1);
-    private final DataField latLong24bitField = storage.getDataField(2);
-    private final DataField latLong16bitField = storage.getDataField(3);
-    private final DataField plainString20Field = storage.getDataField(4);
+    private final DataField unsigned16bitField = storage.getDataField(2);
+    private final DataField latLong24bitField = storage.getDataField(3);
+    private final DataField latLong16bitField = storage.getDataField(4);
+    private final DataField plainString20Field = storage.getDataField(5);
 
     private final int recordId = storage.addRecord();
 
@@ -41,6 +43,19 @@ class StorageDataTypesTest {
     public void test_unsigned8bit_out_of_bounds() {
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned8bitField, -1));
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned8bitField, 256));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1000, 10000, 20000, 30000, 40000, 50000, 60000, 65535})
+    public void test_unsigned16bit(final int value) {
+        storage.set(recordId, unsigned16bitField, value);
+        assertEquals(value, storage.getAsInt(recordId, unsigned16bitField));
+    }
+
+    @Test
+    public void test_unsigned16bit_out_of_bounds() {
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned16bitField, -1));
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned16bitField, 65536));
     }
 
     @ParameterizedTest

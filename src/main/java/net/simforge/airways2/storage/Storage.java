@@ -5,10 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -26,11 +23,11 @@ public class Storage<T> {
 
     private final DataField[] sortedDataFields;
     private final int[] sortedDataFieldHashs;
-    // todo ak add record status byte before record:
+    // todo ak2 add record status byte before record:
     //   empty (can be reused)
     //   stored
 
-    // todo ak some header:
+    // todo ak2 some header:
     //   version 1b
     //   record count 4b
     //   record size 2b
@@ -73,11 +70,11 @@ public class Storage<T> {
     }
 
     public void save() throws IOException {
-        // todo ak implement safe saving
+        // todo ak2 implement safe saving
         //   write to ./data/cities.<current millis>
         //   rename ./data/cities to ./data/cities.<millis from the header!!!>
         //   rename ./data/cities.<current millis> to ./data/cities
-        // todo ak update header accordingly
+        // todo ak2 update header accordingly
         if (!Files.exists(rootPath)) {
             Files.createDirectories(rootPath);
         }
@@ -89,7 +86,7 @@ public class Storage<T> {
     }
 
     public int getCount() {
-        // todo ak modify when header introduced
+        // todo ak2 modify when header introduced
         return data.length / recordSize;
     }
 
@@ -97,15 +94,24 @@ public class Storage<T> {
         data = new byte[0];
     }
 
+    public Collection<T> all() {
+        final List<T> result = new ArrayList<>();
+        for (int recordId = 1; recordId <= getCount(); recordId++) {
+            // todo ak2 check not deleted
+            result.add(instantiator.create(recordId));
+        }
+        return result;
+    }
+
     public Optional<T> byId(final int recordId) {
         checkRecordIdInBounds(recordId);
-        // todo ak check not deleted
+        // todo ak2 check not deleted
         return Optional.of(instantiator.create(recordId));
     }
 
     public Optional<T> findFirst(final Predicate<T> condition) {
         for (int recordId = 1; recordId <= getCount(); recordId++) {
-            // todo ak check not deleted
+            // todo ak2 check not deleted
             final T instance = instantiator.create(recordId);
             if (condition.test(instance)) {
                 return Optional.of(instance);
@@ -114,7 +120,7 @@ public class Storage<T> {
         return Optional.empty();
     }
 
-    // todo ak to check if new id is possible according to idDataType
+    // todo ak2 to check if new id is possible according to idDataType
     public int addRecord() {
         final int recordId = getCount() + 1;
         final byte[] newData = new byte[data.length + recordSize];
@@ -125,7 +131,7 @@ public class Storage<T> {
 
     public int getAsInt(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -133,6 +139,8 @@ public class Storage<T> {
 
         return switch (dataField.dataType()) {
             case Unsigned8bit -> Byte.toUnsignedInt(data[fieldOffset]);
+            case Unsigned16bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 8)
+                    + (Byte.toUnsignedInt(data[fieldOffset + 1]));
             case Signed32bit -> (data[fieldOffset] << 24)
                     + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 16)
                     + (Byte.toUnsignedInt(data[fieldOffset + 2]) << 8)
@@ -143,7 +151,7 @@ public class Storage<T> {
 
     public float getAsFloat(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -169,7 +177,7 @@ public class Storage<T> {
 
     public String getAsString(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -190,7 +198,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final int value) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -198,10 +206,13 @@ public class Storage<T> {
 
         switch (dataField.dataType()) {
             case Unsigned8bit -> {
-                if (value < 0 || value > 255) {
-                    throw new IllegalArgumentException("Value out of range: " + value);
-                }
+                checkArgument(0 <= value && value <= 255, "expected range is [0..255]");
                 data[fieldOffset] = (byte) value;
+            }
+            case Unsigned16bit -> {
+                checkArgument(0 <= value && value <= 65535, "expected range is [0..65353]");
+                data[fieldOffset] = (byte) (value >> 8);
+                data[fieldOffset + 1] = (byte) value;
             }
             case Signed32bit -> {
                 // no need to check if value is within limits
@@ -216,7 +227,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final float value) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -244,7 +255,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final String value) {
         checkRecordIdInBounds(recordId);
-        // todo ak check if record deleted
+        // todo ak2 check if record deleted
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
