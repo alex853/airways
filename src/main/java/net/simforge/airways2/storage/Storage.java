@@ -42,7 +42,7 @@ public class Storage<T> {
         this.dataPath = name != null ? rootPath.resolve(name) : null;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
-        this.dataFields = dataFields; // todo ak check all required fields are initialised correctly
+        this.dataFields = dataFields; // todo ak2 check all required fields are initialised correctly
         this.recordSize = dataFields[dataFields.length - 1].offsetPlusSize();
 
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);

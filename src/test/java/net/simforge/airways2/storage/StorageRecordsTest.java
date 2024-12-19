@@ -39,6 +39,6 @@ class StorageRecordsTest {
         assertThrows(IllegalArgumentException.class, () -> storage.getAsString(recordId, plainString20Field));
     }
 
-    // todo ak deleted records should not be read
+    // todo ak2 deleted records should not be read
 
 }

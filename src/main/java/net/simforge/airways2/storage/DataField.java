@@ -67,7 +67,7 @@ public class DataField {
             case Unsigned8bit -> 1;
             case LatLong24bit -> 3;
             case LatLong16bit -> 2;
-            case PlainString -> 1 + length; // todo ak limit length by 254
+            case PlainString -> 1 + length; // todo ak2 limit length by 254
             //case PackedTo6BitsString -> (length * 6) / 8 + (((length * 6) % 8) > 0 ? 1 : 0);
         };
     }
