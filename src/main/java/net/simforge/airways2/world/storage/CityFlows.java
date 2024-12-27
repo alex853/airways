@@ -1,4 +1,4 @@
-package net.simforge.airways2.world;
+package net.simforge.airways2.world.storage;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
@@ -11,8 +11,8 @@ public class CityFlows {
             .withIdOf(DataType.Unsigned24bit)
             .withDataField(DataField.of(DataType.Unsigned16bit)) // cityId
             .withDataField(DataField.of(DataType.Unsigned8bit)) // status
-            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatDt
-            .withDataField(DataField.of(DataType.Signed32bit)) // lastRedistributionDt
+            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // lastRedistributionTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // attraction, 1.0 corresponds to 100
             // unitsThreshold - skipped, not required
             // defaultAvailability - skipped, not required

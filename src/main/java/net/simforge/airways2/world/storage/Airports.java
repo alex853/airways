@@ -1,17 +1,19 @@
-package net.simforge.airways2.world;
+package net.simforge.airways2.world.storage;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.airways2.world.World;
+import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Airports {
-    private final World world;
     private final Strings strings;
 
     private final Storage<Airport> storage = Storage.<Airport>builder()
@@ -32,7 +34,6 @@ public class Airports {
     private final DataField nameIdField = storage.getDataField(4);
 
     private Airports(final World world) throws IOException {
-        this.world = world;
         this.strings = world.strings();
         this.storage.setRootPath(world.getRootPath());
         this.storage.loadIfExists();
@@ -42,17 +43,8 @@ public class Airports {
         return new Airports(world);
     }
 
-    void save() throws IOException {
+    public void save() throws IOException {
         storage.save();
-    }
-
-    public Optional<Airport> byId(final int airportId) {
-        return storage.byId(airportId);
-    }
-
-    public Optional<Airport> byIcao(final String icao) {
-        checkNotNull(icao, "icao should not be null");
-        return storage.findFirst(a -> icao.equals(a.getIcao()));
     }
 
     public Airport create(final double latitude,
@@ -67,6 +59,19 @@ public class Airports {
         storage.set(recordId, icaoField, icao);
         storage.set(recordId, nameIdField, strings.findOrAdd(name));
         return new Airport(recordId);
+    }
+
+    public Optional<Airport> byId(final int airportId) {
+        return storage.byId(airportId);
+    }
+
+    public Optional<Airport> byIcao(final String icao) {
+        checkNotNull(icao, "icao should not be null");
+        return storage.findFirst(a -> icao.equals(a.getIcao()));
+    }
+
+    public Collection<Airport> all() {
+        return storage.all();
     }
 
     public class Airport {
@@ -98,6 +103,15 @@ public class Airports {
 
         public String getName() {
             return strings.byId(storage.getAsInt(id, nameIdField));
+        }
+
+        public Geo.Coords getCoords() {
+            return Geo.coords(getLatitude(), getLongitude());
+        }
+
+        @Override
+        public String toString() {
+            return "{ icao: " + getIcao() + " }";
         }
     }
 }

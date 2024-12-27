@@ -1,0 +1,24 @@
+package net.simforge.airways2.world;
+
+import net.simforge.commons.misc.JavaTime;
+
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
+public class Time {
+    public static final int ONE_MINUTE = 60;
+    public static final int HALF_AN_HOUR = 1800;
+    public static final int ONE_HOUR = 3600;
+
+    public static final int TICK = 10;
+
+    public static int now() {
+        return (int) (JavaTime.nowUtc().toEpochSecond(ZoneOffset.UTC));
+    }
+
+    public static LocalDateTime toLdt(final int time) {
+        return time != 0
+                ? LocalDateTime.ofEpochSecond(time, 0, ZoneOffset.UTC)
+                : null;
+    }
+}

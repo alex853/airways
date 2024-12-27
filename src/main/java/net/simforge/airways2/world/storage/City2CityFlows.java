@@ -1,4 +1,4 @@
-package net.simforge.airways2.world;
+package net.simforge.airways2.world.storage;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
@@ -13,7 +13,7 @@ public class City2CityFlows {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // fromCityId
             .withDataField(DataField.of(DataType.Unsigned24bit)) // toFlowId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // toCityId
-            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatDt
+            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned8bit)) // status (was active)
             // units - skipped, not required
             .withDataField(DataField.of(DataType.Unsigned16bit)) // percentage [0.0000 (0) .. 1.0000 (16383)]

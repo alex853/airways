@@ -11,6 +11,8 @@ class StorageDataTypesTest {
             .withDataField(DataField.of(DataType.Signed32bit))
             .withDataField(DataField.of(DataType.Unsigned8bit))
             .withDataField(DataField.of(DataType.Unsigned16bit))
+            .withDataField(DataField.of(DataType.Unsigned24bit))
+            .withDataField(DataField.of(DataType.Float))
             .withDataField(DataField.of(DataType.LatLong24bit))
             .withDataField(DataField.of(DataType.LatLong16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
@@ -19,9 +21,11 @@ class StorageDataTypesTest {
     private final DataField signed32bitField = storage.getDataField(0);
     private final DataField unsigned8bitField = storage.getDataField(1);
     private final DataField unsigned16bitField = storage.getDataField(2);
-    private final DataField latLong24bitField = storage.getDataField(3);
-    private final DataField latLong16bitField = storage.getDataField(4);
-    private final DataField plainString20Field = storage.getDataField(5);
+    private final DataField unsigned24bitField = storage.getDataField(3);
+    private final DataField floatField = storage.getDataField(4);
+    private final DataField latLong24bitField = storage.getDataField(5);
+    private final DataField latLong16bitField = storage.getDataField(6);
+    private final DataField plainString20Field = storage.getDataField(7);
 
     private final int recordId = storage.addRecord();
 
@@ -56,6 +60,26 @@ class StorageDataTypesTest {
     public void test_unsigned16bit_out_of_bounds() {
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned16bitField, -1));
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned16bitField, 65536));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 1000, 1000000, 10000000, 16777215})
+    public void test_unsigned24bit(final int value) {
+        storage.set(recordId, unsigned24bitField, value);
+        assertEquals(value, storage.getAsInt(recordId, unsigned24bitField));
+    }
+
+    @Test
+    public void test_unsigned24bit_out_of_bounds() {
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned24bitField, -1));
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, unsigned24bitField, 16777216));
+    }
+
+    @ParameterizedTest
+    @ValueSource(floats = {-999, -180, -179.9f, -90, -1, 0, 1, 90, 179.9f, 180, 999, Float.NaN, Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY})
+    public void test_float(final float value) {
+        storage.set(recordId, floatField, value);
+        assertEquals(value, storage.getAsFloat(recordId, floatField));
     }
 
     @ParameterizedTest

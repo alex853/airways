@@ -1,9 +1,10 @@
-package net.simforge.airways2.world;
+package net.simforge.airways2.world.storage;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.airways2.world.World;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -12,7 +13,6 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Cities {
-    private final World world;
     private final Strings strings;
 
     private final Storage<City> storage = Storage.<City>builder()
@@ -33,7 +33,6 @@ public class Cities {
     private final DataField nameIdField = storage.getDataField(4);
 
     private Cities(final World world) throws IOException {
-        this.world = world;
         this.strings = world.strings();
         this.storage.setRootPath(world.getRootPath());
         this.storage.loadIfExists();
@@ -43,7 +42,7 @@ public class Cities {
         return new Cities(world);
     }
 
-    void save() throws IOException {
+    public void save() throws IOException {
         storage.save();
     }
 

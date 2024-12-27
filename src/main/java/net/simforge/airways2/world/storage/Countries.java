@@ -1,9 +1,10 @@
-package net.simforge.airways2.world;
+package net.simforge.airways2.world.storage;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.airways2.world.World;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -36,7 +37,7 @@ public class Countries {
         return new Countries(world);
     }
 
-    void save() throws IOException {
+    public void save() throws IOException {
         storage.save();
     }
 

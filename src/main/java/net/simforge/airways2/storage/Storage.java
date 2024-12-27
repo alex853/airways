@@ -12,6 +12,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Storage<T> {
+    private static final int recordHeaderSize = 1;
+
     private Path rootPath = Paths.get("./storage");
     private Path dataPath;
 
@@ -43,7 +45,7 @@ public class Storage<T> {
         this.instantiator = instantiator;
         this.idDataType = idDataType;
         this.dataFields = dataFields; // todo ak2 check all required fields are initialised correctly
-        this.recordSize = dataFields[dataFields.length - 1].offsetPlusSize();
+        this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
 
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
         Arrays.sort(sortedDataFields, Comparator.comparingInt(Object::hashCode));
@@ -135,16 +137,16 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         return switch (dataField.dataType()) {
             case Unsigned8bit -> Byte.toUnsignedInt(data[fieldOffset]);
             case Unsigned16bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 8)
                     + (Byte.toUnsignedInt(data[fieldOffset + 1]));
-            case Signed32bit -> (data[fieldOffset] << 24)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 16)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 2]) << 8)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 3]));
+            case Unsigned24bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 16)
+                    + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 8)
+                    + (Byte.toUnsignedInt(data[fieldOffset + 2]));
+            case Signed32bit -> getIntAtOffset(fieldOffset);
             default -> throw new IllegalStateException("Unexpected dataField dataType: " + dataField.dataType());
         };
     }
@@ -155,9 +157,13 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         switch (dataField.dataType()) {
+            case Float -> {
+                final int intBits = getIntAtOffset(fieldOffset);
+                return Float.intBitsToFloat(intBits);
+            }
             case LatLong24bit -> {
                 final int maxValue = 128 * 256 * 256 - 1;
                 final int intValue = (data[fieldOffset] << 16)
@@ -181,7 +187,7 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         //noinspection SwitchStatementWithTooFewBranches
         switch (dataField.dataType()) {
@@ -202,7 +208,7 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         switch (dataField.dataType()) {
             case Unsigned8bit -> {
@@ -214,12 +220,15 @@ public class Storage<T> {
                 data[fieldOffset] = (byte) (value >> 8);
                 data[fieldOffset + 1] = (byte) value;
             }
+            case Unsigned24bit -> {
+                checkArgument(0 <= value && value <= 16777215, "expected range is [0..16777215]");
+                data[fieldOffset] = (byte) (value >> 16);
+                data[fieldOffset + 1] = (byte) (value >> 8);
+                data[fieldOffset + 2] = (byte) value;
+            }
             case Signed32bit -> {
                 // no need to check if value is within limits
-                data[fieldOffset] = (byte) (value >> 24);
-                data[fieldOffset + 1] = (byte) (value >> 16);
-                data[fieldOffset + 2] = (byte) (value >> 8);
-                data[fieldOffset + 3] = (byte) value;
+                setIntAtOffset(fieldOffset, value);
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
@@ -231,9 +240,13 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         switch (dataField.dataType()) {
+            case Float -> {
+                final int intBits = Float.floatToIntBits(value);
+                setIntAtOffset(fieldOffset, intBits);
+            }
             case LatLong24bit -> {
                 checkArgument(-180 <= value && value <= 180, "Lat/Long Value out of range: " + value);
                 final int maxValue = 128 * 256 * 256 - 1;
@@ -259,7 +272,7 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
-        final int fieldOffset = (recordId-1) * recordSize + dataField.offset();
+        final int fieldOffset = getFieldOffset(recordId, dataField);
 
         switch (dataField.dataType()) {
             case PlainString:
@@ -277,6 +290,24 @@ public class Storage<T> {
             default:
                 throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
+    }
+
+    private int getFieldOffset(int recordId, DataField dataField) {
+        return (recordId-1) * recordSize + recordHeaderSize + dataField.offset();
+    }
+
+    private int getIntAtOffset(int fieldOffset) {
+        return (data[fieldOffset] << 24)
+                + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 16)
+                + (Byte.toUnsignedInt(data[fieldOffset + 2]) << 8)
+                + (Byte.toUnsignedInt(data[fieldOffset + 3]));
+    }
+
+    private void setIntAtOffset(final int fieldOffset, final int value) {
+        data[fieldOffset] = (byte) (value >> 24);
+        data[fieldOffset + 1] = (byte) (value >> 16);
+        data[fieldOffset + 2] = (byte) (value >> 8);
+        data[fieldOffset + 3] = (byte) value;
     }
 
     private void checkDataFieldIsInStorage(final DataField dataField) {

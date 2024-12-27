@@ -1,7 +1,7 @@
 package net.simforge.airways2.worldbuilder.tools;
 
-import net.simforge.airways2.world.Cities;
-import net.simforge.airways2.world.Countries;
+import net.simforge.airways2.world.storage.Cities;
+import net.simforge.airways2.world.storage.Countries;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
