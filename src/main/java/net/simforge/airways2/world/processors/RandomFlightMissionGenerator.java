@@ -52,8 +52,8 @@ public class RandomFlightMissionGenerator {
             final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
             final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destination.getCoords(), performanceData);
             final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
-            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
+            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak1 Time.fromLtd?
+            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak1 Time.fromLtd?
 
             final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
                     aircraft,
@@ -65,7 +65,7 @@ public class RandomFlightMissionGenerator {
             world.events().sendEvent(
                     PilotOnDuty,
                     mission.getId(),
-                    (int) flightTimeline.getStart().getScheduledTime().toEpochSecond(ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
+                    (int) flightTimeline.getStart().getScheduledTime().toEpochSecond(ZoneOffset.UTC)); // todo ak1 Time.fromLtd?
         });
     }
 }

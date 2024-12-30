@@ -7,7 +7,7 @@ import java.io.IOException;
 
 public class WorldRunner {
     public static void main(String[] args) throws IOException {
-        final World world = World.loadOrCreate(World25.name);
+        final World world = World25.load();
 
         while (true) {
             final boolean needToCatchTime = world.process();

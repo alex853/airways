@@ -3,9 +3,9 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -40,17 +40,15 @@ public class FlightMissions {
     private final DataField actualLandingTimeField = storage.getDataField(9);
     private final DataField actualArrivalTimeField = storage.getDataField(10);
 
-    private FlightMissions(final World world) throws IOException {
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public FlightMissions() {
     }
 
-    public static FlightMissions loadOrCreate(final World world) throws IOException {
-        return new FlightMissions(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Collection<Mission> all() {

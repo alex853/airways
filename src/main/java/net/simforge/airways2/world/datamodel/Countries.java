@@ -4,15 +4,14 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Countries {
-    private final World world;
     private final Strings strings;
 
     private final Storage<Country> storage = Storage.<Country>builder()
@@ -26,19 +25,16 @@ public class Countries {
     private final DataField codeField = storage.getDataField(0);
     private final DataField nameIdField = storage.getDataField(1);
 
-    private Countries(final World world) throws IOException {
-        this.world = world;
-        this.strings = world.strings();
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public Countries(final Strings strings) {
+        this.strings = strings;
     }
 
-    public static Countries loadOrCreate(final World world) throws IOException {
-        return new Countries(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Optional<Country> byId(final int countryId) {

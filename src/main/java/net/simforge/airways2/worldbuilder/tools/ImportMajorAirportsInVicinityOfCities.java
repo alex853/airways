@@ -19,7 +19,7 @@ public class ImportMajorAirportsInVicinityOfCities {
     private static final Logger logger = LoggerFactory.getLogger(ImportMajorAirportsInVicinityOfCities.class.getName());
 
     public static void main(final String[] args) throws IOException {
-        final World world = World.load(new DiskStorageStrategy(World25.name));
+        final World world = World25.load();
         final Cities cities = world.cities();
         final Airports airports = world.airports();
         final Airport2City airport2city = world.airport2city();

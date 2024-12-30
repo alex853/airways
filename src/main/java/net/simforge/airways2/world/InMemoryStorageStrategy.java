@@ -1,18 +1,15 @@
 package net.simforge.airways2.world;
 
+import java.io.IOException;
+
 public class InMemoryStorageStrategy implements WorldStorageStrategy {
     @Override
-    public World create() {
-        throw new UnsupportedOperationException("InMemoryStorageStrategy.create not implemented");
+    public void load(WorldIOOperation loadingOps) throws IOException {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public World load() {
-        throw new UnsupportedOperationException("InMemoryStorageStrategy.load not implemented");
-    }
-
-    @Override
-    public void save(World world) {
-        throw new UnsupportedOperationException("InMemoryStorageStrategy.save not implemented");
+    public void save(WorldIOOperation savingOps) throws IOException {
+        throw new UnsupportedOperationException();
     }
 }

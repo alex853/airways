@@ -3,9 +3,9 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 
@@ -27,17 +27,15 @@ public class Events {
     private final DataField timeField = storage.getDataField(2);
     private final DataField objectIdField = storage.getDataField(3);
 
-    private Events(final World world) throws IOException {
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public Events() {
     }
 
-    public static Events loadOrCreate(final World world) throws IOException {
-        return new Events(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Event sendEvent(final Type type,

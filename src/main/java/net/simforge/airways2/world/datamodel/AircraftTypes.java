@@ -6,6 +6,7 @@ import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -23,17 +24,15 @@ public class AircraftTypes {
     private final DataField icaoField = storage.getDataField(0);
     private final DataField iataField = storage.getDataField(1);
 
-    private AircraftTypes(final World world) throws IOException {
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public AircraftTypes() {
     }
 
-    public static AircraftTypes loadOrCreate(final World world) throws IOException {
-        return new AircraftTypes(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public AircraftType create(final String icao,

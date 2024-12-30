@@ -3,7 +3,6 @@ package net.simforge.airways2.storage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.function.Predicate;
@@ -13,9 +12,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Storage<T> {
     private static final int recordHeaderSize = 1;
-
-    private Path rootPath = Paths.get("./storage");
-    private Path dataPath;
 
     private final String name;
     private final Instantiator<T> instantiator;
@@ -41,7 +37,6 @@ public class Storage<T> {
                     final DataType idDataType,
                     final DataField[] dataFields) {
         this.name = name;
-        this.dataPath = name != null ? rootPath.resolve(name) : null;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
         this.dataFields = dataFields; // todo ak2 check all required fields are initialised correctly
@@ -59,27 +54,17 @@ public class Storage<T> {
         return new Builder<T>();
     }
 
-    public void setRootPath(final Path rootPath) {
-        this.rootPath = rootPath;
-        this.dataPath = name != null ? rootPath.resolve(name) : null;
-    }
-
-    public void loadIfExists() throws IOException {
+    public void loadIfExists(final Path rootPath) throws IOException {
+        final Path dataPath = rootPath.resolve(name);
         if (!Files.exists(dataPath)) {
+            reset();
             return;
         }
         data = Files.readAllBytes(dataPath);
     }
 
-    public void save() throws IOException {
-        // todo ak2 implement safe saving
-        //   write to ./data/cities.<current millis>
-        //   rename ./data/cities to ./data/cities.<millis from the header!!!>
-        //   rename ./data/cities.<current millis> to ./data/cities
-        // todo ak2 update header accordingly
-        if (!Files.exists(rootPath)) {
-            Files.createDirectories(rootPath);
-        }
+    public void save(final Path rootPath) throws IOException {
+        final Path dataPath = rootPath.resolve(name);
         Files.write(dataPath, data,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE);
     }
 

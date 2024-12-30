@@ -19,7 +19,7 @@ public class ImportCities {
     private static final Logger logger = LoggerFactory.getLogger(ImportCities.class.getName());
 
     public static void main(final String[] args) throws IOException {
-        final World world = World.load(new DiskStorageStrategy(World25.name));
+        final World world = World25.load();
         final Countries countries = world.countries();
         final Cities cities = world.cities();
 

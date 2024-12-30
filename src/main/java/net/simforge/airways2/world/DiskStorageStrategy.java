@@ -3,22 +3,24 @@ package net.simforge.airways2.world;
 import java.nio.file.Path;
 
 public class DiskStorageStrategy implements WorldStorageStrategy {
-    @Override
-    public World create() {
-        throw new UnsupportedOperationException("DiskStorageStrategy.create not implemented");
-    }
+    private final String name;
 
-    @Override
-    public World load() {
-        throw new UnsupportedOperationException("DiskStorageStrategy.load not implemented");
-    }
-
-    @Override
-    public void save(World world) {
-        throw new UnsupportedOperationException("DiskStorageStrategy.save not implemented");
+    public DiskStorageStrategy(final String name) {
+        this.name = name;
     }
 
     public Path getRootPath() {
         throw new UnsupportedOperationException("DiskStorageStrategy.getRootPath not implemented");
+    }
+
+    @Override
+    public void load(final WorldIOOperation loadingOps) {
+        throw new UnsupportedOperationException("DiskStorageStrategy.load not implemented");
+    }
+
+    // todo ak0 safe saving via save to tmp and then renaming
+    @Override
+    public void save(final WorldIOOperation savingOps) {
+        throw new UnsupportedOperationException("DiskStorageStrategy.save not implemented");
     }
 }

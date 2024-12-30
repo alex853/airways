@@ -4,10 +4,10 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
-import net.simforge.airways2.world.World;
 import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -33,18 +33,16 @@ public class Airports {
     private final DataField icaoField = storage.getDataField(3);
     private final DataField nameIdField = storage.getDataField(4);
 
-    private Airports(final World world) throws IOException {
-        this.strings = world.strings();
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public Airports(final Strings strings) {
+        this.strings = strings;
     }
 
-    public static Airports loadOrCreate(final World world) throws IOException {
-        return new Airports(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Airport create(final double latitude,

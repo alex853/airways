@@ -10,27 +10,19 @@ import java.util.Arrays;
 
 // todo ak2 tests!!!!
 public class Strings {
-    private final Path rootPath;
-    private final Path indicesPath;
-    private final Path dataPath;
-
     private int[] indices = new int[1];
     private byte[] strings = new byte[0];
 
-    private Strings(final Path rootPath) {
-        this.rootPath = rootPath;
-        this.indicesPath = rootPath.resolve("string-index");
-        this.dataPath = rootPath.resolve("string-data");
+    public Strings() {
     }
 
-    public static Strings loadOrCreate(final Path rootPath) throws IOException {
-        final Strings result = new Strings(rootPath);
-        result.loadIfExists();
-        return result;
-    }
+    public void loadIfExists(final Path rootPath) throws IOException {
+        final Path indicesPath = rootPath.resolve("string-index");
+        final Path dataPath = rootPath.resolve("string-data");
 
-    private void loadIfExists() throws IOException {
         if (!Files.exists(indicesPath) || !Files.exists(dataPath)) {
+            indices = new int[1];
+            strings = new byte[0];
             return;
         }
 
@@ -40,7 +32,10 @@ public class Strings {
         strings = Files.readAllBytes(dataPath);
     }
 
-    public void save() throws IOException {
+    public void save(final Path rootPath) throws IOException {
+        final Path indicesPath = rootPath.resolve("string-index");
+        final Path dataPath = rootPath.resolve("string-data");
+
         final ByteBuffer byteBuffer = ByteBuffer.allocate(indices.length * 4);
         byteBuffer.asIntBuffer().put(indices);
 

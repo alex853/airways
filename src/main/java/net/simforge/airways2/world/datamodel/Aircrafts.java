@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Strings;
 import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
@@ -41,18 +42,16 @@ public class Aircrafts {
     private final DataField locationLatitudeField = storage.getDataField(7);
     private final DataField locationLongitudeField = storage.getDataField(8);
 
-    private Aircrafts(final World world) throws IOException {
-        this.strings = world.strings();
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public Aircrafts(final Strings strings) {
+        this.strings = strings;
     }
 
-    public static Aircrafts loadOrCreate(final World world) throws IOException {
-        return new Aircrafts(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Collection<Aircraft> all() {

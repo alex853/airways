@@ -9,82 +9,85 @@ import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
 import net.simforge.airways2.world.datamodel.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static com.google.common.base.Preconditions.checkState;
 
 public class World {
-    private final String worldName;
+    private final WorldStorageStrategy worldStorageStrategy;
 
-    private final Strings strings;
+    private final Strings strings = new Strings();
 
-    private final Events events;
+    private final Events events = new Events();
 
-    private final Countries countries;
-    private final Cities cities;
-    private final Airports airports;
-    private final Airport2City airport2city;
+    private final Countries countries = new Countries(this.strings);
+    private final Cities cities = new Cities(this.strings);
+    private final Airports airports = new Airports(this.strings);
+    private final Airport2City airport2city = new Airport2City();
 
-    private final AircraftTypes aircraftTypes;
-    private final Aircrafts aircrafts;
-    private final FlightMissions flightMissions;
+    private final AircraftTypes aircraftTypes = new AircraftTypes();
+    private final Aircrafts aircrafts = new Aircrafts(this.strings);
+    private final FlightMissions flightMissions = new FlightMissions();
 
-    private final Storage<Object> worldTime;
+    private final Storage<Object> worldTime = Storage.builder()
+            .name("world-time")
+            .withDataField(DataField.of(DataType.Signed32bit))
+            .build();
+
     private static final int worldTimeStep = 10;
-    private int lastSavedAtWorldTime;
     private static final int saveWorldPeriod = Time.ONE_MINUTE;
+    private int lastSavedAtWorldTime;
 
-    private World(final String worldName) throws IOException {
-        this.worldName = worldName;
-
-        this.strings = Strings.loadOrCreate(getRootPath());
-
-        this.events = Events.loadOrCreate(this);
-
-        this.countries = Countries.loadOrCreate(this);
-        this.cities = Cities.loadOrCreate(this);
-        this.airports = Airports.loadOrCreate(this);
-        this.airport2city = Airport2City.loadOrCreate(this);
-
-        this.aircraftTypes = AircraftTypes.loadOrCreate(this);
-        this.aircrafts = Aircrafts.loadOrCreate(this);
-        this.flightMissions = FlightMissions.loadOrCreate(this);
-
-        this.worldTime = Storage.builder()
-                .name("world-time")
-                .withDataField(DataField.of(DataType.Signed32bit))
-                .build();
-        this.worldTime.setRootPath(getRootPath());
-        this.worldTime.loadIfExists();
-
-        this.lastSavedAtWorldTime = readWorldTime();
+    private World(final WorldStorageStrategy worldStorageStrategy) {
+        this.worldStorageStrategy = worldStorageStrategy;
     }
 
-    public static World loadOrCreate(final String worldName) throws IOException {
-        return new World(worldName);
+    public static World create(final WorldStorageStrategy worldStorageStrategy, int startWorldTime) {
+        final World world = new World(worldStorageStrategy);
+        world.setWorldTime(startWorldTime);
+        return world;
     }
 
-    public Path getRootPath() {
-        return Paths.get(worldName);
+    public static World load(final WorldStorageStrategy worldStorageStrategy) throws IOException {
+        final World world = new World(worldStorageStrategy);
+        worldStorageStrategy.load(rootPath -> {
+            world.strings.loadIfExists(rootPath);
+
+            world.events.loadIfExists(rootPath);
+
+            world.countries.loadIfExists(rootPath);
+            world.cities.loadIfExists(rootPath);
+            world.airports.loadIfExists(rootPath);
+            world.airport2city.loadIfExists(rootPath);
+
+            world.aircraftTypes.loadIfExists(rootPath);
+            world.aircrafts.loadIfExists(rootPath);
+            world.flightMissions.loadIfExists(rootPath);
+
+            world.worldTime.loadIfExists(rootPath);
+        });
+
+        world.lastSavedAtWorldTime = world.readWorldTime();
+
+        return world;
     }
 
-    // todo ak2 safe saving via save to tmp and then renaming
     public void save() throws IOException {
-        strings.save();
+        worldStorageStrategy.save(rootPath -> {
+            strings.save(rootPath);
 
-        events.save();
+            events.save(rootPath);
 
-        countries.save();
-        cities.save();
-        airports.save();
-        airport2city.save();
+            countries.save(rootPath);
+            cities.save(rootPath);
+            airports.save(rootPath);
+            airport2city.save(rootPath);
 
-        aircraftTypes.save();
-        aircrafts.save();
-        flightMissions.save();
+            aircraftTypes.save(rootPath);
+            aircrafts.save(rootPath);
+            flightMissions.save(rootPath);
 
-        worldTime.save();
+            worldTime.save(rootPath);
+        });
     }
 
     public Strings strings() {

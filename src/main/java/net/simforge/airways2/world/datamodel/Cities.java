@@ -4,9 +4,9 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
@@ -32,18 +32,16 @@ public class Cities {
     private final DataField populationField = storage.getDataField(3);
     private final DataField nameIdField = storage.getDataField(4);
 
-    private Cities(final World world) throws IOException {
-        this.strings = world.strings();
-        this.storage.setRootPath(world.getRootPath());
-        this.storage.loadIfExists();
+    public Cities(final Strings strings) {
+        this.strings = strings;
     }
 
-    public static Cities loadOrCreate(final World world) throws IOException {
-        return new Cities(world);
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
     }
 
-    public void save() throws IOException {
-        storage.save();
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
     }
 
     public Collection<City> all() {
