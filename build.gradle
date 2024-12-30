@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'net.simforge'
-version repositoryVersion
+version = repositoryVersion
 
 java {
     sourceCompatibility = '17'

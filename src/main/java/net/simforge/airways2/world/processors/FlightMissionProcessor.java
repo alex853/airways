@@ -3,10 +3,10 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.*;
-import net.simforge.airways2.world.storage.Aircrafts;
-import net.simforge.airways2.world.storage.Airports;
-import net.simforge.airways2.world.storage.Events;
-import net.simforge.airways2.world.storage.FlightMissions;
+import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.Events;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static net.simforge.airways2.world.storage.Events.Type.PilotOnDuty;
+import static net.simforge.airways2.world.datamodel.Events.Type.PilotOnDuty;
 
 public class FlightMissionProcessor {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionProcessor.class);

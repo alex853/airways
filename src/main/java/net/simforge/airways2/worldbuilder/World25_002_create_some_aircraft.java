@@ -1,15 +1,16 @@
 package net.simforge.airways2.worldbuilder;
 
+import net.simforge.airways2.world.DiskStorageStrategy;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.storage.AircraftTypes;
-import net.simforge.airways2.world.storage.Aircrafts;
-import net.simforge.airways2.world.storage.Airports;
+import net.simforge.airways2.world.datamodel.AircraftTypes;
+import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
 
 import java.io.IOException;
 
 public class World25_002_create_some_aircraft {
     public static void main(String[] args) throws IOException {
-        final World world = World.loadOrCreate(World25.name);
+        final World world = World.load(new DiskStorageStrategy(World25.name));
 
         final Airports.Airport lfpg = world.airports().byIcao("LFPG").orElseThrow();
 

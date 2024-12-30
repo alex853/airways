@@ -1,7 +1,8 @@
 package net.simforge.airways2.worldbuilder.tools;
 
-import net.simforge.airways2.world.storage.Cities;
-import net.simforge.airways2.world.storage.Countries;
+import net.simforge.airways2.world.DiskStorageStrategy;
+import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
@@ -18,7 +19,7 @@ public class ImportCities {
     private static final Logger logger = LoggerFactory.getLogger(ImportCities.class.getName());
 
     public static void main(final String[] args) throws IOException {
-        final World world = World.loadOrCreate(World25.name);
+        final World world = World.load(new DiskStorageStrategy(World25.name));
         final Countries countries = world.countries();
         final Cities cities = world.cities();
 

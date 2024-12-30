@@ -1,4 +1,4 @@
-package net.simforge.airways2.world.storage;
+package net.simforge.airways2.world.datamodel;
 
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;

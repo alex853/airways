@@ -6,7 +6,7 @@ import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
-import net.simforge.airways2.world.storage.*;
+import net.simforge.airways2.world.datamodel.*;
 
 import java.io.IOException;
 import java.nio.file.Path;

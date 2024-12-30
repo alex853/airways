@@ -1,7 +1,7 @@
 package net.simforge.airways2.world.computations;
 
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.storage.FlightMissions;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 
 import java.time.LocalDateTime;
 

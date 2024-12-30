@@ -6,9 +6,9 @@ import net.simforge.airways2.world.computations.AircraftPerformanceData;
 import net.simforge.airways2.world.computations.AircraftPerformanceDataHelper;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.computations.SimpleFlight;
-import net.simforge.airways2.world.storage.Aircrafts;
-import net.simforge.airways2.world.storage.Airports;
-import net.simforge.airways2.world.storage.FlightMissions;
+import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
 
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.simforge.airways2.world.storage.Events.Type.PilotOnDuty;
+import static net.simforge.airways2.world.datamodel.Events.Type.PilotOnDuty;
 
 public class RandomFlightMissionGenerator {
     public static void process(final World world, final int worldTime) {
@@ -52,8 +52,8 @@ public class RandomFlightMissionGenerator {
             final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
             final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destination.getCoords(), performanceData);
             final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC));
-            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC);
+            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
+            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
 
             final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
                     aircraft,
@@ -65,7 +65,7 @@ public class RandomFlightMissionGenerator {
             world.events().sendEvent(
                     PilotOnDuty,
                     mission.getId(),
-                    (int) flightTimeline.getStart().getScheduledTime().toEpochSecond(ZoneOffset.UTC));
+                    (int) flightTimeline.getStart().getScheduledTime().toEpochSecond(ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
         });
     }
 }

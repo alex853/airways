@@ -1,5 +1,6 @@
 package net.simforge.airways2.worldbuilder;
 
+import net.simforge.airways2.world.DiskStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 
@@ -16,14 +17,13 @@ public class World25_000_reset_world {
     }
 
     private static void createWorld() throws IOException {
-        final World world = World.loadOrCreate(World25.name);
-        world.setWorldTime(Time.now());
+        final World world = World.create(new DiskStorageStrategy(World25.name), Time.now());
         world.save();
     }
 
     public static void removeWorld() throws IOException {
-        final World world = World.loadOrCreate(World25.name);
-        final Path rootPath = world.getRootPath();
+        final DiskStorageStrategy strategy = new DiskStorageStrategy(World25.name);
+        final Path rootPath = strategy.getRootPath();
         try (final Stream<Path> paths = Files.walk(rootPath)) {
             paths.sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {
