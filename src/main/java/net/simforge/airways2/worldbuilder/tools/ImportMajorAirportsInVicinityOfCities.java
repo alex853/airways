@@ -1,6 +1,5 @@
 package net.simforge.airways2.worldbuilder.tools;
 
-import net.simforge.airways2.world.DiskStorageStrategy;
 import net.simforge.airways2.world.datamodel.Airport2City;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;

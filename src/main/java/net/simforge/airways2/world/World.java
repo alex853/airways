@@ -10,8 +10,6 @@ import net.simforge.airways2.world.datamodel.*;
 
 import java.io.IOException;
 
-import static com.google.common.base.Preconditions.checkState;
-
 public class World {
     private final WorldStorageStrategy worldStorageStrategy;
 
@@ -34,22 +32,20 @@ public class World {
             .build();
 
     private static final int worldTimeStep = 10;
-    private static final int saveWorldPeriod = Time.ONE_MINUTE;
-    private int lastSavedAtWorldTime;
 
     private World(final WorldStorageStrategy worldStorageStrategy) {
         this.worldStorageStrategy = worldStorageStrategy;
     }
 
-    public static World create(final WorldStorageStrategy worldStorageStrategy, int startWorldTime) {
-        final World world = new World(worldStorageStrategy);
+    public static World create(final WorldStorageStrategy strategy, int startWorldTime) {
+        final World world = new World(strategy);
         world.setWorldTime(startWorldTime);
         return world;
     }
 
-    public static World load(final WorldStorageStrategy worldStorageStrategy) throws IOException {
-        final World world = new World(worldStorageStrategy);
-        worldStorageStrategy.load(rootPath -> {
+    public static World load(final WorldStorageStrategy strategy) throws IOException {
+        final World world = new World(strategy);
+        strategy.load(rootPath -> {
             world.strings.loadIfExists(rootPath);
 
             world.events.loadIfExists(rootPath);
@@ -65,8 +61,6 @@ public class World {
 
             world.worldTime.loadIfExists(rootPath);
         });
-
-        world.lastSavedAtWorldTime = world.readWorldTime();
 
         return world;
     }
@@ -126,47 +120,34 @@ public class World {
         return flightMissions;
     }
 
-    public boolean process() throws IOException {
-        final int processedWorldTime = readWorldTime();
-//        final int actualRealWorldTime = Time.now();
-        final int actualRealWorldTime = processedWorldTime + 10;
-
-        final int diff = actualRealWorldTime - processedWorldTime;
-        checkState(diff >= 0);
-
+    public boolean process(final int expectedWorldTime) {
+        final int processedWorldTime = getWorldTime();
         final int newWorldTime = processedWorldTime + worldTimeStep;
 
-        if (newWorldTime > actualRealWorldTime) {
+        if (expectedWorldTime < newWorldTime) {
             return false; // do not process world more frequent than 'worldTimeStep' setting
         }
 
         RandomFlightMissionGenerator.process(this, newWorldTime);
         FlightMissionProcessor.process(this, newWorldTime);
 
-        writeWorldTime(newWorldTime);
+        setWorldTime(newWorldTime);
 
-        if (lastSavedAtWorldTime + saveWorldPeriod < newWorldTime) {
-            save();
-            lastSavedAtWorldTime = newWorldTime;
+        return !(expectedWorldTime > newWorldTime);
+    }
+
+    public int getWorldTime() {
+        if (worldTime.getCount() == 1) {
+            return worldTime.getAsInt(1, worldTime.getDataField(0));
+        } else {
+            throw new IllegalStateException("unable to read world time");
         }
-
-        return true;
     }
 
-    private int readWorldTime() {
-        return worldTime.getCount() == 1
-                ? worldTime.getAsInt(1, worldTime.getDataField(0))
-                : Time.now();
-    }
-
-    private void writeWorldTime(final int newWorldTime) {
+    public void setWorldTime(int newWorldTime) {
         if (worldTime.getCount() == 0) {
             worldTime.addRecord();
         }
         worldTime.set(1, worldTime.getDataField(0), newWorldTime);
-    }
-
-    public void setWorldTime(int newWorldTime) {
-        writeWorldTime(newWorldTime);
     }
 }

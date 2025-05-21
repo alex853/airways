@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Strings;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,6 +45,10 @@ public class Countries {
     public Optional<Country> byCode(final String code) {
         checkNotNull(code, "code should not be null");
         return storage.findFirst(c -> code.equals(c.getCode()));
+    }
+
+    public Collection<Country> all() {
+        return storage.all();
     }
 
     public Country create(final String code,

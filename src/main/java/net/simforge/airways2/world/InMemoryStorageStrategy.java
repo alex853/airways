@@ -4,12 +4,12 @@ import java.io.IOException;
 
 public class InMemoryStorageStrategy implements WorldStorageStrategy {
     @Override
-    public void load(WorldIOOperation loadingOps) throws IOException {
-        throw new UnsupportedOperationException();
+    public void load(final WorldIOOperation loadingOps) throws IOException {
+        loadingOps.perform(null);
     }
 
     @Override
-    public void save(WorldIOOperation savingOps) throws IOException {
-        throw new UnsupportedOperationException();
+    public void save(final WorldIOOperation savingOps) {
+        // noop
     }
 }

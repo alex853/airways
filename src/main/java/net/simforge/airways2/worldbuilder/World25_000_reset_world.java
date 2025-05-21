@@ -23,7 +23,10 @@ public class World25_000_reset_world {
 
     public static void removeWorld() throws IOException {
         final DiskStorageStrategy strategy = new DiskStorageStrategy(World25.name);
-        final Path rootPath = strategy.getRootPath();
+        final Path rootPath = strategy.getWorldPath();
+        if (!Files.exists(rootPath)) {
+            return;
+        }
         try (final Stream<Path> paths = Files.walk(rootPath)) {
             paths.sorted(Comparator.reverseOrder()).forEach(path -> {
                 try {

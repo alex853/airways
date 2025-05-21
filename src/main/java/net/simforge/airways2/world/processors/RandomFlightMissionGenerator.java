@@ -65,7 +65,11 @@ public class RandomFlightMissionGenerator {
             world.events().sendEvent(
                     PilotOnDuty,
                     mission.getId(),
-                    (int) flightTimeline.getStart().getScheduledTime().toEpochSecond(ZoneOffset.UTC)); // todo ak1 Time.fromLtd?
+                    fromLdt(flightTimeline.getStart().getScheduledTime())); // todo ak1 Time.fromLtd?
         });
+    }
+
+    public static int fromLdt(final LocalDateTime time) {
+        return (int) time.toEpochSecond(ZoneOffset.UTC);
     }
 }
