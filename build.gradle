@@ -8,7 +8,7 @@ group = 'net.simforge'
 version = repositoryVersion
 
 java {
-    sourceCompatibility = '1.8'
+    sourceCompatibility = '17'
 }
 
 repositories {
