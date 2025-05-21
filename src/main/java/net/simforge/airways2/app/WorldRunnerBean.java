@@ -18,7 +18,7 @@ import java.time.ZoneOffset;
 public class WorldRunnerBean implements DisposableBean {
     private static final Logger logger = LoggerFactory.getLogger(WorldRunnerBean.class.getName());
 
-    private static final int saveWorldPeriod = Time.ONE_MINUTE;
+    private static final int saveWorldPeriod = Time.ONE_HOUR;
 
     private volatile Status status = Status.Startup;
     private Thread thread;
