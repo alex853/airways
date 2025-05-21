@@ -1,18 +1,18 @@
 package net.simforge.airways2.worldbuilder.tools;
 
-import net.simforge.airways2.world.DiskStorageStrategy;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
+import net.simforge.commons.io.IOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ImportCities {
@@ -23,7 +23,10 @@ public class ImportCities {
         final Countries countries = world.countries();
         final Cities cities = world.cities();
 
-        final Csv csv = Csv.load(new File("./data/city-population.csv"));
+        final String content = IOHelper.readInputStream(
+                Objects.requireNonNull(
+                        ImportCities.class.getResourceAsStream("/city-population.csv")));
+        final Csv csv = Csv.fromContent(content);
 
         final List<Filter> filters = toFilters(args);
 

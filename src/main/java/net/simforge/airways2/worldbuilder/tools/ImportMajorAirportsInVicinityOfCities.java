@@ -6,12 +6,13 @@ import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
+import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ImportMajorAirportsInVicinityOfCities {
@@ -23,7 +24,10 @@ public class ImportMajorAirportsInVicinityOfCities {
         final Airports airports = world.airports();
         final Airport2City airport2city = world.airport2city();
 
-        final Csv airportsCsv = Csv.load(new File("./data/icaodata.csv"));
+        final String content = IOHelper.readInputStream(
+                Objects.requireNonNull(
+                        ImportCities.class.getResourceAsStream("/icaodata.csv")));
+        final Csv airportsCsv = Csv.fromContent(content);
         for (int i = 0; i < airportsCsv.rowCount(); i++) {
             String icao = airportsCsv.value(i, 0);
             String latStr = airportsCsv.value(i, 1);
