@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/geo")
@@ -30,7 +31,8 @@ public class GeoController {
                 .map(c -> new CountryDto(
                         c.getId(),
                         c.getCode(),
-                        c.getName())).toList());
+                        c.getName()))
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/cities")
@@ -44,7 +46,8 @@ public class GeoController {
                         c.getName(),
                         c.getPopulation(),
                         c.getLatitude(),
-                        c.getLongitude())).toList());
+                        c.getLongitude()))
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/airports")
