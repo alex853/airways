@@ -22,7 +22,7 @@ public class Application {
         final String className = "net.simforge.airways2.worldbuilder." + stepName;
         final Class stepClass = Class.forName(className);
         final Method main = stepClass.getMethod("main", String[].class);
-        main.invoke(null, new String[0]);
+        main.invoke(null, new Object[] { new String[0] });
     }
 
 }
