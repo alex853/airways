@@ -1,8 +1,10 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.app.dto.AirportDto;
 import net.simforge.airways2.app.dto.CityDto;
 import net.simforge.airways2.app.dto.CountryDto;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +34,7 @@ public class GeoController {
                         c.getId(),
                         c.getCode(),
                         c.getName()))
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     @GetMapping("/cities")
@@ -47,11 +49,21 @@ public class GeoController {
                         c.getPopulation(),
                         c.getLatitude(),
                         c.getLongitude()))
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     @GetMapping("/airports")
-    public ResponseEntity<List<CityDto>> getAirports() {
-        return null;
+    public ResponseEntity<List<AirportDto>> getAirports() {
+        final World world = worldBean.world();
+        final Collection<Airports.Airport> airports = world.airports().all();
+        return ResponseEntity.ok(airports.stream()
+                .map(a -> new AirportDto(
+                        a.getId(),
+                        a.getLatitude(),
+                        a.getLongitude(),
+                        a.getIata(),
+                        a.getIcao(),
+                        a.getName()))
+                .toList());
     }
 }
