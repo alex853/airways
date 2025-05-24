@@ -120,7 +120,7 @@ public class EventLog {
         }
 
         public ObjectType getObject2Type() {
-            return ObjectType.byCode(getObject1TypeRaw());
+            return ObjectType.byCode(getObject2TypeRaw());
         }
 
         public int getObject2Id() {
@@ -132,7 +132,7 @@ public class EventLog {
         }
 
         public ObjectType getObject3Type() {
-            return ObjectType.byCode(getObject1TypeRaw());
+            return ObjectType.byCode(getObject3TypeRaw());
         }
 
         public int getObject3Id() {
@@ -144,7 +144,7 @@ public class EventLog {
         }
 
         public ObjectType getObject4Type() {
-            return ObjectType.byCode(getObject1TypeRaw());
+            return ObjectType.byCode(getObject4TypeRaw());
         }
 
         public int getObject4Id() {
