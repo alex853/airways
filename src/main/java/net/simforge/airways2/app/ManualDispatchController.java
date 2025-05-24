@@ -2,20 +2,36 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.AircraftPerformanceData;
+import net.simforge.airways2.world.computations.AircraftPerformanceDataHelper;
+import net.simforge.airways2.world.computations.FlightTimeline;
+import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
+
+import static net.simforge.airways2.world.Time.fromLdt;
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
 @RestController
 @RequestMapping("/manual-dispatch")
 @CrossOrigin
 public class ManualDispatchController {
+    private static final Logger log = LoggerFactory.getLogger(ManualDispatchController.class);
+
     @Autowired
     private WorldRunnerBean worldBean;
 
@@ -36,8 +52,46 @@ public class ManualDispatchController {
     }
 
     @PostMapping("/dispatch-flight")
-    public ResponseEntity<?> dispatchFlight() {
-        throw new UnsupportedOperationException();
+    public void dispatchFlight(final int aircraftId, final String destinationAirportIcao, final String timeMode) {
+        final World world = worldBean.world();
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+        if (!Aircrafts.isIdleAndParkedAtAirport(aircraft)) {
+            throw new IllegalArgumentException();
+        }
+
+        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
+        final Airports.Airport destinationAirport = world.airports().byIcao(destinationAirportIcao).orElseThrow();
+
+        final int departureTime = switch (timeMode) {
+            case "asap" -> world.getWorldTime();
+            case "in-1-hour-from-now" -> world.getWorldTime() + Time.ONE_HOUR;
+            case "in-3-hour-from-now" -> world.getWorldTime() + 3*Time.ONE_HOUR;
+            case "in-6-hour-from-now" -> world.getWorldTime() + 6*Time.ONE_HOUR;
+            default -> throw new IllegalArgumentException();
+        };
+
+        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
+        final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
+        final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
+        flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
+        final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
+
+        final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
+                aircraft,
+                locationAirport,
+                destinationAirport,
+                departureTime,
+                arrivalTime);
+
+        world.eventsToProcess().sendEvent(
+                PilotOnDuty,
+                mission.getId(),
+                fromLdt(flightTimeline.getStart().getScheduledTime()));
+
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
+        log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
     }
 
     @Data

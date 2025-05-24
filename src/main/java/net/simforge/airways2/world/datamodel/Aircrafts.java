@@ -59,9 +59,7 @@ public class Aircrafts {
 
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
         return all().stream()
-                .filter(aircraft -> (aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                        || aircraft.getOperationalStatusRaw() == 0)  // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
-                        && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport)
+                .filter(Aircrafts::isIdleAndParkedAtAirport)
                 .toList();
     }
 
@@ -215,5 +213,11 @@ public class Aircrafts {
                     .findFirst()
                     .orElse(null);
         }
+    }
+
+    public static boolean isIdleAndParkedAtAirport(final Aircraft aircraft) {
+        return (aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
+                || aircraft.getOperationalStatusRaw() == 0)  // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
+            && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport;
     }
 }

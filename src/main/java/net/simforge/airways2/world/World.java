@@ -102,6 +102,10 @@ public class World {
         eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), object4);
     }
 
+    public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft) {
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), null);
+    }
+
     public Countries countries() {
         return countries;
     }

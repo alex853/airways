@@ -21,4 +21,8 @@ public class Time {
                 ? LocalDateTime.ofEpochSecond(time, 0, ZoneOffset.UTC)
                 : null;
     }
+
+    public static int fromLdt(final LocalDateTime time) {
+        return (int) time.toEpochSecond(ZoneOffset.UTC);
+    }
 }

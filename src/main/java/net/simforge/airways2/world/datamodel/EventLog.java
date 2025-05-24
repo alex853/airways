@@ -153,13 +153,16 @@ public class EventLog {
     }
 
     public enum EventType {
+        FlightDispatchedManually(200),
         FlightStarted(210),
         FlightFinished(211),
 
         AircraftDepartedFromGate(310),
         AircraftTakeoff(311),
         AircraftLanding(312),
-        AircraftArrivedToGate(313);
+        AircraftArrivedToGate(313),
+
+        ;
 
         private final int code;
 

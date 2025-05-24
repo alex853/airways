@@ -33,31 +33,28 @@ public class RandomFlightMissionGenerator {
                     .filter(airport -> airport.getId() != locationAirportId
                             && Geo.distance(locationAirport.getCoords(), airport.getCoords()) >= 100)
                     .toList();
-            final Airports.Airport destination = possibleDestinations.get((int) (possibleDestinations.size() * Math.random()));
+            final Airports.Airport destinationAirport = possibleDestinations.get((int) (possibleDestinations.size() * Math.random()));
 
             final int departureTime = worldTime + Time.ONE_HOUR;
 
             final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
-            final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destination.getCoords(), performanceData);
+            final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
             final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak1 Time.fromLtd?
-            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak1 Time.fromLtd?
+            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
+            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
 
             final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
                     aircraft,
                     locationAirport,
-                    destination,
+                    destinationAirport,
                     departureTime,
                     arrivalTime);
 
             world.eventsToProcess().sendEvent(
                     PilotOnDuty,
                     mission.getId(),
-                    fromLdt(flightTimeline.getStart().getScheduledTime())); // todo ak1 Time.fromLtd?
+                    Time.fromLdt(flightTimeline.getStart().getScheduledTime()));
         });
     }
 
-    public static int fromLdt(final LocalDateTime time) {
-        return (int) time.toEpochSecond(ZoneOffset.UTC);
-    }
 }
