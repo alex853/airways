@@ -2,56 +2,60 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.AircraftPerformanceData;
-import net.simforge.airways2.world.computations.AircraftPerformanceDataHelper;
-import net.simforge.airways2.world.computations.FlightTimeline;
-import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
-import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
-
 public class RandomFlightMissionGenerator {
+    private static final Logger log = LoggerFactory.getLogger(RandomFlightMissionGenerator.class);
+    private static long lastExecution;
+
     public static void process(final World world, final int worldTime) {
+        if (LocalDateTime.now().getMinute() != 0) {
+            return;
+        }
+        if (System.currentTimeMillis() - lastExecution < 3600000) {
+            return;
+        }
+        lastExecution = System.currentTimeMillis();
+
         final Collection<Aircrafts.Aircraft> idleAircraft = world.aircrafts().allIdleAndParkedAtAirport();
 
         final List<Aircrafts.Aircraft> aircraftWithoutMission = idleAircraft.stream()
                 .filter(aircraft -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft)))
                 .toList();
 
-        aircraftWithoutMission.forEach(aircraft -> {
-            final int locationAirportId = aircraft.getLocationAirportId();
-            final Airports.Airport locationAirport = world.airports().byId(locationAirportId).orElseThrow();
-            final List<Airports.Airport> possibleDestinations = world.airports().all().stream()
-                    .filter(airport -> airport.getId() != locationAirportId
-                            && Geo.distance(locationAirport.getCoords(), airport.getCoords()) >= 100)
-                    .toList();
-            final Airports.Airport destinationAirport = possibleDestinations.get((int) (possibleDestinations.size() * Math.random()));
+        if (aircraftWithoutMission.isEmpty()) {
+            log.info("there is no aircraft for random mission generation");
+            return;
+        }
 
-            final int departureTime = worldTime + Time.ONE_HOUR;
+        final Aircrafts.Aircraft aircraft = aircraftWithoutMission.get(0);
+        final Airports.Airport destinationAirport = selectRandomDestination(world, aircraft);
+        final int departureTime = worldTime + Time.ONE_HOUR;
 
-            final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
-            final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
-            final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-            flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));
-            final int arrivalTime = Time.fromLdt(flightTimeline.getBlocksOn().getScheduledTime());
+        final FlightMissions.Mission mission = FlightMissionHelper.scheduleFlightMission(world, aircraft, destinationAirport, departureTime);
 
-            final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
-                    aircraft,
-                    locationAirport,
-                    destinationAirport,
-                    departureTime,
-                    arrivalTime);
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        world.log(EventLog.EventType.FlightDispatchedViaRandom, EventLog.pilotId(pilot), mission, aircraft);
+        log.info("Pilot {}, flight {} - flight dispatched via random, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
+    }
 
-            world.eventsToProcess().sendEvent(
-                    PilotOnDuty,
-                    mission.getId(),
-                    Time.fromLdt(flightTimeline.getStart().getScheduledTime()));
-        });
+    private static Airports.Airport selectRandomDestination(World world, Aircrafts.Aircraft aircraft) {
+        final int locationAirportId = aircraft.getLocationAirportId();
+        final Airports.Airport locationAirport = world.airports().byId(locationAirportId).orElseThrow();
+        final List<Airports.Airport> possibleDestinations = world.airports().all().stream()
+                .filter(airport -> airport.getId() != locationAirportId
+                        && Geo.distance(locationAirport.getCoords(), airport.getCoords()) >= 100)
+                .toList();
+        return possibleDestinations.get((int) (possibleDestinations.size() * Math.random()));
     }
 }

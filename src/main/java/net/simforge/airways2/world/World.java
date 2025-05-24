@@ -6,6 +6,7 @@ import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
 
 import java.io.IOException;
 
@@ -142,8 +143,8 @@ public class World {
             return false; // do not process world more frequent than 'worldTimeStep' setting
         }
 
-// todo ak2        RandomFlightMissionGenerator.process(this, newWorldTime);
         FlightMissionProcessor.process(this, newWorldTime);
+        RandomFlightMissionGenerator.process(this, newWorldTime);
 
         setWorldTime(newWorldTime);
 

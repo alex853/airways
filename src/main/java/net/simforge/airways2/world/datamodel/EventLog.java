@@ -153,7 +153,8 @@ public class EventLog {
     }
 
     public enum EventType {
-        FlightDispatchedManually(200),
+        FlightDispatchedViaRandom(200),
+        FlightDispatchedRandomly(201),
         FlightStarted(210),
         FlightFinished(211),
 

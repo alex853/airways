@@ -4,14 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.AircraftPerformanceData;
-import net.simforge.airways2.world.computations.AircraftPerformanceDataHelper;
-import net.simforge.airways2.world.computations.FlightTimeline;
-import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +17,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.List;
-
-import static net.simforge.airways2.world.Time.fromLdt;
-import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
 @RestController
 @RequestMapping("/manual-dispatch")
@@ -61,7 +55,6 @@ public class ManualDispatchController {
             throw new IllegalArgumentException();
         }
 
-        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
         final Airports.Airport destinationAirport = world.airports().byIcao(destinationAirportIcao).orElseThrow();
 
         final int departureTime = switch (departureTimeMode) {
@@ -72,26 +65,10 @@ public class ManualDispatchController {
             default -> throw new IllegalArgumentException();
         };
 
-        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
-        final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
-        final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-        flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));
-        final int arrivalTime = Time.fromLdt(flightTimeline.getBlocksOn().getScheduledTime());
-
-        final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
-                aircraft,
-                locationAirport,
-                destinationAirport,
-                departureTime,
-                arrivalTime);
-
-        world.eventsToProcess().sendEvent(
-                PilotOnDuty,
-                mission.getId(),
-                fromLdt(flightTimeline.getStart().getScheduledTime()));
+        final FlightMissions.Mission mission = FlightMissionHelper.scheduleFlightMission(world, aircraft, destinationAirport, departureTime);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
+        world.log(EventLog.EventType.FlightDispatchedViaRandom, EventLog.pilotId(pilot), mission, aircraft);
         log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
     }
 
