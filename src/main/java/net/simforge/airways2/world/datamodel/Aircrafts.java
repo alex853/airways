@@ -199,7 +199,9 @@ public class Aircrafts {
 
     public enum LocationStatus {
         ParkedAtAirport(0),
-        Flying(1);
+        Flying(1),
+        TaxiingOut(2),
+        TaxiingIn(3);
 
         private final int code;
 

@@ -34,7 +34,7 @@ public class SingleFlightTest {
             world.process(world.getWorldTime() + 10);
         }
 
-        // todo ak1 check statuses and locations
+        // todo ak2 check statuses and locations
         System.out.println();
     }
 }

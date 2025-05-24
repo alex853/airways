@@ -33,7 +33,7 @@ public class FlightMissionProcessor {
             mission.setHeartbeatTime(worldTime + Time.TICK);
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
             aircraft.setFlightMissionId(mission.getId());
-            // todo ak1 pilot/pilots/cabin crew - set status
+            // todo ak2 pilot/pilots/cabin crew - set status
             pilotOnDutyEvent.get().setProcessedStatus();
 
             int pilot = 0; // todo ak2 remove it when pilot is introduced
@@ -97,7 +97,7 @@ public class FlightMissionProcessor {
 
         // todo ak2   (was not implemented in #old) pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
-        // todo ak2 aircraft.setStatus(Aircraft.Status.TaxiingOut);
+        aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced
         world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
@@ -172,14 +172,14 @@ public class FlightMissionProcessor {
         mission.setStatus(FlightMissions.Status.Arrival);
         mission.setActualLandingTime(worldTime);
 
-        // todo ak1 scheduling.fireEvent(session, Landing.class, flight);
+        // todo ak2 scheduling.fireEvent(session, Landing.class, flight);
 
 // todo ak2        person.setLocationAirport(flight.getToAirport());
 // todo ak2               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
         final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
-        aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+        aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingIn);
         aircraft.setLocationAirportId(locationAirport.getId());
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
@@ -194,6 +194,13 @@ public class FlightMissionProcessor {
         mission.setActualArrivalTime(worldTime);
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+        final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+
+        aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+        aircraft.setLocationAirportId(locationAirport.getId());
+        aircraft.setLocationLatitude(locationAirport.getLatitude());
+        aircraft.setLocationLongitude(locationAirport.getLongitude());
 
         // todo ak2 scheduling.fireEvent(session, BlocksOn.class, flight);
 
