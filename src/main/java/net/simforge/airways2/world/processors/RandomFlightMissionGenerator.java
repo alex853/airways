@@ -14,28 +14,18 @@ import net.simforge.commons.misc.Geo;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
 public class RandomFlightMissionGenerator {
     public static void process(final World world, final int worldTime) {
-        final List<Aircrafts.Aircraft> idleAircraft = world.aircrafts().all().stream()
-                .filter(aircraft -> aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                        && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport)
-                .toList();
+        final Collection<Aircrafts.Aircraft> idleAircraft = world.aircrafts().allIdleAndParkedAtAirport();
 
         final List<Aircrafts.Aircraft> aircraftWithoutMission = idleAircraft.stream()
-                .filter(aircraft -> {
-                    final List<FlightMissions.Mission> allMissions = new ArrayList<>(world.flightMissions().allForAircraft(aircraft));
-                    allMissions.sort(FlightMissions.sortByDepartureTimeFromFutureToPast);
-                    if (allMissions.isEmpty()) {
-                        return true;
-                    }
-                    final FlightMissions.Mission lastMission = allMissions.get(0);
-                    return lastMission.getStatus() == FlightMissions.Status.Finished
-                        || lastMission.getStatus() == FlightMissions.Status.Cancelled;
-                })
+                .filter(aircraft -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft)))
                 .toList();
 
         aircraftWithoutMission.forEach(aircraft -> {

@@ -72,6 +72,10 @@ public class Airports {
         return storage.all();
     }
 
+    public String getIcao(final int airportId) {
+        return byId(airportId).orElseThrow().getIcao();
+    }
+
     public class Airport {
         private final int id;
 

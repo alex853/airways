@@ -37,6 +37,10 @@ public class FlightMissionProcessor {
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
             // todo ak1 pilot/pilots/cabin crew - set status
             pilotOnDutyEvent.get().setProcessedStatus();
+
+            int pilot = 0; // todo ak2 remove it when pilot is introduced
+            // todo ak0 add event-log and logging
+            log.info("Pilot {}, flight {} - started, aircraft {} is activated, flight in Preflight status", pilot, mission.getId(), aircraft.getRegNo());
         }
 
         while (true) {
@@ -73,7 +77,7 @@ public class FlightMissionProcessor {
                         finishFlight(world, worldTime, mission.get());
                     }
                 }
-                default -> throw new IllegalStateException("what to do here???");
+                default -> throw new IllegalStateException("what to do here???"); // todo ak2 ???
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Finished
@@ -89,16 +93,17 @@ public class FlightMissionProcessor {
         mission.setStatus(FlightMissions.Status.Departure);
         mission.setActualDepartureTime(worldTime);
 
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
         // todo ak2 scheduling.fireEvent(session, BlocksOff.class, flight);
 
         // todo ak2   (was not implemented in #old) pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
         // todo ak2 aircraft.setStatus(Aircraft.Status.TaxiingOut);
 
-        // todo ak1 EventLog.info(session, log, pilot, "Aircraft departed from gate", flight, aircraft, flight.getFromAirport());
-
-        // todo ak1 log.info("Pilot {}, flight {} - aircraft {} departed from gate at {}", pilot, flight, aircraft, flight.getFromAirport());
-
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        // todo ak0 EventLog.info(session, log, pilot, "Aircraft departed from gate", flight, aircraft, flight.getFromAirport());
+        log.info("Pilot {}, flight {} - aircraft {} departed from gate at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     private static void takeoff(final World world, final int worldTime, final FlightMissions.Mission mission) {
@@ -122,17 +127,17 @@ public class FlightMissionProcessor {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        // todo ak1 EventLog.info(session, log, pilot, "Takeoff", flight, aircraft, flight.getFromAirport());
-
-        // todo ak1 log.info("Pilot {}, flight {} - aircraft {} took off at {}", pilot, flight, aircraft, flight.getFromAirport());
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        // todo ak0 EventLog.info(session, log, pilot, "Takeoff", flight, aircraft, flight.getFromAirport());
+        log.info("Pilot {}, flight {} - aircraft {} took off at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     private static void fly(final World world, final int worldTime, final FlightMissions.Mission mission) {
         final Airports.Airport fromAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport toAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
-        // todo ak1 AircraftType aircraftType = flight.getAircraftType();
-        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData(); // todo ak1
+        // todo ak2 AircraftType aircraftType = flight.getAircraftType();
+        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData(); // todo ak2
         final SimpleFlight simpleFlight = SimpleFlight.forRoute(
                 fromAirport.getCoords(),
                 toAirport.getCoords(),
@@ -181,22 +186,24 @@ public class FlightMissionProcessor {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        // todo ak1 EventLog.info(session, log, pilot, "Landing", flight, aircraft, flight.getToAirport());
-
-        // todo ak1 log.info("Pilot {}, flight {} - aircraft {} landed at {}", pilot, flight, aircraft, flight.getToAirport());
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        // todo ak0 EventLog.info(session, log, pilot, "Landing", flight, aircraft, flight.getToAirport());
+        log.info("Pilot {}, flight {} - aircraft {} landed at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
     }
 
     private static void blocksOn(final World world, final int worldTime, final FlightMissions.Mission mission) {
         mission.setStatus(FlightMissions.Status.Postflight);
         mission.setActualArrivalTime(worldTime);
 
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
         // todo ak2 scheduling.fireEvent(session, BlocksOn.class, flight);
 
 // todo ak2               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
-        // todo ak1 EventLog.info(session, log, pilot, "Aircraft arrived to gate", flight, aircraft, flight.getToAirport());
-
-        // todo ak1 log.info("Pilot {}, flight {} - aircraft {} arrived to gate", pilot, flight, aircraft);
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        // todo ak0 EventLog.info(session, log, pilot, "Aircraft arrived to gate", flight, aircraft, flight.getToAirport());
+        log.info("Pilot {}, flight {} - aircraft {} arrived to gate at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
     }
 
     private static void finishFlight(final World world, final int worldTime, final FlightMissions.Mission mission) {
@@ -212,8 +219,8 @@ public class FlightMissionProcessor {
 
         // todo ak2 aircraftAssignment.setStatus(AircraftAssignment.Status.Done);
 
-        // todo ak1 EventLog.info(session, log, pilot, "Flight finished", flight, aircraft, flight.getToAirport());
-
-        // todo ak1 log.info("Pilot {}, flight {} - flight finished", pilot, flight);
+        int pilot = 0; // todo ak2 remove it when pilot is introduced
+        // todo ak0 EventLog.info(session, log, pilot, "Flight finished", flight, aircraft, flight.getToAirport());
+        log.info("Pilot {}, flight {} - flight finished", pilot, mission.getId());
     }
 }

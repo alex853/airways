@@ -64,6 +64,16 @@ public class FlightMissions {
         return all().stream().filter(m -> m.getAircraftId() == aircraft.getId()).toList();
     }
 
+    public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
+        final List<FlightMissions.Mission> allMissions = allForAircraft(aircraft);
+        allMissions.sort(FlightMissions.sortByDepartureTimeFromFutureToPast);
+        if (allMissions.isEmpty()) {
+            return Optional.empty();
+        } else {
+            return Optional.of(allMissions.get(0));
+        }
+    }
+
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
         return storage.findFirst(mission -> mission.getHeartbeatTime() <= worldTime
                 && mission.getHeartbeatTime() != 0);
@@ -204,4 +214,10 @@ public class FlightMissions {
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureTime() - m1.getPlannedDepartureTime();
+
+    public static boolean isFinishedOrCancelledOrEmpty(final Optional<Mission> mission) {
+        return mission.isEmpty()
+                || mission.get().getStatus() == FlightMissions.Status.Finished
+                || mission.get().getStatus() == FlightMissions.Status.Cancelled;
+    }
 }

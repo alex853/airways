@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,9 +23,8 @@ public class ManualDispatchController {
     public ResponseEntity<List<AircraftDto>> getAvailableAircraft() {
         final World world = worldBean.world();
         final Collection<Aircrafts.Aircraft> availableAircraft =
-                world.aircrafts().all().stream()
-                        .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                                || a.getOperationalStatusRaw() == 0) // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
+                world.aircrafts().allIdleAndParkedAtAirport().stream()
+                        .filter(a -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
                         .toList();
         return ResponseEntity.ok(availableAircraft.stream()
                 .map(a -> new AircraftDto(

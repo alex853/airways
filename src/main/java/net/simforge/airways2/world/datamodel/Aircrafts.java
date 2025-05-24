@@ -57,6 +57,14 @@ public class Aircrafts {
         return storage.all();
     }
 
+    public Collection<Aircraft> allIdleAndParkedAtAirport() {
+        return all().stream()
+                .filter(aircraft -> (aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
+                        || aircraft.getOperationalStatusRaw() == 0)  // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
+                        && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport)
+                .toList();
+    }
+
     public Optional<Aircraft> byId(final int id) {
         return storage.byId(id);
     }
