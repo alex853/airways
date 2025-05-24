@@ -68,7 +68,7 @@ public class ManualDispatchController {
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleFlightMission(world, aircraft, destinationAirport, departureTime);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightDispatchedViaRandom, EventLog.pilotId(pilot), mission, aircraft);
+        world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
         log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
     }
 
