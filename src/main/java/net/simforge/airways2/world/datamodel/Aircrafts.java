@@ -118,6 +118,10 @@ public class Aircrafts {
             return storage.getAsInt(id, flightMissionIdField);
         }
 
+        public void setFlightMissionId(final int flightMissionId) {
+            storage.set(id, flightMissionIdField, flightMissionId);
+        }
+
         public OperationalStatus getOperationalStatus() {
             return OperationalStatus.byCode(getOperationalStatusRaw());
         }

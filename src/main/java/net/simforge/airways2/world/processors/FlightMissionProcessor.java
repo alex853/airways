@@ -32,6 +32,7 @@ public class FlightMissionProcessor {
             mission.setStatus(FlightMissions.Status.Preflight);
             mission.setHeartbeatTime(worldTime + Time.TICK);
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
+            aircraft.setFlightMissionId(mission.getId());
             // todo ak1 pilot/pilots/cabin crew - set status
             pilotOnDutyEvent.get().setProcessedStatus();
 
@@ -211,6 +212,7 @@ public class FlightMissionProcessor {
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+        aircraft.setFlightMissionId(0);
 
         // todo ak2 pilotAssignment.setStatus(PilotAssignment.Status.Done);
 
