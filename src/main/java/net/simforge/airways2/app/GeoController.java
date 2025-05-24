@@ -1,8 +1,7 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.app.dto.AirportDto;
-import net.simforge.airways2.app.dto.CityDto;
-import net.simforge.airways2.app.dto.CountryDto;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
@@ -64,5 +63,35 @@ public class GeoController {
                         a.getIcao(),
                         a.getName()))
                 .toList());
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class CountryDto {
+        private int id;
+        private String code;
+        private String name;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class CityDto {
+        private int id;
+        private int countryId;
+        private String name;
+        private int population;
+        private float latitude;
+        private float longitude;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class AirportDto {
+        private int id;
+        private float latitude;
+        private float longitude;
+        private String iata;
+        private String icao;
+        private String name;
     }
 }
