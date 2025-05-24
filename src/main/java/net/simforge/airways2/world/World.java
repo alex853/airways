@@ -5,7 +5,6 @@ import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 import net.simforge.airways2.world.processors.FlightMissionProcessor;
-import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
 import net.simforge.airways2.world.datamodel.*;
 
 import java.io.IOException;
@@ -15,7 +14,7 @@ public class World {
 
     private final Strings strings = new Strings();
 
-    private final Events events = new Events();
+    private final EventsToProcess eventsToProcess = new EventsToProcess();
 
     private final Countries countries = new Countries(this.strings);
     private final Cities cities = new Cities(this.strings);
@@ -48,7 +47,7 @@ public class World {
         strategy.load(rootPath -> {
             world.strings.loadIfExists(rootPath);
 
-            world.events.loadIfExists(rootPath);
+            world.eventsToProcess.loadIfExists(rootPath);
 
             world.countries.loadIfExists(rootPath);
             world.cities.loadIfExists(rootPath);
@@ -69,7 +68,7 @@ public class World {
         worldStorageStrategy.save(rootPath -> {
             strings.save(rootPath);
 
-            events.save(rootPath);
+            eventsToProcess.save(rootPath);
 
             countries.save(rootPath);
             cities.save(rootPath);
@@ -88,8 +87,8 @@ public class World {
         return strings;
     }
 
-    public Events events() {
-        return events;
+    public EventsToProcess events() {
+        return eventsToProcess;
     }
 
     public Countries countries() {
@@ -128,7 +127,7 @@ public class World {
             return false; // do not process world more frequent than 'worldTimeStep' setting
         }
 
-        RandomFlightMissionGenerator.process(this, newWorldTime);
+// todo ak2        RandomFlightMissionGenerator.process(this, newWorldTime);
         FlightMissionProcessor.process(this, newWorldTime);
 
         setWorldTime(newWorldTime);

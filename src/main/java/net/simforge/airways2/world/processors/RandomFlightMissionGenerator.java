@@ -16,7 +16,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.simforge.airways2.world.datamodel.Events.Type.PilotOnDuty;
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
 public class RandomFlightMissionGenerator {
     public static void process(final World world, final int worldTime) {

@@ -11,9 +11,9 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class Events {
+public class EventsToProcess {
     private final Storage<Event> storage = Storage.<Event>builder()
-            .name("events")
+            .name("events-to-process")
             .withInstantiator(Event::new)
             .withIdOf(DataType.Signed32bit)
             .withDataField(DataField.of(DataType.Unsigned8bit)) // status
@@ -27,7 +27,7 @@ public class Events {
     private final DataField timeField = storage.getDataField(2);
     private final DataField objectIdField = storage.getDataField(3);
 
-    public Events() {
+    public EventsToProcess() {
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {

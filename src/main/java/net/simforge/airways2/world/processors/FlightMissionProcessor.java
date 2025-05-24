@@ -5,7 +5,7 @@ import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.*;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.Events;
+import net.simforge.airways2.world.datamodel.EventsToProcess;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
@@ -15,16 +15,16 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static net.simforge.airways2.world.datamodel.Events.Type.PilotOnDuty;
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
 public class FlightMissionProcessor {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionProcessor.class);
 
     public static void process(final World world, final int worldTime) {
-        final Events events = world.events();
+        final EventsToProcess eventsToProcess = world.events();
 
         while (true) {
-            final Optional<Events.Event> pilotOnDutyEvent = events.findFirstActiveEvent(PilotOnDuty, worldTime);
+            final Optional<EventsToProcess.Event> pilotOnDutyEvent = eventsToProcess.findFirstActiveEvent(PilotOnDuty, worldTime);
             if (pilotOnDutyEvent.isEmpty()) {
                 break;
             }
