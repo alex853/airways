@@ -6,6 +6,8 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.junit.jupiter.api.Test;
 
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
+
 public class SingleFlightTest {
     @Test
     public void test() {
@@ -22,6 +24,10 @@ public class SingleFlightTest {
         final int arrivalTime = departureTime + 2*Time.ONE_HOUR;
         final FlightMissions.Mission mission = world.flightMissions()
                 .createPlannedMission(aircraft, airportA, airportB, departureTime, arrivalTime);
+        world.eventsToProcess().sendEvent(
+                PilotOnDuty,
+                mission.getId(),
+                departureTime);
 
         final int finishTime = startTime + 6*Time.ONE_HOUR;
         while (world.getWorldTime() < finishTime) {

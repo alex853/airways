@@ -49,7 +49,7 @@ public class World {
             world.strings.loadIfExists(rootPath);
 
             world.eventsToProcess.loadIfExists(rootPath);
-// todo ak0            world.eventLog.loadIfExists(rootPath);
+            world.eventLog.loadIfExists(rootPath);
 
             world.countries.loadIfExists(rootPath);
             world.cities.loadIfExists(rootPath);
@@ -71,7 +71,7 @@ public class World {
             strings.save(rootPath);
 
             eventsToProcess.save(rootPath);
-// todo ak0            eventLog.save(rootPath);
+            eventLog.save(rootPath);
 
             countries.save(rootPath);
             cities.save(rootPath);
@@ -96,6 +96,10 @@ public class World {
 
     public EventLog eventLog() {
         return eventLog;
+    }
+
+    public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final EventLog.EventLogId object4) {
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), object4);
     }
 
     public Countries countries() {

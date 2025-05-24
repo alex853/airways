@@ -3,7 +3,6 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
 import java.nio.file.Path;
