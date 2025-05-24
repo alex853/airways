@@ -2,6 +2,7 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,12 @@ public class FlightMissionController {
                         f.getHeartbeatTime(),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        f.getPlannedDepartureTime(),
-                        f.getPlannedArrivalTime(),
-                        f.getActualDepartureTime(),
-                        f.getActualTakeoffTime(),
-                        f.getActualLandingTime(),
-                        f.getActualArrivalTime()))
+                        WebTime.full(f.getPlannedDepartureTime()),
+                        WebTime.full(f.getPlannedArrivalTime()),
+                        WebTime.full(f.getActualDepartureTime()),
+                        WebTime.full(f.getActualTakeoffTime()),
+                        WebTime.full(f.getActualLandingTime()),
+                        WebTime.full(f.getActualArrivalTime())))
                 .toList());
     }
 
@@ -51,11 +52,11 @@ public class FlightMissionController {
         private int heartbeatTime;
         private String departureAirport;
         private String destinationAirport;
-        private int plannedDepartureTime;
-        private int plannedArrivalTime;
-        private int actualDepartureTime;
-        private int actualTakeoffTime;
-        private int actualLandingTime;
-        private int actualArrivalTime;
+        private String plannedDepartureTime;
+        private String plannedArrivalTime;
+        private String actualDepartureTime;
+        private String actualTakeoffTime;
+        private String actualLandingTime;
+        private String actualArrivalTime;
     }
 }
