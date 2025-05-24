@@ -65,7 +65,7 @@ public class FlightMissions {
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
-        final List<FlightMissions.Mission> allMissions = allForAircraft(aircraft);
+        final List<FlightMissions.Mission> allMissions = new ArrayList<>(allForAircraft(aircraft));
         allMissions.sort(FlightMissions.sortByDepartureTimeFromFutureToPast);
         if (allMissions.isEmpty()) {
             return Optional.empty();
