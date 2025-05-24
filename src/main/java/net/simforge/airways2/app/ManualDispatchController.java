@@ -18,8 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 
@@ -52,7 +50,10 @@ public class ManualDispatchController {
     }
 
     @PostMapping("/dispatch-flight")
-    public void dispatchFlight(final int aircraftId, final String destinationAirportIcao, final String timeMode) {
+    public void dispatchFlight(
+            @RequestParam(name = "aircraftId") final int aircraftId,
+            @RequestParam(name = "destinationIcao") final String destinationAirportIcao,
+            @RequestParam(name = "departureTimeMode") final String departureTimeMode) {
         final World world = worldBean.world();
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
@@ -63,19 +64,19 @@ public class ManualDispatchController {
         final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
         final Airports.Airport destinationAirport = world.airports().byIcao(destinationAirportIcao).orElseThrow();
 
-        final int departureTime = switch (timeMode) {
+        final int departureTime = switch (departureTimeMode) {
             case "asap" -> world.getWorldTime();
-            case "in-1-hour-from-now" -> world.getWorldTime() + Time.ONE_HOUR;
-            case "in-3-hour-from-now" -> world.getWorldTime() + 3*Time.ONE_HOUR;
-            case "in-6-hour-from-now" -> world.getWorldTime() + 6*Time.ONE_HOUR;
+            case "in-1-hour" -> world.getWorldTime() + Time.ONE_HOUR;
+            case "in-3-hours" -> world.getWorldTime() + 3*Time.ONE_HOUR;
+            case "in-6-hours" -> world.getWorldTime() + 6*Time.ONE_HOUR;
             default -> throw new IllegalArgumentException();
         };
 
         final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
         final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
         final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-        flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
-        final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
+        flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));
+        final int arrivalTime = Time.fromLdt(flightTimeline.getBlocksOn().getScheduledTime());
 
         final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
                 aircraft,

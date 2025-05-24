@@ -11,8 +11,6 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collection;
 import java.util.List;
 
@@ -40,8 +38,8 @@ public class RandomFlightMissionGenerator {
             final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
             final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
             final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
-            flightTimeline.scheduleDepartureTime(LocalDateTime.ofEpochSecond(departureTime, 0, ZoneOffset.UTC)); // todo ak0 Time.fromLtd?
-            final int arrivalTime = (int) flightTimeline.getBlocksOn().getScheduledTime().toEpochSecond(ZoneOffset.UTC); // todo ak0 Time.fromLtd?
+            flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));
+            final int arrivalTime = Time.fromLdt(flightTimeline.getBlocksOn().getScheduledTime());
 
             final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
                     aircraft,
@@ -56,5 +54,4 @@ public class RandomFlightMissionGenerator {
                     Time.fromLdt(flightTimeline.getStart().getScheduledTime()));
         });
     }
-
 }
