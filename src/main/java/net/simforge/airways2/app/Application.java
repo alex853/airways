@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak0 webapp first steps
 // todo ak2 migrate to simforge.net
 @SpringBootApplication
 public class Application {

@@ -24,7 +24,7 @@ public class ManualDispatchController {
         final Collection<Aircrafts.Aircraft> availableAircraft =
                 world.aircrafts().all().stream()
                         .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                                || a.getOperationalStatusRaw() == 0) // todo ak0 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
+                                || a.getOperationalStatusRaw() == 0) // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
                         .toList();
         return ResponseEntity.ok(availableAircraft.stream()
                 .map(a -> new AircraftDto(

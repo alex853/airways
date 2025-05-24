@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -57,6 +58,10 @@ public class EventsToProcess {
         return storage.findFirst(event -> event.getStatus() == Status.Active
                 && event.getType() == type
                 && event.getTime() <= worldTime);
+    }
+
+    public Collection<Event> all() {
+        return storage.all();
     }
 
     public class Event {
