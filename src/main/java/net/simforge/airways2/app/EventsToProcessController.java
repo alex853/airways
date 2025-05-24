@@ -31,7 +31,7 @@ public class EventsToProcessController {
                         e.getStatusRaw() + " - " + e.getStatus(),
                         e.getTypeRaw() + " - " + e.getType(),
                         e.getObjectId(),
-                        e.getTime()))
+                        WebTime.full(e.getTime())))
                 .toList());
     }
 
@@ -42,6 +42,6 @@ public class EventsToProcessController {
         private String status;
         private String type;
         private int objectId;
-        private int time;
+        private String time;
     }
 }
