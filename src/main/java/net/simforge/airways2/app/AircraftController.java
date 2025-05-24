@@ -31,8 +31,8 @@ public class AircraftController {
                         world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                         a.getRegNo(),
                         a.getFlightMissionId(),
-                        a.getOperationalStatusRaw() + " - " + a.getOperationalStatus().name(),
-                        a.getLocationStatusRaw() + " - " + a.getLocationStatus().name(),
+                        a.getOperationalStatusRaw() + " - " + a.getOperationalStatus(),
+                        a.getLocationStatusRaw() + " - " + a.getLocationStatus(),
                         a.getLocationAirportId() != 0 ? world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao() : null,
                         a.getLocationLatitude(),
                         a.getLocationLongitude()))
