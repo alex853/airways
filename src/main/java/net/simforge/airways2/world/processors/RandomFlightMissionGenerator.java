@@ -13,10 +13,8 @@ import net.simforge.commons.misc.Geo;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
 
@@ -52,7 +50,7 @@ public class RandomFlightMissionGenerator {
                     departureTime,
                     arrivalTime);
 
-            world.events().sendEvent(
+            world.eventsToProcess().sendEvent(
                     PilotOnDuty,
                     mission.getId(),
                     fromLdt(flightTimeline.getStart().getScheduledTime())); // todo ak1 Time.fromLtd?

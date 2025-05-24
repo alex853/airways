@@ -15,6 +15,7 @@ public class World {
     private final Strings strings = new Strings();
 
     private final EventsToProcess eventsToProcess = new EventsToProcess();
+    private final EventLog eventLog = new EventLog();
 
     private final Countries countries = new Countries(this.strings);
     private final Cities cities = new Cities(this.strings);
@@ -48,6 +49,7 @@ public class World {
             world.strings.loadIfExists(rootPath);
 
             world.eventsToProcess.loadIfExists(rootPath);
+// todo ak0            world.eventLog.loadIfExists(rootPath);
 
             world.countries.loadIfExists(rootPath);
             world.cities.loadIfExists(rootPath);
@@ -69,6 +71,7 @@ public class World {
             strings.save(rootPath);
 
             eventsToProcess.save(rootPath);
+// todo ak0            eventLog.save(rootPath);
 
             countries.save(rootPath);
             cities.save(rootPath);
@@ -87,8 +90,12 @@ public class World {
         return strings;
     }
 
-    public EventsToProcess events() {
+    public EventsToProcess eventsToProcess() {
         return eventsToProcess;
+    }
+
+    public EventLog eventLog() {
+        return eventLog;
     }
 
     public Countries countries() {

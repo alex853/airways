@@ -3,8 +3,6 @@ package net.simforge.airways2.app;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.datamodel.EventsToProcess;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +24,7 @@ public class EventsToProcessController {
     @GetMapping("/all")
     public ResponseEntity<List<EventDto>> getAll() {
         final World world = worldBean.world();
-        final Collection<EventsToProcess.Event> aircraft = world.events().all();
+        final Collection<EventsToProcess.Event> aircraft = world.eventsToProcess().all();
         return ResponseEntity.ok(aircraft.stream()
                 .map(e -> new EventDto(
                         e.getId(),
