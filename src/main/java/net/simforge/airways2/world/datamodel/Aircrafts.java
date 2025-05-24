@@ -4,7 +4,6 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
-import net.simforge.airways2.world.World;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -123,11 +122,11 @@ public class Aircrafts {
 
         public void setOperationalStatus(final OperationalStatus operationalStatus) {
             checkNotNull(operationalStatus, "operationalStatus is mandatory");
-            storage.set(id, operationalStatusField, operationalStatus.ordinal());
+            storage.set(id, operationalStatusField, operationalStatus.code());
         }
 
         public LocationStatus getLocationStatus() {
-            return LocationStatus.values()[getLocationStatusRaw()];
+            return LocationStatus.byCode(getLocationStatusRaw());
         }
 
         public int getLocationStatusRaw() {
