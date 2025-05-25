@@ -1,0 +1,92 @@
+package net.simforge.airways2.world.datamodel;
+
+import net.simforge.airways2.storage.DataField;
+import net.simforge.airways2.storage.DataType;
+import net.simforge.airways2.storage.Storage;
+import net.simforge.airways2.storage.Strings;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+public class AircraftOperators {
+    private final Storage<AircraftOperator> storage = Storage.<AircraftOperator>builder()
+            .name("aircraft-operators")
+            .withInstantiator(AircraftOperator::new)
+            .withIdOf(DataType.Unsigned16bit)
+            .withDataField(DataField.of(DataType.PlainString).length(2)) // iata
+            .withDataField(DataField.of(DataType.PlainString).length(3)) // icao
+            .withDataField(DataField.of(DataType.PlainString).length(30)) // name
+            .build();
+
+    private final DataField iataField = storage.getDataField(0);
+    private final DataField icaoField = storage.getDataField(1);
+    private final DataField nameField = storage.getDataField(2);
+
+    public AircraftOperators() {
+    }
+
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
+    }
+
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
+    }
+
+    public Collection<AircraftOperator> all() {
+        return storage.all();
+    }
+
+    public Optional<AircraftOperator> byId(final int id) {
+        return storage.byId(id);
+    }
+
+    public Optional<AircraftOperator> byIata(final String iata) {
+        checkNotNull(iata, "iata is mandatory");
+        return storage.findFirst(t -> t.getIata().equals(iata));
+    }
+
+    public AircraftOperator create(final String iata,
+                       final String icao,
+                       final String name) {
+        checkNotNull(iata);
+        checkNotNull(icao);
+        // todo ak2 iata unique
+        // todo ak2 icao unique
+        checkNotNull(name);
+
+        final int recordId = storage.addRecord();
+        storage.set(recordId, iataField, iata);
+        storage.set(recordId, icaoField, icao);
+        storage.set(recordId, nameField, name);
+        return new AircraftOperator(recordId);
+    }
+
+    public class AircraftOperator {
+        private final int id;
+
+        private AircraftOperator(final int id) {
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public String getIata() {
+            return storage.getAsString(id, iataField);
+        }
+
+        public String getIcao() {
+            return storage.getAsString(id, icaoField);
+        }
+
+        public String getName() {
+            return storage.getAsString(id, nameField);
+        }
+    }
+}

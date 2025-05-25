@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Strings;
 import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
+import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 
 import java.io.IOException;
 
@@ -25,6 +26,7 @@ public class World {
 
     private final AircraftTypes aircraftTypes = new AircraftTypes();
     private final Aircrafts aircrafts = new Aircrafts(this.strings);
+    private final AircraftOperators aircraftOperators = new AircraftOperators();
     private final FlightMissions flightMissions = new FlightMissions();
 
     private final Storage<Object> worldTime = Storage.builder()
@@ -59,6 +61,7 @@ public class World {
 
             world.aircraftTypes.loadIfExists(rootPath);
             world.aircrafts.loadIfExists(rootPath);
+            world.aircraftOperators.loadIfExists(rootPath);
             world.flightMissions.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
@@ -81,14 +84,11 @@ public class World {
 
             aircraftTypes.save(rootPath);
             aircrafts.save(rootPath);
+            aircraftOperators.save(rootPath);
             flightMissions.save(rootPath);
 
             worldTime.save(rootPath);
         });
-    }
-
-    public Strings strings() {
-        return strings;
     }
 
     public EventsToProcess eventsToProcess() {
@@ -131,6 +131,10 @@ public class World {
         return aircrafts;
     }
 
+    public AircraftOperators aircraftOperators() {
+        return aircraftOperators;
+    }
+
     public FlightMissions flightMissions() {
         return flightMissions;
     }
@@ -145,6 +149,7 @@ public class World {
 
         FlightMissionProcessor.process(this, newWorldTime);
         RandomFlightMissionGenerator.process(this, newWorldTime);
+        ScheduledFlightMissionGenerator.process(this, newWorldTime);
 
         setWorldTime(newWorldTime);
 

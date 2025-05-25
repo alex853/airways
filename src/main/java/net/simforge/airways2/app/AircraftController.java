@@ -30,6 +30,7 @@ public class AircraftController {
                         a.getId(),
                         world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                         a.getRegNo(),
+                        a.getAircraftOperatorId(),
                         a.getFlightMissionId(),
                         a.getOperationalStatusRaw() + " - " + a.getOperationalStatus(),
                         a.getLocationStatusRaw() + " - " + a.getLocationStatus(),
@@ -45,6 +46,7 @@ public class AircraftController {
         private int id;
         private String type;
         private String regNo;
+        private int aircraftOperatorId;
         private int flightMissionId;
         private String operationalStatus;
         private String locationStatus;
