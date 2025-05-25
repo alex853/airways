@@ -63,6 +63,12 @@ public class Aircrafts {
                 .toList();
     }
 
+    public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
+        return all().stream()
+                .filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned)
+                .toList();
+    }
+
     public Optional<Aircraft> byId(final int id) {
         return storage.byId(id);
     }
@@ -112,6 +118,10 @@ public class Aircrafts {
 
         public int getAircraftOperatorId() {
             return storage.getAsInt(id, aircraftOperatorIdField);
+        }
+
+        public void setAircraftOperatorId(final int aircraftOperatorId) {
+            storage.set(id, aircraftOperatorIdField, aircraftOperatorId);
         }
 
         public int getFlightMissionId() {
@@ -222,8 +232,13 @@ public class Aircrafts {
     }
 
     public static boolean isIdleAndParkedAtAirport(final Aircraft aircraft) {
-        return (aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                || aircraft.getOperationalStatusRaw() == 0)  // todo ak1 temporal fix due to enum code-vs-ordinal issue, remove it once all aircraft statuses will be reassigned
-            && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport;
+        return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
+                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport;
+    }
+
+    public static boolean isIdleAndParkedAtAirportAndNoOperatorAssigned(final Aircraft aircraft) {
+        return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
+                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                && aircraft.getAircraftOperatorId() == 0;
     }
 }

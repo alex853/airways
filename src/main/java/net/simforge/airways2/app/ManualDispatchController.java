@@ -31,10 +31,9 @@ public class ManualDispatchController {
     public ResponseEntity<List<AircraftDto>> getAvailableAircraft() {
         final World world = worldBean.world();
         final Collection<Aircrafts.Aircraft> availableAircraft =
-                world.aircrafts().allIdleAndParkedAtAirport().stream()
+                world.aircrafts().allIdleAndParkedAtAirportAndNoOperatorAssigned().stream()
                         .filter(a -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
                         .toList();
-        // todo ak1 aw/auw - relates to correct operator?
 
         return ResponseEntity.ok(availableAircraft.stream()
                 .map(a -> new AircraftDto(
@@ -53,13 +52,12 @@ public class ManualDispatchController {
         final World world = worldBean.world();
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-        if (!Aircrafts.isIdleAndParkedAtAirport(aircraft)) {
+        if (!Aircrafts.isIdleAndParkedAtAirportAndNoOperatorAssigned(aircraft)) {
             throw new IllegalArgumentException();
         }
         if (!FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft))) {
             throw new IllegalArgumentException();
         }
-        // todo ak1 aw/auw - relates to correct operator?
 
         final Airports.Airport destinationAirport = world.airports().byIcao(destinationAirportIcao).orElseThrow();
 
