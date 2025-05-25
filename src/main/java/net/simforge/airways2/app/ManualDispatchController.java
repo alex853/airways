@@ -34,6 +34,8 @@ public class ManualDispatchController {
                 world.aircrafts().allIdleAndParkedAtAirport().stream()
                         .filter(a -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
                         .toList();
+        // todo ak1 aw/auw - relates to correct operator?
+
         return ResponseEntity.ok(availableAircraft.stream()
                 .map(a -> new AircraftDto(
                         a.getId(),
@@ -54,6 +56,10 @@ public class ManualDispatchController {
         if (!Aircrafts.isIdleAndParkedAtAirport(aircraft)) {
             throw new IllegalArgumentException();
         }
+        if (!FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft))) {
+            throw new IllegalArgumentException();
+        }
+        // todo ak1 aw/auw - relates to correct operator?
 
         final Airports.Airport destinationAirport = world.airports().byIcao(destinationAirportIcao).orElseThrow();
 
