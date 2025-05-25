@@ -26,6 +26,8 @@ public class FlightMissionProcessor {
                 break;
             }
 
+            // todo ak1 pilot npc/pc check
+
             final FlightMissions.Mission mission = world.flightMissions().byId(pilotOnDutyEvent.get().getObjectId()).orElseThrow();
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
@@ -46,6 +48,8 @@ public class FlightMissionProcessor {
             if (mission.isEmpty()) {
                 break;
             }
+
+            // todo ak1 pilot npc/pc check
 
             final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission.get());
             final LocalDateTime now = Time.toLdt(worldTime);

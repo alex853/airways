@@ -6,6 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+// todo ak1 pilot? mission gets pilot_id, pilot has type - npc/pc
+// todo ak1 pilot_id vs pilot_assignment?
+// todo ak1 how to add pilot_id to flight-missions?
 // todo ak2 migrate to simforge.net
 @SpringBootApplication
 public class Application {
