@@ -46,6 +46,7 @@ public class AircraftController {
         final World world = worldBean.world();
         final Collection<Aircrafts.Aircraft> aircraft = world.aircrafts().all();
         return ResponseEntity.ok(aircraft.stream()
+                .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying)
                 .map(a -> new FlyingAircraftDto(
                         a.getId(),
                         world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
