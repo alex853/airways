@@ -57,8 +57,7 @@ public class FlightMissionController {
                 .map(f -> new EnhancedFlightDto(
                         f.getId(),
                         f.getAircraftId(),
-                        f.getStatusRaw() + " - " + f.getStatus(),
-                        WebTime.full(f.getHeartbeatTime()),
+                        f.getStatus(),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
                         Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(), // todo ak0 wrap into function
@@ -93,10 +92,9 @@ public class FlightMissionController {
     private static class EnhancedFlightDto {
         private int id;
         private int aircraftId;
-        private String status;
-        private String heartbeatTime;
-        private String departureAirport;
-        private String destinationAirport;
+        private String st;
+        private String dep;
+        private String dest;
         private String dof;
         private String pDep;
         private String pArr;
