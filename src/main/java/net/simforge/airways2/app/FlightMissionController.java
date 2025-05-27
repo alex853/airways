@@ -48,10 +48,10 @@ public class FlightMissionController {
     public ResponseEntity<List<FlightMissionDto>> getCurrentFlights() {
         final World world = worldBean.world();
         final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
-        final int fromTime = world.getWorldTime() - 12 * Time.ONE_HOUR;
+        final int fromTime = world.getWorldTime() - 6 * Time.ONE_HOUR;
         final int toTime = world.getWorldTime() + 18 * Time.ONE_HOUR;
         return ResponseEntity.ok(flights.stream()
-                .filter(f -> fromTime <= f.getPlannedDepartureTime() && f.getPlannedDepartureTime() <= toTime)
+                .filter(f -> fromTime <= f.getPlannedDepartureTime() && f.getPlannedDepartureTime() <= toTime) // todo ak0 condition should be improved
                 .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
                 .map(f -> new FlightMissionDto(
                         f.getId(),
