@@ -100,9 +100,9 @@ public class FlightMissionController {
         private String dof;
         private String pDep;
         private String pArr;
-        private String actualDepartureTime;
-        private String actualTakeoffTime;
-        private String actualLandingTime;
-        private String actualArrivalTime;
+        private String aDep;
+        private String aTof;
+        private String aLdg;
+        private String aArr;
     }
 }
