@@ -45,7 +45,7 @@ public class FlightMissionController {
     }
 
     @GetMapping("/current-flights")
-    public ResponseEntity<List<FlightMissionDto>> getCurrentFlights() {
+    public ResponseEntity<List<EnhancedFlightDto>> getCurrentFlights() {
         final World world = worldBean.world();
         final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
         final int fromTime = world.getWorldTime() - 6 * Time.ONE_HOUR;
@@ -53,13 +53,14 @@ public class FlightMissionController {
         return ResponseEntity.ok(flights.stream()
                 .filter(f -> fromTime <= f.getPlannedDepartureTime() && f.getPlannedDepartureTime() <= toTime) // todo ak0 condition should be improved
                 .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
-                .map(f -> new FlightMissionDto(
+                .map(f -> new EnhancedFlightDto(
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusRaw() + " - " + f.getStatus(),
                         WebTime.full(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
+                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate(),
                         WebTime.full(f.getPlannedDepartureTime()),
                         WebTime.full(f.getPlannedArrivalTime()),
                         WebTime.full(f.getActualDepartureTime()),
@@ -78,6 +79,24 @@ public class FlightMissionController {
         private String heartbeatTime;
         private String departureAirport;
         private String destinationAirport;
+        private String plannedDepartureTime;
+        private String plannedArrivalTime;
+        private String actualDepartureTime;
+        private String actualTakeoffTime;
+        private String actualLandingTime;
+        private String actualArrivalTime;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class EnhancedFlightDto {
+        private int id;
+        private int aircraftId;
+        private String status;
+        private String heartbeatTime;
+        private String departureAirport;
+        private String destinationAirport;
+        private String dof;
         private String plannedDepartureTime;
         private String plannedArrivalTime;
         private String actualDepartureTime;
