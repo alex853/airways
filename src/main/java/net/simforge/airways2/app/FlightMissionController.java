@@ -49,8 +49,8 @@ public class FlightMissionController {
     public ResponseEntity<List<EnhancedFlightDto>> getCurrentFlights() {
         final World world = worldBean.world();
         final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
-        final int fromTime = world.getWorldTime() - 6 * Time.ONE_HOUR;
-        final int toTime = world.getWorldTime() + 18 * Time.ONE_HOUR;
+        final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
+        final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
         final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
         return ResponseEntity.ok(flights.stream()
                 .filter(f -> switch (f.getStatus()) {
