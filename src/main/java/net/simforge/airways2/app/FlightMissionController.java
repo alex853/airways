@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -25,8 +26,33 @@ public class FlightMissionController {
     @GetMapping("/all")
     public ResponseEntity<List<FlightMissionDto>> getAll() {
         final World world = worldBean.world();
-        final Collection<FlightMissions.Mission> aircraft = world.flightMissions().all();
-        return ResponseEntity.ok(aircraft.stream()
+        final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
+        return ResponseEntity.ok(flights.stream()
+                .map(f -> new FlightMissionDto(
+                        f.getId(),
+                        f.getAircraftId(),
+                        f.getStatusRaw() + " - " + f.getStatus(),
+                        WebTime.full(f.getHeartbeatTime()),
+                        world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
+                        world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
+                        WebTime.full(f.getPlannedDepartureTime()),
+                        WebTime.full(f.getPlannedArrivalTime()),
+                        WebTime.full(f.getActualDepartureTime()),
+                        WebTime.full(f.getActualTakeoffTime()),
+                        WebTime.full(f.getActualLandingTime()),
+                        WebTime.full(f.getActualArrivalTime())))
+                .toList());
+    }
+
+    @GetMapping("/current-flights")
+    public ResponseEntity<List<FlightMissionDto>> getCurrentFlights() {
+        final World world = worldBean.world();
+        final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
+        final int fromTime = world.getWorldTime() - 12 * Time.ONE_HOUR;
+        final int toTime = world.getWorldTime() + 18 * Time.ONE_HOUR;
+        return ResponseEntity.ok(flights.stream()
+                .filter(f -> fromTime <= f.getPlannedDepartureTime() && f.getPlannedDepartureTime() <= toTime)
+                .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
                 .map(f -> new FlightMissionDto(
                         f.getId(),
                         f.getAircraftId(),
