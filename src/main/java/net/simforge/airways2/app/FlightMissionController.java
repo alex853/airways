@@ -60,9 +60,9 @@ public class FlightMissionController {
                         WebTime.full(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(),
-                        WebTime.full(f.getPlannedDepartureTime()),
-                        WebTime.full(f.getPlannedArrivalTime()),
+                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(), // todo ak0 wrap into function
+                        JavaTime.toHhmm(Time.toLdt(f.getPlannedDepartureTime()).toLocalTime()), // todo ak0 wrap into function
+                        JavaTime.toHhmm(Time.toLdt(f.getPlannedArrivalTime()).toLocalTime()), // todo ak0 wrap into function
                         WebTime.full(f.getActualDepartureTime()),
                         WebTime.full(f.getActualTakeoffTime()),
                         WebTime.full(f.getActualLandingTime()),
@@ -97,8 +97,8 @@ public class FlightMissionController {
         private String departureAirport;
         private String destinationAirport;
         private String dof;
-        private String plannedDepartureTime;
-        private String plannedArrivalTime;
+        private String pDep;
+        private String pArr;
         private String actualDepartureTime;
         private String actualTakeoffTime;
         private String actualLandingTime;
