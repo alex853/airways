@@ -57,7 +57,7 @@ public class FlightMissionController {
                 .map(f -> new EnhancedFlightDto(
                         f.getId(),
                         f.getAircraftId(),
-                        f.getStatus(),
+                        f.getStatus().name(),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
                         Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(), // todo ak0 wrap into function
