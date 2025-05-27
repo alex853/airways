@@ -64,10 +64,10 @@ public class FlightMissionController {
                         Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(), // todo ak0 wrap into function
                         JavaTime.toHhmm(Time.toLdt(f.getPlannedDepartureTime()).toLocalTime()), // todo ak0 wrap into function
                         JavaTime.toHhmm(Time.toLdt(f.getPlannedArrivalTime()).toLocalTime()), // todo ak0 wrap into function
-                        WebTime.full(f.getActualDepartureTime()),
-                        WebTime.full(f.getActualTakeoffTime()),
-                        WebTime.full(f.getActualLandingTime()),
-                        WebTime.full(f.getActualArrivalTime())))
+                        f.getActualDepartureTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualDepartureTime()).toLocalTime()) : null,
+                        f.getActualTakeoffTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualTakeoffTime()).toLocalTime()) : null,
+                        f.getActualLandingTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualLandingTime()).toLocalTime()) : null,
+                        f.getActualArrivalTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualArrivalTime()).toLocalTime()) : null))
                 .toList());
     }
 
