@@ -33,15 +33,15 @@ public class FlightMissionController {
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusRaw() + " - " + f.getStatus(),
-                        WebTime.full(f.getHeartbeatTime()),
+                        WebTime.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        WebTime.full(f.getPlannedDepartureTime()),
-                        WebTime.full(f.getPlannedArrivalTime()),
-                        WebTime.full(f.getActualDepartureTime()),
-                        WebTime.full(f.getActualTakeoffTime()),
-                        WebTime.full(f.getActualLandingTime()),
-                        WebTime.full(f.getActualArrivalTime())))
+                        WebTime.ts(f.getPlannedDepartureTime()),
+                        WebTime.ts(f.getPlannedArrivalTime()),
+                        WebTime.ts(f.getActualDepartureTime()),
+                        WebTime.ts(f.getActualTakeoffTime()),
+                        WebTime.ts(f.getActualLandingTime()),
+                        WebTime.ts(f.getActualArrivalTime())))
                 .toList());
     }
 
@@ -68,6 +68,7 @@ public class FlightMissionController {
                 .map(f -> new EnhancedFlightDto(
                         f.getId(),
                         f.getAircraftId(),
+                        world.aircrafts().byId(f.getAircraftId()).orElseThrow().getRegNo(),
                         f.getStatus().name(),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
@@ -102,7 +103,8 @@ public class FlightMissionController {
     @AllArgsConstructor
     private static class EnhancedFlightDto {
         private int id;
-        private int aircraftId;
+        private int acId;
+        private String acReg;
         private String st;
         private String dep;
         private String dest;

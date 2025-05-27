@@ -28,7 +28,7 @@ public class EventLogController {
         return ResponseEntity.ok(logs.stream()
                 .map(e -> new EventDto(
                         e.getId(),
-                        WebTime.full(e.getTime()),
+                        WebTime.ts(e.getTime()),
                         e.getTypeRaw() + " - " + e.getType(),
                         e.getObject1Type() + " - " + e.getObject1Id(),
                         e.getObject2Type() + " - " + e.getObject2Id(),

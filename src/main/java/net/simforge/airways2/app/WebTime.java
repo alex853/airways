@@ -4,7 +4,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.JavaTime;
 
 public class WebTime {
-    public static String full(final int time) {
+    public static String ts(final int time) {
         return (time != 0)
                 ? Time.toLdt(time).toString()
                 : null;
