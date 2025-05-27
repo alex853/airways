@@ -60,7 +60,7 @@ public class FlightMissionController {
                         WebTime.full(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate(),
+                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(),
                         WebTime.full(f.getPlannedDepartureTime()),
                         WebTime.full(f.getPlannedArrivalTime()),
                         WebTime.full(f.getActualDepartureTime()),
