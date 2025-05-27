@@ -8,6 +8,6 @@ public enum DataType {
     Float,
     LatLong24bit, // accuracy 0.0001, this means 11 meters step on equator
     LatLong16bit, // accuracy 0.01, this means 1.1 kilometer step on equator
-    PlainString, // todo ak1 add check that it is no longer than 254!!!
+    PlainString, // default length is 20 bytes, max length is 254 bytes
 //    PackedTo6BitsString
 }

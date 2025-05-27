@@ -2,6 +2,7 @@ package net.simforge.airways2.storage;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -127,6 +128,38 @@ class StorageDataTypesTest {
         assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, plainString20Field, "waaaaayyyyyy toooooooo loooooooong teeeeeext"));
     }
 
+    @Test
+    public void test_plainString_longer_than_254_bytes_should_fail() {
+        assertThrows(IllegalArgumentException.class,
+                () -> Storage.builder()
+                        .withDataField(DataField.of(DataType.PlainString).length(255))
+                        .build());
+    }
 
-    // todo ak2 tests for cases when wrong formats on wrong methods
+    @Test
+    public void test_plainString_with_zero_length_should_fail() {
+        assertThrows(IllegalArgumentException.class,
+                () -> Storage.builder()
+                        .withDataField(DataField.of(DataType.PlainString).length(0))
+                        .build());
+    }
+
+    @Test
+    public void test_plainString_with_negative_length_should_fail() {
+        assertThrows(IllegalArgumentException.class,
+                () -> Storage.builder()
+                        .withDataField(DataField.of(DataType.PlainString).length(-1))
+                        .build());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = { "PlainString" } )
+    public void test_length_method_is_not_applicable_to_most_of_types(final DataType dataType) {
+        assertThrows(IllegalArgumentException.class,
+                () -> Storage.builder()
+                        .withDataField(DataField.of(dataType).length(20))
+                        .build());
+    }
+
+    // todo ak3 tests for cases when wrong formats on wrong methods
 }
