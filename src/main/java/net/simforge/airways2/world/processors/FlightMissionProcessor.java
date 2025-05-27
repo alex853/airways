@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.processors;
 
-import com.google.common.base.Preconditions;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.*;
@@ -30,9 +29,34 @@ public class FlightMissionProcessor {
             // todo ak1 pilot npc/pc check
 
             final FlightMissions.Mission mission = world.flightMissions().byId(pilotOnDutyEvent.get().getObjectId()).orElseThrow();
-            Preconditions.checkArgument(mission.getStatus() == FlightMissions.Status.Dispatched);
-
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+            final FlightMissions.Status actualStatus = mission.getStatus();
+            if (actualStatus != FlightMissions.Status.Dispatched) {
+                mission.setStatus(FlightMissions.Status.Cancelled);
+                pilotOnDutyEvent.get().setProcessedStatus();
+
+                int pilot = 0; // todo ak2 remove it when pilot is introduced
+                world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
+                log.info("Pilot {}, flight {} - flight cancelled - flight actual state {} while expected {}", pilot, mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
+
+                return;
+            }
+
+            if (aircraft.getOperationalStatus() != Aircrafts.OperationalStatus.Idle
+                    || aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport
+                    || aircraft.getLocationAirportId() != mission.getDepartureAirportId()) {
+                mission.setStatus(FlightMissions.Status.Cancelled);
+                pilotOnDutyEvent.get().setProcessedStatus();
+
+                int pilot = 0; // todo ak2 remove it when pilot is introduced
+                world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
+                log.info("Pilot {}, flight {} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
+                        pilot, mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
+
+                return;
+
+            }
 
             mission.setStatus(FlightMissions.Status.Preflight);
             mission.setHeartbeatTime(worldTime + Time.TICK);
@@ -62,7 +86,7 @@ public class FlightMissionProcessor {
                         blocksOff(world, worldTime, mission.get());
                     }
                 }
-                case Departure ->  {
+                case Departure -> {
                     if (timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
                         takeoff(world, worldTime, mission.get());
                     }
