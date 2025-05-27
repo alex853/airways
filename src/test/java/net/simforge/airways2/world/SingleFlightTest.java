@@ -23,7 +23,12 @@ public class SingleFlightTest {
         final int departureTime = startTime + 2*Time.ONE_HOUR;
         final int arrivalTime = departureTime + 2*Time.ONE_HOUR;
         final FlightMissions.Mission mission = world.flightMissions()
-                .createPlannedMission(aircraft, airportA, airportB, departureTime, arrivalTime);
+                .createDispatchedMission(
+                        aircraft,
+                        airportA,
+                        airportB,
+                        departureTime,
+                        arrivalTime);
         world.eventsToProcess().sendEvent(
                 PilotOnDuty,
                 mission.getId(),
@@ -34,7 +39,7 @@ public class SingleFlightTest {
             world.process(world.getWorldTime() + 10);
         }
 
-        // todo ak2 check statuses and locations
+        // todo ak1 check statuses and locations
         System.out.println();
     }
 }

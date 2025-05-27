@@ -1,13 +1,13 @@
 package net.simforge.airways2.storage;
 
 public enum DataType {
-    Signed32bit, // int
-    Unsigned24bit, // todo ak2 not implemented, not tested
-    Unsigned16bit,
-    Unsigned8bit,
+    Signed32bit, // just as usual 'int'
+    Unsigned24bit, // 3 bytes unsigned integer
+    Unsigned16bit, // 2 bytes unsigned integer
+    Unsigned8bit, // 1 byte unsiged integer, from 0 to 255
     Float,
     LatLong24bit, // accuracy 0.0001, this means 11 meters step on equator
     LatLong16bit, // accuracy 0.01, this means 1.1 kilometer step on equator
-    PlainString, // todo ak2 add check that it is no longer than 254!!!
+    PlainString, // todo ak1 add check that it is no longer than 254!!!
 //    PackedTo6BitsString
 }

@@ -69,7 +69,7 @@ public class ManualDispatchController {
             default -> throw new IllegalArgumentException();
         };
 
-        final FlightMissions.Mission mission = FlightMissionHelper.scheduleFlightMission(world, aircraft, destinationAirport, departureTime);
+        final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced
         world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);

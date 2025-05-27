@@ -1,24 +1,83 @@
 package net.simforge.airways2.world.processors;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.*;
+import net.simforge.commons.misc.JavaTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Optional;
 
 public class ScheduledFlightMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(ScheduledFlightMissionGenerator.class);
     private static long lastExecution;
 
+    private static final int schedulingDepthDays = 2;
+
+    private static final ScheduledFlight[] schedule = {
+            new ScheduledFlight(101, "AW101", "F-AUWA", "LFPG", "EGLL", "05:00"),
+            new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
+            new ScheduledFlight(121, "AW121", "F-AUWA", "LFPG", "LIRF", "11:00"),
+            new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
+    };
+
     public static void process(final World world, final int worldTime) {
-        if (LocalDateTime.now().getMinute() != 0) {
-            return;
-        }
         if (System.currentTimeMillis() - lastExecution < 3600000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
-        // todo ak0 aw/auw
+        Arrays.stream(schedule).forEach(each -> scheduleFlight(world, worldTime, each));
+    }
+
+    private static void scheduleFlight(final World world, final int worldTime, final ScheduledFlight schedule) {
+        final Collection<ScheduledFlights.Flight> scheduledFlights = world.scheduledFlights().byScheduleId(schedule.scheduleId);
+        final LocalDateTime worldDateTime = Time.toLdt(worldTime);
+        final LocalDate worldDate = worldDateTime.toLocalDate();
+        for (int i = 0; i <= schedulingDepthDays; i++) {
+            final LocalDate flightDate = worldDate.plusDays(i);
+            final Optional<FlightMissions.Mission> flightMission = scheduledFlights.stream()
+                    .map(f -> world.flightMissions().byId(f.getFlightMissionId()).orElseThrow())
+                    .filter(f -> Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().equals(flightDate))
+                    .findFirst();
+            if (flightMission.isPresent()) {
+                continue;
+            }
+
+            final LocalDateTime departureTime = flightDate.atTime(JavaTime.hhmmToLocalTime(schedule.getDepartureTime()));
+            final Duration remainingTimeToDepartureTime = Duration.between(worldDateTime, departureTime);
+            if (remainingTimeToDepartureTime.getSeconds() < Time.ONE_HOUR) {
+                continue;
+            }
+
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byRegNo(schedule.regNo).orElseThrow();
+            final Airports.Airport departureAirport = world.airports().byIcao(schedule.from).orElseThrow();
+            final Airports.Airport destinationAirport = world.airports().byIcao(schedule.to).orElseThrow();
+            final FlightMissions.Mission newFlightMission = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, departureAirport, destinationAirport, Time.fromLdt(departureTime));
+            world.scheduledFlights().create(schedule.scheduleId, newFlightMission.getId());
+
+            int pilot = 0; // todo ak2 remove it when pilot is introduced
+            world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(pilot), newFlightMission, aircraft);
+            log.info("Pilot {}, flight {} - flight scheduled and dispatched, aircraft {}", pilot, newFlightMission.getId(), aircraft.getRegNo());
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class ScheduledFlight {
+        private int scheduleId;
+        private String flightNo;
+        private String regNo;
+        private String from;
+        private String to;
+        private String departureTime;
     }
 }

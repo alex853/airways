@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import com.google.common.base.Preconditions;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.*;
@@ -29,6 +30,8 @@ public class FlightMissionProcessor {
             // todo ak1 pilot npc/pc check
 
             final FlightMissions.Mission mission = world.flightMissions().byId(pilotOnDutyEvent.get().getObjectId()).orElseThrow();
+            Preconditions.checkArgument(mission.getStatus() == FlightMissions.Status.Dispatched);
+
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
             mission.setStatus(FlightMissions.Status.Preflight);

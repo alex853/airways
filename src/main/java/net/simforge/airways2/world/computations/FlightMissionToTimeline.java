@@ -12,22 +12,22 @@ public class FlightMissionToTimeline {
                 Time.toLdt(mission.getPlannedDepartureTime()),
                 Time.toLdt(mission.getPlannedArrivalTime()));
 
-        final LocalDateTime actualDepartureTime = Time.toLdt(mission.getActualDepartureTime());
+        final LocalDateTime actualDepartureTime = Time.toLdtOrNull(mission.getActualDepartureTime());
         if (actualDepartureTime != null) {
             timeline.getBlocksOff().setActualTime(actualDepartureTime);
         }
 
-        final LocalDateTime actualTakeoffTime = Time.toLdt(mission.getActualTakeoffTime());
+        final LocalDateTime actualTakeoffTime = Time.toLdtOrNull(mission.getActualTakeoffTime());
         if (actualTakeoffTime != null) {
             timeline.getTakeoff().setActualTime(actualTakeoffTime);
         }
 
-        final LocalDateTime actualLandingTime = Time.toLdt(mission.getActualLandingTime());
+        final LocalDateTime actualLandingTime = Time.toLdtOrNull(mission.getActualLandingTime());
         if (actualLandingTime != null) {
             timeline.getLanding().setActualTime(actualLandingTime);
         }
 
-        final LocalDateTime actualArrivalTime = Time.toLdt(mission.getActualArrivalTime());
+        final LocalDateTime actualArrivalTime = Time.toLdtOrNull(mission.getActualArrivalTime());
         if (actualArrivalTime != null) {
             timeline.getBlocksOn().setActualTime(actualArrivalTime);
         }

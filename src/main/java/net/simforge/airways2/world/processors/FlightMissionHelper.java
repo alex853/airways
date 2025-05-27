@@ -15,22 +15,21 @@ import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOn
 
 public class FlightMissionHelper {
 
-    public static FlightMissions.Mission scheduleFlightMission(
+    public static FlightMissions.Mission scheduleDispatchedMission(
             final World world,
             final Aircrafts.Aircraft aircraft,
+            final Airports.Airport departureAirport,
             final Airports.Airport destinationAirport,
             final int departureTime) {
-        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
-
         final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
-        final SimpleFlight simpleFlight = SimpleFlight.forRoute(locationAirport.getCoords(), destinationAirport.getCoords(), performanceData);
+        final SimpleFlight simpleFlight = SimpleFlight.forRoute(departureAirport.getCoords(), destinationAirport.getCoords(), performanceData);
         final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
         flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));
         final int arrivalTime = Time.fromLdt(flightTimeline.getBlocksOn().getScheduledTime());
 
-        final FlightMissions.Mission mission = world.flightMissions().createPlannedMission(
+        final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(
                 aircraft,
-                locationAirport,
+                departureAirport,
                 destinationAirport,
                 departureTime,
                 arrivalTime);
@@ -42,4 +41,16 @@ public class FlightMissionHelper {
         return mission;
     }
 
+    public static FlightMissions.Mission scheduleDispatchedMissionFromCurrentLocationAirport(
+            final World world,
+            final Aircrafts.Aircraft aircraft,
+            final Airports.Airport destinationAirport,
+            final int departureTime) {
+        return scheduleDispatchedMission(
+                world,
+                aircraft,
+                world.airports().byId(aircraft.getLocationAirportId()).orElseThrow(),
+                destinationAirport,
+                departureTime);
+    }
 }

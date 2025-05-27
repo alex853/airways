@@ -29,6 +29,8 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
             .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime
             .build();
+    // todo ak1 npc/pc some flag how that mission is being executed - OR STORE IT BINARY IN STATUS FIELD?
+    // todo ak3 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
     private final DataField aircraftIdField = storage.getDataField(0);
     private final DataField statusField = storage.getDataField(1);
@@ -171,9 +173,11 @@ public class FlightMissions {
         }
     }
 
+    // todo ak3 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
     public enum Status {
-        Planned(1),
-        // todo ak2 Assigned(20)?
+        PlannedManually(1),
+        PlannedViaSchedule(2),
+        Dispatched(20),
         Preflight(30),
         Departure(40),
         Flying(50),
@@ -200,14 +204,14 @@ public class FlightMissions {
         }
     }
 
-    public Mission createPlannedMission(final Aircrafts.Aircraft aircraft,
-                                        final Airports.Airport origin,
-                                        final Airports.Airport destination,
-                                        final int departureTime,
-                                        final int arrivalTime) {
+    public Mission createDispatchedMission(final Aircrafts.Aircraft aircraft,
+                                           final Airports.Airport origin,
+                                           final Airports.Airport destination,
+                                           final int departureTime,
+                                           final int arrivalTime) {
         final int id = storage.addRecord();
         storage.set(id, aircraftIdField, aircraft.getId());
-        storage.set(id, statusField, Status.Planned.code());
+        storage.set(id, statusField, Status.Dispatched.code());
         storage.set(id, departureAirportIdField, origin.getId());
         storage.set(id, destinationAirportIdField, destination.getId());
         storage.set(id, plannedDepartureTimeField, departureTime);

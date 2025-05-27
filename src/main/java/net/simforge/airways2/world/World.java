@@ -29,6 +29,8 @@ public class World {
     private final AircraftOperators aircraftOperators = new AircraftOperators();
     private final FlightMissions flightMissions = new FlightMissions();
 
+    private final ScheduledFlights scheduledFlights = new ScheduledFlights();
+
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
             .withDataField(DataField.of(DataType.Signed32bit))
@@ -64,6 +66,8 @@ public class World {
             world.aircraftOperators.loadIfExists(rootPath);
             world.flightMissions.loadIfExists(rootPath);
 
+            world.scheduledFlights.loadIfExists(rootPath);
+
             world.worldTime.loadIfExists(rootPath);
         });
 
@@ -86,6 +90,8 @@ public class World {
             aircrafts.save(rootPath);
             aircraftOperators.save(rootPath);
             flightMissions.save(rootPath);
+
+            scheduledFlights.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -137,6 +143,10 @@ public class World {
 
     public FlightMissions flightMissions() {
         return flightMissions;
+    }
+
+    public ScheduledFlights scheduledFlights() {
+        return scheduledFlights;
     }
 
     public boolean process(final int expectedWorldTime) {
