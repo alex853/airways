@@ -5,7 +5,6 @@ import lombok.Data;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.commons.misc.JavaTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -16,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Predicate;
 
 @RestController
 @RequestMapping("/flight-mission")
@@ -51,8 +51,19 @@ public class FlightMissionController {
         final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
         final int fromTime = world.getWorldTime() - 6 * Time.ONE_HOUR;
         final int toTime = world.getWorldTime() + 18 * Time.ONE_HOUR;
+        final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
         return ResponseEntity.ok(flights.stream()
-                .filter(f -> fromTime <= f.getPlannedDepartureTime() && f.getPlannedDepartureTime() <= toTime) // todo ak0 condition should be improved
+                .filter(f -> switch (f.getStatus()) {
+                    case PlannedManually, PlannedViaSchedule, Dispatched, Preflight, Cancelled
+                            -> condition.test(f.getPlannedDepartureTime());
+                    case Departure, Flying, Arrival, Postflight, Finished
+                            -> condition.test(f.getPlannedDepartureTime())
+                            || condition.test(f.getPlannedArrivalTime())
+                            || condition.test(f.getActualDepartureTime())
+                            || condition.test(f.getActualTakeoffTime())
+                            || condition.test(f.getActualLandingTime())
+                            || condition.test(f.getActualArrivalTime());
+                })
                 .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
                 .map(f -> new EnhancedFlightDto(
                         f.getId(),
@@ -60,13 +71,13 @@ public class FlightMissionController {
                         f.getStatus().name(),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().toString(), // todo ak0 wrap into function
-                        JavaTime.toHhmm(Time.toLdt(f.getPlannedDepartureTime()).toLocalTime()), // todo ak0 wrap into function
-                        JavaTime.toHhmm(Time.toLdt(f.getPlannedArrivalTime()).toLocalTime()), // todo ak0 wrap into function
-                        f.getActualDepartureTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualDepartureTime()).toLocalTime()) : null,
-                        f.getActualTakeoffTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualTakeoffTime()).toLocalTime()) : null,
-                        f.getActualLandingTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualLandingTime()).toLocalTime()) : null,
-                        f.getActualArrivalTime() != 0 ? JavaTime.toHhmm(Time.toLdt(f.getActualArrivalTime()).toLocalTime()) : null))
+                        WebTime.ymdOrNull(f.getPlannedDepartureTime()),
+                        WebTime.hmOrNull(f.getPlannedDepartureTime()),
+                        WebTime.hmOrNull(f.getPlannedArrivalTime()),
+                        WebTime.hmOrNull(f.getActualDepartureTime()),
+                        WebTime.hmOrNull(f.getActualTakeoffTime()),
+                        WebTime.hmOrNull(f.getActualLandingTime()),
+                        WebTime.hmOrNull(f.getActualArrivalTime())))
                 .toList());
     }
 

@@ -66,7 +66,8 @@ public class ScheduledFlightMissionGenerator {
 
             int pilot = 0; // todo ak2 remove it when pilot is introduced
             world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(pilot), newFlightMission, aircraft);
-            log.info("Pilot {}, flight {} - flight scheduled and dispatched, aircraft {}", pilot, newFlightMission.getId(), aircraft.getRegNo());
+            log.info("Pilot {}, flight {} - flight scheduled and dispatched, flight no {}, date of flight {}, aircraft {}",
+                    pilot, newFlightMission.getId(), schedule.flightNo, flightDate, aircraft.getRegNo());
         }
     }
 
