@@ -32,7 +32,7 @@ public class FlightMissionController {
                 .map(f -> new FlightMissionDto(
                         f.getId(),
                         f.getAircraftId(),
-                        f.getStatusRaw() + " - " + f.getStatus(),
+                        f.getStatusCode() + " - " + f.getStatus(),
                         WebTime.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FlightMissions {
@@ -16,7 +17,7 @@ public class FlightMissions {
             .withInstantiator(Mission::new)
             .withIdOf(DataType.Unsigned24bit)
             .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // status
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // status 0..127, mode 7xxxxxxx
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
@@ -27,8 +28,10 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
             .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime
             .build();
-    // todo ak0 npc/pc some flag how that mission is being executed - OR STORE IT BINARY IN STATUS FIELD?
     // todo ak3 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
+
+    private static final int pcModeMask = 0b10000000;
+    private static final int modeMask = pcModeMask;
 
     private final DataField aircraftIdField = storage.getDataField(0);
     private final DataField statusField = storage.getDataField(1);
@@ -97,16 +100,31 @@ public class FlightMissions {
         }
 
         public Status getStatus() {
-            return Status.byCode(getStatusRaw());
+            return Status.byCode(getStatusCode());
         }
 
-        public int getStatusRaw() {
-            return storage.getAsInt(id, statusField);
+        public int getStatusCode() {
+            final int statusRaw = storage.getAsInt(id, statusField);
+            return statusRaw & ~modeMask;
         }
 
         public void setStatus(final Status status) {
             checkNotNull(status, "status is mandatory");
-            storage.set(id, statusField, status.code());
+            checkArgument(status.code() <= 127, "status code should be in [0..127] range");
+            final int statusCode = status.code();
+            final int modeBits = (isModePc() ? pcModeMask : 0);
+            storage.set(id, statusField, statusCode ^ modeBits);
+        }
+
+        public boolean isModePc() {
+            final int statusRaw = storage.getAsInt(id, statusField);
+            return (statusRaw & pcModeMask) != 0;
+        }
+
+        public void setModePc(final boolean enabled) {
+            final int statusCode = getStatusCode();
+            final int modeBits = (enabled ? pcModeMask : 0);
+            storage.set(id, statusField, statusCode ^ modeBits);
         }
 
         public int getHeartbeatTime() {
