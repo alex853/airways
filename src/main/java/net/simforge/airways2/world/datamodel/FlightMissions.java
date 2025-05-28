@@ -3,8 +3,6 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.world.World;
-import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,7 +27,7 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
             .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime
             .build();
-    // todo ak1 npc/pc some flag how that mission is being executed - OR STORE IT BINARY IN STATUS FIELD?
+    // todo ak0 npc/pc some flag how that mission is being executed - OR STORE IT BINARY IN STATUS FIELD?
     // todo ak3 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
     private final DataField aircraftIdField = storage.getDataField(0);
@@ -221,23 +219,4 @@ public class FlightMissions {
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureTime() - m1.getPlannedDepartureTime();
 
-    public static boolean isFinishedOrCancelledOrEmpty(final Optional<Mission> mission) {
-        return mission.isEmpty()
-                || mission.get().getStatus() == FlightMissions.Status.Finished
-                || mission.get().getStatus() == FlightMissions.Status.Cancelled;
-    }
-
-    public static String formatRoute(final World world, int flightMissionId) {
-        final Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
-        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-        return from.getIcao() + " - " + to.getIcao();
-    }
-
-    public static float calculateHeading(final World world, int flightMissionId) {
-        final Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
-        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-        return (float) Geo.bearing(from.getCoords(), to.getCoords());
-    }
 }

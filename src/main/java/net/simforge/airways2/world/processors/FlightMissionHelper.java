@@ -9,6 +9,9 @@ import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.commons.misc.Geo;
+
+import java.util.Optional;
 
 import static net.simforge.airways2.world.Time.fromLdt;
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
@@ -52,5 +55,25 @@ public class FlightMissionHelper {
                 world.airports().byId(aircraft.getLocationAirportId()).orElseThrow(),
                 destinationAirport,
                 departureTime);
+    }
+
+    public static boolean isFinishedOrCancelledOrEmpty(final Optional<FlightMissions.Mission> mission) {
+        return mission.isEmpty()
+                || mission.get().getStatus() == FlightMissions.Status.Finished
+                || mission.get().getStatus() == FlightMissions.Status.Cancelled;
+    }
+
+    public static String formatRoute(final World world, int flightMissionId) {
+        final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        return from.getIcao() + " - " + to.getIcao();
+    }
+
+    public static float calculateHeading(final World world, int flightMissionId) {
+        final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        return (float) Geo.bearing(from.getCoords(), to.getCoords());
     }
 }

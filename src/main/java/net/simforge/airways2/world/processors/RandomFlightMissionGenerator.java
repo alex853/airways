@@ -18,7 +18,7 @@ public class RandomFlightMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(RandomFlightMissionGenerator.class);
     private static long lastExecution;
 
-    public static void process(final World world, final int worldTime) {
+    public static void process(final World world) {
         if (LocalDateTime.now().getMinute() != 0) {
             return;
         }
@@ -29,7 +29,7 @@ public class RandomFlightMissionGenerator {
 
         final Collection<Aircrafts.Aircraft> idleAircraft = world.aircrafts().allIdleAndParkedAtAirportAndNoOperatorAssigned();
         final List<Aircrafts.Aircraft> aircraftWithoutMission = idleAircraft.stream()
-                .filter(aircraft -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft)))
+                .filter(aircraft -> FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft)))
                 .toList();
 
         if (aircraftWithoutMission.isEmpty()) {
@@ -39,7 +39,7 @@ public class RandomFlightMissionGenerator {
 
         final Aircrafts.Aircraft aircraft = aircraftWithoutMission.get(0);
         final Airports.Airport destinationAirport = selectRandomDestination(world, aircraft);
-        final int departureTime = worldTime + Time.ONE_HOUR;
+        final int departureTime = world.getWorldTime() + Time.ONE_HOUR;
 
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
 

@@ -32,7 +32,7 @@ public class ManualDispatchController {
         final World world = worldBean.world();
         final Collection<Aircrafts.Aircraft> availableAircraft =
                 world.aircrafts().allIdleAndParkedAtAirportAndNoOperatorAssigned().stream()
-                        .filter(a -> FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
+                        .filter(a -> FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
                         .toList();
 
         return ResponseEntity.ok(availableAircraft.stream()
@@ -55,7 +55,7 @@ public class ManualDispatchController {
         if (!Aircrafts.isIdleAndParkedAtAirportAndNoOperatorAssigned(aircraft)) {
             throw new IllegalArgumentException();
         }
-        if (!FlightMissions.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft))) {
+        if (!FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft))) {
             throw new IllegalArgumentException();
         }
 
@@ -69,6 +69,7 @@ public class ManualDispatchController {
             default -> throw new IllegalArgumentException();
         };
 
+        // todo ak0 npc/pc flag
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced

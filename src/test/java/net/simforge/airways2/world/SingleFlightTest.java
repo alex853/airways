@@ -7,6 +7,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.junit.jupiter.api.Test;
 
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SingleFlightTest {
     @Test
@@ -39,7 +40,11 @@ public class SingleFlightTest {
             world.process(world.getWorldTime() + 10);
         }
 
-        // todo ak1 check statuses and locations
-        System.out.println();
+        final FlightMissions.Mission resultedMission = world.flightMissions().byId(mission.getId()).orElseThrow();
+        assertEquals(FlightMissions.Status.Finished, resultedMission.getStatus());
+        final Aircrafts.Aircraft resultedAircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        assertEquals(Aircrafts.LocationStatus.ParkedAtAirport, resultedAircraft.getLocationStatus());
+        assertEquals(airportB.getId(), resultedAircraft.getLocationAirportId());
+        assertEquals(Aircrafts.OperationalStatus.Idle, resultedAircraft.getOperationalStatus());
     }
 }

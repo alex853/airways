@@ -4,6 +4,7 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.airways2.world.processors.FlightMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
@@ -35,6 +36,8 @@ public class World {
             .name("world-time")
             .withDataField(DataField.of(DataType.Signed32bit))
             .build();
+
+    private final FlightMissionControl flightMissionControl = new FlightMissionControl(this);
 
     private static final int worldTimeStep = 10;
 
@@ -145,6 +148,10 @@ public class World {
         return flightMissions;
     }
 
+    public FlightMissionControl flightMissionControl() {
+        return flightMissionControl;
+    }
+
     public ScheduledFlights scheduledFlights() {
         return scheduledFlights;
     }
@@ -157,11 +164,12 @@ public class World {
             return false; // do not process world more frequent than 'worldTimeStep' setting
         }
 
-        FlightMissionProcessor.process(this, newWorldTime);
-        RandomFlightMissionGenerator.process(this, newWorldTime);
-        ScheduledFlightMissionGenerator.process(this, newWorldTime);
-
         setWorldTime(newWorldTime);
+
+        // todo ak2 ERROR PROCESSING - WHAT IF SOMEWHAT HAPPENS ON SOME OF PROCESSORS AND WORLD ITERATION TERMINATES WITH EXCEPTION?
+        FlightMissionProcessor.process(this);
+        RandomFlightMissionGenerator.process(this);
+        ScheduledFlightMissionGenerator.process(this);
 
         return !(expectedWorldTime > newWorldTime);
     }

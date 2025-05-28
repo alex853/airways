@@ -29,18 +29,18 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
     };
 
-    public static void process(final World world, final int worldTime) {
+    public static void process(final World world) {
         if (System.currentTimeMillis() - lastExecution < 3600000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
-        Arrays.stream(schedule).forEach(each -> scheduleFlight(world, worldTime, each));
+        Arrays.stream(schedule).forEach(each -> scheduleFlight(world, each));
     }
 
-    private static void scheduleFlight(final World world, final int worldTime, final ScheduledFlight schedule) {
+    private static void scheduleFlight(final World world, final ScheduledFlight schedule) {
         final Collection<ScheduledFlights.Flight> scheduledFlights = world.scheduledFlights().byScheduleId(schedule.scheduleId);
-        final LocalDateTime worldDateTime = Time.toLdt(worldTime);
+        final LocalDateTime worldDateTime = Time.toLdt(world.getWorldTime());
         final LocalDate worldDate = worldDateTime.toLocalDate();
         for (int i = 0; i <= schedulingDepthDays; i++) {
             final LocalDate flightDate = worldDate.plusDays(i);
@@ -58,16 +58,20 @@ public class ScheduledFlightMissionGenerator {
                 continue;
             }
 
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byRegNo(schedule.regNo).orElseThrow();
+            final Optional<Aircrafts.Aircraft> aircraft = world.aircrafts().byRegNo(schedule.regNo);
+            if (aircraft.isEmpty()) {
+                log.warn("flight no {} - unable to find aircraft with reg no {}", schedule.flightNo, schedule.regNo);
+                continue;
+            }
             final Airports.Airport departureAirport = world.airports().byIcao(schedule.from).orElseThrow();
             final Airports.Airport destinationAirport = world.airports().byIcao(schedule.to).orElseThrow();
-            final FlightMissions.Mission newFlightMission = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, departureAirport, destinationAirport, Time.fromLdt(departureTime));
+            final FlightMissions.Mission newFlightMission = FlightMissionHelper.scheduleDispatchedMission(world, aircraft.get(), departureAirport, destinationAirport, Time.fromLdt(departureTime));
             world.scheduledFlights().create(schedule.scheduleId, newFlightMission.getId());
 
             int pilot = 0; // todo ak2 remove it when pilot is introduced
-            world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(pilot), newFlightMission, aircraft);
+            world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(pilot), newFlightMission, aircraft.get());
             log.info("Pilot {}, flight {} - flight scheduled and dispatched, flight no {}, date of flight {}, aircraft {}",
-                    pilot, newFlightMission.getId(), schedule.flightNo, flightDate, aircraft.getRegNo());
+                    pilot, newFlightMission.getId(), schedule.flightNo, flightDate, aircraft.get().getRegNo());
         }
     }
 

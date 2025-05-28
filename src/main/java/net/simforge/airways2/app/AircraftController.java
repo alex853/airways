@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -51,8 +51,8 @@ public class AircraftController {
                         a.getId(),
                         world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                         a.getRegNo(),
-                        FlightMissions.formatRoute(world, a.getFlightMissionId()),
-                        FlightMissions.calculateHeading(world, a.getFlightMissionId()),
+                        FlightMissionHelper.formatRoute(world, a.getFlightMissionId()),
+                        FlightMissionHelper.calculateHeading(world, a.getFlightMissionId()),
                         a.getLocationLatitude(),
                         a.getLocationLongitude()))
                 .toList());

@@ -52,7 +52,9 @@ public class WorldRunnerBean implements DisposableBean {
             logger.info("world cycle stopped, status is {}", status);
 
             if (status == Status.HaveToStopNow) {
-                saveWorld();
+                synchronized (world) {
+                    saveWorld();
+                }
                 status = Status.Stopped;
             }
         });
@@ -70,6 +72,7 @@ public class WorldRunnerBean implements DisposableBean {
         logger.info("world thread stopped");
     }
 
+    // todo ak1 externally readable copy vs internally modifying copy, all changes from web are coming into some kind of incoming queue
     public World world() {
         return world;
     }
