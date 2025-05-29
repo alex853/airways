@@ -54,15 +54,9 @@ public class FlightMissionController {
         final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
         return ResponseEntity.ok(flights.stream()
                 .filter(f -> switch (f.getStatus()) {
-                    case PlannedManually, PlannedViaSchedule, Dispatched, Preflight, Cancelled
-                            -> condition.test(f.getPlannedDepartureTime());
-                    case Departure, Flying, Arrival, Postflight, Finished
-                            -> condition.test(f.getPlannedDepartureTime())
-                            || condition.test(f.getPlannedArrivalTime())
-                            || condition.test(f.getActualDepartureTime())
-                            || condition.test(f.getActualTakeoffTime())
-                            || condition.test(f.getActualLandingTime())
-                            || condition.test(f.getActualArrivalTime());
+                    case PlannedManually, PlannedViaSchedule, Dispatched, Cancelled -> condition.test(f.getPlannedDepartureTime());
+                    case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                    case Finished -> condition.test(f.getActualArrivalTime());
                 })
                 .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
                 .map(f -> new EnhancedFlightDto(
