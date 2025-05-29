@@ -13,6 +13,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Storage<T> {
     private static final int recordHeaderSize = 1;
 
+    // existing or deleted record
+    /** @noinspection unused*/
+    private static final int RECORD_EXISTS = 0;
+    private static final int RECORD_EMPTY_OR_DELETED = 1;
+
     private final String name;
     private final Instantiator<T> instantiator;
     private final DataType idDataType;
@@ -21,11 +26,8 @@ public class Storage<T> {
 
     private final DataField[] sortedDataFields;
     private final int[] sortedDataFieldHashs;
-    // todo ak2 add record status byte before record:
-    //   empty (can be reused)
-    //   stored
 
-    // todo ak2 some header:
+    // todo ak3 some header:
     //   version 1b
     //   record count 4b
     //   record size 2b
@@ -39,7 +41,7 @@ public class Storage<T> {
         this.name = name;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
-        this.dataFields = dataFields; // todo ak2 check all required fields are initialised correctly
+        this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
 
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
@@ -72,19 +74,34 @@ public class Storage<T> {
         return dataFields[fieldIndex];
     }
 
-    public int getCount() {
-        // todo ak2 modify when header introduced
-        return data.length / recordSize;
-    }
-
     public void reset() {
         data = new byte[0];
     }
 
+    private int getRecordCount() {
+        return data.length / recordSize;
+    }
+
+    // todo ak3 optimization - that counts can be stored in headers or counted somehow else - after loading and any change
+    public int getCount() {
+        int count = 0;
+        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+
+            count++;
+        }
+        return count;
+    }
+
     public Collection<T> all() {
         final List<T> result = new ArrayList<>();
-        for (int recordId = 1; recordId <= getCount(); recordId++) {
-            // todo ak2 check not deleted
+        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+
             result.add(instantiator.create(recordId));
         }
         return result;
@@ -92,13 +109,16 @@ public class Storage<T> {
 
     public Optional<T> byId(final int recordId) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check not deleted
+        checkRecordIdIsNotDeleted(recordId);
         return Optional.of(instantiator.create(recordId));
     }
 
     public Optional<T> findFirst(final Predicate<T> condition) {
-        for (int recordId = 1; recordId <= getCount(); recordId++) {
-            // todo ak2 check not deleted
+        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+
             final T instance = instantiator.create(recordId);
             if (condition.test(instance)) {
                 return Optional.of(instance);
@@ -107,18 +127,41 @@ public class Storage<T> {
         return Optional.empty();
     }
 
-    // todo ak2 to check if new id is possible according to idDataType
     public int addRecord() {
-        final int recordId = getCount() + 1;
-        final byte[] newData = new byte[data.length + recordSize];
-        System.arraycopy(data, 0, newData, 0, data.length);
-        data = newData;
-        return recordId;
+        // todo ak3 optimization - ids of deleted records can be temporarily stored somewhere to improve performance
+        int deletedRecordId = 0;
+        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+            if (!isDeleted(recordId)) {
+                continue;
+            }
+
+            deletedRecordId = recordId;
+            break;
+        }
+
+        if (deletedRecordId != 0) {
+            data[getRecordHeaderOffset(deletedRecordId)] = RECORD_EXISTS;
+            return deletedRecordId;
+        } else {
+            final int addedRecordId = getRecordCount() + 1;
+            // todo ak3 to check if new id is possible according to idDataType
+            final byte[] newData = new byte[data.length + recordSize];
+            System.arraycopy(data, 0, newData, 0, data.length);
+            data = newData;
+            return addedRecordId;
+        }
+    }
+
+    public void deleteRecord(final int recordId) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+        data[getRecordHeaderOffset(recordId)] = RECORD_EMPTY_OR_DELETED;
+        Arrays.fill(data, getRecordHeaderOffset(recordId) + 1, getRecordHeaderOffset(recordId+1), (byte) 0);
     }
 
     public int getAsInt(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -138,7 +181,7 @@ public class Storage<T> {
 
     public float getAsFloat(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -168,7 +211,7 @@ public class Storage<T> {
 
     public String getAsString(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -189,7 +232,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final int value) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -221,7 +264,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final float value) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -253,7 +296,7 @@ public class Storage<T> {
 
     public void set(final int recordId, final DataField dataField, final String value) {
         checkRecordIdInBounds(recordId);
-        // todo ak2 check if record deleted
+        checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
@@ -277,8 +320,12 @@ public class Storage<T> {
         }
     }
 
+    private int getRecordHeaderOffset(int recordId) {
+        return (recordId-1) * recordSize;
+    }
+
     private int getFieldOffset(int recordId, DataField dataField) {
-        return (recordId-1) * recordSize + recordHeaderSize + dataField.offset();
+        return getRecordHeaderOffset(recordId) + recordHeaderSize + dataField.offset();
     }
 
     private int getIntAtOffset(int fieldOffset) {
@@ -308,9 +355,20 @@ public class Storage<T> {
     }
 
     private void checkRecordIdInBounds(final int recordId) {
-        if (recordId < 1 || recordId > getCount()) {
+        if (recordId < 1 || recordId > getRecordCount()) {
             throw new IllegalArgumentException("RecordId is out of range: " + recordId);
         }
+    }
+
+    private void checkRecordIdIsNotDeleted(final int recordId) {
+        if (isDeleted(recordId)) {
+            throw new IllegalArgumentException("RecordId is deleted: " + recordId);
+        }
+    }
+
+    private boolean isDeleted(final int recordId) {
+        final int recordHeader = data[getRecordHeaderOffset(recordId)];
+        return recordHeader == RECORD_EMPTY_OR_DELETED;
     }
 
     public static class Builder<T> {
