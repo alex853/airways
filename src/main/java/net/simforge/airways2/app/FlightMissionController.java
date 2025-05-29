@@ -46,7 +46,7 @@ public class FlightMissionController {
     }
 
     @GetMapping("/current-flights")
-    public ResponseEntity<List<EnhancedFlightDto>> getCurrentFlights() {
+    public ResponseEntity<List<EnhancedFlightMissionDto>> getCurrentFlights() {
         final World world = worldBean.world();
         final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
         final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
@@ -59,20 +59,7 @@ public class FlightMissionController {
                     case Finished -> condition.test(f.getActualArrivalTime());
                 })
                 .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
-                .map(f -> new EnhancedFlightDto(
-                        f.getId(),
-                        f.getAircraftId(),
-                        world.aircrafts().byId(f.getAircraftId()).orElseThrow().getRegNo(),
-                        f.getStatus().name(),
-                        world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
-                        world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        WebTime.ymdOrNull(f.getPlannedDepartureTime()),
-                        WebTime.hmOrNull(f.getPlannedDepartureTime()),
-                        WebTime.hmOrNull(f.getPlannedArrivalTime()),
-                        WebTime.hmOrNull(f.getActualDepartureTime()),
-                        WebTime.hmOrNull(f.getActualTakeoffTime()),
-                        WebTime.hmOrNull(f.getActualLandingTime()),
-                        WebTime.hmOrNull(f.getActualArrivalTime())))
+                .map(f -> EnhancedFlightMissionDto.fromMission(world, f))
                 .toList());
     }
 
@@ -91,23 +78,5 @@ public class FlightMissionController {
         private String actualTakeoffTime;
         private String actualLandingTime;
         private String actualArrivalTime;
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class EnhancedFlightDto {
-        private int id;
-        private int acId;
-        private String acReg;
-        private String st;
-        private String dep;
-        private String dest;
-        private String dof;
-        private String pDep;
-        private String pArr;
-        private String aDep;
-        private String aTof;
-        private String aLdg;
-        private String aArr;
     }
 }

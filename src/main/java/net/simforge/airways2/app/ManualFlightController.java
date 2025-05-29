@@ -20,62 +20,70 @@ public class ManualFlightController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/status")
-    public ResponseEntity<?> getStatus(@RequestParam(name = "flightId") final int flightId) {
-// todo ak0 npc/pc
-        throw new UnsupportedOperationException();
+    public EnhancedFlightMissionDto getStatus(@RequestParam(name = "flightId") final int flightId) {
+        final World world = worldBean.world();
+        final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/start")
-    public void start(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto start(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
         world.flightMissionControl().startOrCancel(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/blocks-off")
-    public void depart(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto depart(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
         world.flightMissionControl().blocksOff(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/takeoff")
-    public void takeoff(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto takeoff(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
         world.flightMissionControl().takeoff(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/landing")
-    public void landing(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto landing(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
         world.flightMissionControl().landing(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/blocks-on")
-    public void arrive(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto arrive(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
         world.flightMissionControl().blocksOn(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 
     @PostMapping("/finish")
-    public void finish(@RequestParam(name = "flightId") final int flightId) {
+    public EnhancedFlightMissionDto finish(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
         checkArgument(flight.isModePc(), "flight should be in manual mode");
         checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
         world.flightMissionControl().finish(flight);
+        return EnhancedFlightMissionDto.fromMission(world, flight);
     }
 }
