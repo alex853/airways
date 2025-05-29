@@ -70,7 +70,7 @@ public class FlightMissionProcessor {
                         flightControl.finish(mission.get());
                     }
                 }
-                default -> throw new IllegalStateException("what to do here???"); // todo ak2 ???
+                default -> throw new IllegalStateException("what to do here???"); // todo ak0 RECHECK!
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Finished

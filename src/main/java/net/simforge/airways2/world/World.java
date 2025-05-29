@@ -170,7 +170,7 @@ public class World {
 
         setWorldTime(newWorldTime);
 
-        // todo ak2 ERROR PROCESSING - WHAT IF SOMEWHAT HAPPENS ON SOME OF PROCESSORS AND WORLD ITERATION TERMINATES WITH EXCEPTION?
+        // todo ak1 ERROR PROCESSING - WHAT IF SOMEWHAT HAPPENS ON SOME OF PROCESSORS AND WORLD ITERATION TERMINATES WITH EXCEPTION?
         FlightMissionProcessor.process(this);
         RandomFlightMissionGenerator.process(this);
         ScheduledFlightMissionGenerator.process(this);
