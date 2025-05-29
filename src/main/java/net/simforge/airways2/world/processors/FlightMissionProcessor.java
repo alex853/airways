@@ -27,10 +27,10 @@ public class FlightMissionProcessor {
                 break;
             }
 
-            // todo ak0 pilot npc/pc check
-
             final FlightMissions.Mission mission = world.flightMissions().byId(pilotOnDutyEvent.get().getObjectId()).orElseThrow();
-            world.flightMissionControl().startOrCancel(mission);
+            if (!mission.isModePc()) {
+                world.flightMissionControl().startOrCancel(mission);
+            }
 
             pilotOnDutyEvent.get().setProcessedStatus();
         }
@@ -41,19 +41,17 @@ public class FlightMissionProcessor {
                 break;
             }
 
-            // todo ak0 pilot npc/pc check
-
             final FlightMissionControl flightControl = world.flightMissionControl();
             final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission.get());
             final LocalDateTime now = Time.toLdt(worldTime);
             switch (mission.get().getStatus()) {
                 case Preflight -> {
-                    if (timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
+                    if (!mission.get().isModePc() && timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
                         flightControl.blocksOff(mission.get());
                     }
                 }
                 case Departure -> {
-                    if (timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
+                    if (!mission.get().isModePc() && timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
                         flightControl.takeoff(mission.get());
                     }
                 }
@@ -61,14 +59,14 @@ public class FlightMissionProcessor {
                     fly(world, worldTime, mission.get());
                 }
                 case Arrival -> {
-                    if (timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
+                    if (!mission.get().isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                         flightControl.blocksOn(mission.get());
 
                         // todo ak2 scheduling.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
                     }
                 }
                 case Postflight -> {
-                    if (timeline.getFinish().getEstimatedTime().isBefore(now)) {
+                    if (!mission.get().isModePc() && timeline.getFinish().getEstimatedTime().isBefore(now)) {
                         flightControl.finish(mission.get());
                     }
                 }
@@ -113,8 +111,9 @@ public class FlightMissionProcessor {
 
         } else {
 
-            world.flightMissionControl().landing(mission);
-
+            if (!mission.isModePc()) {
+                world.flightMissionControl().landing(mission);
+            }
         }
     }
 }

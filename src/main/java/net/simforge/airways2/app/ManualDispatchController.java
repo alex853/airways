@@ -48,7 +48,8 @@ public class ManualDispatchController {
     public void dispatchFlight(
             @RequestParam(name = "aircraftId") final int aircraftId,
             @RequestParam(name = "destinationIcao") final String destinationAirportIcao,
-            @RequestParam(name = "departureTimeMode") final String departureTimeMode) {
+            @RequestParam(name = "departureTimeMode") final String departureTimeMode,
+            @RequestParam(name = "flightMode") final String flightMode) {
         final World world = worldBean.world();
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
@@ -69,12 +70,15 @@ public class ManualDispatchController {
             default -> throw new IllegalArgumentException();
         };
 
-        // todo ak0 npc/pc flag
+        final boolean pcMode = "manual".equals(flightMode);
+
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
+        mission.setModePc(pcMode);
 
         int pilot = 0; // todo ak2 remove it when pilot is introduced
         world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
         log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
+        // todo ak0 npc/pc return mission id
     }
 
     @Data

@@ -116,6 +116,10 @@ public class World {
         eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), null);
     }
 
+    public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission) {
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), null, null);
+    }
+
     public Countries countries() {
         return countries;
     }

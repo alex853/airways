@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-// todo ak0 npc/pc
 @RestController
 @RequestMapping("/manual-flight")
 @CrossOrigin
@@ -20,6 +19,7 @@ public class ManualFlightController {
 
     @GetMapping("/status")
     public ResponseEntity<?> getStatus(@RequestParam(name = "flightId") final int flightId) {
+// todo ak0 npc/pc
         throw new UnsupportedOperationException();
     }
 
@@ -27,6 +27,7 @@ public class ManualFlightController {
     public void start(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().startOrCancel(flight);
     }
 
@@ -34,6 +35,7 @@ public class ManualFlightController {
     public void depart(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().blocksOff(flight);
     }
 
@@ -41,6 +43,7 @@ public class ManualFlightController {
     public void takeoff(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().takeoff(flight);
     }
 
@@ -48,6 +51,7 @@ public class ManualFlightController {
     public void landing(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().landing(flight);
     }
 
@@ -55,6 +59,7 @@ public class ManualFlightController {
     public void arrive(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().blocksOn(flight);
     }
 
@@ -62,6 +67,7 @@ public class ManualFlightController {
     public void finish(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+// todo ak0 npc/pc check pc & status
         world.flightMissionControl().finish(flight);
     }
 }
