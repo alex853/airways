@@ -158,6 +158,7 @@ public class EventLog {
         FlightScheduledAndDispatched(202),
         FlightStarted(210),
         FlightFinished(211),
+        FlightIsInUnexpectedStatus(212),
         FlightCancelled(219),
 
         AircraftDepartedFromGate(310),

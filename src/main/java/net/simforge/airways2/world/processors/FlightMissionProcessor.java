@@ -61,8 +61,7 @@ public class FlightMissionProcessor {
                 case Arrival -> {
                     if (!mission.get().isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                         flightControl.blocksOn(mission.get());
-
-                        // todo ak2 scheduling.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
+                        // todo ak3 scheduling.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
                     }
                 }
                 case Postflight -> {
@@ -70,7 +69,11 @@ public class FlightMissionProcessor {
                         flightControl.finish(mission.get());
                     }
                 }
-                default -> throw new IllegalStateException("what to do here???"); // todo ak0 RECHECK!
+                default -> {
+                    int pilot = 0; // todo ak3 remove it when pilot is introduced
+                    world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(pilot), mission.get());
+                    log.info("Pilot {}, flight {} - flight is in unexpected status", pilot, mission.get().getId());
+                }
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Finished
@@ -86,8 +89,8 @@ public class FlightMissionProcessor {
         final Airports.Airport fromAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport toAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
-        // todo ak2 AircraftType aircraftType = flight.getAircraftType();
-        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData(); // todo ak2
+        // todo ak3 AircraftType aircraftType = flight.getAircraftType();
+        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData(); // todo ak3
         final SimpleFlight simpleFlight = SimpleFlight.forRoute(
                 fromAirport.getCoords(),
                 toAirport.getCoords(),
@@ -100,14 +103,14 @@ public class FlightMissionProcessor {
         if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) {
 
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-            // todo ak2 Pilot pilot = session.load(Pilot.class, ctx.getPilot().getId());
+            // todo ak3 Pilot pilot = session.load(Pilot.class, ctx.getPilot().getId());
 
             final Geo.Coords coords = aircraftPosition.getCoords();
 
             aircraft.setLocationLatitude((float) coords.getLat());
             aircraft.setLocationLongitude((float) coords.getLon());
 
-// todo ak2 not implemented in #old                       pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
+            // todo ak3 not implemented in #old                       pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
         } else {
 

@@ -9,10 +9,14 @@ import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class World {
+    private static final Logger log = LoggerFactory.getLogger(World.class);
+
     private final WorldStorageStrategy worldStorageStrategy;
 
     private final Strings strings = new Strings();
@@ -170,10 +174,13 @@ public class World {
 
         setWorldTime(newWorldTime);
 
-        // todo ak1 ERROR PROCESSING - WHAT IF SOMEWHAT HAPPENS ON SOME OF PROCESSORS AND WORLD ITERATION TERMINATES WITH EXCEPTION?
-        FlightMissionProcessor.process(this);
-        RandomFlightMissionGenerator.process(this);
-        ScheduledFlightMissionGenerator.process(this);
+        try {
+            FlightMissionProcessor.process(this);
+            RandomFlightMissionGenerator.process(this);
+            ScheduledFlightMissionGenerator.process(this);
+        } catch (final RuntimeException e) {
+            log.error("error during world processor", e);
+        }
 
         return !(expectedWorldTime > newWorldTime);
     }
