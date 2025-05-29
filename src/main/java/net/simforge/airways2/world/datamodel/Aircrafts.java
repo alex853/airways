@@ -4,6 +4,7 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -180,6 +181,10 @@ public class Aircrafts {
 
         public void setLocationLongitude(final float locationLongitude) {
             storage.set(id, locationLongitudeField, locationLongitude);
+        }
+
+        public Geo.Coords getLocationCoords() {
+            return Geo.coords(getLocationLatitude(), getLocationLongitude());
         }
     }
 
