@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @RestController
 @RequestMapping("/manual-flight")
 @CrossOrigin
@@ -27,7 +29,8 @@ public class ManualFlightController {
     public void start(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
         world.flightMissionControl().startOrCancel(flight);
     }
 
@@ -35,7 +38,8 @@ public class ManualFlightController {
     public void depart(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
         world.flightMissionControl().blocksOff(flight);
     }
 
@@ -43,7 +47,8 @@ public class ManualFlightController {
     public void takeoff(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
         world.flightMissionControl().takeoff(flight);
     }
 
@@ -51,7 +56,8 @@ public class ManualFlightController {
     public void landing(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
         world.flightMissionControl().landing(flight);
     }
 
@@ -59,7 +65,8 @@ public class ManualFlightController {
     public void arrive(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
         world.flightMissionControl().blocksOn(flight);
     }
 
@@ -67,7 +74,8 @@ public class ManualFlightController {
     public void finish(@RequestParam(name = "flightId") final int flightId) {
         final World world = worldBean.world();
         final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-// todo ak0 npc/pc check pc & status
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
         world.flightMissionControl().finish(flight);
     }
 }

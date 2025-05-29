@@ -116,6 +116,10 @@ public class FlightMissions {
             storage.set(id, statusField, statusCode ^ modeBits);
         }
 
+        /**
+         * NPC aka Non Player Character, means 'automatic' flight
+         * PC  aka     Player Character, means 'manual' flight
+         */
         public boolean isModePc() {
             final int statusRaw = storage.getAsInt(id, statusField);
             return (statusRaw & pcModeMask) != 0;

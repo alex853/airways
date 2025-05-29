@@ -47,4 +47,7 @@ public class SingleFlightTest {
         assertEquals(airportB.getId(), resultedAircraft.getLocationAirportId());
         assertEquals(Aircrafts.OperationalStatus.Idle, resultedAircraft.getOperationalStatus());
     }
+
+    // todo ak0 pc/npc test that pc flight is not cought by processor generally
+    // todo ak0 pc/npc test that pc flight is __flying__ (aircraft is moving) from A to B when the status is correct
 }
