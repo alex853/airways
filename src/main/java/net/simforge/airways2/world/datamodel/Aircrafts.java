@@ -78,7 +78,7 @@ public class Aircrafts {
                            final Airports.Airport locationAirport) {
         checkNotNull(aircraftType);
         checkNotNull(regNo);
-        // todo ak2 check regNo is correct
+        // todo ak3 check regNo is correct
         checkNotNull(locationAirport);
 
         final int recordId = storage.addRecord();

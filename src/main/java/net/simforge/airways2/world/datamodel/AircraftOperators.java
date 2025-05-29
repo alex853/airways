@@ -55,8 +55,8 @@ public class AircraftOperators {
                        final String name) {
         checkNotNull(iata);
         checkNotNull(icao);
-        // todo ak2 iata unique
-        // todo ak2 icao unique
+        // todo ak3 iata unique
+        // todo ak3 icao unique
         checkNotNull(name);
 
         final int recordId = storage.addRecord();
