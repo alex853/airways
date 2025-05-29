@@ -45,7 +45,7 @@ public class ManualDispatchController {
     }
 
     @PostMapping("/dispatch-flight")
-    public void dispatchFlight(
+    public ResponseEntity<DispatchFlightResponseDto> dispatchFlight(
             @RequestParam(name = "aircraftId") final int aircraftId,
             @RequestParam(name = "destinationIcao") final String destinationAirportIcao,
             @RequestParam(name = "departureTimeMode") final String departureTimeMode,
@@ -78,7 +78,8 @@ public class ManualDispatchController {
         int pilot = 0; // todo ak2 remove it when pilot is introduced
         world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
         log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
-        // todo ak0 npc/pc return mission id
+
+        return ResponseEntity.ok(new DispatchFlightResponseDto(mission.getId()));
     }
 
     @Data
@@ -88,5 +89,11 @@ public class ManualDispatchController {
         private String type;
         private String regNo;
         private String location;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class DispatchFlightResponseDto {
+        private int flightId;
     }
 }
