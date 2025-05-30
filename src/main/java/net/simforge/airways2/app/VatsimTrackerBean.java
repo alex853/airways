@@ -96,7 +96,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
                         .forEach(p -> {
                             if (!trackedPilots.containsKey(p.getPilotNumber())) {
-                                trackedPilots.put(p.getPilotNumber(), Context.build(p));
+                                trackedPilots.put(p.getPilotNumber(), Context.newFlightInAirport(p));
                             }
                         });
 
@@ -134,7 +134,9 @@ public class VatsimTrackerBean implements DisposableBean {
     public static class Context {
 
         private final int pilotNumber;
-        private String status;
+        private String flightStage; // Preflight, Departing, Flying, Arriving, Arrived
+        private String planningStatus; // All Good or some issue with Flight Plan
+        private String overallStatus; // Restorable, All Good, Irreversible
         private Position position;
 
         private Context(final int pilotNumber, final Position position) {
@@ -142,23 +144,30 @@ public class VatsimTrackerBean implements DisposableBean {
             this.position = position;
         }
 
-        public static Context build(final Position position) {
+        public static Context newFlightInAirport(final Position position) {
             final Context context = new Context(position.getPilotNumber(), position);
-            context.updateStatus();
+            context.doPreflightStatusAnalysis();
             return context;
         }
 
-        private void updateStatus() {
+        private void doPreflightStatusAnalysis() {
+            flightStage = "Preflight"; // ? Departing
+
             if (position.getFpAircraftType() == null) {
-                status = "FP - type unknown";
+                planningStatus = "FP - type unknown";
+                overallStatus = "Restorable";
             } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
-                status = "FP - no route";
+                planningStatus = "FP - no route";
+                overallStatus = "Restorable";
             } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-                status = "FP - departure misaligned";
+                planningStatus = "FP - departure misaligned";
+                overallStatus = "Restorable";
             } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-                status = "FP - destination is out of world";
+                planningStatus = "FP - destination is out of world";
+                overallStatus = "Restorable";
             } else {
-                status = "ALL OK";
+                planningStatus = "All Good";
+                overallStatus = "All Good";
             }
         }
 
@@ -166,16 +175,42 @@ public class VatsimTrackerBean implements DisposableBean {
             return pilotNumber;
         }
 
-        public String getStatus() {
-            return status;
+        public String getFlightStage() {
+            return flightStage;
+        }
+
+        public String getPlanningStatus() {
+            return planningStatus;
+        }
+
+        public String getOverallStatus() {
+            return overallStatus;
         }
 
         public Position getPosition() {
             return position;
         }
 
-        public void nextReportPosition(final Position position) {
+        public void nextReportPosition(final Position nextPosition) {
             // todo ak0 implement
+
+            // preflight or departing? --> update planning status
+            boolean takeoff = position.isOnGround() && !nextPosition.isOnGround();
+
+            if (flightStage.equals("Preflight") || flightStage.equals("Departing")) {
+                if (takeoff) {
+                    flightStage = "Flying";
+                    if (!overallStatus.equals("All Good")) {
+                        overallStatus = "Irreversible";
+                    }
+                } else {
+                    doPreflightStatusAnalysis();
+                }
+            }
+
+            position = nextPosition;
+
+            // determine takeoff? --> stage to Flying --> if planning status != ALL OK then schedule removal
         }
 
         public void noPositionInReport(final String report) {

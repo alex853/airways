@@ -24,7 +24,9 @@ public class VatsimTrackerController {
                 .sorted(Comparator.comparing(VatsimTrackerBean.Context::getPilotNumber))
                 .map(c -> new PilotDto(
                         c.getPilotNumber(),
-                        c.getStatus(),
+                        c.getFlightStage(),
+                        c.getPlanningStatus(),
+                        c.getOverallStatus(),
                         c.getPosition().getAirportIcao(),
                         c.getPosition().getFpAircraftType(),
                         c.getPosition().getRegNo(),
@@ -37,7 +39,9 @@ public class VatsimTrackerController {
     @AllArgsConstructor
     private static class PilotDto {
         private int pilotNumber;
-        private String status;
+        private String flightStage;
+        private String planningStatus;
+        private String overallStatus;
         private String locationIcao;
         private String aircraftType;
         private String regNo;
