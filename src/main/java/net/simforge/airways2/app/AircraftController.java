@@ -2,17 +2,14 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -23,10 +20,8 @@ public class AircraftController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/all")
-    public ResponseEntity<List<FullAircraftDto>> getAll() {
-        final World world = worldBean.world();
-        final Collection<Aircrafts.Aircraft> aircraft = world.aircrafts().all();
-        return ResponseEntity.ok(aircraft.stream()
+    public List<FullAircraftDto> getAll() {
+        return worldBean.read(world -> world.aircrafts().all().stream()
                 .map(a -> new FullAircraftDto(
                         a.getId(),
                         world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
@@ -42,10 +37,8 @@ public class AircraftController {
     }
 
     @GetMapping("/flying")
-    public ResponseEntity<List<FlyingAircraftDto>> getFlying() {
-        final World world = worldBean.world();
-        final Collection<Aircrafts.Aircraft> aircraft = world.aircrafts().all();
-        return ResponseEntity.ok(aircraft.stream()
+    public List<FlyingAircraftDto> getFlying() {
+        return worldBean.read(world ->  world.aircrafts().all().stream()
                 .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying)
                 .map(a -> new FlyingAircraftDto(
                         a.getId(),

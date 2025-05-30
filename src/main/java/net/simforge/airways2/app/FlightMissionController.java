@@ -3,10 +3,8 @@ package net.simforge.airways2.app;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,10 +23,8 @@ public class FlightMissionController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/all")
-    public ResponseEntity<List<FlightMissionDto>> getAll() {
-        final World world = worldBean.world();
-        final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
-        return ResponseEntity.ok(flights.stream()
+    public List<FlightMissionDto> getAll() {
+        return worldBean.read(world -> world.flightMissions().all().stream()
                 .map(f -> new FlightMissionDto(
                         f.getId(),
                         f.getAircraftId(),
@@ -46,21 +42,22 @@ public class FlightMissionController {
     }
 
     @GetMapping("/current-flights")
-    public ResponseEntity<List<EnhancedFlightMissionDto>> getCurrentFlights() {
-        final World world = worldBean.world();
-        final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
-        final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
-        final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
-        final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
-        return ResponseEntity.ok(flights.stream()
-                .filter(f -> switch (f.getStatus()) {
-                    case PlannedManually, PlannedViaSchedule, Dispatched, Cancelled -> condition.test(f.getPlannedDepartureTime());
-                    case Preflight, Departure, Flying, Arrival, Postflight -> true;
-                    case Finished -> condition.test(f.getActualArrivalTime());
-                })
-                .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
-                .map(f -> EnhancedFlightMissionDto.fromMission(world, f))
-                .toList());
+    public List<EnhancedFlightMissionDto> getCurrentFlights() {
+        return worldBean.read(world -> {
+            final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
+            final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
+            final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
+            final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
+            return flights.stream()
+                    .filter(f -> switch (f.getStatus()) {
+                        case PlannedManually, PlannedViaSchedule, Dispatched, Cancelled -> condition.test(f.getPlannedDepartureTime());
+                        case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                        case Finished -> condition.test(f.getActualArrivalTime());
+                    })
+                    .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
+                    .map(f -> EnhancedFlightMissionDto.fromMission(world, f))
+                    .toList();
+        });
     }
 
     @Data

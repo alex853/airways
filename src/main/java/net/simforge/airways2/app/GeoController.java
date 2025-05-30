@@ -2,18 +2,12 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.Cities;
-import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -24,10 +18,8 @@ public class GeoController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/countries")
-    public ResponseEntity<List<CountryDto>> getCountries() {
-        final World world = worldBean.world();
-        final Collection<Countries.Country> countries = world.countries().all();
-        return ResponseEntity.ok(countries.stream()
+    public List<CountryDto> getCountries() {
+        return worldBean.read(world -> world.countries().all().stream()
                 .map(c -> new CountryDto(
                         c.getId(),
                         c.getCode(),
@@ -36,10 +28,8 @@ public class GeoController {
     }
 
     @GetMapping("/cities")
-    public ResponseEntity<List<CityDto>> getCities() {
-        final World world = worldBean.world();
-        final Collection<Cities.City> cities = world.cities().all();
-        return ResponseEntity.ok(cities.stream()
+    public List<CityDto> getCities() {
+        return worldBean.read(world -> world.cities().all().stream()
                 .map(c -> new CityDto(
                         c.getId(),
                         c.getCountryId(),
@@ -51,10 +41,8 @@ public class GeoController {
     }
 
     @GetMapping("/airports")
-    public ResponseEntity<List<AirportDto>> getAirports() {
-        final World world = worldBean.world();
-        final Collection<Airports.Airport> airports = world.airports().all();
-        return ResponseEntity.ok(airports.stream()
+    public List<AirportDto> getAirports() {
+        return worldBean.read(world -> world.airports().all().stream()
                 .map(a -> new AirportDto(
                         a.getId(),
                         a.getLatitude(),

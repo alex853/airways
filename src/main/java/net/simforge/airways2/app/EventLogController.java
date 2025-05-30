@@ -2,16 +2,12 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.EventLog;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.List;
 
 @RestController
@@ -22,10 +18,8 @@ public class EventLogController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/all")
-    public ResponseEntity<List<EventDto>> getAll() {
-        final World world = worldBean.world();
-        final Collection<EventLog.Event> logs = world.eventLog().all();
-        return ResponseEntity.ok(logs.stream()
+    public List<EventDto> getAll() {
+        return worldBean.read(world -> world.eventLog().all().stream()
                 .map(e -> new EventDto(
                         e.getId(),
                         WebTime.ts(e.getTime()),

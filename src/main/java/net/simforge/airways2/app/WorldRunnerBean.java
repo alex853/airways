@@ -13,6 +13,10 @@ import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 public class WorldRunnerBean implements DisposableBean {
@@ -23,6 +27,8 @@ public class WorldRunnerBean implements DisposableBean {
     private volatile Status status = Status.Startup;
     private Thread thread;
     private World world;
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
 
     @PostConstruct
     public void init() {
@@ -35,25 +41,39 @@ public class WorldRunnerBean implements DisposableBean {
             while (status == Status.Running) {
                 final int now = (int) (System.currentTimeMillis() / 1000);
                 final boolean needToCatchTime;
-                synchronized (world) {
-                    needToCatchTime = world.process(now);
+
+                lock.writeLock().lock();
+                try {
+                    needToCatchTime = world.process(now); // todo ak3 - monitoring - how much time does it take
+
+                    while (!actionQueue.isEmpty()) { // todo ak3 - monitoring - how much time each action is waiting
+                        final ActionContext<?> actionContext = actionQueue.poll();
+                        actionContext.perform(world);
+                    }
+
+                    if (lastSaved + saveWorldPeriod < now) {
+                        saveWorld(); // todo ak3 - monitoring - how much time does it take
+                        lastSaved = now;
+                    }
+                } finally {
+                    lock.writeLock().unlock();
                 }
+
                 if (needToCatchTime) {
                     Thread.yield();
                 } else {
-                    Misc.sleepBM(100);
+                    Misc.sleepBM(10);
                 }
 
-                if (lastSaved + saveWorldPeriod < now) {
-                    saveWorld();
-                    lastSaved = now;
-                }
             }
             logger.info("world cycle stopped, status is {}", status);
 
             if (status == Status.HaveToStopNow) {
-                synchronized (world) {
+                lock.writeLock().lock();
+                try {
                     saveWorld();
+                } finally {
+                    lock.writeLock().unlock();
                 }
                 status = Status.Stopped;
             }
@@ -72,9 +92,19 @@ public class WorldRunnerBean implements DisposableBean {
         logger.info("world thread stopped");
     }
 
-    // todo ak1 externally readable copy vs internally modifying copy, all changes from web are coming into some kind of incoming queue
-    public World world() {
-        return world;
+    public <T> T read(final Action<T> action) {
+        lock.readLock().lock();
+        try {
+            return action.invoke(world);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    public <T> T modifySync(final Action<T> action) {
+        final ActionContext<T> actionContext = new ActionContext<>(action);
+        actionQueue.add(actionContext);
+        return actionContext.getResult();
     }
 
     private void loadWorld() {
@@ -104,5 +134,56 @@ public class WorldRunnerBean implements DisposableBean {
         HaveToStopNow,
         Stopped,
         TerminatedDueToError
+    }
+
+    public interface Action<T> {
+        T invoke(World world);
+    }
+
+    private static class ActionContext<T> {
+        private final CountDownLatch latch = new CountDownLatch(1);
+        private final Action<T> action;
+        private volatile boolean finished;
+        private volatile boolean getResultInvoked;
+        private volatile T result;
+        private volatile RuntimeException thrownException;
+
+        public ActionContext(final Action<T> action) {
+            this.action = action;
+        }
+
+        public T getResult() {
+            if (getResultInvoked) {
+                throw new IllegalStateException("can't read the result more than one time");
+            }
+            getResultInvoked = true;
+
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (thrownException == null) {
+                return result;
+            } else {
+                throw thrownException;
+            }
+        }
+
+        public void perform(final World world) {
+            if (finished) {
+                return;
+            }
+
+            try {
+                result = action.invoke(world);
+            } catch (final RuntimeException e) {
+                logger.error("error on action execution", e);
+                thrownException = e;
+            }
+            latch.countDown();
+            finished = true;
+        }
     }
 }
