@@ -50,7 +50,8 @@ public class FlightMissionController {
             final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
             return flights.stream()
                     .filter(f -> switch (f.getStatus()) {
-                        case PlannedManually, PlannedViaSchedule, Dispatched, Cancelled -> condition.test(f.getPlannedDepartureTime());
+                        case PlannedManually, PlannedViaSchedule, Cancelled -> condition.test(f.getPlannedDepartureTime());
+                        case Dispatched -> f.getPlannedDepartureTime() <= toTime;
                         case Preflight, Departure, Flying, Arrival, Postflight -> true;
                         case Finished -> condition.test(f.getActualArrivalTime());
                     })
