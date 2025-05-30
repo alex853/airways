@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -20,6 +21,7 @@ public class VatsimTrackerController {
     @GetMapping("/all")
     public List<PilotDto> getAll() {
         return vatsimTrackerBean.contexts().stream()
+                .sorted(Comparator.comparing(VatsimTrackerBean.Context::getPilotNumber))
                 .map(c -> new PilotDto(
                         c.getPilotNumber(),
                         c.getStatus(),
