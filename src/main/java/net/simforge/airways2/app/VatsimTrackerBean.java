@@ -13,7 +13,9 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -28,6 +30,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
     @Autowired
     private WorldRunnerBean worldBean;
+    private static Set<String> worldIcaos;
 
     @PostConstruct
     public void init() {
@@ -35,19 +38,16 @@ public class VatsimTrackerBean implements DisposableBean {
 
         compactifiedStorage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
 
-        final Set<String> icaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
+        worldIcaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
 
         // todo ak0 load data
+
+        final Map<Integer, Context> trackedPilots = new HashMap<>();
 
         thread = new Thread(() -> {
             log.info("thread started");
 
             String lastProcessedReport = null;
-            try {
-                lastProcessedReport = compactifiedStorage.getLastReport();
-            } catch (final IOException e) {
-                log.error("error on reading last processed report", e); // todo ak0 what to do here?
-            }
 
             status = Status.Running;
 
@@ -55,9 +55,13 @@ public class VatsimTrackerBean implements DisposableBean {
 
                 String nextReport = null;
                 try {
-                    nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
+                    if (lastProcessedReport == null) {
+                        nextReport = compactifiedStorage.getLastReport(); // todo ak0 how much time does it take?
+                    } else {
+                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport); // todo ak0 how much time does it take?
+                    }
                 } catch (final IOException e) {  // todo ak0 what to do here?
-                    log.error("error on reading next report", e);
+                    log.error("error on looking for a report", e);
                 }
 
                 if (nextReport == null) {
@@ -76,9 +80,34 @@ public class VatsimTrackerBean implements DisposableBean {
                     continue;
                 }
 
+                final String nextReportFinal = nextReport;
+                final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
+
+                // all aircraft located in 'tracked' airports while they are in those airports
+                // when they depart, they will be tracked only if they have appropriate flight plans
+
+                trackedPilots.forEach((pilotNumber, context) -> {
+                    final Position position = pilotNumberToPosition.get(pilotNumber);
+                    if (position != null) {
+                        context.nextReportPosition(position);
+                    } else {
+                        context.noPositionInReport(nextReportFinal);
+                    }
+                });
+
                 positions.stream()
-                        .filter(p -> p.isInAirport() && icaos.contains(p.getAirportIcao()))
-                        .forEach(p -> log.info("{} - {} - {}", p.getAirportIcao(), p.getCallsign(), p.getFpAircraftType()));
+                        .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
+                        .forEach(p -> {
+                            if (!trackedPilots.containsKey(p.getPilotNumber())) {
+                                trackedPilots.put(p.getPilotNumber(), Context.build(p));
+                            }
+                        });
+
+                final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
+                        .filter(Context::shouldBeRemoved)
+                        .map(Context::getPilotNumber)
+                        .toList();
+                pilotNumbersForRemoval.forEach(trackedPilots::remove);
 
                 lastProcessedReport = nextReport;
             }
@@ -101,14 +130,57 @@ public class VatsimTrackerBean implements DisposableBean {
         log.info("thread stopped");
     }
 
-/*    public static void main(String[] args) {
-        final String storageRoot = "";
-        final CompactifiedStorage storage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
-        final String lastReport = storage.getLastReport();
+    private static class Context {
 
-        String nextReport = storage.getNextReport(lastReport);
-        List<Position> positions = storage.loadPositions(nextReport);
-    }*/
+        private final int pilotNumber;
+        private Position position;
+
+        private Context(final int pilotNumber, final Position position) {
+            this.pilotNumber = pilotNumber;
+            this.position = position;
+        }
+
+        public static Context build(final Position position) {
+            final Context context = new Context(position.getPilotNumber(), position);
+            log.info("{} at {} - new context created", position.getCallsign(), position.getAirportIcao());
+            context.analyze();
+            return context;
+        }
+
+        private void analyze() {
+            if (position.getFpAircraftType() == null) {
+                log.warn("{} at {} - no aircraft type", position.getCallsign(), position.getAirportIcao());
+            }
+
+            if (position.getFpDeparture() == null || position.getFpDestination() == null) {
+                log.warn("{} at {} - no FP dep or dest", position.getCallsign(), position.getAirportIcao());
+            }
+
+            if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
+                log.warn("{} at {} - FP dep {} does not match location", position.getCallsign(), position.getAirportIcao(), position.getFpDeparture());
+            }
+
+            if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
+                log.warn("{} at {} - FP dest {} is out of world", position.getCallsign(), position.getAirportIcao(), position.getFpDestination());
+            }
+        }
+
+        public int getPilotNumber() {
+            return pilotNumber;
+        }
+
+        public void nextReportPosition(final Position position) {
+            // todo ak0 implement
+        }
+
+        public void noPositionInReport(final String report) {
+            // todo ak0 implement
+        }
+
+        public boolean shouldBeRemoved() {
+            return false;
+        }
+    }
 
     private enum Status {
         Startup,
