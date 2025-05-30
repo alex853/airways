@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ImportMajorAirportsInVicinityOfCities {
-    private static final Logger logger = LoggerFactory.getLogger(ImportMajorAirportsInVicinityOfCities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ImportMajorAirportsInVicinityOfCities.class);
 
     public static void main(final String[] args) throws IOException {
         final World world = World25.load();
@@ -60,7 +60,7 @@ public class ImportMajorAirportsInVicinityOfCities {
                                     null, // todo ak3 iata to be added
                                     icao,
                                     name);
-                            logger.info("\tAirport {} created", icao);
+                            log.info("\tAirport {} created", icao);
                         } else {
                             airport = airportByIcao.get();
                         }

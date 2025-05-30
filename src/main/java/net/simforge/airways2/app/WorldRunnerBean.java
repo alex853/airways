@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
 public class WorldRunnerBean implements DisposableBean {
-    private static final Logger logger = LoggerFactory.getLogger(WorldRunnerBean.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(WorldRunnerBean.class);
 
     private static final int saveWorldPeriod = Time.ONE_HOUR;
 
@@ -66,7 +66,7 @@ public class WorldRunnerBean implements DisposableBean {
                 }
 
             }
-            logger.info("world cycle stopped, status is {}", status);
+            log.info("world cycle stopped, status is {}", status);
 
             if (status == Status.HaveToStopNow) {
                 lock.writeLock().lock();
@@ -84,12 +84,12 @@ public class WorldRunnerBean implements DisposableBean {
 
     @Override
     public void destroy() throws Exception {
-        logger.info("world thread was told to stop");
+        log.info("world thread was told to stop");
 
         status = Status.HaveToStopNow;
         thread.join();
 
-        logger.info("world thread stopped");
+        log.info("world thread stopped");
     }
 
     public <T> T read(final Action<T> action) {
@@ -110,9 +110,9 @@ public class WorldRunnerBean implements DisposableBean {
     private void loadWorld() {
         try {
             world = World25.load();
-            logger.info("world loaded, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
+            log.info("world loaded, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
         } catch (IOException e) {
-            logger.error("unable to load the world", e);
+            log.error("unable to load the world", e);
             throw new RuntimeException("unable to load the world", e);
         }
     }
@@ -120,10 +120,10 @@ public class WorldRunnerBean implements DisposableBean {
     private void saveWorld() {
         try {
             world.save();
-            logger.info("world saved, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
+            log.info("world saved, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
         } catch (IOException e) {
             status = Status.TerminatedDueToError;
-            logger.error("unable to save the world", e);
+            log.error("unable to save the world", e);
             throw new RuntimeException("unable to save the world", e);
         }
     }
@@ -179,7 +179,7 @@ public class WorldRunnerBean implements DisposableBean {
             try {
                 result = action.invoke(world);
             } catch (final RuntimeException e) {
-                logger.error("error on action execution", e);
+                log.error("error on action execution", e);
                 thrownException = e;
             }
             latch.countDown();

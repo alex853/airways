@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class ImportCities {
-    private static final Logger logger = LoggerFactory.getLogger(ImportCities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(ImportCities.class);
 
     public static void main(final String[] args) throws IOException {
         final World world = World25.load();
@@ -43,7 +43,7 @@ public class ImportCities {
             final double cityLatitude = Double.parseDouble(csv.value(row, "CityLatitude"));
             final double cityLongitude = Double.parseDouble(csv.value(row, "CityLongitude"));
 
-            logger.info("Processing {}, {} -> {}, {}", countryName, countryCode, cityName, cityPopulation);
+            log.info("Processing {}, {} -> {}, {}", countryName, countryCode, cityName, cityPopulation);
 
             final Optional<Countries.Country> existingCountry = countries.byCode(countryCode);
             final int countryId = existingCountry.map(Countries.Country::getId)
@@ -59,7 +59,7 @@ public class ImportCities {
                     cityLatitude,
                     cityLongitude,
                     cityPopulation);
-            logger.info("\tCity {} created", cityName);
+            log.info("\tCity {} created", cityName);
         }
 
         world.save();
