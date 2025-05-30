@@ -26,17 +26,17 @@ public class VatsimTrackerBean implements DisposableBean {
 
         compactifiedStorage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
 
-        String lastProcessedReport;
-        try {
-            lastProcessedReport = compactifiedStorage.getLastReport();
-        } catch (final IOException e) {
-            log.error("error on reading last processed report", e); // todo ak0 what to do here?
-        }
-
         // todo ak0 load data
 
         thread = new Thread(() -> {
             log.info("thread started");
+
+            String lastProcessedReport = null;
+            try {
+                lastProcessedReport = compactifiedStorage.getLastReport();
+            } catch (final IOException e) {
+                log.error("error on reading last processed report", e); // todo ak0 what to do here?
+            }
 
             status = Status.Running;
 
