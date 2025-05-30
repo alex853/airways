@@ -247,7 +247,9 @@ public class VatsimTrackerBean implements DisposableBean {
         public void noPositionInReport(final String report) {
             // todo ak1 implement
             shouldBeRemoved = true;
-            log.info("{}, {}, {} -> {} - Event 'OFFLINE', terminated", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+            if (overallStatus == OverallStatus.AllGood) {
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE', terminated", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+            }
         }
 
         public boolean shouldBeRemoved() {
