@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Component
 public class VatsimTrackerBean implements DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(VatsimTrackerBean.class);
-    private static final String storageRoot = "../data/network-view"; // todo ak0 move it into settings
+    private static final String storageRoot = "../data/network-view"; // todo ak1 move it into settings
 
     private volatile Status status = Status.Startup;
     private Thread thread;
@@ -39,7 +39,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
         worldIcaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
 
-        // todo ak0 load data
+        // todo ak1 load data
 
         thread = new Thread(() -> {
             log.info("thread started");
@@ -53,11 +53,11 @@ public class VatsimTrackerBean implements DisposableBean {
                 String nextReport = null;
                 try {
                     if (lastProcessedReport == null) {
-                        nextReport = compactifiedStorage.getLastReport(); // todo ak0 how much time does it take?
+                        nextReport = compactifiedStorage.getLastReport(); // todo ak1 how much time does it take?
                     } else {
-                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport); // todo ak0 how much time does it take?
+                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport); // todo ak1 how much time does it take?
                     }
-                } catch (final IOException e) {  // todo ak0 what to do here?
+                } catch (final IOException e) {  // todo ak1 what to do here?
                     log.error("error on looking for a report", e);
                 }
 
@@ -66,12 +66,12 @@ public class VatsimTrackerBean implements DisposableBean {
                     continue;
                 }
 
-                log.error("found next report {}", nextReport);
+                log.info("found next report {}", nextReport);
 
                 final List<Position> positions;
                 try {
                     positions = compactifiedStorage.loadPositions(nextReport);
-                } catch (IOException e) { // todo ak0 what to do here
+                } catch (IOException e) { // todo ak1 what to do here
                     log.error("error on reading next report data", e);
                     Misc.sleep(10000);
                     continue;
@@ -111,7 +111,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
             log.info("cycle stopped, status is {}", status);
 
-            // todo ak0 save data
+            // todo ak1 save data
         });
         thread.setName("vatsim-tracker-bean-thread");
         thread.start();
@@ -138,6 +138,8 @@ public class VatsimTrackerBean implements DisposableBean {
         private String planningStatus; // All Good or some issue with Flight Plan
         private String overallStatus; // Restorable, All Good, Irreversible
         private Position position;
+        private int removalCounter;
+        private boolean shouldBeRemoved;
 
         private Context(final int pilotNumber, final Position position) {
             this.pilotNumber = pilotNumber;
@@ -151,7 +153,7 @@ public class VatsimTrackerBean implements DisposableBean {
         }
 
         private void doPreflightStatusAnalysis() {
-            flightStage = "Preflight"; // ? Departing
+            flightStage = "Preflight"; // todo ak1 ? Departing
 
             if (position.getFpAircraftType() == null) {
                 planningStatus = "FP - type unknown";
@@ -192,33 +194,46 @@ public class VatsimTrackerBean implements DisposableBean {
         }
 
         public void nextReportPosition(final Position nextPosition) {
-            // todo ak0 implement
-
-            // preflight or departing? --> update planning status
-            boolean takeoff = position.isOnGround() && !nextPosition.isOnGround();
-
-            if (flightStage.equals("Preflight") || flightStage.equals("Departing")) {
-                if (takeoff) {
-                    flightStage = "Flying";
-                    if (!overallStatus.equals("All Good")) {
-                        overallStatus = "Irreversible";
-                    }
-                } else {
-                    doPreflightStatusAnalysis();
+            if (overallStatus.equals("Irreversible")) {
+                removalCounter--;
+                if (removalCounter <= 0) {
+                    shouldBeRemoved = true;
                 }
+                return;
             }
 
-            position = nextPosition;
+            boolean takeoff = position.isOnGround() && !nextPosition.isOnGround();
+            boolean landing = !position.isOnGround() && nextPosition.isOnGround();
 
-            // determine takeoff? --> stage to Flying --> if planning status != ALL OK then schedule removal
+            if (flightStage.equals("Preflight") || flightStage.equals("Departing")) { // todo ak1 departing means starts moving
+                if (takeoff) {
+                    flightStage = "Flying";
+                    if (overallStatus.equals("All Good")) {
+                        // todo ak0 event 'takeoff'
+                    } else {
+                        overallStatus = "Irreversible";
+                        removalCounter = 5;
+                    }
+                } else {
+                    doPreflightStatusAnalysis(); // todo ak0 probable event 'planned' or 'dispatched'
+                }
+            } else if (flightStage.equals("Flying")) {
+                if (landing) {
+                    // todo ak0 event 'landing'
+                    flightStage = "Arriving";
+                }
+            } // todo ak1 arrived means stops moving for 1-2 reports
+
+            position = nextPosition;
         }
 
         public void noPositionInReport(final String report) {
-            // todo ak0 implement
+            // todo ak1 implement
+            shouldBeRemoved = true;
         }
 
         public boolean shouldBeRemoved() {
-            return false;
+            return shouldBeRemoved;
         }
     }
 
