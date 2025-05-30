@@ -24,7 +24,7 @@ public class WorldRunnerBean implements DisposableBean {
 
     private static final int saveWorldPeriod = Time.ONE_HOUR;
 
-    private volatile Status status = Status.Startup;
+    private volatile ThreadStatus status = ThreadStatus.Startup;
     private Thread thread;
     private World world;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
@@ -36,9 +36,9 @@ public class WorldRunnerBean implements DisposableBean {
 
         thread = new Thread(() -> {
             int lastSaved = (int) (System.currentTimeMillis() / 1000);
-            status = Status.Running;
+            status = ThreadStatus.Running;
 
-            while (status == Status.Running) {
+            while (status == ThreadStatus.Running) {
                 final int now = (int) (System.currentTimeMillis() / 1000);
                 final boolean needToCatchTime;
 
@@ -68,14 +68,14 @@ public class WorldRunnerBean implements DisposableBean {
             }
             log.info("world cycle stopped, status is {}", status);
 
-            if (status == Status.HaveToStopNow) {
+            if (status == ThreadStatus.HaveToStopNow) {
                 lock.writeLock().lock();
                 try {
                     saveWorld();
                 } finally {
                     lock.writeLock().unlock();
                 }
-                status = Status.Stopped;
+                status = ThreadStatus.Stopped;
             }
         });
         thread.setName("world-runner-bean-thread");
@@ -86,7 +86,7 @@ public class WorldRunnerBean implements DisposableBean {
     public void destroy() throws Exception {
         log.info("world thread was told to stop");
 
-        status = Status.HaveToStopNow;
+        status = ThreadStatus.HaveToStopNow;
         thread.join();
 
         log.info("world thread stopped");
@@ -122,13 +122,13 @@ public class WorldRunnerBean implements DisposableBean {
             world.save();
             log.info("world saved, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
         } catch (IOException e) {
-            status = Status.TerminatedDueToError;
+            status = ThreadStatus.TerminatedDueToError;
             log.error("unable to save the world", e);
             throw new RuntimeException("unable to save the world", e);
         }
     }
 
-    private enum Status {
+    private enum ThreadStatus {
         Startup,
         Running,
         HaveToStopNow,

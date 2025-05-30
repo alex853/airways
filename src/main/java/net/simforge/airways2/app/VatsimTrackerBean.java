@@ -21,7 +21,7 @@ public class VatsimTrackerBean implements DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(VatsimTrackerBean.class);
     private static final String storageRoot = "../data/network-view"; // todo ak1 move it into settings
 
-    private volatile Status status = Status.Startup;
+    private volatile ThreadStatus threadStatus = ThreadStatus.Startup;
     private Thread thread;
     private CompactifiedStorage compactifiedStorage;
 
@@ -46,9 +46,9 @@ public class VatsimTrackerBean implements DisposableBean {
 
             String lastProcessedReport = null;
 
-            status = Status.Running;
+            threadStatus = ThreadStatus.Running;
 
-            while (status == Status.Running) {
+            while (threadStatus == ThreadStatus.Running) {
 
                 String nextReport = null;
                 try {
@@ -109,7 +109,7 @@ public class VatsimTrackerBean implements DisposableBean {
                 lastProcessedReport = nextReport;
             }
 
-            log.info("cycle stopped, status is {}", status);
+            log.info("cycle stopped, status is {}", threadStatus);
 
             // todo ak1 save data
         });
@@ -121,7 +121,7 @@ public class VatsimTrackerBean implements DisposableBean {
     public void destroy() throws Exception {
         log.info("thread was told to stop");
 
-        status = Status.HaveToStopNow;
+        threadStatus = ThreadStatus.HaveToStopNow;
         thread.join();
 
         log.info("thread stopped");
@@ -148,28 +148,29 @@ public class VatsimTrackerBean implements DisposableBean {
 
         public static Context newFlightInAirport(final Position position) {
             final Context context = new Context(position.getPilotNumber(), position);
-            context.doPreflightStatusAnalysis();
+            context.flightStage = "Preflight"; // todo ak1 ? Departing
+            context.planningStatus = context.doPreflightStatusAnalysis(position);
+            if (context.planningStatus.equals("All Good")) {
+                context.overallStatus = "All Good";
+                // todo ak1 push to world
+                log.info("{}, {}, {} -> {} - Event 'dispatched'", position.getPilotNumber(), position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+            } else {
+                context.overallStatus = "Restorable";
+            }
             return context;
         }
 
-        private void doPreflightStatusAnalysis() {
-            flightStage = "Preflight"; // todo ak1 ? Departing
-
+        private String doPreflightStatusAnalysis(final Position position) {
             if (position.getFpAircraftType() == null) {
-                planningStatus = "FP - type unknown";
-                overallStatus = "Restorable";
+                return "FP - type unknown";
             } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
-                planningStatus = "FP - no route";
-                overallStatus = "Restorable";
+                return "FP - no route";
             } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-                planningStatus = "FP - departure misaligned";
-                overallStatus = "Restorable";
+                return "FP - departure misaligned";
             } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-                planningStatus = "FP - destination is out of world";
-                overallStatus = "Restorable";
+                return "FP - destination is out of world";
             } else {
-                planningStatus = "All Good";
-                overallStatus = "All Good";
+                return "All Good";
             }
         }
 
@@ -216,7 +217,20 @@ public class VatsimTrackerBean implements DisposableBean {
                         removalCounter = 5;
                     }
                 } else {
-                    doPreflightStatusAnalysis(); // todo ak0 probable event 'dispatched'
+                    final String newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
+                    if (!newPlanningStatus.equals(planningStatus)) {
+                        if (newPlanningStatus.equals("All Good")) {
+                            planningStatus = "All Good";
+                            overallStatus = "All Good";
+                            // todo ak1 push to world
+                            log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+                        } else {
+                            planningStatus = newPlanningStatus;
+                            overallStatus = "Restorable";
+                            // todo ak1 push to world
+                            log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination(), newPlanningStatus);
+                        }
+                    }
                 }
             } else if (flightStage.equals("Flying")) {
                 if (landing && overallStatus.equals("All Good")) {
@@ -232,6 +246,7 @@ public class VatsimTrackerBean implements DisposableBean {
         public void noPositionInReport(final String report) {
             // todo ak1 implement
             shouldBeRemoved = true;
+            log.info("{}, {}, {} -> {} - Event 'OFFLINE', terminated", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
         }
 
         public boolean shouldBeRemoved() {
@@ -239,7 +254,7 @@ public class VatsimTrackerBean implements DisposableBean {
         }
     }
 
-    private enum Status {
+    private enum ThreadStatus {
         Startup,
         Running,
         HaveToStopNow,
