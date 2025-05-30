@@ -13,10 +13,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
@@ -32,6 +29,8 @@ public class VatsimTrackerBean implements DisposableBean {
     private WorldRunnerBean worldBean;
     private static Set<String> worldIcaos;
 
+    private final Map<Integer, Context> trackedPilots = new HashMap<>();
+
     @PostConstruct
     public void init() {
         log.info("init called");
@@ -41,8 +40,6 @@ public class VatsimTrackerBean implements DisposableBean {
         worldIcaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
 
         // todo ak0 load data
-
-        final Map<Integer, Context> trackedPilots = new HashMap<>();
 
         thread = new Thread(() -> {
             log.info("thread started");
@@ -130,9 +127,14 @@ public class VatsimTrackerBean implements DisposableBean {
         log.info("thread stopped");
     }
 
-    private static class Context {
+    public Collection<Context> contexts() {
+        return trackedPilots.values();
+    }
+
+    public static class Context {
 
         private final int pilotNumber;
+        private String status;
         private Position position;
 
         private Context(final int pilotNumber, final Position position) {
@@ -142,31 +144,34 @@ public class VatsimTrackerBean implements DisposableBean {
 
         public static Context build(final Position position) {
             final Context context = new Context(position.getPilotNumber(), position);
-            log.info("{} at {} - new context created", position.getCallsign(), position.getAirportIcao());
-            context.analyze();
+            context.updateStatus();
             return context;
         }
 
-        private void analyze() {
+        private void updateStatus() {
             if (position.getFpAircraftType() == null) {
-                log.warn("{} at {} - no aircraft type", position.getCallsign(), position.getAirportIcao());
-            }
-
-            if (position.getFpDeparture() == null || position.getFpDestination() == null) {
-                log.warn("{} at {} - no FP dep or dest", position.getCallsign(), position.getAirportIcao());
-            }
-
-            if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-                log.warn("{} at {} - FP dep {} does not match location", position.getCallsign(), position.getAirportIcao(), position.getFpDeparture());
-            }
-
-            if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-                log.warn("{} at {} - FP dest {} is out of world", position.getCallsign(), position.getAirportIcao(), position.getFpDestination());
+                status = "FP - type unknown";
+            } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
+                status = "FP - no route";
+            } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
+                status = "FP - departure misaligned";
+            } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
+                status = "FP - destination is out of world";
+            } else {
+                status = "ALL OK";
             }
         }
 
         public int getPilotNumber() {
             return pilotNumber;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public Position getPosition() {
+            return position;
         }
 
         public void nextReportPosition(final Position position) {
