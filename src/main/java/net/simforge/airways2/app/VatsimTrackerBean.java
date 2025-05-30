@@ -209,18 +209,20 @@ public class VatsimTrackerBean implements DisposableBean {
                 if (takeoff) {
                     flightStage = "Flying";
                     if (overallStatus.equals("All Good")) {
-                        // todo ak0 event 'takeoff'
+                        // todo ak1 push to world
+                        log.info("{}, {}, {} -> {} - Event 'takeoff'", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
                     } else {
                         overallStatus = "Irreversible";
                         removalCounter = 5;
                     }
                 } else {
-                    doPreflightStatusAnalysis(); // todo ak0 probable event 'planned' or 'dispatched'
+                    doPreflightStatusAnalysis(); // todo ak0 probable event 'dispatched'
                 }
             } else if (flightStage.equals("Flying")) {
-                if (landing) {
-                    // todo ak0 event 'landing'
+                if (landing && overallStatus.equals("All Good")) {
                     flightStage = "Arriving";
+                    // todo ak1 push to world
+                    log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
                 }
             } // todo ak1 arrived means stops moving for 1-2 reports
 
