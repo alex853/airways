@@ -169,6 +169,7 @@ public class VatsimTrackerBean implements DisposableBean {
             c.removalCounter = Integer.parseInt(csv.value(row, CSV_REMOVAL_COUNTER));
             c.shouldBeRemoved = Boolean.parseBoolean(csv.value(row, CSV_SHOULD_BE_REMOVED));
             c.distanceLegs.addAll(Arrays.stream(csv.value(row, CSV_DISTANCE_LEGS).split(":"))
+                    .filter(s -> s.length() != 0)
                     .map(Float::parseFloat)
                     .toList());
             loadedTrackedPilots.put(c.pilotNumber, c);
