@@ -3,13 +3,13 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.storage.Strings;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AircraftOperators {
@@ -50,14 +50,19 @@ public class AircraftOperators {
         return storage.findFirst(t -> t.getIata().equals(iata));
     }
 
+    public Optional<AircraftOperator> byIcao(final String icao) {
+        checkNotNull(icao, "icao is mandatory");
+        return storage.findFirst(t -> t.getIcao().equals(icao));
+    }
+
     public AircraftOperator create(final String iata,
-                       final String icao,
-                       final String name) {
-        checkNotNull(iata);
-        checkNotNull(icao);
-        // todo ak3 iata unique
-        // todo ak3 icao unique
-        checkNotNull(name);
+                                   final String icao,
+                                   final String name) {
+        checkNotNull(iata, "iata should be specified");
+        checkNotNull(icao, "icao should be specified");
+        checkArgument(byIata(iata).isEmpty(), "iata should be unique");
+        checkArgument(byIcao(icao).isEmpty(), "icao should be unique");
+        checkNotNull(name, "name should be specified");
 
         final int recordId = storage.addRecord();
         storage.set(recordId, iataField, iata);

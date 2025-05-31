@@ -7,6 +7,8 @@ import java.io.IOException;
 
 public class World25 {
     public static final String name = "World25";
+    public static final String ShadowJetIata = "SJ";
+    public static final String ShadowJetIcao = "SJT";
 
     public static World load() throws IOException {
         return World.load(new DiskStorageStrategy(World25.name));
