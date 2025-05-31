@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +38,7 @@ public class VatsimTrackerBean implements DisposableBean {
     private static final File root = new File("./vatsim-tracker/");
     private static final File lastProcessedReportFile = new File(root, "last-processed-report");
     private static final File contextsFile = new File(root, "contexts.csv");
+    private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
     private final Map<Integer, Context> trackedPilots = new HashMap<>();
     private String lastProcessedReport = null;
 
@@ -61,10 +63,10 @@ public class VatsimTrackerBean implements DisposableBean {
 
             threadStatus = ThreadStatus.Running;
 
-            while (threadStatus == ThreadStatus.Running) {
+            int nextReportCount = 0;
+            long nextReportMilliseconds = 0;
 
-                int nextReportCount = 0;
-                long nextReportMilliseconds = 0;
+            while (threadStatus == ThreadStatus.Running) {
 
                 String nextReport;
                 try {
@@ -75,7 +77,10 @@ public class VatsimTrackerBean implements DisposableBean {
                         nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
                         nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
                         nextReportCount++;
-                        log.info("next report time {} ms", (nextReportMilliseconds / nextReportCount));
+
+                        if ((nextReportCount % 100) == 0) {
+                            log.warn("next report time {} ms", (nextReportMilliseconds / nextReportCount));
+                        }
                     }
                 } catch (final Exception e) {
                     log.error("error on looking for a report", e);
@@ -281,11 +286,13 @@ public class VatsimTrackerBean implements DisposableBean {
                 context.aircraftRegNo = position.getRegNo();
                 context.plannedDeparture = position.getFpDeparture();
                 context.plannedDestination = position.getFpDestination();
+
                 // todo ak1 push to world
-                // todo ak0 add to pilot log
                 log.info("{}, {}, {} -> {} - Event 'dispatched'", position.getPilotNumber(), position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+                context.pilotLog("Event 'dispatched' == via new flight in airport");
             } else {
                 context.overallStatus = OverallStatus.Restorable;
+                context.pilotLog("new flight in Restorable status");
             }
 
             return context;
@@ -375,8 +382,8 @@ public class VatsimTrackerBean implements DisposableBean {
                     flightStage = FlightStage.Flying;
                     if (overallStatus == OverallStatus.AllGood) {
                         // todo ak1 push to world
-                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'takeoff'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                        pilotLog("Event 'takeoff'");
                     } else {
                         overallStatus = OverallStatus.Irreversible;
                         removalCounter = 5;
@@ -388,8 +395,8 @@ public class VatsimTrackerBean implements DisposableBean {
                             && getLastTrackedDistance() > 0.2) { // threshold
                         flightStage = FlightStage.Departing;
                         // todo ak1 push to world
-                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'blocks-off'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                        pilotLog("Event 'blocks-off'");
                     }
 
                     final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
@@ -403,14 +410,14 @@ public class VatsimTrackerBean implements DisposableBean {
                             plannedDestination = nextPosition.getFpDestination();
                             overallStatus = OverallStatus.AllGood;
                             // todo ak1 push to world
-                            // todo ak0 add to pilot log
                             log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                            pilotLog("Event 'dispatched' == via some correction");
                         } else {
                             planningStatus = newPlanningStatus;
                             overallStatus = OverallStatus.Restorable;
                             // todo ak1 push to world
-                            // todo ak0 add to pilot log
                             log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
+                            pilotLog("Event 'cancelled' as flight becomes Restorable");
                         }
                     }
                 }
@@ -419,15 +426,15 @@ public class VatsimTrackerBean implements DisposableBean {
                     if (plannedDestination.equals(nextPosition.getAirportIcao())) {
                         flightStage = FlightStage.Arriving;
                         // todo ak1 push to world
-                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                        pilotLog("Event 'landing'");
                     } else {
                         flightStage = FlightStage.Arrived;
                         overallStatus = OverallStatus.Irreversible;
                         removalCounter = 5;
                         // todo ak1 push to world
-                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                        pilotLog("Event 'landing' on wrong airport, removing");
                     }
                 }
             } else if (flightStage == FlightStage.Arriving) {
@@ -435,8 +442,8 @@ public class VatsimTrackerBean implements DisposableBean {
                         && getLastTrackedDistance() < 0.3) {
                     flightStage = FlightStage.Arrived;
                     // todo ak1 push to world
-                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    pilotLog("Event 'blocks-on'");
                 }
             }
 
@@ -455,23 +462,42 @@ public class VatsimTrackerBean implements DisposableBean {
             } else if (overallStatus == OverallStatus.AllGood) {
                 if (flightStage == FlightStage.Arriving) {
                     // todo ak1 push to world
-                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    pilotLog("Event 'blocks-on' due to pilot went offline");
                     shouldBeRemoved = true;
                 } else {
-                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    pilotLog("Event 'offline' from AllGood, removing");
                     shouldBeRemoved = true;
                 }
             } else { // Restorable
-                // todo ak0 add to pilot log
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'offline' from Restorable, removing");
                 shouldBeRemoved = true;
             }
         }
 
         public boolean shouldBeRemoved() {
             return shouldBeRemoved;
+        }
+
+        private void pilotLog(final String message) {
+            final String folder1 = (pilotNumber / 100000) + "xxxxx";
+            final File folder1file = new File(pilotLogsRoot, folder1);
+            final String folder2 = (pilotNumber / 1000) + "xxx";
+            final File folder2file = new File(folder1file, folder2);
+            final String filename = pilotNumber + ".log";
+            final File pilotLogFile = new File(folder2file, filename);
+
+            //noinspection ResultOfMethodCallIgnored
+            pilotLogFile.getParentFile().mkdirs();
+
+            final String line = LocalDateTime.now() + " | " + aircraftType + " | " + plannedDeparture + " -> " + plannedDestination + " | " + message + "\r\n";
+            try {
+                IOHelper.appendFile(pilotLogFile, line);
+            } catch (final IOException e) {
+                log.warn("unable to write pilot log", e);
+            }
         }
     }
 
