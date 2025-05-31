@@ -52,7 +52,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
             try {
                 loadStatus();
-            } catch (IOException e) {
+            } catch (final Exception e) {
                 log.error("unable to load status", e);
                 throw new RuntimeException(e);
             }
@@ -69,7 +69,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     } else {
                         nextReport = compactifiedStorage.getNextReport(lastProcessedReport); // todo ak1 how much time does it take?
                     }
-                } catch (final IOException e) {
+                } catch (final Exception e) {
                     log.error("error on looking for a report", e);
                     Misc.sleep(60000);
                     continue;
