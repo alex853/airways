@@ -28,11 +28,11 @@ public class VatsimTrackerController {
                         c.getPlanningStatus().name(),
                         c.getOverallStatus().name(),
                         c.getLastTrackedDistance(),
-                        c.getPosition().getAirportIcao(),
-                        c.getPosition().getFpAircraftType(),
-                        c.getPosition().getRegNo(),
-                        c.getPosition().getFpDeparture(),
-                        c.getPosition().getFpDestination()))
+                        c.getLocationAirport(),
+                        c.getAircraftType(),
+                        c.getAircraftRegNo(),
+                        c.getPlannedDeparture(),
+                        c.getPlannedDestination()))
                 .toList();
     }
 
