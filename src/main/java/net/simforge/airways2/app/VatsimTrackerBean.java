@@ -3,6 +3,7 @@ package net.simforge.airways2.app;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
+import net.simforge.commons.legacy.misc.Settings;
 import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.Misc;
 import net.simforge.networkview.core.Network;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 @Component
 public class VatsimTrackerBean implements DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(VatsimTrackerBean.class);
-    private static final String storageRoot = "../data/network-view"; // todo ak1 move it into settings
+    private static final String storageRoot = Settings.get("network.view.storage.root");
 
     private volatile ThreadStatus threadStatus = ThreadStatus.Startup;
     private Thread thread;
@@ -62,12 +63,19 @@ public class VatsimTrackerBean implements DisposableBean {
 
             while (threadStatus == ThreadStatus.Running) {
 
+                int nextReportCount = 0;
+                long nextReportMilliseconds = 0;
+
                 String nextReport;
                 try {
                     if (lastProcessedReport == null) {
-                        nextReport = compactifiedStorage.getLastReport(); // todo ak1 how much time does it take?
+                        nextReport = compactifiedStorage.getLastReport();
                     } else {
-                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport); // todo ak1 how much time does it take?
+                        long before = System.nanoTime();
+                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
+                        nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
+                        nextReportCount++;
+                        log.info("next report time {} ms", (nextReportMilliseconds / nextReportCount));
                     }
                 } catch (final Exception e) {
                     log.error("error on looking for a report", e);
@@ -274,7 +282,7 @@ public class VatsimTrackerBean implements DisposableBean {
                 context.plannedDeparture = position.getFpDeparture();
                 context.plannedDestination = position.getFpDestination();
                 // todo ak1 push to world
-                // todo ak1 add to pilot log
+                // todo ak0 add to pilot log
                 log.info("{}, {}, {} -> {} - Event 'dispatched'", position.getPilotNumber(), position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
             } else {
                 context.overallStatus = OverallStatus.Restorable;
@@ -367,7 +375,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     flightStage = FlightStage.Flying;
                     if (overallStatus == OverallStatus.AllGood) {
                         // todo ak1 push to world
-                        // todo ak1 add to pilot log
+                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'takeoff'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     } else {
                         overallStatus = OverallStatus.Irreversible;
@@ -380,7 +388,7 @@ public class VatsimTrackerBean implements DisposableBean {
                             && getLastTrackedDistance() > 0.2) { // threshold
                         flightStage = FlightStage.Departing;
                         // todo ak1 push to world
-                        // todo ak1 add to pilot log
+                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'blocks-off'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     }
 
@@ -395,13 +403,13 @@ public class VatsimTrackerBean implements DisposableBean {
                             plannedDestination = nextPosition.getFpDestination();
                             overallStatus = OverallStatus.AllGood;
                             // todo ak1 push to world
-                            // todo ak1 add to pilot log
+                            // todo ak0 add to pilot log
                             log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                         } else {
                             planningStatus = newPlanningStatus;
                             overallStatus = OverallStatus.Restorable;
                             // todo ak1 push to world
-                            // todo ak1 add to pilot log
+                            // todo ak0 add to pilot log
                             log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
                         }
                     }
@@ -411,14 +419,14 @@ public class VatsimTrackerBean implements DisposableBean {
                     if (plannedDestination.equals(nextPosition.getAirportIcao())) {
                         flightStage = FlightStage.Arriving;
                         // todo ak1 push to world
-                        // todo ak1 add to pilot log
+                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     } else {
                         flightStage = FlightStage.Arrived;
                         overallStatus = OverallStatus.Irreversible;
                         removalCounter = 5;
                         // todo ak1 push to world
-                        // todo ak1 add to pilot log
+                        // todo ak0 add to pilot log
                         log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     }
                 }
@@ -427,7 +435,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         && getLastTrackedDistance() < 0.3) {
                     flightStage = FlightStage.Arrived;
                     // todo ak1 push to world
-                    // todo ak1 add to pilot log
+                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 }
             }
@@ -447,16 +455,16 @@ public class VatsimTrackerBean implements DisposableBean {
             } else if (overallStatus == OverallStatus.AllGood) {
                 if (flightStage == FlightStage.Arriving) {
                     // todo ak1 push to world
-                    // todo ak1 add to pilot log
+                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     shouldBeRemoved = true;
                 } else {
-                    // todo ak1 add to pilot log
+                    // todo ak0 add to pilot log
                     log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     shouldBeRemoved = true;
                 }
             } else { // Restorable
-                // todo ak1 add to pilot log
+                // todo ak0 add to pilot log
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 shouldBeRemoved = true;
             }
