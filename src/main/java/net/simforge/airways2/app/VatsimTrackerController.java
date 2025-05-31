@@ -27,6 +27,7 @@ public class VatsimTrackerController {
                         c.getFlightStage().name(),
                         c.getPlanningStatus().name(),
                         c.getOverallStatus().name(),
+                        c.getLastTrackedDistance(),
                         c.getPosition().getAirportIcao(),
                         c.getPosition().getFpAircraftType(),
                         c.getPosition().getRegNo(),
@@ -42,6 +43,7 @@ public class VatsimTrackerController {
         private String flightStage;
         private String planningStatus;
         private String overallStatus;
+        private float lastTrackedDistance;
         private String locationIcao;
         private String aircraftType;
         private String regNo;

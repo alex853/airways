@@ -1,6 +1,7 @@
 package net.simforge.airways2.app;
 
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.Misc;
 import net.simforge.networkview.core.Network;
 import net.simforge.networkview.core.Position;
@@ -140,6 +141,7 @@ public class VatsimTrackerBean implements DisposableBean {
         private Position position;
         private int removalCounter;
         private boolean shouldBeRemoved;
+        private final Queue<Float> distanceLegs = new LinkedList<>();
 
         private Context(final int pilotNumber, final Position position) {
             this.pilotNumber = pilotNumber;
@@ -194,17 +196,25 @@ public class VatsimTrackerBean implements DisposableBean {
             return position;
         }
 
+        public float getLastTrackedDistance() {
+            return distanceLegs.stream().reduce(0.0f, Float::sum);
+        }
+
         public void nextReportPosition(final Position nextPosition) {
             if (overallStatus == OverallStatus.Irreversible) {
-                removalCounter--;
-                if (removalCounter <= 0) {
+                if (removalCounter == 0) {
                     shouldBeRemoved = true;
+                } else {
+                    removalCounter--;
                 }
                 return;
             }
 
             boolean takeoff = position.isOnGround() && !nextPosition.isOnGround();
             boolean landing = !position.isOnGround() && nextPosition.isOnGround();
+
+            distanceLegs.add((float) Geo.distance(position.getCoords(), nextPosition.getCoords()));
+            while (distanceLegs.size() > 3) { distanceLegs.poll(); }
 
             if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) { // todo ak1 departing means starts moving
                 if (takeoff) {
@@ -245,10 +255,20 @@ public class VatsimTrackerBean implements DisposableBean {
         }
 
         public void noPositionInReport(final String report) {
-            // todo ak1 implement
-            shouldBeRemoved = true;
-            if (overallStatus == OverallStatus.AllGood) {
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE', terminated", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+            // todo ak1 re-implement
+
+            if (overallStatus == OverallStatus.Irreversible) {
+                if (removalCounter == 0) {
+                    shouldBeRemoved = true;
+                } else {
+                    removalCounter--;
+                }
+            } else if (overallStatus == OverallStatus.AllGood) {
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+                shouldBeRemoved = true;
+            } else { // Restorable
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
+                shouldBeRemoved = true;
             }
         }
 
