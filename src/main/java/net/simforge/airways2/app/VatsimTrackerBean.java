@@ -65,106 +65,110 @@ public class VatsimTrackerBean implements DisposableBean {
             long nextReportMilliseconds = 0;
 
             while (threadStatus == ThreadStatus.Running) {
-
-                String nextReport;
                 try {
-                    if (lastProcessedReport == null) {
-                        nextReport = compactifiedStorage.getLastReport();
-                    } else {
-                        long before = System.nanoTime();
-                        nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
-                        nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
-                        nextReportCount++;
-
-                        if ((nextReportCount % 100) == 0) {
-                            log.warn("next report time {} ms", (nextReportMilliseconds / nextReportCount));
-                        }
-                    }
-                } catch (final Exception e) {
-                    log.error("error on looking for a report", e);
-                    Misc.sleep(60000);
-                    continue;
-                }
-
-                if (nextReport == null) {
-                    Misc.sleep(10000);
-                    continue;
-                }
-
-                log.info("report {} - found next report", nextReport);
-
-                final List<Position> positions;
-                try {
-                    positions = compactifiedStorage.loadPositions(nextReport);
-                } catch (final Exception e) {
-                    log.error("error on reading next report data", e);
-                    Misc.sleep(60000);
-                    continue;
-                }
-
-                log.info("report {} - {} positions loaded", nextReport, positions.size());
-
-                final String nextReportFinal = nextReport;
-                //final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
-                final Map<Integer, Position> pilotNumberToPosition = new HashMap<>();
-                for (final Position p : positions) {
-                    pilotNumberToPosition.put(p.getPilotNumber(), p);
-                }
-
-                log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
-
-                // all aircraft located in 'tracked' airports while they are in those airports
-                // when they depart, they will be tracked only if they have appropriate flight plans
-
-                trackedPilots.forEach((pilotNumber, context) -> {
+                    String nextReport;
                     try {
-                        final Position position = pilotNumberToPosition.get(pilotNumber);
-                        if (position != null) {
-                            log.info("report {} - online position {}", nextReport, pilotNumber);
-                            context.nextReportPosition(position);
+                        if (lastProcessedReport == null) {
+                            nextReport = compactifiedStorage.getLastReport();
                         } else {
-                            log.info("report {} - offline position {}", nextReport, pilotNumber);
-                            context.noPositionInReport(nextReportFinal);
+                            long before = System.nanoTime();
+                            nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
+                            nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
+                            nextReportCount++;
+
+                            if ((nextReportCount % 100) == 0) {
+                                log.warn("next report time {} ms", (nextReportMilliseconds / nextReportCount));
+                            }
                         }
                     } catch (final Exception e) {
-                        log.error("error on processing", e);
+                        log.error("error on looking for a report", e);
+                        Misc.sleep(60000);
+                        continue;
                     }
-                });
 
-                log.info("report {} - tracked pilots processed", nextReport);
+                    if (nextReport == null) {
+                        Misc.sleep(10000);
+                        continue;
+                    }
 
-                positions.stream()
-                        .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
-                        .forEach(p -> {
-                            if (!trackedPilots.containsKey(p.getPilotNumber())) {
-                                try {
-                                    final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
-                                    pc.newPilotContextInAirport(p);
-                                    trackedPilots.put(p.getPilotNumber(), pc);
-                                } catch (final Exception e) {
-                                    log.error("error on processing", e);
-                                }
+                    log.info("report {} - found next report", nextReport);
+
+                    final List<Position> positions;
+                    try {
+                        positions = compactifiedStorage.loadPositions(nextReport);
+                    } catch (final Exception e) {
+                        log.error("error on reading next report data", e);
+                        Misc.sleep(60000);
+                        continue;
+                    }
+
+                    log.info("report {} - {} positions loaded", nextReport, positions.size());
+
+                    final String nextReportFinal = nextReport;
+                    //final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p)); // todo ak1 collision?
+                    final Map<Integer, Position> pilotNumberToPosition = new HashMap<>();
+                    for (final Position p : positions) {
+                        pilotNumberToPosition.put(p.getPilotNumber(), p);
+                    }
+
+                    log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
+
+                    // all aircraft located in 'tracked' airports while they are in those airports
+                    // when they depart, they will be tracked only if they have appropriate flight plans
+
+                    trackedPilots.forEach((pilotNumber, context) -> {
+                        try {
+                            final Position position = pilotNumberToPosition.get(pilotNumber);
+                            if (position != null) {
+                                //log.info("report {} - online position {}", nextReport, pilotNumber);
+                                context.nextReportPosition(position);
+                            } else {
+                                //log.info("report {} - offline position {}", nextReport, pilotNumber);
+                                context.noPositionInReport(nextReportFinal);
                             }
-                        });
+                        } catch (final Exception e) {
+                            log.error("error on processing", e);
+                        }
+                    });
 
-                log.info("report {} - new pilots processed", nextReport);
+                    log.info("report {} - tracked pilots processed", nextReport);
 
-                final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
-                        .filter(PilotContext::shouldBeRemoved)
-                        .map(PilotContext::getPilotNumber)
-                        .toList();
-                pilotNumbersForRemoval.forEach(trackedPilots::remove);
+                    positions.stream()
+                            .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
+                            .forEach(p -> {
+                                if (!trackedPilots.containsKey(p.getPilotNumber())) {
+                                    try {
+                                        final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
+                                        pc.newPilotContextInAirport(p);
+                                        trackedPilots.put(p.getPilotNumber(), pc);
+                                    } catch (final Exception e) {
+                                        log.error("error on processing", e);
+                                    }
+                                }
+                            });
 
-                log.info("report {} - pilot removal completed", nextReport);
+                    log.info("report {} - new pilots processed", nextReport);
 
-                lastProcessedReport = nextReport;
-                try {
-                    saveStatus();
+                    final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
+                            .filter(PilotContext::shouldBeRemoved)
+                            .map(PilotContext::getPilotNumber)
+                            .toList();
+                    pilotNumbersForRemoval.forEach(trackedPilots::remove);
+
+                    log.info("report {} - pilot removal completed", nextReport);
+
+                    lastProcessedReport = nextReport;
+                    try {
+                        saveStatus();
+                    } catch (final Exception e) {
+                        log.error("unable to save status", e);
+                    }
+
+                    log.info("report {} - all done", nextReport);
                 } catch (final Exception e) {
-                    log.error("unable to save status", e);
+                    log.error("undetermined exception in vatsim tracker", e);
+                    Misc.sleep(10000);
                 }
-
-                log.info("report {} - all done", nextReport);
             }
 
             log.info("cycle stopped, status is {}", threadStatus);
