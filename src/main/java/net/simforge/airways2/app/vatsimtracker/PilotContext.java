@@ -235,7 +235,9 @@ public class PilotContext {
             }
         } else if (overallStatus == OverallStatus.AllGood) {
             if (flightStage == FlightStage.Arriving) {
-                // todo ak0 push to world
+
+                mission_blocksOn();
+
                 log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'blocks-on' due to pilot went offline");
                 shouldBeRemoved = true;
