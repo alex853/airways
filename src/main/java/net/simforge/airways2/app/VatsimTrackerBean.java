@@ -9,6 +9,7 @@ import net.simforge.commons.misc.Misc;
 import net.simforge.networkview.core.Network;
 import net.simforge.networkview.core.Position;
 import net.simforge.networkview.core.report.compact.CompactifiedStorage;
+import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -19,6 +20,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
@@ -116,23 +118,28 @@ public class VatsimTrackerBean implements DisposableBean {
                     // all aircraft located in 'tracked' airports while they are in those airports
                     // when they depart, they will be tracked only if they have appropriate flight plans
 
+                    final AtomicInteger onlinePositions = new AtomicInteger();
+                    final AtomicInteger offlinePositions = new AtomicInteger();
                     trackedPilots.forEach((pilotNumber, context) -> {
                         try {
                             final Position position = pilotNumberToPosition.get(pilotNumber);
                             if (position != null) {
                                 //log.info("report {} - online position {}", nextReport, pilotNumber);
                                 context.nextReportPosition(position);
+                                onlinePositions.incrementAndGet();
                             } else {
                                 //log.info("report {} - offline position {}", nextReport, pilotNumber);
                                 context.noPositionInReport(nextReportFinal);
+                                offlinePositions.incrementAndGet();
                             }
                         } catch (final Exception e) {
                             log.error("error on processing", e);
                         }
                     });
 
-                    log.info("report {} - tracked pilots processed", nextReport);
+                    log.info("report {} - tracked pilots processed, online {}, offline {}", nextReport, onlinePositions.get(), offlinePositions.get());
 
+                    final AtomicInteger newPilots = new AtomicInteger();
                     positions.stream()
                             .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
                             .forEach(p -> {
@@ -141,13 +148,14 @@ public class VatsimTrackerBean implements DisposableBean {
                                         final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
                                         pc.newPilotContextInAirport(p);
                                         trackedPilots.put(p.getPilotNumber(), pc);
+                                        newPilots.incrementAndGet();
                                     } catch (final Exception e) {
                                         log.error("error on processing", e);
                                     }
                                 }
                             });
 
-                    log.info("report {} - new pilots processed", nextReport);
+                    log.info("report {} - new {} pilots processed", nextReport, newPilots.get());
 
                     final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
                             .filter(PilotContext::shouldBeRemoved)
@@ -155,7 +163,7 @@ public class VatsimTrackerBean implements DisposableBean {
                             .toList();
                     pilotNumbersForRemoval.forEach(trackedPilots::remove);
 
-                    log.info("report {} - pilot removal completed", nextReport);
+                    log.info("report {} - pilot removal completed, removed {} records", nextReport, pilotNumbersForRemoval.size());
 
                     lastProcessedReport = nextReport;
                     try {
@@ -231,6 +239,4 @@ public class VatsimTrackerBean implements DisposableBean {
         Stopped,
         TerminatedDueToError
     }
-
-
 }
