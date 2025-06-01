@@ -85,8 +85,16 @@ public class PilotContext {
         return overallStatus;
     }
 
+    public int getFlightMissionId() {
+        return flightMissionId;
+    }
+
     public boolean shouldBeRemoved() {
         return shouldBeRemoved;
+    }
+
+    public int getRemovalCounter() {
+        return removalCounter;
     }
 
     public float getLastTrackedDistance() {
