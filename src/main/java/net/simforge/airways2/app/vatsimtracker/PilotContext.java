@@ -396,6 +396,7 @@ public class PilotContext {
         csv.addColumn(CSV_PLANNED_DEPARTURE);
         csv.addColumn(CSV_PLANNED_DESTINATION);
         csv.addColumn(CSV_OVERALL_STATUS);
+        csv.addColumn(CSV_FLIGHT_MISSION_ID);
         csv.addColumn(CSV_POSITION_IS_ON_GROUND);
         csv.addColumn(CSV_POSITION_AIRPORT_ICAO);
         csv.addColumn(CSV_POSITION_LATITUDE);
