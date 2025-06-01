@@ -96,7 +96,7 @@ public class VatsimTrackerBean implements DisposableBean {
                 final List<Position> positions;
                 try {
                     positions = compactifiedStorage.loadPositions(nextReport);
-                } catch (IOException e) {
+                } catch (final IOException e) {
                     log.error("error on reading next report data", e);
                     Misc.sleep(60000);
                     continue;
@@ -116,7 +116,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         } else {
                             context.noPositionInReport(nextReportFinal);
                         }
-                    } catch (final RuntimeException e) {
+                    } catch (final Exception e) {
                         log.error("error on processing", e);
                     }
                 });
@@ -129,7 +129,7 @@ public class VatsimTrackerBean implements DisposableBean {
                                     final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
                                     pc.newPilotContextInAirport(p);
                                     trackedPilots.put(p.getPilotNumber(), pc);
-                                } catch (final RuntimeException e) {
+                                } catch (final Exception e) {
                                     log.error("error on processing", e);
                                 }
                             }
