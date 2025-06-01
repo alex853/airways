@@ -417,9 +417,9 @@ public class PilotContext {
         } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
             return PlanningStatus.FP_NoRoute;
         } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-            return PlanningStatus.FP_DepartureMisaligned;
+            return PlanningStatus.FP_DepWrong;
         } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-            return PlanningStatus.FP_DestinationIsOutOfTheWorld;
+            return PlanningStatus.FP_DestOutWorld;
         } else {
             return PlanningStatus.AllGood;
         }
