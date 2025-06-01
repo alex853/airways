@@ -244,6 +244,13 @@ public class PilotContext {
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Preflight stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'offline' from AllGood on Preflight stage, cancelling and removing");
                 shouldBeRemoved = true;
+            } else if (flightStage == FlightStage.Flying) {
+                mission_cancelFromFlying(); // todo ak2 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
+                flightMissionId = 0;
+
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Flying stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'offline' from AllGood on Flying stage, cancelling and removing");
+                shouldBeRemoved = true;
             } else if (flightStage == FlightStage.Arriving) {
                 mission_blocksOnAndFinish();
                 flightMissionId = 0;
@@ -369,6 +376,20 @@ public class PilotContext {
                 world.flightMissionControl().cancelFromPreflight(mission.get());
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
+            }
+
+            return null;
+        });
+    }
+
+    private void mission_cancelFromFlying() {
+        worldBean.modifySync(world -> {
+            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+
+            if (mission.getStatus() == FlightMissions.Status.Flying) {
+                world.flightMissionControl().cancelFromFlyingAndReturnAircraftToDepartureAirport(mission);
+            } else {
+                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
             return null;

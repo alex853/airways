@@ -73,6 +73,29 @@ public class FlightMissionControl {
         log.info("Pilot {}, flight {} - flight cancelled from preflight", pilot, mission.getId());
     }
 
+    public void cancelFromFlyingAndReturnAircraftToDepartureAirport(final FlightMissions.Mission mission) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+        final FlightMissions.Status actualStatus = mission.getStatus();
+        checkArgument(actualStatus == FlightMissions.Status.Flying);
+
+        mission.setStatus(FlightMissions.Status.Cancelled);
+
+        final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+
+        aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+        aircraft.setLocationAirportId(mission.getDepartureAirportId());
+        aircraft.setLocationLatitude(departureAirport.getLatitude());
+        aircraft.setLocationLongitude(departureAirport.getLongitude());
+
+        aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+        aircraft.setFlightMissionId(0);
+
+        int pilot = 0; // todo ak3 remove it when pilot is introduced
+        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
+        log.info("Pilot {}, flight {} - flight cancelled from preflight", pilot, mission.getId());
+    }
+
     public void blocksOff(final FlightMissions.Mission mission) {
         mission.setStatus(FlightMissions.Status.Departure);
         mission.setActualDepartureTime(world.getWorldTime());

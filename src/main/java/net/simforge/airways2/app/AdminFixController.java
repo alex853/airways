@@ -30,12 +30,12 @@ public class AdminFixController {
                 aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
                 aircraft.setFlightMissionId(0);
             } else {
-                final Airports.Airport airport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+                final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
 
                 aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
                 aircraft.setLocationAirportId(mission.getDepartureAirportId());
-                aircraft.setLocationLatitude(airport.getLatitude());
-                aircraft.setLocationLongitude(airport.getLongitude());
+                aircraft.setLocationLatitude(departureAirport.getLatitude());
+                aircraft.setLocationLongitude(departureAirport.getLongitude());
 
                 aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
                 aircraft.setFlightMissionId(0);
