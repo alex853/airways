@@ -3,9 +3,9 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.AircraftPerformanceData;
-import net.simforge.airways2.world.computations.AircraftPerformanceDataHelper;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.computations.SimpleFlight;
+import net.simforge.airways2.world.datamodel.AircraftTypes;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -24,7 +24,8 @@ public class FlightMissionHelper {
             final Airports.Airport departureAirport,
             final Airports.Airport destinationAirport,
             final int departureTime) {
-        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData();
+        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
         final SimpleFlight simpleFlight = SimpleFlight.forRoute(departureAirport.getCoords(), destinationAirport.getCoords(), performanceData);
         final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
         flightTimeline.scheduleDepartureTime(Time.toLdt(departureTime));

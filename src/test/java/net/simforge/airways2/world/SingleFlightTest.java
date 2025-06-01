@@ -26,7 +26,7 @@ public class SingleFlightTest {
         airportA = world.airports().create(0, 0, "AAA", "AAAA", "Alpha");
         airportB = world.airports().create(0, 10, "BBB", "BBBB", "Bravo");
 
-        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().create("TTTT", "TTT");
+        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().create("A320", "320");
         final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-BCDE", airportA);
 
         final int departureTime = startTime + 2*Time.ONE_HOUR;

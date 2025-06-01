@@ -89,8 +89,9 @@ public class FlightMissionProcessor {
         final Airports.Airport fromAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport toAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
-        // todo ak3 AircraftType aircraftType = flight.getAircraftType();
-        final AircraftPerformanceData performanceData = AircraftPerformanceDataHelper.getData(); // todo ak3
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
         final SimpleFlight simpleFlight = SimpleFlight.forRoute(
                 fromAirport.getCoords(),
                 toAirport.getCoords(),
@@ -102,7 +103,6 @@ public class FlightMissionProcessor {
 
         if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) {
 
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
             // todo ak3 Pilot pilot = session.load(Pilot.class, ctx.getPilot().getId());
 
             final Geo.Coords coords = aircraftPosition.getCoords();
