@@ -259,14 +259,17 @@ public class PilotContext {
                     world,
                     aircraftType,
                     positionAirportIcao);
-            final FlightMissions.Mission aMission = FlightMissionHelper.scheduleDispatchedMission(
+            final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
                     world,
                     aircraft,
                     world.airports().byIcao(plannedDeparture).orElseThrow(),
                     world.airports().byIcao(plannedDestination).orElseThrow(),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
-            aMission.setModePc(true);
-            return aMission;
+            mission.setModePc(true);
+
+            world.flightMissionControl().startOrCancel(mission);
+
+            return mission;
         });
     }
 
@@ -274,9 +277,6 @@ public class PilotContext {
         worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
-            if (mission.getStatus() == FlightMissions.Status.Dispatched) {
-                world.flightMissionControl().startOrCancel(mission); // todo ak2 check status
-            }
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
                 world.flightMissionControl().blocksOff(mission);
             } else {
@@ -291,9 +291,6 @@ public class PilotContext {
         worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
-            if (mission.getStatus() == FlightMissions.Status.Dispatched) {
-                world.flightMissionControl().startOrCancel(mission); // todo ak2 check status
-            }
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
                 world.flightMissionControl().blocksOff(mission);
             }
@@ -337,8 +334,17 @@ public class PilotContext {
     }
 
     private void mission_cancelBeforeFlightIfExists() {
-        // todo ak0 push to world
-        throw new UnsupportedOperationException("PilotContext.mission_cancelBeforeFlightIfExists not implemented");
+        worldBean.modifySync(world -> {
+            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+
+            if (mission.getStatus() == FlightMissions.Status.Dispatched) {
+                world.flightMissionControl().cancelFromPreflight(mission);
+            } else {
+                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+            }
+
+            return null;
+        });
     }
 
     private void copyPositionFields(final Position position) {

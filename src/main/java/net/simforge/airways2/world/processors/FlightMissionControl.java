@@ -9,6 +9,8 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
@@ -54,6 +56,21 @@ public class FlightMissionControl {
         int pilot = 0; // todo ak3 remove it when pilot is introduced
         world.log(EventLog.EventType.FlightStarted, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("Pilot {}, flight {} - flight started and in Preflight status, aircraft {} is activated", pilot, mission.getId(), aircraft.getRegNo());
+    }
+
+    public void cancelFromPreflight(final FlightMissions.Mission mission) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+        final FlightMissions.Status actualStatus = mission.getStatus();
+        checkArgument(actualStatus == FlightMissions.Status.Preflight);
+
+        mission.setStatus(FlightMissions.Status.Cancelled);
+        aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+        aircraft.setFlightMissionId(0);
+
+        int pilot = 0; // todo ak3 remove it when pilot is introduced
+        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
+        log.info("Pilot {}, flight {} - flight cancelled from preflight", pilot, mission.getId());
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {
