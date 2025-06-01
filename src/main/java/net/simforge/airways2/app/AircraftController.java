@@ -28,8 +28,9 @@ public class AircraftController {
                         a.getRegNo(),
                         a.getAircraftOperatorId(),
                         a.getFlightMissionId(),
-                        a.getOperationalStatusRaw() + " - " + a.getOperationalStatus(),
-                        a.getLocationStatusRaw() + " - " + a.getLocationStatus(),
+                        a.getFlightMissionId() != 0 ? FlightMissionHelper.formatRoute(world, a.getFlightMissionId()) : null,
+                        a.getOperationalStatus().name(),
+                        a.getLocationStatus().name(),
                         a.getLocationAirportId() != 0 ? world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao() : null,
                         a.getLocationLatitude(),
                         a.getLocationLongitude()))
@@ -59,6 +60,7 @@ public class AircraftController {
         private String regNo;
         private int aircraftOperatorId;
         private int flightMissionId;
+        private String flightRoute;
         private String operationalStatus;
         private String locationStatus;
         private String locationAirport;
