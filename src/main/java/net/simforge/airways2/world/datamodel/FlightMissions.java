@@ -193,7 +193,7 @@ public class FlightMissions {
         }
     }
 
-    // todo ak3 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
+    // todo ak2 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
     public enum Status {
         PlannedManually(1),
         PlannedViaSchedule(2),

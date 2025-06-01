@@ -9,7 +9,6 @@ import net.simforge.commons.misc.Misc;
 import net.simforge.networkview.core.Network;
 import net.simforge.networkview.core.Position;
 import net.simforge.networkview.core.report.compact.CompactifiedStorage;
-import org.checkerframework.checker.units.qual.A;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -78,7 +77,7 @@ public class VatsimTrackerBean implements DisposableBean {
                             nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
                             nextReportCount++;
 
-                            if ((nextReportCount % 100) == 0) {
+                            if ((nextReportCount % 100) == 0) { // todo ak1 see bunch of monitoring todos - all them can be wrapped into some tool clas
                                 log.warn("next report time {} ms", (nextReportMilliseconds / nextReportCount));
                             }
                         }

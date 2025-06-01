@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
-// todo ak2 tests!!!!
+// todo ak3 tests!!!!
 public class Strings {
     private int[] indices = new int[1];
     private byte[] strings = new byte[0];
@@ -77,7 +77,7 @@ public class Strings {
         final int newId = newIndices.length-1;
         final int newStartingPoint = strings.length;
         newIndices[newId] = newStartingPoint;
-        newStrings[newStartingPoint] = (byte) target.length; // todo ak2 check the case when strings longer than 128 bytes, this can lead to negative values here!
+        newStrings[newStartingPoint] = (byte) target.length; // todo ak3 check the case when strings longer than 128 bytes, this can lead to negative values here!
         System.arraycopy(target, 0, newStrings, newStartingPoint+1, target.length);
 
         this.indices = newIndices;

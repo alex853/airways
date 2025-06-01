@@ -23,7 +23,7 @@ dependencies {
     implementation 'net.simforge:simforge-commons:latest.release'
 //    implementation 'net.simforge:simforge-commons-ext:latest.release'
 //    implementation 'net.simforge:simforge-atmosphere:latest.release'
-    implementation 'net.simforge:refdata-aircrafts:1.5.1' // todo ak1 return to latest.release
+    implementation 'net.simforge:refdata-aircrafts:1.5.1' // todo ak0 return to latest.release
 //    implementation 'net.simforge:refdata-airports:latest.release'
     implementation 'net.simforge:network-view-core:latest.release'
 

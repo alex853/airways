@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 // todo ak2 migrate to simforge.net
+// todo ak1 health monitoring
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);

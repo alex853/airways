@@ -44,15 +44,15 @@ public class WorldRunnerBean implements DisposableBean {
 
                 lock.writeLock().lock();
                 try {
-                    needToCatchTime = world.process(now); // todo ak3 - monitoring - how much time does it take
+                    needToCatchTime = world.process(now); // todo ak1 - monitoring - how much time does it take
 
-                    while (!actionQueue.isEmpty()) { // todo ak3 - monitoring - how much time each action is waiting
+                    while (!actionQueue.isEmpty()) { // todo ak1 - monitoring - how much time each action is waiting
                         final ActionContext<?> actionContext = actionQueue.poll();
                         actionContext.perform(world);
                     }
 
                     if (lastSaved + saveWorldPeriod < now) {
-                        saveWorld(); // todo ak3 - monitoring - how much time does it take
+                        saveWorld(); // todo ak1 - monitoring - how much time does it take
                         lastSaved = now;
                     }
                 } finally {

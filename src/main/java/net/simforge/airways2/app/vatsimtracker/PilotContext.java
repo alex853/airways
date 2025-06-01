@@ -253,7 +253,7 @@ public class PilotContext {
                 pilotLog("Event 'offline' from AllGood on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else if (flightStage == FlightStage.Flying) {
-                mission_cancelFromFlying(); // todo ak2 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
+                mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
                 flightMissionId = 0;
 
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Flying stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
