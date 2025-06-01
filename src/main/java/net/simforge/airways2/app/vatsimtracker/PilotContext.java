@@ -17,10 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class PilotContext {
@@ -184,7 +181,8 @@ public class PilotContext {
                         planningStatus = newPlanningStatus;
                         overallStatus = OverallStatus.Restorable;
 
-                        mission_cancelBeforeFlightIfExists();
+                        mission_cancelFromPreflightIfExists();
+                        flightMissionId = 0;
 
                         log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
                         pilotLog("Event 'cancelled' as flight becomes Restorable");
@@ -216,7 +214,10 @@ public class PilotContext {
                     && getLastTrackedDistance() < 0.3) {
                 flightStage = FlightStage.Arrived;
 
-                mission_blocksOn();
+                mission_blocksOnAndFinish();
+                flightMissionId = 0;
+
+                // todo ak1 when to remove such flights?
 
                 log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'blocks-on'");
@@ -238,7 +239,8 @@ public class PilotContext {
         } else if (overallStatus == OverallStatus.AllGood) {
             if (flightStage == FlightStage.Arriving) {
 
-                mission_blocksOn();
+                mission_blocksOnAndFinish();
+                flightMissionId = 0;
 
                 log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'blocks-on' due to pilot went offline");
@@ -255,7 +257,8 @@ public class PilotContext {
 
             if (flightStage == FlightStage.Preflight) {
 
-                mission_cancelBeforeFlightIfExists();
+                mission_cancelFromPreflightIfExists();
+                flightMissionId = 0;
 
             } else {
                 log.warn("NEED TO THINK WHAT IS THIS!!!"); // todo ak1 !!!!
@@ -332,7 +335,7 @@ public class PilotContext {
         });
     }
 
-    private void mission_blocksOn() {
+    private void mission_blocksOnAndFinish() {
         worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
@@ -347,14 +350,17 @@ public class PilotContext {
         });
     }
 
-    private void mission_cancelBeforeFlightIfExists() {
+    private void mission_cancelFromPreflightIfExists() {
         worldBean.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
+            if (mission.isEmpty()) {
+                return null;
+            }
 
-            if (mission.getStatus() == FlightMissions.Status.Dispatched) {
-                world.flightMissionControl().cancelFromPreflight(mission);
+            if (mission.get().getStatus() == FlightMissions.Status.Preflight) {
+                world.flightMissionControl().cancelFromPreflight(mission.get());
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
             return null;
