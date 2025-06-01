@@ -96,7 +96,7 @@ public class VatsimTrackerBean implements DisposableBean {
                 final List<Position> positions;
                 try {
                     positions = compactifiedStorage.loadPositions(nextReport);
-                } catch (final IOException e) {
+                } catch (final Exception e) {
                     log.error("error on reading next report data", e);
                     Misc.sleep(60000);
                     continue;
@@ -144,7 +144,7 @@ public class VatsimTrackerBean implements DisposableBean {
                 lastProcessedReport = nextReport;
                 try {
                     saveStatus();
-                } catch (IOException e) {
+                } catch (final Exception e) {
                     log.error("unable to save status", e);
                 }
             }
