@@ -189,7 +189,7 @@ public class PilotContext {
                         planningStatus = newPlanningStatus;
                         overallStatus = OverallStatus.Restorable;
 
-                        mission_cancelFromPreflightIfExists();
+                        mission_cancelBeforeTakeoffIfExists();
                         flightMissionId = 0;
 
                         log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
@@ -213,7 +213,7 @@ public class PilotContext {
 
                     // todo ak0 push to world - if it is from world, move aircraft, if not - cancel, restore aircraft location
 
-                    log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     pilotLog("Event 'landing' on wrong airport, removing");
                 }
             }
@@ -245,12 +245,12 @@ public class PilotContext {
                 removalCounter--;
             }
         } else if (overallStatus == OverallStatus.AllGood) {
-            if (flightStage == FlightStage.Preflight) {
-                mission_cancelFromPreflightIfExists();
+            if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
+                mission_cancelBeforeTakeoffIfExists();
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Preflight stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                pilotLog("Event 'offline' from AllGood on Preflight stage, cancelling and removing");
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on {} stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                pilotLog("Event 'offline' from AllGood on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else if (flightStage == FlightStage.Flying) {
                 mission_cancelFromFlying(); // todo ak2 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
@@ -269,20 +269,20 @@ public class PilotContext {
             } else {
                 // todo ak0 push to world
 
-                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, flight stage {}, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE????", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, flight stage {}, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
                 pilotLog("Event 'offline' from AllGood, " + flightStage + " stage, removing");
                 shouldBeRemoved = true;
             }
         } else { // Restorable, presumably on ground
-            if (flightStage == FlightStage.Preflight) {
-                mission_cancelFromPreflightIfExists();
+            if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
+                mission_cancelBeforeTakeoffIfExists();
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable on Preflight stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                pilotLog("Event 'offline' from Restorable on Preflight stage, cancelling and removing");
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable on {} stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                pilotLog("Event 'offline' from Restorable on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
-                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE????", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'offline' from Restorable, " + flightStage + " stage, removing");
                 shouldBeRemoved = true;
             }
@@ -369,7 +369,7 @@ public class PilotContext {
         });
     }
 
-    private void mission_cancelFromPreflightIfExists() {
+    private void mission_cancelBeforeTakeoffIfExists() {
         worldBean.modifySync(world -> {
             if (flightMissionId == 0) {
                 return null;
@@ -380,8 +380,9 @@ public class PilotContext {
                 return null;
             }
 
-            if (mission.get().getStatus() == FlightMissions.Status.Preflight) {
-                world.flightMissionControl().cancelFromPreflight(mission.get());
+            if (mission.get().getStatus() == FlightMissions.Status.Preflight
+                    || mission.get().getStatus() == FlightMissions.Status.Departure) {
+                world.flightMissionControl().cancelBeforeTakeoff(mission.get());
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }

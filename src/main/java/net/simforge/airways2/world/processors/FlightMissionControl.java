@@ -58,11 +58,11 @@ public class FlightMissionControl {
         log.info("Pilot {}, flight {} - flight started and in Preflight status, aircraft {} is activated", pilot, mission.getId(), aircraft.getRegNo());
     }
 
-    public void cancelFromPreflight(final FlightMissions.Mission mission) {
+    public void cancelBeforeTakeoff(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         final FlightMissions.Status actualStatus = mission.getStatus();
-        checkArgument(actualStatus == FlightMissions.Status.Preflight);
+        checkArgument(actualStatus == FlightMissions.Status.Preflight || actualStatus == FlightMissions.Status.Departure);
 
         mission.setStatus(FlightMissions.Status.Cancelled);
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
