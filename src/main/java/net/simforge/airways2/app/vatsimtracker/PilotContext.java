@@ -237,36 +237,40 @@ public class PilotContext {
                 removalCounter--;
             }
         } else if (overallStatus == OverallStatus.AllGood) {
-            if (flightStage == FlightStage.Arriving) {
-
-                mission_blocksOnAndFinish();
-                flightMissionId = 0;
-
-                log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                pilotLog("Event 'blocks-on' due to pilot went offline");
-                shouldBeRemoved = true;
-            } else {
-
-                // todo ak0 push to world
-
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                pilotLog("Event 'offline' from AllGood, removing");
-                shouldBeRemoved = true;
-            }
-        } else { // Restorable, presumably on ground
-
             if (flightStage == FlightStage.Preflight) {
-
                 mission_cancelFromPreflightIfExists();
                 flightMissionId = 0;
 
-            } else {
-                log.warn("NEED TO THINK WHAT IS THIS!!!"); // todo ak1 !!!!
-            }
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Preflight stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'offline' from AllGood on Preflight stage, cancelling and removing");
+                shouldBeRemoved = true;
+            } else if (flightStage == FlightStage.Arriving) {
+                mission_blocksOnAndFinish();
+                flightMissionId = 0;
 
-            log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-            pilotLog("Event 'offline' from Restorable, removing");
-            shouldBeRemoved = true;
+                log.info("{}, {}, {} -> {} - Event 'blocks-on' due to pilot went offline", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
+                shouldBeRemoved = true;
+            } else {
+                // todo ak0 push to world
+
+                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, flight stage {}, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE????", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                pilotLog("Event 'offline' from AllGood, " + flightStage + " stage, removing");
+                shouldBeRemoved = true;
+            }
+        } else { // Restorable, presumably on ground
+            if (flightStage == FlightStage.Preflight) {
+                mission_cancelFromPreflightIfExists();
+                flightMissionId = 0;
+
+                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable on Preflight stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'offline' from Restorable on Preflight stage, cancelling and removing");
+                shouldBeRemoved = true;
+            } else {
+                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE????", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                pilotLog("Event 'offline' from Restorable, " + flightStage + " stage, removing");
+                shouldBeRemoved = true;
+            }
         }
     }
 
