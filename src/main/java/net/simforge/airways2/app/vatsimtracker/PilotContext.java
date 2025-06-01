@@ -109,7 +109,7 @@ public class PilotContext {
             plannedDeparture = position.getFpDeparture();
             plannedDestination = position.getFpDestination();
 
-            final FlightMissions.Mission mission = mission_dispatchNew();
+            final FlightMissions.Mission mission = mission_dispatchNewAndStart();
             flightMissionId = mission.getId();
 
             log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
@@ -175,7 +175,7 @@ public class PilotContext {
                         plannedDestination = nextPosition.getFpDestination();
                         overallStatus = OverallStatus.AllGood;
 
-                        final FlightMissions.Mission mission = mission_dispatchNew();
+                        final FlightMissions.Mission mission = mission_dispatchNewAndStart();
                         flightMissionId = mission.getId();
 
                         log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
@@ -204,7 +204,9 @@ public class PilotContext {
                     flightStage = FlightStage.Arrived;
                     overallStatus = OverallStatus.Irreversible;
                     removalCounter = 5;
-                    // todo ak0 push to world
+
+                    // todo ak0 push to world - if it is from world, move aircraft, if not - cancel, restore aircraft location
+
                     log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     pilotLog("Event 'landing' on wrong airport, removing");
                 }
@@ -242,20 +244,30 @@ public class PilotContext {
                 pilotLog("Event 'blocks-on' due to pilot went offline");
                 shouldBeRemoved = true;
             } else {
+
                 // todo ak0 push to world
+
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'offline' from AllGood, removing");
                 shouldBeRemoved = true;
             }
-        } else { // Restorable
-            // todo ak0 push to world
+        } else { // Restorable, presumably on ground
+
+            if (flightStage == FlightStage.Preflight) {
+
+                mission_cancelBeforeFlightIfExists();
+
+            } else {
+                log.warn("NEED TO THINK WHAT IS THIS!!!"); // todo ak1 !!!!
+            }
+
             log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
             pilotLog("Event 'offline' from Restorable, removing");
             shouldBeRemoved = true;
         }
     }
 
-    private FlightMissions.Mission mission_dispatchNew() {
+    private FlightMissions.Mission mission_dispatchNewAndStart() {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableOrCreate(
                     world,

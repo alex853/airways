@@ -12,7 +12,7 @@ public class Application {
 
     public static void main(final String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         if (args.length == 1) {
-            runWorldBuilderStep(args[0]); // todo ak1 add logging here
+            runWorldBuilderStep(args[0]); // todo ak2 add logging here
             return;
         }
 
