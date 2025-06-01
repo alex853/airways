@@ -352,6 +352,10 @@ public class PilotContext {
 
     private void mission_cancelFromPreflightIfExists() {
         worldBean.modifySync(world -> {
+            if (flightMissionId == 0) {
+                return null;
+            }
+
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
                 return null;
