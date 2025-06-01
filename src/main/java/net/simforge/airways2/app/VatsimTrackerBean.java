@@ -105,7 +105,11 @@ public class VatsimTrackerBean implements DisposableBean {
                 log.info("report {} - {} positions loaded", nextReport, positions.size());
 
                 final String nextReportFinal = nextReport;
-                final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
+                //final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
+                final Map<Integer, Position> pilotNumberToPosition = new HashMap<>();
+                for (final Position p : positions) {
+                    pilotNumberToPosition.put(p.getPilotNumber(), p);
+                }
 
                 log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
 
