@@ -1,7 +1,7 @@
 package net.simforge.airways2.world.computations;
 
 public class AircraftPerformanceDataHelper {
-    // todo ak2 load performance data from somewhere
+    // todo ak1 load performance data from somewhere
     public static AircraftPerformanceData getData() {
         return new AircraftPerformanceData() {
             @Override

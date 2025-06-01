@@ -2,6 +2,7 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ public class VatsimTrackerController {
     @GetMapping("/all")
     public List<PilotDto> getAll() {
         return vatsimTrackerBean.contexts().stream()
-                .sorted(Comparator.comparing(VatsimTrackerBean.Context::getPilotNumber))
+                .sorted(Comparator.comparing(PilotContext::getPilotNumber))
                 .map(c -> new PilotDto(
                         c.getPilotNumber(),
                         c.getFlightStage().name(),

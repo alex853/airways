@@ -1,12 +1,10 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.misc.Settings;
-import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.Misc;
 import net.simforge.networkview.core.Network;
 import net.simforge.networkview.core.Position;
@@ -20,7 +18,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,8 +37,7 @@ public class VatsimTrackerBean implements DisposableBean {
     private static final File root = new File("./vatsim-tracker/");
     private static final File lastProcessedReportFile = new File(root, "last-processed-report");
     private static final File contextsFile = new File(root, "contexts.csv");
-    private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
-    private final Map<Integer, Context> trackedPilots = new HashMap<>();
+    private final Map<Integer, PilotContext> trackedPilots = new HashMap<>();
     private String lastProcessedReport = null;
 
     @PostConstruct
@@ -116,7 +112,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     try {
                         final Position position = pilotNumberToPosition.get(pilotNumber);
                         if (position != null) {
-                            context.nextReportPosition(worldBean, position);
+                            context.nextReportPosition(position);
                         } else {
                             context.noPositionInReport(nextReportFinal);
                         }
@@ -130,7 +126,8 @@ public class VatsimTrackerBean implements DisposableBean {
                         .forEach(p -> {
                             if (!trackedPilots.containsKey(p.getPilotNumber())) {
                                 try {
-                                    trackedPilots.put(p.getPilotNumber(), Context.newFlightInAirport(worldBean, p));
+                                    final PilotContext pc = trackedPilots.put(p.getPilotNumber(), new PilotContext(worldBean, p.getPilotNumber()));
+                                    pc.newPilotContextInAirport(p);
                                 } catch (final RuntimeException e) {
                                     log.error("error on processing", e);
                                 }
@@ -138,8 +135,8 @@ public class VatsimTrackerBean implements DisposableBean {
                         });
 
                 final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
-                        .filter(Context::shouldBeRemoved)
-                        .map(Context::getPilotNumber)
+                        .filter(PilotContext::shouldBeRemoved)
+                        .map(PilotContext::getPilotNumber)
                         .toList();
                 pilotNumbersForRemoval.forEach(trackedPilots::remove);
 
@@ -157,89 +154,6 @@ public class VatsimTrackerBean implements DisposableBean {
         thread.start();
     }
 
-    private void loadStatus() throws IOException {
-        if (!lastProcessedReportFile.exists()
-                || !contextsFile.exists()) {
-            log.warn("can't find status data, vatsim tracker will start from the scratch");
-            return;
-        }
-
-        final String loadedLastProcessedReport = IOHelper.loadFile(lastProcessedReportFile);
-
-        Csv csv = Csv.load(contextsFile);
-        final Map<Integer, Context> loadedTrackedPilots = new HashMap<>();
-        for (int row = 0; row < csv.rowCount(); row++) {
-            final Context c = new Context(Integer.parseInt(csv.value(row, CSV_PILOT_NUMBER)));
-            c.flightStage = FlightStage.valueOf(csv.value(row, CSV_FLIGHT_STAGE));
-            c.planningStatus = PlanningStatus.valueOf(csv.value(row, CSV_PLANNING_STATUS));
-            c.aircraftType = csv.value(row, CSV_AIRCRAFT_TYPE);
-            c.aircraftRegNo = csv.value(row, CSV_AIRCRAFT_REG_NO);
-            c.plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
-            c.plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
-            c.overallStatus = OverallStatus.valueOf(csv.value(row, CSV_OVERALL_STATUS));
-            c.positionIsOnGround = Boolean.parseBoolean(csv.value(row, CSV_POSITION_IS_ON_GROUND));
-            c.positionAirportIcao = csv.value(row, CSV_POSITION_AIRPORT_ICAO);
-            c.positionLatitude = Double.parseDouble(csv.value(row, CSV_POSITION_LATITUDE));
-            c.positionLongitude = Double.parseDouble(csv.value(row, CSV_POSITION_LONGITUDE));
-            c.removalCounter = Integer.parseInt(csv.value(row, CSV_REMOVAL_COUNTER));
-            c.shouldBeRemoved = Boolean.parseBoolean(csv.value(row, CSV_SHOULD_BE_REMOVED));
-            c.distanceLegs.addAll(Arrays.stream(csv.value(row, CSV_DISTANCE_LEGS).split(":"))
-                    .filter(s -> s.length() != 0)
-                    .map(Float::parseFloat)
-                    .toList());
-            loadedTrackedPilots.put(c.pilotNumber, c);
-        }
-
-        lastProcessedReport = loadedLastProcessedReport;
-        trackedPilots.clear();
-        trackedPilots.putAll(loadedTrackedPilots);
-    }
-
-    private void saveStatus() throws IOException {
-        Csv csv = Csv.empty();
-        csv.addColumn(CSV_PILOT_NUMBER);
-        csv.addColumn(CSV_FLIGHT_STAGE);
-        csv.addColumn(CSV_PLANNING_STATUS);
-        csv.addColumn(CSV_AIRCRAFT_TYPE);
-        csv.addColumn(CSV_AIRCRAFT_REG_NO);
-        csv.addColumn(CSV_PLANNED_DEPARTURE);
-        csv.addColumn(CSV_PLANNED_DESTINATION);
-        csv.addColumn(CSV_OVERALL_STATUS);
-        csv.addColumn(CSV_POSITION_IS_ON_GROUND);
-        csv.addColumn(CSV_POSITION_AIRPORT_ICAO);
-        csv.addColumn(CSV_POSITION_LATITUDE);
-        csv.addColumn(CSV_POSITION_LONGITUDE);
-        csv.addColumn(CSV_REMOVAL_COUNTER);
-        csv.addColumn(CSV_SHOULD_BE_REMOVED);
-        csv.addColumn(CSV_DISTANCE_LEGS);
-
-        trackedPilots.forEach((pn, c) -> {
-            final int row = csv.addRow();
-            csv.set(row, CSV_PILOT_NUMBER, String.valueOf(c.pilotNumber));
-            csv.set(row, CSV_FLIGHT_STAGE, c.flightStage.name());
-            csv.set(row, CSV_PLANNING_STATUS, c.planningStatus.name());
-            csv.set(row, CSV_AIRCRAFT_TYPE, c.aircraftType);
-            csv.set(row, CSV_AIRCRAFT_REG_NO, c.aircraftRegNo);
-            csv.set(row, CSV_PLANNED_DEPARTURE, c.plannedDeparture);
-            csv.set(row, CSV_PLANNED_DESTINATION, c.plannedDestination);
-            csv.set(row, CSV_OVERALL_STATUS, c.overallStatus.name());
-            csv.set(row, CSV_POSITION_IS_ON_GROUND, String.valueOf(c.positionIsOnGround));
-            csv.set(row, CSV_POSITION_AIRPORT_ICAO, c.positionAirportIcao);
-            csv.set(row, CSV_POSITION_LATITUDE, String.valueOf(c.positionLatitude));
-            csv.set(row, CSV_POSITION_LONGITUDE, String.valueOf(c.positionLongitude));
-            csv.set(row, CSV_REMOVAL_COUNTER, String.valueOf(c.removalCounter));
-            csv.set(row, CSV_SHOULD_BE_REMOVED, String.valueOf(c.shouldBeRemoved));
-            csv.set(row, CSV_DISTANCE_LEGS, c.distanceLegs.stream()
-                    .map(String::valueOf)
-                    .collect(Collectors.joining(":")));
-        });
-
-        //noinspection ResultOfMethodCallIgnored
-        root.mkdirs();
-        IOHelper.saveFile(contextsFile, csv.getContent());
-        IOHelper.saveFile(lastProcessedReportFile, lastProcessedReport);
-    }
-
     @Override
     public void destroy() throws Exception {
         log.info("thread was told to stop");
@@ -250,290 +164,41 @@ public class VatsimTrackerBean implements DisposableBean {
         log.info("thread stopped");
     }
 
-    public Collection<Context> contexts() {
+    private void loadStatus() throws IOException {
+        if (!lastProcessedReportFile.exists()
+                || !contextsFile.exists()) {
+            log.warn("can't find status data, vatsim tracker will start from the scratch");
+            return;
+        }
+
+        final String loadedLastProcessedReport = IOHelper.loadFile(lastProcessedReportFile);
+
+        Csv csv = Csv.load(contextsFile);
+        final Map<Integer, PilotContext> loadedTrackedPilots = new HashMap<>();
+        for (int row = 0; row < csv.rowCount(); row++) {
+            final PilotContext c = PilotContext.fromCsv(worldBean, csv, row);
+            loadedTrackedPilots.put(c.getPilotNumber(), c);
+        }
+
+        lastProcessedReport = loadedLastProcessedReport;
+        trackedPilots.clear();
+        trackedPilots.putAll(loadedTrackedPilots);
+    }
+
+    private void saveStatus() throws IOException {
+        Csv csv = Csv.empty();
+        PilotContext.addCsvColumns(csv);
+
+        trackedPilots.forEach((pn, c) -> c.toCsv(csv));
+
+        //noinspection ResultOfMethodCallIgnored
+        root.mkdirs();
+        IOHelper.saveFile(contextsFile, csv.getContent());
+        IOHelper.saveFile(lastProcessedReportFile, lastProcessedReport);
+    }
+
+    public Collection<PilotContext> contexts() {
         return trackedPilots.values();
-    }
-
-    public static class Context {
-        private final int pilotNumber;
-        private FlightStage flightStage;
-        private PlanningStatus planningStatus;
-        private String aircraftType;
-        private String aircraftRegNo;
-        private String plannedDeparture;
-        private String plannedDestination;
-        private OverallStatus overallStatus;
-        private boolean positionIsOnGround;
-        private String positionAirportIcao;
-        private double positionLatitude;
-        private double positionLongitude;
-        private int removalCounter;
-        private boolean shouldBeRemoved;
-        private final Queue<Float> distanceLegs = new LinkedList<>();
-
-        Context(final int pilotNumber) {
-            this.pilotNumber = pilotNumber;
-        }
-
-        public static Context newFlightInAirport(final WorldRunnerBean worldBean, final Position position) { // todo ak1 this worldBean here smells bad
-            final Context context = new Context(position.getPilotNumber());
-            context.copyPositionFields(position);
-
-            context.flightStage = FlightStage.Preflight;
-            context.planningStatus = context.doPreflightStatusAnalysis(position);
-
-            if (context.planningStatus == PlanningStatus.AllGood) {
-                context.overallStatus = OverallStatus.AllGood;
-                context.aircraftType = position.getFpAircraftType();
-                context.aircraftRegNo = position.getRegNo();
-                context.plannedDeparture = position.getFpDeparture();
-                context.plannedDestination = position.getFpDestination();
-
-                // todo ak0 push to world
-                final Aircrafts.Aircraft aircraft = worldBean.modifySync(world -> {
-                    return ShadowJetLogic.findAvailableOrCreate(world, context.aircraftType, context.positionAirportIcao);
-                });
-                // todo ak1 pilot log
-
-                log.info("{}, {}, {} -> {} - Event 'dispatched'", position.getPilotNumber(), position.getFpAircraftType(), position.getFpDeparture(), position.getFpDestination());
-                context.pilotLog("Event 'dispatched' == via new flight in airport");
-            } else {
-                context.overallStatus = OverallStatus.Restorable;
-                context.pilotLog("new flight in Restorable status");
-            }
-
-            return context;
-        }
-
-        private void copyPositionFields(final Position position) {
-            positionIsOnGround = position.isOnGround();
-            positionAirportIcao = position.isInAirport() ? position.getAirportIcao() : null;
-            positionLatitude = position.getCoords().getLat();
-            positionLongitude = position.getCoords().getLon();
-        }
-
-        private PlanningStatus doPreflightStatusAnalysis(final Position position) {
-            if (position.getFpAircraftType() == null) {
-                return PlanningStatus.FP_TypeUnknown;
-            } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
-                return PlanningStatus.FP_NoRoute;
-            } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-                return PlanningStatus.FP_DepartureMisaligned;
-            } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-                return PlanningStatus.FP_DestinationIsOutOfTheWorld;
-            } else {
-                return PlanningStatus.AllGood;
-            }
-        }
-
-        public int getPilotNumber() {
-            return pilotNumber;
-        }
-
-        public FlightStage getFlightStage() {
-            return flightStage;
-        }
-
-        public PlanningStatus getPlanningStatus() {
-            return planningStatus;
-        }
-
-        public String getPlannedDeparture() {
-            return plannedDeparture;
-        }
-
-        public String getPlannedDestination() {
-            return plannedDestination;
-        }
-
-        public String getLocationAirport() {
-            return positionAirportIcao;
-        }
-
-        public String getAircraftType() {
-            return aircraftType;
-        }
-
-        public String getAircraftRegNo() {
-            return aircraftRegNo;
-        }
-
-        public OverallStatus getOverallStatus() {
-            return overallStatus;
-        }
-
-        public float getLastTrackedDistance() {
-            return distanceLegs.stream().reduce(0.0f, Float::sum);
-        }
-
-        public void nextReportPosition(final WorldRunnerBean worldBean, final Position nextPosition) { // todo ak1 this worldBean here smells bad
-            if (overallStatus == OverallStatus.Irreversible) {
-                if (removalCounter == 0) {
-                    shouldBeRemoved = true;
-                } else {
-                    removalCounter--;
-                }
-                return;
-            }
-
-            boolean takeoff = positionIsOnGround && !nextPosition.isOnGround();
-            boolean landing = !positionIsOnGround && nextPosition.isOnGround();
-
-            distanceLegs.add((float) Geo.distance(Geo.coords(positionLatitude, positionLongitude), nextPosition.getCoords()));
-            while (distanceLegs.size() > 3) {
-                distanceLegs.poll();
-            }
-
-            if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
-                if (takeoff) {
-                    flightStage = FlightStage.Flying;
-                    if (overallStatus == OverallStatus.AllGood) {
-                        // todo ak0 push to world
-                        log.info("{}, {}, {} -> {} - Event 'takeoff'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                        pilotLog("Event 'takeoff'");
-                    } else {
-                        overallStatus = OverallStatus.Irreversible;
-                        removalCounter = 5;
-                    }
-                } else {
-                    if (flightStage == FlightStage.Preflight
-                            && planningStatus == PlanningStatus.AllGood
-                            && overallStatus == OverallStatus.AllGood
-                            && getLastTrackedDistance() > 0.2) { // threshold
-                        flightStage = FlightStage.Departing;
-                        // todo ak0 push to world
-                        log.info("{}, {}, {} -> {} - Event 'blocks-off'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                        pilotLog("Event 'blocks-off'");
-                    }
-
-                    final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
-                    final OverallStatus newOverallStatus = newPlanningStatus == PlanningStatus.AllGood ? OverallStatus.AllGood : OverallStatus.Restorable;
-                    if (newOverallStatus != overallStatus) {
-                        if (newOverallStatus == OverallStatus.AllGood) {
-                            planningStatus = PlanningStatus.AllGood;
-                            aircraftType = nextPosition.getFpAircraftType();
-                            aircraftRegNo = nextPosition.getRegNo();
-                            plannedDeparture = nextPosition.getFpDeparture();
-                            plannedDestination = nextPosition.getFpDestination();
-                            overallStatus = OverallStatus.AllGood;
-
-                            // todo ak0 push to world
-                            final Aircrafts.Aircraft aircraft = worldBean.modifySync(world -> {
-                                return ShadowJetLogic.findAvailableOrCreate(world, aircraftType, positionAirportIcao);
-                            });
-                            // todo ak1 pilot log
-
-                            log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                            pilotLog("Event 'dispatched' == via some correction");
-                        } else {
-                            planningStatus = newPlanningStatus;
-                            overallStatus = OverallStatus.Restorable;
-                            // todo ak0 push to world
-                            log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
-                            pilotLog("Event 'cancelled' as flight becomes Restorable");
-                        }
-                    }
-                }
-            } else if (flightStage == FlightStage.Flying) {
-                if (landing && overallStatus == OverallStatus.AllGood) {
-                    if (plannedDestination.equals(nextPosition.getAirportIcao())) {
-                        flightStage = FlightStage.Arriving;
-                        // todo ak0 push to world
-                        log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                        pilotLog("Event 'landing'");
-                    } else {
-                        flightStage = FlightStage.Arrived;
-                        overallStatus = OverallStatus.Irreversible;
-                        removalCounter = 5;
-                        // todo ak0 push to world
-                        log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                        pilotLog("Event 'landing' on wrong airport, removing");
-                    }
-                }
-            } else if (flightStage == FlightStage.Arriving) {
-                if (overallStatus == OverallStatus.AllGood
-                        && getLastTrackedDistance() < 0.3) {
-                    flightStage = FlightStage.Arrived;
-                    // todo ak0 push to world
-                    log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                    pilotLog("Event 'blocks-on'");
-                }
-            }
-
-            copyPositionFields(nextPosition);
-        }
-
-        public void noPositionInReport(final String report) {
-            // todo ak1 re-implement
-
-            if (overallStatus == OverallStatus.Irreversible) {
-                if (removalCounter == 0) {
-                    shouldBeRemoved = true;
-                } else {
-                    removalCounter--;
-                }
-            } else if (overallStatus == OverallStatus.AllGood) {
-                if (flightStage == FlightStage.Arriving) {
-                    // todo ak0 push to world
-                    log.info("{}, {}, {} -> {} - Event 'blocks-on' due to OFFLINE", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                    pilotLog("Event 'blocks-on' due to pilot went offline");
-                    shouldBeRemoved = true;
-                } else {
-                    log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                    pilotLog("Event 'offline' from AllGood, removing");
-                    shouldBeRemoved = true;
-                }
-            } else { // Restorable
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                pilotLog("Event 'offline' from Restorable, removing");
-                shouldBeRemoved = true;
-            }
-        }
-
-        public boolean shouldBeRemoved() {
-            return shouldBeRemoved;
-        }
-
-        private void pilotLog(final String message) {
-            final String folder1 = (pilotNumber / 100000) + "xxxxx";
-            final File folder1file = new File(pilotLogsRoot, folder1);
-            final String folder2 = (pilotNumber / 1000) + "xxx";
-            final File folder2file = new File(folder1file, folder2);
-            final String filename = pilotNumber + ".log";
-            final File pilotLogFile = new File(folder2file, filename);
-
-            //noinspection ResultOfMethodCallIgnored
-            pilotLogFile.getParentFile().mkdirs();
-
-            final String line = LocalDateTime.now() + " | " + aircraftType + " | " + plannedDeparture + " -> " + plannedDestination + " | " + message + "\r\n";
-            try {
-                IOHelper.appendFile(pilotLogFile, line);
-            } catch (final IOException e) {
-                log.warn("unable to write pilot log", e);
-            }
-        }
-    }
-
-    public enum FlightStage {
-        Preflight,
-        Departing,
-        Flying,
-        Arriving,
-        Arrived
-    }
-
-    public enum PlanningStatus {
-        AllGood,
-        FP_TypeUnknown,
-        FP_NoRoute,
-        FP_DepartureMisaligned,
-        FP_DestinationIsOutOfTheWorld
-    }
-
-    public enum OverallStatus {
-        AllGood,
-        Restorable,
-        Irreversible
     }
 
     private enum ThreadStatus {
@@ -544,20 +209,5 @@ public class VatsimTrackerBean implements DisposableBean {
         TerminatedDueToError
     }
 
-    private static final String CSV_PILOT_NUMBER = "PilotNumber";
-    private static final String CSV_FLIGHT_STAGE = "FlightStage";
-    private static final String CSV_PLANNING_STATUS = "PlanningStatus";
-    private static final String CSV_AIRCRAFT_TYPE = "AircraftType";
-    private static final String CSV_AIRCRAFT_REG_NO = "AircraftRegNo";
-    private static final String CSV_PLANNED_DEPARTURE = "PlannedDeparture";
-    private static final String CSV_PLANNED_DESTINATION = "PlannedDestination";
-    private static final String CSV_OVERALL_STATUS = "OverallStatus";
-    private static final String CSV_POSITION_IS_ON_GROUND = "PositionIsOnGround";
-    private static final String CSV_POSITION_AIRPORT_ICAO = "PositionAirportIcao";
-    private static final String CSV_POSITION_LATITUDE = "PositionLatitude";
-    private static final String CSV_POSITION_LONGITUDE = "PositionLongitude";
-    private static final String CSV_REMOVAL_COUNTER = "RemovalCounter";
-    private static final String CSV_SHOULD_BE_REMOVED = "ShouldBeRemoved";
-    private static final String CSV_DISTANCE_LEGS = "DistanceLegs";
 
 }
