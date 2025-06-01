@@ -91,7 +91,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     continue;
                 }
 
-                log.info("found next report {}", nextReport);
+                log.info("report {} - found next report", nextReport);
 
                 final List<Position> positions;
                 try {
@@ -101,6 +101,8 @@ public class VatsimTrackerBean implements DisposableBean {
                     Misc.sleep(60000);
                     continue;
                 }
+
+                log.info("report {} - positions loaded", nextReport);
 
                 final String nextReportFinal = nextReport;
                 final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
@@ -121,6 +123,8 @@ public class VatsimTrackerBean implements DisposableBean {
                     }
                 });
 
+                log.info("report {} - tracked pilots processed", nextReport);
+
                 positions.stream()
                         .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
                         .forEach(p -> {
@@ -135,11 +139,15 @@ public class VatsimTrackerBean implements DisposableBean {
                             }
                         });
 
+                log.info("report {} - new pilots processed", nextReport);
+
                 final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
                         .filter(PilotContext::shouldBeRemoved)
                         .map(PilotContext::getPilotNumber)
                         .toList();
                 pilotNumbersForRemoval.forEach(trackedPilots::remove);
+
+                log.info("report {} - pilot removal completed", nextReport);
 
                 lastProcessedReport = nextReport;
                 try {
@@ -147,6 +155,8 @@ public class VatsimTrackerBean implements DisposableBean {
                 } catch (final Exception e) {
                     log.error("unable to save status", e);
                 }
+
+                log.info("report {} - all done", nextReport);
             }
 
             log.info("cycle stopped, status is {}", threadStatus);
