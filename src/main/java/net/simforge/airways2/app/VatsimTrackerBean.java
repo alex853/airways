@@ -114,8 +114,10 @@ public class VatsimTrackerBean implements DisposableBean {
                     try {
                         final Position position = pilotNumberToPosition.get(pilotNumber);
                         if (position != null) {
+                            log.info("report {} - online position {}", nextReport, pilotNumber);
                             context.nextReportPosition(position);
                         } else {
+                            log.info("report {} - offline position {}", nextReport, pilotNumber);
                             context.noPositionInReport(nextReportFinal);
                         }
                     } catch (final Exception e) {
