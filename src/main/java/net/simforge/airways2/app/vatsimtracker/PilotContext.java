@@ -195,7 +195,9 @@ public class PilotContext {
             if (landing && overallStatus == OverallStatus.AllGood) {
                 if (plannedDestination.equals(nextPosition.getAirportIcao())) {
                     flightStage = FlightStage.Arriving;
-                    // todo ak0 push to world
+
+                    mission_landing();
+
                     log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                     pilotLog("Event 'landing'");
                 } else {
@@ -211,7 +213,9 @@ public class PilotContext {
             if (overallStatus == OverallStatus.AllGood
                     && getLastTrackedDistance() < 0.3) {
                 flightStage = FlightStage.Arrived;
-                // todo ak0 push to world
+
+                mission_blocksOn();
+
                 log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'blocks-on'");
             }
@@ -236,11 +240,13 @@ public class PilotContext {
                 pilotLog("Event 'blocks-on' due to pilot went offline");
                 shouldBeRemoved = true;
             } else {
+                // todo ak0 push to world
                 log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
                 pilotLog("Event 'offline' from AllGood, removing");
                 shouldBeRemoved = true;
             }
         } else { // Restorable
+            // todo ak0 push to world
             log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
             pilotLog("Event 'offline' from Restorable, removing");
             shouldBeRemoved = true;
@@ -301,7 +307,37 @@ public class PilotContext {
         });
     }
 
+    private void mission_landing() {
+        worldBean.modifySync(world -> {
+            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+
+            if (mission.getStatus() == FlightMissions.Status.Flying) {
+                world.flightMissionControl().landing(mission);
+            } else {
+                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+            }
+
+            return null;
+        });
+    }
+
+    private void mission_blocksOn() {
+        worldBean.modifySync(world -> {
+            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+
+            if (mission.getStatus() == FlightMissions.Status.Arrival) {
+                world.flightMissionControl().blocksOn(mission);
+                world.flightMissionControl().finish(mission);
+            } else {
+                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+            }
+
+            return null;
+        });
+    }
+
     private void mission_cancelBeforeFlightIfExists() {
+        // todo ak0 push to world
         throw new UnsupportedOperationException("PilotContext.mission_cancelBeforeFlightIfExists not implemented");
     }
 
