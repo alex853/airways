@@ -102,10 +102,12 @@ public class VatsimTrackerBean implements DisposableBean {
                     continue;
                 }
 
-                log.info("report {} - positions loaded", nextReport);
+                log.info("report {} - {} positions loaded", nextReport, positions.size());
 
                 final String nextReportFinal = nextReport;
                 final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p));
+
+                log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
 
                 // all aircraft located in 'tracked' airports while they are in those airports
                 // when they depart, they will be tracked only if they have appropriate flight plans
