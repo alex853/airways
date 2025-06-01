@@ -126,8 +126,9 @@ public class VatsimTrackerBean implements DisposableBean {
                         .forEach(p -> {
                             if (!trackedPilots.containsKey(p.getPilotNumber())) {
                                 try {
-                                    final PilotContext pc = trackedPilots.put(p.getPilotNumber(), new PilotContext(worldBean, p.getPilotNumber()));
+                                    final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
                                     pc.newPilotContextInAirport(p);
+                                    trackedPilots.put(p.getPilotNumber(), pc);
                                 } catch (final RuntimeException e) {
                                     log.error("error on processing", e);
                                 }
