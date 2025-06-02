@@ -20,7 +20,7 @@ public class Application {
             return;
         }
 
-        SpringApplication.run(Application.class, args);
+//        SpringApplication.run(Application.class, args);
     }
 
     private static void runWorldBuilderStep(final String stepName) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {

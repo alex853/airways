@@ -110,7 +110,7 @@ public class FlightMissions {
 
         public void setStatus(final Status status) {
             checkNotNull(status, "status is mandatory");
-            checkArgument(status.code() <= 127, "status code should be in [0..127] range");
+            checkArgument(status.code() <= 15, "status code should be in [0..15] range");
             final int statusCode = status.code();
             final int modeBits = (isModePc() ? pcModeMask : 0);
             storage.set(id, statusField, statusCode ^ modeBits);
@@ -196,19 +196,19 @@ public class FlightMissions {
     // todo ak0 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
     public enum Status {
         // available 0
-        PlannedManually(1),
-        PlannedViaSchedule(2),
+        PlannedManually(1), // old: 1
+        PlannedViaSchedule(2), // old: 2
         // available 3
-        Dispatched(20), // -> 4
-        Preflight(30), // -> 5
-        Departure(40), // -> 6
-        Flying(50), // -> 7
-        Arrival(60), // -> 8
-        Postflight(70), // -> 9
-        Finished(100), // -> 10
+        Dispatched(4), // old: 20
+        Preflight(5), // old: 30
+        Departure(6), // old: 40
+        Flying(7), // old: 50
+        Arrival(8), // old: 60
+        Postflight(9), // old: 70
+        Finished(10), // old: -> 100
         // available 11
         // available 12
-        Cancelled(99); // -> 13
+        Cancelled(13); // old: 99
         // available 14
         // available 15
 
