@@ -424,7 +424,7 @@ public class PilotContext {
 
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
                     || mission.get().getStatus() == FlightMissions.Status.Departure) {
-                world.flightMissionControl().cancelBeforeTakeoff(mission.get());
+                world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
@@ -438,7 +438,7 @@ public class PilotContext {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Flying) {
-                world.flightMissionControl().cancelFromFlyingAndReturnAircraftToDepartureAirport(mission);
+                world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }

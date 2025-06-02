@@ -58,26 +58,13 @@ public class FlightMissionControl {
         log.info("Pilot {}, flight {} - flight started and in Preflight status, aircraft {} is activated", pilot, mission.getId(), aircraft.getRegNo());
     }
 
-    public void cancelBeforeTakeoff(final FlightMissions.Mission mission) {
+    public void cancelFlightAndReturnAircraftToDepartureAirport(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         final FlightMissions.Status actualStatus = mission.getStatus();
-        checkArgument(actualStatus == FlightMissions.Status.Preflight || actualStatus == FlightMissions.Status.Departure);
-
-        mission.setStatus(FlightMissions.Status.Cancelled);
-        aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-        aircraft.setFlightMissionId(0);
-
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
-        log.info("Pilot {}, flight {} - flight cancelled from preflight", pilot, mission.getId());
-    }
-
-    public void cancelFromFlyingAndReturnAircraftToDepartureAirport(final FlightMissions.Mission mission) {
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-
-        final FlightMissions.Status actualStatus = mission.getStatus();
-        checkArgument(actualStatus == FlightMissions.Status.Flying);
+        checkArgument(actualStatus == FlightMissions.Status.Preflight
+                || actualStatus == FlightMissions.Status.Departure
+                || actualStatus == FlightMissions.Status.Flying);
 
         mission.setStatus(FlightMissions.Status.Cancelled);
 
@@ -93,7 +80,7 @@ public class FlightMissionControl {
 
         int pilot = 0; // todo ak3 remove it when pilot is introduced
         world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
-        log.info("Pilot {}, flight {} - flight cancelled from preflight", pilot, mission.getId());
+        log.info("Pilot {}, flight {} - flight cancelled from {}", pilot, mission.getId(), actualStatus);
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {
