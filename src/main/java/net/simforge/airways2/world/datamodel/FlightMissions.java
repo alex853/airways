@@ -193,7 +193,6 @@ public class FlightMissions {
         }
     }
 
-    // todo ak0 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
     public enum Status {
         // available 0
         PlannedManually(1), // old: 1
