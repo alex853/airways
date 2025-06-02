@@ -23,6 +23,8 @@ public class World25_006_create_aircraft_types {
         aircraftTypes.byIcao("A345").orElseGet(() -> aircraftTypes.create("A345", "345"));
         aircraftTypes.byIcao("A346").orElseGet(() -> aircraftTypes.create("A346", "346"));
 
+        aircraftTypes.byIcao("A388").orElseGet(() -> aircraftTypes.create("A388", "388"));
+
         aircraftTypes.byIcao("B736").orElseGet(() -> aircraftTypes.create("B736", "736"));
         aircraftTypes.byIcao("B737").orElseGet(() -> aircraftTypes.create("B737", "73G"));
 
