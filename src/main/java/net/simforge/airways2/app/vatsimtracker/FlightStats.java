@@ -50,6 +50,10 @@ public class FlightStats {
         }
     }
 
+    public static Map<String, Integer> getStats() {
+        return new TreeMap<>(data);
+    }
+
     private static void validateDateAndData() {
         final LocalDate today = LocalDate.now();
         if (today.equals(date)) {

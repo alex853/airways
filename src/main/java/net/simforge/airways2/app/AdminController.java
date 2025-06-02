@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.app.vatsimtracker.FlightStats;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -13,12 +14,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/admin-fix")
+@RequestMapping("/admin")
 @CrossOrigin
-public class AdminFixController {
-    private static final Logger log = LoggerFactory.getLogger(AdminFixController.class);
+public class AdminController {
+    private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -31,6 +33,11 @@ public class AdminFixController {
                 .contentType(MediaType.TEXT_PLAIN)
                 .contentLength(bytes.length)
                 .body(bytes);
+    }
+
+    @GetMapping("/vatsim-flight-stats")
+    public Map<String, Integer> getVatsimFlightStats() {
+        return FlightStats.getStats();
     }
 
     @GetMapping("/flight/cancel")
