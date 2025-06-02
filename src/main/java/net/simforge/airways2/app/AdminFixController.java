@@ -69,7 +69,7 @@ public class AdminFixController {
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
 
-            return "A/C # " + aircraft + " is parked in airport # " + aircraft.getLocationAirportId();
+            return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
     }
 }
