@@ -34,7 +34,7 @@ public class AdminFixController {
     }
 
     @GetMapping("/flight/cancel")
-    public EnhancedFlightMissionDto cancelFlight(@RequestParam(name = "flightId") final int flightId) {
+    public String cancelFlight(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             mission.setStatus(FlightMissions.Status.Cancelled);
@@ -56,12 +56,12 @@ public class AdminFixController {
                 aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
                 aircraft.setFlightMissionId(0);
             }
-            return null;
+            return "F/M # " + flightId + " cancelled, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
     }
 
     @GetMapping("/aircraft/reset-status")
-    public EnhancedFlightMissionDto resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
+    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
 
@@ -69,7 +69,7 @@ public class AdminFixController {
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
 
-            return null;
+            return "A/C # " + aircraft + " is parked in airport # " + aircraft.getLocationAirportId();
         });
     }
 }
