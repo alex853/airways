@@ -117,7 +117,7 @@ public class PilotContext {
             final FlightMissions.Mission mission = mission_dispatchNewAndStart();
             flightMissionId = mission.getId();
 
-            log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+            log.info("{} - Event 'dispatched'", missionLogHead(mission));
             pilotLog("Event 'dispatched' == via new flight in airport");
         } else {
             overallStatus = OverallStatus.Restorable;
@@ -126,7 +126,10 @@ public class PilotContext {
     }
 
     public void nextReportPosition(final Position nextPosition) {
-        if (overallStatus == OverallStatus.Irreversible) {
+        final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
+        final OverallStatus newOverallStatus = newPlanningStatus == PlanningStatus.AllGood ? OverallStatus.AllGood : OverallStatus.Restorable;
+
+        if (overallStatus == OverallStatus.Irreversible) { // todo ak1 it smells bad, what if f/p changed?
             if (removalCounter == 0) {
                 shouldBeRemoved = true;
             } else {
@@ -147,12 +150,17 @@ public class PilotContext {
             if (takeoff) {
                 flightStage = FlightStage.Flying;
                 if (overallStatus == OverallStatus.AllGood) {
+                    final FlightMissions.Mission mission = mission_takeoff();
 
-                    mission_takeoff();
-
-                    log.info("{}, {}, {} -> {} - Event 'takeoff'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    log.info("{} - Event 'takeoff'", missionLogHead(mission));
                     pilotLog("Event 'takeoff'");
                 } else {
+                    final FlightMissions.Mission oldMission = mission_read();
+                    mission_cancelBeforeTakeoffIfExists();
+
+                    log.info("{} - Event 'takeoff' not in AllGood, cancelling and removal", missionLogHead(oldMission));
+                    pilotLog("Event 'takeoff' not in AllGood, cancelling and removal");
+
                     overallStatus = OverallStatus.Irreversible;
                     removalCounter = 5;
                 }
@@ -163,14 +171,12 @@ public class PilotContext {
                         && getLastTrackedDistance() > 0.2) { // threshold
                     flightStage = FlightStage.Departing;
 
-                    mission_blocksOff();
+                    final FlightMissions.Mission mission = mission_blocksOff();
 
-                    log.info("{}, {}, {} -> {} - Event 'blocks-off'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    log.info("{} - Event 'blocks-off'", missionLogHead(mission));
                     pilotLog("Event 'blocks-off'");
                 }
 
-                final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
-                final OverallStatus newOverallStatus = newPlanningStatus == PlanningStatus.AllGood ? OverallStatus.AllGood : OverallStatus.Restorable;
                 if (newOverallStatus != overallStatus) {
                     if (newOverallStatus == OverallStatus.AllGood) {
                         planningStatus = PlanningStatus.AllGood;
@@ -183,16 +189,17 @@ public class PilotContext {
                         final FlightMissions.Mission mission = mission_dispatchNewAndStart();
                         flightMissionId = mission.getId();
 
-                        log.info("{}, {}, {} -> {} - Event 'dispatched'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                        log.info("{} - Event 'dispatched'", missionLogHead(mission));
                         pilotLog("Event 'dispatched' == via some correction");
                     } else {
                         planningStatus = newPlanningStatus;
                         overallStatus = OverallStatus.Restorable;
 
+                        final FlightMissions.Mission oldMission = mission_read();
                         mission_cancelBeforeTakeoffIfExists();
                         flightMissionId = 0;
 
-                        log.info("{}, {}, {} -> {} - Event 'cancelled', planning status {}", pilotNumber, aircraftType, plannedDeparture, plannedDestination, newPlanningStatus);
+                        log.info("{} - Event 'cancelled', planning status {}", missionLogHead(oldMission), newPlanningStatus);
                         pilotLog("Event 'cancelled' as flight becomes Restorable");
                     }
                 }
@@ -202,19 +209,26 @@ public class PilotContext {
                 if (plannedDestination.equals(nextPosition.getAirportIcao())) {
                     flightStage = FlightStage.Arriving;
 
-                    mission_landing();
+                    final FlightMissions.Mission mission = mission_landing();
 
-                    log.info("{}, {}, {} -> {} - Event 'landing'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                    log.info("{} - Event 'landing'", missionLogHead(mission));
                     pilotLog("Event 'landing'");
-                } else {
-                    flightStage = FlightStage.Arrived;
-                    overallStatus = OverallStatus.Irreversible;
-                    removalCounter = 5;
+                } else if (worldIcaos.contains(nextPosition.getAirportIcao())) {
+                    flightStage = FlightStage.Arriving;
 
-                    // todo ak0 push to world - if it is from world, move aircraft, if not - cancel, restore aircraft location
+                    final FlightMissions.Mission mission = mission_landing();
 
-                    log.info("{}, {}, {} -> {} - Event 'landing' on wrong airport, removing  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
-                    pilotLog("Event 'landing' on wrong airport, removing");
+                    log.info("{} - Event 'landing' on WRONG airport", missionLogHead(mission));
+                    pilotLog("Event 'landing' on WRONG airport");
+                } else { // landing on airport out of the world
+                    final FlightMissions.Mission oldMission = mission_read();
+                    mission_cancelFromFlying(); // todo ak3 improvement is possible here?
+                    flightMissionId = 0;
+
+                    log.info("{} - Event 'landing' on airport out world, cancelling and removing", missionLogHead(oldMission));
+                    pilotLog("Event 'landing' on airport out world, cancelling and removing");
+
+                    shouldBeRemoved = true;
                 }
             }
         } else if (flightStage == FlightStage.Arriving) {
@@ -222,14 +236,28 @@ public class PilotContext {
                     && getLastTrackedDistance() < 0.3) {
                 flightStage = FlightStage.Arrived;
 
-                mission_blocksOnAndFinish();
+                final FlightMissions.Mission mission = mission_blocksOnAndFinish();
                 flightMissionId = 0;
 
-                // todo ak1 when to remove such flights?
-
-                log.info("{}, {}, {} -> {} - Event 'blocks-on'", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                log.info("{} - Event 'blocks-on'", missionLogHead(mission));
                 pilotLog("Event 'blocks-on'");
+
+                removalCounter = 5; // it will stay Arrived for 5 reports and then will be removed
             }
+        } else if (flightStage == FlightStage.Arrived) {
+            if (removalCounter == 0) {
+                final FlightMissions.Mission oldMission = mission_read();
+                flightMissionId = 0;
+
+                log.error("{} - Event 'completed' for Arrived flight", missionLogHead(oldMission));
+                pilotLog("Event 'completed' for Arrived flight, removing");
+
+                shouldBeRemoved = true;
+            } else {
+                removalCounter--;
+            }
+        } else {
+            throw new IllegalStateException();
         }
 
         copyPositionFields(nextPosition);
@@ -246,47 +274,61 @@ public class PilotContext {
             }
         } else if (overallStatus == OverallStatus.AllGood) {
             if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
+                final FlightMissions.Mission oldMission = mission_read();
                 mission_cancelBeforeTakeoffIfExists();
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on {} stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                log.info("{} - Event 'OFFLINE' from AllGood and on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage);
                 pilotLog("Event 'offline' from AllGood on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else if (flightStage == FlightStage.Flying) {
+                final FlightMissions.Mission oldMission = mission_read();
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood and on Flying stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                log.info("{} - Event 'OFFLINE' from AllGood and on Flying stage, cancelling and removing", missionLogHead(oldMission));
                 pilotLog("Event 'offline' from AllGood on Flying stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else if (flightStage == FlightStage.Arriving) {
+                final FlightMissions.Mission oldMission = mission_read();
                 mission_blocksOnAndFinish();
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'blocks-on' due to pilot went offline", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission));
                 pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
                 shouldBeRemoved = true;
-            } else {
-                // todo ak0 push to world
+            } else if (flightStage == FlightStage.Arrived) {
+                final FlightMissions.Mission oldMission = mission_read();
+                flightMissionId = 0;
 
-                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from AllGood, flight stage {}, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
-                pilotLog("Event 'offline' from AllGood, " + flightStage + " stage, removing");
+                log.error("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission));
+                pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
                 shouldBeRemoved = true;
+            } else {
+                throw new IllegalStateException();
             }
         } else { // Restorable, presumably on ground
             if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
+                final FlightMissions.Mission oldMission = mission_read();
                 mission_cancelBeforeTakeoffIfExists();
                 flightMissionId = 0;
 
-                log.info("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable on {} stage, cancelling and removing", pilotNumber, aircraftType, plannedDeparture, plannedDestination, flightStage);
+                log.info("{} - Event 'OFFLINE' from Restorable on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage);
                 pilotLog("Event 'offline' from Restorable on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
-                log.error("{}, {}, {} -> {} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", pilotNumber, aircraftType, plannedDeparture, plannedDestination);
+                final FlightMissions.Mission oldMission = mission_read();
+                log.error("{} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", missionLogHead(oldMission));
                 pilotLog("Event 'offline' from Restorable, " + flightStage + " stage, removing");
                 shouldBeRemoved = true;
             }
         }
+    }
+
+    private FlightMissions.Mission mission_read() {
+        return flightMissionId != 0
+                ? worldBean.read(world -> world.flightMissions().byId(flightMissionId).orElseThrow())
+                : null;
     }
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
@@ -309,8 +351,8 @@ public class PilotContext {
         });
     }
 
-    private void mission_blocksOff() {
-        worldBean.modifySync(world -> {
+    private FlightMissions.Mission mission_blocksOff() {
+        return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
@@ -319,12 +361,12 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            return null;
+            return mission;
         });
     }
 
-    private void mission_takeoff() {
-        worldBean.modifySync(world -> {
+    private FlightMissions.Mission mission_takeoff() {
+        return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
@@ -336,12 +378,12 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            return null;
+            return mission;
         });
     }
 
-    private void mission_landing() {
-        worldBean.modifySync(world -> {
+    private FlightMissions.Mission mission_landing() {
+        return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Flying) {
@@ -350,12 +392,12 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            return null;
+            return mission;
         });
     }
 
-    private void mission_blocksOnAndFinish() {
-        worldBean.modifySync(world -> {
+    private FlightMissions.Mission mission_blocksOnAndFinish() {
+        return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
@@ -365,7 +407,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            return null;
+            return mission;
         });
     }
 
@@ -443,6 +485,15 @@ public class PilotContext {
         } catch (final IOException e) {
             log.warn("unable to write pilot log", e);
         }
+    }
+
+    private String missionLogHead(final FlightMissions.Mission mission) {
+        return String.format("[%s] f/m %s, a/c %s : %s -> %s",
+                pilotNumber,
+                mission != null ? "#" + mission.getId() : "-",
+                mission != null ? "#" + mission.getAircraftId() : "-",
+                plannedDeparture,
+                plannedDestination);
     }
 
     public static void addCsvColumns(final Csv csv) {

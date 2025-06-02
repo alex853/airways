@@ -103,7 +103,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         continue;
                     }
 
-                    log.info("report {} - {} positions loaded", nextReport, positions.size());
+                    //log.info("report {} - {} positions loaded", nextReport, positions.size());
 
                     final String nextReportFinal = nextReport;
                     //final Map<Integer, Position> pilotNumberToPosition = positions.stream().collect(Collectors.toMap(Position::getPilotNumber, p -> p)); // todo ak1 collision?
@@ -112,7 +112,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         pilotNumberToPosition.put(p.getPilotNumber(), p);
                     }
 
-                    log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
+                    //log.info("report {} - map1 {}, map2 {}", nextReport, pilotNumberToPosition.size(), trackedPilots.size());
 
                     // all aircraft located in 'tracked' airports while they are in those airports
                     // when they depart, they will be tracked only if they have appropriate flight plans
@@ -136,7 +136,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         }
                     });
 
-                    log.info("report {} - tracked pilots processed, online {}, offline {}", nextReport, onlinePositions.get(), offlinePositions.get());
+                    //log.info("report {} - tracked pilots processed, online {}, offline {}", nextReport, onlinePositions.get(), offlinePositions.get());
 
                     final AtomicInteger newPilots = new AtomicInteger();
                     positions.stream()
@@ -154,7 +154,7 @@ public class VatsimTrackerBean implements DisposableBean {
                                 }
                             });
 
-                    log.info("report {} - new {} pilots processed", nextReport, newPilots.get());
+                    //log.info("report {} - new {} pilots processed", nextReport, newPilots.get());
 
                     final List<Integer> pilotNumbersForRemoval = trackedPilots.values().stream()
                             .filter(PilotContext::shouldBeRemoved)
@@ -162,7 +162,7 @@ public class VatsimTrackerBean implements DisposableBean {
                             .toList();
                     pilotNumbersForRemoval.forEach(trackedPilots::remove);
 
-                    log.info("report {} - pilot removal completed, removed {} records", nextReport, pilotNumbersForRemoval.size());
+                    //log.info("report {} - pilot removal completed, removed {} records", nextReport, pilotNumbersForRemoval.size());
 
                     lastProcessedReport = nextReport;
                     try {
@@ -171,7 +171,7 @@ public class VatsimTrackerBean implements DisposableBean {
                         log.error("unable to save status", e);
                     }
 
-                    log.info("report {} - all done", nextReport);
+                    //log.info("report {} - all done", nextReport);
                 } catch (final Exception e) {
                     log.error("undetermined exception in vatsim tracker", e);
                     Misc.sleep(10000);

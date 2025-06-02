@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Aircrafts {
@@ -79,7 +80,7 @@ public class Aircrafts {
                            final Airports.Airport locationAirport) {
         checkNotNull(aircraftType);
         checkNotNull(regNo);
-        // todo ak1 check regNo is unique
+        checkArgument(byRegNo(regNo).isEmpty());
         checkNotNull(locationAirport);
 
         final int recordId = storage.addRecord();
