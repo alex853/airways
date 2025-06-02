@@ -29,6 +29,25 @@ public class FlightStats {
     public static void event(final String event) {
         validateDateAndData();
         data.compute(event, (key, value) -> value != null ? value + 1 : 1);
+
+        Integer dispatch = data.get("dispatchNewAndStart");
+        Integer blocksOff = data.get("blocksOff");
+        Integer takeoff = data.get("takeoff");
+        Integer landing = data.get("landing");
+        Integer finish = data.get("blocksOnAndFinish");
+
+        if (dispatch != null && finish != null) {
+            data.put("dispatchToFinishPercent", (int) Math.round((float)finish / (float)Math.max(1, dispatch) * 100.0));
+        }
+        if (dispatch != null && landing != null) {
+            data.put("dispatchToLandingPercent", (int) Math.round((float)landing / (float)Math.max(1, dispatch) * 100.0));
+        }
+        if (dispatch != null && takeoff != null) {
+            data.put("dispatchToTakeoffPercent", (int) Math.round((float)takeoff / (float)Math.max(1, dispatch) * 100.0));
+        }
+        if (dispatch != null && blocksOff != null) {
+            data.put("dispatchToBlocksOffPercent", (int) Math.round((float)blocksOff / (float)Math.max(1, dispatch) * 100.0));
+        }
     }
 
     private static void validateDateAndData() {
