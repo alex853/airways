@@ -9,8 +9,6 @@ import net.simforge.airways2.worldbuilder.World25;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -18,22 +16,12 @@ import java.util.stream.Collectors;
 public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
-    private static final Map<String, Integer> missingAircraftTypes = new HashMap<>();
 
     public static Aircrafts.Aircraft findAvailableOrCreate(
             final World world,
-            final String aircraftTypeIcao,
-            final String locationAirportIcao) {
-        final AircraftOperators.AircraftOperator shadowJet = world.aircraftOperators().byIata(World25.ShadowJetIata).orElseThrow();
-        final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(aircraftTypeIcao);
-        if (requestedAircraftType.isEmpty()) {
-            missingAircraftTypes.compute(aircraftTypeIcao, (key, value) -> value == null ? 1 : value + 1);
-            missingAircraftTypes.entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .forEach(entry -> log.info("mission aircraft types | {} - {}", entry.getKey(), entry.getValue()));
-        }
-        final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
-        final Airports.Airport locationAirport = world.airports().byIcao(locationAirportIcao).orElseThrow();
+            final AircraftTypes.AircraftType aircraftType,
+            final Airports.Airport locationAirport) {
+        final AircraftOperators.AircraftOperator shadowJet = getShadowJet(world);
 
         final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts().allIdleAndParkedAtAirport().stream()
                 .filter(a -> a.getAircraftOperatorId() == shadowJet.getId())
@@ -62,8 +50,12 @@ public class ShadowJetLogic {
 
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
         newAircraft.setAircraftOperatorId(shadowJet.getId());
-        log.info("new aircraft {} with reg no {} located at {} created", aircraftType.getIcao(), newRegNo, locationAirportIcao);
+        log.info("new aircraft {} with reg no {} located at {} created", aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         return newAircraft;
+    }
+
+    public static AircraftOperators.AircraftOperator getShadowJet(World world) {
+        return world.aircraftOperators().byIata(World25.ShadowJetIata).orElseThrow();
     }
 
     private static String generateRandomSJxxxRegNo() {

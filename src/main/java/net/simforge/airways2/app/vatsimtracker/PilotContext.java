@@ -2,11 +2,10 @@ package net.simforge.airways2.app.vatsimtracker;
 
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
+import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.Geo;
@@ -333,10 +332,18 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
         return worldBean.modifySync(world -> {
+            final AircraftOperators.AircraftOperator shadowJet = ShadowJetLogic.getShadowJet(world);
+            final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(aircraftType);
+            if (requestedAircraftType.isEmpty()) {
+                FlightStats.event("missingAircraftType " + aircraftType);
+            }
+            final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
+            final Airports.Airport positionAirport = world.airports().byIcao(positionAirportIcao).orElseThrow();
+
             final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableOrCreate(
                     world,
                     aircraftType,
-                    positionAirportIcao);
+                    positionAirport);
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
                     world,
                     aircraft,
