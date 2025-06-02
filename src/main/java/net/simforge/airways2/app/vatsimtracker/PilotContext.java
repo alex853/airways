@@ -347,6 +347,8 @@ public class PilotContext {
 
             world.flightMissionControl().startOrCancel(mission);
 
+            FlightStats.event("dispatchNewAndStart");
+
             return mission;
         });
     }
@@ -360,6 +362,8 @@ public class PilotContext {
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
+
+            FlightStats.event("blocksOff");
 
             return mission;
         });
@@ -378,6 +382,8 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
+            FlightStats.event("takeoff");
+
             return mission;
         });
     }
@@ -391,6 +397,8 @@ public class PilotContext {
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
+
+            FlightStats.event("landing");
 
             return mission;
         });
@@ -406,6 +414,8 @@ public class PilotContext {
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
+
+            FlightStats.event("blocksOnAndFinish");
 
             return mission;
         });
@@ -429,6 +439,8 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
+            FlightStats.event("cancelBeforeTakeoffIfExists");
+
             return null;
         });
     }
@@ -442,6 +454,8 @@ public class PilotContext {
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
+
+            FlightStats.event("cancelFromFlying");
 
             return null;
         });

@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.app.vatsimtracker.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.commons.io.Csv;
@@ -170,6 +171,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     } catch (final Exception e) {
                         log.error("unable to save status", e);
                     }
+                    FlightStats.save();
 
                     //log.info("report {} - all done", nextReport);
                 } catch (final Exception e) {
