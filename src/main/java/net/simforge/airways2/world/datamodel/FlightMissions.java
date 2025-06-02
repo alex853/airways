@@ -193,18 +193,24 @@ public class FlightMissions {
         }
     }
 
-    // todo ak2 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
+    // todo ak0 these statuses can be packed into first 4 bits, to have codes from 0 to 15, this would allow to have up to 4 boolean mode-flags
     public enum Status {
+        // available 0
         PlannedManually(1),
         PlannedViaSchedule(2),
-        Dispatched(20),
-        Preflight(30),
-        Departure(40),
-        Flying(50),
-        Arrival(60),
-        Postflight(70),
-        Finished(100),
-        Cancelled(99);
+        // available 3
+        Dispatched(20), // -> 4
+        Preflight(30), // -> 5
+        Departure(40), // -> 6
+        Flying(50), // -> 7
+        Arrival(60), // -> 8
+        Postflight(70), // -> 9
+        Finished(100), // -> 10
+        // available 11
+        // available 12
+        Cancelled(99); // -> 13
+        // available 14
+        // available 15
 
         private final int code;
 

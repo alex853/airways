@@ -70,9 +70,8 @@ public class FlightMissionProcessor {
                     }
                 }
                 default -> {
-                    int pilot = 0; // todo ak3 remove it when pilot is introduced
-                    world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(pilot), mission.get());
-                    log.info("Pilot {}, flight {} - flight is in unexpected status", pilot, mission.get().getId());
+                    world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(0), mission.get());
+                    log.info("f/m #{} - flight is in unexpected status", mission.get().getId());
                 }
             }
 

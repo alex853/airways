@@ -27,9 +27,8 @@ public class FlightMissionControl {
         if (actualStatus != FlightMissions.Status.Dispatched) {
             mission.setStatus(FlightMissions.Status.Cancelled);
 
-            int pilot = 0; // todo ak3 remove it when pilot is introduced
-            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
-            log.info("Pilot {}, flight {} - flight cancelled - flight actual state {} while expected {}", pilot, mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
+            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+            log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
 
             return;
         }
@@ -39,10 +38,9 @@ public class FlightMissionControl {
                 || aircraft.getLocationAirportId() != mission.getDepartureAirportId()) {
             mission.setStatus(FlightMissions.Status.Cancelled);
 
-            int pilot = 0; // todo ak3 remove it when pilot is introduced
-            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
-            log.info("Pilot {}, flight {} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
-                    pilot, mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
+            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+            log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
+                    mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
 
             return;
         }
@@ -53,9 +51,8 @@ public class FlightMissionControl {
         aircraft.setFlightMissionId(mission.getId());
         // todo ak3 pilot/pilots/cabin crew - set status
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightStarted, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
-        log.info("Pilot {}, flight {} - flight started and in Preflight status, aircraft {} is activated", pilot, mission.getId(), aircraft.getRegNo());
+        world.log(EventLog.EventType.FlightStarted, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        log.info("f/m #{} - flight started and in Preflight status, aircraft {} is activated", mission.getId(), aircraft.getRegNo());
     }
 
     public void cancelFlightAndReturnAircraftToDepartureAirport(final FlightMissions.Mission mission) {
@@ -78,9 +75,8 @@ public class FlightMissionControl {
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(pilot), mission, aircraft);
-        log.info("Pilot {}, flight {} - flight cancelled from {}", pilot, mission.getId(), actualStatus);
+        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+        log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {
@@ -95,9 +91,8 @@ public class FlightMissionControl {
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
-        log.info("Pilot {}, flight {} - aircraft {} departed from gate at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
+        world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     public void takeoff(final FlightMissions.Mission mission) {
@@ -121,9 +116,8 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
-        log.info("Pilot {}, flight {} - aircraft {} took off at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
+        world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     public void landing(final FlightMissions.Mission mission) {
@@ -146,9 +140,8 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("Pilot {}, flight {} - aircraft {} landed at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        log.info("f/m #flight {} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
     }
 
     public void blocksOn(final FlightMissions.Mission mission) {
@@ -168,9 +161,8 @@ public class FlightMissionControl {
 
         // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("Pilot {}, flight {} - aircraft {} arrived to gate at {}", pilot, mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
     }
 
     public void finish(final FlightMissions.Mission mission) {
@@ -187,8 +179,7 @@ public class FlightMissionControl {
 
         // todo ak3 aircraftAssignment.setStatus(AircraftAssignment.Status.Done);
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightFinished, EventLog.pilotId(pilot), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("Pilot {}, flight {} - flight finished", pilot, mission.getId());
+        world.log(EventLog.EventType.FlightFinished, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        log.info("f/m #{} - flight finished", mission.getId());
     }
 }

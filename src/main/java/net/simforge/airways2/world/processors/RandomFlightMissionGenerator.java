@@ -43,9 +43,8 @@ public class RandomFlightMissionGenerator {
 
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
 
-        int pilot = 0; // todo ak3 remove it when pilot is introduced
-        world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.pilotId(pilot), mission, aircraft);
-        log.info("Pilot {}, flight {} - flight dispatched randomly, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
+        world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.pilotId(0), mission, aircraft);
+        log.info("f/m #{} - flight dispatched randomly, aircraft {}", mission.getId(), aircraft.getRegNo());
     }
 
     private static Airports.Airport selectRandomDestination(World world, Aircrafts.Aircraft aircraft) {

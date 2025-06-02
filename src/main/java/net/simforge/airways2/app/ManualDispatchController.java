@@ -66,9 +66,8 @@ public class ManualDispatchController {
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
             mission.setModePc(pcMode);
 
-            int pilot = 0; // todo ak3 remove it when pilot is introduced
-            world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(pilot), mission, aircraft);
-            log.info("Pilot {}, flight {} - flight dispatched manually, aircraft {}", pilot, mission.getId(), aircraft.getRegNo());
+            world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(0), mission, aircraft);
+            log.info("f/m #{} - flight dispatched manually, aircraft {}", mission.getId(), aircraft.getRegNo());
 
             return new DispatchFlightResponseDto(mission.getId());
         });

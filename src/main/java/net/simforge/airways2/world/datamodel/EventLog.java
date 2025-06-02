@@ -217,7 +217,7 @@ public class EventLog {
         private final int id;
     }
 
-    public static EventLogId pilotId(int pilotId) {
+    public static EventLogId pilotId(int pilotId) { // todo ak3 review all the usages when pilot will be introduced
         return new EventLogId(ObjectType.Pilot, pilotId);
     }
 
