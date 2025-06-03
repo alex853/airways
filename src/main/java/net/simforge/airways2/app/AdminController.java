@@ -1,6 +1,6 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.app.vatsimtracker.FlightStats;
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;

@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
@@ -44,15 +45,21 @@ public class WorldRunnerBean implements DisposableBean {
 
                 lock.writeLock().lock();
                 try {
-                    needToCatchTime = world.process(now); // todo ak1 - monitoring - how much time does it take
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - world.process")) {
+                        needToCatchTime = world.process(now);
+                    }
 
-                    while (!actionQueue.isEmpty()) { // todo ak1 - monitoring - how much time each action is waiting
-                        final ActionContext<?> actionContext = actionQueue.poll();
-                        actionContext.perform(world);
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - action.perform")) {
+                        while (!actionQueue.isEmpty()) {
+                            final ActionContext<?> actionContext = actionQueue.poll();
+                            actionContext.perform(world);
+                        }
                     }
 
                     if (lastSaved + saveWorldPeriod < now) {
-                        saveWorld(); // todo ak1 - monitoring - how much time does it take
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - saveWorld")) {
+                            saveWorld();
+                        }
                         lastSaved = now;
                     }
                 } finally {

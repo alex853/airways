@@ -1,0 +1,65 @@
+package net.simforge.airways2.app.tools;
+
+import net.simforge.commons.misc.Str;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class Timing {
+    private static final Logger log = LoggerFactory.getLogger(Timing.class);
+    private static final ConcurrentHashMap<String, LabelData> data = new ConcurrentHashMap<>();
+    private static final int PRINT_STATUS_EVERY_N_MEASURES = 100;
+    private static final AtomicInteger counterToStatusPrinting = new AtomicInteger(PRINT_STATUS_EVERY_N_MEASURES);
+
+    public static Timer label(final String label) {
+        printStatusIfTimeComes();
+
+        final LabelData labelData = data.computeIfAbsent(label, (key) -> new LabelData(label));
+        return new Timer(labelData);
+    }
+
+    private static void printStatusIfTimeComes() {
+        if (counterToStatusPrinting.decrementAndGet() > 0) {
+            return;
+        }
+
+        data.forEach((key, value) -> value.logInfo());
+        counterToStatusPrinting.set(PRINT_STATUS_EVERY_N_MEASURES);
+    }
+
+    public static class Timer implements AutoCloseable {
+        private final LabelData labelData;
+        private final long start = System.nanoTime();
+
+        private Timer(LabelData labelData) {
+            this.labelData = labelData;
+        }
+
+        @Override
+        public void close() {
+            final long finish = System.nanoTime();
+            labelData.measure(finish - start);
+        }
+    }
+
+    private static class LabelData {
+        private final String label;
+        private long count;
+        private long totalDuration;
+
+        public LabelData(final String label) {
+            this.label = label;
+        }
+
+        public synchronized void measure(long duration) {
+            count++;
+            totalDuration += duration;
+        }
+
+        public void logInfo() {
+            log.info("Timing info : {} ..... {} ms", Str.al(label, 40), (totalDuration / count /  1_000_000));
+        }
+    }
+}

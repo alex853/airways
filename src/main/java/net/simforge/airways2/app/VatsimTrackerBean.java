@@ -1,6 +1,7 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.app.vatsimtracker.FlightStats;
+import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.commons.io.Csv;
@@ -63,9 +64,6 @@ public class VatsimTrackerBean implements DisposableBean {
 
             threadStatus = ThreadStatus.Running;
 
-            int nextReportCount = 0;
-            long nextReportMilliseconds = 0;
-
             while (threadStatus == ThreadStatus.Running) {
                 try {
                     String nextReport;
@@ -73,13 +71,8 @@ public class VatsimTrackerBean implements DisposableBean {
                         if (lastProcessedReport == null) {
                             nextReport = compactifiedStorage.getLastReport();
                         } else {
-                            long before = System.nanoTime();
-                            nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
-                            nextReportMilliseconds += (System.nanoTime() - before) / 1_000_000;
-                            nextReportCount++;
-
-                            if ((nextReportCount % 100) == 0) { // todo ak1 see bunch of monitoring todos - all them can be wrapped into some tool clas
-                                log.warn("next report time {} ms", (nextReportMilliseconds / nextReportCount));
+                            try (final Timing.Timer ignored = Timing.label("VatsimTrackerBean#getNextReport")) {
+                                nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
                             }
                         }
                     } catch (final Exception e) {

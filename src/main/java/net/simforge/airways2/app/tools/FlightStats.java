@@ -1,4 +1,4 @@
-package net.simforge.airways2.app.vatsimtracker;
+package net.simforge.airways2.app.tools;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
