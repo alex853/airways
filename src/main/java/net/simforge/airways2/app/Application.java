@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak0 migrate to simforge.net
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);

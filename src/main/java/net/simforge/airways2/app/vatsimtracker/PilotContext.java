@@ -430,11 +430,13 @@ public class PilotContext {
     private void mission_cancelBeforeTakeoffIfExists() {
         worldBean.modifySync(world -> {
             if (flightMissionId == 0) {
+                log.warn("erroneous case, f/m == 0, in mission_cancelBeforeTakeoffIfExists, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
+                log.warn("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
@@ -454,11 +456,13 @@ public class PilotContext {
     private void mission_cancelFromFlying() {
         worldBean.modifySync(world -> {
             if (flightMissionId == 0) {
+                log.warn("erroneous case, f/m == 0, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
+                log.warn("erroneous case, f/m not found, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
