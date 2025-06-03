@@ -332,7 +332,6 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
         return worldBean.modifySync(world -> {
-            final AircraftOperators.AircraftOperator shadowJet = ShadowJetLogic.getShadowJet(world);
             final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(aircraftType);
             if (requestedAircraftType.isEmpty()) {
                 FlightStats.event("missingAircraftType " + aircraftType);
@@ -431,12 +430,12 @@ public class PilotContext {
     private void mission_cancelBeforeTakeoffIfExists() {
         worldBean.modifySync(world -> {
             if (flightMissionId == 0) {
-                return null;
+                return null; // todo ak3 erroneous case, need to rethink
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                return null;
+                return null; // todo ak3 erroneous case, need to rethink
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
@@ -454,12 +453,19 @@ public class PilotContext {
 
     private void mission_cancelFromFlying() {
         worldBean.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            if (flightMissionId == 0) {
+                return null; // todo ak3 erroneous case, need to rethink
+            }
 
-            if (mission.getStatus() == FlightMissions.Status.Flying) {
-                world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
+            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
+            if (mission.isEmpty()) {
+                return null; // todo ak3 erroneous case, need to rethink
+            }
+
+            if (mission.get().getStatus() == FlightMissions.Status.Flying) {
+                world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
             FlightStats.event("cancelFromFlying");
