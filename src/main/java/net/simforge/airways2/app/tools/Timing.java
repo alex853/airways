@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Timing {
     private static final Logger log = LoggerFactory.getLogger(Timing.class);
     private static final ConcurrentHashMap<String, LabelData> data = new ConcurrentHashMap<>();
-    private static final int PRINT_STATUS_EVERY_N_MEASURES = 10000;
+    private static final int PRINT_STATUS_EVERY_N_MEASURES = 100000;
     private static final AtomicInteger counterToStatusPrinting = new AtomicInteger(PRINT_STATUS_EVERY_N_MEASURES);
 
     public static Timer label(final String label) {
@@ -59,7 +59,7 @@ public class Timing {
         }
 
         public void logInfo() {
-            log.info("Timing info : {} ..... {} ms", Str.al(label, 40), (totalDuration / count /  1_000_000));
+            log.info("Timing info : {} ..... {} microseconds", Str.al(label, 40), (totalDuration / count /  1_000));
         }
     }
 }
