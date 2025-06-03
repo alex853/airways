@@ -8,8 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak2 migrate to simforge.net
-// todo ak0 health monitoring
+// todo ak0 migrate to simforge.net
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -31,5 +30,4 @@ public class Application {
         main.invoke(null, new Object[] { new String[0] });
         log.warn("world builder step - DONE");
     }
-
 }

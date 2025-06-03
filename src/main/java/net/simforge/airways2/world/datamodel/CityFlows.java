@@ -19,7 +19,7 @@ public class CityFlows {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // mobility, 1.0 corresponds to 100
             .build();
 
-    // todo rework all below
+    // todo ak1 rework all below
     private final DataField cityId = storage.getDataField(0);
     private final DataField status = storage.getDataField(1);
 

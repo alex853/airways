@@ -22,7 +22,7 @@ public class City2CityFlows {
             .withDataField(DataField.of(DataType.Signed32bit)) // accumulatedFlowDt
             .build();
 
-    // todo rework all below
+    // todo ak1 rework all below
     private final DataField cityId = storage.getDataField(0);
     private final DataField status = storage.getDataField(1);
     // ...

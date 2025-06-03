@@ -28,7 +28,7 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
             .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime
             .build();
-    // todo ak3 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
+    // todo ak1 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
     private static final int pcModeMask = 0b10000000;
     private static final int modeMask = pcModeMask;
