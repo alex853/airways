@@ -141,7 +141,7 @@ public class FlightMissionControl {
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("f/m #flight {} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
+        log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
     }
 
     public void blocksOn(final FlightMissions.Mission mission) {
