@@ -222,6 +222,10 @@ public class VatsimTrackerBean implements DisposableBean {
         IOHelper.saveFile(lastProcessedReportFile, lastProcessedReport);
     }
 
+    public String getLastProcessedReport() {
+        return lastProcessedReport;
+    }
+
     public Collection<PilotContext> contexts() {
         return trackedPilots.values();
     }
