@@ -124,4 +124,19 @@ public class AdminController {
             return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
     }
+
+    @GetMapping("/aircraft/move-to-airport")
+    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId, @RequestParam(name = "airportId") final int airportId) {
+        return worldBean.modifySync(world -> {
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+            final Airports.Airport airport = world.airports().byId(airportId).orElseThrow();
+
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+            aircraft.setLocationAirportId(airportId);
+            aircraft.setLocationLatitude(airport.getLatitude());
+            aircraft.setLocationLongitude(airport.getLongitude());
+
+            return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+        });
+    }
 }
