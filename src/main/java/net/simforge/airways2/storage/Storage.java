@@ -165,6 +165,14 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
 
+        return getAsIntUnsafe(recordId, dataField);
+    }
+
+    public int getAsIntUnsafe(final int recordId, final DataField dataField) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+        checkNotNull(dataField, "dataField should not be null");
+
         final int fieldOffset = getFieldOffset(recordId, dataField);
 
         return switch (dataField.dataType()) {
@@ -235,6 +243,14 @@ public class Storage<T> {
         checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
+
+        setUnsafe(recordId, dataField, value);
+    }
+
+    public void setUnsafe(final int recordId, final DataField dataField, final int value) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+        checkNotNull(dataField, "dataField should not be null");
 
         final int fieldOffset = getFieldOffset(recordId, dataField);
 
