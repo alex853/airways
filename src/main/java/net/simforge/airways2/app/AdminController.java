@@ -126,7 +126,7 @@ public class AdminController {
     }
 
     @GetMapping("/aircraft/move-to-airport")
-    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId, @RequestParam(name = "airportId") final int airportId) {
+    public String moveAircraftToAirport(@RequestParam(name = "aircraftId") final int aircraftId, @RequestParam(name = "airportId") final int airportId) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
             final Airports.Airport airport = world.airports().byId(airportId).orElseThrow();
