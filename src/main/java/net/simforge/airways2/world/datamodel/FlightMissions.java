@@ -167,7 +167,7 @@ public class FlightMissions {
             checkNotNull(status, "status is mandatory");
             checkArgument(status.code() <= 15, "status code should be in [0..15] range");
             final int statusCode = status.code();
-            final int modeBits = (isModePc() ? pcModeMask : 0);
+            final int modeBits = (isModePc() ? allModesMask : 0);
             storage.set(id, statusField, statusCode ^ modeBits);
         }
 
@@ -183,7 +183,7 @@ public class FlightMissions {
             setStatusBitMode(pcModeMask, enabled);
         }
 
-        private boolean isTimeMode() {
+        public boolean isTimeMode() {
             return isStatusBitMode(timeModeMask);
         }
 

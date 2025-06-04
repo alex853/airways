@@ -29,6 +29,7 @@ public class FlightMissionController {
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusCode() + " - " + f.getStatus(),
+                        (f.isModePc() ? "P" : "n") + (f.isTimeMode() ? "T" : "t"),
                         WebTime.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
@@ -67,6 +68,7 @@ public class FlightMissionController {
         private int id;
         private int aircraftId;
         private String status;
+        private String modes;
         private String heartbeatTime;
         private String departureAirport;
         private String destinationAirport;
