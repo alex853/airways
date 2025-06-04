@@ -445,13 +445,27 @@ public class FlightMissions {
 
             setTimeMode(true);
 
-            setDateOfFlight(Time.toLdOrNull(plannedDepartureTime));
-            setPlannedDepartureTimeLT(Time.toLtOrNull(plannedDepartureTime));
-            setPlannedArrivalTimeLT(Time.toLtOrNull(plannedArrivalTime));
-            setActualDepartureTimeLT(Time.toLtOrNull(actualDepartureTime));
-            setActualTakeoffTimeLT(Time.toLtOrNull(actualTakeoffTime));
-            setActualLandingTimeLT(Time.toLtOrNull(actualLandingTime));
-            setActualArrivalTimeLT(Time.toLtOrNull(actualArrivalTime));
+            final LocalDate dof = Time.toLdOrNull(plannedDepartureTime);
+            final LocalTime pdep = Time.toLtOrNull(plannedDepartureTime);
+            final LocalTime parr = Time.toLtOrNull(plannedArrivalTime);
+            final LocalTime adep = Time.toLtOrNull(actualDepartureTime);
+            final LocalTime atof = Time.toLtOrNull(actualTakeoffTime);
+            final LocalTime aldg = Time.toLtOrNull(actualLandingTime);
+            final LocalTime aarr = Time.toLtOrNull(actualArrivalTime);
+
+            log.warn("converting time to lt 1 - time mode {}, dof {}, pdep {}, parr {}, adep {}, atof {}, aldg {}, aarr {}",
+                    isTimeMode(), dof, pdep, parr, adep, atof, aldg, aarr);
+
+            setDateOfFlight(dof);
+            setPlannedDepartureTimeLT(pdep);
+            setPlannedArrivalTimeLT(parr);
+            setActualDepartureTimeLT(adep);
+            setActualTakeoffTimeLT(atof);
+            setActualLandingTimeLT(aldg);
+            setActualArrivalTimeLT(aarr);
+
+            log.warn("converting time to lt 2 - time mode {}, dof {}, new pdep-time {}, old pdep-time {}",
+                    isTimeMode(), getDateOfFlight(), getPlannedDepartureTime(), plannedDepartureTime);
         }
 
         @Override
