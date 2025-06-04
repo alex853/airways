@@ -239,12 +239,14 @@ public class Aircrafts {
 
     public static boolean isIdleAndParkedAtAirport(final Aircraft aircraft) {
         return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport;
+                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                && aircraft.getLocationAirportId() != 0;
     }
 
     public static boolean isIdleAndParkedAtAirportAndNoOperatorAssigned(final Aircraft aircraft) {
         return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
                 && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                && aircraft.getLocationAirportId() != 0
                 && aircraft.getAircraftOperatorId() == 0;
     }
 }

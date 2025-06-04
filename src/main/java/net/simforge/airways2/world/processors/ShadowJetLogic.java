@@ -28,7 +28,6 @@ public class ShadowJetLogic {
         final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts().allIdleAndParkedAtAirport().stream()
                 .filter(a -> a.getAircraftOperatorId() == shadowJet.getId())
                 .filter(a -> a.getAircraftTypeId() == aircraftType.getId())
-                .filter(a -> a.getLocationAirportId() != 0)
                 .min(Comparator.comparing(a -> Geo.distance(locationAirport.getCoords(), a.getLocationCoords())));
 
         if (existingAircraft.isPresent()) {
