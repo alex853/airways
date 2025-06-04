@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class PilotContext {
@@ -337,7 +338,7 @@ public class PilotContext {
                 FlightStats.event("missingAircraftType " + aircraftType);
             }
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
-            final Airports.Airport positionAirport = world.airports().byIcao(positionAirportIcao).orElseThrow();
+            final Airports.Airport positionAirport = world.airports().byIcao(positionAirportIcao).orElseThrow(elseThrowException(positionAirportIcao));
 
             final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableOrCreate(
                     world,
@@ -346,8 +347,8 @@ public class PilotContext {
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
                     world,
                     aircraft,
-                    world.airports().byIcao(plannedDeparture).orElseThrow(),
-                    world.airports().byIcao(plannedDestination).orElseThrow(),
+                    world.airports().byIcao(plannedDeparture).orElseThrow(elseThrowException(plannedDeparture)),
+                    world.airports().byIcao(plannedDestination).orElseThrow(elseThrowException(plannedDestination)),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
             mission.setModePc(true);
 
@@ -525,6 +526,10 @@ public class PilotContext {
                 mission != null ? "#" + mission.getAircraftId() : "-",
                 plannedDeparture,
                 plannedDestination);
+    }
+
+    private static Supplier<RuntimeException> elseThrowException(final String what) {
+        return () -> new IllegalArgumentException("Can't find by '" + what + "'");
     }
 
     public static void addCsvColumns(final Csv csv) {
