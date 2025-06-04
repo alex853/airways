@@ -76,6 +76,55 @@ public class FlightMissionModeTest {
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
-    // todo ak2 when I will start pushing vatsim coords into the system, I will need the second mode available,
-    //          now it is busy by time mode, so I will need to add tests for that mode wich replaces time mode
+    @Test
+    public void test__no_time_is_default() {
+        assertFalse(mission.isTimeMode());
+    }
+
+    @Test
+    public void test__time_then_status() {
+        mission.setTimeMode(true);
+        mission.setStatus(FlightMissions.Status.Flying);
+
+        assertTrue(mission.isTimeMode());
+        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    }
+
+    @Test
+    public void test__no_time_then_status() {
+        mission.setTimeMode(false);
+        mission.setStatus(FlightMissions.Status.Flying);
+
+        assertFalse(mission.isTimeMode());
+        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    }
+
+    @Test
+    public void test__status_then_time() {
+        mission.setStatus(FlightMissions.Status.Flying);
+        mission.setTimeMode(true);
+
+        assertTrue(mission.isTimeMode());
+        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    }
+
+    @Test
+    public void test__status_then_no_time() {
+        mission.setStatus(FlightMissions.Status.Flying);
+        mission.setTimeMode(false);
+
+        assertFalse(mission.isTimeMode());
+        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    }
+
+    @Test
+    public void test__pc_then_time_then_status() {
+        mission.setModePc(true);
+        mission.setTimeMode(true);
+        mission.setStatus(FlightMissions.Status.Flying);
+
+        assertTrue(mission.isModePc());
+        assertTrue(mission.isTimeMode());
+        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    }
 }

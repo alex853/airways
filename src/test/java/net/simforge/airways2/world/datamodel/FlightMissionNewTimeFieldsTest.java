@@ -12,7 +12,7 @@ import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FlightMissionsNewTimeFieldsTest {
+public class FlightMissionNewTimeFieldsTest {
 
     private World world;
     private FlightMissions.Mission mission;
