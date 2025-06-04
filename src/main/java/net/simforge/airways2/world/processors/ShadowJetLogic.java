@@ -6,9 +6,11 @@ import net.simforge.airways2.world.datamodel.AircraftTypes;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.worldbuilder.World25;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -26,10 +28,17 @@ public class ShadowJetLogic {
         final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts().allIdleAndParkedAtAirport().stream()
                 .filter(a -> a.getAircraftOperatorId() == shadowJet.getId())
                 .filter(a -> a.getAircraftTypeId() == aircraftType.getId())
-                .filter(a -> a.getLocationAirportId() == locationAirport.getId())
-                .findFirst();
+                .min(Comparator.comparing(a -> Geo.distance(locationAirport.getCoords(), a.getLocationCoords())));
 
         if (existingAircraft.isPresent()) {
+            if (existingAircraft.get().getLocationAirportId() != locationAirport.getId()) {
+                log.info("moving {}, reg no {} located at {} to {}",
+                        aircraftType.getIcao(), existingAircraft.get().getRegNo(),
+                        world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
+                        locationAirport.getIcao());
+                AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
+            }
+
             return existingAircraft.get();
         }
 
@@ -44,13 +53,13 @@ public class ShadowJetLogic {
         }
 
         if (newRegNo == null) {
-            log.error("could not find available SJ-xxx reg no");
-            throw new IllegalStateException("could not find available SJ-xxx reg no");
+            log.error("could not find non-occupied SJ-xxx reg no");
+            throw new IllegalStateException("could not find non-occupied SJ-xxx reg no");
         }
 
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
         newAircraft.setAircraftOperatorId(shadowJet.getId());
-        log.info("new aircraft {} with reg no {} located at {} created", aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
+        log.info("creating {}, reg no {} at {}", aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         return newAircraft;
     }
 

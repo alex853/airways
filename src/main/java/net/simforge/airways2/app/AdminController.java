@@ -5,6 +5,7 @@ import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,10 +132,7 @@ public class AdminController {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
             final Airports.Airport airport = world.airports().byId(airportId).orElseThrow();
 
-            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-            aircraft.setLocationAirportId(airportId);
-            aircraft.setLocationLatitude(airport.getLatitude());
-            aircraft.setLocationLongitude(airport.getLongitude());
+            AircraftHelper.moveParkedAircraftToAnotherAirport(world, aircraft, airport);
 
             return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
