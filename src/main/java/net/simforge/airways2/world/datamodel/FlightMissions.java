@@ -104,9 +104,7 @@ public class FlightMissions {
         mission.setPlannedDepartureTime(departureTime);
         mission.setPlannedArrivalTime(arrivalTime);
 
-        if ((id % 10) == 0) {
-            mission.convertTimeToLT();
-        }
+        mission.convertTimeToLT();
 
         return mission;
     }
