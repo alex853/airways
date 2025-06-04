@@ -67,6 +67,14 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/flight/delete")
+    public String deleteFlight(@RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            world.flightMissions().deleteById(flightId);
+            return "F/M # " + flightId + " deleted";
+        });
+    }
+
     @GetMapping("/aircraft/reset-status")
     public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
         return worldBean.modifySync(world -> {

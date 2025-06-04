@@ -111,6 +111,10 @@ public class FlightMissions {
         return mission;
     }
 
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
+    }
+
     public Collection<Mission> all() {
         return storage.all();
     }
