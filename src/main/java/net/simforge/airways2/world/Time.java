@@ -44,7 +44,7 @@ public class Time {
     }
 
     public static int fromLdLt(final LocalDate date, final LocalTime time) {
-        log.info("Time#fromLdLt - date {}, time {}", date, time);
+//        log.info("Time#fromLdLt - date {}, time {}", date, time);
         if (date == null || time == null) {
             return 0;
         }

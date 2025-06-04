@@ -323,11 +323,14 @@ public class FlightMissions {
             checkArgument(isTimeMode());
             final int days = storage.getAsIntUnsafe(id, dateOfFlightField);
             if (days == 0) {
-                log.info("f/m getDateOfFlight days {}", days);
+//                log.info("f/m getDateOfFlight days {}", days);
                 return null;
             }
+            if (days > 300) {
+                log.error("getDateOfFlight - too big day " + days, new IllegalStateException());
+            }
             final LocalDate dof = DAY_BEFORE_FIRST_DAY.plusDays(days);
-            log.info("f/m getDateOfFlight days {}, date {}", days, dof);
+//            log.info("f/m getDateOfFlight days {}, date {}", days, dof);
             return dof;
         }
 
@@ -336,7 +339,10 @@ public class FlightMissions {
             final int days = dateOfFlight != null
                     ? (int) ChronoUnit.DAYS.between(DAY_BEFORE_FIRST_DAY, dateOfFlight)
                     : 0;
-            log.info("f/m setDateOfFlight days {}, date {}", days, dateOfFlight);
+            if (days > 300) {
+                log.error("setDateOfFlight - too big day " + days, new IllegalStateException());
+            }
+        //            log.info("f/m setDateOfFlight days {}, date {}", days, dateOfFlight);
             storage.setUnsafe(id, dateOfFlightField, days);
         }
 
@@ -409,22 +415,54 @@ public class FlightMissions {
         }
 
         private void setLocalTimeToHighOfU24(final DataField dataField, final LocalTime localTime) {
+            final LocalTime lowTimeSrc = getLocalTimeFromLowOfU24(dataField);
+
             setLocalTimeToU24(dataField, localTime, 0b111111111111000000000000, 12);
+
+            final LocalTime lowTimeDst = getLocalTimeFromLowOfU24(dataField);
+            final LocalTime highTimeDst = getLocalTimeFromHighOfU24(dataField);
+
+            if (!Objects.equals(lowTimeSrc, lowTimeDst)) {
+                log.error("setLocalTimeToHighOfU24 - low time not matched - was " + lowTimeSrc + ", became " + lowTimeDst, new IllegalStateException());
+            }
+            if (!Objects.equals(localTime, highTimeDst)) {
+                log.error("setLocalTimeToHighOfU24 - high time not matched - was " + localTime + ", became " + highTimeDst, new IllegalStateException());
+            }
         }
 
         private void setLocalTimeToLowOfU24(final DataField dataField, final LocalTime localTime) {
+            final LocalTime highTimeSrc = getLocalTimeFromHighOfU24(dataField);
+
             setLocalTimeToU24(dataField, localTime, 0b000000000000111111111111, 0);
+
+            final LocalTime lowTimeDst = getLocalTimeFromLowOfU24(dataField);
+            final LocalTime highTimeDst = getLocalTimeFromHighOfU24(dataField);
+
+            if (!Objects.equals(localTime, lowTimeDst)) {
+                log.error("setLocalTimeToLowOfU24 - low time not matched - was " + localTime + ", became " + lowTimeDst, new IllegalStateException());
+            }
+            if (!Objects.equals(highTimeSrc, highTimeDst)) {
+                log.error("setLocalTimeToLowOfU24 - high time not matched - was " + highTimeSrc + ", became " + highTimeDst, new IllegalStateException());
+            }
         }
 
         private LocalTime getLocalTimeFromU24(final DataField dataField, final int mask, final int shift) {
             final int raw = storage.getAsIntUnsafe(id, dataField);
-            final int minutes = (raw & mask) >> shift;
-            return minutes != 0 ? LocalTime.ofSecondOfDay(minutes * 60L) : null;
+            final int minutesRaw = (raw & mask) >> shift;
+            if (minutesRaw == 0) {
+                return null;
+            }
+            final int minutes = (minutesRaw == 1440) ? 0 : minutesRaw;
+            if (minutes > 1440) {
+                log.error("getLocalTimeFromU24 - minutes is " + minutes, new IllegalStateException());
+                return LocalTime.ofSecondOfDay(0);
+            }
+            return LocalTime.ofSecondOfDay(minutes * 60L);
         }
 
         private void setLocalTimeToU24(final DataField dataField, final LocalTime localTime, final int mask, final int shift) {
-            final Integer minutesRaw = localTime != null ? localTime.toSecondOfDay() / 60 : null;
-            final int minutes = minutesRaw != null ? (minutesRaw == 0 ? 1440 : minutesRaw) : 0;
+            final Integer minutesRaw = localTime != null ? (localTime.toSecondOfDay() / 60) : null;
+            final int minutes = minutesRaw == null ? 0 : (minutesRaw == 0 ? 1440 : minutesRaw);
             final int shiftedMinutes = minutes << shift;
             final int raw = storage.getAsIntUnsafe(id, dataField);
             final int anotherPart = (raw & ~mask);

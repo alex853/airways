@@ -146,6 +146,26 @@ public class FlightMissionsNewTimeFieldsTest {
     }
 
     @Test
+    public void test__planned_times_all_combinations() {
+        mission.convertTimeToLT();
+
+        final LocalDate today = JavaTime.todayUtc();
+        mission.setDateOfFlight(today);
+
+        for (int time1 = 0; time1 < 1440; time1++) {
+            final int plannedDepartureTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time1 * 60));
+            mission.setPlannedDepartureTime(plannedDepartureTime);
+            for (int time2 = 0; time2 < 1440; time2++) {
+                final int plannedArrivalTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time2 * 60));
+                mission.setPlannedArrivalTime(plannedArrivalTime);
+
+                assertEquals(plannedDepartureTime, mission.getPlannedDepartureTime());
+                assertEquals(plannedArrivalTime, mission.getPlannedArrivalTime());
+            }
+        }
+    }
+
+    @Test
     public void test__all_fields_combination() {
         mission.convertTimeToLT();
 
