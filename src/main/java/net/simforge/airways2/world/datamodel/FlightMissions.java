@@ -87,6 +87,27 @@ public class FlightMissions {
         storage.save(rootPath);
     }
 
+    public Mission createDispatchedMission(final Aircrafts.Aircraft aircraft,
+                                           final Airports.Airport origin,
+                                           final Airports.Airport destination,
+                                           final int departureTime,
+                                           final int arrivalTime) {
+        final int id = storage.addRecord();
+        final Mission mission = new Mission(id);
+        storage.set(id, aircraftIdField, aircraft.getId());
+        mission.setStatus(Status.Dispatched);
+        storage.set(id, departureAirportIdField, origin.getId());
+        storage.set(id, destinationAirportIdField, destination.getId());
+        mission.setPlannedDepartureTime(departureTime);
+        mission.setPlannedArrivalTime(arrivalTime);
+
+        if ((id % 10) == 0) {
+            mission.convertTimeToLT();
+        }
+
+        return mission;
+    }
+
     public Collection<Mission> all() {
         return storage.all();
     }
@@ -466,21 +487,6 @@ public class FlightMissions {
                     .findFirst()
                     .orElse(null);
         }
-    }
-
-    public Mission createDispatchedMission(final Aircrafts.Aircraft aircraft,
-                                           final Airports.Airport origin,
-                                           final Airports.Airport destination,
-                                           final int departureTime,
-                                           final int arrivalTime) {
-        final int id = storage.addRecord();
-        storage.set(id, aircraftIdField, aircraft.getId());
-        storage.set(id, statusField, Status.Dispatched.code());
-        storage.set(id, departureAirportIdField, origin.getId());
-        storage.set(id, destinationAirportIdField, destination.getId());
-        storage.set(id, plannedDepartureTimeField, departureTime);
-        storage.set(id, plannedArrivalTimeField, arrivalTime);
-        return new Mission(id);
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureTime() - m1.getPlannedDepartureTime();
