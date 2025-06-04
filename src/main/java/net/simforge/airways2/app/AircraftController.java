@@ -28,7 +28,7 @@ public class AircraftController {
                         a.getRegNo(),
                         a.getAircraftOperatorId(),
                         a.getFlightMissionId(),
-                        a.getFlightMissionId() != 0 ? FlightMissionHelper.formatRoute(world, a.getFlightMissionId()) : null,
+                        a.getFlightMissionId() != 0 ? FlightMissionHelper.formatRouteOrNull(world, a.getFlightMissionId()) : null,
                         a.getOperationalStatus().name(),
                         a.getLocationStatus().name(),
                         a.getLocationAirportId() != 0 ? world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao() : null,
