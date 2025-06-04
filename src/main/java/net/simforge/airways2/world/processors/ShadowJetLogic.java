@@ -34,7 +34,8 @@ public class ShadowJetLogic {
             if (existingAircraft.get().getLocationAirportId() != locationAirport.getId()) {
                 log.info("moving {}, reg no {} located at {} to {}",
                         aircraftType.getIcao(), existingAircraft.get().getRegNo(),
-                        world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
+                        //world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
+                        existingAircraft.get().getLocationAirportId(),
                         locationAirport.getIcao());
                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
             }
