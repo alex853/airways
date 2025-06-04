@@ -109,7 +109,9 @@ public class Storage<T> {
 
     public Optional<T> byId(final int recordId) {
         checkRecordIdInBounds(recordId);
-        checkRecordIdIsNotDeleted(recordId);
+        if (isDeleted(recordId)) {
+            return Optional.empty();
+        }
         return Optional.of(instantiator.create(recordId));
     }
 
