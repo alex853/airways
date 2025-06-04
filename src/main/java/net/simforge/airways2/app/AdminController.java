@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.Map;
 
 @RestController
@@ -25,14 +27,32 @@ public class AdminController {
     @Autowired
     private WorldRunnerBean worldBean;
 
-    @GetMapping("/log")
-    public ResponseEntity<byte[]> downloadDirect() throws IOException {
+    @GetMapping("/log/full")
+    public ResponseEntity<byte[]> getFullLog() throws IOException {
         byte[] bytes = IOHelper.loadFile(new File("./logs/logback.log")).getBytes();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)
                 .contentLength(bytes.length)
                 .body(bytes);
+    }
+
+    @GetMapping("/log/tail")
+    public ResponseEntity<byte[]> getLogTail() throws IOException {
+        final File file = new File("./logs/logback.log");
+        try (final RandomAccessFile raf = new RandomAccessFile(file, "r")) {
+            if (raf.length() > 1_000_000) {
+                raf.seek(raf.length() - 1_000_000);
+            }
+
+            byte[] bytes = new byte[1_000_000];
+            raf.readFully(bytes);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .contentLength(bytes.length)
+                    .body(bytes);
+        }
     }
 
     @GetMapping("/vatsim-flight-stats")
