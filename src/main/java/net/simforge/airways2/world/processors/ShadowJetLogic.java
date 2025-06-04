@@ -32,8 +32,8 @@ public class ShadowJetLogic {
 
         if (existingAircraft.isPresent()) {
             if (existingAircraft.get().getLocationAirportId() != locationAirport.getId()) {
-                log.info("moving {}, reg no {} located at {} to {}",
-                        aircraftType.getIcao(), existingAircraft.get().getRegNo(),
+                log.info("moving a/c #{}, {}, reg no {} located at {} to {}",
+                        aircraftType.getId(), aircraftType.getIcao(), existingAircraft.get().getRegNo(),
                         world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
                         locationAirport.getIcao());
                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
@@ -59,7 +59,7 @@ public class ShadowJetLogic {
 
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
         newAircraft.setAircraftOperatorId(shadowJet.getId());
-        log.info("creating {}, reg no {} at {}", aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
+        log.info("creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         return newAircraft;
     }
 
