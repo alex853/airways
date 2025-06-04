@@ -64,14 +64,22 @@ public class FlightMissionHelper {
                 || mission.get().getStatus() == FlightMissions.Status.Cancelled;
     }
 
-    public static String formatRoute(final World world, int flightMissionId) {
+    public static String formatRoute(final World world, final int flightMissionId) {
         final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
         final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
         return from.getIcao() + " - " + to.getIcao();
     }
 
-    public static float calculateHeading(final World world, int flightMissionId) {
+    public static String formatRouteOrNull(final World world, final int flightMissionId) {
+        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
+        if (mission.isEmpty()) {
+            return null;
+        }
+        return formatRoute(world, flightMissionId);
+    }
+
+    public static float calculateHeading(final World world, final int flightMissionId) {
         final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
         final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
