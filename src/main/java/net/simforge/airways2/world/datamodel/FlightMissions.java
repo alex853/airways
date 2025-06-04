@@ -4,6 +4,8 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.world.Time;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class FlightMissions {
+    private static final Logger log = LoggerFactory.getLogger(FlightMissions.class);
     private final Storage<Mission> storage = Storage.<Mission>builder()
             .name("flight-missions")
             .withInstantiator(Mission::new)
@@ -320,9 +323,12 @@ public class FlightMissions {
             checkArgument(isTimeMode());
             final int days = storage.getAsIntUnsafe(id, dateOfFlightField);
             if (days == 0) {
+                log.info("f/m getDateOfFlight days {}", days);
                 return null;
             }
-            return DAY_BEFORE_FIRST_DAY.plusDays(days);
+            final LocalDate dof = DAY_BEFORE_FIRST_DAY.plusDays(days);
+            log.info("f/m getDateOfFlight days {}, date {}", days, dof);
+            return dof;
         }
 
         public void setDateOfFlight(final LocalDate dateOfFlight) {
@@ -330,6 +336,7 @@ public class FlightMissions {
             final int days = dateOfFlight != null
                     ? (int) ChronoUnit.DAYS.between(DAY_BEFORE_FIRST_DAY, dateOfFlight)
                     : 0;
+            log.info("f/m setDateOfFlight days {}, date {}", days, dateOfFlight);
             storage.setUnsafe(id, dateOfFlightField, days);
         }
 

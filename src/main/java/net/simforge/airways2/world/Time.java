@@ -2,6 +2,8 @@ package net.simforge.airways2.world;
 
 import com.google.common.base.Preconditions;
 import net.simforge.commons.misc.JavaTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -9,6 +11,7 @@ import java.time.LocalTime;
 import java.time.ZoneOffset;
 
 public class Time {
+    private static final Logger log = LoggerFactory.getLogger(Time.class);
     public static final int ONE_MINUTE = 60;
     public static final int HALF_AN_HOUR = 1800;
     public static final int ONE_HOUR = 3600;
@@ -41,6 +44,7 @@ public class Time {
     }
 
     public static int fromLdLt(final LocalDate date, final LocalTime time) {
+        log.info("Time#fromLdLt - date {}, time {}", date, time);
         if (date == null || time == null) {
             return 0;
         }
