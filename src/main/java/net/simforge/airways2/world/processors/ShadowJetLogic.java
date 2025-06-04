@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.AircraftTypes;
@@ -36,11 +37,13 @@ public class ShadowJetLogic {
                         existingAircraft.get().getId(), aircraftType.getIcao(), existingAircraft.get().getRegNo(),
                         world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
                         locationAirport.getIcao());
+                FlightStats.event("shadowJet moving");
                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
             } else {
                 log.info("selecting a/c #{}, {}, reg no {} located at {}",
                         existingAircraft.get().getId(), aircraftType.getIcao(), existingAircraft.get().getRegNo(),
                         locationAirport.getIcao());
+                FlightStats.event("shadowJet selecting");
             }
 
             return existingAircraft.get();
@@ -64,6 +67,7 @@ public class ShadowJetLogic {
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
         newAircraft.setAircraftOperatorId(shadowJet.getId());
         log.info("creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
+        FlightStats.event("shadowJet creating");
         return newAircraft;
     }
 
