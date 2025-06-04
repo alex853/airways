@@ -28,14 +28,14 @@ public class ShadowJetLogic {
         final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts().allIdleAndParkedAtAirport().stream()
                 .filter(a -> a.getAircraftOperatorId() == shadowJet.getId())
                 .filter(a -> a.getAircraftTypeId() == aircraftType.getId())
+                .filter(a -> a.getLocationAirportId() != 0)
                 .min(Comparator.comparing(a -> Geo.distance(locationAirport.getCoords(), a.getLocationCoords())));
 
         if (existingAircraft.isPresent()) {
             if (existingAircraft.get().getLocationAirportId() != locationAirport.getId()) {
                 log.info("moving {}, reg no {} located at {} to {}",
                         aircraftType.getIcao(), existingAircraft.get().getRegNo(),
-                        //world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
-                        existingAircraft.get().getLocationAirportId(),
+                        world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
                         locationAirport.getIcao());
                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
             }
