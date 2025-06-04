@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class FlightMissionsTest {
+public class FlightMissionModeTest {
 
     private World world;
     private FlightMissions.Mission mission;
@@ -75,4 +75,7 @@ public class FlightMissionsTest {
         assertFalse(mission.isModePc());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
+
+    // todo ak2 when I will start pushing vatsim coords into the system, I will need the second mode available,
+    //          now it is busy by time mode, so I will need to add tests for that mode wich replaces time mode
 }
