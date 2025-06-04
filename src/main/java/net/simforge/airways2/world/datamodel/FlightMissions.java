@@ -426,7 +426,7 @@ public class FlightMissions {
             if (!Objects.equals(lowTimeSrc, lowTimeDst)) {
                 log.error("setLocalTimeToHighOfU24 - low time not matched - was " + lowTimeSrc + ", became " + lowTimeDst, new IllegalStateException());
             }
-            if (!Objects.equals(localTime, highTimeDst)) {
+            if (!Objects.equals(cutSecondsOrNull(localTime), highTimeDst)) {
                 log.error("setLocalTimeToHighOfU24 - high time not matched - was " + localTime + ", became " + highTimeDst, new IllegalStateException());
             }
         }
@@ -439,12 +439,18 @@ public class FlightMissions {
             final LocalTime lowTimeDst = getLocalTimeFromLowOfU24(dataField);
             final LocalTime highTimeDst = getLocalTimeFromHighOfU24(dataField);
 
-            if (!Objects.equals(localTime, lowTimeDst)) {
+            if (!Objects.equals(cutSecondsOrNull(localTime), lowTimeDst)) {
                 log.error("setLocalTimeToLowOfU24 - low time not matched - was " + localTime + ", became " + lowTimeDst, new IllegalStateException());
             }
             if (!Objects.equals(highTimeSrc, highTimeDst)) {
                 log.error("setLocalTimeToLowOfU24 - high time not matched - was " + highTimeSrc + ", became " + highTimeDst, new IllegalStateException());
             }
+        }
+
+        private LocalTime cutSecondsOrNull(final LocalTime localTime) {
+            return localTime != null
+                    ? localTime.withSecond(0).withNano(0)
+                    : null;
         }
 
         private LocalTime getLocalTimeFromU24(final DataField dataField, final int mask, final int shift) {
@@ -481,6 +487,13 @@ public class FlightMissions {
             final int actualTakeoffTime = getActualTakeoffTime();
             final int actualLandingTime = getActualLandingTime();
             final int actualArrivalTime = getActualArrivalTime();
+
+            setPlannedDepartureTime(0);
+            setPlannedArrivalTime(0);
+            setActualDepartureTime(0);
+            setActualTakeoffTime(0);
+            setActualLandingTime(0);
+            setActualArrivalTime(0);
 
             setTimeMode(true);
 
