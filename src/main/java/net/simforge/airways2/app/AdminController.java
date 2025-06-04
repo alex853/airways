@@ -1,6 +1,7 @@
 package net.simforge.airways2.app;
 
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -13,10 +14,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin")
@@ -26,6 +27,8 @@ public class AdminController {
 
     @Autowired
     private WorldRunnerBean worldBean;
+    @Autowired
+    private VatsimTrackerBean vatsimTracker;
 
     @GetMapping("/log/full")
     public ResponseEntity<byte[]> getFullLog() throws IOException {
@@ -41,11 +44,13 @@ public class AdminController {
     public ResponseEntity<byte[]> getLogTail() throws IOException {
         final File file = new File("./logs/logback.log");
         try (final RandomAccessFile raf = new RandomAccessFile(file, "r")) {
-            if (raf.length() > 1_000_000) {
-                raf.seek(raf.length() - 1_000_000);
+            final int maxLength = 100_000;
+
+            if (raf.length() > maxLength) {
+                raf.seek(raf.length() - maxLength);
             }
 
-            byte[] bytes = new byte[1_000_000];
+            byte[] bytes = new byte[maxLength];
             raf.readFully(bytes);
 
             return ResponseEntity.ok()
@@ -55,9 +60,21 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/vatsim-flight-stats")
+    @GetMapping("/vatsim/flight-stats")
     public Map<String, Integer> getVatsimFlightStats() {
         return FlightStats.getStats();
+    }
+
+    @GetMapping("/vatsim/remove-context-by-flight")
+    public String removeVatsimContextByFlight(@RequestParam(name = "flightId") final int flightId) {
+        final Optional<PilotContext> pc = vatsimTracker.contexts().stream()
+                .filter(f -> f.getFlightMissionId() == flightId)
+                .findFirst();
+        if (pc.isEmpty()) {
+            return "Pilot context for f/m # " + flightId + " NOT FOUND";
+        }
+        vatsimTracker.removePilot(pc.get().getPilotNumber());
+        return "Pilot context for f/m # " + flightId + " REMOVED";
     }
 
     @GetMapping("/flight/cancel")

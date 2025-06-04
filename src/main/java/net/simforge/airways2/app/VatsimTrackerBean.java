@@ -223,8 +223,12 @@ public class VatsimTrackerBean implements DisposableBean {
         return lastProcessedReport;
     }
 
-    public Collection<PilotContext> contexts() {
+    public Collection<PilotContext> contexts() { // todo ak3 thread safety?
         return trackedPilots.values();
+    }
+
+    public void removePilot(final int pilotNumber) { // todo ak3 thread safety?
+        trackedPilots.remove(pilotNumber);
     }
 
     private enum ThreadStatus {
