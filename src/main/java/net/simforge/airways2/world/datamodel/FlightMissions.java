@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -34,16 +35,10 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTime + plannedArrivalTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTime + actualTakeoffTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTimeExp + plannedArrivalTimeExp
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved
-/*            .withDataField(DataField.of(DataType.Signed32bit)) // plannedDepartureTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // plannedArrivalTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualDepartureTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualTakeoffTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime*/
             .build();
     // todo ak0 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
@@ -60,6 +55,7 @@ public class FlightMissions {
     private final DataField plannedDepartureAndArrivalTimeField = storage.getDataField(6);
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
+    private final DataField plannedDepartureAndArrivalTimeFieldExp = storage.getDataField(9);
 
     public FlightMissions() {
     }
@@ -209,6 +205,7 @@ public class FlightMissions {
             final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
             setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
             setPlannedDepartureTimeLt(ldt != null ? ldt.toLocalTime() : null);
+            setPlannedDepartureTimeExp(plannedDepartureWorldTime);
         }
 
         public int getPlannedArrivalWorldTime() {
@@ -217,6 +214,7 @@ public class FlightMissions {
 
         public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
             setPlannedArrivalLt(Time.toLtOrNull(plannedArrivalWorldTime));
+            setPlannedArrivalTimeExp(plannedArrivalWorldTime);
         }
 
         public int getActualDepartureWorldTime() {
@@ -455,6 +453,67 @@ public class FlightMissions {
             } else {
                 return draftNextLdt.plusDays(1);
             }
+        }
+
+        public int getPlannedDepartureTimeExp() {
+            return getTimeExp(plannedDepartureAndArrivalTimeFieldExp, true);
+        }
+
+        private void setPlannedDepartureTimeExp(final int plannedDepartureWorldTime) {
+            setTimeExp(plannedDepartureAndArrivalTimeFieldExp, true, plannedDepartureWorldTime);
+        }
+
+        public int getPlannedArrivalTimeExp() {
+            return getTimeExp(plannedDepartureAndArrivalTimeFieldExp, false);
+        }
+
+        private void setPlannedArrivalTimeExp(final int plannedArrivalWorldTime) {
+            setTimeExp(plannedDepartureAndArrivalTimeFieldExp, false, plannedArrivalWorldTime);
+        }
+
+        private int getTimeExp(final DataField dataField, final boolean high) {
+            final LocalDate dateOfFlight = getDateOfFlight();
+            final int value = get12bits(dataField, high);
+            if (dateOfFlight != null && value != 0) {
+                final int minutes = value - 1000;
+                checkArgument(-1000 < minutes && minutes < 3000);
+
+                return Time.fromLdt(dateOfFlight.atStartOfDay().plusMinutes(value));
+            } else {
+                return 0;
+            }
+        }
+
+        private void setTimeExp(final DataField dataField, final boolean high, final int worldTime) {
+            final LocalDate dateOfFlight = getDateOfFlight();
+            if (dateOfFlight != null && worldTime != 0) {
+                final LocalDateTime baseTime = dateOfFlight.atStartOfDay();
+                final LocalDateTime thisTime = Time.toLdt(worldTime);
+                final int minutes = (int) Duration.between(baseTime, thisTime).getSeconds() / 60;
+                checkArgument(-1000 < minutes && minutes < 3000);
+
+                set12bits(dataField, high, minutes + 1000);
+            } else {
+                set12bits(dataField, high, 0);
+            }
+        }
+
+        private int get12bits(final DataField dataField, final boolean high) {
+            final int mask = high ? 0b11111111111110000000000000 : 0b00000000000001111111111111;
+            final int shift = high ? 12 : 0;
+
+            final int raw = storage.getAsIntUnsafe(id, dataField);
+            return (raw & mask) >> shift;
+        }
+
+        private void set12bits(final DataField dataField, final boolean high, final int value) {
+            final int mask = high ? 0b11111111111110000000000000 : 0b00000000000001111111111111;
+            final int shift = high ? 12 : 0;
+
+            final int shiftedValue = value << shift;
+            final int raw = storage.getAsIntUnsafe(id, dataField);
+            final int anotherPart = (raw & ~mask);
+            storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
         }
 
         @Override

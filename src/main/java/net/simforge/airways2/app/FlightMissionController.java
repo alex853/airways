@@ -34,7 +34,9 @@ public class FlightMissionController {
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
                         WebTime.ts(f.getPlannedDepartureLdt()),
+                        WebTime.ts(f.getPlannedDepartureTimeExp()),
                         WebTime.ts(f.getPlannedArrivalLdt()),
+                        WebTime.ts(f.getPlannedArrivalTimeExp()),
                         WebTime.ts(f.getActualDepartureLdt()),
                         WebTime.ts(f.getActualTakeoffLdt()),
                         WebTime.ts(f.getActualLandingLdt()),
@@ -73,7 +75,9 @@ public class FlightMissionController {
         private String departureAirport;
         private String destinationAirport;
         private String plannedDepartureTime;
+        private String plannedDepartureTimeExp;
         private String plannedArrivalTime;
+        private String plannedArrivalTimeExp;
         private String actualDepartureTime;
         private String actualTakeoffTime;
         private String actualLandingTime;
