@@ -29,16 +29,16 @@ public class FlightMissionController {
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusCode() + " - " + f.getStatus(),
-                        (f.isModePc() ? "P" : "n") + (f.isTimeMode() ? "T" : "t"),
+                        (f.isModePc() ? "P" : "n") + (f.isUnusedMode() ? "+" : "_"),
                         WebTime.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        WebTime.ts(f.getPlannedDepartureTime()),
-                        WebTime.ts(f.getPlannedArrivalTime()),
-                        WebTime.ts(f.getActualDepartureTime()),
-                        WebTime.ts(f.getActualTakeoffTime()),
-                        WebTime.ts(f.getActualLandingTime()),
-                        WebTime.ts(f.getActualArrivalTime())))
+                        WebTime.ts(f.getPlannedDepartureLdt()),
+                        WebTime.ts(f.getPlannedArrivalLdt()),
+                        WebTime.ts(f.getActualDepartureLdt()),
+                        WebTime.ts(f.getActualTakeoffLdt()),
+                        WebTime.ts(f.getActualLandingLdt()),
+                        WebTime.ts(f.getActualArrivalLdt())))
                 .toList());
     }
 
@@ -51,12 +51,12 @@ public class FlightMissionController {
             final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
             return flights.stream()
                     .filter(f -> switch (f.getStatus()) {
-                        case PlannedManually, PlannedViaSchedule, Cancelled -> condition.test(f.getPlannedDepartureTime());
-                        case Dispatched -> f.getPlannedDepartureTime() <= toTime;
+                        case PlannedManually, PlannedViaSchedule, Cancelled -> condition.test(f.getPlannedDepartureWorldTime());
+                        case Dispatched -> f.getPlannedDepartureWorldTime() <= toTime;
                         case Preflight, Departure, Flying, Arrival, Postflight -> true;
-                        case Finished -> condition.test(f.getActualArrivalTime());
+                        case Finished -> condition.test(f.getActualArrivalWorldTime());
                     })
-                    .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureTime))
+                    .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureWorldTime))
                     .map(f -> EnhancedFlightMissionDto.fromMission(world, f))
                     .toList();
         });

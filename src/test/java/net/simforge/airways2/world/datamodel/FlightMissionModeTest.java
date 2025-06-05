@@ -15,7 +15,7 @@ public class FlightMissionModeTest {
 
     @BeforeEach
     public void beforeEach() {
-        final int startTime = 1700000000;
+        final int startTime = Time.START_TIME_EPOCH_SECONDS; // 2025-01-01 00:00
         world = World.create(new InMemoryStorageStrategy(), startTime);
 
         final Airports.Airport airportA = world.airports().create(0, 0, "AAA", "AAAA", "Alpha");
@@ -77,54 +77,54 @@ public class FlightMissionModeTest {
     }
 
     @Test
-    public void test__no_time_is_default() {
-        assertFalse(mission.isTimeMode());
+    public void test__unused_is_default() {
+        assertTrue(mission.isUnusedMode());
     }
 
     @Test
-    public void test__time_then_status() {
-        mission.setTimeMode(true);
+    public void test__unused_then_status() {
+        mission.setUnusedMode(true);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertTrue(mission.isTimeMode());
+        assertTrue(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
-    public void test__no_time_then_status() {
-        mission.setTimeMode(false);
+    public void test__no_unused_then_status() {
+        mission.setUnusedMode(false);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertFalse(mission.isTimeMode());
+        assertFalse(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
-    public void test__status_then_time() {
+    public void test__status_then_unused() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setTimeMode(true);
+        mission.setUnusedMode(true);
 
-        assertTrue(mission.isTimeMode());
+        assertTrue(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
-    public void test__status_then_no_time() {
+    public void test__status_then_no_unused() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setTimeMode(false);
+        mission.setUnusedMode(false);
 
-        assertFalse(mission.isTimeMode());
+        assertFalse(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
-    public void test__pc_then_time_then_status() {
+    public void test__pc_then_unused_then_status() {
         mission.setModePc(true);
-        mission.setTimeMode(true);
+        mission.setUnusedMode(true);
         mission.setStatus(FlightMissions.Status.Flying);
 
         assertTrue(mission.isModePc());
-        assertTrue(mission.isTimeMode());
+        assertTrue(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 }

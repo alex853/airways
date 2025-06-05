@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.computations;
 
-import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 
 import java.time.LocalDateTime;
@@ -9,25 +8,25 @@ public class FlightMissionToTimeline {
 
     public static FlightTimeline byMission(final FlightMissions.Mission mission) {
         FlightTimeline timeline = FlightTimeline.byScheduledDepartureArrivalTime(
-                Time.toLdt(mission.getPlannedDepartureTime()),
-                Time.toLdt(mission.getPlannedArrivalTime()));
+                mission.getPlannedDepartureLdt(),
+                mission.getPlannedArrivalLdt());
 
-        final LocalDateTime actualDepartureTime = Time.toLdtOrNull(mission.getActualDepartureTime());
+        final LocalDateTime actualDepartureTime = mission.getActualDepartureLdt();
         if (actualDepartureTime != null) {
             timeline.getBlocksOff().setActualTime(actualDepartureTime);
         }
 
-        final LocalDateTime actualTakeoffTime = Time.toLdtOrNull(mission.getActualTakeoffTime());
+        final LocalDateTime actualTakeoffTime = mission.getActualTakeoffLdt();
         if (actualTakeoffTime != null) {
             timeline.getTakeoff().setActualTime(actualTakeoffTime);
         }
 
-        final LocalDateTime actualLandingTime = Time.toLdtOrNull(mission.getActualLandingTime());
+        final LocalDateTime actualLandingTime = mission.getActualLandingLdt();
         if (actualLandingTime != null) {
             timeline.getLanding().setActualTime(actualLandingTime);
         }
 
-        final LocalDateTime actualArrivalTime = Time.toLdtOrNull(mission.getActualArrivalTime());
+        final LocalDateTime actualArrivalTime = mission.getActualArrivalLdt();
         if (actualArrivalTime != null) {
             timeline.getBlocksOn().setActualTime(actualArrivalTime);
         }

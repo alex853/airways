@@ -81,7 +81,7 @@ public class FlightMissionControl {
 
     public void blocksOff(final FlightMissions.Mission mission) {
         mission.setStatus(FlightMissions.Status.Departure);
-        mission.setActualDepartureTime(world.getWorldTime());
+        mission.setActualDepartureWorldTime(world.getWorldTime());
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
@@ -99,7 +99,7 @@ public class FlightMissionControl {
         // todo ak3 Pilot pilot = ctx.getPilot();
 
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setActualTakeoffTime(world.getWorldTime());
+        mission.setActualTakeoffWorldTime(world.getWorldTime());
 
         // todo ak3 scheduling.fireEvent(session, Takeoff.class, flight);
 
@@ -126,7 +126,7 @@ public class FlightMissionControl {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         mission.setStatus(FlightMissions.Status.Arrival);
-        mission.setActualLandingTime(world.getWorldTime());
+        mission.setActualLandingWorldTime(world.getWorldTime());
 
         // todo ak3 scheduling.fireEvent(session, Landing.class, flight);
 
@@ -146,7 +146,7 @@ public class FlightMissionControl {
 
     public void blocksOn(final FlightMissions.Mission mission) {
         mission.setStatus(FlightMissions.Status.Postflight);
-        mission.setActualArrivalTime(world.getWorldTime());
+        mission.setActualArrivalWorldTime(world.getWorldTime());
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 

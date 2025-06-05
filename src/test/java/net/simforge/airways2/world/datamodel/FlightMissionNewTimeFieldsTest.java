@@ -19,7 +19,7 @@ public class FlightMissionNewTimeFieldsTest {
 
     @BeforeEach
     public void beforeEach() {
-        final int startTime = 1700000000;
+        final int startTime = Time.START_TIME_EPOCH_SECONDS;
         world = World.create(new InMemoryStorageStrategy(), startTime);
 
         final Airports.Airport airportA = world.airports().create(0, 0, "AAA", "AAAA", "Alpha");
@@ -37,14 +37,12 @@ public class FlightMissionNewTimeFieldsTest {
                         airportB,
                         departureTime,
                         arrivalTime);
-        mission.setPlannedDepartureTime(0);
-        mission.setPlannedArrivalTime(0);
+        mission.setPlannedDepartureWorldTime(0);
+        mission.setPlannedArrivalWorldTime(0);
     }
 
     @Test
     public void test__date_of_flight_field() {
-        mission.convertTimeToLT();
-
         final LocalDate today = JavaTime.todayUtc();
 
         mission.setDateOfFlight(today);
@@ -54,8 +52,6 @@ public class FlightMissionNewTimeFieldsTest {
 
     @Test
     public void test__date_of_flight_field__set_null() {
-        mission.convertTimeToLT();
-
         mission.setDateOfFlight(null);
 
         assertNull(mission.getDateOfFlight());
@@ -63,191 +59,169 @@ public class FlightMissionNewTimeFieldsTest {
 
     @Test
     public void test__date_of_flight_field__get_null() {
-        mission.convertTimeToLT();
-
         assertNull(mission.getDateOfFlight());
     }
 
     @Test
     public void test__planned_departure_time_lt_field() {
-        mission.convertTimeToLT();
-
         final LocalTime time = LocalTime.now();
 
-        mission.setPlannedDepartureTimeLT(time);
+        mission.setPlannedDepartureTimeLt(time);
 
-        assertEquals(time.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
+        assertEquals(time.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
     }
 
     @Test
     public void test__planned_departure_time_lt_field__get_null() {
-        mission.convertTimeToLT();
-
-        assertNull(mission.getPlannedDepartureTimeLT());
+        assertNull(mission.getPlannedDepartureLt());
     }
 
     @Test
     public void test__planned_departure_time_lt_field__set_null() {
-        mission.convertTimeToLT();
-
         final LocalTime time = LocalTime.now();
-        mission.setPlannedDepartureTimeLT(time);
+        mission.setPlannedDepartureTimeLt(time);
         
-        mission.setPlannedDepartureTimeLT(null);
+        mission.setPlannedDepartureTimeLt(null);
 
-        assertNull(mission.getPlannedDepartureTimeLT());
+        assertNull(mission.getPlannedDepartureLt());
     }
 
     @Test
     public void test__planned_arrival_time_lt_field() {
-        mission.convertTimeToLT();
-
         final LocalTime time = LocalTime.now();
 
-        mission.setPlannedArrivalTimeLT(time);
+        mission.setPlannedArrivalLt(time);
 
-        assertEquals(time.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
+        assertEquals(time.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
     }
 
     @Test
     public void test__planned_arrival_time_lt_field__get_null() {
-        mission.convertTimeToLT();
-
-        assertNull(mission.getPlannedArrivalTimeLT());
+        assertNull(mission.getPlannedArrivalLt());
     }
 
     @Test
     public void test__planned_arrival_time_lt_field__set_null() {
-        mission.convertTimeToLT();
-
         final LocalTime time = LocalTime.now();
-        mission.setPlannedArrivalTimeLT(time);
+        mission.setPlannedArrivalLt(time);
         
-        mission.setPlannedArrivalTimeLT(null);
+        mission.setPlannedArrivalLt(null);
 
-        assertNull(mission.getPlannedArrivalTimeLT());
+        assertNull(mission.getPlannedArrivalLt());
     }
 
     @Test
     public void test__dof_and_planned_times_combination() {
-        mission.convertTimeToLT();
-
         final LocalDate today = JavaTime.todayUtc();
         final LocalTime plannedDeparture = LocalTime.now();
         final LocalTime plannedArrival = plannedDeparture.plusMinutes((long) (10 + 100*Math.random()));
 
         mission.setDateOfFlight(today);
-        mission.setPlannedDepartureTimeLT(plannedDeparture);
-        mission.setPlannedArrivalTimeLT(plannedArrival);
+        mission.setPlannedDepartureTimeLt(plannedDeparture);
+        mission.setPlannedArrivalLt(plannedArrival);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
     }
 
     @Test
     public void test__planned_times_all_combinations() {
-        mission.convertTimeToLT();
-
         final LocalDate today = JavaTime.todayUtc();
         mission.setDateOfFlight(today);
 
         for (int time1 = 0; time1 < 1440; time1++) {
             final int plannedDepartureTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time1 * 60));
-            mission.setPlannedDepartureTime(plannedDepartureTime);
+            mission.setPlannedDepartureWorldTime(plannedDepartureTime);
             for (int time2 = 0; time2 < 1440; time2++) {
                 final int plannedArrivalTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time2 * 60));
-                mission.setPlannedArrivalTime(plannedArrivalTime);
+                mission.setPlannedArrivalWorldTime(plannedArrivalTime);
 
-                assertEquals(plannedDepartureTime, mission.getPlannedDepartureTime());
-                assertEquals(plannedArrivalTime, mission.getPlannedArrivalTime());
+                assertEquals(plannedDepartureTime, mission.getPlannedDepartureWorldTime());
+                assertEquals(plannedArrivalTime, mission.getPlannedArrivalWorldTime());
             }
         }
     }
 
     @Test
     public void test__all_fields_combination() {
-        mission.convertTimeToLT();
-
         final LocalDate today = JavaTime.todayUtc();
         final LocalTime plannedDeparture = LocalTime.now();
         final LocalTime plannedArrival = plannedDeparture.plusMinutes((long) (10 + 100*Math.random()));
 
         mission.setDateOfFlight(today);
-        mission.setPlannedDepartureTimeLT(plannedDeparture);
-        mission.setPlannedArrivalTimeLT(plannedArrival);
+        mission.setPlannedDepartureTimeLt(plannedDeparture);
+        mission.setPlannedArrivalLt(plannedArrival);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
-        assertNull(mission.getActualDepartureTimeLT());
-        assertNull(mission.getActualTakeoffTimeLT());
-        assertNull(mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
+        assertNull(mission.getActualDepartureLt());
+        assertNull(mission.getActualTakeoffLt());
+        assertNull(mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
 
         final LocalTime actualDeparture = plannedDeparture.plusMinutes(2);
-        mission.setActualDepartureTimeLT(actualDeparture);
+        mission.setActualDepartureLt(actualDeparture);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureTimeLT());
-        assertNull(mission.getActualTakeoffTimeLT());
-        assertNull(mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
+        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureLt());
+        assertNull(mission.getActualTakeoffLt());
+        assertNull(mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
 
         final LocalTime actualTakeoff = plannedDeparture.plusMinutes(2);
-        mission.setActualTakeoffTimeLT(actualTakeoff);
+        mission.setActualTakeoffLt(actualTakeoff);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureTimeLT());
-        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffTimeLT());
-        assertNull(mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
+        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureLt());
+        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffLt());
+        assertNull(mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
 
         final LocalTime actualLanding = plannedArrival.minusMinutes(10);
-        mission.setActualLandingTimeLT(actualLanding);
+        mission.setActualLandingLt(actualLanding);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureTimeLT());
-        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffTimeLT());
-        assertEquals(actualLanding.withSecond(0).withNano(0), mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
+        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureLt());
+        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffLt());
+        assertEquals(actualLanding.withSecond(0).withNano(0), mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
 
         final LocalTime actualArrival = plannedArrival.minusMinutes(3);
-        mission.setActualArrivalTimeLT(actualArrival);
+        mission.setActualArrivalLt(actualArrival);
 
         assertEquals(today, mission.getDateOfFlight());
-        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureTimeLT());
-        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffTimeLT());
-        assertEquals(actualLanding.withSecond(0).withNano(0), mission.getActualLandingTimeLT());
-        assertEquals(actualArrival.withSecond(0).withNano(0), mission.getActualArrivalTimeLT());
+        assertEquals(plannedDeparture.withSecond(0).withNano(0), mission.getPlannedDepartureLt());
+        assertEquals(plannedArrival.withSecond(0).withNano(0), mission.getPlannedArrivalLt());
+        assertEquals(actualDeparture.withSecond(0).withNano(0), mission.getActualDepartureLt());
+        assertEquals(actualTakeoff.withSecond(0).withNano(0), mission.getActualTakeoffLt());
+        assertEquals(actualLanding.withSecond(0).withNano(0), mission.getActualLandingLt());
+        assertEquals(actualArrival.withSecond(0).withNano(0), mission.getActualArrivalLt());
     }
 
     @Test
     public void test__convert_to_lt__when_all_null() {
-        mission.setPlannedDepartureTime(0);
-        mission.setPlannedArrivalTime(0);
-        mission.setActualDepartureTime(0);
-        mission.setActualTakeoffTime(0);
-        mission.setActualLandingTime(0);
-        mission.setActualArrivalTime(0);
-
-        mission.convertTimeToLT();
+        mission.setPlannedDepartureWorldTime(0);
+        mission.setPlannedArrivalWorldTime(0);
+        mission.setActualDepartureWorldTime(0);
+        mission.setActualTakeoffWorldTime(0);
+        mission.setActualLandingWorldTime(0);
+        mission.setActualArrivalWorldTime(0);
 
         assertNull(mission.getDateOfFlight());
-        assertNull(mission.getPlannedDepartureTimeLT());
-        assertNull(mission.getPlannedArrivalTimeLT());
-        assertNull(mission.getActualDepartureTimeLT());
-        assertNull(mission.getActualTakeoffTimeLT());
-        assertNull(mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertNull(mission.getPlannedDepartureLt());
+        assertNull(mission.getPlannedArrivalLt());
+        assertNull(mission.getActualDepartureLt());
+        assertNull(mission.getActualTakeoffLt());
+        assertNull(mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
     }
 
     @Test
@@ -257,22 +231,20 @@ public class FlightMissionNewTimeFieldsTest {
         final int plannedArrivalTime = plannedDepartureTime + 12345;
         final int actualDepartureTime = now + 510;
 
-        mission.setPlannedDepartureTime(plannedDepartureTime);
-        mission.setPlannedArrivalTime(plannedArrivalTime);
-        mission.setActualDepartureTime(actualDepartureTime);
-        mission.setActualTakeoffTime(0);
-        mission.setActualLandingTime(0);
-        mission.setActualArrivalTime(0);
-
-        mission.convertTimeToLT();
+        mission.setPlannedDepartureWorldTime(plannedDepartureTime);
+        mission.setPlannedArrivalWorldTime(plannedArrivalTime);
+        mission.setActualDepartureWorldTime(actualDepartureTime);
+        mission.setActualTakeoffWorldTime(0);
+        mission.setActualLandingWorldTime(0);
+        mission.setActualArrivalWorldTime(0);
 
         assertEquals(Time.toLdt(plannedDepartureTime).toLocalDate(), mission.getDateOfFlight());
-        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureTimeLT());
-        assertNull(mission.getActualTakeoffTimeLT());
-        assertNull(mission.getActualLandingTimeLT());
-        assertNull(mission.getActualArrivalTimeLT());
+        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureLt());
+        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalLt());
+        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureLt());
+        assertNull(mission.getActualTakeoffLt());
+        assertNull(mission.getActualLandingLt());
+        assertNull(mission.getActualArrivalLt());
     }
 
     @Test
@@ -285,22 +257,20 @@ public class FlightMissionNewTimeFieldsTest {
         final int actualLandingTime = actualTakeoffTime + 10203;
         final int actualArrivalTime = actualLandingTime + 170;
 
-        mission.setPlannedDepartureTime(plannedDepartureTime);
-        mission.setPlannedArrivalTime(plannedArrivalTime);
-        mission.setActualDepartureTime(actualDepartureTime);
-        mission.setActualTakeoffTime(actualTakeoffTime);
-        mission.setActualLandingTime(actualLandingTime);
-        mission.setActualArrivalTime(actualArrivalTime);
-
-        mission.convertTimeToLT();
+        mission.setPlannedDepartureWorldTime(plannedDepartureTime);
+        mission.setPlannedArrivalWorldTime(plannedArrivalTime);
+        mission.setActualDepartureWorldTime(actualDepartureTime);
+        mission.setActualTakeoffWorldTime(actualTakeoffTime);
+        mission.setActualLandingWorldTime(actualLandingTime);
+        mission.setActualArrivalWorldTime(actualArrivalTime);
 
         assertEquals(Time.toLdt(plannedDepartureTime).toLocalDate(), mission.getDateOfFlight());
-        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureTimeLT());
-        assertEquals(Time.toLtOrNull(actualTakeoffTime).withSecond(0), mission.getActualTakeoffTimeLT());
-        assertEquals(Time.toLtOrNull(actualLandingTime).withSecond(0), mission.getActualLandingTimeLT());
-        assertEquals(Time.toLtOrNull(actualArrivalTime).withSecond(0), mission.getActualArrivalTimeLT());
+        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureLt());
+        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalLt());
+        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureLt());
+        assertEquals(Time.toLtOrNull(actualTakeoffTime).withSecond(0), mission.getActualTakeoffLt());
+        assertEquals(Time.toLtOrNull(actualLandingTime).withSecond(0), mission.getActualLandingLt());
+        assertEquals(Time.toLtOrNull(actualArrivalTime).withSecond(0), mission.getActualArrivalLt());
     }
 
     @Test
@@ -313,26 +283,24 @@ public class FlightMissionNewTimeFieldsTest {
         final int actualLandingTime = actualTakeoffTime + 10203;
         final int actualArrivalTime = actualLandingTime + 170;
 
-        mission.setPlannedDepartureTime(plannedDepartureTime);
-        mission.setPlannedArrivalTime(plannedArrivalTime);
-        mission.setActualDepartureTime(actualDepartureTime);
-        mission.setActualTakeoffTime(0);
-        mission.setActualLandingTime(0);
-        mission.setActualArrivalTime(0);
+        mission.setPlannedDepartureWorldTime(plannedDepartureTime);
+        mission.setPlannedArrivalWorldTime(plannedArrivalTime);
+        mission.setActualDepartureWorldTime(actualDepartureTime);
+        mission.setActualTakeoffWorldTime(0);
+        mission.setActualLandingWorldTime(0);
+        mission.setActualArrivalWorldTime(0);
 
-        mission.convertTimeToLT();
-
-        mission.setActualTakeoffTime(actualTakeoffTime);
-        mission.setActualLandingTime(actualLandingTime);
-        mission.setActualArrivalTime(actualArrivalTime);
+        mission.setActualTakeoffWorldTime(actualTakeoffTime);
+        mission.setActualLandingWorldTime(actualLandingTime);
+        mission.setActualArrivalWorldTime(actualArrivalTime);
 
         assertEquals(Time.toLdt(plannedDepartureTime).toLocalDate(), mission.getDateOfFlight());
-        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureTimeLT());
-        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalTimeLT());
-        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureTimeLT());
-        assertEquals(Time.toLtOrNull(actualTakeoffTime).withSecond(0), mission.getActualTakeoffTimeLT());
-        assertEquals(Time.toLtOrNull(actualLandingTime).withSecond(0), mission.getActualLandingTimeLT());
-        assertEquals(Time.toLtOrNull(actualArrivalTime).withSecond(0), mission.getActualArrivalTimeLT());
+        assertEquals(Time.toLtOrNull(plannedDepartureTime).withSecond(0), mission.getPlannedDepartureLt());
+        assertEquals(Time.toLtOrNull(plannedArrivalTime).withSecond(0), mission.getPlannedArrivalLt());
+        assertEquals(Time.toLtOrNull(actualDepartureTime).withSecond(0), mission.getActualDepartureLt());
+        assertEquals(Time.toLtOrNull(actualTakeoffTime).withSecond(0), mission.getActualTakeoffLt());
+        assertEquals(Time.toLtOrNull(actualLandingTime).withSecond(0), mission.getActualLandingLt());
+        assertEquals(Time.toLtOrNull(actualArrivalTime).withSecond(0), mission.getActualArrivalLt());
     }
 
 }

@@ -46,7 +46,7 @@ public class ScheduledFlightMissionGenerator {
             final LocalDate flightDate = worldDate.plusDays(i);
             final Optional<FlightMissions.Mission> flightMission = scheduledFlights.stream()
                     .map(f -> world.flightMissions().byId(f.getFlightMissionId()).orElseThrow())
-                    .filter(f -> Time.toLdt(f.getPlannedDepartureTime()).toLocalDate().equals(flightDate))
+                    .filter(f -> f.getDateOfFlight().equals(flightDate))
                     .findFirst();
             if (flightMission.isPresent()) {
                 continue;

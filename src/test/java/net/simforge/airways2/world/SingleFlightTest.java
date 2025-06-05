@@ -19,7 +19,7 @@ public class SingleFlightTest {
 
     @BeforeEach
     public void beforeEach() {
-        final int startTime = 1700000000;
+        final int startTime = Time.START_TIME_EPOCH_SECONDS;
 
         world = World.create(new InMemoryStorageStrategy(), startTime);
 

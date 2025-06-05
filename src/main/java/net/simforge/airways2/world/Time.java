@@ -12,6 +12,7 @@ import java.time.ZoneOffset;
 
 public class Time {
     private static final Logger log = LoggerFactory.getLogger(Time.class);
+    public static final int START_TIME_EPOCH_SECONDS = 1735689600;
     public static final int ONE_MINUTE = 60;
     public static final int HALF_AN_HOUR = 1800;
     public static final int ONE_HOUR = 3600;
@@ -43,8 +44,13 @@ public class Time {
         return (int) time.toEpochSecond(ZoneOffset.UTC);
     }
 
+    public static int fromLdtOrNull(final LocalDateTime time) {
+        return time != null
+                ? (int) time.toEpochSecond(ZoneOffset.UTC)
+                : 0;
+    }
+
     public static int fromLdLt(final LocalDate date, final LocalTime time) {
-//        log.info("Time#fromLdLt - date {}, time {}", date, time);
         if (date == null || time == null) {
             return 0;
         }

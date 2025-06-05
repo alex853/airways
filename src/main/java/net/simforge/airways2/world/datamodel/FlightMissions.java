@@ -30,23 +30,6 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
             // ---------------------------------------------------------------------------------------------------------
-            .withDataField(DataField.of(DataType.Signed32bit)) // plannedDepartureTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // plannedArrivalTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualDepartureTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualTakeoffTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
-            .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime
-            .build();
-/*    private final Storage<Mission> storage = Storage.<Mission>builder()
-            .name("flight-missions")
-            .withInstantiator(Mission::new)
-            .withIdOf(DataType.Unsigned24bit)
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // status 0..15, modes 76xxxxxx, bits xx54xxxx are non-used
-            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
-            // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned16bit)) // dateOfFlight
             .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTime + plannedArrivalTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTime + actualTakeoffTime
@@ -55,29 +38,28 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
-            .build();*/
+/*            .withDataField(DataField.of(DataType.Signed32bit)) // plannedDepartureTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // plannedArrivalTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // actualDepartureTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // actualTakeoffTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // actualLandingTime
+            .withDataField(DataField.of(DataType.Signed32bit)) // actualArrivalTime*/
+            .build();
     // todo ak0 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
     private static final int pcModeMask = 0b10000000;
-    private static final int timeModeMask = 0b01000000;
-    private static final int allModesMask = pcModeMask | timeModeMask;
+    private static final int unusedModeMask = 0b01000000;
+    private static final int allModesMask = pcModeMask | unusedModeMask;
 
     private final DataField aircraftIdField = storage.getDataField(0);
     private final DataField statusField = storage.getDataField(1);
     private final DataField heartbeatTimeField = storage.getDataField(2);
     private final DataField departureAirportIdField = storage.getDataField(3);
     private final DataField destinationAirportIdField = storage.getDataField(4);
-    private final DataField plannedDepartureTimeField = storage.getDataField(5);
-    private final DataField plannedArrivalTimeField = storage.getDataField(6);
-    private final DataField actualDepartureTimeField = storage.getDataField(7);
-    private final DataField actualTakeoffTimeField = storage.getDataField(8);
-    private final DataField actualLandingTimeField = storage.getDataField(9);
-    private final DataField actualArrivalTimeField = storage.getDataField(10);
-
-    private final DataField dateOfFlightField = DataField.of(DataType.Unsigned16bit).after(destinationAirportIdField);
-    private final DataField plannedDepartureAndArrivalTimeField = DataField.of(DataType.Unsigned24bit).after(dateOfFlightField);
-    private final DataField actualDepartureAndTakeoffTimeField = DataField.of(DataType.Unsigned24bit).after(plannedDepartureAndArrivalTimeField);
-    private final DataField actualLandingAndArrivalTimeField = DataField.of(DataType.Unsigned24bit).after(actualDepartureAndTakeoffTimeField);
+    private final DataField dateOfFlightField = storage.getDataField(5);
+    private final DataField plannedDepartureAndArrivalTimeField = storage.getDataField(6);
+    private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
+    private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
 
     public FlightMissions() {
     }
@@ -101,11 +83,8 @@ public class FlightMissions {
         mission.setStatus(Status.Dispatched);
         storage.set(id, departureAirportIdField, origin.getId());
         storage.set(id, destinationAirportIdField, destination.getId());
-        mission.setPlannedDepartureTime(departureTime);
-        mission.setPlannedArrivalTime(arrivalTime);
-
-        mission.convertTimeToLT();
-
+        mission.setPlannedDepartureWorldTime(departureTime);
+        mission.setPlannedArrivalWorldTime(arrivalTime);
         return mission;
     }
 
@@ -186,12 +165,12 @@ public class FlightMissions {
             setStatusBitMode(pcModeMask, enabled);
         }
 
-        public boolean isTimeMode() {
-            return isStatusBitMode(timeModeMask);
+        public boolean isUnusedMode() {
+            return isStatusBitMode(unusedModeMask);
         }
 
-        void setTimeMode(final boolean enabled) {
-            setStatusBitMode(timeModeMask, enabled);
+        public void setUnusedMode(final boolean enabled) {
+            setStatusBitMode(unusedModeMask, enabled);
         }
 
         private boolean isStatusBitMode(final int bitModeMask) {
@@ -222,191 +201,178 @@ public class FlightMissions {
             return storage.getAsInt(id, destinationAirportIdField);
         }
 
-        public int getPlannedDepartureTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, plannedDepartureTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getPlannedDepartureTimeLT());
-            }
+        public int getPlannedDepartureWorldTime() {
+            return Time.fromLdtOrNull(getPlannedDepartureLdt());
         }
 
-        public void setPlannedDepartureTime(final int plannedDepartureTime) {
-            if (!isTimeMode()) {
-                storage.set(id, plannedDepartureTimeField, plannedDepartureTime);
-            } else {
-                final LocalDateTime ldt = Time.toLdt(plannedDepartureTime);
-                setDateOfFlight(ldt.toLocalDate());
-                setPlannedDepartureTimeLT(ldt.toLocalTime());
-            }
+        public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
+            final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
+            setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
+            setPlannedDepartureTimeLt(ldt != null ? ldt.toLocalTime() : null);
         }
 
-        public int getPlannedArrivalTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, plannedArrivalTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getPlannedArrivalTimeLT());
-            }
+        public int getPlannedArrivalWorldTime() {
+            return Time.fromLdtOrNull(getPlannedArrivalLdt());
         }
 
-        public void setPlannedArrivalTime(final int plannedArrivalTime) {
-            if (!isTimeMode()) {
-                storage.set(id, plannedArrivalTimeField, plannedArrivalTime);
-            } else {
-                setPlannedArrivalTimeLT(Time.toLtOrNull(plannedArrivalTime));
-            }
+        public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
+            setPlannedArrivalLt(Time.toLtOrNull(plannedArrivalWorldTime));
         }
 
-        public int getActualDepartureTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, actualDepartureTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getActualDepartureTimeLT());
-            }
+        public int getActualDepartureWorldTime() {
+            return Time.fromLdtOrNull(getActualDepartureLdt());
         }
 
-        public void setActualDepartureTime(final int actualDepartureTime) {
-            if (!isTimeMode()) {
-                storage.set(id, actualDepartureTimeField, actualDepartureTime);
-            } else {
-                setActualDepartureTimeLT(Time.toLtOrNull(actualDepartureTime));
-            }
+        public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
+            setActualDepartureLt(Time.toLtOrNull(actualDepartureWorldTime));
         }
 
-        public int getActualTakeoffTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, actualTakeoffTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getActualTakeoffTimeLT());
-            }
+        public int getActualTakeoffWorldTime() {
+            return Time.fromLdtOrNull(getActualTakeoffLdt());
         }
 
-        public void setActualTakeoffTime(final int actualTakeoffTime) {
-            if (!isTimeMode()) {
-                storage.set(id, actualTakeoffTimeField, actualTakeoffTime);
-            } else {
-                setActualTakeoffTimeLT(Time.toLtOrNull(actualTakeoffTime));
-            }
+        public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
+            setActualTakeoffLt(Time.toLtOrNull(actualTakeoffWorldTime));
         }
 
-        public int getActualLandingTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, actualLandingTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getActualLandingTimeLT());
-            }
+        public int getActualLandingWorldTime() {
+            return Time.fromLdtOrNull(getActualLandingLdt());
         }
 
-        public void setActualLandingTime(final int actualLandingTime) {
-            if (!isTimeMode()) {
-                storage.set(id, actualLandingTimeField, actualLandingTime);
-            } else {
-                setActualLandingTimeLT(Time.toLtOrNull(actualLandingTime));
-            }
+        public void setActualLandingWorldTime(final int actualLandingWorldTime) {
+            setActualLandingLt(Time.toLtOrNull(actualLandingWorldTime));
         }
 
-        public int getActualArrivalTime() {
-            if (!isTimeMode()) {
-                return storage.getAsInt(id, actualArrivalTimeField);
-            } else {
-                return Time.fromLdLt(getDateOfFlight(), getActualArrivalTimeLT());
-            }
+        public int getActualArrivalWorldTime() {
+            return Time.fromLdtOrNull(getActualArrivalLdt());
         }
 
-        public void setActualArrivalTime(final int actualArrivalTime) {
-            if (!isTimeMode()) {
-                storage.set(id, actualArrivalTimeField, actualArrivalTime);
-            } else {
-                setActualArrivalTimeLT(Time.toLtOrNull(actualArrivalTime));
-            }
+        public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
+            setActualArrivalLt(Time.toLtOrNull(actualArrivalWorldTime));
         }
 
         private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
 
         public LocalDate getDateOfFlight() {
-            checkArgument(isTimeMode());
             final int days = storage.getAsIntUnsafe(id, dateOfFlightField);
             if (days == 0) {
-//                log.info("f/m getDateOfFlight days {}", days);
                 return null;
             }
             if (days > 300) {
                 log.error("getDateOfFlight - too big day " + days, new IllegalStateException());
             }
-            final LocalDate dof = DAY_BEFORE_FIRST_DAY.plusDays(days);
-//            log.info("f/m getDateOfFlight days {}, date {}", days, dof);
-            return dof;
+            return DAY_BEFORE_FIRST_DAY.plusDays(days);
         }
 
         public void setDateOfFlight(final LocalDate dateOfFlight) {
-            checkArgument(isTimeMode());
             final int days = dateOfFlight != null
                     ? (int) ChronoUnit.DAYS.between(DAY_BEFORE_FIRST_DAY, dateOfFlight)
                     : 0;
             if (days > 300) {
                 log.error("setDateOfFlight - too big day " + days, new IllegalStateException());
             }
-        //            log.info("f/m setDateOfFlight days {}, date {}", days, dateOfFlight);
             storage.setUnsafe(id, dateOfFlightField, days);
         }
-
-        public LocalTime getPlannedDepartureTimeLT() {
-            checkArgument(isTimeMode());
+        public LocalTime getPlannedDepartureLt() {
             return getLocalTimeFromHighOfU24(plannedDepartureAndArrivalTimeField);
         }
 
-        public void setPlannedDepartureTimeLT(final LocalTime plannedDepartureTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToHighOfU24(plannedDepartureAndArrivalTimeField, plannedDepartureTime);
+        public void setPlannedDepartureTimeLt(final LocalTime plannedDepartureLt) {
+            setLocalTimeToHighOfU24(plannedDepartureAndArrivalTimeField, plannedDepartureLt);
         }
 
-        public LocalTime getPlannedArrivalTimeLT() {
-            checkArgument(isTimeMode());
+        public LocalDateTime getPlannedDepartureLdt() {
+            final LocalDate dateOfFlight = getDateOfFlight();
+            final LocalTime plannedDepartureLt = getPlannedDepartureLt();
+            if (dateOfFlight == null || plannedDepartureLt == null) {
+                return null;
+            }
+
+            return dateOfFlight.atTime(plannedDepartureLt);
+        }
+
+        public LocalTime getPlannedArrivalLt() {
             return getLocalTimeFromLowOfU24(plannedDepartureAndArrivalTimeField);
         }
 
-        public void setPlannedArrivalTimeLT(final LocalTime plannedArrivalTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToLowOfU24(plannedDepartureAndArrivalTimeField, plannedArrivalTime);
+        public void setPlannedArrivalLt(final LocalTime plannedArrivalLt) {
+            setLocalTimeToLowOfU24(plannedDepartureAndArrivalTimeField, plannedArrivalLt);
         }
 
-        public LocalTime getActualDepartureTimeLT() {
-            checkArgument(isTimeMode());
+        // todo ak1 tests!
+        public LocalDateTime getPlannedArrivalLdt() {
+            return addTimeToSameOrNextDay(getPlannedDepartureLdt(), getPlannedArrivalLt());
+        }
+
+        public LocalTime getActualDepartureLt() {
             return getLocalTimeFromHighOfU24(actualDepartureAndTakeoffTimeField);
         }
 
-        public void setActualDepartureTimeLT(final LocalTime actualDepartureTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToHighOfU24(actualDepartureAndTakeoffTimeField, actualDepartureTime);
+        public void setActualDepartureLt(final LocalTime actualDepartureLt) {
+            setLocalTimeToHighOfU24(actualDepartureAndTakeoffTimeField, actualDepartureLt);
         }
 
-        public LocalTime getActualTakeoffTimeLT() {
-            checkArgument(isTimeMode());
+        // todo ak1 tests!
+        // dof  2025-06-10
+        // pd   10:00   ad = 09:58   diff = +2       same day
+        // pd   10:00   ad = 10:30   diff = -30      same day
+        // pd   23:30   ad = 00:01   diff = +1409    next day
+        // pd   00:10   ad = 23:50   diff = -1420    prev day
+        public LocalDateTime getActualDepartureLdt() {
+            final LocalDateTime plannedDepartureLdt = getPlannedDepartureLdt();
+            final LocalTime actualDepartureTime = getActualDepartureLt();
+            if (plannedDepartureLdt == null || actualDepartureTime == null) {
+                return null;
+            }
+
+            final LocalDateTime draftActualDepartureLdt = plannedDepartureLdt.toLocalDate().atTime(actualDepartureTime);
+            final int difference = plannedDepartureLdt.toLocalTime().toSecondOfDay() - actualDepartureTime.toSecondOfDay();
+            if (-12*Time.ONE_HOUR < difference && difference < 12*Time.ONE_HOUR) {
+                return draftActualDepartureLdt;
+            } else if (difference > 0) {
+                return draftActualDepartureLdt.plusDays(1);
+            } else {
+                return draftActualDepartureLdt.minusDays(1);
+            }
+        }
+
+        public LocalTime getActualTakeoffLt() {
             return getLocalTimeFromLowOfU24(actualDepartureAndTakeoffTimeField);
         }
 
-        public void setActualTakeoffTimeLT(final LocalTime actualTakeoffTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToLowOfU24(actualDepartureAndTakeoffTimeField, actualTakeoffTime);
+        public void setActualTakeoffLt(final LocalTime actualTakeoffLt) {
+            setLocalTimeToLowOfU24(actualDepartureAndTakeoffTimeField, actualTakeoffLt);
         }
 
-        public LocalTime getActualLandingTimeLT() {
-            checkArgument(isTimeMode());
+        // todo ak1 tests!
+        public LocalDateTime getActualTakeoffLdt() {
+            return addTimeToSameOrNextDay(getActualDepartureLdt(), getActualTakeoffLt());
+        }
+
+        public LocalTime getActualLandingLt() {
             return getLocalTimeFromHighOfU24(actualLandingAndArrivalTimeField);
         }
 
-        public void setActualLandingTimeLT(final LocalTime actualLandingTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToHighOfU24(actualLandingAndArrivalTimeField, actualLandingTime);
+        public void setActualLandingLt(final LocalTime actualLandingLt) {
+            setLocalTimeToHighOfU24(actualLandingAndArrivalTimeField, actualLandingLt);
         }
 
-        public LocalTime getActualArrivalTimeLT() {
-            checkArgument(isTimeMode());
+        // todo ak1 tests!
+        public LocalDateTime getActualLandingLdt() {
+            return addTimeToSameOrNextDay(getActualTakeoffLdt(), getActualLandingLt());
+        }
+
+        public LocalTime getActualArrivalLt() {
             return getLocalTimeFromLowOfU24(actualLandingAndArrivalTimeField);
         }
 
-        public void setActualArrivalTimeLT(final LocalTime actualArrivalTime) {
-            checkArgument(isTimeMode());
-            setLocalTimeToLowOfU24(actualLandingAndArrivalTimeField, actualArrivalTime);
+        public void setActualArrivalLt(final LocalTime actualArrivalLt) {
+            setLocalTimeToLowOfU24(actualLandingAndArrivalTimeField, actualArrivalLt);
+        }
+
+        // todo ak1 tests!
+        public LocalDateTime getActualArrivalLdt() {
+            return addTimeToSameOrNextDay(getActualLandingLdt(), getActualArrivalLt());
         }
 
         private LocalTime getLocalTimeFromHighOfU24(final DataField dataField) {
@@ -478,48 +444,17 @@ public class FlightMissions {
             storage.setUnsafe(id, dataField, shiftedMinutes | anotherPart);
         }
 
-        public void convertTimeToLT() {
-            if (isTimeMode()) {
-                return;
+        private LocalDateTime addTimeToSameOrNextDay(final LocalDateTime previousLdt, final LocalTime nextLt) {
+            if (previousLdt == null || nextLt == null) {
+                return null;
             }
 
-            final int plannedDepartureTime = getPlannedDepartureTime();
-            final int plannedArrivalTime = getPlannedArrivalTime();
-            final int actualDepartureTime = getActualDepartureTime();
-            final int actualTakeoffTime = getActualTakeoffTime();
-            final int actualLandingTime = getActualLandingTime();
-            final int actualArrivalTime = getActualArrivalTime();
-
-            setPlannedDepartureTime(0);
-            setPlannedArrivalTime(0);
-            setActualDepartureTime(0);
-            setActualTakeoffTime(0);
-            setActualLandingTime(0);
-            setActualArrivalTime(0);
-
-            setTimeMode(true);
-
-            final LocalDate dof = Time.toLdOrNull(plannedDepartureTime);
-            final LocalTime pdep = Time.toLtOrNull(plannedDepartureTime);
-            final LocalTime parr = Time.toLtOrNull(plannedArrivalTime);
-            final LocalTime adep = Time.toLtOrNull(actualDepartureTime);
-            final LocalTime atof = Time.toLtOrNull(actualTakeoffTime);
-            final LocalTime aldg = Time.toLtOrNull(actualLandingTime);
-            final LocalTime aarr = Time.toLtOrNull(actualArrivalTime);
-
-            log.warn("converting time to lt 1 - time mode {}, dof {}, pdep {}, parr {}, adep {}, atof {}, aldg {}, aarr {}",
-                    isTimeMode(), dof, pdep, parr, adep, atof, aldg, aarr);
-
-            setDateOfFlight(dof);
-            setPlannedDepartureTimeLT(pdep);
-            setPlannedArrivalTimeLT(parr);
-            setActualDepartureTimeLT(adep);
-            setActualTakeoffTimeLT(atof);
-            setActualLandingTimeLT(aldg);
-            setActualArrivalTimeLT(aarr);
-
-            log.warn("converting time to lt 2 - time mode {}, dof {}, new pdep-time {}, old pdep-time {}",
-                    isTimeMode(), getDateOfFlight(), getPlannedDepartureTime(), plannedDepartureTime);
+            final LocalDateTime draftNextLdt = previousLdt.toLocalDate().atTime(nextLt);
+            if (nextLt.toSecondOfDay() >= previousLdt.toLocalTime().toSecondOfDay()) {
+                return draftNextLdt;
+            } else {
+                return draftNextLdt.plusDays(1);
+            }
         }
 
         @Override
@@ -564,6 +499,6 @@ public class FlightMissions {
         }
     }
 
-    public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureTime() - m1.getPlannedDepartureTime();
+    public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureWorldTime() - m1.getPlannedDepartureWorldTime();
 
 }
