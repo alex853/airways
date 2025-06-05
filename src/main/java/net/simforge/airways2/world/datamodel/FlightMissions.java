@@ -36,11 +36,10 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTime + actualTakeoffTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTimeExp + plannedArrivalTimeExp
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTimeExp + actualTakeoffTimeExp
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTimeExp + actualArrivalTimeExp
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
             .build();
-    // todo ak0 all those 6 time related fields can packed into 10-11 bytes instead of 24 bytes
 
     private static final int pcModeMask = 0b10000000;
     private static final int unusedModeMask = 0b01000000;
@@ -56,6 +55,8 @@ public class FlightMissions {
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
     private final DataField plannedDepartureAndArrivalTimeFieldExp = storage.getDataField(9);
+    private final DataField actualDepartureAndTakeoffTimeFieldExp = storage.getDataField(10);
+    private final DataField actualLandingAndArrivalTimeFieldExp = storage.getDataField(11);
 
     public FlightMissions() {
     }
@@ -223,6 +224,7 @@ public class FlightMissions {
 
         public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
             setActualDepartureLt(Time.toLtOrNull(actualDepartureWorldTime));
+            setActualDepartureTimeExp(actualDepartureWorldTime);
         }
 
         public int getActualTakeoffWorldTime() {
@@ -231,6 +233,7 @@ public class FlightMissions {
 
         public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
             setActualTakeoffLt(Time.toLtOrNull(actualTakeoffWorldTime));
+            setActualTakeoffTimeExp(actualTakeoffWorldTime);
         }
 
         public int getActualLandingWorldTime() {
@@ -239,6 +242,7 @@ public class FlightMissions {
 
         public void setActualLandingWorldTime(final int actualLandingWorldTime) {
             setActualLandingLt(Time.toLtOrNull(actualLandingWorldTime));
+            setActualLandingTimeExp(actualLandingWorldTime);
         }
 
         public int getActualArrivalWorldTime() {
@@ -247,6 +251,7 @@ public class FlightMissions {
 
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
             setActualArrivalLt(Time.toLtOrNull(actualArrivalWorldTime));
+            setActualArrivalTimeExp(actualArrivalWorldTime);
         }
 
         private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
@@ -471,6 +476,38 @@ public class FlightMissions {
             setTimeExp(plannedDepartureAndArrivalTimeFieldExp, false, plannedArrivalWorldTime);
         }
 
+        public int getActualDepartureTimeExp() {
+            return getTimeExp(actualDepartureAndTakeoffTimeFieldExp, true);
+        }
+
+        private void setActualDepartureTimeExp(final int actualDepartureWorldTime) {
+            setTimeExp(actualDepartureAndTakeoffTimeFieldExp, true, actualDepartureWorldTime);
+        }
+
+        public int getActualTakeoffTimeExp() {
+            return getTimeExp(actualDepartureAndTakeoffTimeFieldExp, false);
+        }
+
+        private void setActualTakeoffTimeExp(final int actualTakeoffWorldTime) {
+            setTimeExp(actualDepartureAndTakeoffTimeFieldExp, false, actualTakeoffWorldTime);
+        }
+
+        public int getActualLandingTimeExp() {
+            return getTimeExp(actualLandingAndArrivalTimeFieldExp, true);
+        }
+
+        private void setActualLandingTimeExp(final int actualLandingWorldTime) {
+            setTimeExp(actualLandingAndArrivalTimeFieldExp, true, actualLandingWorldTime);
+        }
+
+        public int getActualArrivalTimeExp() {
+            return getTimeExp(actualLandingAndArrivalTimeFieldExp, false);
+        }
+
+        private void setActualArrivalTimeExp(final int actualArrivalWorldTime) {
+            setTimeExp(actualLandingAndArrivalTimeFieldExp, false, actualArrivalWorldTime);
+        }
+
         private int getTimeExp(final DataField dataField, final boolean high) {
             final LocalDate dateOfFlight = getDateOfFlight();
             final int value = get12bits(dataField, high);
@@ -495,14 +532,16 @@ public class FlightMissions {
                 set12bits(dataField, high, minutes + 1000);
 
                 final int check = get12bits(dataField, high);
-                log.warn("setTimeExp dof {}, worldTime {}, minutes {}, minutes+1000 {}, check {}", dateOfFlight, thisTime, minutes, minutes+1000, check);
+                if (check != minutes + 1000) {
+                    log.warn("setTimeExp high {}, dof {}, worldTime {}, minutes {}, minutes+1000 {}, check {}", high, dateOfFlight, thisTime, minutes, minutes + 1000, check);
+                }
             } else {
                 set12bits(dataField, high, 0);
             }
         }
 
         private int get12bits(final DataField dataField, final boolean high) {
-            final int mask = high ? 0b11111111111110000000000000 : 0b00000000000001111111111111;
+            final int mask = high ? 0b111111111111000000000000 : 0b000000000000111111111111;
             final int shift = high ? 12 : 0;
 
             final int raw = storage.getAsIntUnsafe(id, dataField);
@@ -510,7 +549,7 @@ public class FlightMissions {
         }
 
         private void set12bits(final DataField dataField, final boolean high, final int value) {
-            final int mask = high ? 0b11111111111110000000000000 : 0b00000000000001111111111111;
+            final int mask = high ? 0b111111111111000000000000 : 0b000000000000111111111111;
             final int shift = high ? 12 : 0;
 
             final int shiftedValue = value << shift;

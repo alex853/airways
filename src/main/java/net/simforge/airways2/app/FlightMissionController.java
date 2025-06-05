@@ -38,9 +38,13 @@ public class FlightMissionController {
                         WebTime.ts(f.getPlannedArrivalLdt()),
                         WebTime.ts(f.getPlannedArrivalTimeExp()),
                         WebTime.ts(f.getActualDepartureLdt()),
+                        WebTime.ts(f.getActualDepartureTimeExp()),
                         WebTime.ts(f.getActualTakeoffLdt()),
+                        WebTime.ts(f.getActualTakeoffTimeExp()),
                         WebTime.ts(f.getActualLandingLdt()),
-                        WebTime.ts(f.getActualArrivalLdt())))
+                        WebTime.ts(f.getActualLandingTimeExp()),
+                        WebTime.ts(f.getActualArrivalLdt()),
+                        WebTime.ts(f.getActualArrivalTimeExp())))
                 .toList());
     }
 
@@ -79,8 +83,12 @@ public class FlightMissionController {
         private String plannedArrivalTime;
         private String plannedArrivalTimeExp;
         private String actualDepartureTime;
+        private String actualDepartureTimeExp;
         private String actualTakeoffTime;
+        private String actualTakeoffTimeExp;
         private String actualLandingTime;
+        private String actualLandingTimeExp;
         private String actualArrivalTime;
+        private String actualArrivalTimeExp;
     }
 }
