@@ -478,7 +478,7 @@ public class FlightMissions {
                 final int minutes = value - 1000;
                 checkArgument(-1000 < minutes && minutes < 3000);
 
-                return Time.fromLdt(dateOfFlight.atStartOfDay().plusMinutes(value));
+                return Time.fromLdt(dateOfFlight.atStartOfDay().plusMinutes(minutes));
             } else {
                 return 0;
             }
@@ -493,6 +493,9 @@ public class FlightMissions {
                 checkArgument(-1000 < minutes && minutes < 3000);
 
                 set12bits(dataField, high, minutes + 1000);
+
+                final int check = get12bits(dataField, high);
+                log.warn("setTimeExp dof {}, worldTime {}, minutes {}, minutes+1000 {}, check {}", dateOfFlight, thisTime, minutes, minutes+1000, check);
             } else {
                 set12bits(dataField, high, 0);
             }
