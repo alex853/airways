@@ -38,11 +38,11 @@ class EnhancedFlightMissionDto {
                 world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
                 world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
                 mission.getDateOfFlight().toString(),
-                JavaTime.toHhmm(mission.getPlannedDepartureLt()),
-                JavaTime.toHhmm(mission.getPlannedArrivalLt()),
-                JavaTime.toHhmm(mission.getActualDepartureLt()),
-                JavaTime.toHhmm(mission.getActualTakeoffLt()),
-                JavaTime.toHhmm(mission.getActualLandingLt()),
-                JavaTime.toHhmm(mission.getActualArrivalLt()));
+                WebTime.toHhmmOrNull(mission.getPlannedDepartureLt()),
+                WebTime.toHhmmOrNull(mission.getPlannedArrivalLt()),
+                WebTime.toHhmmOrNull(mission.getActualDepartureLt()),
+                WebTime.toHhmmOrNull(mission.getActualTakeoffLt()),
+                WebTime.toHhmmOrNull(mission.getActualLandingLt()),
+                WebTime.toHhmmOrNull(mission.getActualArrivalLt()));
     }
 }

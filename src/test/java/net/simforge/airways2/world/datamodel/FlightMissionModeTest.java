@@ -77,8 +77,8 @@ public class FlightMissionModeTest {
     }
 
     @Test
-    public void test__unused_is_default() {
-        assertTrue(mission.isUnusedMode());
+    public void test__unused_off_by_default() {
+        assertFalse(mission.isUnusedMode());
     }
 
     @Test

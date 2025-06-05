@@ -133,12 +133,12 @@ public class FlightMissionNewTimeFieldsTest {
         for (int time1 = 0; time1 < 1440; time1++) {
             final int plannedDepartureTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time1 * 60));
             mission.setPlannedDepartureWorldTime(plannedDepartureTime);
-            for (int time2 = 0; time2 < 1440; time2++) {
+            for (int time2 = time1; time2 < 1440; time2++) {
                 final int plannedArrivalTime = Time.fromLdLt(today, LocalTime.ofSecondOfDay(time2 * 60));
                 mission.setPlannedArrivalWorldTime(plannedArrivalTime);
 
-                assertEquals(plannedDepartureTime, mission.getPlannedDepartureWorldTime());
-                assertEquals(plannedArrivalTime, mission.getPlannedArrivalWorldTime());
+                assertEquals(plannedDepartureTime, mission.getPlannedDepartureWorldTime(), "planned departure check for " + time1 + "/" + time2);
+                assertEquals(plannedArrivalTime, mission.getPlannedArrivalWorldTime(), "planned arrival check for " + time1 + "/" + time2);
             }
         }
     }

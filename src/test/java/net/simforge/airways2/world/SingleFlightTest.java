@@ -79,7 +79,7 @@ public class SingleFlightTest {
         runWorldForNHours(1);
         world.flightMissionControl().startOrCancel(mission);
         runWorldForNHours(1);
-        world.flightMissionControl().blocksOn(mission);
+        world.flightMissionControl().blocksOff(mission);
         runWorldForNHours(1);
         world.flightMissionControl().takeoff(mission);
         runWorldForNHours(3);

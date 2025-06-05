@@ -4,6 +4,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.JavaTime;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public class WebTime {
     public static String ts(final int time) {
@@ -27,6 +28,12 @@ public class WebTime {
     public static String hmOrNull(final int time) {
         return time != 0
                 ? JavaTime.toHhmm(Time.toLdt(time).toLocalTime())
+                : null;
+    }
+
+    public static String toHhmmOrNull(final LocalTime time) {
+        return time != null
+                ? JavaTime.toHhmm(time)
                 : null;
     }
 }
