@@ -392,14 +392,11 @@ public class FlightMissions {
             storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
         }
 
-/*        public void copyExpToNew() {
-            setPlannedDepartureTimeNew(getPlannedDepartureWorldTime());
-            setPlannedArrivalTimeNew(getPlannedArrivalWorldTime());
-            setActualDepartureTimeNew(getActualDepartureWorldTime());
-            setActualTakeoffTimeNew(getActualTakeoffWorldTime());
-            setActualLandingTimeNew(getActualLandingWorldTime());
-            setActualArrivalTimeNew(getActualArrivalWorldTime());
-        }*/
+        public void resetExpToZeroes() {
+            storage.set(id, plannedDepartureAndArrivalTimeFieldExp, 0);
+            storage.set(id, actualDepartureAndTakeoffTimeFieldExp, 0);
+            storage.set(id, actualLandingAndArrivalTimeFieldExp, 0);
+        }
 
         @Override
         public String toString() {
