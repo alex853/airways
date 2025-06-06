@@ -75,7 +75,7 @@ public class VatsimBaseTestCases {
 
         nextReport = ReportUtils.toTimestamp(Time.toLdt(startTime));
 
-        offline();
+        vatsimPilotGoesOffline();
     }
 
     @Test
@@ -83,21 +83,21 @@ public class VatsimBaseTestCases {
         assertAircraftParkedAtAirportAndIdle(egll);
 
         runWorldMins(10);
-        onlineParkedAt(egll, aircraft);
-        flightplanFiled("EGLL", "EGCC");
+        vatsimPilotGoesOnlineParkedAt(egll, aircraft);
+        vatsimPilotFilesFlightplan("EGLL", "EGCC");
         runWorldMins(2);
 
         assertFlightMissionPreflight(egll, egcc);
         assertAircraftParkedAtAirportAndActive(egll);
 
-        startTaxiingOut();
+        vatsimPilotStartsTaxiingOut();
         runWorldMins(3);
 
         assertFlightMissionDeparting();
         assertAircraftTaxiingOut(egll);
 
         runWorldMins(3);
-        takeoff();
+        vatsimPilotMakesTakeoff();
         runWorldMins(3);
 
         assertFlightMissionFlying();
@@ -108,21 +108,21 @@ public class VatsimBaseTestCases {
         assertFlightMissionFlying();
         assertAircraftFlying();
 
-        runWorldUntilTimeToLand();
-        landing();
+        runWorldUntilVatsimPilotReachesDestination();
+        vatsimPilotMakesLanding();
         runWorldMins(3);
 
         assertFlightMissionArriving();
         assertAircraftTaxiingIn(egcc);
 
         runWorldMins(3);
-        blocksOn();
+        vatsimPilotPutsBlocksOn();
         runWorldMins(7);
 
         assertAircraftParkedAtAirportAndIdle(egcc);
         assertFlightMissionFinished(egll, egcc);
 
-        offline();
+        vatsimPilotGoesOffline();
         runWorldMins(10);
 
         assertAircraftParkedAtAirportAndIdle(egcc);
@@ -134,15 +134,15 @@ public class VatsimBaseTestCases {
         assertAircraftParkedAtAirportAndIdle(egll);
 
         runWorldMins(10);
-        onlineParkedAt(egll, aircraft);
-        flightplanFiled("EGLL", "EGCC");
+        vatsimPilotGoesOnlineParkedAt(egll, aircraft);
+        vatsimPilotFilesFlightplan("EGLL", "EGCC");
         runWorldMins(2);
 
         assertFlightMissionPreflight(egll, egcc);
         assertAircraftParkedAtAirportAndActive(egll);
 
         runWorldMins(10);
-        offline();
+        vatsimPilotGoesOffline();
         runWorldMins(5);
 
         assertFlightMissionCancelled();
@@ -154,15 +154,15 @@ public class VatsimBaseTestCases {
         assertAircraftParkedAtAirportAndIdle(egll);
 
         runWorldMins(10);
-        onlineParkedAt(egll, aircraft);
-        flightplanFiled("EGLL", "UWWW");
+        vatsimPilotGoesOnlineParkedAt(egll, aircraft);
+        vatsimPilotFilesFlightplan("EGLL", "UWWW");
         runWorldMins(2);
 
         assertNoFlightMissionCreated();
         assertAircraftParkedAtAirportAndIdle(egll);
         assertPilotContextPresent();
 
-        offline();
+        vatsimPilotGoesOffline();
         runWorldMins(2);
 
         assertPilotContextAbsent();
@@ -174,22 +174,22 @@ public class VatsimBaseTestCases {
         assertAircraftParkedAtAirportAndIdle(egll);
 
         runWorldMins(10);
-        onlineParkedAt(egll, aircraft);
-        flightplanFiled("EGLL", "UWWW");
+        vatsimPilotGoesOnlineParkedAt(egll, aircraft);
+        vatsimPilotFilesFlightplan("EGLL", "UWWW");
         runWorldMins(2);
 
         assertNoFlightMissionCreated();
         assertAircraftParkedAtAirportAndIdle(egll);
         assertPilotContextPresent();
 
-        startTaxiingOut();
+        vatsimPilotStartsTaxiingOut();
         runWorldMins(3);
 
         assertAircraftParkedAtAirportAndIdle(egll);
         assertPilotContextPresent();
 
         runWorldMins(3);
-        takeoff();
+        vatsimPilotMakesTakeoff();
         runWorldMins(2);
 
         assertPilotContextAbsent();
@@ -205,6 +205,8 @@ public class VatsimBaseTestCases {
     // change of flightplan from correct to another correct
     // landing out of the world
     // landing on wrong airport
+
+    // reconnect while pilot context is in irreversible status
 
     // short disconnect cases
 
@@ -288,11 +290,11 @@ public class VatsimBaseTestCases {
         return world.flightMissions().byId(1).orElseThrow();
     }
 
-    private void offline() {
+    private void vatsimPilotGoesOffline() {
         currentVatsimPosition = null;
     }
 
-    private void onlineParkedAt(final Airports.Airport airport, final Aircrafts.Aircraft aircraft) {
+    private void vatsimPilotGoesOnlineParkedAt(final Airports.Airport airport, final Aircrafts.Aircraft aircraft) {
         checkArgument(simulationMode == SimulationMode.Nope);
         if (currentVatsimPosition == null) {
             currentVatsimPosition = new ReportPilotPosition();
@@ -307,21 +309,21 @@ public class VatsimBaseTestCases {
         currentVatsimPosition.setLongitude((double) airport.getLongitude());
     }
 
-    private void flightplanFiled(final String departure, final String destination) {
+    private void vatsimPilotFilesFlightplan(final String departure, final String destination) {
         checkNotNull(currentVatsimPosition);
         checkArgument(simulationMode == SimulationMode.Nope);
         currentVatsimPosition.setFpOrigin(departure);
         currentVatsimPosition.setFpDestination(destination);
     }
 
-    private void startTaxiingOut() {
+    private void vatsimPilotStartsTaxiingOut() {
         checkNotNull(currentVatsimPosition);
         checkArgument(Position.create(currentVatsimPosition).isInAirport());
         checkArgument(simulationMode == SimulationMode.Nope);
         simulationMode = SimulationMode.TaxiingOut;
     }
 
-    private void takeoff() {
+    private void vatsimPilotMakesTakeoff() {
         checkNotNull(currentVatsimPosition);
         checkArgument(Position.create(currentVatsimPosition).isInAirport());
         checkArgument(simulationMode == SimulationMode.TaxiingOut);
@@ -329,7 +331,7 @@ public class VatsimBaseTestCases {
         currentVatsimPosition.setOnGround(false);
     }
 
-    private void runWorldUntilTimeToLand() {
+    private void runWorldUntilVatsimPilotReachesDestination() {
         checkNotNull(currentVatsimPosition);
         checkArgument(!Position.create(currentVatsimPosition).isOnGround());
         checkArgument(simulationMode == SimulationMode.Flying);
@@ -339,7 +341,7 @@ public class VatsimBaseTestCases {
         }
     }
 
-    private void landing() {
+    private void vatsimPilotMakesLanding() {
         checkNotNull(currentVatsimPosition);
         checkArgument(!Position.create(currentVatsimPosition).isOnGround());
         checkArgument(simulationMode == SimulationMode.TimeToLand);
@@ -350,7 +352,7 @@ public class VatsimBaseTestCases {
         currentVatsimPosition.setLongitude((double) destination.getLongitude());
     }
 
-    private void blocksOn() {
+    private void vatsimPilotPutsBlocksOn() {
         checkNotNull(currentVatsimPosition);
         checkArgument(Position.create(currentVatsimPosition).isInAirport());
         checkArgument(simulationMode == SimulationMode.TaxiingIn);

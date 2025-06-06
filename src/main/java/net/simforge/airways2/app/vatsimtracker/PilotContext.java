@@ -130,7 +130,7 @@ public class PilotContext {
         final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
         final OverallStatus newOverallStatus = newPlanningStatus == PlanningStatus.AllGood ? OverallStatus.AllGood : OverallStatus.Restorable;
 
-        if (overallStatus == OverallStatus.Irreversible) { // todo ak2 it smells bad, what if f/p changed?
+        if (overallStatus == OverallStatus.Irreversible) { // todo ak1 it smells bad, what if f/p changed?
             if (removalCounter == 0) {
                 shouldBeRemoved = true;
             } else {
@@ -268,7 +268,7 @@ public class PilotContext {
     }
 
     public void noPositionInReport(final String report) {
-        // todo ak2 re-implement
+        // todo ak1 re-implement
 
         if (overallStatus == OverallStatus.Irreversible) {
             if (removalCounter == 0) {
