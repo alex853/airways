@@ -558,6 +558,15 @@ public class FlightMissions {
             storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
         }
 
+        public void convertNewToExp() {
+            setPlannedDepartureTimeExp(getPlannedDepartureWorldTime());
+            setPlannedArrivalTimeExp(getPlannedArrivalWorldTime());
+            setActualDepartureTimeExp(getActualDepartureWorldTime());
+            setActualTakeoffTimeExp(getActualTakeoffTimeExp());
+            setActualLandingTimeExp(getActualLandingWorldTime());
+            setActualArrivalTimeExp(getActualArrivalWorldTime());
+        }
+
         @Override
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
