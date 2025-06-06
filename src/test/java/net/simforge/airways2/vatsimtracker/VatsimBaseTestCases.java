@@ -196,6 +196,18 @@ public class VatsimBaseTestCases {
         assertAircraftParkedAtAirportAndIdle(egll);
     }
 
+    // reconnect on ground...
+    // jump on ground...
+    // change of aircraft type
+    // change of flightplan from correct to incorrect
+    // change of flightplan from incorrect to correct
+    // change of flightplan from incorrect to incorrect
+    // change of flightplan from correct to another correct
+    // landing out of the world
+    // landing on wrong airport
+
+    // short disconnect cases
+
     private void assertPilotContextPresent() {
         assertNotNull(pilotContext);
     }

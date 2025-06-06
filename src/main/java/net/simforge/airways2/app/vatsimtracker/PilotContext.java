@@ -319,7 +319,7 @@ public class PilotContext {
                 }
                 flightMissionId = 0;
 
-                log.info("{} - Event 'OFFLINE' from Restorable ({}) on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage, planningStatus);
+                log.info("{} - Event 'OFFLINE' from Restorable ({}) on {} stage, cancelling and removing", missionLogHead(oldMission), planningStatus, flightStage);
                 pilotLog("Event 'offline' from Restorable (" + planningStatus + ") on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
