@@ -198,7 +198,7 @@ public class FlightMissions {
         }
 
         public int getPlannedDepartureWorldTime() {
-            return getPlannedDepartureTimeExp();
+            return getPlannedDepartureTimeNew();
         }
 
         public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
