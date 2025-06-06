@@ -150,6 +150,26 @@ public class VatsimBaseTestCases {
     }
 
     @Test
+    public void invalid_flightplan___then_offline_while_parked_____flight_should_not_be_created() {
+        assertAircraftParkedAtAirportAndIdle(egll);
+
+        runWorldMins(10);
+        onlineParkedAt(egll, aircraft);
+        flightplanFiled("EGLL", "UWWW");
+        runWorldMins(2);
+
+        assertNoFlightMissionCreated();
+        assertAircraftParkedAtAirportAndIdle(egll);
+        assertPilotContextPresent();
+
+        offline();
+        runWorldMins(2);
+
+        assertPilotContextAbsent();
+        assertAircraftParkedAtAirportAndIdle(egll);
+    }
+
+    @Test
     public void invalid_flightplan___then_takeoff_____flight_should_not_be_created() {
         assertAircraftParkedAtAirportAndIdle(egll);
 
@@ -170,9 +190,10 @@ public class VatsimBaseTestCases {
 
         runWorldMins(3);
         takeoff();
-        runWorldMins(15);
+        runWorldMins(2);
 
         assertPilotContextAbsent();
+        assertAircraftParkedAtAirportAndIdle(egll);
     }
 
     private void assertPilotContextPresent() {

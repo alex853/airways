@@ -161,11 +161,12 @@ public class PilotContext {
                         mission_cancelBeforeTakeoffIfExists();
                     }
 
-                    log.info("{} - Event 'takeoff' not in AllGood, cancelling and removal", missionLogHead(oldMission));
-                    pilotLog("Event 'takeoff' not in AllGood, cancelling and removal");
+                    log.info("{} - Event 'takeoff' from {} ({}) on {} stage, cancelling and removal", missionLogHead(oldMission), overallStatus, planningStatus, flightStage);
+                    pilotLog("Event 'takeoff' from " + overallStatus + " (" + planningStatus + ") on " + flightStage + " stage, cancelling and removal");
 
                     overallStatus = OverallStatus.Irreversible;
-                    removalCounter = 5;
+                    shouldBeRemoved = true;
+                    removalCounter = 0;
                 }
             } else {
                 if (flightStage == FlightStage.Preflight
@@ -313,11 +314,13 @@ public class PilotContext {
         } else { // Restorable, presumably on ground
             if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
                 final FlightMissions.Mission oldMission = mission_read();
-                mission_cancelBeforeTakeoffIfExists();
+                if (oldMission != null) {
+                    mission_cancelBeforeTakeoffIfExists();
+                }
                 flightMissionId = 0;
 
-                log.info("{} - Event 'OFFLINE' from Restorable on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage);
-                pilotLog("Event 'offline' from Restorable on " + flightStage + " stage, cancelling and removing");
+                log.info("{} - Event 'OFFLINE' from Restorable ({}) on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage, planningStatus);
+                pilotLog("Event 'offline' from Restorable (" + planningStatus + ") on " + flightStage + " stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
                 final FlightMissions.Mission oldMission = mission_read();
@@ -434,14 +437,14 @@ public class PilotContext {
     private void mission_cancelBeforeTakeoffIfExists() {
         worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
-                log.warn("erroneous case, f/m == 0, in mission_cancelBeforeTakeoffIfExists, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak3 erroneous case, need to rethink
+                log.warn("erroneous case, f/m == 0, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.warn("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak3 erroneous case, need to rethink
+                log.warn("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
