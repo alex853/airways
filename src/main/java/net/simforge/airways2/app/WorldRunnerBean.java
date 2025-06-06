@@ -3,6 +3,7 @@ package net.simforge.airways2.app;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;
@@ -35,9 +36,9 @@ public class WorldRunnerBean implements DisposableBean {
     public void init() {
         loadWorld();
 
-        world.flightMissions().byId(1).get().convertNewToExp();
-        world.flightMissions().byId(2).get().convertNewToExp();
-        world.flightMissions().byId(78).get().convertNewToExp();
+        world.flightMissions().all().stream()
+                .filter(f -> f.getId() <= 500)
+                .forEach(FlightMissions.Mission::convertNewToExp);
 
         thread = new Thread(() -> {
             int lastSaved = (int) (System.currentTimeMillis() / 1000);
