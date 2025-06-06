@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
-public class WorldRunnerBean implements DisposableBean {
+public class WorldRunnerBean implements WorldAccess, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(WorldRunnerBean.class);
 
     private static final int saveWorldPeriod = Time.ONE_HOUR;
@@ -100,6 +100,7 @@ public class WorldRunnerBean implements DisposableBean {
         log.info("world thread stopped");
     }
 
+    @Override
     public <T> T read(final Action<T> action) {
         lock.readLock().lock();
         try {
@@ -109,6 +110,7 @@ public class WorldRunnerBean implements DisposableBean {
         }
     }
 
+    @Override
     public <T> T modifySync(final Action<T> action) {
         final ActionContext<T> actionContext = new ActionContext<>(action);
         actionQueue.add(actionContext);
@@ -142,10 +144,6 @@ public class WorldRunnerBean implements DisposableBean {
         HaveToStopNow,
         Stopped,
         TerminatedDueToError
-    }
-
-    public interface Action<T> {
-        T invoke(World world);
     }
 
     private static class ActionContext<T> {

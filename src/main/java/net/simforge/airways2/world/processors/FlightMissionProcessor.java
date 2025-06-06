@@ -69,9 +69,12 @@ public class FlightMissionProcessor {
                         flightControl.finish(mission.get());
                     }
                 }
+                case Finished, Cancelled -> {
+                    // noop
+                }
                 default -> {
                     world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(0), mission.get());
-                    log.info("f/m #{} - flight is in unexpected status", mission.get().getId());
+                    log.warn("f/m #{} - flight is in unexpected status - {}", mission.get().getId(), mission.get().getStatus());
                 }
             }
 

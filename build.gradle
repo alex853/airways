@@ -24,7 +24,7 @@ dependencies {
 //    implementation 'net.simforge:simforge-commons-ext:latest.release'
 //    implementation 'net.simforge:simforge-atmosphere:latest.release'
     implementation 'net.simforge:refdata-aircrafts:latest.release'
-//    implementation 'net.simforge:refdata-airports:latest.release'
+    implementation 'net.simforge:refdata-airports:latest.release'
     implementation 'net.simforge:network-view-core:latest.release'
 
     compileOnly 'org.projectlombok:lombok:1.18.22'

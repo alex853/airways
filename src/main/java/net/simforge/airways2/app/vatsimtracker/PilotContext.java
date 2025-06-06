@@ -1,5 +1,6 @@
 package net.simforge.airways2.app.vatsimtracker;
 
+import net.simforge.airways2.app.WorldAccess;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.world.Time;
@@ -24,7 +25,7 @@ public class PilotContext {
     private static final Logger log = LoggerFactory.getLogger(PilotContext.class);
     private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
 
-    private final WorldRunnerBean worldBean;
+    private final WorldAccess worldAccess;
     private final Set<String> worldIcaos;
     private final int pilotNumber;
     private FlightStage flightStage;
@@ -43,9 +44,9 @@ public class PilotContext {
     private boolean shouldBeRemoved;
     private final Queue<Float> distanceLegs = new LinkedList<>();
 
-    public PilotContext(final WorldRunnerBean worldBean, final int pilotNumber) {
-        this.worldBean = worldBean;
-        this.worldIcaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
+    public PilotContext(final WorldAccess worldAccess, final int pilotNumber) {
+        this.worldAccess = worldAccess;
+        this.worldIcaos = worldAccess.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
         this.pilotNumber = pilotNumber;
     }
 
@@ -156,7 +157,9 @@ public class PilotContext {
                     pilotLog("Event 'takeoff'");
                 } else {
                     final FlightMissions.Mission oldMission = mission_read();
-                    mission_cancelBeforeTakeoffIfExists();
+                    if (oldMission != null) {
+                        mission_cancelBeforeTakeoffIfExists();
+                    }
 
                     log.info("{} - Event 'takeoff' not in AllGood, cancelling and removal", missionLogHead(oldMission));
                     pilotLog("Event 'takeoff' not in AllGood, cancelling and removal");
@@ -327,12 +330,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_read() {
         return flightMissionId != 0
-                ? worldBean.read(world -> world.flightMissions().byId(flightMissionId).orElseThrow())
+                ? worldAccess.read(world -> world.flightMissions().byId(flightMissionId).orElseThrow())
                 : null;
     }
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
-        return worldBean.modifySync(world -> {
+        return worldAccess.modifySync(world -> {
             final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(aircraftType);
             if (requestedAircraftType.isEmpty()) {
                 FlightStats.event("missingAircraftType " + aircraftType);
@@ -361,7 +364,7 @@ public class PilotContext {
     }
 
     private FlightMissions.Mission mission_blocksOff() {
-        return worldBean.modifySync(world -> {
+        return worldAccess.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
@@ -377,7 +380,7 @@ public class PilotContext {
     }
 
     private FlightMissions.Mission mission_takeoff() {
-        return worldBean.modifySync(world -> {
+        return worldAccess.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
@@ -396,7 +399,7 @@ public class PilotContext {
     }
 
     private FlightMissions.Mission mission_landing() {
-        return worldBean.modifySync(world -> {
+        return worldAccess.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Flying) {
@@ -412,7 +415,7 @@ public class PilotContext {
     }
 
     private FlightMissions.Mission mission_blocksOnAndFinish() {
-        return worldBean.modifySync(world -> {
+        return worldAccess.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
 
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
@@ -429,7 +432,7 @@ public class PilotContext {
     }
 
     private void mission_cancelBeforeTakeoffIfExists() {
-        worldBean.modifySync(world -> {
+        worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
                 log.warn("erroneous case, f/m == 0, in mission_cancelBeforeTakeoffIfExists, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
@@ -455,7 +458,7 @@ public class PilotContext {
     }
 
     private void mission_cancelFromFlying() {
-        worldBean.modifySync(world -> {
+        worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
                 log.warn("erroneous case, f/m == 0, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink

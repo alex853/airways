@@ -108,7 +108,9 @@ public class Storage<T> {
     }
 
     public Optional<T> byId(final int recordId) {
-        checkRecordIdInBounds(recordId);
+        if (isOutOfBounds(recordId)) {
+            return Optional.empty();
+        }
         if (isDeleted(recordId)) {
             return Optional.empty();
         }
@@ -373,9 +375,13 @@ public class Storage<T> {
     }
 
     private void checkRecordIdInBounds(final int recordId) {
-        if (recordId < 1 || recordId > getRecordCount()) {
+        if (isOutOfBounds(recordId)) {
             throw new IllegalArgumentException("RecordId is out of range: " + recordId);
         }
+    }
+
+    private boolean isOutOfBounds(int recordId) {
+        return recordId < 1 || recordId > getRecordCount();
     }
 
     private void checkRecordIdIsNotDeleted(final int recordId) {
