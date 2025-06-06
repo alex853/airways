@@ -96,7 +96,7 @@ public class FlightMissionProcessor {
                 toAirport.getCoords(),
                 performanceData);
 
-        final Duration actualTimeSinceTakeoff = Duration.between(mission.getActualTakeoffLdt(), Time.toLdt(worldTime));
+        final Duration actualTimeSinceTakeoff = Duration.between(Time.toLdt(mission.getActualTakeoffWorldTime()), Time.toLdt(worldTime));
 
         final SimpleFlight.Position aircraftPosition = simpleFlight.getAircraftPosition(actualTimeSinceTakeoff);
 

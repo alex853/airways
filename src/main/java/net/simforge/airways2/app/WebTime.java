@@ -25,13 +25,13 @@ public class WebTime {
                 : null;
     }
 
-    public static String hmOrNull(final int time) {
+    public static String hhmmOrNull(final int time) {
         return time != 0
                 ? JavaTime.toHhmm(Time.toLdt(time).toLocalTime())
                 : null;
     }
 
-    public static String toHhmmOrNull(final LocalTime time) {
+    public static String hhmmOrNull(final LocalTime time) {
         return time != null
                 ? JavaTime.toHhmm(time)
                 : null;

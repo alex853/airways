@@ -33,17 +33,17 @@ public class FlightMissionController {
                         WebTime.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        WebTime.ts(f.getPlannedDepartureLdt()),
+                        WebTime.ts(f.getPlannedDepartureWorldTime()),
                         WebTime.ts(f.getPlannedDepartureTimeExp()),
-                        WebTime.ts(f.getPlannedArrivalLdt()),
+                        WebTime.ts(f.getPlannedArrivalWorldTime()),
                         WebTime.ts(f.getPlannedArrivalTimeExp()),
-                        WebTime.ts(f.getActualDepartureLdt()),
+                        WebTime.ts(f.getActualDepartureWorldTime()),
                         WebTime.ts(f.getActualDepartureTimeExp()),
-                        WebTime.ts(f.getActualTakeoffLdt()),
+                        WebTime.ts(f.getActualTakeoffWorldTime()),
                         WebTime.ts(f.getActualTakeoffTimeExp()),
-                        WebTime.ts(f.getActualLandingLdt()),
+                        WebTime.ts(f.getActualLandingWorldTime()),
                         WebTime.ts(f.getActualLandingTimeExp()),
-                        WebTime.ts(f.getActualArrivalLdt()),
+                        WebTime.ts(f.getActualArrivalWorldTime()),
                         WebTime.ts(f.getActualArrivalTimeExp())))
                 .toList());
     }

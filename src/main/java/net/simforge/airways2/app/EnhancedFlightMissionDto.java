@@ -5,7 +5,6 @@ import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.commons.misc.JavaTime;
 
 @Data
 @AllArgsConstructor
@@ -38,11 +37,11 @@ class EnhancedFlightMissionDto {
                 world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
                 world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
                 mission.getDateOfFlight().toString(),
-                WebTime.toHhmmOrNull(mission.getPlannedDepartureLt()),
-                WebTime.toHhmmOrNull(mission.getPlannedArrivalLt()),
-                WebTime.toHhmmOrNull(mission.getActualDepartureLt()),
-                WebTime.toHhmmOrNull(mission.getActualTakeoffLt()),
-                WebTime.toHhmmOrNull(mission.getActualLandingLt()),
-                WebTime.toHhmmOrNull(mission.getActualArrivalLt()));
+                WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
+                WebTime.hhmmOrNull(mission.getPlannedArrivalWorldTime()),
+                WebTime.hhmmOrNull(mission.getActualDepartureWorldTime()),
+                WebTime.hhmmOrNull(mission.getActualTakeoffWorldTime()),
+                WebTime.hhmmOrNull(mission.getActualLandingWorldTime()),
+                WebTime.hhmmOrNull(mission.getActualArrivalWorldTime()));
     }
 }

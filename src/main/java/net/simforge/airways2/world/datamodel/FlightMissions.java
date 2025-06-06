@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -199,58 +198,52 @@ public class FlightMissions {
         }
 
         public int getPlannedDepartureWorldTime() {
-            return Time.fromLdtOrNull(getPlannedDepartureLdt());
+            return getPlannedDepartureTimeExp();
         }
 
         public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
             final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
             setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
-            setPlannedDepartureTimeLt(ldt != null ? ldt.toLocalTime() : null);
             setPlannedDepartureTimeExp(plannedDepartureWorldTime);
         }
 
         public int getPlannedArrivalWorldTime() {
-            return Time.fromLdtOrNull(getPlannedArrivalLdt());
+            return getPlannedArrivalTimeExp();
         }
 
         public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
-            setPlannedArrivalLt(Time.toLtOrNull(plannedArrivalWorldTime));
             setPlannedArrivalTimeExp(plannedArrivalWorldTime);
         }
 
         public int getActualDepartureWorldTime() {
-            return Time.fromLdtOrNull(getActualDepartureLdt());
+            return getActualDepartureTimeExp();
         }
 
         public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
-            setActualDepartureLt(Time.toLtOrNull(actualDepartureWorldTime));
             setActualDepartureTimeExp(actualDepartureWorldTime);
         }
 
         public int getActualTakeoffWorldTime() {
-            return Time.fromLdtOrNull(getActualTakeoffLdt());
+            return getActualTakeoffTimeExp();
         }
 
         public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
-            setActualTakeoffLt(Time.toLtOrNull(actualTakeoffWorldTime));
             setActualTakeoffTimeExp(actualTakeoffWorldTime);
         }
 
         public int getActualLandingWorldTime() {
-            return Time.fromLdtOrNull(getActualLandingLdt());
+            return getActualLandingTimeExp();
         }
 
         public void setActualLandingWorldTime(final int actualLandingWorldTime) {
-            setActualLandingLt(Time.toLtOrNull(actualLandingWorldTime));
             setActualLandingTimeExp(actualLandingWorldTime);
         }
 
         public int getActualArrivalWorldTime() {
-            return Time.fromLdtOrNull(getActualArrivalLdt());
+            return getActualArrivalTimeExp();
         }
 
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
-            setActualArrivalLt(Time.toLtOrNull(actualArrivalWorldTime));
             setActualArrivalTimeExp(actualArrivalWorldTime);
         }
 
@@ -275,189 +268,6 @@ public class FlightMissions {
                 log.error("setDateOfFlight - too big day " + days, new IllegalStateException());
             }
             storage.setUnsafe(id, dateOfFlightField, days);
-        }
-        public LocalTime getPlannedDepartureLt() {
-            return getLocalTimeFromHighOfU24(plannedDepartureAndArrivalTimeField);
-        }
-
-        public void setPlannedDepartureTimeLt(final LocalTime plannedDepartureLt) {
-            setLocalTimeToHighOfU24(plannedDepartureAndArrivalTimeField, plannedDepartureLt);
-        }
-
-        public LocalDateTime getPlannedDepartureLdt() {
-            final LocalDate dateOfFlight = getDateOfFlight();
-            final LocalTime plannedDepartureLt = getPlannedDepartureLt();
-            if (dateOfFlight == null || plannedDepartureLt == null) {
-                return null;
-            }
-
-            return dateOfFlight.atTime(plannedDepartureLt);
-        }
-
-        public LocalTime getPlannedArrivalLt() {
-            return getLocalTimeFromLowOfU24(plannedDepartureAndArrivalTimeField);
-        }
-
-        public void setPlannedArrivalLt(final LocalTime plannedArrivalLt) {
-            setLocalTimeToLowOfU24(plannedDepartureAndArrivalTimeField, plannedArrivalLt);
-        }
-
-        // todo ak1 tests!
-        public LocalDateTime getPlannedArrivalLdt() {
-            return addTimeToSameOrNextDay(getPlannedDepartureLdt(), getPlannedArrivalLt());
-        }
-
-        public LocalTime getActualDepartureLt() {
-            return getLocalTimeFromHighOfU24(actualDepartureAndTakeoffTimeField);
-        }
-
-        public void setActualDepartureLt(final LocalTime actualDepartureLt) {
-            setLocalTimeToHighOfU24(actualDepartureAndTakeoffTimeField, actualDepartureLt);
-        }
-
-        // todo ak1 tests!
-        // dof  2025-06-10
-        // pd   10:00   ad = 09:58   diff = +2       same day
-        // pd   10:00   ad = 10:30   diff = -30      same day
-        // pd   23:30   ad = 00:01   diff = +1409    next day
-        // pd   00:10   ad = 23:50   diff = -1420    prev day
-        public LocalDateTime getActualDepartureLdt() {
-            final LocalDateTime plannedDepartureLdt = getPlannedDepartureLdt();
-            final LocalTime actualDepartureTime = getActualDepartureLt();
-            if (plannedDepartureLdt == null || actualDepartureTime == null) {
-                return null;
-            }
-
-            final LocalDateTime draftActualDepartureLdt = plannedDepartureLdt.toLocalDate().atTime(actualDepartureTime);
-            final int difference = plannedDepartureLdt.toLocalTime().toSecondOfDay() - actualDepartureTime.toSecondOfDay();
-            if (-12*Time.ONE_HOUR < difference && difference < 12*Time.ONE_HOUR) {
-                return draftActualDepartureLdt;
-            } else if (difference > 0) {
-                return draftActualDepartureLdt.plusDays(1);
-            } else {
-                return draftActualDepartureLdt.minusDays(1);
-            }
-        }
-
-        public LocalTime getActualTakeoffLt() {
-            return getLocalTimeFromLowOfU24(actualDepartureAndTakeoffTimeField);
-        }
-
-        public void setActualTakeoffLt(final LocalTime actualTakeoffLt) {
-            setLocalTimeToLowOfU24(actualDepartureAndTakeoffTimeField, actualTakeoffLt);
-        }
-
-        // todo ak1 tests!
-        public LocalDateTime getActualTakeoffLdt() {
-            return addTimeToSameOrNextDay(getActualDepartureLdt(), getActualTakeoffLt());
-        }
-
-        public LocalTime getActualLandingLt() {
-            return getLocalTimeFromHighOfU24(actualLandingAndArrivalTimeField);
-        }
-
-        public void setActualLandingLt(final LocalTime actualLandingLt) {
-            setLocalTimeToHighOfU24(actualLandingAndArrivalTimeField, actualLandingLt);
-        }
-
-        // todo ak1 tests!
-        public LocalDateTime getActualLandingLdt() {
-            return addTimeToSameOrNextDay(getActualTakeoffLdt(), getActualLandingLt());
-        }
-
-        public LocalTime getActualArrivalLt() {
-            return getLocalTimeFromLowOfU24(actualLandingAndArrivalTimeField);
-        }
-
-        public void setActualArrivalLt(final LocalTime actualArrivalLt) {
-            setLocalTimeToLowOfU24(actualLandingAndArrivalTimeField, actualArrivalLt);
-        }
-
-        // todo ak1 tests!
-        public LocalDateTime getActualArrivalLdt() {
-            return addTimeToSameOrNextDay(getActualLandingLdt(), getActualArrivalLt());
-        }
-
-        private LocalTime getLocalTimeFromHighOfU24(final DataField dataField) {
-            return getLocalTimeFromU24(dataField, 0b111111111111000000000000, 12);
-        }
-
-        private LocalTime getLocalTimeFromLowOfU24(final DataField dataField) {
-            return getLocalTimeFromU24(dataField, 0b000000000000111111111111, 0);
-        }
-
-        private void setLocalTimeToHighOfU24(final DataField dataField, final LocalTime localTime) {
-            final LocalTime lowTimeSrc = getLocalTimeFromLowOfU24(dataField);
-
-            setLocalTimeToU24(dataField, localTime, 0b111111111111000000000000, 12);
-
-            final LocalTime lowTimeDst = getLocalTimeFromLowOfU24(dataField);
-            final LocalTime highTimeDst = getLocalTimeFromHighOfU24(dataField);
-
-            if (!Objects.equals(lowTimeSrc, lowTimeDst)) {
-                log.error("setLocalTimeToHighOfU24 - low time not matched - was " + lowTimeSrc + ", became " + lowTimeDst, new IllegalStateException());
-            }
-            if (!Objects.equals(cutSecondsOrNull(localTime), highTimeDst)) {
-                log.error("setLocalTimeToHighOfU24 - high time not matched - was " + localTime + ", became " + highTimeDst, new IllegalStateException());
-            }
-        }
-
-        private void setLocalTimeToLowOfU24(final DataField dataField, final LocalTime localTime) {
-            final LocalTime highTimeSrc = getLocalTimeFromHighOfU24(dataField);
-
-            setLocalTimeToU24(dataField, localTime, 0b000000000000111111111111, 0);
-
-            final LocalTime lowTimeDst = getLocalTimeFromLowOfU24(dataField);
-            final LocalTime highTimeDst = getLocalTimeFromHighOfU24(dataField);
-
-            if (!Objects.equals(cutSecondsOrNull(localTime), lowTimeDst)) {
-                log.error("setLocalTimeToLowOfU24 - low time not matched - was " + localTime + ", became " + lowTimeDst, new IllegalStateException());
-            }
-            if (!Objects.equals(highTimeSrc, highTimeDst)) {
-                log.error("setLocalTimeToLowOfU24 - high time not matched - was " + highTimeSrc + ", became " + highTimeDst, new IllegalStateException());
-            }
-        }
-
-        private LocalTime cutSecondsOrNull(final LocalTime localTime) {
-            return localTime != null
-                    ? localTime.withSecond(0).withNano(0)
-                    : null;
-        }
-
-        private LocalTime getLocalTimeFromU24(final DataField dataField, final int mask, final int shift) {
-            final int raw = storage.getAsIntUnsafe(id, dataField);
-            final int minutesRaw = (raw & mask) >> shift;
-            if (minutesRaw == 0) {
-                return null;
-            }
-            final int minutes = (minutesRaw == 1440) ? 0 : minutesRaw;
-            if (minutes > 1440) {
-                log.error("getLocalTimeFromU24 - minutes is " + minutes, new IllegalStateException());
-                return LocalTime.ofSecondOfDay(0);
-            }
-            return LocalTime.ofSecondOfDay(minutes * 60L);
-        }
-
-        private void setLocalTimeToU24(final DataField dataField, final LocalTime localTime, final int mask, final int shift) {
-            final Integer minutesRaw = localTime != null ? (localTime.toSecondOfDay() / 60) : null;
-            final int minutes = minutesRaw == null ? 0 : (minutesRaw == 0 ? 1440 : minutesRaw);
-            final int shiftedMinutes = minutes << shift;
-            final int raw = storage.getAsIntUnsafe(id, dataField);
-            final int anotherPart = (raw & ~mask);
-            storage.setUnsafe(id, dataField, shiftedMinutes | anotherPart);
-        }
-
-        private LocalDateTime addTimeToSameOrNextDay(final LocalDateTime previousLdt, final LocalTime nextLt) {
-            if (previousLdt == null || nextLt == null) {
-                return null;
-            }
-
-            final LocalDateTime draftNextLdt = previousLdt.toLocalDate().atTime(nextLt);
-            if (nextLt.toSecondOfDay() >= previousLdt.toLocalTime().toSecondOfDay()) {
-                return draftNextLdt;
-            } else {
-                return draftNextLdt.plusDays(1);
-            }
         }
 
         public int getPlannedDepartureTimeExp() {
