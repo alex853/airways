@@ -562,7 +562,7 @@ public class FlightMissions {
             setPlannedDepartureTimeExp(getPlannedDepartureWorldTime());
             setPlannedArrivalTimeExp(getPlannedArrivalWorldTime());
             setActualDepartureTimeExp(getActualDepartureWorldTime());
-            setActualTakeoffTimeExp(getActualTakeoffTimeExp());
+            setActualTakeoffTimeExp(getActualTakeoffWorldTime());
             setActualLandingTimeExp(getActualLandingWorldTime());
             setActualArrivalTimeExp(getActualArrivalWorldTime());
         }

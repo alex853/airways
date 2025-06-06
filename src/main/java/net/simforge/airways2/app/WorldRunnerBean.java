@@ -36,6 +36,8 @@ public class WorldRunnerBean implements DisposableBean {
         loadWorld();
 
         world.flightMissions().byId(1).get().convertNewToExp();
+        world.flightMissions().byId(2).get().convertNewToExp();
+        world.flightMissions().byId(78).get().convertNewToExp();
 
         thread = new Thread(() -> {
             int lastSaved = (int) (System.currentTimeMillis() / 1000);
