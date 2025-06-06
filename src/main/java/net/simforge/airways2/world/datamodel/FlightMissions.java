@@ -34,9 +34,9 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTime + plannedArrivalTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTime + actualTakeoffTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTimeExp + plannedArrivalTimeExp
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTimeExp + actualTakeoffTimeExp
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTimeExp + actualArrivalTimeExp
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
             .build();
 
@@ -53,9 +53,12 @@ public class FlightMissions {
     private final DataField plannedDepartureAndArrivalTimeField = storage.getDataField(6);
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
-    private final DataField plannedDepartureAndArrivalTimeFieldExp = storage.getDataField(9);
-    private final DataField actualDepartureAndTakeoffTimeFieldExp = storage.getDataField(10);
-    private final DataField actualLandingAndArrivalTimeFieldExp = storage.getDataField(11);
+    @SuppressWarnings("unused")
+    private final DataField reserved24bitsField1 = storage.getDataField(9);
+    @SuppressWarnings("unused")
+    private final DataField reserved24bitsField2 = storage.getDataField(10);
+    @SuppressWarnings("unused")
+    private final DataField reserved24bitsField3 = storage.getDataField(11);
 
     public FlightMissions() {
     }
@@ -198,53 +201,53 @@ public class FlightMissions {
         }
 
         public int getPlannedDepartureWorldTime() {
-            return getPlannedDepartureTimeNew();
+            return getTime12bit(plannedDepartureAndArrivalTimeField, true);
         }
 
         public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
             final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
             setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
-            setPlannedDepartureTimeNew(plannedDepartureWorldTime);
+            setTime12bit(plannedDepartureAndArrivalTimeField, true, plannedDepartureWorldTime);
         }
 
         public int getPlannedArrivalWorldTime() {
-            return getPlannedArrivalTimeNew();
+            return getTime12bit(plannedDepartureAndArrivalTimeField, false);
         }
 
         public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
-            setPlannedArrivalTimeNew(plannedArrivalWorldTime);
+            setTime12bit(plannedDepartureAndArrivalTimeField, false, plannedArrivalWorldTime);
         }
 
         public int getActualDepartureWorldTime() {
-            return getActualDepartureTimeNew();
+            return getTime12bit(actualDepartureAndTakeoffTimeField, true);
         }
 
         public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
-            setActualDepartureTimeNew(actualDepartureWorldTime);
+            setTime12bit(actualDepartureAndTakeoffTimeField, true, actualDepartureWorldTime);
         }
 
         public int getActualTakeoffWorldTime() {
-            return getActualTakeoffTimeNew();
+            return getTime12bit(actualDepartureAndTakeoffTimeField, false);
         }
 
         public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
-            setActualTakeoffTimeNew(actualTakeoffWorldTime);
+            setTime12bit(actualDepartureAndTakeoffTimeField, false, actualTakeoffWorldTime);
         }
 
         public int getActualLandingWorldTime() {
-            return getActualLandingTimeNew();
+            return getTime12bit(actualLandingAndArrivalTimeField, true);
         }
 
         public void setActualLandingWorldTime(final int actualLandingWorldTime) {
-            setActualLandingTimeNew(actualLandingWorldTime);
+            setTime12bit(actualLandingAndArrivalTimeField, true, actualLandingWorldTime);
         }
 
         public int getActualArrivalWorldTime() {
-            return getActualArrivalTimeNew();
+            return getTime12bit(actualLandingAndArrivalTimeField, false);
         }
 
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
-            setActualArrivalTimeNew(actualArrivalWorldTime);
+            setTime12bit(actualLandingAndArrivalTimeField, false, actualArrivalWorldTime);
         }
 
         private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
@@ -268,78 +271,6 @@ public class FlightMissions {
                 log.error("setDateOfFlight - too big day " + days, new IllegalStateException());
             }
             storage.setUnsafe(id, dateOfFlightField, days);
-        }
-
-        public int getPlannedDepartureTimeNew() {
-            return getTime12bit(plannedDepartureAndArrivalTimeField, true);
-        }
-
-        private void setPlannedDepartureTimeNew(final int plannedDepartureWorldTime) {
-            setTime12bit(plannedDepartureAndArrivalTimeField, true, plannedDepartureWorldTime);
-        }
-
-        public int getPlannedArrivalTimeNew() {
-            return getTime12bit(plannedDepartureAndArrivalTimeField, false);
-        }
-
-        private void setPlannedArrivalTimeNew(final int plannedArrivalWorldTime) {
-            setTime12bit(plannedDepartureAndArrivalTimeField, false, plannedArrivalWorldTime);
-        }
-
-        public int getActualDepartureTimeNew() {
-            return getTime12bit(actualDepartureAndTakeoffTimeField, true);
-        }
-
-        private void setActualDepartureTimeNew(final int actualDepartureWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeField, true, actualDepartureWorldTime);
-        }
-
-        public int getActualTakeoffTimeNew() {
-            return getTime12bit(actualDepartureAndTakeoffTimeField, false);
-        }
-
-        private void setActualTakeoffTimeNew(final int actualTakeoffWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeField, false, actualTakeoffWorldTime);
-        }
-
-        public int getActualLandingTimeNew() {
-            return getTime12bit(actualLandingAndArrivalTimeField, true);
-        }
-
-        private void setActualLandingTimeNew(final int actualLandingWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeField, true, actualLandingWorldTime);
-        }
-
-        public int getActualArrivalTimeNew() {
-            return getTime12bit(actualLandingAndArrivalTimeField, false);
-        }
-
-        private void setActualArrivalTimeNew(final int actualArrivalWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeField, false, actualArrivalWorldTime);
-        }
-
-        public int getPlannedDepartureTimeExp() {
-            return getTime12bit(plannedDepartureAndArrivalTimeFieldExp, true);
-        }
-
-        public int getPlannedArrivalTimeExp() {
-            return getTime12bit(plannedDepartureAndArrivalTimeFieldExp, false);
-        }
-
-        public int getActualDepartureTimeExp() {
-            return getTime12bit(actualDepartureAndTakeoffTimeFieldExp, true);
-        }
-
-        public int getActualTakeoffTimeExp() {
-            return getTime12bit(actualDepartureAndTakeoffTimeFieldExp, false);
-        }
-
-        public int getActualLandingTimeExp() {
-            return getTime12bit(actualLandingAndArrivalTimeFieldExp, true);
-        }
-
-        public int getActualArrivalTimeExp() {
-            return getTime12bit(actualLandingAndArrivalTimeFieldExp, false);
         }
 
         private int getTime12bit(final DataField dataField, final boolean high) {
@@ -390,12 +321,6 @@ public class FlightMissions {
             final int raw = storage.getAsIntUnsafe(id, dataField);
             final int anotherPart = (raw & ~mask);
             storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
-        }
-
-        public void resetExpToZeroes() {
-            storage.set(id, plannedDepartureAndArrivalTimeFieldExp, 0);
-            storage.set(id, actualDepartureAndTakeoffTimeFieldExp, 0);
-            storage.set(id, actualLandingAndArrivalTimeFieldExp, 0);
         }
 
         @Override
