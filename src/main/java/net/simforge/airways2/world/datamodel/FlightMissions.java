@@ -204,52 +204,46 @@ public class FlightMissions {
         public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
             final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
             setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
-            setPlannedDepartureTimeExp(plannedDepartureWorldTime);
             setPlannedDepartureTimeNew(plannedDepartureWorldTime);
         }
 
         public int getPlannedArrivalWorldTime() {
-            return getPlannedArrivalTimeExp();
+            return getPlannedArrivalTimeNew();
         }
 
         public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
-            setPlannedArrivalTimeExp(plannedArrivalWorldTime);
             setPlannedArrivalTimeNew(plannedArrivalWorldTime);
         }
 
         public int getActualDepartureWorldTime() {
-            return getActualDepartureTimeExp();
+            return getActualDepartureTimeNew();
         }
 
         public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
-            setActualDepartureTimeExp(actualDepartureWorldTime);
             setActualDepartureTimeNew(actualDepartureWorldTime);
         }
 
         public int getActualTakeoffWorldTime() {
-            return getActualTakeoffTimeExp();
+            return getActualTakeoffTimeNew();
         }
 
         public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
-            setActualTakeoffTimeExp(actualTakeoffWorldTime);
             setActualTakeoffTimeNew(actualTakeoffWorldTime);
         }
 
         public int getActualLandingWorldTime() {
-            return getActualLandingTimeExp();
+            return getActualLandingTimeNew();
         }
 
         public void setActualLandingWorldTime(final int actualLandingWorldTime) {
-            setActualLandingTimeExp(actualLandingWorldTime);
             setActualLandingTimeNew(actualLandingWorldTime);
         }
 
         public int getActualArrivalWorldTime() {
-            return getActualArrivalTimeExp();
+            return getActualArrivalTimeNew();
         }
 
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
-            setActualArrivalTimeExp(actualArrivalWorldTime);
             setActualArrivalTimeNew(actualArrivalWorldTime);
         }
 
@@ -422,14 +416,14 @@ public class FlightMissions {
             storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
         }
 
-        public void copyExpToNew() {
+/*        public void copyExpToNew() {
             setPlannedDepartureTimeNew(getPlannedDepartureWorldTime());
             setPlannedArrivalTimeNew(getPlannedArrivalWorldTime());
             setActualDepartureTimeNew(getActualDepartureWorldTime());
             setActualTakeoffTimeNew(getActualTakeoffWorldTime());
             setActualLandingTimeNew(getActualLandingWorldTime());
             setActualArrivalTimeNew(getActualArrivalWorldTime());
-        }
+        }*/
 
         @Override
         public String toString() {
