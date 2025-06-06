@@ -36,8 +36,7 @@ public class WorldRunnerBean implements DisposableBean {
     public void init() {
         loadWorld();
 
-        world.flightMissions().all().stream()
-                .filter(f -> f.getId() <= 500)
+        world.flightMissions().all()
                 .forEach(FlightMissions.Mission::convertNewToExp);
 
         thread = new Thread(() -> {
