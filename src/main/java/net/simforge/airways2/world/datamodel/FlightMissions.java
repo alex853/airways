@@ -322,48 +322,24 @@ public class FlightMissions {
             return getTime12bit(plannedDepartureAndArrivalTimeFieldExp, true);
         }
 
-        private void setPlannedDepartureTimeExp(final int plannedDepartureWorldTime) {
-            setTime12bit(plannedDepartureAndArrivalTimeFieldExp, true, plannedDepartureWorldTime);
-        }
-
         public int getPlannedArrivalTimeExp() {
             return getTime12bit(plannedDepartureAndArrivalTimeFieldExp, false);
-        }
-
-        private void setPlannedArrivalTimeExp(final int plannedArrivalWorldTime) {
-            setTime12bit(plannedDepartureAndArrivalTimeFieldExp, false, plannedArrivalWorldTime);
         }
 
         public int getActualDepartureTimeExp() {
             return getTime12bit(actualDepartureAndTakeoffTimeFieldExp, true);
         }
 
-        private void setActualDepartureTimeExp(final int actualDepartureWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeFieldExp, true, actualDepartureWorldTime);
-        }
-
         public int getActualTakeoffTimeExp() {
             return getTime12bit(actualDepartureAndTakeoffTimeFieldExp, false);
-        }
-
-        private void setActualTakeoffTimeExp(final int actualTakeoffWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeFieldExp, false, actualTakeoffWorldTime);
         }
 
         public int getActualLandingTimeExp() {
             return getTime12bit(actualLandingAndArrivalTimeFieldExp, true);
         }
 
-        private void setActualLandingTimeExp(final int actualLandingWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeFieldExp, true, actualLandingWorldTime);
-        }
-
         public int getActualArrivalTimeExp() {
             return getTime12bit(actualLandingAndArrivalTimeFieldExp, false);
-        }
-
-        private void setActualArrivalTimeExp(final int actualArrivalWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeFieldExp, false, actualArrivalWorldTime);
         }
 
         private int getTime12bit(final DataField dataField, final boolean high) {
