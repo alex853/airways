@@ -368,7 +368,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_blocksOff() {
         return worldAccess.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
+            if (mission1.isEmpty()) {
+                log.warn("erroneous case, f/m == 0, in mission_blocksOff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
+            }
+            final FlightMissions.Mission mission = mission1.get();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
                 world.flightMissionControl().blocksOff(mission);
