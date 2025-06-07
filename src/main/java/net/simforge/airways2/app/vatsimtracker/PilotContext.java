@@ -384,7 +384,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_takeoff() {
         return worldAccess.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
+            if (mission1.isEmpty()) {
+                log.warn("erroneous case, f/m == 0, in mission_takeoff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
+            }
+            final FlightMissions.Mission mission = mission1.get();
 
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
                 world.flightMissionControl().blocksOff(mission);
@@ -403,7 +408,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_landing() {
         return worldAccess.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
+            if (mission1.isEmpty()) {
+                log.warn("erroneous case, f/m == 0, in mission_landing, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
+            }
+            final FlightMissions.Mission mission = mission1.get();
 
             if (mission.getStatus() == FlightMissions.Status.Flying) {
                 world.flightMissionControl().landing(mission);
@@ -419,7 +429,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_blocksOnAndFinish() {
         return worldAccess.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
+            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
+            if (mission1.isEmpty()) {
+                log.warn("erroneous case, f/m == 0, in v, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                return null; // todo ak1 erroneous case, need to investigate
+            }
+            final FlightMissions.Mission mission = mission1.get();
 
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
                 world.flightMissionControl().blocksOn(mission);
@@ -495,6 +510,12 @@ public class PilotContext {
     private PlanningStatus doPreflightStatusAnalysis(final Position position) {
         if (position.getFpAircraftType() == null) {
             return PlanningStatus.FP_TypeUnknown;
+        } else if (!position.isOnGround()) {
+            return PlanningStatus.FP_NotOnGround;
+        } else if (!position.isInAirport()) {
+            return PlanningStatus.FP_NotInAirport;
+        } else if (position.getAirportIcao() == null) {
+            return PlanningStatus.FP_NoPositionAirport;
         } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
             return PlanningStatus.FP_NoRoute;
         } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
