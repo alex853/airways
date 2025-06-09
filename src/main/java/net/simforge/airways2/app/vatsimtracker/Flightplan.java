@@ -36,7 +36,11 @@ public class Flightplan {
     }
 
     public boolean isValid() {
-        return doPreflightStatusAnalysis() == PlanningStatus.AllGood;
+        return determineStatus() == Status.AllGood;
+    }
+
+    public Status getStatus() {
+        return determineStatus();
     }
 
     public boolean isSame(final Flightplan flightplan) {
@@ -50,21 +54,32 @@ public class Flightplan {
         return destination.equals(airportIcao);
     }
 
-    private PlanningStatus doPreflightStatusAnalysis() {
+    private Status determineStatus() {
         if (aircraftType == null) {
-            return PlanningStatus.FP_TypeUnknown;
+            return Status.FP_TypeUnknown;
         } else if (filedAt == null) {
-            return PlanningStatus.FP_NoPositionAirport;
+            return Status.FP_NoPositionAirport;
         } else if (departure == null || destination == null) {
-            return PlanningStatus.FP_NoRoute;
+            return Status.FP_NoRoute;
         } else if (!departure.equals(filedAt)) {
-            return PlanningStatus.FP_DepWrong;
+            return Status.FP_DepWrong;
         } else if (!PilotContext.worldIcaos.contains(departure)) {
-            return PlanningStatus.FP_DepWrong;
+            return Status.FP_DepWrong;
         } else if (!PilotContext.worldIcaos.contains(destination)) {
-            return PlanningStatus.FP_DestOutWorld;
+            return Status.FP_DestOutWorld;
         } else {
-            return PlanningStatus.AllGood;
+            return Status.AllGood;
         }
+    }
+
+    public enum Status {
+        AllGood,
+        FP_TypeUnknown,
+        FP_NotOnGround,
+        FP_NotInAirport,
+        FP_NoPositionAirport,
+        FP_NoRoute,
+        FP_DepWrong,
+        FP_DestOutWorld
     }
 }

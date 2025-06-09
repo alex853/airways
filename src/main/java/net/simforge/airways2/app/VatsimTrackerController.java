@@ -37,8 +37,7 @@ public class VatsimTrackerController {
                     return new PilotDto(
                             c.getPilotNumber(),
                             c.getFlightStage().name(),
-                            null,
-                            null,
+                            c.getFlightplanStatus() != null ? c.getFlightplanStatus().name() : null,
                             df3digits.format(c.getTrackTailDistance()),
                             c.getLocationAirport(),
                             c.getAircraftType(),
@@ -58,8 +57,7 @@ public class VatsimTrackerController {
     private static class PilotDto {
         private int pilotNumber;
         private String flightStage;
-        private String planningStatus;
-        private String overallStatus;
+        private String flightplanStatus;
         private String lastTrackedDistance;
         private String locationIcao;
         private String aircraftType;

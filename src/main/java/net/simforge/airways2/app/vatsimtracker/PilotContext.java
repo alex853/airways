@@ -59,6 +59,10 @@ public class PilotContext {
         return flightStage;
     }
 
+    public Flightplan.Status getFlightplanStatus() {
+        return flightplan != null ? flightplan.getStatus() : null;
+    }
+
     public String getPlannedDeparture() {
         return flightplan != null ? flightplan.getDeparture() : null;
     }
