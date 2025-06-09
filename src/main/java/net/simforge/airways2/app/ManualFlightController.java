@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,8 @@ public class ManualFlightController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
-            world.flightMissionControl().landing(flight);
+            final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
+            world.flightMissionControl().landing(flight, landingAirport);
             return EnhancedFlightMissionDto.fromMission(world, flight);
         });
     }

@@ -4,6 +4,7 @@ public enum FlightStage {
     Preflight,
     Departing,
     Flying,
+    FlyingOffline,
     Arriving,
     Arrived
 }

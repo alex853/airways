@@ -79,10 +79,8 @@ public class VatsimTrackerTest {
         nextReport = ReportUtils.toTimestamp(Time.toLdt(startTime));
 
         vatsimPilotGoesOffline();
-        positionWhileFlyingOffline = null;
+
         pilotContext = null;
-        simulationMode = SimulationMode.Nope;
-        simulationActualDestinationAirportIcao = null;
     }
 
     @Test
@@ -386,7 +384,7 @@ public class VatsimTrackerTest {
     }
 
     @Test
-    public void valid_flight_till_landing___then___landing_at_wrong_airport_in_the_world___flight_should_be_finished___aircraft_is_at_that_wrong_airport() {
+    public void valid_flight_till_landing___then_landing_at_wrong_airport_in_the_world___flight_should_be_finished___aircraft_is_at_that_wrong_airport() {
         vatsimPilotGoesOnlineParkedAt(egll, "A320");
         vatsimPilotFilesFlightplan("EGLL", "EGCC");
         runWorldMins(2);
@@ -535,7 +533,7 @@ public class VatsimTrackerTest {
         vatsimPilotStartsTaxiingOut();
         runWorldMins(5);
         vatsimPilotMakesTakeoff();
-        runWorldMins(15);
+        runWorldMins(10);
         vatsimPilotJumpsToAirportWhileFlying(egss);
         runWorldMins(3);
 
@@ -567,10 +565,10 @@ public class VatsimTrackerTest {
         vatsimPilotStartsTaxiingOut();
         runWorldMins(5);
         vatsimPilotMakesTakeoff();
-        runWorldMins(15);
+        runWorldMins(10);
 
         vatsimPilotGoesOfflineWhileFlyingAndWillBeBackOnline();
-        runWorldMins(5);
+        runWorldMins(3);
 
         vatsimPilotGoesBackOnlineWhileFlying();
 
@@ -693,6 +691,9 @@ public class VatsimTrackerTest {
 
     private void vatsimPilotGoesOffline() {
         currentVatsimPosition = null;
+        simulationMode = SimulationMode.Nope;
+        positionWhileFlyingOffline = null;
+        simulationActualDestinationAirportIcao = null;
     }
 
     private void vatsimPilotGoesOnlineParkedAt(final Airports.Airport airport, final String aircraftType) {
@@ -864,58 +865,55 @@ public class VatsimTrackerTest {
 
         nextReport = ReportUtils.toTimestamp(ReportUtils.fromTimestampJava(nextReport).plusMinutes(2));
 
-        if (currentVatsimPosition != null) {
-            switch (simulationMode) {
-                case Nope:
-                    break;
-                case TaxiingOut: {
-                    checkArgument(Position.create(currentVatsimPosition).isInAirport());
-                    final Geo.Coords newPosition = Geo.destination(
-                            getCurrentVatsimPositionCoords(),
-                            0,
-                            TAXI_SPEED_KTS * (2.0 / 60.0));
-                    currentVatsimPosition.setLatitude(newPosition.getLat());
-                    currentVatsimPosition.setLongitude(newPosition.getLon());
-                    break;
-                }
-                case Flying, FlyingWhileShortDisconnect: {
-                    checkArgument(!Position.create(currentVatsimPosition).isOnGround());
-                    final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
-                    final Geo.Coords currentVatsimPositionCoords = simulationMode == SimulationMode.Flying
-                            ? getCurrentVatsimPositionCoords()
-                            : Geo.coords(positionWhileFlyingOffline.getLatitude(), positionWhileFlyingOffline.getLongitude());
-                    final double bearing = Geo.bearing(currentVatsimPositionCoords, destinationCoords);
-                    final int tas = AircraftPerformanceDatabase.getPerformance(currentVatsimPosition.getFpAircraft()).orElseThrow().getCruiseTas();
-                    final Geo.Coords newPosition = Geo.destination(currentVatsimPositionCoords, bearing, tas * (2.0 / 60.0));
+        switch (simulationMode) {
+            case Nope:
+                break;
+            case TaxiingOut: {
+                checkArgument(Position.create(currentVatsimPosition).isInAirport());
+                final Geo.Coords newPosition = Geo.destination(
+                        getCurrentVatsimPositionCoords(),
+                        0,
+                        TAXI_SPEED_KTS * (2.0 / 60.0));
+                currentVatsimPosition.setLatitude(newPosition.getLat());
+                currentVatsimPosition.setLongitude(newPosition.getLon());
+                break;
+            }
+            case Flying, FlyingWhileShortDisconnect: {
+                final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
+                final Geo.Coords currentVatsimPositionCoords = simulationMode == SimulationMode.Flying
+                        ? getCurrentVatsimPositionCoords()
+                        : Geo.coords(positionWhileFlyingOffline.getLatitude(), positionWhileFlyingOffline.getLongitude());
+                final double bearing = Geo.bearing(currentVatsimPositionCoords, destinationCoords);
+                final int tas = AircraftPerformanceDatabase.getPerformance(simulationMode == SimulationMode.Flying ? currentVatsimPosition.getFpAircraft() : positionWhileFlyingOffline.getFpAircraft()).orElseThrow().getCruiseTas();
+                final Geo.Coords newPosition = Geo.destination(currentVatsimPositionCoords, bearing, tas * (2.0 / 60.0));
 
-                    if (Geo.distance(currentVatsimPositionCoords, destinationCoords) < Geo.distance(newPosition, destinationCoords)) {
-                        if (simulationMode == SimulationMode.Flying) {
-                            simulationMode = SimulationMode.TimeToLand;
-                        } else {
-                            throw new IllegalStateException("TimeToLand reached while in FlyingWhileShortDisconnect");
-                        }
+                if (Geo.distance(currentVatsimPositionCoords, destinationCoords) < Geo.distance(newPosition, destinationCoords)) {
+                    if (simulationMode == SimulationMode.Flying) {
+                        simulationMode = SimulationMode.TimeToLand;
                     } else {
-                        if (simulationMode == SimulationMode.Flying) {
-                            currentVatsimPosition.setLatitude(newPosition.getLat());
-                            currentVatsimPosition.setLongitude(newPosition.getLon());
-                        } else {
-                            positionWhileFlyingOffline.setLatitude(newPosition.getLat());
-                            positionWhileFlyingOffline.setLongitude(newPosition.getLon());
-                        }
+                        throw new IllegalStateException("TimeToLand reached while in FlyingWhileShortDisconnect");
                     }
-                    break;
+                } else {
+                    if (simulationMode == SimulationMode.Flying) {
+                        currentVatsimPosition.setLatitude(newPosition.getLat());
+                        currentVatsimPosition.setLongitude(newPosition.getLon());
+                    } else {
+                        positionWhileFlyingOffline.setLatitude(newPosition.getLat());
+                        positionWhileFlyingOffline.setLongitude(newPosition.getLon());
+                    }
                 }
-                case TaxiingIn: {
-                    checkArgument(Position.create(currentVatsimPosition).isInAirport());
-                    final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
-                    final Geo.Coords newPosition = Geo.destination(
-                            destinationCoords,
-                            Math.random()*360,
-                            TAXI_SPEED_KTS * (2.0 / 60.0) / 2);
-                    currentVatsimPosition.setLatitude(newPosition.getLat());
-                    currentVatsimPosition.setLongitude(newPosition.getLon());
-                    break;
-                }
+                break;
+            }
+            case TaxiingIn: {
+                checkArgument(Position.create(currentVatsimPosition).isInAirport());
+                final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
+                final Geo.Coords newPosition = Geo.destination(
+                        destinationCoords,
+                        Math.random() * 360,
+                        TAXI_SPEED_KTS * (2.0 / 60.0) / 2);
+                currentVatsimPosition.setLatitude(newPosition.getLat());
+                currentVatsimPosition.setLongitude(newPosition.getLon());
+                break;
             }
         }
     }

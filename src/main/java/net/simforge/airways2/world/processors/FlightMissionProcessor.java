@@ -117,7 +117,7 @@ public class FlightMissionProcessor {
         } else {
 
             if (!mission.isModePc()) {
-                world.flightMissionControl().landing(mission);
+                world.flightMissionControl().landing(mission, toAirport);
             }
         }
     }

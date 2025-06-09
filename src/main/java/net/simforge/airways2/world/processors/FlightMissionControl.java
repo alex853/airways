@@ -121,7 +121,7 @@ public class FlightMissionControl {
         log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
-    public void landing(final FlightMissions.Mission mission) {
+    public void landing(final FlightMissions.Mission mission, Airports.Airport landingAirport) {
         // todo ak3 Pilot pilot = ctx.getPilot();
         // todo ak3 Person person = pilot.getPerson();
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
@@ -134,12 +134,10 @@ public class FlightMissionControl {
         // todo ak3        person.setLocationAirport(flight.getToAirport());
         // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
-        final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingIn);
-        aircraft.setLocationAirportId(locationAirport.getId());
-        aircraft.setLocationLatitude(locationAirport.getLatitude());
-        aircraft.setLocationLongitude(locationAirport.getLongitude());
+        aircraft.setLocationAirportId(landingAirport.getId());
+        aircraft.setLocationLatitude(landingAirport.getLatitude());
+        aircraft.setLocationLongitude(landingAirport.getLongitude());
 
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
