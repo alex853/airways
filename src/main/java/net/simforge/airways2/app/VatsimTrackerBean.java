@@ -188,7 +188,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
     private void loadStatus() throws IOException {
         if (!lastProcessedReportFile.exists()
-                || contextsFile.exists()) {
+                || !contextsFile.exists()) {
             log.warn("can't find status data, vatsim tracker will start from the scratch");
             return;
         }
