@@ -160,13 +160,14 @@ public class PilotContext {
                         final FlightMissions.Mission oldMission = mission_read();
                         final Flightplan oldFlightplan = flightplan;
                         mission_cancelBeforeTakeoffIfExists();
-                        flightMissionId = 0;
-                        flightplan = null;
-                        trackTail.clear();
 
                         log.info("{} - Event 'cancelled', new flightplan differs {}", missionLogHead(oldMission, oldFlightplan), newFlightplan);
                         pilotLog("Event 'cancelled' as new flightplan differs");
                     }
+
+                    flightMissionId = 0;
+                    flightplan = null;
+                    trackTail.clear();
                 }
 
                 if (newFlightplan.isValid() && flightplan == null) {
@@ -176,10 +177,12 @@ public class PilotContext {
 
                     log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'dispatched' == via some correction");
+                } else {
+                    flightplan = newFlightplan;
                 }
 
                 if (flightStage == FlightStage.Preflight
-                        && newFlightplan.isValid()
+                        && flightplan.isValid()
                         && newTrackTrailDistance > 0.2) { // threshold
                     flightStage = FlightStage.Departing;
 
