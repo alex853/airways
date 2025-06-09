@@ -619,11 +619,11 @@ public class PilotContext {
         final int row = csv.addRow();
         csv.set(row, CSV_PILOT_NUMBER, String.valueOf(pilotNumber));
         csv.set(row, CSV_FLIGHT_STAGE, flightStage.name());
-        csv.set(row, CSV_PLAN_FILED_AT, flightplan.getFiledAt());
-        csv.set(row, CSV_AIRCRAFT_TYPE, flightplan.getAircraftType());
+        csv.set(row, CSV_PLAN_FILED_AT, flightplan != null ? flightplan.getFiledAt() : null);
+        csv.set(row, CSV_AIRCRAFT_TYPE, flightplan != null ? flightplan.getAircraftType() : null);
         csv.set(row, CSV_AIRCRAFT_REG_NO, aircraftRegNo);
-        csv.set(row, CSV_PLANNED_DEPARTURE, flightplan.getDeparture());
-        csv.set(row, CSV_PLANNED_DESTINATION, flightplan.getDestination());
+        csv.set(row, CSV_PLANNED_DEPARTURE, flightplan != null ? flightplan.getDeparture() : null);
+        csv.set(row, CSV_PLANNED_DESTINATION, flightplan != null ?  flightplan.getDestination() : null);
         csv.set(row, CSV_FLIGHT_MISSION_ID, String.valueOf(flightMissionId));
         csv.set(row, CSV_POSITION_LAST_SEEN, positionLastSeen);
         csv.set(row, CSV_POSITION_IS_ON_GROUND, String.valueOf(positionIsOnGround));
@@ -668,7 +668,9 @@ public class PilotContext {
         c.aircraftRegNo = csv.value(row, CSV_AIRCRAFT_REG_NO);
         final String plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
         final String plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
-        c.flightplan = new Flightplan(filedAt, aircraftType, plannedDeparture, plannedDestination);
+        if (filedAt != null && aircraftType != null) {
+            c.flightplan = new Flightplan(filedAt, aircraftType, plannedDeparture, plannedDestination);
+        }
         c.flightMissionId = Integer.parseInt(csv.value(row, CSV_FLIGHT_MISSION_ID));
         c.positionLastSeen = csv.value(row, CSV_POSITION_LAST_SEEN);
         c.positionIsOnGround = Boolean.parseBoolean(csv.value(row, CSV_POSITION_IS_ON_GROUND));
