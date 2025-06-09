@@ -60,11 +60,11 @@ public class PilotContext {
     }
 
     public String getPlannedDeparture() {
-        return flightplan.getDeparture();
+        return flightplan != null ? flightplan.getDeparture() : null;
     }
 
     public String getPlannedDestination() {
-        return flightplan.getDestination();
+        return flightplan != null ? flightplan.getDestination() : null;
     }
 
     public String getLocationAirport() {
@@ -72,7 +72,7 @@ public class PilotContext {
     }
 
     public String getAircraftType() {
-        return flightplan.getAircraftType();
+        return flightplan != null ? flightplan.getAircraftType() : null;
     }
 
     public String getAircraftRegNo() {
