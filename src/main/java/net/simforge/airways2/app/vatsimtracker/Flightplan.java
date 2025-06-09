@@ -44,10 +44,18 @@ public class Flightplan {
     }
 
     public boolean isSame(final Flightplan flightplan) {
-        return filedAt.equals(flightplan.filedAt)
+        return allFieldsFiled()
+                && filedAt.equals(flightplan.filedAt)
                 && aircraftType.equals(flightplan.aircraftType)
                 && departure.equals(flightplan.departure)
                 && destination.equals(flightplan.destination);
+    }
+
+    private boolean allFieldsFiled() {
+        return filedAt != null
+                && aircraftType != null
+                && departure != null
+                && destination != null;
     }
 
     public boolean isValidDestinationLocation(final String airportIcao) {
