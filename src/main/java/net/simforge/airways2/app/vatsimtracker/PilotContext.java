@@ -139,35 +139,27 @@ public class PilotContext {
                 flightStage = FlightStage.Flying;
                 if (flightplan != null && flightplan.isValid()) {
                     final FlightMissions.Mission mission = mission_takeoff();
-
                     log.info("{} - Event 'takeoff'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'takeoff'");
                 } else {
-                    final FlightMissions.Mission oldMission = mission_read();
-                    final Flightplan oldFlightplan = flightplan;
-                    if (oldMission != null) {
+                    if (flightMissionId != 0) {
+                        log.info("{} - Event 'takeoff' with invalid flightplan, cancelling and removal", missionLogHead(mission_read(), flightplan));
+                        pilotLog("Event 'takeoff' with invalid flightplan, cancelling and removal");
                         mission_cancelBeforeTakeoffIfExists();
                     }
 
-                    log.info("{} - Event 'takeoff' with invalid flightplan, cancelling and removal", missionLogHead(oldMission, oldFlightplan));
-                    pilotLog("Event 'takeoff' with invalid flightplan, cancelling and removal");
-
+                    resetFlightInfo();
                     shouldBeRemoved = true;
                 }
             } else {
                 if (flightplan != null && !newFlightplan.isSame(flightplan)) {
                     if (flightMissionId != 0) {
-                        final FlightMissions.Mission oldMission = mission_read();
-                        final Flightplan oldFlightplan = flightplan;
-                        mission_cancelBeforeTakeoffIfExists();
-
-                        log.info("{} - Event 'cancelled', new flightplan differs {}", missionLogHead(oldMission, oldFlightplan), newFlightplan);
+                        log.info("{} - Event 'cancelled', new flightplan differs {}", missionLogHead(mission_read(), flightplan), newFlightplan);
                         pilotLog("Event 'cancelled' as new flightplan differs");
+                        mission_cancelBeforeTakeoffIfExists();
                     }
 
-                    flightMissionId = 0;
-                    flightplan = null;
-                    trackTail.clear();
+                    resetFlightInfo();
                 }
 
                 if (newFlightplan.isValid() && flightplan == null) {
@@ -197,9 +189,7 @@ public class PilotContext {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying();
-                flightMissionId = 0;
-                flightplan = null;
-                trackTail.clear();
+                resetFlightInfo();
 
                 log.info("{} - Event 'JUMP IN THE AIR', cancelling and removing", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
@@ -224,9 +214,7 @@ public class PilotContext {
                     final FlightMissions.Mission oldMission = mission_read();
                     final Flightplan oldFlightplan = flightplan;
                     mission_cancelFromFlying(); // todo ak3 improvement is possible here?
-                    flightMissionId = 0;
-                    flightplan = null;
-                    trackTail.clear();
+                    resetFlightInfo();
 
                     log.info("{} - Event 'landing' on airport out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
                     pilotLog("Event 'landing' on airport out world, cancelling and removing");
@@ -266,9 +254,7 @@ public class PilotContext {
             if (removalCounter == 0) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
-                flightMissionId = 0;
-                flightplan = null;
-                trackTail.clear();
+                resetFlightInfo();
 
                 log.error("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
@@ -295,32 +281,25 @@ public class PilotContext {
 
     public void noPositionInReport(final String report) {
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
-            final FlightMissions.Mission oldMission = mission_read();
-            final Flightplan oldFlightplan = flightplan;
-            mission_cancelBeforeTakeoffIfExists();
-            flightMissionId = 0;
-            flightplan = null;
-            trackTail.clear();
-
-            log.info("{} - Event 'OFFLINE' on {} stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan), flightStage);
-            pilotLog("Event 'offline' on " + flightStage + " stage, cancelling and removing");
+            if (flightMissionId != 0) {
+                log.info("{} - Event 'OFFLINE' on {} stage, cancelling and removing", missionLogHead(mission_read(), flightplan), flightStage);
+                pilotLog("Event 'offline' on " + flightStage + " stage, cancelling and removing");
+                mission_cancelBeforeTakeoffIfExists();
+            }
+            resetFlightInfo();
             shouldBeRemoved = true;
         } else if (flightStage == FlightStage.Flying) {
-            final FlightMissions.Mission mission = mission_read();
+            log.info("{} - Event 'OFFLINE' on Flying stage, grace period started", missionLogHead(mission_read(), flightplan));
+            pilotLog("Event 'offline' on Flying stage, grace period started");
             flightStage = FlightStage.FlyingOffline;
-
-            log.info("{} - Event 'OFFLINE' from AllGood and on Flying stage, grace period started", missionLogHead(mission, flightplan));
-            pilotLog("Event 'offline' from AllGood on Flying stage, grace period started");
         } else if (flightStage == FlightStage.FlyingOffline) {
             if (getElapsedSecondsSinceLastSeen(report) > 10 * Time.ONE_MINUTE) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
-                flightMissionId = 0;
-                flightplan = null;
-                trackTail.clear();
+                resetFlightInfo();
 
-                log.info("{} - Event 'CANCEL' from AllGood and on FlyingOffline stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
+                log.info("{} - Event 'CANCEL' on FlyingOffline stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'cancel' from AllGood on FlyingOffline stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
@@ -332,9 +311,7 @@ public class PilotContext {
             final FlightMissions.Mission oldMission = mission_read();
             final Flightplan oldFlightplan = flightplan;
             mission_blocksOnAndFinish();
-            flightMissionId = 0;
-            flightplan = null;
-            trackTail.clear();
+            resetFlightInfo();
 
             log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
@@ -342,9 +319,7 @@ public class PilotContext {
         } else if (flightStage == FlightStage.Arrived) {
             final FlightMissions.Mission oldMission = mission_read();
             final Flightplan oldFlightplan = flightplan;
-            flightMissionId = 0;
-            flightplan = null;
-            trackTail.clear();
+            resetFlightInfo();
 
             log.error("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
@@ -352,6 +327,12 @@ public class PilotContext {
         } else {
             throw new IllegalStateException();
         }
+    }
+
+    private void resetFlightInfo() {
+        flightMissionId = 0;
+        flightplan = null;
+        trackTail.clear();
     }
 
     private boolean checkTrackContinuationCriterion(final Position nextPosition) {
@@ -510,8 +491,7 @@ public class PilotContext {
     private void mission_cancelBeforeTakeoffIfExists() {
         worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
-                log.warn("erroneous case, f/m == 0, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                return null;
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
