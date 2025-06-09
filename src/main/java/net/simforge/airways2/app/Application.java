@@ -8,6 +8,17 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+// todo ak2 aircraft types
+//          A306
+//          A32N -> A20N mapping
+//          E170,E175,E190,E195 and E2
+//          SU95
+//          B777 -> B773 mapping
+//          MD11
+//          AT76 and related
+//          B722
+//          B732
+//          MD82
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);

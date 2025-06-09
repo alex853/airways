@@ -246,7 +246,7 @@ public class PilotContext {
                 log.info("{} - Event 'blocks-on'", missionLogHead(mission));
                 pilotLog("Event 'blocks-on'");
 
-                removalCounter = 5; // it will stay Arrived for 5 reports and then will be removed
+                removalCounter = 3; // it will stay Arrived for 3 reports and then will be removed
             }
         } else if (flightStage == FlightStage.Arrived) {
             if (removalCounter == 0) {
