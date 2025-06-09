@@ -31,7 +31,7 @@ public class HealthController {
     private VatsimTrackerBean vatsimTrackerBean;
 
     @GetMapping("/status")
-    public ResponseEntity<StatusDto> downloadDirect() {
+    public ResponseEntity<StatusDto> getStatus() {
         final int worldTime = worldBean.read(World::getWorldTime);
         final LocalDateTime worldTimeLdt = Time.toLdt(worldTime);
 
