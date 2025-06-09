@@ -46,11 +46,11 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
 
                 lock.writeLock().lock();
                 try {
-                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - world.process")) {
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - world.process")) {
                         needToCatchTime = world.process(now);
                     }
 
-                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - action.perform")) {
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - action.perform")) {
                         while (!actionQueue.isEmpty()) {
                             final ActionContext<?> actionContext = actionQueue.poll();
                             actionContext.perform(world);
@@ -58,7 +58,7 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
                     }
 
                     if (lastSaved + saveWorldPeriod < now) {
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - saveWorld")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - saveWorld")) {
                             saveWorld();
                         }
                         lastSaved = now;

@@ -26,17 +26,13 @@ import java.util.stream.Collectors;
 public class PilotContext {
     private static final Logger log = LoggerFactory.getLogger(PilotContext.class);
     private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
+    public static final Set<String> worldIcaos = new TreeSet<>();
 
     private final WorldAccess worldAccess;
-    private final Set<String> worldIcaos;
     private final int pilotNumber;
     private FlightStage flightStage;
-    private PlanningStatus planningStatus;
-    private String aircraftType;
+    private Flightplan flightplan;
     private String aircraftRegNo;
-    private String plannedDeparture;
-    private String plannedDestination;
-    private OverallStatus overallStatus;
     private int flightMissionId;
     private boolean positionIsOnGround;
     private String positionAirportIcao;
@@ -45,12 +41,14 @@ public class PilotContext {
     private String positionLastSeen;
     private int removalCounter;
     private boolean shouldBeRemoved;
-    private final Queue<Float> distanceLegs = new LinkedList<>();
+    private final Queue<TrackLeg> trackTail = new LinkedList<>();
 
     public PilotContext(final WorldAccess worldAccess, final int pilotNumber) {
         this.worldAccess = worldAccess;
-        this.worldIcaos = worldAccess.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
         this.pilotNumber = pilotNumber;
+        if (worldIcaos.isEmpty()) {
+            worldIcaos.addAll(worldAccess.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet())));
+        }
     }
 
     public int getPilotNumber() {
@@ -61,16 +59,12 @@ public class PilotContext {
         return flightStage;
     }
 
-    public PlanningStatus getPlanningStatus() {
-        return planningStatus;
-    }
-
     public String getPlannedDeparture() {
-        return plannedDeparture;
+        return flightplan.getDeparture();
     }
 
     public String getPlannedDestination() {
-        return plannedDestination;
+        return flightplan.getDestination();
     }
 
     public String getLocationAirport() {
@@ -78,15 +72,11 @@ public class PilotContext {
     }
 
     public String getAircraftType() {
-        return aircraftType;
+        return flightplan.getAircraftType();
     }
 
     public String getAircraftRegNo() {
         return aircraftRegNo;
-    }
-
-    public OverallStatus getOverallStatus() {
-        return overallStatus;
     }
 
     public int getFlightMissionId() {
@@ -101,151 +91,137 @@ public class PilotContext {
         return removalCounter;
     }
 
-    public float getLastTrackedDistance() {
-        return distanceLegs.stream().reduce(0.0f, Float::sum);
+    public double getTrackTailDistance() {
+        return TrackLeg.distance(trackTail);
     }
 
     public void newPilotContextInAirport(final Position position) {
-        copyPositionFields(position);
-
         flightStage = FlightStage.Preflight;
-        planningStatus = doPreflightStatusAnalysis(position);
+        final Flightplan newFlightplan = new Flightplan(position);
 
-        if (planningStatus == PlanningStatus.AllGood) {
-            overallStatus = OverallStatus.AllGood;
-            aircraftType = position.getFpAircraftType();
-            aircraftRegNo = position.getRegNo();
-            plannedDeparture = position.getFpDeparture();
-            plannedDestination = position.getFpDestination();
-
+        if (newFlightplan.isValid()) {
+            flightplan = newFlightplan;
+            copyPositionFields(position, trackTail);
             final FlightMissions.Mission mission = mission_dispatchNewAndStart();
             flightMissionId = mission.getId();
 
-            log.info("{} - Event 'dispatched'", missionLogHead(mission));
+            log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
             pilotLog("Event 'dispatched' == via new flight in airport");
         } else {
-            overallStatus = OverallStatus.Restorable;
-            pilotLog("new flight in Restorable status");
+            pilotLog("new pilot context in non-valid state");
         }
+
+        copyPositionFields(position, trackTail);
     }
 
-    public void nextReportPosition(final Position nextPosition) {
-        final PlanningStatus newPlanningStatus = doPreflightStatusAnalysis(nextPosition);
-        final OverallStatus newOverallStatus = newPlanningStatus == PlanningStatus.AllGood ? OverallStatus.AllGood : OverallStatus.Restorable;
+    public void nextReportPosition(final Position newPosition) {
+        final Flightplan newFlightplan = new Flightplan(newPosition);
 
-        if (overallStatus == OverallStatus.Irreversible) { // todo ak1 it smells bad, what if f/p changed?
-            if (removalCounter == 0) {
-                shouldBeRemoved = true;
-            } else {
-                removalCounter--;
-            }
-            return;
-        }
+        final boolean takeoff = positionIsOnGround && !newPosition.isOnGround();
+        final boolean landing = !positionIsOnGround && newPosition.isOnGround();
 
-        final boolean takeoff = positionIsOnGround && !nextPosition.isOnGround();
-        final boolean landing = !positionIsOnGround && nextPosition.isOnGround();
+        final Queue<TrackLeg> newTrackTail = (positionLatitude != 0 || positionLongitude != 0)
+                ? TrackLeg.add(trackTail,
+                Geo.distance(Geo.coords(positionLatitude, positionLongitude), newPosition.getCoords()),
+                Duration.between(ReportUtils.fromTimestampJava(positionLastSeen), ReportUtils.fromTimestampJava(newPosition.getReportInfo().getReport())).getSeconds() / 3600.0)
+                : new LinkedList<>();
 
-        final Queue<Float> nextDistanceLegs = new LinkedList<>(distanceLegs);
-        if (positionLatitude != 0) {
-            nextDistanceLegs.add((float) Geo.distance(Geo.coords(positionLatitude, positionLongitude), nextPosition.getCoords()));
-        }
-        while (nextDistanceLegs.size() > 3) {
-            nextDistanceLegs.poll();
-        }
-        final double nextDistance = nextDistanceLegs.stream().reduce(0.0f, Float::sum);
-        final boolean trackContinued = checkTrackContinuationCriterion(nextPosition);
-        final boolean noHugeJumpDetected = checkNoHugeJumpDetectedCriterion(nextPosition);
+        final double newTrackTrailDistance = TrackLeg.distance(newTrackTail);
+        final boolean trackContinued = checkTrackContinuationCriterion(newPosition);
+        final boolean noHugeJumpDetected = checkNoHugeJumpDetectedCriterion(newPosition);
 
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
             if (takeoff) {
                 flightStage = FlightStage.Flying;
-                if (overallStatus == OverallStatus.AllGood) {
+                if (flightplan != null && flightplan.isValid()) {
                     final FlightMissions.Mission mission = mission_takeoff();
 
-                    log.info("{} - Event 'takeoff'", missionLogHead(mission));
+                    log.info("{} - Event 'takeoff'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'takeoff'");
                 } else {
                     final FlightMissions.Mission oldMission = mission_read();
+                    final Flightplan oldFlightplan = flightplan;
                     if (oldMission != null) {
                         mission_cancelBeforeTakeoffIfExists();
                     }
 
-                    log.info("{} - Event 'takeoff' from {} ({}) on {} stage, cancelling and removal", missionLogHead(oldMission), overallStatus, planningStatus, flightStage);
-                    pilotLog("Event 'takeoff' from " + overallStatus + " (" + planningStatus + ") on " + flightStage + " stage, cancelling and removal");
+                    log.info("{} - Event 'takeoff' with invalid flightplan, cancelling and removal", missionLogHead(oldMission, oldFlightplan));
+                    pilotLog("Event 'takeoff' with invalid flightplan, cancelling and removal");
 
-                    overallStatus = OverallStatus.Irreversible;
                     shouldBeRemoved = true;
-                    removalCounter = 0;
                 }
             } else {
+                if (flightplan != null && !newFlightplan.isSame(flightplan)) {
+                    if (flightMissionId != 0) {
+                        final FlightMissions.Mission oldMission = mission_read();
+                        final Flightplan oldFlightplan = flightplan;
+                        mission_cancelBeforeTakeoffIfExists();
+                        flightMissionId = 0;
+                        flightplan = null;
+                        trackTail.clear();
+
+                        log.info("{} - Event 'cancelled', new flightplan differs {}", missionLogHead(oldMission, oldFlightplan), newFlightplan);
+                        pilotLog("Event 'cancelled' as new flightplan differs");
+                    }
+                }
+
+                if (newFlightplan.isValid() && flightplan == null) {
+                    flightplan = newFlightplan;
+                    final FlightMissions.Mission mission = mission_dispatchNewAndStart();
+                    flightMissionId = mission.getId();
+
+                    log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
+                    pilotLog("Event 'dispatched' == via some correction");
+                }
+
                 if (flightStage == FlightStage.Preflight
-                        && planningStatus == PlanningStatus.AllGood
-                        && overallStatus == OverallStatus.AllGood
-                        && nextDistance > 0.2) { // threshold
+                        && newFlightplan.isValid()
+                        && newTrackTrailDistance > 0.2) { // threshold
                     flightStage = FlightStage.Departing;
 
                     final FlightMissions.Mission mission = mission_blocksOff();
 
-                    log.info("{} - Event 'blocks-off'", missionLogHead(mission));
+                    log.info("{} - Event 'blocks-off'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'blocks-off'");
-                } else if (newOverallStatus != overallStatus) {
-                    if (newOverallStatus == OverallStatus.AllGood) {
-                        planningStatus = PlanningStatus.AllGood;
-                        aircraftType = nextPosition.getFpAircraftType();
-                        aircraftRegNo = nextPosition.getRegNo();
-                        plannedDeparture = nextPosition.getFpDeparture();
-                        plannedDestination = nextPosition.getFpDestination();
-                        overallStatus = OverallStatus.AllGood;
-
-                        final FlightMissions.Mission mission = mission_dispatchNewAndStart();
-                        flightMissionId = mission.getId();
-
-                        log.info("{} - Event 'dispatched'", missionLogHead(mission));
-                        pilotLog("Event 'dispatched' == via some correction");
-                    } else {
-                        planningStatus = newPlanningStatus;
-                        overallStatus = OverallStatus.Restorable;
-
-                        final FlightMissions.Mission oldMission = mission_read();
-                        mission_cancelBeforeTakeoffIfExists();
-                        flightMissionId = 0;
-
-                        log.info("{} - Event 'cancelled', planning status {}", missionLogHead(oldMission), newPlanningStatus);
-                        pilotLog("Event 'cancelled' as flight becomes Restorable");
-                    }
                 }
             }
         } else if (flightStage == FlightStage.Flying) {
             if ((!trackContinued && !landing) || !noHugeJumpDetected) {
                 final FlightMissions.Mission oldMission = mission_read();
+                final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying();
                 flightMissionId = 0;
+                flightplan = null;
+                trackTail.clear();
 
-                log.info("{} - Event 'JUMP IN THE AIR', cancelling and removing", missionLogHead(oldMission));
+                log.info("{} - Event 'JUMP IN THE AIR', cancelling and removing", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
 
                 shouldBeRemoved = true;
-            } else if (landing && overallStatus == OverallStatus.AllGood) {
-                if (plannedDestination.equals(nextPosition.getAirportIcao())) {
+            } else if (landing) {
+                if (flightplan.isValidDestinationLocation(newPosition.getAirportIcao())) {
                     flightStage = FlightStage.Arriving;
 
-                    final FlightMissions.Mission mission = mission_landing(nextPosition.getAirportIcao());
+                    final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
 
-                    log.info("{} - Event 'landing'", missionLogHead(mission));
+                    log.info("{} - Event 'landing'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'landing'");
-                } else if (worldIcaos.contains(nextPosition.getAirportIcao())) {
+                } else if (worldIcaos.contains(newPosition.getAirportIcao())) {
                     flightStage = FlightStage.Arriving;
 
-                    final FlightMissions.Mission mission = mission_landing(nextPosition.getAirportIcao());
+                    final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
 
-                    log.info("{} - Event 'landing' on WRONG airport", missionLogHead(mission));
+                    log.info("{} - Event 'landing' on WRONG airport", missionLogHead(mission, flightplan));
                     pilotLog("Event 'landing' on WRONG airport");
                 } else { // landing on airport out of the world
                     final FlightMissions.Mission oldMission = mission_read();
+                    final Flightplan oldFlightplan = flightplan;
                     mission_cancelFromFlying(); // todo ak3 improvement is possible here?
                     flightMissionId = 0;
+                    flightplan = null;
+                    trackTail.clear();
 
-                    log.info("{} - Event 'landing' on airport out world, cancelling and removing", missionLogHead(oldMission));
+                    log.info("{} - Event 'landing' on airport out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
                     pilotLog("Event 'landing' on airport out world, cancelling and removing");
 
                     shouldBeRemoved = true;
@@ -256,122 +232,128 @@ public class PilotContext {
                 flightStage = FlightStage.Flying;
                 final FlightMissions.Mission mission = mission_read();
 
-                log.info("{} - Event 'back to flying online'!", missionLogHead(mission));
+                log.info("{} - Event 'back to flying online'!", missionLogHead(mission, flightplan));
                 pilotLog("Event 'back to flying online'");
             }
         } else if (flightStage == FlightStage.Arriving) {
-            if (overallStatus == OverallStatus.AllGood
-                    && nextDistance < 0.3) {
+            if (newTrackTrailDistance < 0.3) {
                 flightStage = FlightStage.Arrived;
 
                 final FlightMissions.Mission mission = mission_blocksOnAndFinish();
-                flightMissionId = 0;
 
-                log.info("{} - Event 'blocks-on'", missionLogHead(mission));
+                log.info("{} - Event 'blocks-on'", missionLogHead(mission, flightplan));
                 pilotLog("Event 'blocks-on'");
 
                 removalCounter = 3; // it will stay Arrived for 3 reports and then will be removed
             }
+
+            if (newFlightplan.isValid() && !newFlightplan.isSame(flightplan)) {
+                flightplan = newFlightplan;
+                final FlightMissions.Mission mission = mission_dispatchNewAndStart();
+                flightMissionId = mission.getId();
+
+                log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
+                pilotLog("Event 'dispatched' == via end of flight");
+            }
         } else if (flightStage == FlightStage.Arrived) {
             if (removalCounter == 0) {
                 final FlightMissions.Mission oldMission = mission_read();
+                final Flightplan oldFlightplan = flightplan;
                 flightMissionId = 0;
+                flightplan = null;
+                trackTail.clear();
 
-                log.error("{} - Event 'completed' for Arrived flight", missionLogHead(oldMission));
-                pilotLog("Event 'completed' for Arrived flight, removing");
+                log.error("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
+                pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
 
-                shouldBeRemoved = true;
+                flightStage = FlightStage.Preflight;
             } else {
                 removalCounter--;
+            }
+
+            if (newFlightplan.isValid() && !newFlightplan.isSame(flightplan)) {
+                flightplan = newFlightplan;
+                final FlightMissions.Mission mission = mission_dispatchNewAndStart();
+                flightMissionId = mission.getId();
+
+                log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
+                pilotLog("Event 'dispatched' == via end of flight");
             }
         } else {
             throw new IllegalStateException();
         }
 
-        copyPositionFields(nextPosition);
+        copyPositionFields(newPosition, newTrackTail);
     }
 
     public void noPositionInReport(final String report) {
-        if (overallStatus == OverallStatus.Irreversible) {
-            if (removalCounter == 0) {
+        if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
+            final FlightMissions.Mission oldMission = mission_read();
+            final Flightplan oldFlightplan = flightplan;
+            mission_cancelBeforeTakeoffIfExists();
+            flightMissionId = 0;
+            flightplan = null;
+            trackTail.clear();
+
+            log.info("{} - Event 'OFFLINE' on {} stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan), flightStage);
+            pilotLog("Event 'offline' on " + flightStage + " stage, cancelling and removing");
+            shouldBeRemoved = true;
+        } else if (flightStage == FlightStage.Flying) {
+            final FlightMissions.Mission mission = mission_read();
+            flightStage = FlightStage.FlyingOffline;
+
+            log.info("{} - Event 'OFFLINE' from AllGood and on Flying stage, grace period started", missionLogHead(mission, flightplan));
+            pilotLog("Event 'offline' from AllGood on Flying stage, grace period started");
+        } else if (flightStage == FlightStage.FlyingOffline) {
+            if (getElapsedSecondsSinceLastSeen(report) > 10 * Time.ONE_MINUTE) {
+                final FlightMissions.Mission oldMission = mission_read();
+                final Flightplan oldFlightplan = flightplan;
+                mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
+                flightMissionId = 0;
+                flightplan = null;
+                trackTail.clear();
+
+                log.info("{} - Event 'CANCEL' from AllGood and on FlyingOffline stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
+                pilotLog("Event 'cancel' from AllGood on FlyingOffline stage, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
-                removalCounter--;
-            }
-        } else if (overallStatus == OverallStatus.AllGood) {
-            if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
-                final FlightMissions.Mission oldMission = mission_read();
-                mission_cancelBeforeTakeoffIfExists();
-                flightMissionId = 0;
-
-                log.info("{} - Event 'OFFLINE' from AllGood and on {} stage, cancelling and removing", missionLogHead(oldMission), flightStage);
-                pilotLog("Event 'offline' from AllGood on " + flightStage + " stage, cancelling and removing");
-                shouldBeRemoved = true;
-            } else if (flightStage == FlightStage.Flying) {
                 final FlightMissions.Mission mission = mission_read();
-                flightStage = FlightStage.FlyingOffline;
-
-                log.info("{} - Event 'OFFLINE' from AllGood and on Flying stage, grace period started", missionLogHead(mission));
-                pilotLog("Event 'offline' from AllGood on Flying stage, grace period started");
-            } else if (flightStage == FlightStage.FlyingOffline) {
-                if (getElapsedSecondsSinceLastSeen(report) > 10*Time.ONE_MINUTE) {
-                    final FlightMissions.Mission oldMission = mission_read();
-                    mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
-                    flightMissionId = 0;
-
-                    log.info("{} - Event 'CANCEL' from AllGood and on FlyingOffline stage, cancelling and removing", missionLogHead(oldMission));
-                    pilotLog("Event 'cancel' from AllGood on FlyingOffline stage, cancelling and removing");
-                    shouldBeRemoved = true;
-                } else {
-                    final FlightMissions.Mission mission = mission_read();
-                    log.info("{} - Event 'still offline' from AllGood and on FlyingOffline stage, ", missionLogHead(mission));
-                    pilotLog("Event 'still offline' from AllGood on FlyingOffline stage, cancelling and removing");
-                }
-            } else if (flightStage == FlightStage.Arriving) {
-                final FlightMissions.Mission oldMission = mission_read();
-                mission_blocksOnAndFinish();
-                flightMissionId = 0;
-
-                log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission));
-                pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
-                shouldBeRemoved = true;
-            } else if (flightStage == FlightStage.Arrived) {
-                final FlightMissions.Mission oldMission = mission_read();
-                flightMissionId = 0;
-
-                log.error("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission));
-                pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
-                shouldBeRemoved = true;
-            } else {
-                throw new IllegalStateException();
+                log.info("{} - Event 'still offline' from AllGood and on FlyingOffline stage, ", missionLogHead(mission, flightplan));
+                pilotLog("Event 'still offline' from AllGood on FlyingOffline stage, cancelling and removing");
             }
-        } else { // Restorable, presumably on ground
-            if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
-                final FlightMissions.Mission oldMission = mission_read();
-                if (oldMission != null) {
-                    mission_cancelBeforeTakeoffIfExists();
-                }
-                flightMissionId = 0;
+        } else if (flightStage == FlightStage.Arriving) {
+            final FlightMissions.Mission oldMission = mission_read();
+            final Flightplan oldFlightplan = flightplan;
+            mission_blocksOnAndFinish();
+            flightMissionId = 0;
+            flightplan = null;
+            trackTail.clear();
 
-                log.info("{} - Event 'OFFLINE' from Restorable ({}) on {} stage, cancelling and removing", missionLogHead(oldMission), planningStatus, flightStage);
-                pilotLog("Event 'offline' from Restorable (" + planningStatus + ") on " + flightStage + " stage, cancelling and removing");
-                shouldBeRemoved = true;
-            } else {
-                final FlightMissions.Mission oldMission = mission_read();
-                log.error("{} - Event 'OFFLINE' from Restorable, removing !!!!!!!!!!!!!!!! WHAT TO DO THERE???? <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", missionLogHead(oldMission));
-                pilotLog("Event 'offline' from Restorable, " + flightStage + " stage, removing");
-                shouldBeRemoved = true;
-            }
+            log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission, oldFlightplan));
+            pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
+            shouldBeRemoved = true;
+        } else if (flightStage == FlightStage.Arrived) {
+            final FlightMissions.Mission oldMission = mission_read();
+            final Flightplan oldFlightplan = flightplan;
+            flightMissionId = 0;
+            flightplan = null;
+            trackTail.clear();
+
+            log.error("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission, oldFlightplan));
+            pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
+            shouldBeRemoved = true;
+        } else {
+            throw new IllegalStateException();
         }
     }
 
     private boolean checkTrackContinuationCriterion(final Position nextPosition) {
-        final double lastTrackedDistance = getLastTrackedDistance();
-        final double lastTrackedDistanceTime = distanceLegs.size() * 2.0 * 60.0 / Time.ONE_HOUR; // todo ak1 track should be stored in another way
+        final double lastTrackedDistance = TrackLeg.distance(trackTail);
+        final double lastTrackedDistanceTime = TrackLeg.time(trackTail);
         final double lastTrackedDistanceSpeed = lastTrackedDistance / lastTrackedDistanceTime;
 
         final double distanceToNextPosition = Geo.distance(Geo.coords(positionLatitude, positionLongitude), nextPosition.getCoords());
-        final double distanceToNextPositionTime = (double) getElapsedSecondsSinceLastSeen(nextPosition.getReportInfo().getReport()) / Time.ONE_HOUR;;
+        final double distanceToNextPositionTime = (double) getElapsedSecondsSinceLastSeen(nextPosition.getReportInfo().getReport()) / Time.ONE_HOUR;
 
         final double approximatedDistanceForNextPosition = distanceToNextPositionTime * lastTrackedDistanceSpeed;
 
@@ -401,12 +383,12 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
         return worldAccess.modifySync(world -> {
-            final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(aircraftType);
+            final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(flightplan.getAircraftType());
             if (requestedAircraftType.isEmpty()) {
-                FlightStats.event("missingAircraftType " + aircraftType);
+                FlightStats.event("missingAircraftType " + flightplan.getAircraftType());
             }
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
-            final Airports.Airport positionAirport = world.airports().byIcao(positionAirportIcao).orElseThrow(elseThrowException(positionAirportIcao));
+            final Airports.Airport positionAirport = world.airports().byIcao(flightplan.getFiledAt()).orElseThrow(elseThrowException(flightplan.getFiledAt()));
 
             final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableOrCreate(
                     world,
@@ -415,8 +397,8 @@ public class PilotContext {
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
                     world,
                     aircraft,
-                    world.airports().byIcao(plannedDeparture).orElseThrow(elseThrowException(plannedDeparture)),
-                    world.airports().byIcao(plannedDestination).orElseThrow(elseThrowException(plannedDestination)),
+                    world.airports().byIcao(flightplan.getDeparture()).orElseThrow(elseThrowException(flightplan.getDeparture())),
+                    world.airports().byIcao(flightplan.getDestination()).orElseThrow(elseThrowException(flightplan.getDestination())),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
             mission.setModePc(true);
 
@@ -569,39 +551,15 @@ public class PilotContext {
         });
     }
 
-    private void copyPositionFields(final Position position) {
-        if (positionLatitude != 0) {
-            distanceLegs.add((float) Geo.distance(Geo.coords(positionLatitude, positionLongitude), position.getCoords()));
-        }
-        while (distanceLegs.size() > 3) {
-            distanceLegs.poll();
-        }
-
+    private void copyPositionFields(final Position position, final Queue<TrackLeg> trackTail) {
+        positionLastSeen = position.getReportInfo().getReport();
         positionIsOnGround = position.isOnGround();
         positionAirportIcao = position.isInAirport() ? position.getAirportIcao() : null;
         positionLatitude = position.getCoords().getLat();
         positionLongitude = position.getCoords().getLon();
-        positionLastSeen = position.getReportInfo().getReport();
-    }
-
-    private PlanningStatus doPreflightStatusAnalysis(final Position position) {
-        if (position.getFpAircraftType() == null) {
-            return PlanningStatus.FP_TypeUnknown;
-        } else if (!position.isOnGround()) {
-            return PlanningStatus.FP_NotOnGround;
-        } else if (!position.isInAirport()) {
-            return PlanningStatus.FP_NotInAirport;
-        } else if (position.getAirportIcao() == null) {
-            return PlanningStatus.FP_NoPositionAirport;
-        } else if (position.getFpDeparture() == null || position.getFpDestination() == null) {
-            return PlanningStatus.FP_NoRoute;
-        } else if (position.getFpDeparture() != null && !position.getFpDeparture().equals(position.getAirportIcao())) {
-            return PlanningStatus.FP_DepWrong;
-        } else if (position.getFpDestination() != null && !worldIcaos.contains(position.getFpDestination())) {
-            return PlanningStatus.FP_DestOutWorld;
-        } else {
-            return PlanningStatus.AllGood;
-        }
+        aircraftRegNo = position.getRegNo();
+        this.trackTail.clear();
+        this.trackTail.addAll(trackTail);
     }
 
     private void pilotLog(final String message) {
@@ -615,7 +573,9 @@ public class PilotContext {
         //noinspection ResultOfMethodCallIgnored
         pilotLogFile.getParentFile().mkdirs();
 
-        final String line = LocalDateTime.now() + " | " + aircraftType + " | " + plannedDeparture + " -> " + plannedDestination + " | " + message + "\r\n";
+        final String line = LocalDateTime.now() + " | " + (flightplan != null
+                ? flightplan.getAircraftType() + " | " + flightplan.getDeparture() + " -> " + flightplan.getDestination()
+                : "no flightplan") + " | " + message + "\r\n";
         try {
             IOHelper.appendFile(pilotLogFile, line);
         } catch (final IOException e) {
@@ -623,69 +583,68 @@ public class PilotContext {
         }
     }
 
-    private String missionLogHead(final FlightMissions.Mission mission) {
+    private String missionLogHead(final FlightMissions.Mission mission, final Flightplan flightplan) {
         return String.format("[%s] f/m %s, a/c %s : %s -> %s",
                 pilotNumber,
                 mission != null ? "#" + mission.getId() : "-",
                 mission != null ? "#" + mission.getAircraftId() : "-",
-                plannedDeparture,
-                plannedDestination);
+                flightplan != null ? flightplan.getDeparture() : "????",
+                flightplan != null ? flightplan.getDestination() : "????");
     }
 
     private static Supplier<RuntimeException> elseThrowException(final String what) {
         return () -> new IllegalArgumentException("Can't find by '" + what + "'");
     }
 
-    public static void addCsvColumns(final Csv csv) {
+    public static void addCsvColumnsV2(final Csv csv) {
         csv.addColumn(CSV_PILOT_NUMBER);
         csv.addColumn(CSV_FLIGHT_STAGE);
-        csv.addColumn(CSV_PLANNING_STATUS);
+        csv.addColumn(CSV_PLAN_FILED_AT);
         csv.addColumn(CSV_AIRCRAFT_TYPE);
         csv.addColumn(CSV_AIRCRAFT_REG_NO);
         csv.addColumn(CSV_PLANNED_DEPARTURE);
         csv.addColumn(CSV_PLANNED_DESTINATION);
-        csv.addColumn(CSV_OVERALL_STATUS);
         csv.addColumn(CSV_FLIGHT_MISSION_ID);
+        csv.addColumn(CSV_POSITION_LAST_SEEN);
         csv.addColumn(CSV_POSITION_IS_ON_GROUND);
         csv.addColumn(CSV_POSITION_AIRPORT_ICAO);
         csv.addColumn(CSV_POSITION_LATITUDE);
         csv.addColumn(CSV_POSITION_LONGITUDE);
         csv.addColumn(CSV_REMOVAL_COUNTER);
         csv.addColumn(CSV_SHOULD_BE_REMOVED);
-        csv.addColumn(CSV_DISTANCE_LEGS);
+        csv.addColumn(CSV_TRACK_TAIL);
     }
 
-    public void toCsv(final Csv csv) {
+    public void toCsvV2(final Csv csv) {
         final int row = csv.addRow();
         csv.set(row, CSV_PILOT_NUMBER, String.valueOf(pilotNumber));
         csv.set(row, CSV_FLIGHT_STAGE, flightStage.name());
-        csv.set(row, CSV_PLANNING_STATUS, planningStatus.name());
-        csv.set(row, CSV_AIRCRAFT_TYPE, aircraftType);
+        csv.set(row, CSV_PLAN_FILED_AT, flightplan.getFiledAt());
+        csv.set(row, CSV_AIRCRAFT_TYPE, flightplan.getAircraftType());
         csv.set(row, CSV_AIRCRAFT_REG_NO, aircraftRegNo);
-        csv.set(row, CSV_PLANNED_DEPARTURE, plannedDeparture);
-        csv.set(row, CSV_PLANNED_DESTINATION, plannedDestination);
-        csv.set(row, CSV_OVERALL_STATUS, overallStatus.name());
+        csv.set(row, CSV_PLANNED_DEPARTURE, flightplan.getDeparture());
+        csv.set(row, CSV_PLANNED_DESTINATION, flightplan.getDestination());
         csv.set(row, CSV_FLIGHT_MISSION_ID, String.valueOf(flightMissionId));
+        csv.set(row, CSV_POSITION_LAST_SEEN, positionLastSeen);
         csv.set(row, CSV_POSITION_IS_ON_GROUND, String.valueOf(positionIsOnGround));
         csv.set(row, CSV_POSITION_AIRPORT_ICAO, positionAirportIcao);
         csv.set(row, CSV_POSITION_LATITUDE, String.valueOf(positionLatitude));
         csv.set(row, CSV_POSITION_LONGITUDE, String.valueOf(positionLongitude));
         csv.set(row, CSV_REMOVAL_COUNTER, String.valueOf(removalCounter));
         csv.set(row, CSV_SHOULD_BE_REMOVED, String.valueOf(shouldBeRemoved));
-        csv.set(row, CSV_DISTANCE_LEGS, distanceLegs.stream()
-                .map(String::valueOf)
+        csv.set(row, CSV_TRACK_TAIL, trackTail.stream()
+                .map(TrackLeg::toString)
                 .collect(Collectors.joining(":")));
     }
 
-    public static PilotContext fromCsv(final WorldRunnerBean worldBean, final Csv csv, final int row) {
+    public static PilotContext fromCsvV1(final WorldRunnerBean worldBean, final Csv csv, final int row) {
         final PilotContext c = new PilotContext(worldBean, Integer.parseInt(csv.value(row, CSV_PILOT_NUMBER)));
         c.flightStage = FlightStage.valueOf(csv.value(row, CSV_FLIGHT_STAGE));
-        c.planningStatus = PlanningStatus.valueOf(csv.value(row, CSV_PLANNING_STATUS));
-        c.aircraftType = csv.value(row, CSV_AIRCRAFT_TYPE);
+        final String aircraftType = csv.value(row, CSV_AIRCRAFT_TYPE);
         c.aircraftRegNo = csv.value(row, CSV_AIRCRAFT_REG_NO);
-        c.plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
-        c.plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
-        c.overallStatus = OverallStatus.valueOf(csv.value(row, CSV_OVERALL_STATUS));
+        final String plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
+        final String plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
+        c.flightplan = new Flightplan(plannedDeparture, aircraftType, plannedDeparture, plannedDestination);
         c.flightMissionId = Integer.parseInt(csv.value(row, CSV_FLIGHT_MISSION_ID));
         c.positionIsOnGround = Boolean.parseBoolean(csv.value(row, CSV_POSITION_IS_ON_GROUND));
         c.positionAirportIcao = csv.value(row, CSV_POSITION_AIRPORT_ICAO);
@@ -693,27 +652,58 @@ public class PilotContext {
         c.positionLongitude = Double.parseDouble(csv.value(row, CSV_POSITION_LONGITUDE));
         c.removalCounter = Integer.parseInt(csv.value(row, CSV_REMOVAL_COUNTER));
         c.shouldBeRemoved = Boolean.parseBoolean(csv.value(row, CSV_SHOULD_BE_REMOVED));
-        c.distanceLegs.addAll(Arrays.stream(csv.value(row, CSV_DISTANCE_LEGS).split(":"))
+        c.trackTail.addAll(Arrays.stream(csv.value(row, CSV_DISTANCE_LEGS).split(":"))
                 .filter(s -> s.length() != 0)
                 .map(Float::parseFloat)
+                .map(d -> new TrackLeg(d, 2.0 / 60.0))
+                .toList());
+        return c;
+    }
+
+    public static PilotContext fromCsvV2(final WorldRunnerBean worldBean, final Csv csv, final int row) {
+        final PilotContext c = new PilotContext(worldBean, Integer.parseInt(csv.value(row, CSV_PILOT_NUMBER)));
+        c.flightStage = FlightStage.valueOf(csv.value(row, CSV_FLIGHT_STAGE));
+        final String filedAt = csv.value(row, CSV_PLAN_FILED_AT);
+        final String aircraftType = csv.value(row, CSV_AIRCRAFT_TYPE);
+        c.aircraftRegNo = csv.value(row, CSV_AIRCRAFT_REG_NO);
+        final String plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
+        final String plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
+        c.flightplan = new Flightplan(filedAt, aircraftType, plannedDeparture, plannedDestination);
+        c.flightMissionId = Integer.parseInt(csv.value(row, CSV_FLIGHT_MISSION_ID));
+        c.positionLastSeen = csv.value(row, CSV_POSITION_LAST_SEEN);
+        c.positionIsOnGround = Boolean.parseBoolean(csv.value(row, CSV_POSITION_IS_ON_GROUND));
+        c.positionAirportIcao = csv.value(row, CSV_POSITION_AIRPORT_ICAO);
+        c.positionLatitude = Double.parseDouble(csv.value(row, CSV_POSITION_LATITUDE));
+        c.positionLongitude = Double.parseDouble(csv.value(row, CSV_POSITION_LONGITUDE));
+        c.removalCounter = Integer.parseInt(csv.value(row, CSV_REMOVAL_COUNTER));
+        c.shouldBeRemoved = Boolean.parseBoolean(csv.value(row, CSV_SHOULD_BE_REMOVED));
+        c.trackTail.addAll(Arrays.stream(csv.value(row, CSV_TRACK_TAIL).split(":"))
+                .filter(s -> s.length() != 0)
+                .map(TrackLeg::fromString)
                 .toList());
         return c;
     }
 
     private static final String CSV_PILOT_NUMBER = "PilotNumber";
     private static final String CSV_FLIGHT_STAGE = "FlightStage";
+    @Deprecated
     private static final String CSV_PLANNING_STATUS = "PlanningStatus";
+    private static final String CSV_PLAN_FILED_AT = "PlanFiledAt";
     private static final String CSV_AIRCRAFT_TYPE = "AircraftType";
     private static final String CSV_AIRCRAFT_REG_NO = "AircraftRegNo";
     private static final String CSV_PLANNED_DEPARTURE = "PlannedDeparture";
     private static final String CSV_PLANNED_DESTINATION = "PlannedDestination";
+    @Deprecated
     private static final String CSV_OVERALL_STATUS = "OverallStatus";
     private static final String CSV_FLIGHT_MISSION_ID = "FlightMissionId";
+    private static final String CSV_POSITION_LAST_SEEN = "PositionLastSeen";
     private static final String CSV_POSITION_IS_ON_GROUND = "PositionIsOnGround";
     private static final String CSV_POSITION_AIRPORT_ICAO = "PositionAirportIcao";
     private static final String CSV_POSITION_LATITUDE = "PositionLatitude";
     private static final String CSV_POSITION_LONGITUDE = "PositionLongitude";
     private static final String CSV_REMOVAL_COUNTER = "RemovalCounter";
     private static final String CSV_SHOULD_BE_REMOVED = "ShouldBeRemoved";
+    @Deprecated
     private static final String CSV_DISTANCE_LEGS = "DistanceLegs";
+    private static final String CSV_TRACK_TAIL = "TrackTail";
 }

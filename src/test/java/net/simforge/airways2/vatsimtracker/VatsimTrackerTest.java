@@ -1,7 +1,6 @@
 package net.simforge.airways2.vatsimtracker;
 
 import net.simforge.airways2.app.WorldAccess;
-import net.simforge.airways2.app.vatsimtracker.OverallStatus;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
@@ -397,13 +396,13 @@ public class VatsimTrackerTest {
         runWorldMins(3);
 
         assertFlight1Arriving();
-        assertAircraftTaxiingIn(egkk); // todo ak1 hmmm, it needs a fix
+        assertAircraftTaxiingIn(egkk);
 
         runWorldMins(3);
         vatsimPilotPutsBlocksOn();
         runWorldMins(10);
 
-        assertFlight1Finished(egll, egcc); // todo ak1 ??? do i need to change destination?
+        assertFlight1Finished(egll, egcc); // todo ak1 flight finished at egkk however egcc was planned, flight finished, flight mission still shows egcc, not egkk - need to fix, need to have 'actual destination'?
         assertAircraftParkedAtAirportAndIdle(egcc);
     }
 
@@ -445,7 +444,6 @@ public class VatsimTrackerTest {
 
         assertNoFlight2Created();
         assertPilotContextPresent();
-        assertPilotContextInRestorableStatus();
     }
 
     @Test
@@ -468,8 +466,8 @@ public class VatsimTrackerTest {
         vatsimPilotFilesFlightplan("EGCC", "EGKK");
         runWorldMins(2);
 
-        assertFlight2Preflight(egcc, egkk);
         assertFlight1Finished(egll, egcc);
+        assertFlight2Preflight(egcc, egkk);
     }
 
     @Test
@@ -596,10 +594,6 @@ public class VatsimTrackerTest {
 
     private void assertPilotContextAbsent() {
         assertNull(pilotContext);
-    }
-
-    private void assertPilotContextInRestorableStatus() {
-        assertEquals(OverallStatus.Restorable, pilotContext.getOverallStatus());
     }
 
     private void assertNoFlight1Created() {
