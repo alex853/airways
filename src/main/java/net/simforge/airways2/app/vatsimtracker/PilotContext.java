@@ -596,7 +596,7 @@ public class PilotContext {
         return () -> new IllegalArgumentException("Can't find by '" + what + "'");
     }
 
-    public static void addCsvColumnsV2(final Csv csv) {
+    public static void addCsvColumns(final Csv csv) {
         csv.addColumn(CSV_PILOT_NUMBER);
         csv.addColumn(CSV_FLIGHT_STAGE);
         csv.addColumn(CSV_PLAN_FILED_AT);
@@ -615,7 +615,7 @@ public class PilotContext {
         csv.addColumn(CSV_TRACK_TAIL);
     }
 
-    public void toCsvV2(final Csv csv) {
+    public void toCsv(final Csv csv) {
         final int row = csv.addRow();
         csv.set(row, CSV_PILOT_NUMBER, String.valueOf(pilotNumber));
         csv.set(row, CSV_FLIGHT_STAGE, flightStage.name());
@@ -637,30 +637,7 @@ public class PilotContext {
                 .collect(Collectors.joining(":")));
     }
 
-    public static PilotContext fromCsvV1(final WorldRunnerBean worldBean, final Csv csv, final int row) {
-        final PilotContext c = new PilotContext(worldBean, Integer.parseInt(csv.value(row, CSV_PILOT_NUMBER)));
-        c.flightStage = FlightStage.valueOf(csv.value(row, CSV_FLIGHT_STAGE));
-        final String aircraftType = csv.value(row, CSV_AIRCRAFT_TYPE);
-        c.aircraftRegNo = csv.value(row, CSV_AIRCRAFT_REG_NO);
-        final String plannedDeparture = csv.value(row, CSV_PLANNED_DEPARTURE);
-        final String plannedDestination = csv.value(row, CSV_PLANNED_DESTINATION);
-        c.flightplan = new Flightplan(plannedDeparture, aircraftType, plannedDeparture, plannedDestination);
-        c.flightMissionId = Integer.parseInt(csv.value(row, CSV_FLIGHT_MISSION_ID));
-        c.positionIsOnGround = Boolean.parseBoolean(csv.value(row, CSV_POSITION_IS_ON_GROUND));
-        c.positionAirportIcao = csv.value(row, CSV_POSITION_AIRPORT_ICAO);
-        c.positionLatitude = Double.parseDouble(csv.value(row, CSV_POSITION_LATITUDE));
-        c.positionLongitude = Double.parseDouble(csv.value(row, CSV_POSITION_LONGITUDE));
-        c.removalCounter = Integer.parseInt(csv.value(row, CSV_REMOVAL_COUNTER));
-        c.shouldBeRemoved = Boolean.parseBoolean(csv.value(row, CSV_SHOULD_BE_REMOVED));
-        c.trackTail.addAll(Arrays.stream(csv.value(row, CSV_DISTANCE_LEGS).split(":"))
-                .filter(s -> s.length() != 0)
-                .map(Float::parseFloat)
-                .map(d -> new TrackLeg(d, 2.0 / 60.0))
-                .toList());
-        return c;
-    }
-
-    public static PilotContext fromCsvV2(final WorldRunnerBean worldBean, final Csv csv, final int row) {
+    public static PilotContext fromCsv(final WorldRunnerBean worldBean, final Csv csv, final int row) {
         final PilotContext c = new PilotContext(worldBean, Integer.parseInt(csv.value(row, CSV_PILOT_NUMBER)));
         c.flightStage = FlightStage.valueOf(csv.value(row, CSV_FLIGHT_STAGE));
         final String filedAt = csv.value(row, CSV_PLAN_FILED_AT);
@@ -688,15 +665,11 @@ public class PilotContext {
 
     private static final String CSV_PILOT_NUMBER = "PilotNumber";
     private static final String CSV_FLIGHT_STAGE = "FlightStage";
-    @Deprecated
-    private static final String CSV_PLANNING_STATUS = "PlanningStatus";
     private static final String CSV_PLAN_FILED_AT = "PlanFiledAt";
     private static final String CSV_AIRCRAFT_TYPE = "AircraftType";
     private static final String CSV_AIRCRAFT_REG_NO = "AircraftRegNo";
     private static final String CSV_PLANNED_DEPARTURE = "PlannedDeparture";
     private static final String CSV_PLANNED_DESTINATION = "PlannedDestination";
-    @Deprecated
-    private static final String CSV_OVERALL_STATUS = "OverallStatus";
     private static final String CSV_FLIGHT_MISSION_ID = "FlightMissionId";
     private static final String CSV_POSITION_LAST_SEEN = "PositionLastSeen";
     private static final String CSV_POSITION_IS_ON_GROUND = "PositionIsOnGround";
@@ -705,7 +678,5 @@ public class PilotContext {
     private static final String CSV_POSITION_LONGITUDE = "PositionLongitude";
     private static final String CSV_REMOVAL_COUNTER = "RemovalCounter";
     private static final String CSV_SHOULD_BE_REMOVED = "ShouldBeRemoved";
-    @Deprecated
-    private static final String CSV_DISTANCE_LEGS = "DistanceLegs";
     private static final String CSV_TRACK_TAIL = "TrackTail";
 }

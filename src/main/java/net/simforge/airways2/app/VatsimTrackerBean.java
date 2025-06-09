@@ -40,7 +40,6 @@ public class VatsimTrackerBean implements DisposableBean {
     private static final File root = new File("./vatsim-tracker/");
     private static final File lastProcessedReportFile = new File(root, "last-processed-report");
     private static final File contextsFile = new File(root, "contexts.csv");
-    private static final File contextsV2File = new File(root, "contexts-v2.csv");
     private final Map<Integer, PilotContext> trackedPilots = new HashMap<>();
     private String lastProcessedReport = null;
 
@@ -189,23 +188,17 @@ public class VatsimTrackerBean implements DisposableBean {
 
     private void loadStatus() throws IOException {
         if (!lastProcessedReportFile.exists()
-                || (!contextsFile.exists()
-                && !contextsV2File.exists())) {
+                || contextsFile.exists()) {
             log.warn("can't find status data, vatsim tracker will start from the scratch");
             return;
         }
 
         final String loadedLastProcessedReport = IOHelper.loadFile(lastProcessedReportFile);
 
-        final boolean useV2 = contextsV2File.exists();
-        final Csv csv = useV2
-                ? Csv.load(contextsV2File)
-                : Csv.load(contextsFile);
+        final Csv csv = Csv.load(contextsFile);
         final Map<Integer, PilotContext> loadedTrackedPilots = new HashMap<>();
         for (int row = 0; row < csv.rowCount(); row++) {
-            final PilotContext c = useV2
-                    ? PilotContext.fromCsvV2(worldBean, csv, row)
-                    : PilotContext.fromCsvV1(worldBean, csv, row);
+            final PilotContext c = PilotContext.fromCsv(worldBean, csv, row);
             loadedTrackedPilots.put(c.getPilotNumber(), c);
         }
 
@@ -216,9 +209,9 @@ public class VatsimTrackerBean implements DisposableBean {
 
     private void saveStatus() throws IOException {
         Csv csv = Csv.empty();
-        PilotContext.addCsvColumnsV2(csv);
+        PilotContext.addCsvColumns(csv);
 
-        trackedPilots.forEach((pn, c) -> c.toCsvV2(csv));
+        trackedPilots.forEach((pn, c) -> c.toCsv(csv));
 
         //noinspection ResultOfMethodCallIgnored
         root.mkdirs();
