@@ -122,7 +122,14 @@ public class PilotContext {
                 : new LinkedList<>();
 
         final double newTrackTrailDistance = TrackLeg.distance(newTrackTail);
-        final TrackContinuedCriterion trackContinued = new TrackContinuedCriterion(this, newPosition);
+        final TrackTailCriterion trackTailContinued = new TrackTailCriterion(this, newPosition);
+        final EllipseCriterion ellipseCriterion = flightplan != null && flightplan.isValid()
+                ? new EllipseCriterion(
+                        worldAccess.read(world -> world.airports().byIcao(flightplan.getDeparture()).orElseThrow()).getCoords(),
+                        worldAccess.read(world -> world.airports().byIcao(flightplan.getDestination()).orElseThrow()).getCoords(),
+                        newPosition)
+                : null;
+        final boolean trackContinued = trackTailContinued.isСontinued() || (ellipseCriterion != null && ellipseCriterion.isWithinEllipse());
         final HugeJumpCriterion hugeJump = new HugeJumpCriterion(this, newPosition);
 
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
@@ -176,13 +183,13 @@ public class PilotContext {
                 }
             }
         } else if (flightStage == FlightStage.Flying) {
-            if ((!trackContinued.isСontinued() && !landing) || hugeJump.isDetected()) {
+            if ((!trackContinued && !landing) || hugeJump.isDetected()) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying();
                 resetFlightInfo();
 
-                log.info("{} - Event 'JUMP IN THE AIR', {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackContinued, hugeJump);
+                log.info("{} - Event 'JUMP IN THE AIR', {}, {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion, hugeJump);
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
 
                 shouldBeRemoved = true;
@@ -214,11 +221,11 @@ public class PilotContext {
                 }
             }
         } else if (flightStage == FlightStage.FlyingOffline) {
-            if (!landing && trackContinued.isСontinued()) { // pilot is back online and is continuing the flying roughly the same track
+            if (!landing && trackContinued) { // pilot is back online and is continuing the flying roughly the same track
                 flightStage = FlightStage.Flying;
                 final FlightMissions.Mission mission = mission_read();
 
-                log.info("{} - Event 'back to flying online'! {}", missionLogHead(mission, flightplan), trackContinued);
+                log.info("{} - Event 'back to flying online'! {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying online'");
             } // todo ak0 what if landing? or track discontinued?
         } else if (flightStage == FlightStage.Arriving) {
