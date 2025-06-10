@@ -80,7 +80,7 @@ public class VatsimTrackerController {
         private String cpType;
         private String cpDep;
         private String cpDest;
-        private String lastTrackedDistance;
+        private String trackTrail;
         private String removal;
         private int fmId;
         private String fmStatus;
