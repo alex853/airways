@@ -44,6 +44,10 @@ public class Flightplan {
     }
 
     public boolean isSame(final Flightplan flightplan) {
+        if (flightplan == null) {
+            return false;
+        }
+
         return allFieldsFiled()
                 && filedAt.equals(flightplan.filedAt)
                 && aircraftType.equals(flightplan.aircraftType)
