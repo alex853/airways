@@ -201,7 +201,7 @@ public class PilotContext {
 
                     log.info("{} - Event 'landing'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'landing'");
-                } else if (worldIcaos.contains(newPosition.getAirportIcao())) {
+                } else if (worldIcaos.contains(newPosition.getAirportIcao())) { // todo ak2 npe here, airportIcao null? need to check it everywhere
                     flightStage = FlightStage.Arriving;
 
                     final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
