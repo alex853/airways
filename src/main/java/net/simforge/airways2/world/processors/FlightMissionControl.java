@@ -128,6 +128,7 @@ public class FlightMissionControl {
 
         mission.setStatus(FlightMissions.Status.Arrival);
         mission.setActualLandingWorldTime(world.getWorldTime());
+        mission.setActualLandingAirportId(landingAirport.getId());
 
         // todo ak3 scheduling.fireEvent(session, Landing.class, flight);
 
@@ -139,8 +140,8 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
 
-        world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
+        log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()));
     }
 
     public void blocksOn(final FlightMissions.Mission mission) {

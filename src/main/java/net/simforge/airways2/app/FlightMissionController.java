@@ -3,6 +3,7 @@ package net.simforge.airways2.app;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -38,7 +39,9 @@ public class FlightMissionController {
                         WebTime.ts(f.getActualDepartureWorldTime()),
                         WebTime.ts(f.getActualTakeoffWorldTime()),
                         WebTime.ts(f.getActualLandingWorldTime()),
-                        WebTime.ts(f.getActualArrivalWorldTime())))
+                        WebTime.ts(f.getActualArrivalWorldTime()),
+                        world.airports().byId(f.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null)
+                        ))
                 .toList());
     }
 
@@ -78,5 +81,6 @@ public class FlightMissionController {
         private String actualTakeoffTime;
         private String actualLandingTime;
         private String actualArrivalTime;
+        private String actualLandingAirport;
     }
 }

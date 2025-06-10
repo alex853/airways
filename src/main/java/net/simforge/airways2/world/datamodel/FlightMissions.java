@@ -29,12 +29,13 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
-            // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned16bit)) // dateOfFlight
             .withDataField(DataField.of(DataType.Unsigned24bit)) // plannedDepartureTime + plannedArrivalTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualDepartureTime + actualTakeoffTime
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
+            // ---------------------------------------------------------------------------------------------------------
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved
@@ -53,10 +54,9 @@ public class FlightMissions {
     private final DataField plannedDepartureAndArrivalTimeField = storage.getDataField(6);
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
+    private final DataField actualLandingAirportIdField = storage.getDataField(9);
     @SuppressWarnings("unused")
-    private final DataField reserved24bitsField1 = storage.getDataField(9);
-    @SuppressWarnings("unused")
-    private final DataField reserved24bitsField2 = storage.getDataField(10);
+    private final DataField reserved8bitsField2 = storage.getDataField(10);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField3 = storage.getDataField(11);
 
@@ -198,6 +198,14 @@ public class FlightMissions {
 
         public int getDestinationAirportId() {
             return storage.getAsInt(id, destinationAirportIdField);
+        }
+
+        public int getActualLandingAirportId() {
+            return storage.getAsInt(id, actualLandingAirportIdField);
+        }
+
+        public void setActualLandingAirportId(final int actualLandingAirportId) {
+            storage.set(id, actualLandingAirportIdField, actualLandingAirportId);
         }
 
         public int getPlannedDepartureWorldTime() {

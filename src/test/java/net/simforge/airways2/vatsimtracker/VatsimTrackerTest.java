@@ -402,7 +402,7 @@ public class VatsimTrackerTest {
         vatsimPilotPutsBlocksOn();
         runWorldMins(10);
 
-        assertFlight1Finished(egll, egcc); // todo ak0 flight finished at egkk however egcc was planned, flight finished, flight mission still shows egcc, not egkk - need to fix, need to have 'actual destination'?
+        assertFlight1Finished(egll, egkk);
         assertAircraftParkedAtAirportAndIdle(egcc);
     }
 
@@ -637,7 +637,7 @@ public class VatsimTrackerTest {
         final FlightMissions.Mission flight = getFlight1();
         assertEquals(FlightMissions.Status.Finished, flight.getStatus());
         assertEquals(from.getId(), flight.getDepartureAirportId());
-        assertEquals(to.getId(), flight.getDestinationAirportId());
+        assertEquals(to.getId(), flight.getActualLandingAirportId());
     }
 
     private void assertFlight1Cancelled() {

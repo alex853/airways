@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.vatsimtracker.Flightplan;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.networkview.core.Position;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +61,11 @@ public class VatsimTrackerController {
                             c.shouldBeRemoved() + " / " + c.getRemovalCounter(),
                             c.getFlightMissionId(),
                             mission.map(value -> value.getStatus().name()).orElse(null),
-                            mission.map(m -> world.aircrafts().byId(m.getAircraftId()).orElseThrow().getRegNo()).orElse(null));
+                            mission.map(m -> world.aircrafts().byId(m.getAircraftId()).orElseThrow().getRegNo()).orElse(null),
+                            mission.filter(m -> m.getActualLandingAirportId() != 0)
+                                    .flatMap(m -> world.airports().byId(m.getActualLandingAirportId()))
+                                    .map(Airports.Airport::getIcao)
+                                    .orElse(null));
                 })
                 .toList());
     }
@@ -85,5 +90,6 @@ public class VatsimTrackerController {
         private int fmId;
         private String fmStatus;
         private String fmAircraftRegNo;
+        private String fmAcLanding;
     }
 }

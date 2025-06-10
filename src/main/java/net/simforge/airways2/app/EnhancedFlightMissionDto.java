@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 
 @Data
@@ -23,6 +24,7 @@ class EnhancedFlightMissionDto {
     private String aTof;
     private String aLdg;
     private String aArr;
+    private String aLdgA;
 
     public static EnhancedFlightMissionDto fromMission(
             final World world,
@@ -42,6 +44,7 @@ class EnhancedFlightMissionDto {
                 WebTime.hhmmOrNull(mission.getActualDepartureWorldTime()),
                 WebTime.hhmmOrNull(mission.getActualTakeoffWorldTime()),
                 WebTime.hhmmOrNull(mission.getActualLandingWorldTime()),
-                WebTime.hhmmOrNull(mission.getActualArrivalWorldTime()));
+                WebTime.hhmmOrNull(mission.getActualArrivalWorldTime()),
+                world.airports().byId(mission.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null));
     }
 }
