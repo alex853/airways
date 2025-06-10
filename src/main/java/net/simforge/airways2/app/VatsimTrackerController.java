@@ -17,6 +17,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/vatsim-tracker")
@@ -53,7 +54,9 @@ public class VatsimTrackerController {
                             cp != null ? cp.getFpAircraftType() : null,
                             cp != null ? cp.getFpDeparture() : null,
                             cp != null ? cp.getFpDestination() : null,
-                            df3digits.format(c.getTrackTailDistance()),
+                            c.getTrackTail() != null ? c.getTrackTail().stream()
+                                    .map(l -> "(" + df3digits.format(l.getDistance()) + "," + df3digits.format(l.getTime()))
+                                    .collect(Collectors.joining(", ")) : null,
                             c.shouldBeRemoved() + " / " + c.getRemovalCounter(),
                             c.getFlightMissionId(),
                             mission.map(value -> value.getStatus().name()).orElse(null),

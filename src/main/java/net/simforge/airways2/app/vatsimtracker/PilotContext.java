@@ -83,10 +83,6 @@ public class PilotContext {
         return new LinkedList<>(trackTail);
     }
 
-    public double getTrackTailDistance() {
-        return TrackLeg.distance(trackTail);
-    }
-
     public Geo.Coords getPositionCoords() {
         return Geo.coords(positionLatitude, positionLongitude);
     }
