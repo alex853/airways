@@ -291,7 +291,7 @@ public class PilotContext {
             pilotLog("Event 'offline' on Flying stage, grace period started");
             flightStage = FlightStage.FlyingOffline;
         } else if (flightStage == FlightStage.FlyingOffline) {
-            final int minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
+            final long minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE);
             if (minutesOffline > 10) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
