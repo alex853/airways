@@ -7,7 +7,7 @@ public class TrackLeg {
     private final double distance;
     private final double time;
 
-    public TrackLeg(double distance, double time) {
+    public TrackLeg(final double distance, final double time) {
         this.distance = distance;
         this.time = time;
     }

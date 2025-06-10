@@ -118,7 +118,7 @@ public class PilotContext {
         final Queue<TrackLeg> newTrackTail = (positionLatitude != 0 || positionLongitude != 0)
                 ? TrackLeg.add(trackTail,
                 Geo.distance(Geo.coords(positionLatitude, positionLongitude), newPosition.getCoords()),
-                Duration.between(ReportUtils.fromTimestampJava(positionLastSeen), ReportUtils.fromTimestampJava(newPosition.getReportInfo().getReport())).getSeconds() / 3600.0)
+                (double) getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / (double) Time.ONE_HOUR)
                 : new LinkedList<>();
 
         final double newTrackTrailDistance = TrackLeg.distance(newTrackTail);
@@ -577,7 +577,7 @@ public class PilotContext {
         csv.set(row, CSV_AIRCRAFT_TYPE, flightplan != null ? flightplan.getAircraftType() : null);
         csv.set(row, CSV_AIRCRAFT_REG_NO, aircraftRegNo);
         csv.set(row, CSV_PLANNED_DEPARTURE, flightplan != null ? flightplan.getDeparture() : null);
-        csv.set(row, CSV_PLANNED_DESTINATION, flightplan != null ?  flightplan.getDestination() : null);
+        csv.set(row, CSV_PLANNED_DESTINATION, flightplan != null ? flightplan.getDestination() : null);
         csv.set(row, CSV_FLIGHT_MISSION_ID, String.valueOf(flightMissionId));
         csv.set(row, CSV_POSITION_LAST_SEEN, positionLastSeen);
         csv.set(row, CSV_POSITION_IS_ON_GROUND, String.valueOf(positionIsOnGround));

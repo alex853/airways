@@ -23,7 +23,7 @@ public class TrackContinuedCriterion {
         lastTrackedDistanceSpeed = lastTrackedDistance / lastTrackedDistanceTime;
 
         distanceToNextPosition = Geo.distance(pilotContext.getPositionCoords(), newPosition.getCoords());
-        distanceToNextPositionTime = (double) pilotContext.getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / Time.ONE_HOUR;
+        distanceToNextPositionTime = (double) pilotContext.getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / (double) Time.ONE_HOUR;
 
         approximatedDistanceForNextPosition = distanceToNextPositionTime * lastTrackedDistanceSpeed;
 
