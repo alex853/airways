@@ -109,7 +109,7 @@ public class PilotContext {
         copyPositionFields(position, trackTail);
     }
 
-    public void nextReportPosition(final Position newPosition) {
+    public void nextReportPosition(final Position newPosition) { // todo ak0 rework all flightstats events
         final Flightplan newFlightplan = new Flightplan(newPosition);
 
         final boolean takeoff = positionIsOnGround && !newPosition.isOnGround();
