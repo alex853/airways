@@ -59,24 +59,8 @@ public class PilotContext {
         return flightStage;
     }
 
-    public Flightplan.Status getFlightplanStatus() {
-        return flightplan != null ? flightplan.getStatus() : null;
-    }
-
-    public String getPlannedDeparture() {
-        return flightplan != null ? flightplan.getDeparture() : null;
-    }
-
-    public String getPlannedDestination() {
-        return flightplan != null ? flightplan.getDestination() : null;
-    }
-
-    public String getLocationAirport() {
-        return positionAirportIcao;
-    }
-
-    public String getAircraftType() {
-        return flightplan != null ? flightplan.getAircraftType() : null;
+    public Flightplan getFlightplan() {
+        return flightplan;
     }
 
     public String getAircraftRegNo() {

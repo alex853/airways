@@ -42,6 +42,7 @@ public class VatsimTrackerBean implements DisposableBean {
     private static final File contextsFile = new File(root, "contexts.csv");
     private final Map<Integer, PilotContext> trackedPilots = new HashMap<>();
     private String lastProcessedReport = null;
+    private Map<Integer, Position> lastProcessedPositions = null;
 
     @PostConstruct
     public void init() {
@@ -156,6 +157,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     //log.info("report {} - pilot removal completed, removed {} records", nextReport, pilotNumbersForRemoval.size());
 
                     lastProcessedReport = nextReport;
+                    lastProcessedPositions = pilotNumberToPosition;
                     try {
                         saveStatus();
                     } catch (final Exception e) {
@@ -223,9 +225,13 @@ public class VatsimTrackerBean implements DisposableBean {
         return lastProcessedReport;
     }
 
-    public Collection<PilotContext> contexts() { // todo ak3 thread safety?
+    public Map<Integer, Position> getLastProcessedPositions() {
+        return lastProcessedPositions;
+    } // todo ak2 thread safety
+
+    public Collection<PilotContext> contexts() {
         return trackedPilots.values();
-    }
+    } // todo ak2 thread safety
 
     public void removePilot(final int pilotNumber) { // todo ak3 thread safety?
         trackedPilots.remove(pilotNumber);

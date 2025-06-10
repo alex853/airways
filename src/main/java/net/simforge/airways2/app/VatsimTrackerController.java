@@ -2,8 +2,10 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.vatsimtracker.Flightplan;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.networkview.core.Position;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.text.DecimalFormat;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -34,16 +37,23 @@ public class VatsimTrackerController {
                     final Optional<FlightMissions.Mission> mission = c.getFlightMissionId() != 0
                             ? world.flightMissions().byId(c.getFlightMissionId())
                             : Optional.empty();
+                    final Flightplan fp = c.getFlightplan();
+                    final Map<Integer, Position> positions = vatsimTrackerBean.getLastProcessedPositions();
+                    final Position cp = positions != null ? positions.get(c.getPilotNumber()) : null;
                     return new PilotDto(
                             c.getPilotNumber(),
                             c.getFlightStage().name(),
-                            c.getFlightplanStatus() != null ? c.getFlightplanStatus().name() : null,
-                            df3digits.format(c.getTrackTailDistance()),
-                            c.getLocationAirport(),
-                            c.getAircraftType(),
                             c.getAircraftRegNo(),
-                            c.getPlannedDeparture(),
-                            c.getPlannedDestination(),
+                            fp != null ? fp.getStatus().name() : null,
+                            fp != null ? fp.getFiledAt() : null,
+                            fp != null ? fp.getAircraftType() : null,
+                            fp != null ? fp.getDeparture() : null,
+                            fp != null ? fp.getDestination() : null,
+                            cp != null ? cp.getAirportIcao() : null,
+                            cp != null ? cp.getFpAircraftType() : null,
+                            cp != null ? cp.getFpDeparture() : null,
+                            cp != null ? cp.getFpDestination() : null,
+                            df3digits.format(c.getTrackTailDistance()),
                             c.shouldBeRemoved() + " / " + c.getRemovalCounter(),
                             c.getFlightMissionId(),
                             mission.map(value -> value.getStatus().name()).orElse(null),
@@ -57,13 +67,17 @@ public class VatsimTrackerController {
     private static class PilotDto {
         private int pilotNumber;
         private String flightStage;
-        private String flightplanStatus;
-        private String lastTrackedDistance;
-        private String locationIcao;
-        private String aircraftType;
         private String regNo;
-        private String departureIcao;
-        private String destinationIcao;
+        private String fpStatus;
+        private String fpFiledAt;
+        private String fpType;
+        private String fpDep;
+        private String fpDest;
+        private String cpLocation;
+        private String cpType;
+        private String cpDep;
+        private String cpDest;
+        private String lastTrackedDistance;
         private String removal;
         private int fmId;
         private String fmStatus;
