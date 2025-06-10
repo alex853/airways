@@ -327,9 +327,7 @@ public class PilotContext {
     }
 
     public long getElapsedSecondsSinceLastSeen(String report) {
-        long seconds = Duration.between(ReportUtils.fromTimestampJava(positionLastSeen), ReportUtils.fromTimestampJava(report)).getSeconds();
-        log.warn("last seen {}, report {}, seconds {}", positionLastSeen, report, seconds);
-        return seconds;
+        return Duration.between(ReportUtils.fromTimestampJava(positionLastSeen), ReportUtils.fromTimestampJava(report)).getSeconds();
     }
 
     private FlightMissions.Mission mission_read() {
