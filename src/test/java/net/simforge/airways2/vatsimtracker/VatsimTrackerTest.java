@@ -586,8 +586,6 @@ public class VatsimTrackerTest {
     // todo ak1 short disconnect cases on ground
     // todo ak1 offline and then reconnect as before, reconnect without f/p, reconnect on ground, reconnect on different place of world
 
-    // todo ak2 reconnect while pilot context is in irreversible status - it does not seem relevant because Irreversible is almost removed
-
     private void assertPilotContextPresent() {
         assertNotNull(pilotContext);
     }

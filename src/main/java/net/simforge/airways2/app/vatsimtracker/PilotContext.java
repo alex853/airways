@@ -228,7 +228,27 @@ public class PilotContext {
 
                 log.info("{} - Event 'back to flying online'! {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying online'");
-            } // todo ak0 what if landing? or track discontinued?
+            } else if (!landing) { // !landing and !trackContinued // todo ak1 test for this case! what if jump happens here?
+                final FlightMissions.Mission oldMission = mission_read();
+                final Flightplan oldFlightplan = flightplan;
+                mission_cancelFromFlying();
+                resetFlightInfo();
+
+                log.warn("{} - Event 'back to flying' HOWEVER track discontinued, {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion);
+                pilotLog("Event 'back to flying' HOWEVER track discontinued, cancelling and removing");
+
+                shouldBeRemoved = true;
+            } else { // landing // todo ak1 test for this case! probably it could be treated as normal behaviour if offline period is not too long
+                final FlightMissions.Mission oldMission = mission_read();
+                final Flightplan oldFlightplan = flightplan;
+                mission_cancelFromFlying();
+                resetFlightInfo();
+
+                log.warn("{} - Event 'back to flying AND LANDING at the same time', {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion);
+                pilotLog("Event 'back to flying AND LANDING at the same time', cancelling and removing");
+
+                shouldBeRemoved = true;
+            }
         } else if (flightStage == FlightStage.Arriving) {
             final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
             if (newTrackTailDistance < 0.3 || newFlightMissionDueToNewFlightplan) {
