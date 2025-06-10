@@ -95,8 +95,20 @@ public class PilotContext {
         return removalCounter;
     }
 
+    public Queue<TrackLeg> getTrackTail() {
+        return new LinkedList<>(trackTail);
+    }
+
     public double getTrackTailDistance() {
         return TrackLeg.distance(trackTail);
+    }
+
+    public Geo.Coords getPositionCoords() {
+        return Geo.coords(positionLatitude, positionLongitude);
+    }
+
+    public String getPositionLastSeen() {
+        return positionLastSeen;
     }
 
     public void newPilotContextInAirport(final Position position) {
@@ -131,8 +143,8 @@ public class PilotContext {
                 : new LinkedList<>();
 
         final double newTrackTrailDistance = TrackLeg.distance(newTrackTail);
-        final boolean trackContinued = checkTrackContinuationCriterion(newPosition);
-        final boolean noHugeJumpDetected = checkNoHugeJumpDetectedCriterion(newPosition);
+        final TrackContinuedCriterion trackContinued = new TrackContinuedCriterion(this, newPosition);
+        final HugeJumpCriterion hugeJump = new HugeJumpCriterion(this, newPosition);
 
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
             if (takeoff) {
@@ -154,7 +166,7 @@ public class PilotContext {
             } else {
                 if (flightplan != null && !newFlightplan.isSame(flightplan)) {
                     if (flightMissionId != 0) {
-                        log.info("{} - Event 'cancelled', new flightplan differs {}", missionLogHead(mission_read(), flightplan), newFlightplan);
+                        log.info("{} - Event 'cancelled', new {} differs from existing {}", missionLogHead(mission_read(), flightplan), newFlightplan, flightplan);
                         pilotLog("Event 'cancelled' as new flightplan differs");
                         mission_cancelBeforeTakeoffIfExists();
                     }
@@ -185,13 +197,13 @@ public class PilotContext {
                 }
             }
         } else if (flightStage == FlightStage.Flying) {
-            if ((!trackContinued && !landing) || !noHugeJumpDetected) {
+            if ((!trackContinued.isСontinued() && !landing) || hugeJump.isDetected()) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying();
                 resetFlightInfo();
 
-                log.info("{} - Event 'JUMP IN THE AIR', cancelling and removing", missionLogHead(oldMission, oldFlightplan));
+                log.info("{} - Event 'JUMP IN THE AIR', {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackContinued, hugeJump);
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
 
                 shouldBeRemoved = true;
@@ -223,13 +235,13 @@ public class PilotContext {
                 }
             }
         } else if (flightStage == FlightStage.FlyingOffline) {
-            if (!landing && trackContinued) { // pilot is back online and is continuing the flying roughly the same track
+            if (!landing && trackContinued.isСontinued()) { // pilot is back online and is continuing the flying roughly the same track
                 flightStage = FlightStage.Flying;
                 final FlightMissions.Mission mission = mission_read();
 
-                log.info("{} - Event 'back to flying online'!", missionLogHead(mission, flightplan));
+                log.info("{} - Event 'back to flying online'! {}", missionLogHead(mission, flightplan), trackContinued);
                 pilotLog("Event 'back to flying online'");
-            }
+            } // todo ak0 what if landing? or track discontinued?
         } else if (flightStage == FlightStage.Arriving) {
             if (newTrackTrailDistance < 0.3) {
                 flightStage = FlightStage.Arrived;
@@ -335,31 +347,7 @@ public class PilotContext {
         trackTail.clear();
     }
 
-    private boolean checkTrackContinuationCriterion(final Position nextPosition) {
-        final double lastTrackedDistance = TrackLeg.distance(trackTail);
-        final double lastTrackedDistanceTime = TrackLeg.time(trackTail);
-        final double lastTrackedDistanceSpeed = lastTrackedDistance / lastTrackedDistanceTime;
-
-        final double distanceToNextPosition = Geo.distance(Geo.coords(positionLatitude, positionLongitude), nextPosition.getCoords());
-        final double distanceToNextPositionTime = (double) getElapsedSecondsSinceLastSeen(nextPosition.getReportInfo().getReport()) / Time.ONE_HOUR;
-
-        final double approximatedDistanceForNextPosition = distanceToNextPositionTime * lastTrackedDistanceSpeed;
-
-        final double ratio = approximatedDistanceForNextPosition / distanceToNextPosition;
-
-        return (ratio <= 1.5);
-    }
-
-    private boolean checkNoHugeJumpDetectedCriterion(final Position nextPosition) {
-        if (positionLatitude == 0) {
-            return true;
-        }
-
-        final double distanceToNextPosition = Geo.distance(Geo.coords(positionLatitude, positionLongitude), nextPosition.getCoords());
-        return distanceToNextPosition < 50;
-    }
-
-    private long getElapsedSecondsSinceLastSeen(String report) {
+    public long getElapsedSecondsSinceLastSeen(String report) {
         return Duration.between(ReportUtils.fromTimestampJava(positionLastSeen), ReportUtils.fromTimestampJava(report)).getSeconds();
     }
 

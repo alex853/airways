@@ -51,6 +51,16 @@ public class Flightplan {
                 && destination.equals(flightplan.destination);
     }
 
+    @Override
+    public String toString() {
+        return "Flightplan{" +
+                "filedAt='" + filedAt + '\'' +
+                ", aircraftType='" + aircraftType + '\'' +
+                ", departure='" + departure + '\'' +
+                ", destination='" + destination + '\'' +
+                '}';
+    }
+
     private boolean allFieldsFiled() {
         return filedAt != null
                 && aircraftType != null

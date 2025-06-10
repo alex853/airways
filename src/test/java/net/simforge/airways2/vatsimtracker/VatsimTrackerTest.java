@@ -402,7 +402,7 @@ public class VatsimTrackerTest {
         vatsimPilotPutsBlocksOn();
         runWorldMins(10);
 
-        assertFlight1Finished(egll, egcc); // todo ak1 flight finished at egkk however egcc was planned, flight finished, flight mission still shows egcc, not egkk - need to fix, need to have 'actual destination'?
+        assertFlight1Finished(egll, egcc); // todo ak0 flight finished at egkk however egcc was planned, flight finished, flight mission still shows egcc, not egkk - need to fix, need to have 'actual destination'?
         assertAircraftParkedAtAirportAndIdle(egcc);
     }
 
