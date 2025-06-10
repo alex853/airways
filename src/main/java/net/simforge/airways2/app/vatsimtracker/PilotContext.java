@@ -97,10 +97,9 @@ public class PilotContext {
 
     public void newPilotContextInAirport(final Position position) {
         flightStage = FlightStage.Preflight;
-        final Flightplan newFlightplan = new Flightplan(position);
+        flightplan = new Flightplan(position);
 
-        if (newFlightplan.isValid()) {
-            flightplan = newFlightplan;
+        if (flightplan.isValid()) {
             copyPositionFields(position, trackTail);
             final FlightMissions.Mission mission = mission_dispatchNewAndStart();
             flightMissionId = mission.getId();
