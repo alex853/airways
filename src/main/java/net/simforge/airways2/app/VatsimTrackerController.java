@@ -55,7 +55,7 @@ public class VatsimTrackerController {
                             cp != null ? cp.getFpDeparture() : null,
                             cp != null ? cp.getFpDestination() : null,
                             c.getTrackTail() != null ? c.getTrackTail().stream()
-                                    .map(l -> "(" + df3digits.format(l.getDistance()) + "," + df3digits.format(l.getTime()))
+                                    .map(l -> "(" + df3digits.format(l.getDistance()) + "," + df3digits.format(l.getTime()) + ")")
                                     .collect(Collectors.joining(", ")) : null,
                             c.shouldBeRemoved() + " / " + c.getRemovalCounter(),
                             c.getFlightMissionId(),
