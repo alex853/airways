@@ -8,8 +8,10 @@ import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.legacy.misc.Settings;
 import net.simforge.commons.misc.Misc;
+import net.simforge.networkview.core.CompactifiedPosition;
 import net.simforge.networkview.core.Network;
 import net.simforge.networkview.core.Position;
+import net.simforge.networkview.core.report.ReportUtils;
 import net.simforge.networkview.core.report.compact.CompactifiedStorage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,8 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -99,6 +103,15 @@ public class VatsimTrackerBean implements DisposableBean {
                     }
 
                     //log.info("report {} - {} positions loaded", nextReport, positions.size());
+
+                    // ugly hack injecting missing 'report' timestamp in compactified positions
+                    final int reportSeconds = (int) ReportUtils.fromTimestampJava(nextReport).toEpochSecond(ZoneOffset.UTC);
+                    final Field reportSecondsField = CompactifiedPosition.class.getDeclaredField("reportSeconds");
+                    reportSecondsField.setAccessible(true);
+                    for (int i = 0; i < positions.size(); i++) {
+                        final Position p = positions.get(0);
+                        reportSecondsField.set(p, reportSeconds);
+                    }
 
                     final String nextReportFinal = nextReport;
                     final Map<Integer, Position> pilotNumberToPosition = new HashMap<>();
