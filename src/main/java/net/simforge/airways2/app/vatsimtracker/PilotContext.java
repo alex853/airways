@@ -291,19 +291,20 @@ public class PilotContext {
             pilotLog("Event 'offline' on Flying stage, grace period started");
             flightStage = FlightStage.FlyingOffline;
         } else if (flightStage == FlightStage.FlyingOffline) {
-            if (getElapsedSecondsSinceLastSeen(report) > 10 * Time.ONE_MINUTE) {
+            final int minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
+            if (minutesOffline > 10) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
                 resetFlightInfo();
 
-                log.info("{} - Event 'CANCEL' on FlyingOffline stage, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
-                pilotLog("Event 'cancel' from AllGood on FlyingOffline stage, cancelling and removing");
+                log.info("{} - Event 'CANCEL' on FlyingOffline stage, offline for {} mins, cancelling and removing", missionLogHead(oldMission, oldFlightplan), minutesOffline);
+                pilotLog("Event 'cancel' on FlyingOffline stage, offline for " + minutesOffline + " mins, cancelling and removing");
                 shouldBeRemoved = true;
             } else {
                 final FlightMissions.Mission mission = mission_read();
-                log.info("{} - Event 'still offline' from AllGood and on FlyingOffline stage, ", missionLogHead(mission, flightplan));
-                pilotLog("Event 'still offline' from AllGood on FlyingOffline stage, cancelling and removing");
+                log.info("{} - Event 'still offline' on FlyingOffline stage, offline for {} mins, waiting", missionLogHead(mission, flightplan), minutesOffline);
+                pilotLog("Event 'still offline' on FlyingOffline stage, offine for " + minutesOffline + " mins, waiting");
             }
         } else if (flightStage == FlightStage.Arriving) {
             final FlightMissions.Mission oldMission = mission_read();
