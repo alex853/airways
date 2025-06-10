@@ -1,33 +1,32 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.worldbuilder.World25_008_create_aircraft_types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak2 aircraft types
-//          A306
+// todo ak2 aircraft types with errors
 //          A32N -> A20N mapping
-//          E170,E175,E190,E195 and E2
-//          SU95
 //          B777 -> B773 mapping
-//          MD11
-//          AT76 and related
-//          B722
-//          B732
-//          MD82
+// todo ak2 C700 - no aircraft data!
+// todo ak2 AT76 - no aircraft data!
+// todo ak3 minimize between downloading a report and its processing
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
-    public static void main(final String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+    public static void main(final String[] args) throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException, IOException {
         if (args.length == 1) {
             runWorldBuilderStep(args[0]);
             return;
         }
+
+        World25_008_create_aircraft_types.main(args);
 
         SpringApplication.run(Application.class, args);
     }
