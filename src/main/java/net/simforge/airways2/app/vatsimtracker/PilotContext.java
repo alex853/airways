@@ -129,7 +129,7 @@ public class PilotContext {
                         worldAccess.read(world -> world.airports().byIcao(flightplan.getDestination()).orElseThrow()).getCoords(),
                         newPosition)
                 : null;
-        final boolean trackContinued = trackTailContinued.isСontinued() || (ellipseCriterion != null && ellipseCriterion.isWithinEllipse());
+        final boolean trackContinued = trackTailContinued.isContinued() || (ellipseCriterion != null && ellipseCriterion.isWithinEllipse());
         final HugeJumpCriterion hugeJump = new HugeJumpCriterion(this, newPosition);
 
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {

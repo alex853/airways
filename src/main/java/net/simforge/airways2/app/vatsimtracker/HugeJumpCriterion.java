@@ -3,7 +3,10 @@ package net.simforge.airways2.app.vatsimtracker;
 import net.simforge.commons.misc.Geo;
 import net.simforge.networkview.core.Position;
 
+import java.text.DecimalFormat;
+
 public class HugeJumpCriterion {
+    private static final DecimalFormat df1 = new DecimalFormat("#.#");
     private final double distanceToNextPosition;
     private final boolean detected;
 
@@ -27,7 +30,7 @@ public class HugeJumpCriterion {
     @Override
     public String toString() {
         return "HugeJumpCriterion{" +
-                "distanceToNextPosition=" + distanceToNextPosition +
+                "distanceToNextPosition=" + df1.format(distanceToNextPosition) +
                 ", detected=" + detected +
                 '}';
     }

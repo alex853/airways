@@ -4,7 +4,10 @@ import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.Geo;
 import net.simforge.networkview.core.Position;
 
+import java.text.DecimalFormat;
+
 public class TrackTailCriterion {
+    private static final DecimalFormat df3 = new DecimalFormat("#.###");
     private final double lastTrackedDistance;
     private final double lastTrackedDistanceTime;
     private final double lastTrackedDistanceSpeed;
@@ -14,7 +17,7 @@ public class TrackTailCriterion {
 
     private final double maxAllowedDistanceToNewPosition;
 
-    private final boolean сontinued;
+    private final boolean continued;
 
     public TrackTailCriterion(final PilotContext pilotContext, final Position newPosition) {
         lastTrackedDistance = TrackLeg.distance(pilotContext.getTrackTail());
@@ -26,23 +29,23 @@ public class TrackTailCriterion {
 
         maxAllowedDistanceToNewPosition = distanceToNewPositionTime * lastTrackedDistanceSpeed * 1.5;
 
-        сontinued = distanceToNewPosition < maxAllowedDistanceToNewPosition;
+        continued = distanceToNewPosition < maxAllowedDistanceToNewPosition;
     }
 
-    public boolean isСontinued() {
-        return сontinued;
+    public boolean isContinued() {
+        return continued;
     }
 
     @Override
     public String toString() {
         return "TrackTailCriterion{" +
-                "lastTrackedDistance=" + lastTrackedDistance +
-                ", lastTrackedDistanceTime=" + lastTrackedDistanceTime +
-                ", lastTrackedDistanceSpeed=" + lastTrackedDistanceSpeed +
-                ", distanceToNewPosition=" + distanceToNewPosition +
-                ", distanceToNewPositionTime=" + distanceToNewPositionTime +
-                ", maxAllowedDistanceToNewPosition=" + maxAllowedDistanceToNewPosition +
-                ", сontinued=" + сontinued +
+                "lastTrackedDistance=" + df3.format(lastTrackedDistance) +
+                ", lastTrackedDistanceTime=" + df3.format(lastTrackedDistanceTime) +
+                ", lastTrackedDistanceSpeed=" + df3.format(lastTrackedDistanceSpeed) +
+                ", distanceToNewPosition=" + df3.format(distanceToNewPosition) +
+                ", distanceToNewPositionTime=" + df3.format(distanceToNewPositionTime) +
+                ", maxAllowedDistanceToNewPosition=" + df3.format(maxAllowedDistanceToNewPosition) +
+                ", сontinued=" + continued +
                 '}';
     }
 }
