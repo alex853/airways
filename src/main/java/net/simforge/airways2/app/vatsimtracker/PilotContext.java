@@ -351,8 +351,8 @@ public class PilotContext {
             final Flightplan oldFlightplan = flightplan;
             resetFlightInfo();
 
-            log.info("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission, oldFlightplan));
-            pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
+            log.info("{} - Event 'OFFLINE' for Arrived flight", missionLogHead(oldMission, oldFlightplan));
+            pilotLog("Event 'offline' for Arrived flight, removing");
             shouldBeRemoved = true;
         } else {
             throw new IllegalStateException();
