@@ -1,6 +1,5 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.worldbuilder.World25_008_create_aircraft_types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -25,8 +24,6 @@ public class Application {
             runWorldBuilderStep(args[0]);
             return;
         }
-
-        World25_008_create_aircraft_types.main(args);
 
         SpringApplication.run(Application.class, args);
     }
