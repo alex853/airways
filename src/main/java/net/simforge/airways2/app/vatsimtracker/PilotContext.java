@@ -92,8 +92,8 @@ public class PilotContext {
     }
 
     public void newPilotContextInAirport(final Position position) {
-        flightStage = FlightStage.Preflight;
         flightplan = new Flightplan(position);
+        flightStage = FlightStage.Preflight;
 
         if (flightplan.isValid()) {
             copyPositionFields(position, trackTail);
@@ -109,7 +109,7 @@ public class PilotContext {
         copyPositionFields(position, trackTail);
     }
 
-    public void nextReportPosition(final Position newPosition) { // todo ak0 rework all flightstats events
+    public void nextReportPosition(final Position newPosition) { // todo ak1 rework all flightstats events
         final Flightplan newFlightplan = new Flightplan(newPosition);
 
         final boolean takeoff = positionIsOnGround && !newPosition.isOnGround();
@@ -121,7 +121,7 @@ public class PilotContext {
                 (double) getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / (double) Time.ONE_HOUR)
                 : new LinkedList<>();
 
-        final double newTrackTrailDistance = TrackLeg.distance(newTrackTail);
+        final double newTrackTailDistance = TrackLeg.distance(newTrackTail);
         final TrackTailCriterion trackTailContinued = new TrackTailCriterion(this, newPosition);
         final EllipseCriterion ellipseCriterion = flightplan != null && flightplan.isValid()
                 ? new EllipseCriterion(
@@ -173,7 +173,7 @@ public class PilotContext {
 
                 if (flightStage == FlightStage.Preflight
                         && flightplan.isValid()
-                        && newTrackTrailDistance > 0.2) { // threshold
+                        && newTrackTailDistance > 0.2) { // threshold
                     flightStage = FlightStage.Departing;
 
                     final FlightMissions.Mission mission = mission_blocksOff();
@@ -229,7 +229,8 @@ public class PilotContext {
                 pilotLog("Event 'back to flying online'");
             } // todo ak0 what if landing? or track discontinued?
         } else if (flightStage == FlightStage.Arriving) {
-            if (newTrackTrailDistance < 0.3) {
+            final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
+            if (newTrackTailDistance < 0.3 || newFlightMissionDueToNewFlightplan) {
                 flightStage = FlightStage.Arrived;
 
                 final FlightMissions.Mission mission = mission_blocksOnAndFinish();
@@ -237,38 +238,47 @@ public class PilotContext {
                 log.info("{} - Event 'blocks-on'", missionLogHead(mission, flightplan));
                 pilotLog("Event 'blocks-on'");
 
-                removalCounter = 3; // it will stay Arrived for 3 reports and then will be removed
+                removalCounter = 5; // it will stay Arrived for some time
             }
 
-            if (newFlightplan.isValid() && !newFlightplan.isSame(flightplan)) {
+            if (newFlightMissionDueToNewFlightplan) {
+                resetFlightInfo();
+
                 flightplan = newFlightplan;
+                flightStage = FlightStage.Preflight;
                 final FlightMissions.Mission mission = mission_dispatchNewAndStart();
                 flightMissionId = mission.getId();
 
-                log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
-                pilotLog("Event 'dispatched' == via end of flight");
+                log.info("{} - Event 'dispatched' == via end of Arriving flight", missionLogHead(mission, flightplan));
+                pilotLog("Event 'dispatched' == via end of Arriving flight");
             }
         } else if (flightStage == FlightStage.Arrived) {
-            if (removalCounter == 0) {
+            final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
+            if (removalCounter == 0 || newFlightMissionDueToNewFlightplan) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
-                resetFlightInfo();
+
+                resetFlightInfo(); // flight mission has been finished in Arriving section
+
+                flightplan = newFlightplan;
+                flightStage = FlightStage.Preflight;
 
                 log.error("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
-
-                flightStage = FlightStage.Preflight;
             } else {
                 removalCounter--;
             }
 
-            if (newFlightplan.isValid() && !newFlightplan.isSame(flightplan)) {
+            if (newFlightMissionDueToNewFlightplan) {
+                resetFlightInfo();
+
                 flightplan = newFlightplan;
+                flightStage = FlightStage.Preflight;
                 final FlightMissions.Mission mission = mission_dispatchNewAndStart();
                 flightMissionId = mission.getId();
 
-                log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
-                pilotLog("Event 'dispatched' == via end of flight");
+                log.info("{} - Event 'dispatched' == via end of Arrived flight", missionLogHead(mission, flightplan));
+                pilotLog("Event 'dispatched' == via end of Arrived flight");
             }
         } else {
             throw new IllegalStateException();
@@ -332,6 +342,7 @@ public class PilotContext {
         flightMissionId = 0;
         flightplan = null;
         trackTail.clear();
+        removalCounter = 0;
     }
 
     public long getElapsedSecondsSinceLastSeen(String report) {
