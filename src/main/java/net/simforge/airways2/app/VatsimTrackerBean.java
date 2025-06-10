@@ -109,7 +109,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     final Field reportSecondsField = CompactifiedPosition.class.getDeclaredField("reportSeconds");
                     reportSecondsField.setAccessible(true);
                     for (int i = 0; i < positions.size(); i++) {
-                        final Position p = positions.get(0);
+                        final Position p = positions.get(i);
                         reportSecondsField.set(p, reportSeconds);
                     }
 
