@@ -194,28 +194,29 @@ public class PilotContext {
 
                 shouldBeRemoved = true;
             } else if (landing) {
-                if (flightplan.isValidDestinationLocation(newPosition.getAirportIcao())) {
+                final String landingAirportIcao = newPosition.getAirportIcao();
+                if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
                     flightStage = FlightStage.Arriving;
 
                     final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
 
-                    log.info("{} - Event 'landing'", missionLogHead(mission, flightplan));
-                    pilotLog("Event 'landing'");
-                } else if (worldIcaos.contains(newPosition.getAirportIcao())) { // todo ak0 npe here, airportIcao null? need to check it everywhere
+                    log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
+                    pilotLog("Event 'landing' at planned destination airport");
+                } else if (landingAirportIcao != null && worldIcaos.contains(landingAirportIcao)) {
                     flightStage = FlightStage.Arriving;
 
                     final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
 
-                    log.info("{} - Event 'landing' on WRONG airport", missionLogHead(mission, flightplan));
-                    pilotLog("Event 'landing' on WRONG airport");
+                    log.warn("{} - Event 'landing' on WRONG airport {}", missionLogHead(mission, flightplan), landingAirportIcao);
+                    pilotLog("Event 'landing' on WRONG airport " + landingAirportIcao);
                 } else { // landing on airport out of the world
                     final FlightMissions.Mission oldMission = mission_read();
                     final Flightplan oldFlightplan = flightplan;
                     mission_cancelFromFlying(); // todo ak3 improvement is possible here?
                     resetFlightInfo();
 
-                    log.info("{} - Event 'landing' on airport out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
-                    pilotLog("Event 'landing' on airport out world, cancelling and removing");
+                    log.warn("{} - Event 'landing' on airport {} out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
+                    pilotLog("Event 'landing' on airport " + landingAirportIcao + " out world, cancelling and removing");
 
                     shouldBeRemoved = true;
                 }
@@ -263,7 +264,7 @@ public class PilotContext {
                 flightplan = newFlightplan;
                 flightStage = FlightStage.Preflight;
 
-                log.error("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
+                log.info("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
             } else {
                 removalCounter--;
@@ -330,7 +331,7 @@ public class PilotContext {
             final Flightplan oldFlightplan = flightplan;
             resetFlightInfo();
 
-            log.error("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission, oldFlightplan));
+            log.info("{} - Event 'OFFLINE' from AllGood, flight stage Arrived", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'offline' from AllGood, Arrived stage, removing");
             shouldBeRemoved = true;
         } else {
@@ -388,7 +389,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.warn("erroneous case, f/m == 0, in mission_blocksOff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m == 0, in mission_blocksOff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak1 erroneous case, need to investigate
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -409,7 +410,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.warn("erroneous case, f/m == 0, in mission_takeoff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m == 0, in mission_takeoff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak1 erroneous case, need to investigate
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -433,7 +434,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.warn("erroneous case, f/m == 0, in mission_landing, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m == 0, in mission_landing, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak1 erroneous case, need to investigate
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -456,7 +457,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.warn("erroneous case, f/m == 0, in v, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m == 0, in v, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak1 erroneous case, need to investigate
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -482,7 +483,7 @@ public class PilotContext {
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.warn("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak1 erroneous case, need to investigate
             }
 
@@ -502,13 +503,13 @@ public class PilotContext {
     private void mission_cancelFromFlying() {
         worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
-                log.warn("erroneous case, f/m == 0, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m == 0, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.warn("erroneous case, f/m not found, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m not found, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
                 return null; // todo ak3 erroneous case, need to rethink
             }
 
@@ -552,7 +553,7 @@ public class PilotContext {
         try {
             IOHelper.appendFile(pilotLogFile, line);
         } catch (final IOException e) {
-            log.warn("unable to write pilot log", e);
+            log.error("unable to write pilot log", e);
         }
     }
 
