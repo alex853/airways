@@ -46,7 +46,6 @@ public class Storage<T> {
         this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
 
-        // todo ak0 refactor it in both implementations
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
         Arrays.sort(sortedDataFields, Comparator.comparingInt(Object::hashCode));
         sortedDataFieldHashs = new int[sortedDataFields.length];

@@ -77,7 +77,7 @@ public class World {
 
             world.scheduledFlights.loadIfExists(rootPath);
 
-            // todo ak0 airport2airport
+            world.airport2airportDailyFlightStats.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -104,7 +104,7 @@ public class World {
 
             scheduledFlights.save(rootPath);
 
-            // todo ak0 airport2airport
+            airport2airportDailyFlightStats.save(rootPath);
 
             worldTime.save(rootPath);
         });
