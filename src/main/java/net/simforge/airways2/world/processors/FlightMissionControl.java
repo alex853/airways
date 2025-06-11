@@ -181,5 +181,8 @@ public class FlightMissionControl {
 
         world.log(EventLog.EventType.FlightFinished, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - flight finished", mission.getId());
+
+        // todo ak0
+        //      world.airport2airportDailyFlightStats().incrementTodayCount(mission.getDepartureAirportId(), mission.getActualLandingAirportId());
     }
 }

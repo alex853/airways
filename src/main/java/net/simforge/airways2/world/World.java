@@ -36,6 +36,8 @@ public class World {
 
     private final ScheduledFlights scheduledFlights = new ScheduledFlights();
 
+    private final Airport2AirportDailyFlightStats airport2airportDailyFlightStats = new Airport2AirportDailyFlightStats();
+
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
             .withDataField(DataField.of(DataType.Signed32bit))
@@ -75,6 +77,8 @@ public class World {
 
             world.scheduledFlights.loadIfExists(rootPath);
 
+            // todo ak0 airport2airport
+
             world.worldTime.loadIfExists(rootPath);
         });
 
@@ -99,6 +103,8 @@ public class World {
             flightMissions.save(rootPath);
 
             scheduledFlights.save(rootPath);
+
+            // todo ak0 airport2airport
 
             worldTime.save(rootPath);
         });
@@ -164,6 +170,10 @@ public class World {
         return scheduledFlights;
     }
 
+    public Airport2AirportDailyFlightStats airport2airportDailyFlightStats() {
+        return airport2airportDailyFlightStats;
+    }
+
     public boolean process(final int expectedWorldTime) {
         final int processedWorldTime = getWorldTime();
         final int newWorldTime = processedWorldTime + worldTimeStep;
@@ -178,6 +188,7 @@ public class World {
             FlightMissionProcessor.process(this);
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
+            // todo ak0 Airport2AirportDailyFlightStatsRotation.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

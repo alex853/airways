@@ -38,12 +38,15 @@ public class Storage<T> {
                     final Instantiator<T> instantiator,
                     final DataType idDataType,
                     final DataField[] dataFields) {
+        checkNotNull(dataFields);
+
         this.name = name;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
         this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
 
+        // todo ak0 refactor it in both implementations
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
         Arrays.sort(sortedDataFields, Comparator.comparingInt(Object::hashCode));
         sortedDataFieldHashs = new int[sortedDataFields.length];
@@ -340,15 +343,15 @@ public class Storage<T> {
         }
     }
 
-    private int getRecordHeaderOffset(int recordId) {
+    private int getRecordHeaderOffset(final int recordId) {
         return (recordId-1) * recordSize;
     }
 
-    private int getFieldOffset(int recordId, DataField dataField) {
+    private int getFieldOffset(final int recordId, final DataField dataField) {
         return getRecordHeaderOffset(recordId) + recordHeaderSize + dataField.offset();
     }
 
-    private int getIntAtOffset(int fieldOffset) {
+    private int getIntAtOffset(final int fieldOffset) {
         return (data[fieldOffset] << 24)
                 + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 16)
                 + (Byte.toUnsignedInt(data[fieldOffset + 2]) << 8)
