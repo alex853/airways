@@ -51,7 +51,7 @@ public class AdminController {
                 raf.seek(raf.length() - maxLength);
             }
 
-            byte[] bytes = new byte[maxLength];
+            final byte[] bytes = new byte[(int) Math.min(maxLength, raf.length())];
             raf.readFully(bytes);
 
             return ResponseEntity.ok()
