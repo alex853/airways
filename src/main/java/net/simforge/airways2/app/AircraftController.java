@@ -56,7 +56,7 @@ public class AircraftController {
                             WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
                             WebTime.hhmmOrNull(mission.getPlannedArrivalWorldTime()),
                             WebTime.hhmmOrNull(mission.getActualTakeoffWorldTime()),
-                            "n/a");
+                            null);
                 })
                 .toList());
     }
