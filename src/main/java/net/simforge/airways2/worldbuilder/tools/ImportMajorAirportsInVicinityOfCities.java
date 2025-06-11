@@ -44,7 +44,7 @@ public class ImportMajorAirportsInVicinityOfCities {
                 continue;
             }
 
-            // todo ak2 check airport presence by iata
+            // todo ak3 check airport presence by iata
 
             final Geo.Coords airportCoords = Geo.coords(Double.parseDouble(latStr), Double.parseDouble(lonStr));
 
@@ -57,7 +57,7 @@ public class ImportMajorAirportsInVicinityOfCities {
                             airport = airports.create(
                                     airportCoords.getLat(),
                                     airportCoords.getLon(),
-                                    null, // todo ak2 iata to be added
+                                    null, // todo ak3 iata to be added
                                     icao,
                                     name);
                             log.info("\tAirport {} created", icao);

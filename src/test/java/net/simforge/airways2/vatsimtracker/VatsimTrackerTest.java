@@ -19,8 +19,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class VatsimTrackerTest {
@@ -277,7 +276,7 @@ public class VatsimTrackerTest {
     // todo ak1 change of aircraft type
 
     @Test
-    public void valid_fp___then_goes_offline___then_same_valid_fp___flight_should_be_cancelled___and___another_should_be_created() { // todo ak1 this may be treated as same flight, do not recreate
+    public void valid_fp___then_goes_offline___then_same_valid_fp___flight_should_be_cancelled___and___another_should_be_created() { // todo ak2 this may be treated as same flight, do not recreate
         vatsimPilotGoesOnlineParkedAt(egll, "A320");
         vatsimPilotFilesFlightplan("EGLL", "EGCC"); // valid flightplan
         runWorldMins(10);
@@ -583,6 +582,47 @@ public class VatsimTrackerTest {
         assertAircraftParkedAtAirportAndIdle(egcc);
     }
 
+    @Test
+    public void valid_flight_till_flying___then_pilot_goes_offline_for_few_mins___then_pilot_goes_back_online_but_on_ground___track_continued___flight_should_be_continued_and_then_finished() {
+        vatsimPilotGoesOnlineParkedAt(egll, "A320");
+        vatsimPilotFilesFlightplan("EGLL", "EGCC");
+        runWorldMins(2);
+        vatsimPilotStartsTaxiingOut();
+        runWorldMins(5);
+        vatsimPilotMakesTakeoff();
+        runWorldMins(10);
+
+        vatsimPilotGoesOfflineWhileFlyingAndWillBeBackOnline();
+        runWorldMins(10);
+
+        vatsimPilotMakesOfflineLandingAndGoesBackOnline("EGCC");
+        runWorldMins(3);
+
+        assertFlight1Arriving();
+    }
+
+    @Test
+    public void valid_flight_till_flying___then_pilot_goes_offline_for_few_mins___then_pilot_goes_back_online___track_discontinued___flight_should_be_continued_and_then_finished() {
+        vatsimPilotGoesOnlineParkedAt(egll, "A320");
+        vatsimPilotFilesFlightplan("EGLL", "EGCC");
+        runWorldMins(2);
+        vatsimPilotStartsTaxiingOut();
+        runWorldMins(5);
+        vatsimPilotMakesTakeoff();
+        runWorldMins(10);
+
+        vatsimPilotGoesOfflineWhileFlyingAndWillBeBackOnline();
+        runWorldMins(3);
+
+        vatsimPilotJumpsInSlewModeWhileFlyingOffline(Geo.coords(egll.getCoords().getLat() - 10, egll.getCoords().getLon() - 10));
+        runWorldMins(3);
+
+        vatsimPilotGoesBackOnlineWhileFlying();
+        runWorldMins(3);
+
+        assertFlight1Cancelled();
+    }
+
     // todo ak1 short disconnect cases on ground
     // todo ak1 offline and then reconnect as before, reconnect without f/p, reconnect on ground, reconnect on different place of world
 
@@ -689,8 +729,8 @@ public class VatsimTrackerTest {
     }
 
     private void vatsimPilotGoesOnlineParkedAt(final Airports.Airport airport, final String aircraftType) {
-        checkArgument(currentVatsimPosition == null);
-        checkArgument(simulationMode == SimulationMode.Nope);
+        checkState(currentVatsimPosition == null);
+        checkState(simulationMode == SimulationMode.Nope);
         currentVatsimPosition = new ReportPilotPosition();
         currentVatsimPosition.setPilotNumber(pilotNumber);
         currentVatsimPosition.setFpAircraft(aircraftType);
@@ -703,48 +743,48 @@ public class VatsimTrackerTest {
     }
 
     private void vatsimPilotJumpsToAirportWhileParkedAtAirport(final Airports.Airport airport) {
-        checkArgument(simulationMode == SimulationMode.Nope);
+        checkState(simulationMode == SimulationMode.Nope);
         checkNotNull(currentVatsimPosition);
-        checkArgument(currentVatsimPosition.getOnGround());
+        checkState(currentVatsimPosition.getOnGround());
         currentVatsimPosition.setLatitude((double) airport.getLatitude());
         currentVatsimPosition.setLongitude((double) airport.getLongitude());
     }
 
     private void vatsimPilotJumpsToAirportWhileFlying(final Airports.Airport airport) {
-        checkArgument(simulationMode == SimulationMode.Flying);
+        checkState(simulationMode == SimulationMode.Flying);
         checkNotNull(currentVatsimPosition);
-        checkArgument(!currentVatsimPosition.getOnGround());
+        checkState(!currentVatsimPosition.getOnGround());
         currentVatsimPosition.setLatitude((double) airport.getLatitude());
         currentVatsimPosition.setLongitude((double) airport.getLongitude());
         currentVatsimPosition.setOnGround(true);
     }
 
     private void vatsimPilotJumpsInSlewModeWhileFlying(final Geo.Coords coords) {
-        checkArgument(simulationMode == SimulationMode.Flying);
+        checkState(simulationMode == SimulationMode.Flying);
         checkNotNull(currentVatsimPosition);
-        checkArgument(!currentVatsimPosition.getOnGround());
+        checkState(!currentVatsimPosition.getOnGround());
         currentVatsimPosition.setLatitude(coords.getLat());
         currentVatsimPosition.setLongitude(coords.getLon());
     }
 
     private void vatsimPilotFilesFlightplan(final String departure, final String destination) {
         checkNotNull(currentVatsimPosition);
-        checkArgument(simulationMode == SimulationMode.Nope);
+        checkState(simulationMode == SimulationMode.Nope);
         currentVatsimPosition.setFpOrigin(departure);
         currentVatsimPosition.setFpDestination(destination);
     }
 
     private void vatsimPilotStartsTaxiingOut() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(Position.create(currentVatsimPosition).isInAirport());
-        checkArgument(simulationMode == SimulationMode.Nope);
+        checkState(Position.create(currentVatsimPosition).isInAirport());
+        checkState(simulationMode == SimulationMode.Nope);
         simulationMode = SimulationMode.TaxiingOut;
     }
 
     private void vatsimPilotMakesTakeoff() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(Position.create(currentVatsimPosition).isInAirport());
-        checkArgument(simulationMode == SimulationMode.TaxiingOut);
+        checkState(Position.create(currentVatsimPosition).isInAirport());
+        checkState(simulationMode == SimulationMode.TaxiingOut);
         simulationMode = SimulationMode.Flying;
         simulationActualDestinationAirportIcao = currentVatsimPosition.getFpDestination();
         currentVatsimPosition.setOnGround(false);
@@ -752,15 +792,15 @@ public class VatsimTrackerTest {
 
     private void vatsimPilotInFactFliesToAnotherAirport(final String actualDestinationIcao) {
         checkNotNull(currentVatsimPosition);
-        checkArgument(!Position.create(currentVatsimPosition).isOnGround());
-        checkArgument(simulationMode == SimulationMode.Flying);
+        checkState(!Position.create(currentVatsimPosition).isOnGround());
+        checkState(simulationMode == SimulationMode.Flying);
         simulationActualDestinationAirportIcao = actualDestinationIcao;
     }
 
     private void runWorldUntilVatsimPilotReachesDestination() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(!Position.create(currentVatsimPosition).isOnGround());
-        checkArgument(simulationMode == SimulationMode.Flying);
+        checkState(!Position.create(currentVatsimPosition).isOnGround());
+        checkState(simulationMode == SimulationMode.Flying);
 
         while (simulationMode != SimulationMode.TimeToLand) {
             runWorldMins(2);
@@ -769,30 +809,56 @@ public class VatsimTrackerTest {
 
     private void vatsimPilotGoesOfflineWhileFlyingAndWillBeBackOnline() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(!Position.create(currentVatsimPosition).isOnGround());
-        checkArgument(simulationMode == SimulationMode.Flying);
+        checkState(!Position.create(currentVatsimPosition).isOnGround());
+        checkState(simulationMode == SimulationMode.Flying);
         simulationMode = SimulationMode.FlyingWhileShortDisconnect;
         positionWhileFlyingOffline = currentVatsimPosition;
         currentVatsimPosition = null;
     }
 
     private void vatsimPilotGoesBackOnlineWhileFlying() {
-        checkArgument(simulationMode == SimulationMode.FlyingWhileShortDisconnect);
-        checkArgument(currentVatsimPosition == null);
+        checkState(simulationMode == SimulationMode.FlyingWhileShortDisconnect);
+        checkState(currentVatsimPosition == null);
         checkNotNull(positionWhileFlyingOffline);
         simulationMode = SimulationMode.Flying;
         currentVatsimPosition = positionWhileFlyingOffline;
         positionWhileFlyingOffline = null;
     }
 
+    private void vatsimPilotMakesOfflineLandingAndGoesBackOnline(final String landingAirportIcao) {
+        checkState(simulationMode == SimulationMode.TimeToLand);
+        checkState(currentVatsimPosition == null);
+        checkNotNull(positionWhileFlyingOffline);
+
+        simulationMode = SimulationMode.TaxiingIn;
+
+        currentVatsimPosition = positionWhileFlyingOffline;
+        positionWhileFlyingOffline = null;
+
+        final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(landingAirportIcao).orElseThrow().getCoords();
+        currentVatsimPosition.setOnGround(true);
+        currentVatsimPosition.setLatitude(destinationCoords.getLat());
+        currentVatsimPosition.setLongitude(destinationCoords.getLon());
+    }
+
+    private void vatsimPilotJumpsInSlewModeWhileFlyingOffline(final Geo.Coords coords) {
+        checkState(simulationMode == SimulationMode.FlyingWhileShortDisconnect);
+        checkState(currentVatsimPosition == null);
+        checkNotNull(positionWhileFlyingOffline);
+        checkState(!positionWhileFlyingOffline.getOnGround());
+
+        positionWhileFlyingOffline.setLatitude(coords.getLat());
+        positionWhileFlyingOffline.setLongitude(coords.getLon());
+    }
+
     private void vatsimPilotMakesLanding() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(!Position.create(currentVatsimPosition).isOnGround());
-        checkArgument(simulationMode == SimulationMode.TimeToLand);
+        checkState(!Position.create(currentVatsimPosition).isOnGround());
+        checkState(simulationMode == SimulationMode.TimeToLand);
+
         simulationMode = SimulationMode.TaxiingIn;
 
         final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
-        //final Airports.Airport destination = world.airports().byIcao(pilotContext.getPlannedDestination()).orElseThrow();
         currentVatsimPosition.setOnGround(true);
         currentVatsimPosition.setLatitude(destinationCoords.getLat());
         currentVatsimPosition.setLongitude(destinationCoords.getLon());
@@ -800,8 +866,8 @@ public class VatsimTrackerTest {
 
     private void vatsimPilotPutsBlocksOn() {
         checkNotNull(currentVatsimPosition);
-        checkArgument(Position.create(currentVatsimPosition).isInAirport());
-        checkArgument(simulationMode == SimulationMode.TaxiingIn);
+        checkState(Position.create(currentVatsimPosition).isInAirport());
+        checkState(simulationMode == SimulationMode.TaxiingIn);
         simulationMode = SimulationMode.Nope;
     }
 
@@ -861,7 +927,7 @@ public class VatsimTrackerTest {
             case Nope:
                 break;
             case TaxiingOut: {
-                checkArgument(Position.create(currentVatsimPosition).isInAirport());
+                checkState(Position.create(currentVatsimPosition).isInAirport());
                 final Geo.Coords newPosition = Geo.destination(
                         getCurrentVatsimPositionCoords(),
                         0,
@@ -880,11 +946,7 @@ public class VatsimTrackerTest {
                 final Geo.Coords newPosition = Geo.destination(currentVatsimPositionCoords, bearing, tas * (2.0 / 60.0));
 
                 if (Geo.distance(currentVatsimPositionCoords, destinationCoords) < Geo.distance(newPosition, destinationCoords)) {
-                    if (simulationMode == SimulationMode.Flying) {
-                        simulationMode = SimulationMode.TimeToLand;
-                    } else {
-                        throw new IllegalStateException("TimeToLand reached while in FlyingWhileShortDisconnect");
-                    }
+                    simulationMode = SimulationMode.TimeToLand;
                 } else {
                     if (simulationMode == SimulationMode.Flying) {
                         currentVatsimPosition.setLatitude(newPosition.getLat());
@@ -897,7 +959,7 @@ public class VatsimTrackerTest {
                 break;
             }
             case TaxiingIn: {
-                checkArgument(Position.create(currentVatsimPosition).isInAirport());
+                checkState(Position.create(currentVatsimPosition).isInAirport());
                 final Geo.Coords destinationCoords = net.simforge.refdata.airports.Airports.get().findByIcao(simulationActualDestinationAirportIcao).orElseThrow().getCoords();
                 final Geo.Coords newPosition = Geo.destination(
                         destinationCoords,

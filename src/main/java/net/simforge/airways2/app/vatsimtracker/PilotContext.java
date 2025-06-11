@@ -102,14 +102,16 @@ public class PilotContext {
 
             log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
             pilotLog("Event 'dispatched' == via new flight in airport");
+            FlightStats.event("new context - dispatched");
         } else {
             pilotLog("new pilot context in non-valid state");
+            FlightStats.event("new context - flightplan invalid");
         }
 
         copyPositionFields(position, trackTail);
     }
 
-    public void nextReportPosition(final Position newPosition) { // todo ak1 rework all flightstats events
+    public void nextReportPosition(final Position newPosition) {
         final Flightplan newFlightplan = new Flightplan(newPosition);
 
         final boolean takeoff = positionIsOnGround && !newPosition.isOnGround();
@@ -139,11 +141,15 @@ public class PilotContext {
                     final FlightMissions.Mission mission = mission_takeoff();
                     log.info("{} - Event 'takeoff'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'takeoff'");
+                    FlightStats.event("preflight - takeoff with valid flightplan");
                 } else {
                     if (flightMissionId != 0) {
                         log.info("{} - Event 'takeoff' with invalid flightplan, cancelling and removal", missionLogHead(mission_read(), flightplan));
                         pilotLog("Event 'takeoff' with invalid flightplan, cancelling and removal");
                         mission_cancelBeforeTakeoffIfExists();
+                        FlightStats.event("preflight - takeoff with invalid flightplan - fm cancelled");
+                    } else {
+                        FlightStats.event("preflight - takeoff with invalid flightplan - no fm found!");
                     }
 
                     resetFlightInfo();
@@ -155,6 +161,9 @@ public class PilotContext {
                         log.info("{} - Event 'cancelled', new {} differs from existing {}", missionLogHead(mission_read(), flightplan), newFlightplan, flightplan);
                         pilotLog("Event 'cancelled' as new flightplan differs");
                         mission_cancelBeforeTakeoffIfExists();
+                        FlightStats.event("preflight - flightplan changed - fm cancelled");
+                    } else {
+                        FlightStats.event("preflight - flightplan changed - no fm found!");
                     }
 
                     resetFlightInfo();
@@ -167,6 +176,7 @@ public class PilotContext {
 
                     log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'dispatched' == via some correction");
+                    FlightStats.event("preflight - dispatched - new valid flightplan");
                 } else {
                     flightplan = newFlightplan;
                 }
@@ -180,6 +190,7 @@ public class PilotContext {
 
                     log.info("{} - Event 'blocks-off'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'blocks-off'");
+                    FlightStats.event("preflight - blocks-off with valid flightplan");
                 }
             }
         } else if (flightStage == FlightStage.Flying) {
@@ -191,63 +202,42 @@ public class PilotContext {
 
                 log.info("{} - Event 'JUMP IN THE AIR', {}, {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion, hugeJump);
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
+                FlightStats.event("flying - discontinuity-or-jump - fm cancelled");
 
                 shouldBeRemoved = true;
             } else if (landing) {
-                final String landingAirportIcao = newPosition.getAirportIcao();
-                if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
-                    flightStage = FlightStage.Arriving;
-
-                    final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
-
-                    log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
-                    pilotLog("Event 'landing' at planned destination airport");
-                } else if (landingAirportIcao != null && worldIcaos.contains(landingAirportIcao)) {
-                    flightStage = FlightStage.Arriving;
-
-                    final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
-
-                    log.warn("{} - Event 'landing' on WRONG airport {}", missionLogHead(mission, flightplan), landingAirportIcao);
-                    pilotLog("Event 'landing' on WRONG airport " + landingAirportIcao);
-                } else { // landing on airport out of the world
-                    final FlightMissions.Mission oldMission = mission_read();
-                    final Flightplan oldFlightplan = flightplan;
-                    mission_cancelFromFlying(); // todo ak3 improvement is possible here?
-                    resetFlightInfo();
-
-                    log.warn("{} - Event 'landing' on airport {} out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
-                    pilotLog("Event 'landing' on airport " + landingAirportIcao + " out world, cancelling and removing");
-
-                    shouldBeRemoved = true;
-                }
+                landingFromFlyingStage(newPosition);
             }
         } else if (flightStage == FlightStage.FlyingOffline) {
+            final FlightMissions.Mission mission = mission_read();
             if (!landing && trackContinued) { // pilot is back online and is continuing the flying roughly the same track
                 flightStage = FlightStage.Flying;
-                final FlightMissions.Mission mission = mission_read();
 
                 log.info("{} - Event 'back to flying online'! {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying online'");
-            } else if (!landing) { // !landing and !trackContinued // todo ak1 test for this case! what if jump happens here?
-                final FlightMissions.Mission oldMission = mission_read();
-                final Flightplan oldFlightplan = flightplan;
+                FlightStats.event("flying-offline - back online successfully");
+
+                final long minutesOffline = getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / Time.ONE_MINUTE;
+                final long range = ((minutesOffline / 10) + 1) * 10;
+                FlightStats.event("flying-offline - duration " + range);
+            } else if (!landing) { // still flying and track discontinued
+                final Flightplan flightplanCopy = flightplan;
                 mission_cancelFromFlying();
                 resetFlightInfo();
 
-                log.warn("{} - Event 'back to flying' HOWEVER track discontinued, {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion);
+                log.warn("{} - Event 'back to flying' HOWEVER track discontinued, {}, {}, cancelling and removing", missionLogHead(mission, flightplanCopy), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying' HOWEVER track discontinued, cancelling and removing");
+                FlightStats.event("flying-offline - track discontinued, fm cancelled");
 
                 shouldBeRemoved = true;
-            } else { // landing // todo ak1 test for this case! probably it could be treated as normal behaviour if offline period is not too long
-                final FlightMissions.Mission oldMission = mission_read();
-                final Flightplan oldFlightplan = flightplan;
-                mission_cancelFromFlying();
-                resetFlightInfo();
+            } else { // landing
+                flightStage = FlightStage.Flying;
 
-                log.warn("{} - Event 'back to flying AND LANDING at the same time', {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion);
-                pilotLog("Event 'back to flying AND LANDING at the same time', cancelling and removing");
+                log.warn("{} - Event 'back to flying AND LANDING at the same time', {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
+                pilotLog("Event 'back to flying AND LANDING at the same time'");
+                FlightStats.event("flying offline - online and land successfully");
 
-                shouldBeRemoved = true;
+                landingFromFlyingStage(newPosition);
             }
         } else if (flightStage == FlightStage.Arriving) {
             final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
@@ -258,6 +248,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'blocks-on'", missionLogHead(mission, flightplan));
                 pilotLog("Event 'blocks-on'");
+                FlightStats.event("arriving - blocks-on and finish");
 
                 removalCounter = 5; // it will stay Arrived for some time
             }
@@ -272,6 +263,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'dispatched' == via end of Arriving flight", missionLogHead(mission, flightplan));
                 pilotLog("Event 'dispatched' == via end of Arriving flight");
+                FlightStats.event("arriving - dispatched");
             }
         } else if (flightStage == FlightStage.Arrived) {
             final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
@@ -286,6 +278,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
+                FlightStats.event("arrived - completed");
             } else {
                 removalCounter--;
             }
@@ -300,6 +293,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'dispatched' == via end of Arrived flight", missionLogHead(mission, flightplan));
                 pilotLog("Event 'dispatched' == via end of Arrived flight");
+                FlightStats.event("arrived - dispatched");
             }
         } else {
             throw new IllegalStateException();
@@ -308,12 +302,47 @@ public class PilotContext {
         copyPositionFields(newPosition, newTrackTail);
     }
 
+    private void landingFromFlyingStage(Position newPosition) {
+        final String landingAirportIcao = newPosition.getAirportIcao();
+        if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
+            flightStage = FlightStage.Arriving;
+
+            final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
+
+            log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
+            pilotLog("Event 'landing' at planned destination airport");
+            FlightStats.event("landing - planned airport");
+        } else if (landingAirportIcao != null && worldIcaos.contains(landingAirportIcao)) {
+            flightStage = FlightStage.Arriving;
+
+            final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
+
+            log.warn("{} - Event 'landing' on WRONG airport {}", missionLogHead(mission, flightplan), landingAirportIcao);
+            pilotLog("Event 'landing' on WRONG airport " + landingAirportIcao);
+            FlightStats.event("landing - wrong airport");
+        } else { // landing on airport out of the world
+            final FlightMissions.Mission oldMission = mission_read();
+            final Flightplan oldFlightplan = flightplan;
+            mission_cancelFromFlying(); // todo ak3 improvement is possible here?
+            resetFlightInfo();
+
+            log.warn("{} - Event 'landing' on airport {} out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
+            pilotLog("Event 'landing' on airport " + landingAirportIcao + " out world, cancelling and removing");
+            FlightStats.event("landing - out of the world");
+
+            shouldBeRemoved = true;
+        }
+    }
+
     public void noPositionInReport(final String report) {
         if (flightStage == FlightStage.Preflight || flightStage == FlightStage.Departing) {
             if (flightMissionId != 0) {
                 log.info("{} - Event 'OFFLINE' on {} stage, cancelling and removing", missionLogHead(mission_read(), flightplan), flightStage);
                 pilotLog("Event 'offline' on " + flightStage + " stage, cancelling and removing");
                 mission_cancelBeforeTakeoffIfExists();
+                FlightStats.event("preflight - offline - fm cancelled");
+            } else {
+                FlightStats.event("preflight - offline - no fm found!");
             }
             resetFlightInfo();
             shouldBeRemoved = true;
@@ -321,9 +350,10 @@ public class PilotContext {
             log.info("{} - Event 'OFFLINE' on Flying stage, grace period started", missionLogHead(mission_read(), flightplan));
             pilotLog("Event 'offline' on Flying stage, grace period started");
             flightStage = FlightStage.FlyingOffline;
+            FlightStats.event("flying - pilot went offline while flying");
         } else if (flightStage == FlightStage.FlyingOffline) {
             final long minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
-            if (minutesOffline > 10) {
+            if (minutesOffline > 20) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
@@ -331,6 +361,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'CANCEL' on FlyingOffline stage, offline for {} mins, cancelling and removing", missionLogHead(oldMission, oldFlightplan), minutesOffline);
                 pilotLog("Event 'cancel' on FlyingOffline stage, offline for " + minutesOffline + " mins, cancelling and removing");
+                FlightStats.event("flying-offline - allowed offline period exceeded - fm cancelled");
                 shouldBeRemoved = true;
             } else {
                 final FlightMissions.Mission mission = mission_read();
@@ -345,6 +376,7 @@ public class PilotContext {
 
             log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
+            FlightStats.event("arriving - blocks-on and finish as pilot went offline");
             shouldBeRemoved = true;
         } else if (flightStage == FlightStage.Arrived) {
             final FlightMissions.Mission oldMission = mission_read();
@@ -353,6 +385,7 @@ public class PilotContext {
 
             log.info("{} - Event 'OFFLINE' for Arrived flight", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'offline' for Arrived flight, removing");
+            FlightStats.event("arrived - completed as pilot went offline");
             shouldBeRemoved = true;
         } else {
             throw new IllegalStateException();
@@ -409,8 +442,9 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m == 0, in mission_blocksOff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                log.error("erroneous case, f/m not found, in mission_blocksOff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_blocksOff - fm not found");
+                return null;
             }
             final FlightMissions.Mission mission = mission1.get();
 
@@ -430,8 +464,9 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m == 0, in mission_takeoff, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                log.error("erroneous case, f/m not found, in mission_takeoff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_takeoff - fm not found");
+                return null;
             }
             final FlightMissions.Mission mission = mission1.get();
 
@@ -454,8 +489,9 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m == 0, in mission_landing, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                log.error("erroneous case, f/m not found, in mission_landing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_landing - fm not found");
+                return null;
             }
             final FlightMissions.Mission mission = mission1.get();
 
@@ -477,8 +513,9 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m == 0, in v, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                log.error("erroneous case, f/m not found, in mission_blocksOnAndFinish <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_blocksOnAndFinish - fm not found");
+                return null;
             }
             final FlightMissions.Mission mission = mission1.get();
 
@@ -503,8 +540,9 @@ public class PilotContext {
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists, need to investigate <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak1 erroneous case, need to investigate
+                log.error("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_cancelBeforeTakeoffIfExists - fm not found");
+                return null;
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
@@ -523,14 +561,16 @@ public class PilotContext {
     private void mission_cancelFromFlying() {
         worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
-                log.error("erroneous case, f/m == 0, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak3 erroneous case, need to rethink
+                log.error("erroneous case, f/m == 0, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_cancelFromFlying - fm is 0");
+                return null;
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_cancelFromFlying, need to rethink <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                return null; // todo ak3 erroneous case, need to rethink
+                log.error("erroneous case, f/m not found, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("erroneous case - mission_cancelFromFlying - fm not found");
+                return null;
             }
 
             if (mission.get().getStatus() == FlightMissions.Status.Flying) {
