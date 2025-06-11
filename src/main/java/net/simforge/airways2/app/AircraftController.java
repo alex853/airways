@@ -48,9 +48,9 @@ public class AircraftController {
                             a.getId(),
                             world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                             a.getRegNo(),
-                            FlightMissionHelper.calculateHeading(world, a.getFlightMissionId()),
                             a.getLocationLatitude(),
                             a.getLocationLongitude(),
+                            (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId()),
                             world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
                             world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
                             WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
@@ -85,7 +85,7 @@ public class AircraftController {
         private String acReg;
         private float lat;
         private float lon;
-        private float hdg;
+        private int hdg;
         private String fpDep;
         private String fpDest;
         private String pDep;
