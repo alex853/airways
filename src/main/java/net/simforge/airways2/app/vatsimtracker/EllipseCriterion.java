@@ -39,10 +39,11 @@ public class EllipseCriterion {
         return "EllipseCriterion{" +
                 "distanceBetweenAirports=" + df1.format(distanceBetweenAirports) +
                 ", airportRange=" + df1.format(airportRange) +
-                ", c=" + df1.format(c) +
                 ", a(half-length)=" + df1.format(a) +
                 ", b(half-width)=" + df1.format(b) +
-                ", sumOfDistancesToPosition=" + sumOfDistancesToPosition +
+                ", c=" + df1.format(c) +
+                ", 2*a(full-length)=" + df1.format(2*a) +
+                ", sumOfDistancesToPosition=" + df1.format(sumOfDistancesToPosition) +
                 ", withinEllipse(sum<=2*a)=" + withinEllipse +
                 '}';
     }
