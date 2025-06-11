@@ -9,6 +9,7 @@ import net.simforge.airways2.world.processors.FlightMissionProcessor;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
+import net.simforge.airways2.world.processors.Airport2AirportDailyFlightStatsRotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -188,7 +189,7 @@ public class World {
             FlightMissionProcessor.process(this);
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
-            // todo ak0 Airport2AirportDailyFlightStatsRotation.process(this);
+            Airport2AirportDailyFlightStatsRotation.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

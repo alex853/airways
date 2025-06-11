@@ -8,6 +8,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -33,6 +36,13 @@ public class Airport2AirportDailyFlightStats {
     private final DataField fromAirportIdField = storage.getDataField(0);
     private final DataField toAirportIdField = storage.getDataField(1);
     private final DataField todayCountField = storage.getDataField(2);
+    private final DataField todayM1CountField = storage.getDataField(3);
+    private final DataField todayM2CountField = storage.getDataField(4);
+    private final DataField todayM3CountField = storage.getDataField(5);
+    private final DataField todayM4CountField = storage.getDataField(6);
+    private final DataField todayM5CountField = storage.getDataField(7);
+    private final DataField todayM6CountField = storage.getDataField(8);
+    private final DataField todayM7CountField = storage.getDataField(9);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -65,8 +75,22 @@ public class Airport2AirportDailyFlightStats {
         return new FlightStats(id);
     }
 
-    public void rotateCountersAtMidnight() {
-        throw new UnsupportedOperationException("AirportToAirportDailyFlightStats.shiftCountersAtMidnight not implemented");
+    public void rotateCountsAtMidnight() {
+        log.info("midnight count rotation - started");
+
+        final List<FlightStats> toBeRemoved = new ArrayList<>();
+
+        final Collection<FlightStats> all = storage.all();
+        all.forEach(c -> {
+            c.rotateCountsAtMidnight();
+            if (c.getTotalCount() == 0) {
+                toBeRemoved.add(c);
+            }
+        });
+
+        toBeRemoved.forEach(c -> storage.deleteRecord(c.id));
+
+        log.info("midnight count rotation - DONE, processed {} records, removed {} records", all.size(), toBeRemoved.size());
     }
 
     public class FlightStats {
@@ -89,6 +113,27 @@ public class Airport2AirportDailyFlightStats {
             final int newValue = Math.min(current + 1, 255);
             storage.set(id, todayCountField, newValue);
             log.info("daily flight stats {} -> {} - new today count {}", getFromAirportId(), getToAirportId(), newValue);
+        }
+
+        public int getTotalCount() {
+            return storage.getAsInt(id, todayCountField)
+                    + storage.getAsInt(id, todayM1CountField)
+                    + storage.getAsInt(id, todayM2CountField)
+                    + storage.getAsInt(id, todayM3CountField)
+                    + storage.getAsInt(id, todayM4CountField)
+                    + storage.getAsInt(id, todayM5CountField)
+                    + storage.getAsInt(id, todayM6CountField)
+                    + storage.getAsInt(id, todayM7CountField);
+        }
+
+        void rotateCountsAtMidnight() {
+            storage.set(id, todayM7CountField, storage.getAsInt(id, todayM6CountField));
+            storage.set(id, todayM6CountField, storage.getAsInt(id, todayM5CountField));
+            storage.set(id, todayM5CountField, storage.getAsInt(id, todayM4CountField));
+            storage.set(id, todayM4CountField, storage.getAsInt(id, todayM3CountField));
+            storage.set(id, todayM3CountField, storage.getAsInt(id, todayM2CountField));
+            storage.set(id, todayM2CountField, storage.getAsInt(id, todayM1CountField));
+            storage.set(id, todayM1CountField, storage.getAsInt(id, todayCountField));
         }
     }
 }
