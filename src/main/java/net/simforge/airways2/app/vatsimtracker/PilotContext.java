@@ -235,7 +235,7 @@ public class PilotContext {
 
                 log.warn("{} - Event 'back to flying AND LANDING at the same time', {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying AND LANDING at the same time'");
-                FlightStats.event("flying offline - online and land successfully");
+                FlightStats.event("flying-offline - online and land successfully");
 
                 landingFromFlyingStage(newPosition);
             }
