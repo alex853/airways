@@ -134,6 +134,7 @@ public class Airport2AirportDailyFlightStats {
             storage.set(id, todayM3CountField, storage.getAsInt(id, todayM2CountField));
             storage.set(id, todayM2CountField, storage.getAsInt(id, todayM1CountField));
             storage.set(id, todayM1CountField, storage.getAsInt(id, todayCountField));
+            storage.set(id, todayCountField, 0);
         }
     }
 }
