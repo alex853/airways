@@ -113,8 +113,15 @@ public class VatsimTrackerController {
     private boolean checkReportTimeframe(final String report, final String timeframe) {
         final LocalDateTime reportDt = ReportUtils.fromTimestampJava(report);
         final LocalDateTime now = JavaTime.nowUtc();
-        final LocalDateTime nowMinusOneHour = now.minusHours(1);
-        return nowMinusOneHour.isBefore(reportDt);
+        final LocalDateTime threshold = switch (timeframe) {
+            case "last1hour" -> now.minusHours(1);
+            case "last3hours" -> now.minusHours(3);
+            case "last6hours" -> now.minusHours(6);
+            case "last12hours" -> now.minusHours(12);
+            case "last24hours" -> now.minusHours(24);
+            default -> now.minusHours(1);
+        };
+        return threshold.isBefore(reportDt);
     }
 
     @Data
