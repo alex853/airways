@@ -35,7 +35,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
     private volatile ThreadStatus threadStatus = ThreadStatus.Startup;
     private Thread thread;
-    private CompactifiedStorage compactifiedStorage;
+    private CompactifiedStorage storage;
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -52,7 +52,7 @@ public class VatsimTrackerBean implements DisposableBean {
     public void init() {
         log.info("init called");
 
-        compactifiedStorage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
+        storage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
 
         worldIcaos = worldBean.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
 
@@ -74,10 +74,10 @@ public class VatsimTrackerBean implements DisposableBean {
                     String nextReport;
                     try {
                         if (lastProcessedReport == null) {
-                            nextReport = compactifiedStorage.getLastReport();
+                            nextReport = storage.getLastReport();
                         } else {
                             try (final Timing.Timer ignored = Timing.label("VatsimTrackerBean - getNextReport")) {
-                                nextReport = compactifiedStorage.getNextReport(lastProcessedReport);
+                                nextReport = storage.getNextReport(lastProcessedReport);
                             }
                         }
                     } catch (final Exception e) {
@@ -95,7 +95,7 @@ public class VatsimTrackerBean implements DisposableBean {
 
                     final List<Position> positions;
                     try {
-                        positions = compactifiedStorage.loadPositions(nextReport);
+                        positions = storage.loadPositions(nextReport);
                     } catch (final Exception e) {
                         log.error("error on reading next report data", e);
                         Misc.sleep(60000);
