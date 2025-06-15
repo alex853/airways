@@ -86,6 +86,7 @@ public class VatsimTrackerController {
         return storage.listAllReports().stream()
                 .filter(r -> checkReportTimeframe(r, timeframe))
                 .map(r -> loadPositions(r).stream()
+                        .map(p -> VatsimTrackerBean.injectReportIntoCompactifiedPosition(p, r))
                         .filter(p -> p.getPilotNumber() == pilotNumber)
                         .findFirst()
                         .orElseGet(() -> Position.createOfflinePosition(createEmptyReport(r))))

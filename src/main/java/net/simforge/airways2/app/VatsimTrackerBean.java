@@ -105,13 +105,7 @@ public class VatsimTrackerBean implements DisposableBean {
                     //log.info("report {} - {} positions loaded", nextReport, positions.size());
 
                     // ugly hack injecting missing 'report' timestamp in compactified positions
-                    final int reportSeconds = (int) ReportUtils.fromTimestampJava(nextReport).toEpochSecond(ZoneOffset.UTC);
-                    final Field reportSecondsField = CompactifiedPosition.class.getDeclaredField("reportSeconds");
-                    reportSecondsField.setAccessible(true);
-                    for (int i = 0; i < positions.size(); i++) {
-                        final Position p = positions.get(i);
-                        reportSecondsField.set(p, reportSeconds);
-                    }
+                    positions.forEach(p -> injectReportIntoCompactifiedPosition(p, nextReport));
 
                     final String nextReportFinal = nextReport;
                     final Map<Integer, Position> pilotNumberToPosition = new HashMap<>();
@@ -256,5 +250,17 @@ public class VatsimTrackerBean implements DisposableBean {
         HaveToStopNow,
         Stopped,
         TerminatedDueToError
+    }
+
+    public static Position injectReportIntoCompactifiedPosition(final Position p, final String report) {
+        try {
+            final int reportSeconds = (int) ReportUtils.fromTimestampJava(report).toEpochSecond(ZoneOffset.UTC);
+            final Field reportSecondsField = CompactifiedPosition.class.getDeclaredField("reportSeconds");
+            reportSecondsField.setAccessible(true);
+            reportSecondsField.set(p, reportSeconds);
+            return p;
+        } catch (final ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
