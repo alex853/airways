@@ -104,6 +104,7 @@ public class VatsimTrackerController {
 
     private Report createEmptyReport(final String report) {
         final Report r = new Report();
+        r.setId(1L);
         r.setReport(report);
         return r;
     }
