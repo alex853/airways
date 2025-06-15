@@ -148,24 +148,22 @@ public class VatsimTrackerController {
         private float lon;
         private int alt;
         private int hdg;
-        private String apt; // location airport icao
 
         public static PositionDto fromPosition(final Position p) {
             if (!p.isPositionKnown()) {
                 return new PositionDto(
                         p.getReportInfo().getDt().toString(),
                         "Offline",
-                        0, 0, 0, 0, null);
+                        0, 0, 0, 0);
             }
 
             return new PositionDto(
                     p.getReportInfo().getDt().toString(),
-                    (p.isInAirport() ? "Airport" : (p.isOnGround() ? "On Ground" : "Flying")),
+                    (p.isInAirport() ? p.getAirportIcao() : (p.isOnGround() ? "On Ground" : "Flying")),
                     (float) p.getCoords().getLat(),
                     (float) p.getCoords().getLon(),
                     p.getActualAltitude(),
-                    p.getHeading(),
-                    p.getAirportIcao());
+                    p.getHeading());
         }
     }
 }
