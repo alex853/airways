@@ -142,19 +142,22 @@ public class VatsimTrackerController {
     @Data
     @AllArgsConstructor
     private static class PositionDto {
-        private String rp; // report
+        private String dt; // report
         private String st; // status - offline, on ground, in airport, flying
         private float lat;
         private float lon;
         private int alt;
         private int hdg;
+        private String aTp; // aircraft type
+        private String fDep; // flightplan departure
+        private String fDest; // flightplan destination
 
         public static PositionDto fromPosition(final Position p) {
             if (!p.isPositionKnown()) {
                 return new PositionDto(
                         p.getReportInfo().getDt().toString(),
                         "Offline",
-                        0, 0, 0, 0);
+                        0, 0, 0, 0, null, null, null);
             }
 
             return new PositionDto(
@@ -163,7 +166,10 @@ public class VatsimTrackerController {
                     (float) p.getCoords().getLat(),
                     (float) p.getCoords().getLon(),
                     p.getActualAltitude(),
-                    p.getHeading());
+                    p.getHeading(),
+                    p.getFpAircraftType(),
+                    p.getFpDeparture(),
+                    p.getFpDestination());
         }
     }
 }
