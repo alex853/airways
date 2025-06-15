@@ -151,7 +151,7 @@ public class VatsimTrackerController {
         private String apt; // location airport icao
 
         public static PositionDto fromPosition(final Position p) {
-            if (p.isPositionKnown()) {
+            if (!p.isPositionKnown()) {
                 return new PositionDto(
                         p.getReportInfo().getDt().toString(),
                         "Offline",
