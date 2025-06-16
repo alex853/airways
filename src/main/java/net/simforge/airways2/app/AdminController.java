@@ -55,7 +55,7 @@ public class AdminController {
         checkArgument(date.length() == 10);
         checkNotNull(LocalDate.parse(date));
 
-        byte[] bytes = IOHelper.loadFile(new File("./logs/" + date + ".log")).getBytes();
+        byte[] bytes = IOHelper.loadFile(new File("./logs/logback." + date + ".log")).getBytes();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)
