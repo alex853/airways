@@ -1,5 +1,8 @@
 package net.simforge.airways2.app;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -17,14 +20,20 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Type;
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @RestController
 @RequestMapping("/admin")
 @CrossOrigin
 public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();;
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -34,6 +43,19 @@ public class AdminController {
     @GetMapping("/log/full")
     public ResponseEntity<byte[]> getFullLog() throws IOException {
         byte[] bytes = IOHelper.loadFile(new File("./logs/logback.log")).getBytes();
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_PLAIN)
+                .contentLength(bytes.length)
+                .body(bytes);
+    }
+
+    @GetMapping("/log/date/{date}")
+    public ResponseEntity<byte[]> getFullLog(@PathVariable final String date) throws IOException {
+        checkArgument(date.length() == 10);
+        checkNotNull(LocalDate.parse(date));
+
+        byte[] bytes = IOHelper.loadFile(new File("./logs/" + date + ".log")).getBytes();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)
@@ -64,6 +86,23 @@ public class AdminController {
     @GetMapping("/vatsim/flight-stats")
     public Map<String, Integer> getVatsimFlightStats() {
         return FlightStats.getStats();
+    }
+
+    @GetMapping("/vatsim/flight-stats/date/{date}")
+    public Map<String, Integer> getVatsimFlightStats(@PathVariable final String date) {
+        checkArgument(date.length() == 10);
+        checkNotNull(LocalDate.parse(date));
+
+        final File file = new File(FlightStats.statsRoot, date + ".json");
+        final String json;
+        try {
+            json = IOHelper.loadFile(file);
+        } catch (IOException e) {
+            log.error("unable to load flight stats data", e);
+            return null;
+        }
+        Type type = new TypeToken<Map<String, Integer>>(){}.getType();
+        return gson.fromJson(json, type);
     }
 
     @GetMapping("/vatsim/remove-context-by-flight")
