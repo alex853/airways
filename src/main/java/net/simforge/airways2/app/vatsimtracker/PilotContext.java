@@ -364,7 +364,7 @@ public class PilotContext {
             FlightStats.event("flying - pilot went offline while flying");
         } else if (flightStage == FlightStage.FlyingOffline) {
             final long minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
-            if (minutesOffline > 20) {
+            if (minutesOffline > 30) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
