@@ -119,6 +119,10 @@ public class VatsimTrackerController {
             case "last6hours" -> now.minusHours(6);
             case "last12hours" -> now.minusHours(12);
             case "last24hours" -> now.minusHours(24);
+            case "last36hours" -> now.minusHours(36);
+            case "last48hours" -> now.minusHours(48);
+            case "last60hours" -> now.minusHours(60);
+            case "last72hours" -> now.minusHours(72);
             default -> now.minusHours(1);
         };
         return threshold.isBefore(reportDt);

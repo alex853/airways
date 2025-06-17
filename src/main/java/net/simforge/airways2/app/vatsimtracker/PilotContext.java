@@ -304,7 +304,18 @@ public class PilotContext {
 
     private void landingFromFlyingStage(Position newPosition) {
         final String landingAirportIcao = newPosition.getAirportIcao();
-        if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
+        if (landingAirportIcao == null) {
+            final FlightMissions.Mission oldMission = mission_read();
+            final Flightplan oldFlightplan = flightplan;
+            mission_cancelFromFlying();
+            resetFlightInfo();
+
+            log.warn("{} - Event 'landing' on NULL airport, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
+            pilotLog("Event 'landing' on NULL airport, cancelling and removing");
+            FlightStats.event("landing - null airport");
+
+            shouldBeRemoved = true;
+        } else if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
             flightStage = FlightStage.Arriving;
 
             final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
@@ -312,7 +323,7 @@ public class PilotContext {
             log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
             pilotLog("Event 'landing' at planned destination airport");
             FlightStats.event("landing - planned airport");
-        } else if (landingAirportIcao != null && worldIcaos.contains(landingAirportIcao)) {
+        } else if (worldIcaos.contains(landingAirportIcao)) {
             flightStage = FlightStage.Arriving;
 
             final FlightMissions.Mission mission = mission_landing(newPosition.getAirportIcao());
@@ -323,11 +334,11 @@ public class PilotContext {
         } else { // landing on airport out of the world
             final FlightMissions.Mission oldMission = mission_read();
             final Flightplan oldFlightplan = flightplan;
-            mission_cancelFromFlying(); // todo ak3 improvement is possible here?
+            mission_cancelFromFlying();
             resetFlightInfo();
 
-            log.warn("{} - Event 'landing' on airport {} out world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
-            pilotLog("Event 'landing' on airport " + landingAirportIcao + " out world, cancelling and removing");
+            log.warn("{} - Event 'landing' on airport {} out of the world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
+            pilotLog("Event 'landing' on airport " + landingAirportIcao + " out of the world, cancelling and removing");
             FlightStats.event("landing - out of the world");
 
             shouldBeRemoved = true;
