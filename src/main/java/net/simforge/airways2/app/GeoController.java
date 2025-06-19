@@ -7,8 +7,11 @@ import net.simforge.airways2.world.datamodel.Cities;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/geo")
@@ -62,9 +65,30 @@ public class GeoController {
                     .sorted((c1, c2) -> c2.getPopulation() - c1.getPopulation())
                     .map(Cities.City::getName)
                     .toList();
+            final Map<String, IcaoToFlights> outboundConnections = world.airport2airportDailyFlightStats()
+                    .allByFromAirportId(airport.getId()).stream()
+                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getToAirportId()), fs.getTotalCount()))
+                    .collect(Collectors.toMap(p -> p.icao, p -> p));
+            final Map<String, IcaoToFlights> inboundConnections = world.airport2airportDailyFlightStats()
+                    .allByToAirportId(airport.getId()).stream()
+                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getFromAirportId()), fs.getTotalCount()))
+                    .collect(Collectors.toMap(p -> p.icao, p -> p));
+            final Map<String, IcaoToFlights> totalConnections = Stream.concat(
+                    outboundConnections.entrySet().stream(),
+                    inboundConnections.entrySet().stream()
+            ).collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    IcaoToFlights::merge
+            ));
+            final List<IcaoToFlights> top3connections = totalConnections.values().stream()
+                    .sorted(Comparator.comparingInt(IcaoToFlights::getFlights).reversed())
+                    .limit(3)
+                    .toList();
+
             return new AirportDetailsDto(
                     connectedCities,
-                    new ArrayList<>(),
+                    top3connections,
                     0,
                     0,
                     0,
@@ -119,5 +143,9 @@ public class GeoController {
     private static class IcaoToFlights {
         private String icao;
         private int flights;
+
+        public static IcaoToFlights merge(final IcaoToFlights a, final IcaoToFlights b) {
+            return new IcaoToFlights(a.icao, a.flights + b.flights);
+        }
     }
 }

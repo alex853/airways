@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+// todo ak3 indexed access can improve all the operations
 public class Airport2AirportDailyFlightStats {
     private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStats.class);
 
@@ -56,10 +58,12 @@ public class Airport2AirportDailyFlightStats {
         checkArgument(fromAirportId > 0);
         checkArgument(toAirportId > 0);
 
-        final FlightStats flightStats = storage
-                .findFirst(e -> e.getFromAirportId() == fromAirportId && e.getToAirportId() == toAirportId) // todo ak3 indexed access can be put here
-                .orElseGet(() -> createFlightStats(fromAirportId, toAirportId));
-        flightStats.incrementTodayCount();
+        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - incrementTodayCount")) {
+            final FlightStats flightStats = storage
+                    .findFirst(e -> e.getFromAirportId() == fromAirportId && e.getToAirportId() == toAirportId)
+                    .orElseGet(() -> createFlightStats(fromAirportId, toAirportId));
+            flightStats.incrementTodayCount();
+        }
     }
 
     private FlightStats createFlightStats(final int fromAirportId, final int toAirportId) {
@@ -91,6 +95,26 @@ public class Airport2AirportDailyFlightStats {
         toBeRemoved.forEach(c -> storage.deleteRecord(c.id));
 
         log.info("midnight count rotation - DONE, processed {} records, removed {} records", all.size(), toBeRemoved.size());
+    }
+
+    public Collection<FlightStats> allByFromAirportId(final int fromAirportId) {
+        checkArgument(fromAirportId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByFromAirportId")) {
+            return storage.all().stream()
+                    .filter(fs -> fs.getFromAirportId() == fromAirportId)
+                    .toList();
+        }
+    }
+
+    public Collection<FlightStats> allByToAirportId(final int toAirportId) {
+        checkArgument(toAirportId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByToAirportId")) {
+            return storage.all().stream()
+                    .filter(fs -> fs.getToAirportId() == toAirportId)
+                    .toList();
+        }
     }
 
     public class FlightStats {

@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -8,6 +9,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class Airport2City {
     private final Storage<Link> storage = Storage.<Link>builder()
@@ -33,21 +36,32 @@ public class Airport2City {
     }
 
     public Optional<Link> byAirportIdAndCityId(final int airportId, final int cityId) {
-        return storage.findFirst(l -> l.getAirportId() == airportId && l.getCityId() == cityId);
+        checkArgument(airportId > 0);
+        checkArgument(cityId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2City - byAirportIdAndCityId")) {
+            return storage.findFirst(l -> l.getAirportId() == airportId && l.getCityId() == cityId);
+        }
     }
 
     public Collection<Link> allByAirportId(final int airportId) {
-        return storage.all().stream()
-                .filter(l -> l.getAirportId() == airportId)
-                .toList();
+        checkArgument(airportId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2City - allByAirportId")) {
+            return storage.all().stream()
+                    .filter(l -> l.getAirportId() == airportId)
+                    .toList();
+        }
     }
 
     public Link create(final int airportId, final int cityId) {
+        // todo ak1 check that airport-city pair does not exist + checkArgument!!!
         final int linkId = storage.addRecord();
         storage.set(linkId, airportIdField, airportId);
         storage.set(linkId, cityIdField, cityId);
         return new Link(linkId);
     }
+
     public class Link {
         private final int id;
 
