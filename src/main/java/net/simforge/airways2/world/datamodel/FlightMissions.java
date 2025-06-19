@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -97,13 +98,17 @@ public class FlightMissions {
         return storage.all();
     }
 
+    public Collection<Mission> filter(final Predicate<Mission> condition) {
+        return storage.filter(condition);
+    }
+
     public Optional<Mission> byId(final int id) {
         return storage.byId(id);
     }
 
-    public List<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
+    public Collection<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
         checkNotNull(aircraft, "aircraft is mandatory");
-        return all().stream().filter(m -> m.getAircraftId() == aircraft.getId()).toList();
+        return storage.filter(m -> m.getAircraftId() == aircraft.getId());
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {

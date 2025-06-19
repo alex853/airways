@@ -101,9 +101,7 @@ public class Airport2AirportDailyFlightStats {
         checkArgument(fromAirportId > 0);
 
         try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByFromAirportId")) {
-            return storage.all().stream()
-                    .filter(fs -> fs.getFromAirportId() == fromAirportId)
-                    .toList();
+            return storage.filter(fs -> fs.getFromAirportId() == fromAirportId);
         }
     }
 
@@ -111,9 +109,7 @@ public class Airport2AirportDailyFlightStats {
         checkArgument(toAirportId > 0);
 
         try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByToAirportId")) {
-            return storage.all().stream()
-                    .filter(fs -> fs.getToAirportId() == toAirportId)
-                    .toList();
+            return storage.filter(fs -> fs.getToAirportId() == toAirportId);
         }
     }
 

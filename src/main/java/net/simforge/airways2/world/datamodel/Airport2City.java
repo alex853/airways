@@ -48,9 +48,7 @@ public class Airport2City {
         checkArgument(airportId > 0);
 
         try (final Timing.Timer ignored = Timing.label("Airport2City - allByAirportId")) {
-            return storage.all().stream()
-                    .filter(l -> l.getAirportId() == airportId)
-                    .toList();
+            return storage.filter(l -> l.getAirportId() == airportId);
         }
     }
 

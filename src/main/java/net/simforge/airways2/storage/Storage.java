@@ -109,6 +109,24 @@ public class Storage<T> {
         return result;
     }
 
+
+    public Collection<T> filter(final Predicate<T> condition) {
+        final List<T> result = new ArrayList<>();
+        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+
+            final T instance = instantiator.create(recordId);
+            if (!condition.test(instance)) {
+                continue;
+            }
+
+            result.add(instance);
+        }
+        return result;
+    }
+
     public Optional<T> byId(final int recordId) {
         if (isOutOfBounds(recordId)) {
             return Optional.empty();

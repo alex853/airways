@@ -10,6 +10,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -100,21 +101,23 @@ public class GeoController {
                                         .limit(3)
                                         .toList();
                                 try (final Timing.Timer ignored5 = Timing.label("GeoController - getAirportDetails # part5")) {
-                                    final int flightsOutbound = (int) world.flightMissions().all().stream()
-                                            .filter(f -> f.getDepartureAirportId() == airport.getId() && isFlightAlive(f.getStatus()))
+                                    final Collection<FlightMissions.Mission> aliveFlights = world.flightMissions()
+                                            .filter(f -> isFlightAlive(f.getStatus()));
+                                    final int flightsOutbound = (int) aliveFlights.stream()
+                                            .filter(f -> f.getDepartureAirportId() == airport.getId())
                                             .count();
-                                    final int flightsInbound = (int) world.flightMissions().all().stream()
-                                            .filter(f -> f.getDestinationAirportId() == airport.getId() && isFlightAlive(f.getStatus()))
+                                    final int flightsInbound = (int) aliveFlights.stream()
+                                            .filter(f -> f.getDestinationAirportId() == airport.getId())
                                             .count();
                                     try (final Timing.Timer ignored6 = Timing.label("GeoController - getAirportDetails # part6")) {
-                                        final int aircraftParked = (int) world.aircrafts().all().stream()
+                                        final Collection<Aircrafts.Aircraft> aircraftLocatedAtAirport = world.aircrafts()
+                                                .filter(a -> a.getLocationAirportId() == airport.getId());
+                                        final int aircraftParked = (int) aircraftLocatedAtAirport.stream()
                                                 .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                                                        && a.getLocationAirportId() == airport.getId()
                                                         && a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle)
                                                 .count();
-                                        final int aircraftActive = (int) world.aircrafts().all().stream()
-                                                .filter(a -> a.getLocationAirportId() == airport.getId()
-                                                        && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
+                                        final int aircraftActive = (int) aircraftLocatedAtAirport.stream()
+                                                .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
                                                 .count();
                                         return new AirportDetailsDto(
                                                 connectedCities,
