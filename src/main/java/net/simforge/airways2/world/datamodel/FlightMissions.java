@@ -60,6 +60,8 @@ public class FlightMissions {
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField3 = storage.getDataField(11);
 
+    private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
+
     public FlightMissions() {
     }
 
@@ -257,8 +259,6 @@ public class FlightMissions {
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
             setTime12bit(actualLandingAndArrivalTimeField, false, actualArrivalWorldTime);
         }
-
-        private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
 
         public LocalDate getDateOfFlight() {
             final int days = storage.getAsIntUnsafe(id, dateOfFlightField);

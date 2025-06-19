@@ -4,6 +4,7 @@ import net.simforge.commons.misc.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -25,7 +26,10 @@ public class Timing {
             return;
         }
 
-        data.forEach((key, value) -> value.logInfo());
+        data.values().stream()
+                .map(LabelData::logInfoMessage)
+                .sorted()
+                .forEach(log::info);
         counterToStatusPrinting.set(PRINT_STATUS_EVERY_N_MEASURES);
     }
 
@@ -45,6 +49,8 @@ public class Timing {
     }
 
     private static class LabelData {
+        private static final DecimalFormat df3 = new DecimalFormat("#.000");
+
         private final String label;
         private long count;
         private long totalDuration;
@@ -58,8 +64,8 @@ public class Timing {
             totalDuration += duration;
         }
 
-        public void logInfo() {
-            log.info("Timing info : {} ..... {} microseconds, {} calls", Str.al(label, 40), (totalDuration / count /  1_000), count);
+        public String logInfoMessage() {
+            return String.format("Timing info : %s AVG: %s ms, CALLS: %s", Str.al(label, 60), Str.ar(df3.format(totalDuration / (float) count /  1_000_000.0f), 7), count);
         }
     }
 }
