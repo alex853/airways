@@ -59,7 +59,7 @@ public class Timing {
         }
 
         public void logInfo() {
-            log.info("Timing info : {} ..... {} microseconds", Str.al(label, 40), (totalDuration / count /  1_000));
+            log.info("Timing info : {} ..... {} microseconds, {} calls", Str.al(label, 40), (totalDuration / count /  1_000), count);
         }
     }
 }
