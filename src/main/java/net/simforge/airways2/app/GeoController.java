@@ -2,8 +2,10 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,16 +87,36 @@ public class GeoController {
                     .sorted(Comparator.comparingInt(IcaoToFlights::getFlights).reversed())
                     .limit(3)
                     .toList();
-
+            final int flightsOutbound = (int) world.flightMissions().all().stream()
+                    .filter(f -> f.getDepartureAirportId() == airport.getId() && isFlightAlive(f.getStatus()))
+                    .count();
+            final int flightsInbound = (int) world.flightMissions().all().stream()
+                    .filter(f -> f.getDestinationAirportId() == airport.getId() && isFlightAlive(f.getStatus()))
+                    .count();
+            final int aircraftParked = (int) world.aircrafts().all().stream()
+                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                            && a.getLocationAirportId() == airport.getId()
+                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle)
+                    .count();
+            final int aircraftActive = (int) world.aircrafts().all().stream()
+                    .filter(a -> a.getLocationAirportId() == airport.getId()
+                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
+                    .count();
             return new AirportDetailsDto(
                     connectedCities,
                     top3connections,
-                    0,
-                    0,
-                    0,
-                    0
+                    flightsOutbound,
+                    flightsInbound,
+                    aircraftParked,
+                    aircraftActive
             );
         });
+    }
+
+    private boolean isFlightAlive(final FlightMissions.Status status) {
+        return status == FlightMissions.Status.Departure
+                || status == FlightMissions.Status.Flying
+                || status == FlightMissions.Status.Arrival;
     }
 
     @Data
