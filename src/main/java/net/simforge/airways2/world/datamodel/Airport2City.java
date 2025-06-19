@@ -6,6 +6,7 @@ import net.simforge.airways2.storage.Storage;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 
 public class Airport2City {
@@ -35,13 +36,18 @@ public class Airport2City {
         return storage.findFirst(l -> l.getAirportId() == airportId && l.getCityId() == cityId);
     }
 
+    public Collection<Link> allByAirportId(final int airportId) {
+        return storage.all().stream()
+                .filter(l -> l.getAirportId() == airportId)
+                .toList();
+    }
+
     public Link create(final int airportId, final int cityId) {
         final int linkId = storage.addRecord();
         storage.set(linkId, airportIdField, airportId);
         storage.set(linkId, cityIdField, cityId);
         return new Link(linkId);
     }
-
     public class Link {
         private final int id;
 
