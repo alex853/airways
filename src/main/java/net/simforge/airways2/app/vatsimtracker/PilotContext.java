@@ -28,6 +28,8 @@ public class PilotContext {
     private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
     public static final Set<String> worldIcaos = new TreeSet<>();
 
+    private static final int MAX_ALLOWED_OFFLINE_TIME_MINUTES = 60;
+
     private final WorldAccess worldAccess;
     private final int pilotNumber;
     private FlightStage flightStage;
@@ -364,7 +366,7 @@ public class PilotContext {
             FlightStats.event("flying - pilot went offline while flying");
         } else if (flightStage == FlightStage.FlyingOffline) {
             final long minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
-            if (minutesOffline > 30) {
+            if (minutesOffline > MAX_ALLOWED_OFFLINE_TIME_MINUTES) {
                 final FlightMissions.Mission oldMission = mission_read();
                 final Flightplan oldFlightplan = flightplan;
                 mission_cancelFromFlying(); // todo ak3 improvement is possible here - if aircraft is close to destination then finish flight however make a fine to a pilot
