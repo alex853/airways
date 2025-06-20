@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -12,9 +13,9 @@ import java.lang.reflect.Method;
 // todo ak2 aircraft types with errors
 //          A32N -> A20N mapping
 //          B777 -> B773 mapping
-// todo ak2 C700 - no aircraft data!
-// todo ak2 AT76 - no aircraft data!
-// todo ak3 minimize between downloading a report and its processing
+// todo ak1 C700 - no aircraft data!
+// todo ak1 AT76 - no aircraft data!
+// todo ak3 minimize time between downloading a report and its processing
 @SpringBootApplication
 public class Application {
     private static final Logger log = LoggerFactory.getLogger(Application.class);
@@ -24,6 +25,8 @@ public class Application {
             runWorldBuilderStep(args[0]);
             return;
         }
+
+        World25_009_create_some_airports.main(args);
 
         SpringApplication.run(Application.class, args);
     }
