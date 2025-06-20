@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -59,16 +60,16 @@ public class Aircrafts {
         return storage.all();
     }
 
+    public Collection<Aircraft> filter(final Predicate<Aircraft> condition) {
+        return storage.filter(condition);
+    }
+
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
-        return all().stream()
-                .filter(Aircrafts::isIdleAndParkedAtAirport)
-                .toList();
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirport);
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
-        return all().stream()
-                .filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned)
-                .toList();
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned);
     }
 
     public Optional<Aircraft> byId(final int id) {

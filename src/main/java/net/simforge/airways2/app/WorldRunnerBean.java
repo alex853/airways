@@ -3,7 +3,6 @@ package net.simforge.airways2.app;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;
@@ -46,11 +45,11 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
 
                 lock.writeLock().lock();
                 try {
-                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - world.process")) {
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - world.process")) {
                         needToCatchTime = world.process(now);
                     }
 
-                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - action.perform")) {
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - action.perform")) {
                         while (!actionQueue.isEmpty()) {
                             final ActionContext<?> actionContext = actionQueue.poll();
                             actionContext.perform(world);
@@ -58,7 +57,7 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
                     }
 
                     if (lastSaved + saveWorldPeriod < now) {
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean   - saveWorld")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - saveWorld")) {
                             saveWorld();
                         }
                         lastSaved = now;
@@ -102,7 +101,9 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
 
     @Override
     public <T> T read(final Action<T> action) {
-        lock.readLock().lock();
+        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - read # lock")) {
+            lock.readLock().lock();
+        }
         try {
             return action.invoke(world);
         } finally {
