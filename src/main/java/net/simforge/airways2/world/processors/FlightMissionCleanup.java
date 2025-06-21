@@ -6,19 +6,21 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
 public class FlightMissionCleanup {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionCleanup.class);
 
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
-        final int cancelledCleanedUp = (int) world.flightMissions()
+        final Collection<FlightMissions.Mission> cancelled = world.flightMissions()
                 .filter(f -> f.getStatus() == FlightMissions.Status.Cancelled
-                        && f.getPlannedDepartureWorldTime() <= worldTime - 2 * Time.ONE_DAY).stream()
-                .peek(f -> world.flightMissions().deleteById(f.getId()))
-                .count();
-        final int finishedCleanedUp = 0;
-        if (cancelledCleanedUp > 0) {
-            log.info("flight missions cleaned up - {} cancelled, {} finished", cancelledCleanedUp, finishedCleanedUp);
+                        && f.getPlannedDepartureWorldTime() <= worldTime - 2 * Time.ONE_DAY);
+        cancelled.forEach(f -> world.flightMissions().deleteById(f.getId()));
+        final Collection<FlightMissions.Mission> finished = new ArrayList<>();
+        if (cancelled.size() > 0 || finished.size() > 0) {
+            log.info("flight missions cleaned up - {} cancelled, {} finished", cancelled.size(), finished.size());
         }
     }
 }
