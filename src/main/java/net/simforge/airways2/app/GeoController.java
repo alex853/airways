@@ -46,7 +46,10 @@ public class GeoController {
                             c.getName(),
                             c.getPopulation(),
                             c.getLatitude(),
-                            c.getLongitude()))
+                            c.getLongitude(),
+                            world.airport2city().allByCityId(c.getId()).stream()
+                                    .map(l -> world.airports().getIcao(l.getAirportId()))
+                                    .toList()))
                     .toList());
         }
     }
@@ -160,6 +163,7 @@ public class GeoController {
         private int population;
         private float latitude;
         private float longitude;
+        private List<String> airports;
     }
 
     @Data

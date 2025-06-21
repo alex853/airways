@@ -52,6 +52,14 @@ public class Airport2City {
         }
     }
 
+    public Collection<Link> allByCityId(final int cityId) {
+        checkArgument(cityId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2City - allByCityId")) {
+            return storage.filter(l -> l.getCityId() == cityId);
+        }
+    }
+
     public Link create(final int airportId, final int cityId) {
         // todo ak1 check that airport-city pair does not exist + checkArgument!!!
         final int linkId = storage.addRecord();
