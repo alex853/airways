@@ -13,9 +13,11 @@ import java.time.ZoneOffset;
 public class Time {
     private static final Logger log = LoggerFactory.getLogger(Time.class);
     public static final int START_TIME_EPOCH_SECONDS = 1735689600;
+    public static final int ONE_SECOND = 1;
     public static final int ONE_MINUTE = 60;
-    public static final int HALF_AN_HOUR = 1800;
-    public static final int ONE_HOUR = 3600;
+    public static final int HALF_AN_HOUR = 30 * ONE_MINUTE;
+    public static final int ONE_HOUR = 60 * ONE_MINUTE;
+    public static final int ONE_DAY = 24 * ONE_HOUR;
 
     public static final int TICK = 10;
 
