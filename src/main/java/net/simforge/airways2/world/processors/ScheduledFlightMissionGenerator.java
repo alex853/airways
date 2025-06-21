@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ScheduledFlightMissionGenerator {
@@ -45,7 +46,8 @@ public class ScheduledFlightMissionGenerator {
         for (int i = 0; i <= schedulingDepthDays; i++) {
             final LocalDate flightDate = worldDate.plusDays(i);
             final Optional<FlightMissions.Mission> flightMission = scheduledFlights.stream()
-                    .map(f -> world.flightMissions().byId(f.getFlightMissionId()).orElseThrow())
+                    .map(f -> world.flightMissions().byId(f.getFlightMissionId()).orElse(null)) // todo ak3 that .orElse(null) happens due to removal of flight missions, think about it when you will be back to that code
+                    .filter(Objects::nonNull)
                     .filter(f -> f.getDateOfFlight().equals(flightDate))
                     .findFirst();
             if (flightMission.isPresent()) {
