@@ -273,7 +273,7 @@ public class VatsimTrackerTest {
         assertPilotContextPresent();
     }
 
-    // todo ak1 change of aircraft type
+    // todo ak2 change of aircraft type
 
     @Test
     public void valid_fp___then_goes_offline___then_same_valid_fp___flight_should_be_cancelled___and___another_should_be_created() { // todo ak2 this may be treated as same flight, do not recreate
@@ -623,8 +623,8 @@ public class VatsimTrackerTest {
         assertFlight1Cancelled();
     }
 
-    // todo ak1 short disconnect cases on ground
-    // todo ak1 offline and then reconnect as before, reconnect without f/p, reconnect on ground, reconnect on different place of world
+    // todo ak2 short disconnect cases on ground
+    // todo ak2 offline and then reconnect as before, reconnect without f/p, reconnect on ground, reconnect on different place of world
 
     private void assertPilotContextPresent() {
         assertNotNull(pilotContext);

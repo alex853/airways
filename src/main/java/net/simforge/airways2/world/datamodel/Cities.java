@@ -4,6 +4,7 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -100,6 +101,10 @@ public class Cities {
 
         public String getName() {
             return strings.byId(storage.getAsInt(id, nameIdField));
+        }
+
+        public Geo.Coords getCoords() {
+            return Geo.coords(getLatitude(), getLongitude());
         }
     }
 }
