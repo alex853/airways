@@ -4,12 +4,8 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
-import net.simforge.airways2.world.processors.FlightMissionControl;
-import net.simforge.airways2.world.processors.FlightMissionProcessor;
+import net.simforge.airways2.world.processors.*;
 import net.simforge.airways2.world.datamodel.*;
-import net.simforge.airways2.world.processors.RandomFlightMissionGenerator;
-import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
-import net.simforge.airways2.world.processors.Airport2AirportDailyFlightStatsRotation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,6 +183,7 @@ public class World {
 
         try {
             FlightMissionProcessor.process(this);
+            FlightMissionCleanup.process(this);
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
             Airport2AirportDailyFlightStatsRotation.process(this);
