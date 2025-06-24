@@ -27,7 +27,7 @@ class StorageRecordsTest {
 
     @Test
     public void test_count() {
-        final int recordId = storage.addRecord();
+        storage.addRecord();
 
         assertEquals(1, storage.getCount());
     }
@@ -59,7 +59,34 @@ class StorageRecordsTest {
         assertEquals(2, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id, record3Id},
-                storage.all().toArray(new Integer[2]));
+                storage.all().toArray(new Object[0]));
+    }
+
+    @Test
+    public void test__add_several_delete_the_last__then_read_the_previous__previous_should_be_read() {
+        final int record1Id = storage.addRecord();
+        final int record2Id = storage.addRecord();
+        final int record3Id = storage.addRecord();
+        storage.deleteRecord(record3Id);
+
+        assertEquals(2, storage.getCount());
+        assertArrayEquals(
+                new Integer[] {record1Id, record2Id},
+                storage.all().toArray(new Object[0]));
+    }
+
+    @Test
+    public void test__add_several_delete_the_middle__then_delete_last__then_read_the_first__first_should_be_read() {
+        final int record1Id = storage.addRecord();
+        final int record2Id = storage.addRecord();
+        final int record3Id = storage.addRecord();
+        storage.deleteRecord(record2Id);
+        storage.deleteRecord(record3Id);
+
+        assertEquals(1, storage.getCount());
+        assertArrayEquals(
+                new Integer[] {record1Id},
+                storage.all().toArray(new Object[0]));
     }
 
     @Test
@@ -89,7 +116,7 @@ class StorageRecordsTest {
         assertEquals(3, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id, newlyAddedRecordId, record3Id},
-                storage.all().toArray(new Integer[3]));
+                storage.all().toArray(new Object[0]));
     }
 
     @Test
