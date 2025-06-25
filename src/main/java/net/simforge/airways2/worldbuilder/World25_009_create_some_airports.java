@@ -7,10 +7,16 @@ import java.io.IOException;
 public class World25_009_create_some_airports {
     public static void main(String[] args) throws IOException {
         ImportSelectedAirports.main(new String[] {
-                "EHAM",
                 "EDDF",
-                "LPPT",
+                "EDDK",
+                "EDDL",
+                "EFHK",
+                "EHAM",
                 "LCLK",
-                "LCPH" });
+                "LCPH",
+                "LPPT",
+                "LSGG",
+                "LSZH"
+        });
     }
 }
