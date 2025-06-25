@@ -8,6 +8,8 @@ import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -20,7 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Component
-public class WorldRunnerBean implements WorldAccess, DisposableBean {
+public class WorldRunnerBean implements WorldAccess, ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(WorldRunnerBean.class);
 
     private static final int saveWorldPeriod = Time.ONE_HOUR;
@@ -31,8 +33,8 @@ public class WorldRunnerBean implements WorldAccess, DisposableBean {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
 
-    @PostConstruct
-    public void init() {
+    @Override
+    public void run(final ApplicationArguments args) {
         loadWorld();
 
         thread = new Thread(() -> {
