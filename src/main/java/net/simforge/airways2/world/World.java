@@ -35,6 +35,9 @@ public class World {
 
     private final Airport2AirportDailyFlightStats airport2airportDailyFlightStats = new Airport2AirportDailyFlightStats();
 
+    private final CityFlows cityFlows = new CityFlows(this);
+    private final City2CityFlows city2CityFlows = new City2CityFlows();
+
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
             .withDataField(DataField.of(DataType.Signed32bit))
@@ -76,8 +79,13 @@ public class World {
 
             world.airport2airportDailyFlightStats.loadIfExists(rootPath);
 
+            world.cityFlows.loadIfExists(rootPath);
+            world.city2CityFlows.loadIfExists(rootPath);
+
             world.worldTime.loadIfExists(rootPath);
         });
+
+        // todo ak0 world.cityFlows.createMissingCityFlows();
 
         return world;
     }
@@ -102,6 +110,9 @@ public class World {
             scheduledFlights.save(rootPath);
 
             airport2airportDailyFlightStats.save(rootPath);
+
+            cityFlows.save(rootPath);
+            city2CityFlows.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -171,6 +182,14 @@ public class World {
         return airport2airportDailyFlightStats;
     }
 
+    public CityFlows cityFlows() {
+        return cityFlows;
+    }
+
+    public City2CityFlows city2cityFlows() {
+        return city2CityFlows;
+    }
+
     public boolean process(final int expectedWorldTime) {
         final int processedWorldTime = getWorldTime();
         final int newWorldTime = processedWorldTime + worldTimeStep;
@@ -187,6 +206,8 @@ public class World {
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
             Airport2AirportDailyFlightStatsRotation.process(this);
+            // todo ak0 CityFlowsProcessor.process(this);
+            // todo ak0 City2CityFlowsProcessor.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }
