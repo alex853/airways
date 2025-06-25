@@ -7,6 +7,8 @@ import net.simforge.airways2.storage.DataTypeUtils;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.processors.CityFlowOps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,6 +19,8 @@ import java.util.Optional;
 import static com.google.common.base.Preconditions.checkState;
 
 public class CityFlows {
+    private static final Logger log = LoggerFactory.getLogger(CityFlows.class);
+
     private final Storage<Flow> storage = Storage.<Flow>builder()
             .name("city_flows")
             .withInstantiator(Flow::new)
@@ -72,6 +76,7 @@ public class CityFlows {
             }
 
             createFlow(cityId);
+            log.info("city flow for '{}' city created", world.cities().byId(cityId).orElseThrow().getName());
 
             final Optional<Flow> newFlow = storage.byId(cityId);
             checkState(newFlow.isPresent(), "flow should exist here!");

@@ -85,7 +85,7 @@ public class World {
             world.worldTime.loadIfExists(rootPath);
         });
 
-        // todo ak0 world.cityFlows.createMissingCityFlows();
+        world.cityFlows.createMissingCityFlows();
 
         return world;
     }
