@@ -121,6 +121,15 @@ public class Storage<T> {
         return result;
     }
 
+    public Optional<T> byId(final int recordId) {
+        if (isOutOfBounds(recordId)) {
+            return Optional.empty();
+        }
+        if (isDeleted(recordId)) {
+            return Optional.empty();
+        }
+        return Optional.of(instantiator.create(recordId));
+    }
 
     public Collection<T> filter(final Predicate<T> condition) {
         final List<T> result = new ArrayList<>();
@@ -137,16 +146,6 @@ public class Storage<T> {
             result.add(instance);
         }
         return result;
-    }
-
-    public Optional<T> byId(final int recordId) {
-        if (isOutOfBounds(recordId)) {
-            return Optional.empty();
-        }
-        if (isDeleted(recordId)) {
-            return Optional.empty();
-        }
-        return Optional.of(instantiator.create(recordId));
     }
 
     public Optional<T> findFirst(final Predicate<T> condition) {
