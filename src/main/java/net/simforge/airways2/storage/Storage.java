@@ -1,5 +1,8 @@
 package net.simforge.airways2.storage;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,6 +14,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Storage<T> {
+    private static final Logger log = LoggerFactory.getLogger(Storage.class);
+
     private static final int recordHeaderSize = 1;
 
     // existing or deleted record
@@ -20,6 +25,7 @@ public class Storage<T> {
 
     private final String name;
     private final Instantiator<T> instantiator;
+    /** @noinspection FieldCanBeLocal, unused */
     private final DataType idDataType;
     private final DataField[] dataFields;
     private final int recordSize;
@@ -55,7 +61,7 @@ public class Storage<T> {
     }
 
     public static <T> Builder<T> builder() {
-        return new Builder<T>();
+        return new Builder<>();
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {
@@ -80,14 +86,20 @@ public class Storage<T> {
         data = new byte[0];
     }
 
-    private int getRecordCount() {
+    /**
+     * count of all records - existing and deleted
+     */
+    private int getTotalStoredRecordCount() {
         return data.length / recordSize;
     }
 
     // todo ak3 optimization - that counts can be stored in headers or counted somehow else - after loading and any change
+    /**
+     * count of existing records
+     */
     public int getCount() {
         int count = 0;
-        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (isDeleted(recordId)) {
                 continue;
             }
@@ -99,7 +111,7 @@ public class Storage<T> {
 
     public Collection<T> all() {
         final List<T> result = new ArrayList<>();
-        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (isDeleted(recordId)) {
                 continue;
             }
@@ -112,7 +124,7 @@ public class Storage<T> {
 
     public Collection<T> filter(final Predicate<T> condition) {
         final List<T> result = new ArrayList<>();
-        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (isDeleted(recordId)) {
                 continue;
             }
@@ -138,7 +150,7 @@ public class Storage<T> {
     }
 
     public Optional<T> findFirst(final Predicate<T> condition) {
-        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (isDeleted(recordId)) {
                 continue;
             }
@@ -154,7 +166,7 @@ public class Storage<T> {
     public int addRecord() {
         // todo ak3 optimization - ids of deleted records can be temporarily stored somewhere to improve performance
         int deletedRecordId = 0;
-        for (int recordId = 1; recordId <= getRecordCount(); recordId++) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (!isDeleted(recordId)) {
                 continue;
             }
@@ -167,7 +179,7 @@ public class Storage<T> {
             data[getRecordHeaderOffset(deletedRecordId)] = RECORD_EXISTS;
             return deletedRecordId;
         } else {
-            final int addedRecordId = getRecordCount() + 1;
+            final int addedRecordId = getTotalStoredRecordCount() + 1;
             // todo ak3 to check if new id is possible according to idDataType
             final byte[] newData = new byte[data.length + recordSize];
             System.arraycopy(data, 0, newData, 0, data.length);
@@ -179,8 +191,34 @@ public class Storage<T> {
     public void deleteRecord(final int recordId) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
+
         data[getRecordHeaderOffset(recordId)] = RECORD_EMPTY_OR_DELETED;
         Arrays.fill(data, getRecordHeaderOffset(recordId) + 1, getRecordHeaderOffset(recordId+1), (byte) 0);
+
+        vacuumDeletedRecordsAtTail();
+    }
+
+    private void vacuumDeletedRecordsAtTail() {
+        int lastNonDeletedRecordId = -1;
+        int currRecordId = getTotalStoredRecordCount();
+        while (currRecordId >= 1) {
+            if (!isDeleted(currRecordId)) {
+                lastNonDeletedRecordId = currRecordId;
+                break;
+            }
+            currRecordId--;
+        }
+
+        if (lastNonDeletedRecordId == -1) {
+            return;
+        }
+
+        log.warn("vacuuming {} storage, dropping {} records at tail, new total stored record count {}",
+                name, (getTotalStoredRecordCount() - lastNonDeletedRecordId), lastNonDeletedRecordId);
+
+        final byte[] newData = new byte[lastNonDeletedRecordId * recordSize];
+        System.arraycopy(data, 0, newData, 0, newData.length);
+        data = newData;
     }
 
     public int getAsInt(final int recordId, final DataField dataField) {
@@ -294,10 +332,7 @@ public class Storage<T> {
                 data[fieldOffset + 1] = (byte) (value >> 8);
                 data[fieldOffset + 2] = (byte) value;
             }
-            case Signed32bit -> {
-                // no need to check if value is within limits
-                setIntAtOffset(fieldOffset, value);
-            }
+            case Signed32bit -> setIntAtOffset(fieldOffset, value); // no need to check if value is within limits
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
@@ -342,21 +377,19 @@ public class Storage<T> {
 
         final int fieldOffset = getFieldOffset(recordId, dataField);
 
-        switch (dataField.dataType()) {
-            case PlainString:
-                if (value != null && value.length() > dataField.length()) {
-                    throw new IllegalArgumentException("Value is too long, actual length " + value.length() + " while max length is " + dataField.length());
-                }
-                Arrays.fill(data, fieldOffset, fieldOffset + dataField.size(), (byte) 0);
-                if (value == null) {
-                    data[fieldOffset] = (byte) 255;
-                } else {
-                    data[fieldOffset] = (byte) value.length();
-                    System.arraycopy(value.getBytes(), 0, data, fieldOffset + 1, value.length());
-                }
-                break;
-            default:
-                throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+        if (dataField.dataType() == DataType.PlainString) {
+            if (value != null && value.length() > dataField.length()) {
+                throw new IllegalArgumentException("Value is too long, actual length " + value.length() + " while max length is " + dataField.length());
+            }
+            Arrays.fill(data, fieldOffset, fieldOffset + dataField.size(), (byte) 0);
+            if (value == null) {
+                data[fieldOffset] = (byte) 255;
+            } else {
+                data[fieldOffset] = (byte) value.length();
+                System.arraycopy(value.getBytes(), 0, data, fieldOffset + 1, value.length());
+            }
+        } else {
+            throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
 
@@ -401,7 +434,7 @@ public class Storage<T> {
     }
 
     private boolean isOutOfBounds(int recordId) {
-        return recordId < 1 || recordId > getRecordCount();
+        return recordId < 1 || recordId > getTotalStoredRecordCount();
     }
 
     private void checkRecordIdIsNotDeleted(final int recordId) {
@@ -450,7 +483,7 @@ public class Storage<T> {
             if (dataFields.isEmpty()) {
                 throw new IllegalStateException("dataFields not set");
             }
-            return new Storage<T>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]));
+            return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]));
         }
     }
 

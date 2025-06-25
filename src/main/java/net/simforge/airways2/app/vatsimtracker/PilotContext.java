@@ -108,6 +108,7 @@ public class PilotContext {
         } else {
             pilotLog("new pilot context in non-valid state");
             FlightStats.event("new context - flightplan invalid");
+            countDestinationIfMissing(flightplan);
         }
 
         copyPositionFields(position, trackTail);
@@ -181,6 +182,7 @@ public class PilotContext {
                     FlightStats.event("preflight - dispatched - new valid flightplan");
                 } else {
                     flightplan = newFlightplan;
+                    countDestinationIfMissing(flightplan);
                 }
 
                 if (flightStage == FlightStage.Preflight
@@ -410,6 +412,19 @@ public class PilotContext {
         flightplan = null;
         trackTail.clear();
         removalCounter = 0;
+    }
+
+    private void countDestinationIfMissing(final Flightplan flightplan) {
+        if (flightplan == null) {
+            return;
+        }
+        if (flightplan.getDestination() == null) {
+            return;
+        }
+        if (worldIcaos.contains(flightplan.getDestination())) {
+            return;
+        }
+        FlightStats.event("missingAirport " + flightplan.getDestination());
     }
 
     public long getElapsedSecondsSinceLastSeen(String report) {
