@@ -45,7 +45,7 @@ public class TrackTailCriterion {
                 ", distanceToNewPosition=" + df3.format(distanceToNewPosition) +
                 ", distanceToNewPositionTime=" + df3.format(distanceToNewPositionTime) +
                 ", maxAllowedDistanceToNewPosition=" + df3.format(maxAllowedDistanceToNewPosition) +
-                ", сontinued=" + continued +
+                ", continued=" + continued +
                 '}';
     }
 }
