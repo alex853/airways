@@ -17,9 +17,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -29,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Component
-public class VatsimTrackerBean implements DisposableBean {
+public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(VatsimTrackerBean.class);
     private static final String storageRoot = Settings.get("network.view.storage.root");
 
@@ -48,9 +49,9 @@ public class VatsimTrackerBean implements DisposableBean {
     private String lastProcessedReport = null;
     private Map<Integer, Position> lastProcessedPositions = null;
 
-    @PostConstruct
-    public void init() {
-        log.info("init called");
+    @Override
+    public void run(final ApplicationArguments args) {
+        log.info("run called");
 
         storage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
 
