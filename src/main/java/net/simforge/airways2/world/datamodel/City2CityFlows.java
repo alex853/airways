@@ -121,7 +121,7 @@ public class City2CityFlows {
         }
         
         public void setSuccessRate(final float successRate) {
-            storage.set(id, successRateField, CityFlowOps.boundSuccessRate(DataTypeUtils.floatToU16When1to65535(successRate)));
+            storage.set(id, successRateField, DataTypeUtils.floatToU16When1to65535(CityFlowOps.boundSuccessRate(successRate)));
         }
 
         public int getNextGroupSize() {
