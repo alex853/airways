@@ -16,12 +16,12 @@ public class FlightMissionCleanup {
 
         final Collection<FlightMissions.Mission> cancelled = world.flightMissions()
                 .filter(f -> f.getStatus() == FlightMissions.Status.Cancelled
-                        && f.getPlannedDepartureWorldTime() <= worldTime - 2 * Time.ONE_DAY);
+                        && f.getPlannedDepartureWorldTime() <= worldTime - 1 * Time.ONE_DAY);
         cancelled.forEach(f -> world.flightMissions().deleteById(f.getId()));
 
         final Collection<FlightMissions.Mission> finished = world.flightMissions()
                 .filter(f -> f.getStatus() == FlightMissions.Status.Finished
-                        && f.getActualArrivalWorldTime() <= worldTime - 14 * Time.ONE_DAY);
+                        && f.getActualArrivalWorldTime() <= worldTime - 10 * Time.ONE_DAY);
         finished.forEach(f -> world.flightMissions().deleteById(f.getId()));
 
         if (cancelled.size() > 0 || finished.size() > 0) {
