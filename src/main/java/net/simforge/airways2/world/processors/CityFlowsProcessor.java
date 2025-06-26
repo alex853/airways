@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import static net.simforge.airways2.tools.Formatting.df3;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
@@ -40,7 +41,7 @@ public class CityFlowsProcessor {
             c2cFlowsToBeDeactivated.remove(toCity.getId());
 
             final float flowUnits = CityFlowOps.getFlowUnits(world, toCity, thisCity.get());
-            final float percentage = flowUnits / Math.max(totalFlowUnits, 0.000001f);
+            final float flowFraction = flowUnits / Math.max(totalFlowUnits, 0.000001f);
 
             final City2CityFlows.Flow c2cFlow = existingC2CFlows.computeIfAbsent(toCity.getId(),
                     (a) -> world.city2cityFlows().createInactive(thisCity.get().getId(), toCity.getId()));
@@ -52,11 +53,11 @@ public class CityFlowsProcessor {
                 c2cFlow.setAccumulatedFlowTime(world.getWorldTime());
             }
 
-            c2cFlow.setFlowFraction(percentage);
+            c2cFlow.setFlowFraction(flowFraction);
             c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
             final String toCityName = world.cities().byId(toCity.getId()).orElseThrow().getName();
             log.info("city flow #{}, '{}' - flow to city #{}, '{}' is active, flow units {}, percentage {}, next group size {}, acc flow {}",
-                    thisCity.get().getId(), city.getName(), toCity.getId(), toCityName, flowUnits, percentage, c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());
+                    thisCity.get().getId(), city.getName(), toCity.getId(), toCityName, flowUnits, df3.format(flowFraction*100), c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());
         });
 
         c2cFlowsToBeDeactivated.forEach(toCityId -> {
