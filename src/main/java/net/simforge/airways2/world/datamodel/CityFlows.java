@@ -57,8 +57,7 @@ public class CityFlows {
 
     public Optional<Flow> nextForRedistribution(final int worldTime) {
         try (final Timing.Timer ignored = Timing.label("CityFlows - nextForRedistribution")) {
-            return storage.findFirst(f -> f.getLastRedistributionTime() + CityFlowOps.REDISTRIBUTION_PERIOD <= worldTime
-                    && f.getLastRedistributionTime() != 0);
+            return storage.findFirst(f -> f.getLastRedistributionTime() + CityFlowOps.REDISTRIBUTION_PERIOD <= worldTime); // todo ak3 skip it if status is disabled
         }
     }
 
