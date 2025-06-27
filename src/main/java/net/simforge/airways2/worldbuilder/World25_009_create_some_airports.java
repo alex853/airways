@@ -11,17 +11,32 @@ public class World25_009_create_some_airports {
                 "EDDF",
                 "EDDK",
                 "EDDL",
+                "EDDS",
                 "EFHK",
                 "EGCC",
                 "EHAM",
+                "EKCH",
+                "ELLX",
+                "EPWA",
+                "GCTS",
                 "LCLK",
                 "LCPH",
+                "LDSP",
+                "LEIB",
+                "LEMG",
                 "LEPA",
                 "LFMN",
+                "LGAV",
+                "LGSM",
+                "LHBP",
+                "LIPZ",
                 "LOWI",
+                "LPFR",
+                "LPMA",
                 "LPPT",
                 "LSGG",
-                "LSZH"
+                "LSZH",
+                "LXGB"
         });
     }
 }
