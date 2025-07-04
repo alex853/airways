@@ -625,6 +625,8 @@ public class PilotContext {
     }
 
     private void pilotLog(final String message) {
+/* todo ak3 pilot log disabled, probably need to delete it at all
+
         final String folder1 = (pilotNumber / 100000) + "xxxxx";
         final File folder1file = new File(pilotLogsRoot, folder1);
         final String folder2 = (pilotNumber / 1000) + "xxx";
@@ -642,7 +644,7 @@ public class PilotContext {
             IOHelper.appendFile(pilotLogFile, line);
         } catch (final IOException e) {
             log.error("unable to write pilot log", e);
-        }
+        }*/
     }
 
     private String missionLogHead(final FlightMissions.Mission mission, final Flightplan flightplan) {
