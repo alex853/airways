@@ -10,6 +10,8 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
+import net.simforge.commons.misc.JavaTime;
+import net.simforge.commons.misc.Str;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,8 +24,11 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -93,15 +98,42 @@ public class AdminController {
         checkArgument(date.length() == 10);
         checkNotNull(LocalDate.parse(date));
 
+        return loadFlightStats(date);
+    }
+
+    @GetMapping(value = "/vatsim/flight-stats/top-missing-airports", produces = "text/plain")
+    public String getTopMissingAirports() {
+        LocalDate date = JavaTime.todayUtc();
+        final Map<String, Integer> allMissingAirports = new TreeMap<>();
+        for (int i = 0; i <= 7; i++) {
+            final Map<String, Integer> dateData = loadFlightStats(date.toString());
+            dateData.entrySet().stream()
+                    .filter(e -> e.getKey().startsWith("missingAirport"))
+                    .collect(Collectors.toMap(
+                            entry -> entry.getKey().substring("missingAirport ".length()),
+                            Map.Entry::getValue))
+                    .forEach((key, value) -> allMissingAirports.merge(key, value, Integer::sum));
+
+            date = date.minusDays(1);
+        }
+
+        return allMissingAirports.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(50)
+                .map(entry -> Str.al(entry.getKey(), 10) + " " + entry.getValue())
+                .collect(Collectors.joining("\n"));
+    }
+
+    private static Map<String, Integer> loadFlightStats(final String date) {
         final File file = new File(FlightStats.statsRoot, date + ".json");
         final String json;
         try {
             json = IOHelper.loadFile(file);
         } catch (IOException e) {
             log.error("unable to load flight stats data", e);
-            return null;
+            return new HashMap<>();
         }
-        Type type = new TypeToken<Map<String, Integer>>(){}.getType();
+        final Type type = new TypeToken<Map<String, Integer>>(){}.getType();
         return gson.fromJson(json, type);
     }
 
