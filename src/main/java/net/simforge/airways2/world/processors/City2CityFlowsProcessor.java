@@ -14,11 +14,11 @@ public class City2CityFlowsProcessor {
 
     public static void process(final World world) {
         // todo ak0 remove this "rate limiter"
-        if (System.currentTimeMillis() - lastRun < 200000) {
-            return;
-        } else {
-            lastRun = System.currentTimeMillis();
-        }
+//        if (System.currentTimeMillis() - lastRun < 60000) {
+//            return;
+//        } else {
+//            lastRun = System.currentTimeMillis();
+//        }
 
         final int worldTime = world.getWorldTime();
         final Optional<City2CityFlows.Flow> flowO = world.city2cityFlows().nextForHeartbeat(worldTime);
