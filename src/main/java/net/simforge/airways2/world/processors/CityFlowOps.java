@@ -6,8 +6,11 @@ import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
 import net.simforge.airways2.world.datamodel.CityFlows;
 import net.simforge.commons.misc.Geo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CityFlowOps {
+    private static final Logger log = LoggerFactory.getLogger(CityFlowOps.class);
 
     public static final int REDISTRIBUTION_PERIOD = 24 * Time.ONE_HOUR;
     public static final float FLOW_UNITS_THRESHOLD = 0.1f;
@@ -46,9 +49,14 @@ public class CityFlowOps {
         }
 
         final int dailyFlow = getDailyFlow(world, flow);
-        final double requiredFlowToDistribute = (flow.getNextGroupSize() - flow.getAccumulatedFlow()) / flow.getFlowFraction() / flow.getSuccessRate();
+        final float remainingFlow = flow.getNextGroupSize() - flow.getAccumulatedFlow();
+        final double requiredFlowToDistribute = remainingFlow / flow.getFlowFraction() / flow.getSuccessRate();
 
-        return  (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
+        final int time = (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
+        log.warn("calcTimeToAccumulateFlow - dailyFlow {}, remainingFlow {}, flow fraction {}, success rate {}, requiredFlowToDistribute {}, time {}",
+                dailyFlow, remainingFlow, flow.getFlowFraction(), flow.getSuccessRate(), requiredFlowToDistribute, time);
+
+        return time;
     }
 
     public static boolean randomDirection() {
