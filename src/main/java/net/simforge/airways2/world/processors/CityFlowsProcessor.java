@@ -2,7 +2,6 @@ package net.simforge.airways2.world.processors;
 
 import static net.simforge.airways2.tools.Formatting.df3;
 
-import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.City2CityFlows;

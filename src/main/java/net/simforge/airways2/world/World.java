@@ -207,7 +207,7 @@ public class World {
             ScheduledFlightMissionGenerator.process(this);
             Airport2AirportDailyFlightStatsRotation.process(this);
             CityFlowsProcessor.process(this);
-            // todo ak0 City2CityFlowsProcessor.process(this);
+            City2CityFlowsProcessor.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

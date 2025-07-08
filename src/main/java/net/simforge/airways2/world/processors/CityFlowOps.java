@@ -42,9 +42,8 @@ public class CityFlowOps {
 
     public static int calcTimeToAccumulateFlow(final World world, final City2CityFlows.Flow flow) {
         if (flow.getAccumulatedFlow() >= flow.getNextGroupSize()) {
-            return Time.ONE_SECOND;
+            return 0;
         }
-
 
         final int dailyFlow = getDailyFlow(world, flow);
         final double requiredFlowToDistribute = (flow.getNextGroupSize() - flow.getAccumulatedFlow()) / flow.getFlowFraction() / flow.getSuccessRate();
