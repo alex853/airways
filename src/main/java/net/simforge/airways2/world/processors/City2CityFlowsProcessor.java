@@ -28,6 +28,8 @@ public class City2CityFlowsProcessor {
 
         final City2CityFlows.Flow c2cFlow = flowO.get();
 
+        log.info("City2CityFlow {}-{} - a/t {}, h/t {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime());
+
         if (!c2cFlow.isActive()) {
             c2cFlow.setHeartbeatTime(0);
             log.warn("City2CityFlow {}-{} - inactive, heartbeat was set to null", c2cFlow.getFromCityId(), c2cFlow.getToCityId());
@@ -41,6 +43,7 @@ public class City2CityFlowsProcessor {
         }
 
         final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
+        log.info("City2CityFlow {}-{} - calc a/t {}, {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
 
         if (timeToAccumulateFlow > worldTime) {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
@@ -60,7 +63,7 @@ public class City2CityFlowsProcessor {
         c2cFlow.setAccumulatedFlow(0);
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
 
-        c2cFlow.setHeartbeatTime(Math.min(worldTime + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow), c2cFlow.getAccumulatedFlowTime()));
+        c2cFlow.setHeartbeatTime(timeToAccumulateFlow + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
         log.info("City2CityFlow {}-{} - new next group size {}, acc time {}, next heartbeat time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
 
 
