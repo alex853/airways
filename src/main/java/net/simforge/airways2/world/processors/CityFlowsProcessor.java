@@ -17,14 +17,6 @@ public class CityFlowsProcessor {
     private static final Logger log = LoggerFactory.getLogger(CityFlowsProcessor.class);
 
     public static void process(final World world) {
-        world.cityFlows().all().forEach(f -> {
-            log.info("city flow #{}, '{} - status: last redist time {}, next redist time {}",
-                    f.getId(),
-                    world.cities().byId(f.getId()).orElseThrow().getName(),
-                    Time.toLdt(f.getLastRedistributionTime()),
-                    Time.toLdt(f.getLastRedistributionTime() + CityFlowOps.REDISTRIBUTION_PERIOD));
-        });
-
         final Optional<CityFlows.Flow> thisCity = world.cityFlows().nextForRedistribution(world.getWorldTime());
         if (thisCity.isEmpty()) {
             return;
