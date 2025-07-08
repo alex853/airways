@@ -40,12 +40,11 @@ public class City2CityFlowsProcessor {
             return;
         }
 
-        final int timeToAccumulateFlow = c2cFlow.getAccumulatedFlowTime() + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
-        log.warn("City2CityFlow {}-{} - time", c2cFlow.getFromCityId(), c2cFlow.getToCityId());
+        final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
 
-        if (timeToAccumulateFlow < worldTime) {
+        if (timeToAccumulateFlow > worldTime) {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
-            log.warn("City2CityFlow {}-{} - timeToAcc is lower than worldTime: {} vs {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), Time.toLdt(timeToAccumulateFlow), Time.toLdt(worldTime));
+            log.warn("City2CityFlow {}-{} - timeToAcc {} did not reach world time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), Time.toLdt(timeToAccumulateFlow), Time.toLdt(worldTime));
             return;
         }
 
