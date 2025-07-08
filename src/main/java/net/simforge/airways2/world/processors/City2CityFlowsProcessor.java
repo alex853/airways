@@ -27,6 +27,7 @@ public class City2CityFlowsProcessor {
         }
 
         final City2CityFlows.Flow c2cFlow = flowO.get();
+        c2cFlow.setSuccessRate(0.1f);
 
         log.info("City2CityFlow {}-{} - a/t {}, h/t {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime());
 
