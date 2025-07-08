@@ -24,8 +24,6 @@ public class City2CityFlowsProcessor {
             log.warn("City2CityFlow {}-{} - success rate was ZERO, set to default {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), CityFlowOps.STARTING_SUCCESS_RATE);
         }
 
-        log.info("City2CityFlow {}-{} - a/t {}, h/t {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime());
-
         if (!c2cFlow.isActive()) {
             c2cFlow.setHeartbeatTime(0);
             log.warn("City2CityFlow {}-{} - inactive, heartbeat was set to null", c2cFlow.getFromCityId(), c2cFlow.getToCityId());
@@ -35,16 +33,16 @@ public class City2CityFlowsProcessor {
         if (c2cFlow.getNextGroupSize() == 0) {
             c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
             log.warn("City2CityFlow {}-{} - next group size was zero, set to {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize());
-            return;
         }
 
         final int timeToAccumulateRemaining = CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
         final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + timeToAccumulateRemaining;
-        log.info("City2CityFlow {}-{} - acc time remaining {}, acc time {}, acc time ldt {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), timeToAccumulateRemaining, timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
+        log.info("City2CityFlow {}-{} - raw acc time {}, raw heartbeat time {}, acc time remaining {}, acc time {}, acc time ldt {}",
+                c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime(), timeToAccumulateRemaining, timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
 
         if (timeToAccumulateFlow > worldTime) {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
-            log.warn("City2CityFlow {}-{} - timeToAcc {} did not reach world time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), Time.toLdt(timeToAccumulateFlow), Time.toLdt(worldTime));
+            log.warn("City2CityFlow {}-{} - acc time {} has not been reached world time {}, waiting", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), Time.toLdt(timeToAccumulateFlow), Time.toLdt(worldTime));
             return;
         }
 
@@ -61,34 +59,6 @@ public class City2CityFlowsProcessor {
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
 
         c2cFlow.setHeartbeatTime(timeToAccumulateFlow + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
-        log.info("City2CityFlow {}-{} - new next group size {}, acc time {}, next heartbeat time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
-
-
-//        final int dailyFlow = CityFlowOps.getDailyFlow(world, c2cFlow);
-//        final float flowToDistribute = dailyFlow * (float) (worldTime - c2cFlow.getAccumulatedFlowTime()) / (float) Time.ONE_DAY;
-//        final float flowIncrement = flowToDistribute * c2cFlow.getFlowFraction() * c2cFlow.getSuccessRate();
-//        log.warn("City2CityFlow {}-{} - dailyFlow {}, flowToDist {}, flowIncrement {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), dailyFlow, flowToDistribute, flowIncrement);
-
-//        c2cFlow.setAccumulatedFlow(c2cFlow.getAccumulatedFlow() + flowIncrement);
-//        c2cFlow.setAccumulatedFlowTime(worldTime);
-
-//        if (c2cFlow.getNextGroupSize() == 0) {
-//            c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
-//            log.warn("City2CityFlow {}-{} - next journey will be for group of {} persons", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize());
-//        }
-//
-//        if (c2cFlow.getAccumulatedFlow() >= c2cFlow.getNextGroupSize()) {
-//            final boolean directOrBackDirection = CityFlowOps.randomDirection();
-//
-//            log.info("City2CityFlow {}-{} - generating journey for group of {} persons, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), directOrBackDirection);
-
-// todo ak1            Journey journey = JourneyOps.create(session, c2cFlow, directOrBackDirection);
-// todo ak1            AirwaysApp.getScheduling().startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
-
-//            c2cFlow.setAccumulatedFlow(c2cFlow.getAccumulatedFlow() - c2cFlow.getNextGroupSize());
-//            c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
-//        }
-//
-//        c2cFlow.setHeartbeatTime(worldTime + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
+        log.info("City2CityFlow {}-{} - new next group size {}, new acc time {}, new heartbeat time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
     }
 }
