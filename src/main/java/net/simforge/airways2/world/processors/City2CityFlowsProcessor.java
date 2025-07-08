@@ -14,7 +14,7 @@ public class City2CityFlowsProcessor {
 
     public static void process(final World world) {
         // todo ak0 remove this "rate limiter"
-        if (System.currentTimeMillis() - lastRun < 300000) {
+        if (System.currentTimeMillis() - lastRun < 200000) {
             return;
         } else {
             lastRun = System.currentTimeMillis();
