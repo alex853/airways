@@ -42,8 +42,9 @@ public class City2CityFlowsProcessor {
             return;
         }
 
-        final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
-        log.info("City2CityFlow {}-{} - calc a/t {}, {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
+        final int timeToAccumulateRemaining = CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
+        final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + timeToAccumulateRemaining;
+        log.info("City2CityFlow {}-{} - acc time remaining {}, acc time {}, acc time ldt {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), timeToAccumulateRemaining, timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
 
         if (timeToAccumulateFlow > worldTime) {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
