@@ -212,8 +212,13 @@ public class Storage<T> {
             return;
         }
 
+        final int recordsToRemove = getTotalStoredRecordCount() - lastNonDeletedRecordId;
+        if (recordsToRemove == 0) {
+            return;
+        }
+
         log.warn("vacuuming {} storage, dropping {} records at tail, new total stored record count {}",
-                name, (getTotalStoredRecordCount() - lastNonDeletedRecordId), lastNonDeletedRecordId);
+                name, recordsToRemove, lastNonDeletedRecordId);
 
         final byte[] newData = new byte[lastNonDeletedRecordId * recordSize];
         System.arraycopy(data, 0, newData, 0, newData.length);
