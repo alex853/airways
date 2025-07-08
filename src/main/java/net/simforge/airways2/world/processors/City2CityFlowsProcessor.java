@@ -10,16 +10,8 @@ import java.util.*;
 
 public class City2CityFlowsProcessor {
     private static final Logger log = LoggerFactory.getLogger(City2CityFlowsProcessor.class);
-    private static long lastRun;
 
     public static void process(final World world) {
-        // todo ak0 remove this "rate limiter"
-//        if (System.currentTimeMillis() - lastRun < 60000) {
-//            return;
-//        } else {
-//            lastRun = System.currentTimeMillis();
-//        }
-
         final int worldTime = world.getWorldTime();
         final Optional<City2CityFlows.Flow> flowO = world.city2cityFlows().nextForHeartbeat(worldTime);
         if (flowO.isEmpty()) {
@@ -27,7 +19,10 @@ public class City2CityFlowsProcessor {
         }
 
         final City2CityFlows.Flow c2cFlow = flowO.get();
-        c2cFlow.setSuccessRate(0.1f);
+        if (c2cFlow.getSuccessRate() == 0) {
+            c2cFlow.setSuccessRate(CityFlowOps.STARTING_SUCCESS_RATE);
+            log.warn("City2CityFlow {}-{} - success rate was ZERO, set to default {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), CityFlowOps.STARTING_SUCCESS_RATE);
+        }
 
         log.info("City2CityFlow {}-{} - a/t {}, h/t {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime());
 
