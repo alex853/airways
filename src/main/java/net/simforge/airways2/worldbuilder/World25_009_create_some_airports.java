@@ -47,6 +47,7 @@ public class World25_009_create_some_airports {
                 "LPPR",
                 "LSGG",
                 "LSZH",
+                "LTFM",
                 "LXGB"
         });
     }
