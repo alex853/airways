@@ -45,10 +45,11 @@ public class ScheduledFlights {
         return all().stream().filter(f -> f.getScheduleId() == scheduleId).toList();
     }
 
-    public void create(final int scheduleId, final int flightMissionId) {
+    public Flight create(final int scheduleId, final int flightMissionId) {
         final int recordId = storage.addRecord();
         storage.set(recordId, scheduleIdField, scheduleId);
         storage.set(recordId, flightMissionIdField, flightMissionId);
+        return new Flight(recordId);
     }
 
     public class Flight {

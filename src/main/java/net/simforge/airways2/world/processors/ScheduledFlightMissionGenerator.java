@@ -28,6 +28,8 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
             new ScheduledFlight(121, "AW121", "F-AUWA", "LFPG", "LIRF", "11:00"),
             new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
+            new ScheduledFlight(131, "AW131", "F-AUWB", "LFPG", "EDDM", "06:00"),
+            new ScheduledFlight(132, "AW132", "F-AUWB", "EDDM", "LFPG", "10:00"),
     };
 
     public static void process(final World world) {
@@ -68,11 +70,13 @@ public class ScheduledFlightMissionGenerator {
             final Airports.Airport departureAirport = world.airports().byIcao(schedule.from).orElseThrow();
             final Airports.Airport destinationAirport = world.airports().byIcao(schedule.to).orElseThrow();
             final FlightMissions.Mission newFlightMission = FlightMissionHelper.scheduleDispatchedMission(world, aircraft.get(), departureAirport, destinationAirport, Time.fromLdt(departureTime));
-            world.scheduledFlights().create(schedule.scheduleId, newFlightMission.getId());
+            final ScheduledFlights.Flight scheduledFlight = world.scheduledFlights().create(schedule.scheduleId, newFlightMission.getId());
+            final TransportFlights.Flight transportFlight = world.transportFlights().create(newFlightMission, scheduledFlight, 160);
 
             world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(0), newFlightMission, aircraft.get());
             log.info("f/m #{} - flight scheduled and dispatched, flight no {}, date of flight {}, aircraft {}",
                     newFlightMission.getId(), schedule.flightNo, flightDate, aircraft.get().getRegNo());
+            log.info("t/f #{} - created", transportFlight.getId());
         }
     }
 

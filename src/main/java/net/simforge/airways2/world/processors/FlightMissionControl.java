@@ -2,10 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.EventLog;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,6 +89,11 @@ public class FlightMissionControl {
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
 
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
+            tf.setStatus(TransportFlights.Status.Departure);
+            log.info("t/f #{} - departure", tf.getId());
+        });
+
         world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
@@ -117,6 +119,11 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
+            tf.setStatus(TransportFlights.Status.Flying);
+            log.info("t/f #{} - flying", tf.getId());
+        });
+
         world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
@@ -140,6 +147,11 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
 
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
+            tf.setStatus(TransportFlights.Status.Arrival);
+            log.info("t/f #{} - arrival", tf.getId());
+        });
+
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
         log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()));
     }
@@ -160,6 +172,11 @@ public class FlightMissionControl {
         // todo ak3 scheduling.fireEvent(session, BlocksOn.class, flight);
 
         // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
+
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
+            tf.setStatus(TransportFlights.Status.WaitingForDeboarding);
+            log.info("t/f #{} - waiting for deboarding", tf.getId());
+        });
 
         world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));

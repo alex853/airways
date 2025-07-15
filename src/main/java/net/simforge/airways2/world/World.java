@@ -33,6 +33,8 @@ public class World {
 
     private final ScheduledFlights scheduledFlights = new ScheduledFlights();
 
+    private final TransportFlights transportFlights = new TransportFlights();
+
     private final Airport2AirportDailyFlightStats airport2airportDailyFlightStats = new Airport2AirportDailyFlightStats();
 
     private final CityFlows cityFlows = new CityFlows(this);
@@ -77,6 +79,8 @@ public class World {
 
             world.scheduledFlights.loadIfExists(rootPath);
 
+            world.transportFlights.loadIfExists(rootPath);
+
             world.airport2airportDailyFlightStats.loadIfExists(rootPath);
 
             world.cityFlows.loadIfExists(rootPath);
@@ -108,6 +112,8 @@ public class World {
             flightMissions.save(rootPath);
 
             scheduledFlights.save(rootPath);
+
+            transportFlights.save(rootPath);
 
             airport2airportDailyFlightStats.save(rootPath);
 
@@ -176,6 +182,10 @@ public class World {
 
     public ScheduledFlights scheduledFlights() {
         return scheduledFlights;
+    }
+
+    public TransportFlights transportFlights() {
+        return transportFlights;
     }
 
     public Airport2AirportDailyFlightStats airport2airportDailyFlightStats() {
