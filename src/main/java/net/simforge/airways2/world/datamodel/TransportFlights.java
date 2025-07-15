@@ -6,6 +6,7 @@ import net.simforge.airways2.storage.Storage;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.Optional;
 
 public class TransportFlights {
@@ -49,6 +50,10 @@ public class TransportFlights {
         return flight;
     }
 
+    public Collection<Flight> all() {
+        return storage.all();
+    }
+
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {
         return storage.findFirst(f -> f.getFlightMissionId() == flightMissionId);
     }
@@ -86,6 +91,10 @@ public class TransportFlights {
 
         public int getFlightMissionId() {
             return storage.getAsInt(id, flightMissionIdField);
+        }
+
+        public int getScheduledFlightId() {
+            return storage.getAsInt(id, scheduledFlightIdField);
         }
     }
 
