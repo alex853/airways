@@ -54,6 +54,10 @@ public class TransportFlights {
         return storage.all();
     }
 
+    public Optional<Flight> byId(final int id) {
+        return storage.byId(id);
+    }
+
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {
         return storage.findFirst(f -> f.getFlightMissionId() == flightMissionId);
     }
@@ -111,8 +115,7 @@ public class TransportFlights {
         Deboarding(9),
         Finished(10),
 //        CancellationRequested(9001),
-//        Cancelled(9999)
-        ;
+        Cancelled(15);
 
         private final int code;
 

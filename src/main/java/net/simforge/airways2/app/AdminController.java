@@ -8,6 +8,7 @@ import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.JavaTime;
@@ -173,6 +174,15 @@ public class AdminController {
                 aircraft.setFlightMissionId(0);
             }
             return "F/M # " + flightId + " cancelled, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+        });
+    }
+
+    @GetMapping("/transport-flight/cancel")
+    public String cancelTransportFlight(@RequestParam(name = "tfId") final int tfId) {
+        return worldBean.modifySync(world -> {
+            final TransportFlights.Flight flight = world.transportFlights().byId(tfId).orElseThrow();
+            flight.setStatus(TransportFlights.Status.Cancelled);
+            return "T/F # " + tfId + " cancelled";
         });
     }
 
