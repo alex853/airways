@@ -31,6 +31,9 @@ public class World25_009_create_some_airports {
                 "EPWA",
                 "ESSA",
                 "GCTS",
+                "KBOS",
+                "KJFK",
+                "KLAX",
                 "LCLK",
                 "LCPH",
                 "LDDU",
@@ -59,7 +62,9 @@ public class World25_009_create_some_airports {
                 "LSZH",
                 "LTAI",
                 "LTFM",
-                "LXGB"
+                "LXGB",
+                "OMDB",
+                "SCEL"
         });
     }
 }
