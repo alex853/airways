@@ -16,6 +16,7 @@ public class World25_009_create_some_airports {
                 "EDDS",
                 "EDDV",
                 "EFHK",
+                "EFKS",
                 "EGBB",
                 "EGCC",
                 "EGJJ",
