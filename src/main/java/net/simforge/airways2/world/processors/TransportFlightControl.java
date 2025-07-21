@@ -47,7 +47,12 @@ public class TransportFlightControl {
     }
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
-        transportFlight.setStatus(TransportFlights.Status.Checkin);
+        transportFlight.setStatus(TransportFlights.Status.WaitingForBoarding);
+        transportFlight.setHeartbeatTime(0);
+    }
+
+    public void startBoarding(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.Boarding);
         transportFlight.setHeartbeatTime(0);
     }
 }
