@@ -71,7 +71,8 @@ public class ScheduledFlightMissionGenerator {
             final Airports.Airport destinationAirport = world.airports().byIcao(schedule.to).orElseThrow();
             final FlightMissions.Mission newFlightMission = FlightMissionHelper.scheduleDispatchedMission(world, aircraft.get(), departureAirport, destinationAirport, Time.fromLdt(departureTime));
             final ScheduledFlights.Flight scheduledFlight = world.scheduledFlights().create(schedule.scheduleId, newFlightMission.getId());
-            final TransportFlights.Flight transportFlight = world.transportFlights().create(newFlightMission, scheduledFlight, 160);
+
+            final TransportFlights.Flight transportFlight = TransportFlightHelper.createTransportFlight(world, newFlightMission, scheduledFlight);
 
             world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(0), newFlightMission, aircraft.get());
             log.info("f/m #{} - flight scheduled and dispatched, flight no {}, date of flight {}, aircraft {}",

@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,11 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+// todo ak0 backup storage cleanup
+// todo ak0 othh missing
+// todo ak0 eddt existing
+// todo ak0 check null airport cases
+// todo ak0 go through aircraft types
 // todo ak2 aircraft types with errors
 //          A32N -> A20N mapping
 //          B777 -> B773 mapping
@@ -27,6 +33,7 @@ public class Application {
         }
 
         World25_009_create_some_airports.main(args);
+        TransportFlightHelper.updateExistingFlights();
 
         SpringApplication.run(Application.class, args);
     }

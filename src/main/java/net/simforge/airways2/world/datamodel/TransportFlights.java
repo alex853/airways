@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class TransportFlights {
     private final Storage<Flight> storage = Storage.<Flight>builder()
@@ -52,6 +53,10 @@ public class TransportFlights {
 
     public Collection<Flight> all() {
         return storage.all();
+    }
+
+    public Collection<Flight> filter(final Predicate<Flight> condition) {
+        return storage.filter(condition);
     }
 
     public Optional<Flight> byId(final int id) {
