@@ -1,6 +1,5 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,6 @@ public class Application {
         }
 
         World25_009_create_some_airports.main(args);
-        TransportFlightHelper.updateExistingFlights();
 
         SpringApplication.run(Application.class, args);
     }

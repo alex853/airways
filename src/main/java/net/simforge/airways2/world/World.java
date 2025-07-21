@@ -215,6 +215,7 @@ public class World {
             FlightMissionCleanup.process(this);
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
+            TransportFlightProcessor.process(this);
             Airport2AirportDailyFlightStatsRotation.process(this);
             CityFlowsProcessor.process(this);
             City2CityFlowsProcessor.process(this);

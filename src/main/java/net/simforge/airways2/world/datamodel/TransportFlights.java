@@ -59,6 +59,11 @@ public class TransportFlights {
         return storage.filter(condition);
     }
 
+    public Optional<Flight> nextForHeartbeat(final int worldTime) {
+        return storage.findFirst(tf -> tf.getHeartbeatTime() <= worldTime
+                && tf.getHeartbeatTime() != 0);
+    }
+
     public Optional<Flight> byId(final int id) {
         return storage.byId(id);
     }
