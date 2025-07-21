@@ -2,6 +2,7 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
@@ -23,7 +24,17 @@ public class TransportFlightController {
 
     @GetMapping("/all")
     public List<FlightDto> getAll() {
-        return worldBean.read(world -> world.transportFlights().all().stream()
+        return worldBean.read(world -> world.transportFlights()
+                .all().stream()
+                .map(f -> from(world, f))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .toList());
+    }
+
+    @GetMapping("/actual")
+    public List<FlightDto> getActual() {
+        return worldBean.read(world -> world.transportFlights()
+                .filter(f -> world.flightMissions().byId(f.getFlightMissionId()).orElseThrow().getPlannedDepartureWorldTime() >= world.getWorldTime() - Time.ONE_DAY).stream()
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList());
