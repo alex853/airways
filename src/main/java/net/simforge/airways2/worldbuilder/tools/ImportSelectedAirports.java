@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -24,20 +25,15 @@ public class ImportSelectedAirports {
                         ImportSelectedAirports.class.getResourceAsStream("/icaodata.csv")));
         final Csv airportsCsv = Csv.fromContent(content);
 
-        for (final String requestedIcao : args) {
-            final Airport airport = net.simforge.refdata.airports.Airports.get().findByIcao(requestedIcao).orElseThrow();
-
-            insertIfAbsent(world, airport, airportsCsv);
-        }
+        Arrays.stream(args)
+                .forEach(requestedIcao -> insertIfAbsent(world, requestedIcao, airportsCsv));
 
         world.save();
     }
 
-    private static void insertIfAbsent(final World world, final Airport airport, final Csv airportsCsv) {
-        final String icao = airport.getIcao();
-
-        final int row = findByIcao(airportsCsv, icao);
-        final String type = row != -1 ? airportsCsv.value(row, 3) : "civil";
+    private static void insertIfAbsent(final World world, final String icao, final Csv airportsCsv) {
+        final int rowInCsv = findByIcaoInCsv(airportsCsv, icao);
+        final String type = rowInCsv != -1 ? airportsCsv.value(rowInCsv, 3) : "civil";
 
         if (!"civil".equals(type)) {
             return;
@@ -45,6 +41,8 @@ public class ImportSelectedAirports {
 
         final Optional<Airports.Airport> airportByIcao = world.airports().byIcao(icao);
         if (airportByIcao.isEmpty()) {
+            final Airport airport = net.simforge.refdata.airports.Airports.get().findByIcao(icao).orElseThrow();
+
             world.airports().create(
                     airport.getCoords().getLat(),
                     airport.getCoords().getLon(),
@@ -55,7 +53,7 @@ public class ImportSelectedAirports {
         }
     }
 
-    private static int findByIcao(final Csv airportsCsv, final String requestedIcao) {
+    private static int findByIcaoInCsv(final Csv airportsCsv, final String requestedIcao) {
         for (int i = 0; i < airportsCsv.rowCount(); i++) {
             final String icao = airportsCsv.value(i, 0);
             if (requestedIcao.equals(icao)) {
