@@ -81,8 +81,8 @@ public class FlightMissionHelper {
 
     public static float calculateHeading(final World world, final int flightMissionId) {
         final FlightMissions.Mission mission = world.flightMissions().byId(flightMissionId).orElseThrow();
-        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-        return (float) Geo.bearing(from.getCoords(), to.getCoords());
+        return (float) Geo.bearing(aircraft.getLocationCoords(), to.getCoords());
     }
 }
