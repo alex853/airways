@@ -35,6 +35,7 @@ public class World25_009_create_some_airports {
                 "LTAI", "LTFM",
                 "LXGB",
                 "OMDB",
+                "OTHH",
                 "SCEL",
                 "WSSS"
         });
