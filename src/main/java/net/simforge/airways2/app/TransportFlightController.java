@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/transport-flight")
@@ -42,19 +43,19 @@ public class TransportFlightController {
 
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
-        final FlightMissions.Mission mission = world.flightMissions().byId(flight.getFlightMissionId()).orElseThrow();
+        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 flight.getScheduledFlightId(),
-                world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
-                world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
-                mission.getDateOfFlight().toString(),
-                WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
-                WebTime.hhmmOrNull(mission.getPlannedArrivalWorldTime())
-                );
+                mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
+                mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
+                mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
+                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
+                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a")
+            );
     }
 
     @Data
