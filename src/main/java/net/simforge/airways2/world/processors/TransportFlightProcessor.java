@@ -33,6 +33,7 @@ public class TransportFlightProcessor {
     // todo ak0 align!
     private static void processTransportFlight(final World world, final TransportFlightControl tfControl, final TransportFlights.Flight transportFlight) {
         final int worldTime = world.getWorldTime();
+        transportFlight.setHeartbeatTime(0);
             switch (transportFlight.getStatus()) {
                 case Scheduled -> {
                     if (tfControl.checkinTimeComes(transportFlight)) {
