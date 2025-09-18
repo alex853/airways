@@ -21,6 +21,18 @@ public class TransportFlightProcessor {
             }
 
             final TransportFlights.Flight transportFlight = transportFlightO.get();
+            try {
+                processTransportFlight(world, tfControl, transportFlight);
+            } catch (final RuntimeException e) {
+                log.warn("t/f {} processing error", transportFlight.getId(), e);
+                throw e;
+            }
+        }
+    }
+
+    // todo ak0 align!
+    private static void processTransportFlight(final World world, final TransportFlightControl tfControl, final TransportFlights.Flight transportFlight) {
+        final int worldTime = world.getWorldTime();
             switch (transportFlight.getStatus()) {
                 case Scheduled -> {
                     if (tfControl.checkinTimeComes(transportFlight)) {
@@ -33,6 +45,5 @@ public class TransportFlightProcessor {
                     }
                 }
             }
-        }
     }
 }
