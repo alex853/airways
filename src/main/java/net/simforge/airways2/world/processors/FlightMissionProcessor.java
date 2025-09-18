@@ -41,13 +41,23 @@ public class FlightMissionProcessor {
                 break;
             }
 
+            try {
+                processMission(world, mission.get());
+            } catch (final RuntimeException e) {
+                log.warn("f/m #{} - flight processing error - {}", mission.get().getId(), mission.get().getStatus(), e);
+            }
+        }
+    }
+
+    // todo ak0 align!
+    private static void processMission(final World world, final FlightMissions.Mission mission) {
             final FlightMissionControl flightControl = world.flightMissionControl();
-            final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission.get());
+            final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);
             final LocalDateTime now = Time.toLdt(worldTime);
-            switch (mission.get().getStatus()) {
+            switch (mission.getStatus()) {
                 case Preflight -> {
-                    if (!mission.get().isModePc()) {
-                        world.transportFlights().byFlightMissionId(mission.get().getId()).ifPresent(transportFlight -> {
+                    if (!mission.isModePc()) {
+                        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlight -> {
                             final LocalDateTime boardingStartTime = timeline.getBlocksOff().getEstimatedTime().minusMinutes(15); // todo ak1 that is weird! need to redo!
                             if (boardingStartTime.isBefore(now)) {
                                 final TransportFlights.Status transportFlightStatus = transportFlight.getStatus();
@@ -60,45 +70,44 @@ public class FlightMissionProcessor {
                         });
                     }
 
-                    if (!mission.get().isModePc() && timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
-                        flightControl.blocksOff(mission.get());
+                    if (!mission.isModePc() && timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
+                        flightControl.blocksOff(mission);
                     }
                 }
                 case Departure -> {
-                    if (!mission.get().isModePc() && timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
-                        flightControl.takeoff(mission.get());
+                    if (!mission.isModePc() && timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
+                        flightControl.takeoff(mission);
                     }
                 }
                 case Flying -> {
-                    fly(world, worldTime, mission.get());
+                    fly(world, worldTime, mission);
                 }
                 case Arrival -> {
-                    if (!mission.get().isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
-                        flightControl.blocksOn(mission.get());
+                    if (!mission.isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
+                        flightControl.blocksOn(mission);
                         // todo ak3 scheduling.scheduleEvent(StartDeboardingCommand.class, flight, timeMachine.now().plusMinutes(3));
                     }
                 }
                 case Postflight -> {
-                    if (!mission.get().isModePc() && timeline.getFinish().getEstimatedTime().isBefore(now)) {
-                        flightControl.finish(mission.get());
+                    if (!mission.isModePc() && timeline.getFinish().getEstimatedTime().isBefore(now)) {
+                        flightControl.finish(mission);
                     }
                 }
                 case Finished, Cancelled -> {
                     // noop
                 }
                 default -> {
-                    world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(0), mission.get());
-                    log.warn("f/m #{} - flight is in unexpected status - {}", mission.get().getId(), mission.get().getStatus());
+                    world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(0), mission);
+                    log.warn("f/m #{} - flight is in unexpected status - {}", mission.getId(), mission.getStatus());
                 }
             }
 
-            if (mission.get().getStatus() == FlightMissions.Status.Finished
-                    || mission.get().getStatus() == FlightMissions.Status.Cancelled) {
-                mission.get().setHeartbeatTime(0);
+            if (mission.getStatus() == FlightMissions.Status.Finished
+                    || mission.getStatus() == FlightMissions.Status.Cancelled) {
+                mission.setHeartbeatTime(0);
             } else {
-                mission.get().setHeartbeatTime(worldTime + Time.TICK);
+                mission.setHeartbeatTime(worldTime + Time.TICK);
             }
-        }
     }
 
     private static void fly(final World world, final int worldTime, final FlightMissions.Mission mission) {
