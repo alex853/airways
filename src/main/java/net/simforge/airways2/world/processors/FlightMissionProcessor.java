@@ -51,6 +51,7 @@ public class FlightMissionProcessor {
 
     // todo ak0 align!
     private static void processMission(final World world, final FlightMissions.Mission mission) {
+        final int worldTime = world.getWorldTime();
             final FlightMissionControl flightControl = world.flightMissionControl();
             final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);
             final LocalDateTime now = Time.toLdt(worldTime);
