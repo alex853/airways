@@ -45,6 +45,7 @@ public class FlightMissionProcessor {
                 processMission(world, mission.get());
             } catch (final RuntimeException e) {
                 log.warn("f/m #{} - flight processing error - {}", mission.get().getId(), mission.get().getStatus(), e);
+                throw e;
             }
         }
     }
