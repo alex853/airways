@@ -55,7 +55,7 @@ public class AircraftController {
                                 a.getRegNo(),
                                 a.getLocationLatitude(),
                                 a.getLocationLongitude(),
-                                (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId()),
+                                mission.map(m -> (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId())).orElse(0),
                                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                                 mission.map(m -> WebTime.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
