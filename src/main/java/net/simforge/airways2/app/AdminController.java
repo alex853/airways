@@ -150,6 +150,18 @@ public class AdminController {
         return "Pilot context for f/m # " + flightId + " REMOVED";
     }
 
+    @GetMapping("/vatsim/remove-context-by-pilot-number")
+    public String removeVatsimContextByPilotNumber(@RequestParam(name = "pilotNumber") final int pilotNumber) {
+        final Optional<PilotContext> pc = vatsimTracker.contexts().stream()
+                .filter(f -> f.getPilotNumber() == pilotNumber)
+                .findFirst();
+        if (pc.isEmpty()) {
+            return "Pilot context for p/n # " + pilotNumber + " NOT FOUND";
+        }
+        vatsimTracker.removePilot(pc.get().getPilotNumber());
+        return "Pilot context for p/n # " + pilotNumber + " REMOVED";
+    }
+
     @GetMapping("/flight/cancel")
     public String cancelFlight(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
