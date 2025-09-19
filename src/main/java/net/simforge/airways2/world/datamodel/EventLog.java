@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Predicate;
 
 public class EventLog {
     private final Storage<Event> storage = Storage.<Event>builder()
@@ -52,6 +53,14 @@ public class EventLog {
 
     public Collection<Event> all() {
         return storage.all();
+    }
+
+    public Collection<EventLog.Event> filter(final Predicate<EventLog.Event> condition) {
+        return storage.filter(condition);
+    }
+
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
     }
 
     public void log(final int time, final EventType eventType, final EventLogId object1, final EventLogId object2, final EventLogId object3, final EventLogId object4) {

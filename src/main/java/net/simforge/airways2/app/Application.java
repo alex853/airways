@@ -10,11 +10,16 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak0 backup storage cleanup
-// todo ak0 othh missing
-// todo ak0 eddt existing
-// todo ak0 check null airport cases
-// todo ak0 go through aircraft types
+// todo ak0 fs-integration imitation mode
+//   step 1 - I declare that I am at some airport, at some aircraft, and I have intention to fly to another airport
+//            the backend prepares flight, aircraft, transport flight, everything in Scheduled state, etc
+//   step 2 - I start the flight, then I go through all the stages, including transport flight actions (new!)
+
+// todo ak2 backup storage cleanup
+// todo ak2 othh missing
+// todo ak2 eddt existing
+// todo ak2 check null airport cases
+// todo ak2 go through aircraft types
 // todo ak2 aircraft types with errors
 //          A32N -> A20N mapping
 //          B777 -> B773 mapping

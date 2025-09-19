@@ -212,13 +212,15 @@ public class World {
 
         try {
             FlightMissionProcessor.process(this);
-            FlightMissionCleanup.process(this);
             RandomFlightMissionGenerator.process(this);
             ScheduledFlightMissionGenerator.process(this);
             TransportFlightProcessor.process(this);
             Airport2AirportDailyFlightStatsRotation.process(this);
             CityFlowsProcessor.process(this);
             City2CityFlowsProcessor.process(this);
+
+            EventLogCleanup.process(this);
+            FlightMissionCleanup.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }
