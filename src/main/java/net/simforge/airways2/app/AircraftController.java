@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/aircraft")
@@ -47,7 +48,7 @@ public class AircraftController {
             return worldBean.read(world -> world.aircrafts().all().stream()
                     .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying)
                     .map(a -> {
-                        final FlightMissions.Mission mission = world.flightMissions().byId(a.getFlightMissionId()).orElseThrow();
+                        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
                         return new FlyingAircraftDto(
                                 a.getId(),
                                 world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
@@ -55,11 +56,11 @@ public class AircraftController {
                                 a.getLocationLatitude(),
                                 a.getLocationLongitude(),
                                 (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId()),
-                                world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
-                                world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
-                                WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
-                                WebTime.hhmmOrNull(mission.getPlannedArrivalWorldTime()),
-                                WebTime.hhmmOrNull(mission.getActualTakeoffWorldTime()),
+                                mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
+                                mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
+                                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
+                                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
+                                mission.map(m -> WebTime.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
                                 null);
                     })
                     .toList());
