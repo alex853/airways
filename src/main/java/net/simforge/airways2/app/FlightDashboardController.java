@@ -39,7 +39,15 @@ public class FlightDashboardController {
                     aircraft.getOperationalStatus().name()
             );
 
-            final FlightDto flightDto = new FlightDto(flightId);
+            final FlightDto flightDto = new FlightDto(
+                    flightId,
+                    flight.getStatus().name(),
+                    "start",
+                    world.airports().getIcao(flight.getDepartureAirportId()),
+                    world.airports().getIcao(flight.getDestinationAirportId()),
+                    WebTime.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
+                    WebTime.hhmmOrNull(flight.getPlannedArrivalWorldTime())
+            );
 
             final TransportFlightDto transportFlightDto = transportFlight != null
                     ? new TransportFlightDto(transportFlight.getId())
@@ -138,6 +146,12 @@ public class FlightDashboardController {
     @AllArgsConstructor
     public static class FlightDto {
         private int id;
+        private String status;
+        private String permittedActions;
+        private String depIcao;
+        private String destIcao;
+        private String planDepTime;
+        private String planArrTime;
     }
 
     @Data
