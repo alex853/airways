@@ -49,9 +49,10 @@ public class FlightDashboardController {
                     WebTime.hhmmOrNull(flight.getPlannedArrivalWorldTime())
             );
 
-            final TransportFlightDto transportFlightDto = transportFlight != null
-                    ? new TransportFlightDto(transportFlight.getId())
-                    : null;
+            final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
+                    transportFlight.getId(),
+                    transportFlight.getStatus().name()
+            ) : null;
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
         });
@@ -158,5 +159,6 @@ public class FlightDashboardController {
     @AllArgsConstructor
     public static class TransportFlightDto {
         private int id;
+        private String status;
     }
 }
