@@ -15,7 +15,6 @@ import java.lang.reflect.Method;
 //            the backend prepares flight, aircraft, transport flight, everything in Scheduled state, etc
 //   step 2 - I start the flight, then I go through all the stages, including transport flight actions (new!)
 
-// todo ak2 backup storage cleanup
 // todo ak2 othh missing
 // todo ak2 eddt existing
 // todo ak2 check null airport cases

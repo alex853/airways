@@ -10,7 +10,9 @@ public class World25 {
     public static final String ShadowJetIata = "SJ";
     public static final String ShadowJetIcao = "SJT";
 
+    public static final DiskStorageStrategy diskStorageStrategy = new DiskStorageStrategy(World25.name);
+
     public static World load() throws IOException {
-        return World.load(new DiskStorageStrategy(World25.name));
+        return World.load(diskStorageStrategy);
     }
 }

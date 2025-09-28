@@ -67,6 +67,10 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     lock.writeLock().unlock();
                 }
 
+                if (lastSaved == now) {
+                    reduceWorldBackupCounts();
+                }
+
                 if (needToCatchTime) {
                     Thread.yield();
                 } else {
@@ -137,6 +141,14 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
             status = ThreadStatus.TerminatedDueToError;
             log.error("unable to save the world", e);
             throw new RuntimeException("unable to save the world", e);
+        }
+    }
+
+    private void reduceWorldBackupCounts() {
+        try {
+            World25.diskStorageStrategy.reduceWorldBackupCounts();
+        } catch (IOException e) {
+            log.warn("unable to reduce world backups", e);
         }
     }
 
