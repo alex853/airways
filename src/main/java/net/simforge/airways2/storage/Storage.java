@@ -225,6 +225,46 @@ public class Storage<T> {
         data = newData;
     }
 
+    public void printDeletedRecordInfo() {
+        final int totalRecords = getTotalStoredRecordCount();
+
+        int deletedRecords = 0;
+        int highestDeletedId = -1;
+
+        int currentSequence = -1;
+
+        int longestDeletedSequence = -1;
+        int highestIdOfLongestDeletedSequence = -1;
+
+        for (int recordId = 1; recordId <= totalRecords; recordId++) {
+            if (isDeleted(recordId)) {
+                deletedRecords++;
+                highestDeletedId = Math.max(highestDeletedId, recordId);
+
+                if (currentSequence == -1) {
+                    currentSequence = 1;
+                } else {
+                    currentSequence++;
+                }
+            } else {
+                if ((currentSequence != -1) && (currentSequence >= longestDeletedSequence)) {
+                    longestDeletedSequence = currentSequence;
+                    highestIdOfLongestDeletedSequence = recordId - 1;
+
+                    currentSequence = -1;
+                }
+            }
+        }
+
+        if ((currentSequence != -1) && (currentSequence >= longestDeletedSequence)) {
+            longestDeletedSequence = currentSequence;
+            highestIdOfLongestDeletedSequence = totalRecords;
+        }
+
+        log.info("deleted record info for {} storage - total stored {}, deleted {}, highest deleted id {}, longest deleted sequence {}, highest id of longest deleted sequence {}",
+                name, totalRecords, deletedRecords, highestDeletedId, longestDeletedSequence, highestIdOfLongestDeletedSequence);
+    }
+
     public int getAsInt(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);

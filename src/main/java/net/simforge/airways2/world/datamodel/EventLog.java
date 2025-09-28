@@ -89,6 +89,10 @@ public class EventLog {
         }
     }
 
+    public void printDeletedRecordInfo() {
+        storage.printDeletedRecordInfo();
+    }
+
     public class Event {
         private final int id;
 

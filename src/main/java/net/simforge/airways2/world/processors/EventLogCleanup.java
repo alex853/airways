@@ -20,6 +20,7 @@ public class EventLogCleanup {
 
         if (outdated.size() > 0) {
             log.info("event log cleaned up - {} removed", outdated.size());
+            world.eventLog().printDeletedRecordInfo();
         }
     }
 }
