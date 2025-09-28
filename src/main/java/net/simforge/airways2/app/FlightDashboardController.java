@@ -65,7 +65,7 @@ public class FlightDashboardController {
     private NextPlannedStatusDto getNextTransportFlightPlannedStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> new NextPlannedStatusDto(
-                    Checkin.toString(),
+                    Checkin.name(),
                     WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight)));
             default -> null;
         };
