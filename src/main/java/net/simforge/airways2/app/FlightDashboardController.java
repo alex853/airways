@@ -39,10 +39,10 @@ public class FlightDashboardController {
                     aircraft.getOperationalStatus().name()
             );
 
-            final FlightDto flightDto = new FlightDto();
+            final FlightDto flightDto = new FlightDto(flightId);
 
             final TransportFlightDto transportFlightDto = transportFlight != null
-                    ? new TransportFlightDto()
+                    ? new TransportFlightDto(transportFlight.getId())
                     : null;
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
@@ -137,10 +137,12 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class FlightDto {
+        private int id;
     }
 
     @Data
     @AllArgsConstructor
     public static class TransportFlightDto {
+        private int id;
     }
 }
