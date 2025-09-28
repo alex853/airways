@@ -12,6 +12,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class EventLog {
     private final Storage<Event> storage = Storage.<Event>builder()
             .name("event-log")
@@ -179,6 +182,7 @@ public class EventLog {
         AircraftLanding(312),
         AircraftArrivedToGate(313),
 
+        TransportFlightCreated(400),
         ;
 
         private final int code;
@@ -203,7 +207,8 @@ public class EventLog {
         Pilot(1),
         FlightMission(2),
         Aircraft(3),
-        Airport(4);
+        Airport(4),
+        TransportFlight(5);
 
         private final int code;
 
@@ -230,19 +235,27 @@ public class EventLog {
         private final int id;
     }
 
+    public static EventLogId id(final FlightMissions.Mission mission) {
+        checkNotNull(mission);
+        return new EventLogId(ObjectType.FlightMission, mission.getId());
+    }
+
+    public static EventLogId id(final Aircrafts.Aircraft aircraft) {
+        checkNotNull(aircraft);
+        return new EventLogId(ObjectType.Aircraft, aircraft.getId());
+    }
+
+    public static EventLogId id(final TransportFlights.Flight flight) {
+        checkNotNull(flight);
+        return new EventLogId(ObjectType.TransportFlight, flight.getId());
+    }
+
     public static EventLogId pilotId(int pilotId) { // todo ak3 review all the usages when pilot will be introduced
         return new EventLogId(ObjectType.Pilot, pilotId);
     }
 
-    public static EventLogId missionId(int missionId) {
-        return new EventLogId(ObjectType.FlightMission, missionId);
-    }
-
-    public static EventLogId aircraftId(int aircraftId) {
-        return new EventLogId(ObjectType.Aircraft, aircraftId);
-    }
-
-    public static EventLogId airportId(int airportId) {
+    public static EventLogId airportId(final int airportId) {
+        checkArgument(airportId > 0);
         return new EventLogId(ObjectType.Airport, airportId);
     }
 }

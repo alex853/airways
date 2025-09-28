@@ -3,11 +3,9 @@ package net.simforge.airways2.app;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.EventLog;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.world.processors.TransportFlightControl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,13 +59,19 @@ public class ManualDispatchController {
                 default -> throw new IllegalArgumentException();
             };
 
-            final boolean pcMode = "manual".equals(flightMode);
+            final boolean pcMode = "manual".equals(flightMode) || "flight-dashboard".equals(flightMode);
 
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
             mission.setModePc(pcMode);
 
             world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(0), mission, aircraft);
-            log.info("f/m #{} - flight dispatched manually, aircraft {}", mission.getId(), aircraft.getRegNo());
+            log.info("f/m #{} - flight dispatched via web-page, aircraft {}, flight mode {}", mission.getId(), aircraft.getRegNo(), flightMode);
+
+            if ("flight-dashboard".equals(flightMode)) {
+                final TransportFlights.Flight transportFlight = TransportFlightControl.instance(world).createTransportFlight(mission);
+                world.log(EventLog.EventType.TransportFlightCreated, EventLog.id(transportFlight), mission);
+                log.info("f/m #{} - created t/f #{} for the mission dispatched via web-page", mission.getId(), transportFlight.getId());
+            }
 
             return new DispatchFlightResponseDto(mission.getId());
         });

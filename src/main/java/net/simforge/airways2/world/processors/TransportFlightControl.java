@@ -17,6 +17,11 @@ public class TransportFlightControl {
         return new TransportFlightControl(world);
     }
 
+
+    public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission) {
+        return createTransportFlight(flightMission, null);
+    }
+
     public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission,
                                                          final ScheduledFlights.Flight scheduledFlight) {
         final TransportFlights.Flight transportFlight = world.transportFlights().create(flightMission, scheduledFlight, 160);

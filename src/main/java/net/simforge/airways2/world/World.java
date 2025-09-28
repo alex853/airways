@@ -133,15 +133,15 @@ public class World {
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final EventLog.EventLogId object4) {
-        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), object4);
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), EventLog.id(aircraft), object4);
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft) {
-        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), EventLog.aircraftId(aircraft.getId()), null);
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), EventLog.id(aircraft), null);
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission) {
-        eventLog.log(getWorldTime(), eventType, object1, EventLog.missionId(mission.getId()), null, null);
+        eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), null, null);
     }
 
     public Countries countries() {

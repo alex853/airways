@@ -10,6 +10,8 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class TransportFlights {
     private final Storage<Flight> storage = Storage.<Flight>builder()
             .name("transport-flights")
@@ -41,12 +43,13 @@ public class TransportFlights {
     public Flight create(final FlightMissions.Mission flightMission,
                          final ScheduledFlights.Flight scheduledFlight,
                          final int economyClassTickets) {
+        checkNotNull(flightMission);
         final int id = storage.addRecord();
         final Flight flight = new Flight(id);
         flight.setStatus(Status.Scheduled);
         flight.setHeartbeatTime(0);
         storage.set(id, flightMissionIdField, flightMission.getId());
-        storage.set(id, scheduledFlightIdField, scheduledFlight.getId());
+        storage.set(id, scheduledFlightIdField, scheduledFlight != null ? scheduledFlight.getId() : 0);
         // todo ak1 tickets
         return flight;
     }
