@@ -85,4 +85,8 @@ public class FlightMissionHelper {
         final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
         return (float) Geo.bearing(aircraft.getLocationCoords(), to.getCoords());
     }
+
+    public static int calcPreflightStartTime(final FlightMissions.Mission flight) {
+        return flight.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * 60;
+    }
 }

@@ -7,12 +7,14 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
 
 @RestController
@@ -44,6 +46,7 @@ public class FlightDashboardController {
             final FlightDto flightDto = new FlightDto(
                     flightId,
                     flight.getStatus().name(),
+                    getNextFlightPlannedStatus(flight),
                     "start",
                     world.airports().getIcao(flight.getDepartureAirportId()),
                     world.airports().getIcao(flight.getDestinationAirportId()),
@@ -60,6 +63,15 @@ public class FlightDashboardController {
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
         });
+    }
+
+    private NextPlannedStatusDto getNextFlightPlannedStatus(final FlightMissions.Mission flight) {
+        return switch (flight.getStatus()) {
+            case Dispatched -> new NextPlannedStatusDto(
+                    Preflight.name(),
+                    WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight)));
+            default -> null;
+        };
     }
 
     private NextPlannedStatusDto getNextTransportFlightPlannedStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
@@ -87,7 +99,7 @@ public class FlightDashboardController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
+            checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
             world.flightMissionControl().blocksOff(flight);
             return EnhancedFlightMissionDto.fromMission(world, flight);
         });
@@ -161,6 +173,7 @@ public class FlightDashboardController {
     public static class FlightDto {
         private int id;
         private String status;
+        private NextPlannedStatusDto nextPlannedStatus;
         private String permittedActions;
         private String depIcao;
         private String destIcao;

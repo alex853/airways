@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 
 public class FlightTimeline {
 
+    public static final int START_TO_BLOCKS_OFF_MINUTES = 30;
+
     public static FlightTimeline byFlyingTime(Duration flyingTime) {
         FlightTimeline result = new FlightTimeline();
 
@@ -70,7 +72,7 @@ public class FlightTimeline {
         blocksOn = new Milestone(MilestoneType.BlocksOn);
         finish = new Milestone(MilestoneType.Finished);
 
-        preFlight = new Stage(start, blocksOff, Duration.ofMinutes(30));
+        preFlight = new Stage(start, blocksOff, Duration.ofMinutes(START_TO_BLOCKS_OFF_MINUTES));
         departure = new Stage(blocksOff, takeoff, Duration.ofMinutes(10));
         flying = new Stage(takeoff, landing, null);
         arrival = new Stage(landing, blocksOn, Duration.ofMinutes(10));
