@@ -6,12 +6,14 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.processors.TransportFlightHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
 
 @RestController
 @RequestMapping("/flight-dashboard")
@@ -51,11 +53,22 @@ public class FlightDashboardController {
 
             final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
                     transportFlight.getId(),
-                    transportFlight.getStatus().name()
+                    transportFlight.getStatus().name(),
+                    getNextTransportFlightPlannedStatus(transportFlight, flight),
+                    null
             ) : null;
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
         });
+    }
+
+    private NextPlannedStatusDto getNextTransportFlightPlannedStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
+        return switch (transportFlight.getStatus()) {
+            case Scheduled -> new NextPlannedStatusDto(
+                    Checkin.toString(),
+                    WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight)));
+            default -> null;
+        };
     }
 
     @PostMapping("/start")
@@ -160,5 +173,14 @@ public class FlightDashboardController {
     public static class TransportFlightDto {
         private int id;
         private String status;
+        private NextPlannedStatusDto nextPlannedStatus;
+        private String permittedActions;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class NextPlannedStatusDto {
+        private String status;
+        private String time;
     }
 }
