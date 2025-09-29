@@ -220,7 +220,7 @@ public class World {
             City2CityFlowsProcessor.process(this);
 
             EventLogCleanup.process(this);
-            FlightMissionCleanup.process(this);
+            FlightsCleanup.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

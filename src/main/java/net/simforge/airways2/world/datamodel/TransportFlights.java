@@ -54,6 +54,10 @@ public class TransportFlights {
         return flight;
     }
 
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
+    }
+
     public Collection<Flight> all() {
         return storage.all();
     }
