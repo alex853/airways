@@ -127,14 +127,22 @@ public class FlightDashboardController {
         };
     }
 
-    @PostMapping("/start")
-    public EnhancedFlightMissionDto start(@RequestParam(name = "flightId") final int flightId) {
+    @PostMapping("/start-flight")
+    public StatusDto startFlight(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
+
+            final String permitted = getFlightMissionPermittedActions(flight); // todo ak1 permitted actions review
+            if (!"start".equals(permitted)) {
+                throw new IllegalStateException("start is not permitted");
+            }
+
+            // todo ak1 event-logging
             world.flightMissionControl().startOrCancel(flight);
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+            return getStatus(flightId);
         });
     }
 
