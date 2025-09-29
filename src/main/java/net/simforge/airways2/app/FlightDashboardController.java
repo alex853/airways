@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForBoarding;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Boarding;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture;
 
@@ -49,8 +48,8 @@ public class FlightDashboardController {
             final FlightDto flightDto = new FlightDto(
                     flightId,
                     flight.getStatus().name(),
-                    getNextFlightPlannedStatus(flight),
-                    "start",
+                    getNextPlannedFlightMissionStatus(flight),
+                    getFlightMissionPermittedActions(flight),
                     world.airports().getIcao(flight.getDepartureAirportId()),
                     world.airports().getIcao(flight.getDestinationAirportId()),
                     WebTime.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
@@ -60,15 +59,15 @@ public class FlightDashboardController {
             final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
                     transportFlight.getId(),
                     transportFlight.getStatus().name(),
-                    getNextTransportFlightPlannedStatus(transportFlight, flight),
-                    null
+                    getNextPlannedTransportFlightStatus(transportFlight, flight),
+                    getTransportFlightPermittedActions(transportFlight, flight)
             ) : null;
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
         });
     }
 
-    private NextPlannedStatusDto getNextFlightPlannedStatus(final FlightMissions.Mission flight) {
+    private NextPlannedStatusDto getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
         return switch (flight.getStatus()) {
             case Dispatched -> new NextPlannedStatusDto(
                     Preflight.name(),
@@ -77,18 +76,54 @@ public class FlightDashboardController {
         };
     }
 
-    private NextPlannedStatusDto getNextTransportFlightPlannedStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
+    @SuppressWarnings("DuplicateBranchesInSwitch")
+    private String getFlightMissionPermittedActions(final FlightMissions.Mission flight) {
+        return switch (flight.getStatus()) {
+            case PlannedManually, PlannedViaSchedule -> null;
+            case Dispatched -> "start"; // todo ak0 deny start too early
+            case Preflight -> "blocks-off"; // todo ak0 deny if boarding has not been completed
+            case Departure -> "takeoff";
+            case Flying -> "landing"; // todo ak0 deny if it elapsed less than 75% of ideal time
+            case Arrival -> "blocks-on";
+            case Postflight -> "finish"; // todo ak0 deny if deboarding has not been completed
+            case Finished -> null;
+            case Cancelled -> null;
+        };
+    }
+
+    @SuppressWarnings("DuplicateBranchesInSwitch")
+    private NextPlannedStatusDto getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> new NextPlannedStatusDto(
                     Checkin.name(),
                     WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight)));
+            case Checkin -> null;
             case WaitingForBoarding -> new NextPlannedStatusDto(
                     Boarding.name(),
                     "the Captain's instruction");
             case Boarding -> new NextPlannedStatusDto(
                     WaitingForDeparture.name(),
                     "??:??");
-            default -> null;
+            case WaitingForDeparture -> null;
+            case Departure -> null;
+            case Flying -> null;
+            case Arrival -> null;
+            case WaitingForDeboarding -> null;
+            case Deboarding -> null;
+            case Finished -> null;
+            case Cancelled -> null;
+        };
+    }
+
+    @SuppressWarnings("DuplicateBranchesInSwitch")
+    private String getTransportFlightPermittedActions(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
+        return switch (transportFlight.getStatus()) {
+            case Scheduled, Checkin -> null;
+            case WaitingForBoarding -> "start-boarding";
+            case Boarding, WaitingForDeparture, Departure, Flying, Arrival -> null;
+            case WaitingForDeboarding -> "start-deboarding";
+            case Deboarding, Finished -> null;
+            case Cancelled -> null;
         };
     }
 
