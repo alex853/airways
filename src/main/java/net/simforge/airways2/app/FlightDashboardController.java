@@ -153,6 +153,27 @@ public class FlightDashboardController {
         });
     }
 
+    @PostMapping("/start-boarding")
+    public StatusDto startBoarding(@RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
+
+            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak1 permitted actions review
+            if (!"start-boarding".equals(permitted)) {
+                throw new IllegalStateException("start-boarding is not permitted");
+            }
+
+            // todo ak1 event-logging
+            TransportFlightControl.instance(world).startBoarding(transportFlight);
+            return getStatus(flightId);
+        });
+    }
+
     @PostMapping("/blocks-off")
     public EnhancedFlightMissionDto depart(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
