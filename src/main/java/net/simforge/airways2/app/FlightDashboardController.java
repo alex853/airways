@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightControl;
@@ -211,30 +212,50 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
         });
     }
 
-/*    @PostMapping("/landing")
-    public EnhancedFlightMissionDto landing(@RequestParam(name = "flightId") final int flightId) {
+    @PostMapping("/landing")
+    public StatusDto landing(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
             checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == Flying, "flight status is not as expected");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
+
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            if (!"landing".equals(permitted)) {
+                throw new IllegalStateException("landing is not permitted");
+            }
+
+            // todo ak1 event-logging
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
-            world.flightMissionControl().landing(flight, landingAirport);
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+            world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
+
+            return getStatus(flightId);
         });
     }
 
     @PostMapping("/blocks-on")
-    public EnhancedFlightMissionDto arrive(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto blocksOn(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
-            world.flightMissionControl().blocksOn(flight);
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            if (!"blocks-on".equals(permitted)) {
+                throw new IllegalStateException("blocks-on is not permitted");
+            }
+
+            // todo ak1 event-logging
+            world.flightMissionControl().blocksOn(flight); // t/f update is inside
+
+            return getStatus(flightId);
         });
     }
 
-    @PostMapping("/finish")
+/*    @PostMapping("/finish")
     public EnhancedFlightMissionDto finish(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
