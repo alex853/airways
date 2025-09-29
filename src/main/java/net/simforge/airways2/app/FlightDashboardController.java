@@ -78,26 +78,24 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             case Preflight -> Departure.name() + " when Captain decides";
             case Departure -> Flying.name() + " when Captain decides";
             case Flying -> Arrival.name() + " not earlier than " + WebTime.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
+            case Arrival -> Postflight.name() + " just after Blocks On";
+            case Postflight -> Finished.name() + " after Deboarding";
             default -> null;
         };
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
-            case PlannedManually, PlannedViaSchedule -> null;
             case Dispatched -> "start"; // todo ak0 deny start too early
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : null;
             case Arrival -> "blocks-on";
-            case Postflight -> "finish"; // todo ak0 deny if deboarding has not been completed
-            case Finished -> null;
-            case Cancelled -> null;
+            case Postflight -> (transportFlight == null || transportFlight.getStatus() == Finished) ? "finish" : null;
+            default -> null;
         };
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> Checkin.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
@@ -110,20 +108,15 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             case Arrival -> WaitingForDeboarding.name() + " since Blocks On";
             case WaitingForDeboarding -> Deboarding.name() + " when Captain clears";
             case Deboarding -> Finished.name();
-            case Finished -> null;
-            case Cancelled -> null;
+            default -> null;
         };
     }
 
-    @SuppressWarnings("DuplicateBranchesInSwitch")
     private String getTransportFlightPermittedActions(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
-            case Scheduled, Checkin -> null;
             case WaitingForBoarding -> flight.getStatus() == Preflight ? "start-boarding" : null;
-            case Boarding, WaitingForDeparture, Departure, Flying, Arrival -> null;
             case WaitingForDeboarding -> "start-deboarding";
-            case Deboarding, Finished -> null;
-            case Cancelled -> null;
+            default -> null;
         };
     }
 
