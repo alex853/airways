@@ -58,6 +58,15 @@ public class TransportFlightControl {
 
     public void startBoarding(final TransportFlights.Flight transportFlight) {
         transportFlight.setStatus(TransportFlights.Status.Boarding);
+        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak1 normal implementation expected
+    }
+
+    public boolean allPaxBoarded(final TransportFlights.Flight transportFlight) {
+        return true; // todo ak1 normal implementation expected
+    }
+
+    public void waitForDeparture(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
     }
 }

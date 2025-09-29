@@ -23,7 +23,7 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Wait
 @RestController
 @RequestMapping("/flight-dashboard")
 @CrossOrigin
-public class FlightDashboardController {
+public class FlightDashboardController { // todo ak1 migrate ids to sqids
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -175,7 +175,7 @@ public class FlightDashboardController {
         });
     }
 
-    @PostMapping("/blocks-off")
+/*    @PostMapping("/blocks-off")
     public EnhancedFlightMissionDto depart(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -228,6 +228,19 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             world.flightMissionControl().finish(flight);
             return EnhancedFlightMissionDto.fromMission(world, flight);
+        });
+    }*/
+
+    @GetMapping("/fix")
+    public void fix() {
+        worldBean.modifySync(world -> {
+            final int flightId = 682;
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            transportFlight.setHeartbeatTime(world.getWorldTime());
+
+            return null;
         });
     }
 

@@ -43,6 +43,11 @@ public class TransportFlightProcessor {
                     tfControl.waitForBoarding(transportFlight);
                 }
             }
+            case Boarding -> {
+                if (tfControl.allPaxBoarded(transportFlight)) {
+                    tfControl.waitForDeparture(transportFlight);
+                }
+            }
         }
     }
 }
