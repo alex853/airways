@@ -14,7 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight;
+import static net.simforge.airways2.world.datamodel.FlightMissions.Status.*;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Boarding;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture;
@@ -72,6 +72,12 @@ public class FlightDashboardController {
             case Dispatched -> new NextPlannedStatusDto(
                     Preflight.name(),
                     WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight)));
+            case Preflight -> new NextPlannedStatusDto(
+                    Departure.name(),
+                    "the Captain's instruction");
+            case Departure -> new NextPlannedStatusDto(
+                    Flying.name(),
+                    "the Captain's instruction");
             default -> null;
         };
     }
@@ -173,7 +179,7 @@ public class FlightDashboardController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
+            checkArgument(flight.getStatus() == Flying, "flight status is not as expected");
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport);
             return EnhancedFlightMissionDto.fromMission(world, flight);
