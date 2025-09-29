@@ -89,4 +89,10 @@ public class FlightMissionHelper {
     public static int calcPreflightStartTime(final FlightMissions.Mission flight) {
         return flight.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * 60;
     }
+
+    public static int calcEarliestAllowedLandingTime(final FlightMissions.Mission flight) {
+        final int roughDuration = flight.getPlannedArrivalWorldTime() - flight.getPlannedDepartureWorldTime();
+        final int minDuration = (int) Math.round(roughDuration * 0.75);
+        return flight.getActualTakeoffWorldTime() + minDuration;
+    }
 }

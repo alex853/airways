@@ -2,6 +2,7 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
@@ -52,7 +53,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                     flightId,
                     flight.getStatus().name(),
                     getNextPlannedFlightMissionStatus(flight),
-                    getFlightMissionPermittedActions(flight, transportFlight),
+                    getFlightMissionPermittedActions(flight, transportFlight, world),
                     world.airports().getIcao(flight.getDepartureAirportId()),
                     world.airports().getIcao(flight.getDestinationAirportId()),
                     WebTime.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
@@ -75,18 +76,19 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             case Dispatched -> Preflight.name() + " at " + WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
             case Preflight -> Departure.name() + " when Captain decides";
             case Departure -> Flying.name() + " when Captain decides";
+            case Flying -> Arrival.name() + " not earlier than " + WebTime.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
             default -> null;
         };
     }
 
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight) {
+    private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
             case PlannedManually, PlannedViaSchedule -> null;
             case Dispatched -> "start"; // todo ak0 deny start too early
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
-            case Flying -> "landing"; // todo ak0 deny if it elapsed less than 75% of ideal time
+            case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) >= world.getWorldTime()) ? "landing" : null;
             case Arrival -> "blocks-on";
             case Postflight -> "finish"; // todo ak0 deny if deboarding has not been completed
             case Finished -> null;
@@ -133,7 +135,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
             if (!"start".equals(permitted)) {
                 throw new IllegalStateException("start is not permitted");
             }
@@ -176,21 +178,20 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
 
-            // todo ak1 event-logging
-            world.flightMissionControl().blocksOff(flight);
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            if (!"blocks-off".equals(permitted)) {
+                throw new IllegalStateException("blocks-off is not permitted");
+            }
 
             // todo ak1 event-logging
-            if (transportFlight != null) {
-                checkArgument(transportFlight.getStatus() == WaitingForDeparture, "transport flight status is not as expected");
-                TransportFlightControl.instance(world).depart(transportFlight);
-            }
+            world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
             return getStatus(flightId);
         });
     }
 
     @PostMapping("/takeoff")
-    public EnhancedFlightMissionDto takeoff(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto takeoff(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -198,16 +199,15 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
-            // todo ak1 event-logging
-            world.flightMissionControl().takeoff(flight);
-
-            // todo ak1 event-logging
-            if (transportFlight != null) {
-                checkArgument(transportFlight.getStatus() == Departure, "transport flight status is not as expected");
-                TransportFlightControl.instance(world).takeoff(transportFlight);
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            if (!"takeoff".equals(permitted)) {
+                throw new IllegalStateException("takeoff is not permitted");
             }
 
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+            // todo ak1 event-logging
+            world.flightMissionControl().takeoff(flight); // t/f update is inside
+
+            return getStatus(flightId);
         });
     }
 
