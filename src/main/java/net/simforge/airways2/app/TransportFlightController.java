@@ -35,7 +35,10 @@ public class TransportFlightController {
     @GetMapping("/actual")
     public List<FlightDto> getActual() {
         return worldBean.read(world -> world.transportFlights()
-                .filter(f -> world.flightMissions().byId(f.getFlightMissionId()).orElseThrow().getPlannedDepartureWorldTime() >= world.getWorldTime() - Time.ONE_DAY).stream()
+                .filter(f -> world.flightMissions()
+                        .byId(f.getFlightMissionId())
+                        .map(ff -> ff.getPlannedDepartureWorldTime() >= world.getWorldTime() - Time.ONE_DAY)
+                        .orElse(false)).stream()
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList());
