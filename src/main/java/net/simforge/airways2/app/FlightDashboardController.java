@@ -68,17 +68,11 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
         });
     }
 
-    private NextPlannedStatusDto getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
+    private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
         return switch (flight.getStatus()) {
-            case Dispatched -> new NextPlannedStatusDto(
-                    Preflight.name(),
-                    WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight)));
-            case Preflight -> new NextPlannedStatusDto(
-                    Departure.name(),
-                    "the Captain's instruction");
-            case Departure -> new NextPlannedStatusDto(
-                    Flying.name(),
-                    "the Captain's instruction");
+            case Dispatched -> Preflight.name() + " at " + WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
+            case Preflight -> Departure.name() + " when Captain decides";
+            case Departure -> Flying.name() + " when Captain decides";
             default -> null;
         };
     }
@@ -99,18 +93,12 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
     }
 
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private NextPlannedStatusDto getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
+    private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
-            case Scheduled -> new NextPlannedStatusDto(
-                    Checkin.name(),
-                    WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight)));
-            case Checkin -> null;
-            case WaitingForBoarding -> new NextPlannedStatusDto(
-                    Boarding.name(),
-                    "the Captain's instruction");
-            case Boarding -> new NextPlannedStatusDto(
-                    WaitingForDeparture.name(),
-                    "??:??");
+            case Scheduled -> Checkin.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
+            case Checkin -> null; // todo ak1
+            case WaitingForBoarding -> Boarding.name() + " when Captain clears";
+            case Boarding -> WaitingForDeparture.name() + " ~??:??"; // todo ak1
             case WaitingForDeparture -> null;
             case Departure -> null;
             case Flying -> null;
@@ -267,7 +255,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
     public static class FlightDto {
         private int id;
         private String status;
-        private NextPlannedStatusDto nextPlannedStatus;
+        private String nextPlannedStatus;
         private String permittedActions;
         private String depIcao;
         private String destIcao;
@@ -280,14 +268,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
     public static class TransportFlightDto {
         private int id;
         private String status;
-        private NextPlannedStatusDto nextPlannedStatus;
+        private String nextPlannedStatus;
         private String permittedActions;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class NextPlannedStatusDto {
-        private String status;
-        private String time;
     }
 }
