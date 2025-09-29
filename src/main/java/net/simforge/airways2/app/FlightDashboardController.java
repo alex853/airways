@@ -49,7 +49,7 @@ public class FlightDashboardController {
                     flightId,
                     flight.getStatus().name(),
                     getNextPlannedFlightMissionStatus(flight),
-                    getFlightMissionPermittedActions(flight),
+                    getFlightMissionPermittedActions(flight, transportFlight),
                     world.airports().getIcao(flight.getDepartureAirportId()),
                     world.airports().getIcao(flight.getDestinationAirportId()),
                     WebTime.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
@@ -83,11 +83,11 @@ public class FlightDashboardController {
     }
 
     @SuppressWarnings("DuplicateBranchesInSwitch")
-    private String getFlightMissionPermittedActions(final FlightMissions.Mission flight) {
+    private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight) {
         return switch (flight.getStatus()) {
             case PlannedManually, PlannedViaSchedule -> null;
             case Dispatched -> "start"; // todo ak0 deny start too early
-            case Preflight -> "blocks-off"; // todo ak0 deny if boarding has not been completed
+            case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
             case Flying -> "landing"; // todo ak0 deny if it elapsed less than 75% of ideal time
             case Arrival -> "blocks-on";
@@ -141,7 +141,8 @@ public class FlightDashboardController {
             checkArgument(flight.isModePc(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight); // todo ak1 permitted actions review
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight); // todo ak1 permitted actions review
             if (!"start".equals(permitted)) {
                 throw new IllegalStateException("start is not permitted");
             }
