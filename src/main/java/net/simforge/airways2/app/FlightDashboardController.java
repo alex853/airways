@@ -18,7 +18,7 @@ import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Prefli
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForBoarding;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Boarding;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture;
 
 @RestController
 @RequestMapping("/flight-dashboard")
