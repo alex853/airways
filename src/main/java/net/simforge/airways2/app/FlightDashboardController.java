@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForBoarding;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Boarding;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture
 
 @RestController
 @RequestMapping("/flight-dashboard")
@@ -79,6 +82,12 @@ public class FlightDashboardController {
             case Scheduled -> new NextPlannedStatusDto(
                     Checkin.name(),
                     WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight)));
+            case WaitingForBoarding -> new NextPlannedStatusDto(
+                    Boarding.name(),
+                    "the Captain's instruction");
+            case Boarding -> new NextPlannedStatusDto(
+                    WaitingForDeparture.name(),
+                    "??:??");
             default -> null;
         };
     }
