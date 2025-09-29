@@ -56,7 +56,7 @@ public class DiskStorageStrategy implements WorldStorageStrategy {
             if (daysSinceNow == 0) {
                 return; // do not reduce backups in last 24 hours
             }
-            if (!processesDays.contains(daysSinceNow)) {
+            if (!processesDays.contains(daysSinceNow) && daysSinceNow < 10) {
                 processesDays.add(daysSinceNow); // this day still has not been encountered, this backup still needs to be kept
             } else {
                 // we found 2 or more backups for one of processed days, lets remove it
