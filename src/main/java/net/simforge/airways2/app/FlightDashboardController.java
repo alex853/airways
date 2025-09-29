@@ -119,7 +119,7 @@ public class FlightDashboardController {
     private String getTransportFlightPermittedActions(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled, Checkin -> null;
-            case WaitingForBoarding -> "start-boarding";
+            case WaitingForBoarding -> flight.getStatus() == Preflight ? "start-boarding" : null;
             case Boarding, WaitingForDeparture, Departure, Flying, Arrival -> null;
             case WaitingForDeboarding -> "start-deboarding";
             case Deboarding, Finished -> null;
