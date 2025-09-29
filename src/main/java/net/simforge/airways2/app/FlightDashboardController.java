@@ -136,6 +136,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
 
             // todo ak1 event-logging
             world.flightMissionControl().startOrCancel(flight);
+
             return getStatus(flightId);
         });
     }
@@ -248,16 +249,50 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
         });
     }
 
-/*    @PostMapping("/finish")
-    public EnhancedFlightMissionDto finish(@RequestParam(name = "flightId") final int flightId) {
+    @PostMapping("/start-deboarding")
+    public StatusDto startDeboarding(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkNotNull(transportFlight, "transport flight is required for start-deboarding");
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
+
+            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak1 permitted actions review
+            if (!"start-deboarding".equals(permitted)) {
+                throw new IllegalStateException("start-deboarding is not permitted");
+            }
+
+            // todo ak1 event-logging
+            TransportFlightControl.instance(world).startDeboarding(transportFlight);
+
+            return getStatus(flightId);
+        });
+    }
+
+    @PostMapping("/finish-flight")
+    public StatusDto finish(@RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
+
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            if (!"finish".equals(permitted)) {
+                throw new IllegalStateException("finish is not permitted");
+            }
+
+            // todo ak1 event-logging
             world.flightMissionControl().finish(flight);
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+
+            return getStatus(flightId);
         });
-    }*/
+    }
 
     @GetMapping("/fix")
     public void fix() {

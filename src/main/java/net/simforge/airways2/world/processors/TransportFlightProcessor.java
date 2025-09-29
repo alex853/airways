@@ -48,6 +48,11 @@ public class TransportFlightProcessor {
                     tfControl.waitForDeparture(transportFlight);
                 }
             }
+            case Deboarding -> {
+                if (tfControl.allPaxDeboarded(transportFlight)) {
+                    tfControl.finish(transportFlight);
+                }
+            }
         }
     }
 }

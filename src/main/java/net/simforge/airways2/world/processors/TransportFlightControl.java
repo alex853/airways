@@ -69,4 +69,18 @@ public class TransportFlightControl {
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
     }
+
+    public void startDeboarding(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.Deboarding);
+        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak1 normal implementation expected
+    }
+
+    public boolean allPaxDeboarded(final TransportFlights.Flight transportFlight) {
+        return true; // todo ak1 normal implementation expected
+    }
+
+    public void finish(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.Finished);
+        transportFlight.setHeartbeatTime(0);
+    }
 }
