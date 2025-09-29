@@ -88,7 +88,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             case Dispatched -> "start"; // todo ak0 deny start too early
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
-            case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) >= world.getWorldTime()) ? "landing" : null;
+            case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : null;
             case Arrival -> "blocks-on";
             case Postflight -> "finish"; // todo ak0 deny if deboarding has not been completed
             case Finished -> null;
