@@ -3,7 +3,6 @@ package net.simforge.airways2.app;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightControl;
@@ -15,10 +14,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.FlightMissions.Status.*;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Checkin;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Boarding;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.WaitingForDeparture;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.*;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Arrival;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Departure;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Finished;
+import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flying;
 
 @RestController
 @RequestMapping("/flight-dashboard")
@@ -98,13 +100,13 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             case Scheduled -> Checkin.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
             case Checkin -> null; // todo ak1
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
-            case Boarding -> WaitingForDeparture.name() + " ~??:??"; // todo ak1
-            case WaitingForDeparture -> null;
-            case Departure -> null;
-            case Flying -> null;
-            case Arrival -> null;
-            case WaitingForDeboarding -> null;
-            case Deboarding -> null;
+            case Boarding -> WaitingForDeparture.name() + " till around ??:??"; // todo ak1
+            case WaitingForDeparture -> Departure.name();
+            case Departure -> Flying.name();
+            case Flying -> Arrival.name();
+            case Arrival -> WaitingForDeboarding.name() + " since Blocks On";
+            case WaitingForDeboarding -> Deboarding.name() + " when Captain clears";
+            case Deboarding -> Finished.name();
             case Finished -> null;
             case Cancelled -> null;
         };
@@ -148,6 +150,8 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
+            checkNotNull(transportFlight, "transport flight is required for start-boarding");
+
             checkArgument(flight.isModePc(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
@@ -163,14 +167,25 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
         });
     }
 
-/*    @PostMapping("/blocks-off")
-    public EnhancedFlightMissionDto depart(@RequestParam(name = "flightId") final int flightId) {
+    @PostMapping("/blocks-off")
+    public StatusDto blocksOff(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
+
+            // todo ak1 event-logging
             world.flightMissionControl().blocksOff(flight);
-            return EnhancedFlightMissionDto.fromMission(world, flight);
+
+            // todo ak1 event-logging
+            if (transportFlight != null) {
+                checkArgument(transportFlight.getStatus() == WaitingForDeparture, "transport flight status is not as expected");
+                TransportFlightControl.instance(world).depart(transportFlight);
+            }
+
+            return getStatus(flightId);
         });
     }
 
@@ -178,14 +193,25 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
     public EnhancedFlightMissionDto takeoff(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
+
+            // todo ak1 event-logging
             world.flightMissionControl().takeoff(flight);
+
+            // todo ak1 event-logging
+            if (transportFlight != null) {
+                checkArgument(transportFlight.getStatus() == Departure, "transport flight status is not as expected");
+                TransportFlightControl.instance(world).takeoff(transportFlight);
+            }
+
             return EnhancedFlightMissionDto.fromMission(world, flight);
         });
     }
 
-    @PostMapping("/landing")
+/*    @PostMapping("/landing")
     public EnhancedFlightMissionDto landing(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();

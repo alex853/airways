@@ -69,4 +69,14 @@ public class TransportFlightControl {
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
     }
+
+    public void depart(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.Departure);
+        transportFlight.setHeartbeatTime(0);
+    }
+
+    public void takeoff(final TransportFlights.Flight transportFlight) {
+        transportFlight.setStatus(TransportFlights.Status.Flying);
+        transportFlight.setHeartbeatTime(0);
+    }
 }
