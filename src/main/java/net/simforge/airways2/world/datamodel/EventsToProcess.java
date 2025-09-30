@@ -114,7 +114,9 @@ public class EventsToProcess {
     }
 
     public enum Type {
-        PilotOnDuty(100);
+        PilotOnDuty(100),
+        StartAutomaticDeboarding(180),
+        ;
 
         private final int code;
 
