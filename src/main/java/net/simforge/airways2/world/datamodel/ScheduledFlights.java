@@ -52,6 +52,10 @@ public class ScheduledFlights {
         return new Flight(recordId);
     }
 
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
+    }
+
     public class Flight {
         private final int id;
 

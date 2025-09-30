@@ -5,14 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.JavaTime;
 import net.simforge.commons.misc.Str;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +23,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Type;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -195,6 +190,41 @@ public class AdminController {
             final TransportFlights.Flight flight = world.transportFlights().byId(tfId).orElseThrow();
             flight.setStatus(TransportFlights.Status.Cancelled);
             return "T/F # " + tfId + " cancelled";
+        });
+    }
+
+    @GetMapping("/transport-flight/remove")
+    public String removeTransportFlight(@RequestParam(name = "tfId") final int tfId) {
+        return worldBean.modifySync(world -> {
+            final List<String> results = new ArrayList<>();
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byId(tfId).orElseThrow();
+            final int flightId = transportFlight.getFlightMissionId();
+            final int scheduledFlightId = transportFlight.getScheduledFlightId();
+            world.transportFlights().deleteById(tfId);
+            results.add("T/F # " + tfId + " removed");
+
+            if (flightId == 0) {
+                results.add("F/M # is 0");
+            } else {
+                final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightId);
+                if (mission.isEmpty()) {
+                    results.add("F/M # " + flightId + " NOT FOUND");
+                }
+            }
+
+            if (scheduledFlightId == 0) {
+                results.add("S/F # is 0");
+            } else {
+                final Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(scheduledFlightId);
+                if (scheduledFlight.isEmpty()) {
+                    results.add("S/F # " + scheduledFlightId + " NOT FOUND");
+                } else {
+                    world.scheduledFlights().deleteById(scheduledFlightId);
+                }
+            }
+
+            return Strings.join(results, '\n');
         });
     }
 
