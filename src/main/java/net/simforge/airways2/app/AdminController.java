@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
+import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
@@ -162,26 +163,40 @@ public class AdminController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             mission.setStatus(FlightMissions.Status.Cancelled);
-
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-            if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
-                aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-
-                aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-                aircraft.setFlightMissionId(0);
-            } else {
-                final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-
-                aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-                aircraft.setLocationAirportId(mission.getDepartureAirportId());
-                aircraft.setLocationLatitude(departureAirport.getLatitude());
-                aircraft.setLocationLongitude(departureAirport.getLongitude());
-
-                aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-                aircraft.setFlightMissionId(0);
-            }
+            final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
             return "F/M # " + flightId + " cancelled, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
+    }
+
+    @GetMapping("/flight/remove")
+    public String removeFlight(@RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
+            final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
+            world.flightMissions().deleteById(flightId);
+            return "F/M # " + flightId + " removed, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+        });
+    }
+
+    private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+
+            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+            aircraft.setFlightMissionId(0);
+        } else {
+            final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+            aircraft.setLocationAirportId(mission.getDepartureAirportId());
+            aircraft.setLocationLatitude(departureAirport.getLatitude());
+            aircraft.setLocationLongitude(departureAirport.getLongitude());
+
+            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+            aircraft.setFlightMissionId(0);
+        }
+        return aircraft;
     }
 
     @GetMapping("/transport-flight/cancel")
