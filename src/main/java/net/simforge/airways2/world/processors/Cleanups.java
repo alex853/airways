@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Status.Processed;
+
 public class Cleanups {
     private static final Logger log = LoggerFactory.getLogger(Cleanups.class);
 
@@ -29,7 +31,7 @@ public class Cleanups {
 
     private static void cleanupEventsToProcess(final World world) {
         final EventsToProcess storage = world.eventsToProcess();
-        final Collection<EventsToProcess.Event> outdated = storage.filter(e -> e.getTime() <= world.getWorldTime() - 30 * Time.ONE_DAY);
+        final Collection<EventsToProcess.Event> outdated = storage.filter(e -> (e.getTime() <= world.getWorldTime() - 30 * Time.ONE_DAY) && e.getStatus() == Processed);
         outdated.forEach(f -> storage.deleteById(f.getId()));
         if (outdated.size() > 0) {
             log.info("events-to-process cleaned up - {} removed", outdated.size());
