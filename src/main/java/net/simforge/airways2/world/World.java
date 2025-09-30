@@ -219,7 +219,7 @@ public class World {
             CityFlowsProcessor.process(this);
             City2CityFlowsProcessor.process(this);
 
-            EventLogCleanup.process(this);
+            Cleanups.process(this);
             FlightsCleanup.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);

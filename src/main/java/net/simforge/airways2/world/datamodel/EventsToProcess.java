@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -62,6 +63,18 @@ public class EventsToProcess {
 
     public Collection<Event> all() {
         return storage.all();
+    }
+
+    public Collection<Event> filter(final Predicate<EventsToProcess.Event> condition) {
+        return storage.filter(condition);
+    }
+
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
+    }
+
+    public void printDeletedRecordInfo() {
+        storage.printDeletedRecordInfo();
     }
 
     public class Event {
