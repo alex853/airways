@@ -31,7 +31,7 @@ public class Cleanups {
 
     private static void cleanupEventsToProcess(final World world) {
         final EventsToProcess storage = world.eventsToProcess();
-        final Collection<EventsToProcess.Event> outdated = storage.filter(e -> (e.getTime() <= world.getWorldTime() - 30 * Time.ONE_DAY) && e.getStatus() == Processed);
+        final Collection<EventsToProcess.Event> outdated = storage.filter(e -> (e.getTime() <= world.getWorldTime() - 7 * Time.ONE_DAY) && e.getStatus() == Processed);
         outdated.forEach(f -> storage.deleteById(f.getId()));
         if (outdated.size() > 0) {
             log.info("events-to-process cleaned up - {} removed", outdated.size());
