@@ -1,5 +1,9 @@
 package net.simforge.airways2.tools;
 
+import org.apache.logging.log4j.util.Strings;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -98,6 +102,20 @@ public class CabinLayout {
     @Override
     public int hashCode() {
         return Objects.hash(economy, premiumEconomy, business, first);
+    }
+
+    @Override
+    public String toString() {
+        final List<String> strs = new ArrayList<>(4);
+        if (first != 0)
+            strs.add("F" + first);
+        if (business != 0)
+            strs.add("J" + business);
+        if (premiumEconomy != 0)
+            strs.add("W" + premiumEconomy);
+        if (economy != 0 || strs.isEmpty())
+            strs.add("Y" + economy);
+        return Strings.join(strs, '/');
     }
 
     public enum Service {

@@ -57,7 +57,10 @@ public class TransportFlightController {
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
                 mission.map(m -> WebTime.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
-                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a")
+                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
+                flight.getTotalTickets().toString(),
+                flight.getRemainedTickets().toString(),
+                flight.getPaxOnBoard().toString()
             );
     }
 
@@ -74,5 +77,8 @@ public class TransportFlightController {
         private String dof;
         private String pDep;
         private String pArr;
+        private String tTkts;
+        private String rTkts;
+        private String pOnBrd;
     }
 }

@@ -123,6 +123,18 @@ public class TransportFlights {
         public int getScheduledFlightId() {
             return storage.getAsInt(id, scheduledFlightIdField);
         }
+
+        public CabinLayout getTotalTickets() {
+            return CabinLayout.fromSigned32bit(storage.getAsInt(id, totalTicketsField));
+        }
+
+        public CabinLayout getRemainedTickets() {
+            return CabinLayout.fromSigned32bit(storage.getAsInt(id, remainedTicketsField));
+        }
+
+        public CabinLayout getPaxOnBoard() {
+            return CabinLayout.fromSigned32bit(storage.getAsInt(id, paxOnBoardField));
+        }
     }
 
     public enum Status {

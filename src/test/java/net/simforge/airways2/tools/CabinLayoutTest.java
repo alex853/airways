@@ -28,4 +28,22 @@ public class CabinLayoutTest {
         final CabinLayout restored = CabinLayout.fromSigned32bit(stored);
         assertEquals(layout, restored);
     }
+
+    @Test
+    public void test_F0J0W0Y0_toString() {
+        final CabinLayout layout = CabinLayout.FJWY(0, 0, 0, 0);
+        assertEquals("Y0", layout.toString());
+    }
+
+    @Test
+    public void test_F0J10W0Y0_toString() {
+        final CabinLayout layout = CabinLayout.FJWY(0, 10, 0, 0);
+        assertEquals("J10", layout.toString());
+    }
+
+    @Test
+    public void test_Y100() {
+        final CabinLayout layout = CabinLayout.FJWY(0, 0, 0, 100);
+        assertEquals("Y100", layout.toString());
+    }
 }
