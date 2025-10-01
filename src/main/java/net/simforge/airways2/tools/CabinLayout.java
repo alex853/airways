@@ -113,7 +113,7 @@ public class CabinLayout {
             strs.add("J" + business);
         if (premiumEconomy != 0)
             strs.add("W" + premiumEconomy);
-        if (economy != 0 || strs.isEmpty())
+        if (economy != 0)
             strs.add("Y" + economy);
         return Strings.join(strs, '/');
     }

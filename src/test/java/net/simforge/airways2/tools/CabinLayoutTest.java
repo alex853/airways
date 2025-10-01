@@ -32,7 +32,7 @@ public class CabinLayoutTest {
     @Test
     public void test_F0J0W0Y0_toString() {
         final CabinLayout layout = CabinLayout.FJWY(0, 0, 0, 0);
-        assertEquals("Y0", layout.toString());
+        assertEquals("", layout.toString());
     }
 
     @Test
