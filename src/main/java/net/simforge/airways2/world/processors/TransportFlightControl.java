@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -24,7 +25,10 @@ public class TransportFlightControl {
 
     public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission,
                                                          final ScheduledFlights.Flight scheduledFlight) {
-        final TransportFlights.Flight transportFlight = world.transportFlights().create(flightMission, scheduledFlight, 160);
+        final TransportFlights.Flight transportFlight = world.transportFlights().create(
+                flightMission,
+                scheduledFlight,
+                CabinLayout.Y(160));
 
         final int checkinStartsAt = TransportFlightHelper.calcCheckinStartTime(flightMission);
         transportFlight.setHeartbeatTime(checkinStartsAt);

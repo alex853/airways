@@ -3,6 +3,7 @@ package net.simforge.airways2.world.datamodel;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
+import net.simforge.airways2.tools.CabinLayout;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -30,7 +31,9 @@ public class TransportFlights {
     private final DataField heartbeatTimeField = storage.getDataField(1);
     private final DataField flightMissionIdField = storage.getDataField(2);
     private final DataField scheduledFlightIdField = storage.getDataField(3);
-    // tickets... fields
+    private final DataField totalTicketsField = storage.getDataField(4);
+    private final DataField remainedTicketsField = storage.getDataField(5);
+    private final DataField paxOnBoardField = storage.getDataField(6);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -42,15 +45,18 @@ public class TransportFlights {
 
     public Flight create(final FlightMissions.Mission flightMission,
                          final ScheduledFlights.Flight scheduledFlight,
-                         final int economyClassTickets) {
+                         final CabinLayout totalTickets) {
         checkNotNull(flightMission);
+        checkNotNull(totalTickets);
         final int id = storage.addRecord();
         final Flight flight = new Flight(id);
         flight.setStatus(Status.Scheduled);
         flight.setHeartbeatTime(0);
         storage.set(id, flightMissionIdField, flightMission.getId());
         storage.set(id, scheduledFlightIdField, scheduledFlight != null ? scheduledFlight.getId() : 0);
-        // todo ak1 tickets
+        storage.set(id, totalTicketsField, totalTickets.toSigned32bit());
+        storage.set(id, remainedTicketsField, totalTickets.toSigned32bit());
+        storage.set(id, paxOnBoardField, CabinLayout.NOBODY.toSigned32bit());
         return flight;
     }
 

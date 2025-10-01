@@ -32,7 +32,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
 
     @Autowired
     private WorldRunnerBean worldBean;
-
+// todo ak0 add 'disabled' buttons with explanations, correct all states
     @GetMapping("/status")
     public StatusDto getStatus(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.read(world -> {
