@@ -29,10 +29,10 @@ public class EventLogController {
     @GetMapping("/object")
     public List<EventDto> getObject(@RequestParam(name = "type") final int type, @RequestParam(name = "id") final int id) {
         return worldBean.read(world -> world.eventLog()
-                .filter(e -> e.getObject1Id() == id
-                       || e.getObject2Id() == id
-                       || e.getObject3Id() == id
-                       || e.getObject4Id() == id).stream()
+                .filter(e -> (e.getObject1Id() == id && e.getObject1TypeRaw() == type)
+                       || (e.getObject2Id() == id && e.getObject2TypeRaw() == type)
+                       || (e.getObject3Id() == id && e.getObject3TypeRaw() == type)
+                       || (e.getObject4Id() == id && e.getObject4TypeRaw() == type)).stream()
                 .map(e -> toDto(e))
                 .toList());
     }
