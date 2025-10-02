@@ -9,4 +9,6 @@ public class TransportFlightHelper {
     public static int calcCheckinStartTime(final FlightMissions.Mission flightMission) {
         return flightMission.getPlannedDepartureWorldTime() - CHECKIN_STARTS_BEFORE;
     }
+
+    // todo ak0 calcCheckinEndTime - 30 mins before planned departure time
 }
