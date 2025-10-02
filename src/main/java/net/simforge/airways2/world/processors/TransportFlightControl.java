@@ -44,15 +44,12 @@ public class TransportFlightControl {
 
     public void startCheckin(final TransportFlights.Flight transportFlight) {
         transportFlight.setStatus(TransportFlights.Status.Checkin);
-        // todo ak1 this is made incorrect intentionally
-        //          this should be replaced by counting checked-in pax instead
-        //          in fact, this should activate pax to do check-in
-        //          OR it should do check-in while pax are passive
-        transportFlight.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_HOUR));
+        transportFlight.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_HOUR)); // todo ak0 SOME CHECKIN TIME TICK - 60 secs?
     }
 
     public boolean allPaxCheckedIn(final TransportFlights.Flight transportFlight) {
-        return true; // todo ak1 this will be replaced by normal check-in implementation
+        // todo ak0 REMAINED TICKETS ARE ZERO ==AND== ALL JOURNEYS CHECKED-IN
+        return true;
     }
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
