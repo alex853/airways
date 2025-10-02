@@ -16,10 +16,12 @@ public class JourneyControl {
     }
 
     public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final boolean directOrBackDirection) {
-        return world.journeys().create(
+        final Journeys.Journey journey = world.journeys().create(
                 Journeys.Status.LookingForTickets,
                 directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(),
                 directOrBackDirection ? c2cFlow.getToCityId() : c2cFlow.getFromCityId(),
                 c2cFlow.getNextGroupSize());
+        journey.setHeartbeatTime(world.getWorldTime());
+        return journey;
     }
 }
