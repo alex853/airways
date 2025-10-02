@@ -3,6 +3,7 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
+import net.simforge.airways2.world.datamodel.Journeys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,8 +21,8 @@ public class City2CityFlowsProcessor {
 
         final City2CityFlows.Flow c2cFlow = flowO.get();
         if (c2cFlow.getSuccessRate() == 0) {
-            c2cFlow.setSuccessRate(CityFlowOps.STARTING_SUCCESS_RATE);
-            log.warn("City2CityFlow {}-{} - success rate was ZERO, set to default {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), CityFlowOps.STARTING_SUCCESS_RATE);
+            c2cFlow.setSuccessRate(CityFlowHelper.STARTING_SUCCESS_RATE);
+            log.warn("City2CityFlow {}-{} - success rate was ZERO, set to default {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), CityFlowHelper.STARTING_SUCCESS_RATE);
         }
 
         if (!c2cFlow.isActive()) {
@@ -31,11 +32,11 @@ public class City2CityFlowsProcessor {
         }
 
         if (c2cFlow.getNextGroupSize() == 0) {
-            c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
+            c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
             log.warn("City2CityFlow {}-{} - next group size was zero, set to {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize());
         }
 
-        final int timeToAccumulateRemaining = CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow);
+        final int timeToAccumulateRemaining = CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow);
         final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()) + timeToAccumulateRemaining;
         log.info("City2CityFlow {}-{} - raw acc time {}, raw heartbeat time {}, acc time remaining {}, acc time {}, acc time ldt {}",
                 c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getAccumulatedFlowTime(), c2cFlow.getHeartbeatTime(), timeToAccumulateRemaining, timeToAccumulateFlow, Time.toLdt(timeToAccumulateFlow));
@@ -46,19 +47,19 @@ public class City2CityFlowsProcessor {
             return;
         }
 
-        final boolean directOrBackDirection = CityFlowOps.randomDirection();
+        final boolean directOrBackDirection = CityFlowHelper.randomDirection();
 
         log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), directOrBackDirection);
 
-// todo ak0 create journey in looking-for-tickets status            Journey journey = JourneyOps.create(session, c2cFlow, directOrBackDirection);
+        final Journeys.Journey journey = JourneyControl.instance(world).create(c2cFlow, directOrBackDirection);
 // todo ak1            AirwaysApp.getScheduling().startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
 
-        c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
+        c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
 
         c2cFlow.setAccumulatedFlow(0);
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
 
-        c2cFlow.setHeartbeatTime(timeToAccumulateFlow + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
+        c2cFlow.setHeartbeatTime(timeToAccumulateFlow + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
         log.info("City2CityFlow {}-{} - new next group size {}, new acc time {}, new heartbeat time {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
     }
 }

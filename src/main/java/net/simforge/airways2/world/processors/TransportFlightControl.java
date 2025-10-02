@@ -12,7 +12,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
-    
+
     private final World world;
 
     private TransportFlightControl(final World world) {
@@ -71,7 +71,7 @@ public class TransportFlightControl {
             return false;
         }
 
-        final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold; 
+        final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold;
         final int paxCheckedIn = 0; // todo ak1 iterate through journeys and check their states - world.journeys().filter(j -> j.getFlightId() == tfId && j.getStatus() == WaitingForDeparture).sum(j.groupSize)
         return paxCheckedIn == ticketsSold;
     }

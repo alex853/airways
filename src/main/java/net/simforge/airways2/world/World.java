@@ -39,6 +39,7 @@ public class World {
 
     private final CityFlows cityFlows = new CityFlows(this);
     private final City2CityFlows city2CityFlows = new City2CityFlows();
+    private final Journeys journeys = new Journeys();
 
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
@@ -85,6 +86,7 @@ public class World {
 
             world.cityFlows.loadIfExists(rootPath);
             world.city2CityFlows.loadIfExists(rootPath);
+            world.journeys.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -119,6 +121,7 @@ public class World {
 
             cityFlows.save(rootPath);
             city2CityFlows.save(rootPath);
+            journeys.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -200,6 +203,10 @@ public class World {
         return city2CityFlows;
     }
 
+    public Journeys journeys() {
+        return journeys;
+    }
+
     public boolean process(final int expectedWorldTime) {
         final int processedWorldTime = getWorldTime();
         final int newWorldTime = processedWorldTime + worldTimeStep;
@@ -219,7 +226,7 @@ public class World {
             CityFlowsProcessor.process(this);
             City2CityFlowsProcessor.process(this);
 
-            Cleanups.process(this);
+            MiscCleanups.process(this);
             FlightsCleanup.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);

@@ -30,22 +30,22 @@ public class EventLogController {
     public List<EventDto> getObject(@RequestParam(name = "type") final int type, @RequestParam(name = "id") final int id) {
         return worldBean.read(world -> world.eventLog()
                 .filter(e -> (e.getObject1Id() == id && e.getObject1TypeRaw() == type)
-                       || (e.getObject2Id() == id && e.getObject2TypeRaw() == type)
-                       || (e.getObject3Id() == id && e.getObject3TypeRaw() == type)
-                       || (e.getObject4Id() == id && e.getObject4TypeRaw() == type)).stream()
+                        || (e.getObject2Id() == id && e.getObject2TypeRaw() == type)
+                        || (e.getObject3Id() == id && e.getObject3TypeRaw() == type)
+                        || (e.getObject4Id() == id && e.getObject4TypeRaw() == type)).stream()
                 .map(e -> toDto(e))
                 .toList());
     }
 
     private static EventDto toDto(final EventLog.Event e) {
         return new EventDto(
-                        e.getId(),
-                        WebTime.ts(e.getTime()),
-                        e.getTypeRaw() + " - " + e.getType(),
-                        e.getObject1Type() + " - " + e.getObject1Id(),
-                        e.getObject2Type() + " - " + e.getObject2Id(),
-                        e.getObject3Type() + " - " + e.getObject3Id(),
-                        e.getObject4Type() + " - " + e.getObject4Id());
+                e.getId(),
+                WebTime.ts(e.getTime()),
+                e.getTypeRaw() + " - " + e.getType(),
+                e.getObject1Type() + " - " + e.getObject1Id(),
+                e.getObject2Type() + " - " + e.getObject2Id(),
+                e.getObject3Type() + " - " + e.getObject3Id(),
+                e.getObject4Type() + " - " + e.getObject4Id());
     }
 
     @Data

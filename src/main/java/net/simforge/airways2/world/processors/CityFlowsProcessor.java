@@ -27,10 +27,10 @@ public class CityFlowsProcessor {
 
         final Collection<CityFlows.Flow> reachableCities = world.cityFlows().all().stream()
                 .filter(f -> f.getId() != thisCity.get().getId())
-                .filter(f -> CityFlowOps.getFlowUnits(world, f, thisCity.get()) >= CityFlowOps.FLOW_UNITS_THRESHOLD)
+                .filter(f -> CityFlowHelper.getFlowUnits(world, f, thisCity.get()) >= CityFlowHelper.FLOW_UNITS_THRESHOLD)
                 .toList();
         final float totalFlowUnits = reachableCities.stream()
-                .map(f -> CityFlowOps.getFlowUnits(world, f, thisCity.get()))
+                .map(f -> CityFlowHelper.getFlowUnits(world, f, thisCity.get()))
                 .reduce(0.0f, Float::sum);
         final Map<Integer, City2CityFlows.Flow> existingC2CFlows = world.city2cityFlows()
                 .allFromCityId(thisCity.get().getId()).stream()
@@ -41,7 +41,7 @@ public class CityFlowsProcessor {
         reachableCities.forEach(toCity -> {
             c2cFlowsToBeDeactivated.remove(toCity.getId());
 
-            final float flowUnits = CityFlowOps.getFlowUnits(world, toCity, thisCity.get());
+            final float flowUnits = CityFlowHelper.getFlowUnits(world, toCity, thisCity.get());
             final float flowFraction = flowUnits / Math.max(totalFlowUnits, 0.000001f);
 
             final City2CityFlows.Flow c2cFlow = existingC2CFlows.computeIfAbsent(toCity.getId(),
@@ -49,13 +49,13 @@ public class CityFlowsProcessor {
             if (!c2cFlow.isActive()) {
                 c2cFlow.setActive(true);
 
-                c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
+                c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
                 c2cFlow.setAccumulatedFlow(0.0f);
                 c2cFlow.setAccumulatedFlowTime(world.getWorldTime());
             }
 
             c2cFlow.setFlowFraction(flowFraction);
-            c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowOps.calcTimeToAccumulateFlow(world, c2cFlow));
+            c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
             final String toCityName = world.cities().byId(toCity.getId()).orElseThrow().getName();
             log.info("city flow #{}, '{}' - flow to city #{}, '{}' is active, flow units {}, percentage {}, next group size {}, acc flow {}",
                     thisCity.get().getId(), city.getName(), toCity.getId(), toCityName, flowUnits, df3.format(flowFraction*100), c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());

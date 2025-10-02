@@ -17,8 +17,8 @@ import java.lang.reflect.Method;
 // todo ak2 aircraft types with errors
 //          A32N -> A20N mapping
 //          B777 -> B773 mapping
-// todo ak1 C700 - no aircraft data!
-// todo ak1 AT76 - no aircraft data!
+// todo ak3 C700 - no aircraft data!
+// todo ak3 AT76 - no aircraft data!
 // todo ak3 minimize time between downloading a report and its processing
 @SpringBootApplication
 public class Application {

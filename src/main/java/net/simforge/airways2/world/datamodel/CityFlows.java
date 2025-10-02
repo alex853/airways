@@ -6,7 +6,7 @@ import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.DataTypeUtils;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.processors.CityFlowOps;
+import net.simforge.airways2.world.processors.CityFlowHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,7 +57,7 @@ public class CityFlows {
 
     public Optional<Flow> nextForRedistribution(final int worldTime) {
         try (final Timing.Timer ignored = Timing.label("CityFlows - nextForRedistribution")) {
-            return storage.findFirst(f -> f.getLastRedistributionTime() + CityFlowOps.REDISTRIBUTION_PERIOD <= worldTime); // todo ak3 skip it if status is disabled
+            return storage.findFirst(f -> f.getLastRedistributionTime() + CityFlowHelper.REDISTRIBUTION_PERIOD <= worldTime); // todo ak3 skip it if status is disabled
         }
     }
 
@@ -87,8 +87,8 @@ public class CityFlows {
         checkState(flowId == cityId);
         storage.set(flowId, statusField, 0);
         storage.set(flowId, lastRedistributionTimeField, 0);
-        storage.set(flowId, attractionFactorField, DataTypeUtils.floatToU16When1to1000(CityFlowOps.DEFAULT_ATTRACTION_FACTOR));
-        storage.set(flowId, mobilityFactorField, DataTypeUtils.floatToU16When1to1000(CityFlowOps.DEFAULT_MOBILITY_FACTOR));
+        storage.set(flowId, attractionFactorField, DataTypeUtils.floatToU16When1to1000(CityFlowHelper.DEFAULT_ATTRACTION_FACTOR));
+        storage.set(flowId, mobilityFactorField, DataTypeUtils.floatToU16When1to1000(CityFlowHelper.DEFAULT_MOBILITY_FACTOR));
     }
 
     public class Flow {

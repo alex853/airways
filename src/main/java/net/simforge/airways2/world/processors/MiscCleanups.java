@@ -11,8 +11,8 @@ import java.util.Collection;
 
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Status.Processed;
 
-public class Cleanups {
-    private static final Logger log = LoggerFactory.getLogger(Cleanups.class);
+public class MiscCleanups {
+    private static final Logger log = LoggerFactory.getLogger(MiscCleanups.class);
 
     public static void process(final World world) {
         cleanupEventLog(world);

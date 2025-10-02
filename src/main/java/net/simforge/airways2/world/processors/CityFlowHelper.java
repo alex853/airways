@@ -9,8 +9,8 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CityFlowOps {
-    private static final Logger log = LoggerFactory.getLogger(CityFlowOps.class);
+public class CityFlowHelper {
+    private static final Logger log = LoggerFactory.getLogger(CityFlowHelper.class);
 
     public static final int REDISTRIBUTION_PERIOD = 24 * Time.ONE_HOUR;
     public static final float FLOW_UNITS_THRESHOLD = 0.1f;

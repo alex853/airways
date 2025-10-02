@@ -5,7 +5,7 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.DataTypeUtils;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.world.processors.CityFlowOps;
+import net.simforge.airways2.world.processors.CityFlowHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -66,7 +66,7 @@ public class City2CityFlows {
         storage.set(id, toCityIdField, toCityId);
         flow.setActive(false);
         flow.setFlowFraction(0.0f);
-        flow.setSuccessRate(CityFlowOps.STARTING_SUCCESS_RATE);
+        flow.setSuccessRate(CityFlowHelper.STARTING_SUCCESS_RATE);
         return flow;
     }
 
@@ -74,7 +74,7 @@ public class City2CityFlows {
         try (final Timing.Timer ignored = Timing.label("City2CityFlows - nextForHeartbeat")) {
             return storage.findFirst(flow -> flow.getHeartbeatTime() <= worldTime
                     && flow.getHeartbeatTime() != 0
-                    && flow.getFromCityId() == 1); // todo ak0 remove these conditions
+                    && flow.getFromCityId() == 1); // todo ak1 remove these conditions
             // todo ak0 add paris (4) ?
         }
     }
@@ -123,7 +123,7 @@ public class City2CityFlows {
         }
         
         public void setSuccessRate(final float successRate) {
-            storage.set(id, successRateField, DataTypeUtils.floatToU16When1to65535(CityFlowOps.boundSuccessRate(successRate)));
+            storage.set(id, successRateField, DataTypeUtils.floatToU16When1to65535(CityFlowHelper.boundSuccessRate(successRate)));
         }
 
         public int getNextGroupSize() {
