@@ -41,7 +41,7 @@ public class TransportFlightProcessor {
             case Checkin -> {
                 if (tfControl.allPaxCheckedIn(transportFlight)) { // todo ak0 OR CHECKIN TIME ENDS
                     tfControl.waitForBoarding(transportFlight);
-                }
+                } // todo ak0 ELSE SCHEDULE NEXT CHECKIN HEARTBEAT
             }
             case Boarding -> {
                 if (tfControl.allPaxBoarded(transportFlight)) {
