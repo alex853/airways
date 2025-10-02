@@ -20,15 +20,30 @@ public class EventLogController {
     @GetMapping("/all")
     public List<EventDto> getAll() {
         return worldBean.read(world -> world.eventLog().all().stream()
-                .map(e -> new EventDto(
+                .map(e -> toDto(e))
+                .toList());
+    }
+
+    @GetMapping("/object")
+    public List<EventDto> getObject(@RequestParam(name = "type") final int type, @RequestParam(name = "id") final int id) {
+        return worldBean.read(world -> world.eventLog()
+                .filter(e -> e.getObject1Id() == id
+                       || e.getObject2Id() == id
+                       || e.getObject3Id() == id
+                       || e.getObject4Id() == id)
+                .map(e -> toDto(e))
+                .toList());
+    }
+
+    private static EventDto toDto(final EventLog.Event e) {
+        return new EventDto(
                         e.getId(),
                         WebTime.ts(e.getTime()),
                         e.getTypeRaw() + " - " + e.getType(),
                         e.getObject1Type() + " - " + e.getObject1Id(),
                         e.getObject2Type() + " - " + e.getObject2Id(),
                         e.getObject3Type() + " - " + e.getObject3Id(),
-                        e.getObject4Type() + " - " + e.getObject4Id()))
-                .toList());
+                        e.getObject4Type() + " - " + e.getObject4Id());
     }
 
     @Data
