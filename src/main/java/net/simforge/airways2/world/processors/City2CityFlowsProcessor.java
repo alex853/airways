@@ -50,7 +50,7 @@ public class City2CityFlowsProcessor {
 
         log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), directOrBackDirection);
 
-// todo ak1            Journey journey = JourneyOps.create(session, c2cFlow, directOrBackDirection);
+// todo ak0 create journey in looking-for-tickets status            Journey journey = JourneyOps.create(session, c2cFlow, directOrBackDirection);
 // todo ak1            AirwaysApp.getScheduling().startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
 
         c2cFlow.setNextGroupSize(CityFlowOps.randomGroupSize());
