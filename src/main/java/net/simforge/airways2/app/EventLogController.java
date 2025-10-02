@@ -32,7 +32,7 @@ public class EventLogController {
                 .filter(e -> e.getObject1Id() == id
                        || e.getObject2Id() == id
                        || e.getObject3Id() == id
-                       || e.getObject4Id() == id)
+                       || e.getObject4Id() == id).stream()
                 .map(e -> toDto(e))
                 .toList());
     }
