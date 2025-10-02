@@ -114,6 +114,18 @@ public class Journeys {
         public void setHeartbeatTime(final int heartbeatTime) {
             storage.set(id, heartbeatTimeField, heartbeatTime);
         }
+
+        public int getFromCityId() {
+            return storage.getAsInt(id, fromCityIdField);
+        }
+
+        public int getToCityId() {
+            return storage.getAsInt(id, toCityIdField);
+        }
+
+        public int getGroupSize() {
+            return storage.getAsInt(id, groupSizeField);
+        }
     }
 
     public enum Status {

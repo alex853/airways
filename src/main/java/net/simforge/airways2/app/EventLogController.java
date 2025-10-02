@@ -22,7 +22,7 @@ public class EventLogController {
     @GetMapping("/all")
     public List<EventDto> getAll() {
         return worldBean.read(world -> world.eventLog().all().stream()
-                .map(e -> toDto(e))
+                .map(EventLogController::toDto)
                 .toList());
     }
 
@@ -33,7 +33,7 @@ public class EventLogController {
                         || (e.getObject2Id() == id && e.getObject2TypeRaw() == type)
                         || (e.getObject3Id() == id && e.getObject3TypeRaw() == type)
                         || (e.getObject4Id() == id && e.getObject4TypeRaw() == type)).stream()
-                .map(e -> toDto(e))
+                .map(EventLogController::toDto)
                 .toList());
     }
 
