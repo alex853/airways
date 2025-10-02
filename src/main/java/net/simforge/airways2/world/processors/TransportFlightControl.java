@@ -18,7 +18,6 @@ public class TransportFlightControl {
         return new TransportFlightControl(world);
     }
 
-
     public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission) {
         return createTransportFlight(flightMission, null);
     }
@@ -37,6 +36,8 @@ public class TransportFlightControl {
     }
 
     public boolean checkinTimeComes(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Scheduled);
         final FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
         final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(flightMission);
         return checkinStartTime < world.getWorldTime();
@@ -68,6 +69,14 @@ public class TransportFlightControl {
         final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold; 
         final int paxCheckedIn = 0; // todo ak1 iterate through journeys and check their states - world.journeys().filter(j -> j.getFlightId() == tfId && j.getStatus() == WaitingForDeparture).sum(j.groupSize)
         return paxCheckedIn == ticketsSold;
+    }
+
+    public boolean checkinTimeEnds(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        final FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
+        final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(flightMission);
+        return checkinEndTime < world.getWorldTime();
     }
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
