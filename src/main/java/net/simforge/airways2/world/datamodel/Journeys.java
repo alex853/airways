@@ -26,8 +26,8 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // toCityId                2 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit)) // groupSize                1 byte
             .withDataField(DataField.of(DataType.Unsigned8bit)) // type/mode                1 byte
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlightId1      3 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlightId2      3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight1Id      3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight2Id      3 bytes
             // ----------------------------------------------------- sum                   18 bytes
             // -------------------------------------------- reserved 14 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
@@ -41,6 +41,9 @@ public class Journeys {
     private final DataField fromCityIdField = storage.getDataField(2);
     private final DataField toCityIdField = storage.getDataField(3);
     private final DataField groupSizeField = storage.getDataField(4);
+    private final DataField typeModeField = storage.getDataField(5);
+    private final DataField transportFlight1IdField = storage.getDataField(6);
+    private final DataField transportFlight2IdField = storage.getDataField(7);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -60,6 +63,11 @@ public class Journeys {
 
     public Optional<Journey> byId(final int id) {
         return storage.byId(id);
+    }
+
+    public Optional<Journey> nextForHeartbeat(final int worldTime) {
+        return storage.findFirst(journey -> journey.getHeartbeatTime() <= worldTime
+                && journey.getHeartbeatTime() != 0);
     }
 
     public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize) {
@@ -125,6 +133,14 @@ public class Journeys {
 
         public int getGroupSize() {
             return storage.getAsInt(id, groupSizeField);
+        }
+
+        public int getTransportFlight1Id() {
+            return storage.getAsInt(id, transportFlight1IdField);
+        }
+
+        public void setTransportFlight1Id(final int transportFlight1Id) {
+            storage.set(id, transportFlight1IdField, transportFlight1Id);
         }
     }
 

@@ -24,7 +24,7 @@ public class TransportFlightProcessor {
             try {
                 processTransportFlight(world, tfControl, transportFlight);
             } catch (final RuntimeException e) {
-                log.warn("t/f {} processing error", transportFlight.getId(), e);
+                log.warn("t/f #{} processing error", transportFlight.getId(), e);
                 throw e;
             }
         }

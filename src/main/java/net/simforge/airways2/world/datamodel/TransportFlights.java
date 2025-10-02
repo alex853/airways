@@ -132,6 +132,11 @@ public class TransportFlights {
             return CabinLayout.fromSigned32bit(storage.getAsInt(id, remainedTicketsField));
         }
 
+        public void setRemainedTickets(final CabinLayout remainedTickets) {
+            checkNotNull(remainedTickets);
+            storage.set(id, remainedTicketsField, remainedTickets.toSigned32bit());
+        }
+
         public CabinLayout getPaxOnBoard() {
             return CabinLayout.fromSigned32bit(storage.getAsInt(id, paxOnBoardField));
         }

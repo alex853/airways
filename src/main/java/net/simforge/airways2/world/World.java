@@ -225,6 +225,7 @@ public class World {
             Airport2AirportDailyFlightStatsRotation.process(this);
             CityFlowsProcessor.process(this);
             City2CityFlowsProcessor.process(this);
+            JourneyProcessor.process(this);
 
             MiscCleanups.process(this);
             FlightsCleanup.process(this);
