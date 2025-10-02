@@ -43,13 +43,31 @@ public class TransportFlightControl {
     }
 
     public void startCheckin(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Scheduled);
         transportFlight.setStatus(TransportFlights.Status.Checkin);
-        transportFlight.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_HOUR)); // todo ak0 SOME CHECKIN TIME TICK - 60 secs?
+        transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
+    }
+
+    public void continueCheckin(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
     }
 
     public boolean allPaxCheckedIn(final TransportFlights.Flight transportFlight) {
-        // todo ak0 REMAINED TICKETS ARE ZERO ==AND== ALL JOURNEYS CHECKED-IN
-        return true;
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        final int remainedUnsold = transportFlight.getRemainedTickets().getTotal();
+        if (remainedUnsold != 0) {
+            // if some tickets still available then we can't tell that all PAX checked-in even if all PAX with tickets already checked-in
+            // this will lead to a case that check-in will continue be open till the end of check-in window if there are some tickets are still available
+            return false;
+        }
+
+        final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold; 
+        final int paxCheckedIn = 0; // todo ak1 iterate through journeys and check their states - world.journeys().filter(j -> j.getFlightId() == tfId && j.getStatus() == WaitingForDeparture).sum(j.groupSize)
+        return paxCheckedIn == ticketsSold;
     }
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
