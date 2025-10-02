@@ -11,6 +11,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TransportFlightControl {
+    private static final int CHECKIN_TICK = Time.ONE_MINUTE;
+    
     private final World world;
 
     private TransportFlightControl(final World world) {
