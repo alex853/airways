@@ -51,7 +51,7 @@ public class JourneyProcessor {
         final int toCityId = journey.getToCityId();
         final Set<Integer> toAirportIds = world.airport2city().allByCityId(toCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
 
-        final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> flightStatusAllowsToPurchaseTicket(tf.getStatus())
+        final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
                 && isThereDirectRouteAvailable(world, tf, fromAirportIds, toAirportIds)
                 && tf.getRemainedTickets().getTotal() >= journey.getGroupSize());
 
@@ -86,13 +86,13 @@ public class JourneyProcessor {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
             // todo ak1 cancel journey, update stats
-        } else if (flightStatusBeforeCheckin(flight.get().getStatus())) {
+        } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, update stats
             final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(mission.get());
             final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(mission.get());
             journey.setHeartbeatTime(checkinStartTime + (int) (0.8 * Math.random() * (checkinEndTime - checkinStartTime)));
-        } else if (flightStatusAllowsCheckin(flight.get().getStatus())) {
+        } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
             checkin(world, journeyControl, journey);
         } else { // checkin & boarding finished -> journey is too late
             journey.setStatus(Journeys.Status.TooLateToBoard);
@@ -111,7 +111,7 @@ public class JourneyProcessor {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
             // todo ak1 cancel journey, update stats
-        } else if (flightStatusBeforeBoarding(flight.get().getStatus())) {
+        } else if (TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, update stats
             final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission.get());
@@ -134,27 +134,4 @@ public class JourneyProcessor {
 
     // todo ak0 journey sleeps till deboarding
 
-    // these methods will go to tf-helper
-    private static boolean flightStatusAllowsToPurchaseTicket(final TransportFlights.Status status) {
-        return status == TransportFlights.Status.Scheduled
-                || status == TransportFlights.Status.Checkin
-                || status == TransportFlights.Status.WaitingForBoarding
-                || status == TransportFlights.Status.Boarding;
-    }
-
-    private static boolean flightStatusBeforeCheckin(final TransportFlights.Status status) {
-        return status == TransportFlights.Status.Scheduled;
-    }
-
-    private static boolean flightStatusAllowsCheckin(TransportFlights.Status status) {
-        return status == TransportFlights.Status.Checkin
-                || status == TransportFlights.Status.WaitingForBoarding
-                || status == TransportFlights.Status.Boarding;
-    }
-
-    private static boolean flightStatusBeforeBoarding(final TransportFlights.Status status) {
-        return status == TransportFlights.Status.Scheduled
-                || status == TransportFlights.Status.Checkin
-                || status == TransportFlights.Status.WaitingForBoarding;
-    }
 }

@@ -38,7 +38,7 @@ public class TransportFlightProcessor {
                     tfControl.startCheckin(transportFlight);
                 }
             }
-            case Checkin -> {
+            case CheckIn -> {
                 if (tfControl.checkinTimeEnds(transportFlight) || tfControl.allPaxCheckedIn(transportFlight)) {
                     tfControl.waitForBoarding(transportFlight);
                 } else {

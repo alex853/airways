@@ -98,8 +98,8 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
 
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
-            case Scheduled -> Checkin.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case Checkin -> null; // todo ak1
+            case Scheduled -> CheckIn.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
+            case CheckIn -> null; // todo ak1
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
             case Boarding -> WaitingForDeparture.name() + " till around ??:??"; // todo ak1
             case WaitingForDeparture -> Departure.name();

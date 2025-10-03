@@ -163,7 +163,7 @@ public class TransportFlights {
 
     public enum Status {
         Scheduled(0),
-        Checkin(1),
+        CheckIn(1),
         WaitingForBoarding(2),
         Boarding(3),
         WaitingForDeparture(4),

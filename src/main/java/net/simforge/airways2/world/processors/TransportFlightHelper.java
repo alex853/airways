@@ -2,6 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -29,5 +30,28 @@ public class TransportFlightHelper {
     public static int calcBoardingEndTime(final FlightMissions.Mission flightMission) {
         checkNotNull(flightMission);
         return flightMission.getPlannedDepartureWorldTime() - 10 * Time.ONE_MINUTE;
+    }
+
+    public static boolean flightStatusAllowsToPurchaseTicket(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.Scheduled
+                || status == TransportFlights.Status.CheckIn
+                || status == TransportFlights.Status.WaitingForBoarding
+                || status == TransportFlights.Status.Boarding;
+    }
+
+    public static boolean flightStatusBeforeCheckin(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.Scheduled;
+    }
+
+    public static boolean flightStatusAllowsToCheckIn(TransportFlights.Status status) {
+        return status == TransportFlights.Status.CheckIn
+                || status == TransportFlights.Status.WaitingForBoarding
+                || status == TransportFlights.Status.Boarding;
+    }
+
+    public static boolean flightStatusAllowsToStartBoarding(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.Scheduled
+                || status == TransportFlights.Status.CheckIn
+                || status == TransportFlights.Status.WaitingForBoarding;
     }
 }

@@ -52,19 +52,19 @@ public class TransportFlightControl {
     public void startCheckin(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Scheduled);
-        transportFlight.setStatus(TransportFlights.Status.Checkin);
+        transportFlight.setStatus(TransportFlights.Status.CheckIn);
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
     }
 
     public void continueCheckin(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
     }
 
     public boolean allPaxCheckedIn(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
         final int remainedUnsold = transportFlight.getRemainedTickets().getTotal();
         if (remainedUnsold != 0) {
             // if some tickets still available then we can't tell that all PAX checked-in even if all PAX with tickets already checked-in
@@ -78,7 +78,7 @@ public class TransportFlightControl {
 
     public boolean checkinTimeEnds(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
         final FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
         final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(flightMission);
         return checkinEndTime < world.getWorldTime();
@@ -86,14 +86,14 @@ public class TransportFlightControl {
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
         transportFlight.setStatus(TransportFlights.Status.WaitingForBoarding);
         transportFlight.setHeartbeatTime(0);
     }
 
     public void startBoarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding);
+        checkArgument(TransportFlightHelper.flightStatusAllowsToStartBoarding(transportFlight.getStatus()));
         transportFlight.setStatus(TransportFlights.Status.Boarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
     }
