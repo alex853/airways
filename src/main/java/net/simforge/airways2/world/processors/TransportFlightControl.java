@@ -108,7 +108,7 @@ public class TransportFlightControl {
 
     public boolean allPaxBoarded(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak1 another check against sold tickets?
+        return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak2 another check against sold tickets?
     }
 
     public boolean boardingTimeEnds(final TransportFlights.Flight transportFlight) {

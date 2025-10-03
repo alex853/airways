@@ -160,7 +160,7 @@ public class Journeys {
         //todo ak2 persons CouldNotFindPersons(11),
         CouldNotFindTickets(12),
         TooLateToBoard(13),
-        //todo ak1 not sure we need it Terminated(14),
+        //todo ak2 not sure we need it Terminated(14),
         ;
 
         private final int code;

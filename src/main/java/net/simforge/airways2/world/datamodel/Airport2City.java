@@ -61,7 +61,7 @@ public class Airport2City {
     }
 
     public Link create(final int airportId, final int cityId) {
-        // todo ak1 check that airport-city pair does not exist + checkArgument!!!
+        // todo ak0 check that airport-city pair does not exist + checkArgument!!!
         final int linkId = storage.addRecord();
         storage.set(linkId, airportIdField, airportId);
         storage.set(linkId, cityIdField, cityId);

@@ -27,7 +27,7 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flyi
 @RestController
 @RequestMapping("/flight-dashboard")
 @CrossOrigin
-public class FlightDashboardController { // todo ak1 migrate ids to sqids
+public class FlightDashboardController { // todo ak2 migrate ids to sqids
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -134,7 +134,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("start is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             world.flightMissionControl().startOrCancel(flight);
 
             return getStatus(flightId);
@@ -158,7 +158,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("start-boarding is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             TransportFlightControl.instance(world).startBoarding(transportFlight);
             return getStatus(flightId);
         });
@@ -178,7 +178,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("blocks-off is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -199,7 +199,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("takeoff is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             world.flightMissionControl().takeoff(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -220,7 +220,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("landing is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
@@ -242,7 +242,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("blocks-on is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             world.flightMissionControl().blocksOn(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -266,7 +266,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("start-deboarding is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             TransportFlightControl.instance(world).startDeboarding(transportFlight);
 
             return getStatus(flightId);
@@ -287,7 +287,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
                 throw new IllegalStateException("finish is not permitted");
             }
 
-            // todo ak1 event-logging
+            // todo ak0 event-logging
             world.flightMissionControl().finish(flight);
 
             return getStatus(flightId);

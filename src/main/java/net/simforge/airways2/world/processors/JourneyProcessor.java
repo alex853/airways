@@ -157,7 +157,8 @@ public class JourneyProcessor {
 
     private static void justArrived(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         // todo ak1 update stats for a airport pair
-        // todo ak1 check tf1/tf2/... and fly the next leg if exists
+        // todo ak0 check tf1/tf2/... and fly the next leg if exists
+        journey.setTransportFlight1Id(0);
 
         journey.setStatus(Journeys.Status.ItinerariesDone);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
