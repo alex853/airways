@@ -174,6 +174,6 @@ public class JourneyProcessor {
         //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
         //          if this is a 'return trip' then finish the journey
 
-        journey.setStatus(Journeys.Status.Finished);
-    }
+        journey.setStatus(Journeys.Status.Finished); // todo ak0 how to cleanup it???
+    } // todo ak0 cleanup also journeys in other terminal statuses
 }
