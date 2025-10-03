@@ -27,6 +27,7 @@ public class JourneyController {
 
     private static JourneyDto toDto(final World world, final Journeys.Journey e) {
         final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
+        final Optional<FlightMissions.Mission> fm1 = tf1.map(f -> world.flightMissions().byId(f.getFlightMissionId())).orElse(Optional.empty());
         return new JourneyDto(
                 e.getId(),
                 e.getStatus().name(),
@@ -38,8 +39,8 @@ public class JourneyController {
                 e.getGroupSize(),
                 tf1.map(f -> f.getId()).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
-                "AAAA",
-                "BBBB"
+                fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
+                fm1.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null)
         );
     }
 
