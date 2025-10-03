@@ -32,7 +32,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
 
     @Autowired
     private WorldRunnerBean worldBean;
-// todo ak0 add 'disabled' buttons with explanations, correct all states
+// todo ak1 add 'disabled' buttons with explanations, correct all states
     @GetMapping("/status")
     public StatusDto getStatus(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.read(world -> {
@@ -86,7 +86,7 @@ public class FlightDashboardController { // todo ak1 migrate ids to sqids
 
     private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
-            case Dispatched -> "start"; // todo ak0 deny start too early
+            case Dispatched -> "start"; // todo ak1 deny start too early
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : null;

@@ -7,29 +7,29 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TransportFlightHelper {
-    private static final int CHECKIN_STARTS_BEFORE = 120 * Time.ONE_MINUTE;
-    private static final int CHECKIN_ENDS_BEFORE = 30 * Time.ONE_MINUTE;
+    private static final int CHECKIN_STARTS_MINUTES_BEFORE_PLANNED_DEPARTURE = 120 * Time.ONE_MINUTE;
+    private static final int CHECKIN_ENDS_MINUTES_BEFORE_PLANNED_DEPARTURE = 30 * Time.ONE_MINUTE;
+    private static final int BOARDING_STARTS_MINUTES_BEFORE_PLANNED_DEPARTURE = 20 * Time.ONE_MINUTE;
+    private static final int BOARDING_ENDS_MINUTES_BEFORE_PLANNED_DEPARTURE = 10 * Time.ONE_MINUTE;
 
     public static int calcCheckinStartTime(final FlightMissions.Mission flightMission) {
         checkNotNull(flightMission);
-        return flightMission.getPlannedDepartureWorldTime() - CHECKIN_STARTS_BEFORE;
+        return flightMission.getPlannedDepartureWorldTime() - CHECKIN_STARTS_MINUTES_BEFORE_PLANNED_DEPARTURE;
     }
 
     public static int calcCheckinEndTime(final FlightMissions.Mission flightMission) {
         checkNotNull(flightMission);
-        return flightMission.getPlannedDepartureWorldTime() - CHECKIN_ENDS_BEFORE;
+        return flightMission.getPlannedDepartureWorldTime() - CHECKIN_ENDS_MINUTES_BEFORE_PLANNED_DEPARTURE;
     }
 
-    // todo ak0 redo!!!1
     public static int calcBoardingStartTime(final FlightMissions.Mission flightMission) {
         checkNotNull(flightMission);
-        return flightMission.getPlannedDepartureWorldTime() - 20 * Time.ONE_MINUTE;
+        return flightMission.getPlannedDepartureWorldTime() - BOARDING_STARTS_MINUTES_BEFORE_PLANNED_DEPARTURE * Time.ONE_MINUTE;
     }
 
-    // todo ak0 redo!!!1
     public static int calcBoardingEndTime(final FlightMissions.Mission flightMission) {
         checkNotNull(flightMission);
-        return flightMission.getPlannedDepartureWorldTime() - 10 * Time.ONE_MINUTE;
+        return flightMission.getPlannedDepartureWorldTime() - BOARDING_ENDS_MINUTES_BEFORE_PLANNED_DEPARTURE * Time.ONE_MINUTE;
     }
 
     public static boolean flightStatusAllowsToPurchaseTicket(final TransportFlights.Status status) {

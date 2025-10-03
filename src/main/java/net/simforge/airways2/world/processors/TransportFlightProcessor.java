@@ -46,7 +46,7 @@ public class TransportFlightProcessor {
                 }
             }
             case Boarding -> {
-                if (tfControl.allPaxBoarded(transportFlight)) { // todo ak0 check boarding timeframe
+                if (tfControl.boardingTimeEnds(transportFlight) || tfControl.allPaxBoarded(transportFlight)) {
                     tfControl.waitForDeparture(transportFlight);
                 } else {
                     tfControl.continueBoarding(transportFlight);

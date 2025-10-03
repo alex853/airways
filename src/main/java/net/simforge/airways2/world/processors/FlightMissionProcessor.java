@@ -67,8 +67,8 @@ public class FlightMissionProcessor {
             case Preflight -> {
                 if (!mission.isModePc()) {
                     world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlight -> {
-                        final LocalDateTime boardingStartTime = timeline.getBlocksOff().getEstimatedTime().minusMinutes(20); // todo ak0 that is weird! need to redo!
-                        if (boardingStartTime.isBefore(now)) {
+                        final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission);
+                        if (boardingStartTime <= worldTime) {
                             if (TransportFlightHelper.flightStatusAllowsToStartBoarding(transportFlight.getStatus())) {
                                 TransportFlightControl.instance(world).startBoarding(transportFlight);
                             }

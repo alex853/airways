@@ -109,24 +109,33 @@ public class TransportFlightControl {
         return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak1 another check against sold tickets?
     }
 
+    public boolean boardingTimeEnds(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+        final FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
+        final int checkinEndTime = TransportFlightHelper.calcBoardingEndTime(flightMission);
+        return checkinEndTime < world.getWorldTime();
+    }
+
     public void waitForDeparture(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight); // todo ak1 checks
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
     }
 
     public void startDeboarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight); // todo ak1 checks
+        checkNotNull(transportFlight); // todo ak0 checks
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
-        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak1 normal implementation expected
+        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak0 normal implementation expected
     }
 
     public boolean allPaxDeboarded(final TransportFlights.Flight transportFlight) {
-        return true; // todo ak1 normal implementation expected
+        return true; // todo ak0 normal implementation expected
     }
 
     public void finish(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight); // todo ak1 checks
+        checkNotNull(transportFlight); // todo ak0 checks
         transportFlight.setStatus(TransportFlights.Status.Finished);
         transportFlight.setHeartbeatTime(0);
     }
