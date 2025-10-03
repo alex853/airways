@@ -57,8 +57,11 @@ public class ManualDispatchController {
                 case "in-1-hour" -> world.getWorldTime() + Time.ONE_HOUR;
                 case "in-3-hours" -> world.getWorldTime() + 3 * Time.ONE_HOUR;
                 case "in-6-hours" -> world.getWorldTime() + 6 * Time.ONE_HOUR;
+                case "in-9-hours" -> world.getWorldTime() + 9 * Time.ONE_HOUR;
                 case "in-12-hours" -> world.getWorldTime() + 12 * Time.ONE_HOUR;
+                case "in-15-hours" -> world.getWorldTime() + 15 * Time.ONE_HOUR;
                 case "in-18-hours" -> world.getWorldTime() + 18 * Time.ONE_HOUR;
+                case "in-21-hours" -> world.getWorldTime() + 21 * Time.ONE_HOUR;
                 case "in-24-hours" -> world.getWorldTime() + 24 * Time.ONE_HOUR;
                 default -> throw new IllegalArgumentException();
             };
