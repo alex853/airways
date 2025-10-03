@@ -40,7 +40,7 @@ public class ManualDispatchController {
             @RequestParam(name = "destinationIcao") final String destinationAirportIcao,
             @RequestParam(name = "departureTimeMode") final String departureTimeMode,
             @RequestParam(name = "flightMode") final String flightMode,
-            @RequestParam(name = "tfMode" final String tfMode) {
+            @RequestParam(name = "tfMode") final String tfMode) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
             if (!Aircrafts.isIdleAndParkedAtAirportAndNoOperatorAssigned(aircraft)) {
