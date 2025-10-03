@@ -128,7 +128,7 @@ public class TransportFlightControl {
 
     public void scheduleAutomaticDeboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Arrival);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding);
         world.eventsToProcess().sendEvent(StartAutomaticDeboarding, transportFlight.getId(), world.getWorldTime() + TransportFlightHelper.AUTOMATIC_DEBOARDING_DELAY);
     }
 
