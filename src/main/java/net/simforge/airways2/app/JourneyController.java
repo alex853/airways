@@ -2,6 +2,7 @@ package net.simforge.airways2.app;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Journeys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
