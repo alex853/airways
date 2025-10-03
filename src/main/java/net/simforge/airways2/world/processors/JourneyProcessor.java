@@ -91,7 +91,7 @@ public class JourneyProcessor {
             // todo ak1 what if mission is empty - cancel journey, update stats
             final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(mission.get());
             final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(mission.get());
-            journey.setHeartbeatTime(checkinStartTime + (int) (0.8 * (checkinEndTime - checkinStartTime)));
+            journey.setHeartbeatTime(checkinStartTime + (int) (0.8 * Math.random() * (checkinEndTime - checkinStartTime)));
         } else if (flightStatusAllowsCheckin(flight.get().getStatus())) {
             checkin(world, journeyControl, journey);
         } else { // checkin & boarding finished -> journey is too late
@@ -116,7 +116,7 @@ public class JourneyProcessor {
             // todo ak1 what if mission is empty - cancel journey, update stats
             final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission.get());
             final int boardingEndTime = TransportFlightHelper.calcBoardingEndTime(mission.get());
-            journey.setHeartbeatTime(boardingStartTime + (int) (0.8 * (boardingEndTime - boardingStartTime)));
+            journey.setHeartbeatTime(boardingStartTime + (int) (0.8 * Math.random() * (boardingEndTime - boardingStartTime)));
         } else if (flight.get().getStatus() == TransportFlights.Status.Boarding) {
             boarding(world, journeyControl, journey);
         } else { // checkin & boarding finished -> journey is too late
