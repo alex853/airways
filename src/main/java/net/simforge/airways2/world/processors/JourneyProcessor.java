@@ -55,6 +55,7 @@ public class JourneyProcessor {
     }
 
     private static void lookingForTickets(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        // todo ak1 'roundtrip support' - consider 'direction' when determining fromCityId and toCityId
         final int fromCityId = journey.getFromCityId();
         final Set<Integer> fromAirportIds = world.airport2city().allByCityId(fromCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
 

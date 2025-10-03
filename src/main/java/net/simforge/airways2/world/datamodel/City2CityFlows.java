@@ -14,7 +14,7 @@ import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class City2CityFlows {
+public class City2CityFlows { // todo ak1 London - Birmingham - that's stupid, need to remove it, and somehow prevent it in future
     private final Storage<Flow> storage = Storage.<Flow>builder()
             .name("city2city_flows")
             .withInstantiator(Flow::new)
