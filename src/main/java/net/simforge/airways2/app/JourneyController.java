@@ -30,7 +30,7 @@ public class JourneyController {
                 e.getFromCityId(),
                 e.getToCityId(),
                 e.getGroupSize(),
-                e.getTransportFlight1Id());
+                e.getTransportFlight1Id() != 0 ? e.getTransportFlight1Id() : null);
     }
 
     @Data
@@ -41,7 +41,7 @@ public class JourneyController {
         private String hrtBt;
         private int fCId;
         private int tCId;
-        private int groupSize;
-        private int tf1Id;
+        private int gs;
+        private Integer tf1Id;
     }
 }
