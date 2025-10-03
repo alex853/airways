@@ -275,4 +275,14 @@ public class AdminController {
             return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
     }
+
+    @GetMapping("/journey/kick-all-looking-for-tickets")
+    public String kickAllLookingForTickets() {
+        return worldBean.modifySync(world -> {
+            world.journeys()
+                    .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                    .forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+            return "DONE";
+        });
+    }
 }
