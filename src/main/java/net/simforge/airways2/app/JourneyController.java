@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Journeys;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,6 +25,7 @@ public class JourneyController {
     }
 
     private static JourneyDto toDto(final World world, final Journeys.Journey e) {
+        final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
         return new JourneyDto(
                 e.getId(),
                 e.getStatus().name(),
@@ -33,7 +35,11 @@ public class JourneyController {
                 e.getToCityId(),
                 world.cities().byId(e.getToCityId()).orElseThrow().getName(),
                 e.getGroupSize(),
-                e.getTransportFlight1Id() != 0 ? e.getTransportFlight1Id() : null);
+                tf1.map(f -> f.getId()).orElse(null),
+                tf1.map(f -> f.getStatus()).orElse(null),
+                null,
+                null
+        );
     }
 
     @Data
@@ -48,5 +54,8 @@ public class JourneyController {
         private String tCN;
         private int gs;
         private Integer tf1Id;
+        private String tf1St;
+        private String tf1From;
+        private String tf1To;
     }
 }
