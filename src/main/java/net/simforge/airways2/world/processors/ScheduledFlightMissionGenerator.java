@@ -21,7 +21,7 @@ public class ScheduledFlightMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(ScheduledFlightMissionGenerator.class);
     private static long lastExecution;
 
-    private static final int schedulingDepthDays = 2;
+    private static final int schedulingDepthDays = 3;
 
     private static final ScheduledFlight[] schedule = {
             new ScheduledFlight(101, "AW101", "F-AUWA", "LFPG", "EGLL", "05:00"),
@@ -30,6 +30,8 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
             new ScheduledFlight(131, "AW131", "F-AUWB", "LFPG", "EDDM", "06:00"),
             new ScheduledFlight(132, "AW132", "F-AUWB", "EDDM", "LFPG", "10:00"),
+            new ScheduledFlight(141, "AW141", "F-AUWB", "LFPG", "LEBL", "14:00"),
+            new ScheduledFlight(142, "AW142", "F-AUWB", "LEBL", "LFPG", "18:00"),
     };
 
     public static void process(final World world) {
