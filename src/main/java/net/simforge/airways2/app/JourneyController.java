@@ -29,17 +29,19 @@ public class JourneyController {
                 WebTime.ts(e.getHeartbeatTime()),
                 e.getFromCityId(),
                 e.getToCityId(),
-                e.getGroupSize());
+                e.getGroupSize(),
+                e.getTransportFlight1Id());
     }
 
     @Data
     @AllArgsConstructor
     private static class JourneyDto {
         private int id;
-        private String status;
-        private String heartbeat;
-        private int fromCityId;
-        private int toCityId;
+        private String st;
+        private String hrtBt;
+        private int fCId;
+        private int tCId;
         private int groupSize;
+        private int tf1Id;
     }
 }

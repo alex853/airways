@@ -70,7 +70,7 @@ public class TransportFlightController {
     private static class FlightDto {
         private int id;
         private String st;
-        private String hbt;
+        private String hrtBt;
         private int fmId;
         private int sfId;
         private String dep;
