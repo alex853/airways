@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
@@ -283,6 +284,32 @@ public class AdminController {
                     .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                     .forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
             return "DONE";
+        });
+    }
+
+    @GetMapping("/fix-682")
+    public void fix682() {
+        worldBean.modifySync(world -> {
+            final int flightId = 682;
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            transportFlight.setHeartbeatTime(world.getWorldTime());
+
+            return null;
+        });
+    }
+
+    @GetMapping("/fix-129")
+    public void fix() {
+        worldBean.modifySync(world -> {
+            final int journeyId = 129;
+
+            final Journeys.Journey journey = world.journeys().byId(journeyId).orElse(null);
+
+            journey.setHeartbeatTime(world.getWorldTime() + 5 * Time.ONE_MINUTE);
+
+            return null;
         });
     }
 }

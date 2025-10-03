@@ -294,19 +294,6 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
         });
     }
 
-    @GetMapping("/fix")
-    public void fix() {
-        worldBean.modifySync(world -> {
-            final int flightId = 682;
-
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            transportFlight.setHeartbeatTime(world.getWorldTime());
-
-            return null;
-        });
-    }
-
     @Data
     @AllArgsConstructor
     public static class StatusDto {
