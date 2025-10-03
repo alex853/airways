@@ -40,14 +40,14 @@ public class TransportFlightProcessor {
         switch (transportFlight.getStatus()) {
             case Scheduled -> {
                 if (tfControl.checkinTimeComes(transportFlight)) {
-                    tfControl.startCheckin(transportFlight);
+                    tfControl.startCheckIn(transportFlight);
                 }
             }
             case CheckIn -> {
                 if (tfControl.checkinTimeEnds(transportFlight) || tfControl.allPaxCheckedIn(transportFlight)) {
                     tfControl.waitForBoarding(transportFlight);
                 } else {
-                    tfControl.continueCheckin(transportFlight);
+                    tfControl.continueCheckIn(transportFlight);
                 }
             }
             case Boarding -> {

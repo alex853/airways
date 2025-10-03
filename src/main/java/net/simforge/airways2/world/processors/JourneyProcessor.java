@@ -44,7 +44,7 @@ public class JourneyProcessor {
         journey.setHeartbeatTime(0);
         switch (journey.getStatus()) {
             case LookingForTickets -> lookingForTickets(world, journeyControl, journey);
-            case WaitingForCheckin -> waitingForCheckin(world, journeyControl, journey);
+            case WaitingForCheckIn -> waitingForCheckin(world, journeyControl, journey);
             case WaitingForBoarding -> waitingForBoarding(world, journeyControl, journey);
             case WaitingForDeboarding -> waitingForDeboarding(world, journeyControl, journey);
             case JustArrived -> justArrived(world, journeyControl, journey);
@@ -73,7 +73,7 @@ public class JourneyProcessor {
     }
 
     private static void bookDirectFlightJourney(World world, Journeys.Journey journey, TransportFlights.Flight flight) {
-        journey.setStatus(Journeys.Status.WaitingForCheckin);
+        journey.setStatus(Journeys.Status.WaitingForCheckIn);
         journey.setHeartbeatTime(world.getWorldTime());
 
         journey.setTransportFlight1Id(flight.getId());

@@ -51,14 +51,14 @@ public class TransportFlightControl {
         return checkinStartTime < world.getWorldTime();
     }
 
-    public void startCheckin(final TransportFlights.Flight transportFlight) {
+    public void startCheckIn(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Scheduled);
         transportFlight.setStatus(TransportFlights.Status.CheckIn);
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
     }
 
-    public void continueCheckin(final TransportFlights.Flight transportFlight) {
+    public void continueCheckIn(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);

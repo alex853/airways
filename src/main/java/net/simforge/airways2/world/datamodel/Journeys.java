@@ -149,7 +149,7 @@ public class Journeys {
         LookingForTickets(1),
         //todo ak2 persons WaitingForFlight(2),
         //todo ak2 persons TransferToAirport(3),
-        WaitingForCheckin(4),
+        WaitingForCheckIn(4),
         WaitingForBoarding(5),
         OnBoard(6),
         WaitingForDeboarding(7),
