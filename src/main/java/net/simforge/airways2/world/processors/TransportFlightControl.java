@@ -9,10 +9,12 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
 
 public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
     private static final int BOARDING_TICK = Time.ONE_MINUTE;
+    private static final int DEBOARDING_TICK = Time.ONE_MINUTE;
 
     private final World world;
 
@@ -124,18 +126,36 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
     }
 
+    public void scheduleAutomaticDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Arrival);
+        world.eventsToProcess().sendEvent(StartAutomaticDeboarding, transportFlight.getId(), world.getWorldTime() + TransportFlightHelper.AUTOMATIC_DEBOARDING_DELAY);
+    }
+
     public void startDeboarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight); // todo ak0 checks
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Arrival);
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
-        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak0 normal implementation expected
+        transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
+
+        JourneyControl.instance(world).scheduleDeboardingForAllOnBoardJourneys(transportFlight);
+    }
+
+    public void continueDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+        transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
     }
 
     public boolean allPaxDeboarded(final TransportFlights.Flight transportFlight) {
-        return true; // todo ak0 normal implementation expected
+        checkNotNull(transportFlight);
+        return transportFlight.getPaxOnBoard() == 0;
     }
 
     public void finish(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight); // todo ak0 checks
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+        checkArgument(allPaxDeboarded(transportFlight));
         transportFlight.setStatus(TransportFlights.Status.Finished);
         transportFlight.setHeartbeatTime(0);
     }

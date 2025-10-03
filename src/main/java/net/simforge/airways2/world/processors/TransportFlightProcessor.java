@@ -7,24 +7,29 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
+import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
+
 public class TransportFlightProcessor {
     private static final Logger log = LoggerFactory.getLogger(TransportFlightProcessor.class);
 
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
-
         final TransportFlightControl tfControl = TransportFlightControl.instance(world);
+
+        EventProcessing.process(world, StartAutomaticDeboarding, event -> world.transportFlights()
+                .byId(event.getObjectId())
+                .ifPresent(tfControl::startDeboarding));
+
         while (true) {
-            final Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().nextForHeartbeat(worldTime);
-            if (transportFlightO.isEmpty()) {
+            final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().nextForHeartbeat(worldTime);
+            if (transportFlight.isEmpty()) {
                 break;
             }
 
-            final TransportFlights.Flight transportFlight = transportFlightO.get();
             try {
-                processTransportFlight(world, tfControl, transportFlight);
+                processTransportFlight(world, tfControl, transportFlight.get());
             } catch (final RuntimeException e) {
-                log.warn("t/f #{} processing error", transportFlight.getId(), e);
+                log.warn("t/f #{} processing error", transportFlight.get().getId(), e);
                 throw e;
             }
         }
@@ -55,6 +60,8 @@ public class TransportFlightProcessor {
             case Deboarding -> {
                 if (tfControl.allPaxDeboarded(transportFlight)) {
                     tfControl.finish(transportFlight);
+                } else {
+                    tfControl.continueDeboarding(transportFlight);
                 }
             }
         }

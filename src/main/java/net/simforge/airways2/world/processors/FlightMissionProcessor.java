@@ -11,10 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.PilotOnDuty;
-import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
 
 public class FlightMissionProcessor {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionProcessor.class);
@@ -22,25 +20,13 @@ public class FlightMissionProcessor {
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
 
-        processEvents(world, PilotOnDuty, event -> {
+        EventProcessing.process(world, PilotOnDuty, event -> {
             final int flightId = event.getObjectId();
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             if (mission.isModePc()) {
                 return;
             }
             world.flightMissionControl().startOrCancel(mission);
-        });
-        processEvents(world, StartAutomaticDeboarding, event -> {
-            final int flightId = event.getObjectId();
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-            if (mission.isModePc()) {
-                return;
-            }
-            final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(flightId);
-            if (transportFlight.isEmpty()) {
-                return;
-            }
-            TransportFlightControl.instance(world).startDeboarding(transportFlight.get());
         });
 
         while (true) {
@@ -61,16 +47,16 @@ public class FlightMissionProcessor {
     private static void processMission(final World world, final FlightMissions.Mission mission) {
         final int worldTime = world.getWorldTime();
         final FlightMissionControl flightControl = world.flightMissionControl();
+        final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
         final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);
         final LocalDateTime now = Time.toLdt(worldTime);
         switch (mission.getStatus()) {
             case Preflight -> {
                 if (!mission.isModePc()) {
-                    world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlight -> {
-                        final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission);
-                        if (boardingStartTime <= worldTime) {
-                            if (TransportFlightHelper.flightStatusAllowsToStartBoarding(transportFlight.getStatus())) {
-                                TransportFlightControl.instance(world).startBoarding(transportFlight);
+                    transportFlight.ifPresent(tf -> {
+                        if (TransportFlightHelper.calcBoardingStartTime(mission) <= worldTime) {
+                            if (TransportFlightHelper.flightStatusAllowsToStartBoarding(tf.getStatus())) {
+                                TransportFlightControl.instance(world).startBoarding(tf);
                             }
                         }
                     });
@@ -91,7 +77,7 @@ public class FlightMissionProcessor {
             case Arrival -> {
                 if (!mission.isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                     flightControl.blocksOn(mission);
-                    world.eventsToProcess().sendEvent(StartAutomaticDeboarding, mission.getId(), worldTime + 3 * Time.ONE_MINUTE);
+                    transportFlight.ifPresent(tf -> TransportFlightControl.instance(world).scheduleAutomaticDeboarding(tf));
                 }
             }
             case Postflight -> {
@@ -148,22 +134,6 @@ public class FlightMissionProcessor {
             if (!mission.isModePc()) {
                 world.flightMissionControl().landing(mission, toAirport);
             }
-        }
-    }
-
-    private static void processEvents(final World world, final EventsToProcess.Type eventType, final Consumer<EventsToProcess.Event> handler) {
-        final int worldTime = world.getWorldTime();
-        final EventsToProcess eventsToProcess = world.eventsToProcess();
-
-        while (true) {
-            final Optional<EventsToProcess.Event> event = eventsToProcess.findFirstActiveEvent(eventType, worldTime);
-            if (event.isEmpty()) {
-                break;
-            }
-
-            handler.accept(event.get());
-
-            event.get().setProcessedStatus();
         }
     }
 }

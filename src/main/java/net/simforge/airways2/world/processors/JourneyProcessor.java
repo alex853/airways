@@ -13,6 +13,11 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
+// todo ak3 approach around check-in, boarding, deboarding is a bit non-natural
+//          durations do not depend on airplane size, amount of doors open, etc
+//          it can be improved
+//          however the existing solution should work relatively fine
+//          some observations are required to make a decision
 public class JourneyProcessor {
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
 
@@ -41,6 +46,8 @@ public class JourneyProcessor {
             case LookingForTickets -> lookingForTickets(world, journeyControl, journey);
             case WaitingForCheckin -> waitingForCheckin(world, journeyControl, journey);
             case WaitingForBoarding -> waitingForBoarding(world, journeyControl, journey);
+            case WaitingForDeboarding -> waitingForDeboarding(world, journeyControl, journey);
+            case JustArrived -> justArrived(world, journeyControl, journey);
         }
     }
 
@@ -89,9 +96,7 @@ public class JourneyProcessor {
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, update stats
-            final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(mission.get());
-            final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(mission.get());
-            journey.setHeartbeatTime(checkinStartTime + (int) (0.8 * Math.random() * (checkinEndTime - checkinStartTime)));
+            journey.setHeartbeatTime(TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
             checkin(world, journeyControl, journey);
         } else { // checkin & boarding finished -> journey is too late
@@ -114,9 +119,7 @@ public class JourneyProcessor {
         } else if (TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, update stats
-            final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission.get());
-            final int boardingEndTime = TransportFlightHelper.calcBoardingEndTime(mission.get());
-            journey.setHeartbeatTime(boardingStartTime + (int) (0.8 * Math.random() * (boardingEndTime - boardingStartTime)));
+            journey.setHeartbeatTime(TransportFlightHelper.calcBoardingStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.BOARDING_DURATION));
         } else if (flight.get().getStatus() == TransportFlights.Status.Boarding) {
             boarding(world, journeyControl, journey);
         } else { // checkin & boarding finished -> journey is too late
@@ -132,6 +135,26 @@ public class JourneyProcessor {
         flight.setPaxOnBoard(flight.getPaxOnBoard() + journey.getGroupSize());
     }
 
-    // todo ak0 journey sleeps till deboarding
+    private static void waitingForDeboarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        if (flight.isEmpty()) {
+            // todo ak1 cancel journey, update stats
+        } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
+            deboarding(world, journeyControl, journey);
+        } else { // todo ak2 ???
+            // todo ak2 ???
+        }
+    }
 
+    private static void deboarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        journey.setStatus(Journeys.Status.JustArrived);
+        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+
+        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        flight.setPaxOnBoard(flight.getPaxOnBoard() - journey.getGroupSize());
+    }
+
+    private static void justArrived(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR)); // todo ak0 not implemented yet
+    }
 }
