@@ -37,7 +37,7 @@ public class TransportFlightController {
         return worldBean.read(world -> world.transportFlights()
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
-                        .map(ff -> ff.getPlannedDepartureWorldTime() >= world.getWorldTime() - Time.ONE_DAY)
+                        .map(ff -> ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
                         .orElse(false)).stream()
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
