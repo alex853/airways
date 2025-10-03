@@ -37,7 +37,7 @@ public class JourneyController {
                 world.cities().byId(e.getToCityId()).orElseThrow().getName(),
                 e.getGroupSize(),
                 tf1.map(f -> f.getId()).orElse(null),
-                tf1.map(f -> f.getStatus()).orElse(null),
+                tf1.map(f -> f.getStatus().toString()).orElse(null),
                 null,
                 null
         );
