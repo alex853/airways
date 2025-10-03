@@ -39,7 +39,8 @@ public class ManualDispatchController {
             @RequestParam(name = "aircraftId") final int aircraftId,
             @RequestParam(name = "destinationIcao") final String destinationAirportIcao,
             @RequestParam(name = "departureTimeMode") final String departureTimeMode,
-            @RequestParam(name = "flightMode") final String flightMode) {
+            @RequestParam(name = "flightMode") final String flightMode,
+            @RequestParam(name = "tfMode" final String tfMode) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
             if (!Aircrafts.isIdleAndParkedAtAirportAndNoOperatorAssigned(aircraft)) {
@@ -56,6 +57,9 @@ public class ManualDispatchController {
                 case "in-1-hour" -> world.getWorldTime() + Time.ONE_HOUR;
                 case "in-3-hours" -> world.getWorldTime() + 3 * Time.ONE_HOUR;
                 case "in-6-hours" -> world.getWorldTime() + 6 * Time.ONE_HOUR;
+                case "in-12-hours" -> world.getWorldTime() + 12 * Time.ONE_HOUR;
+                case "in-18-hours" -> world.getWorldTime() + 18 * Time.ONE_HOUR;
+                case "in-24-hours" -> world.getWorldTime() + 24 * Time.ONE_HOUR;
                 default -> throw new IllegalArgumentException();
             };
 
@@ -67,7 +71,7 @@ public class ManualDispatchController {
             world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight dispatched via web-page, aircraft {}, flight mode {}", mission.getId(), aircraft.getRegNo(), flightMode);
 
-            if ("flight-dashboard".equals(flightMode)) {
+            if ("schedule".equals(tfMode)) {
                 final TransportFlights.Flight transportFlight = TransportFlightControl.instance(world).createTransportFlight(mission);
                 world.log(EventLog.EventType.TransportFlightCreated, EventLog.id(transportFlight), mission);
                 log.info("f/m #{} - created t/f #{} for the mission dispatched via web-page", mission.getId(), transportFlight.getId());
