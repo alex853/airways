@@ -134,7 +134,7 @@ public class TransportFlightControl {
 
     public void startDeboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Arrival);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding);
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
 
