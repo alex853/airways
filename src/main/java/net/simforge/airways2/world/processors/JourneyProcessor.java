@@ -165,9 +165,10 @@ public class JourneyProcessor {
 
     private static void itinerariesDone(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         // todo ak1 update stats for a city2city flow
-        // todo ak1 check tf1/tf2/... and fly the next leg if exists
+        // todo ak1 extension - roundtrip support
+        //                      if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
+        //                      if this is a 'return trip' then finish the journey
 
-        journey.setStatus(Journeys.Status.ItinerariesDone);
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+        journey.setStatus(Journeys.Status.Finished);
     }
 }
