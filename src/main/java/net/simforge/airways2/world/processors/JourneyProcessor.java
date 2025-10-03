@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 //          some observations are required to make a decision
 public class JourneyProcessor {
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
+    private static final int CLEANUP_TIMEOUT = 3 * Time.ONE_DAY;
 
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
@@ -49,6 +50,7 @@ public class JourneyProcessor {
             case WaitingForDeboarding -> waitingForDeboarding(world, journeyControl, journey);
             case JustArrived -> justArrived(world, journeyControl, journey);
             case ItinerariesDone -> itinerariesDone(world, journeyControl, journey);
+            case Finished -> cleanup(world, journeyControl, journey);
         }
     }
 
@@ -174,6 +176,11 @@ public class JourneyProcessor {
         //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
         //          if this is a 'return trip' then finish the journey
 
-        journey.setStatus(Journeys.Status.Finished); // todo ak0 how to cleanup it???
-    } // todo ak0 cleanup also journeys in other terminal statuses
+        journey.setStatus(Journeys.Status.Finished);
+        journey.setHeartbeatTime(world.getWorldTime() + CLEANUP_TIMEOUT);
+    }
+
+    private static void cleanup(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        world.journeys().deleteById(journey.getId());
+    }
 }
