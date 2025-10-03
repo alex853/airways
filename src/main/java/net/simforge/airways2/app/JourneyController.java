@@ -28,7 +28,9 @@ public class JourneyController {
                 e.getId(),
                 e.getStatus().name(),
                 WebTime.ts(e.getHeartbeatTime()),
+                e.getFromCityId(),
                 world.cities().byId(e.getFromCityId()).orElseThrow().getName(),
+                e.getToCityId(),
                 world.cities().byId(e.getToCityId()).orElseThrow().getName(),
                 e.getGroupSize(),
                 e.getTransportFlight1Id() != 0 ? e.getTransportFlight1Id() : null);
@@ -41,7 +43,9 @@ public class JourneyController {
         private String st;
         private String hrtBt;
         private int fCId;
+        private String fCN;
         private int tCId;
+        private String tCN;
         private int gs;
         private Integer tf1Id;
     }
