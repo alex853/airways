@@ -18,4 +18,16 @@ public class TransportFlightHelper {
         checkNotNull(flightMission);
         return flightMission.getPlannedDepartureWorldTime() - CHECKIN_ENDS_BEFORE;
     }
+
+    // todo ak0 redo!!!1
+    public static int calcBoardingStartTime(final FlightMissions.Mission flightMission) {
+        checkNotNull(flightMission);
+        return flightMission.getPlannedDepartureWorldTime() - 20 * Time.ONE_MINUTE;
+    }
+
+    // todo ak0 redo!!!1
+    public static int calcBoardingEndTime(final FlightMissions.Mission flightMission) {
+        checkNotNull(flightMission);
+        return flightMission.getPlannedDepartureWorldTime() - 10 * Time.ONE_MINUTE;
+    }
 }

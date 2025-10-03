@@ -67,11 +67,11 @@ public class FlightMissionProcessor {
             case Preflight -> {
                 if (!mission.isModePc()) {
                     world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlight -> {
-                        final LocalDateTime boardingStartTime = timeline.getBlocksOff().getEstimatedTime().minusMinutes(15); // todo ak1 that is weird! need to redo!
+                        final LocalDateTime boardingStartTime = timeline.getBlocksOff().getEstimatedTime().minusMinutes(20); // todo ak0 that is weird! need to redo!
                         if (boardingStartTime.isBefore(now)) {
                             final TransportFlights.Status transportFlightStatus = transportFlight.getStatus();
-                            if (transportFlightStatus == TransportFlights.Status.Scheduled // todo ak1 hm? orly?
-                                    || transportFlightStatus == TransportFlights.Status.Checkin // todo ak1 hm? orly?
+                            if (transportFlightStatus == TransportFlights.Status.Scheduled // todo ak0 resuse tf-helper function
+                                    || transportFlightStatus == TransportFlights.Status.Checkin
                                     || transportFlightStatus == TransportFlights.Status.WaitingForBoarding) {
                                 TransportFlightControl.instance(world).startBoarding(transportFlight);
                             }

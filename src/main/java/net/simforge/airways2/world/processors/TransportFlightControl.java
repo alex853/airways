@@ -12,6 +12,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
+    private static final int BOARDING_TICK = Time.ONE_MINUTE;
 
     private final World world;
 
@@ -67,13 +68,12 @@ public class TransportFlightControl {
         final int remainedUnsold = transportFlight.getRemainedTickets().getTotal();
         if (remainedUnsold != 0) {
             // if some tickets still available then we can't tell that all PAX checked-in even if all PAX with tickets already checked-in
-            // this will lead to a case that check-in will continue be open till the end of check-in window if there are some tickets are still available
+            // this will lead to a case that check-in will continue to be open till the end of check-in window if there are some tickets are still available
             return false;
         }
 
         final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold;
-        final int paxCheckedIn = 0; // todo ak1 iterate through journeys and check their states - world.journeys().filter(j -> j.getFlightId() == tfId && j.getStatus() == WaitingForDeparture).sum(j.groupSize)
-        return paxCheckedIn == ticketsSold;
+        return transportFlight.getPaxCheckedIn() == ticketsSold;
     }
 
     public boolean checkinTimeEnds(final TransportFlights.Flight transportFlight) {
@@ -85,25 +85,38 @@ public class TransportFlightControl {
     }
 
     public void waitForBoarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Checkin);
         transportFlight.setStatus(TransportFlights.Status.WaitingForBoarding);
         transportFlight.setHeartbeatTime(0);
     }
 
     public void startBoarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding);
         transportFlight.setStatus(TransportFlights.Status.Boarding);
-        transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak1 normal implementation expected
+        transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
+    }
+
+    public void continueBoarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+        transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
     }
 
     public boolean allPaxBoarded(final TransportFlights.Flight transportFlight) {
-        return true; // todo ak1 normal implementation expected
+        checkNotNull(transportFlight);
+        return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak1 another check against sold tickets?
     }
 
     public void waitForDeparture(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight); // todo ak1 checks
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
     }
 
     public void startDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight); // todo ak1 checks
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + 10 * Time.ONE_MINUTE); // todo ak1 normal implementation expected
     }
@@ -113,6 +126,7 @@ public class TransportFlightControl {
     }
 
     public void finish(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight); // todo ak1 checks
         transportFlight.setStatus(TransportFlights.Status.Finished);
         transportFlight.setHeartbeatTime(0);
     }

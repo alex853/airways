@@ -40,6 +40,7 @@ public class JourneyProcessor {
         switch (journey.getStatus()) {
             case LookingForTickets -> lookingForTickets(world, journeyControl, journey);
             case WaitingForCheckin -> waitingForCheckin(world, journeyControl, journey);
+            case WaitingForBoarding -> waitingForBoarding(world, journeyControl, journey);
         }
     }
 
@@ -50,8 +51,8 @@ public class JourneyProcessor {
         final int toCityId = journey.getToCityId();
         final Set<Integer> toAirportIds = world.airport2city().allByCityId(toCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
 
-        final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> statusAllowsToPurchaseTicket(tf.getStatus())
-                && isDirectRoute(world, tf, fromAirportIds, toAirportIds)
+        final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> flightStatusAllowsToPurchaseTicket(tf.getStatus())
+                && isThereDirectRouteAvailable(world, tf, fromAirportIds, toAirportIds)
                 && tf.getRemainedTickets().getTotal() >= journey.getGroupSize());
 
         if (foundFlights.isEmpty()) {
@@ -61,9 +62,14 @@ public class JourneyProcessor {
 
         final TransportFlights.Flight flight = foundFlights.iterator().next();
 
+        bookDirectFlightJourney(world, journey, flight);
+    }
+
+    private static void bookDirectFlightJourney(World world, Journeys.Journey journey, TransportFlights.Flight flight) {
         journey.setStatus(Journeys.Status.WaitingForCheckin);
-        journey.setTransportFlight1Id(flight.getId());
         journey.setHeartbeatTime(world.getWorldTime());
+
+        journey.setTransportFlight1Id(flight.getId());
 
         // todo ak3 support required service type
         final CabinLayout remainedTickets = flight.getRemainedTickets();
@@ -71,20 +77,84 @@ public class JourneyProcessor {
         flight.setRemainedTickets(CabinLayout.Y(newEconomy));
     }
 
-    private static boolean statusAllowsToPurchaseTicket(final TransportFlights.Status status) {
+    private static boolean isThereDirectRouteAvailable(World world, TransportFlights.Flight tf, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {
+        final FlightMissions.Mission mission = world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow();
+        return fromAirportIds.contains(mission.getDepartureAirportId()) && toAirportIds.contains(mission.getDestinationAirportId());
+    }
+
+    private static void waitingForCheckin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        if (flight.isEmpty()) {
+            // todo ak1 cancel journey, update stats
+        } else if (flightStatusBeforeCheckin(flight.get().getStatus())) {
+            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
+            // todo ak1 what if mission is empty - cancel journey, update stats
+            final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(mission.get());
+            final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(mission.get());
+            journey.setHeartbeatTime(checkinStartTime + (int) (0.8 * (checkinEndTime - checkinStartTime)));
+        } else if (flightStatusAllowsCheckin(flight.get().getStatus())) {
+            checkin(world, journeyControl, journey);
+        } else { // checkin & boarding finished -> journey is too late
+            journey.setStatus(Journeys.Status.TooLateToBoard);
+        }
+    }
+
+    private static void checkin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        journey.setStatus(Journeys.Status.WaitingForBoarding);
+        journey.setHeartbeatTime(world.getWorldTime());
+
+        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        flight.setPaxCheckedIn(flight.getPaxCheckedIn() + journey.getGroupSize());
+    }
+
+    private static void waitingForBoarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        if (flight.isEmpty()) {
+            // todo ak1 cancel journey, update stats
+        } else if (flightStatusBeforeBoarding(flight.get().getStatus())) {
+            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
+            // todo ak1 what if mission is empty - cancel journey, update stats
+            final int boardingStartTime = TransportFlightHelper.calcBoardingStartTime(mission.get());
+            final int boardingEndTime = TransportFlightHelper.calcBoardingEndTime(mission.get());
+            journey.setHeartbeatTime(boardingStartTime + (int) (0.8 * (boardingEndTime - boardingStartTime)));
+        } else if (flight.get().getStatus() == TransportFlights.Status.Boarding) {
+            boarding(world, journeyControl, journey);
+        } else { // checkin & boarding finished -> journey is too late
+            journey.setStatus(Journeys.Status.TooLateToBoard);
+        }
+    }
+
+    private static void boarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+        journey.setStatus(Journeys.Status.OnBoard);
+        // heartbeat is turned off till deboarding
+
+        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        flight.setPaxOnBoard(flight.getPaxOnBoard() + journey.getGroupSize());
+    }
+
+    // todo ak0 journey sleeps till deboarding
+
+    // these methods will go to tf-helper
+    private static boolean flightStatusAllowsToPurchaseTicket(final TransportFlights.Status status) {
         return status == TransportFlights.Status.Scheduled
                 || status == TransportFlights.Status.Checkin
                 || status == TransportFlights.Status.WaitingForBoarding
                 || status == TransportFlights.Status.Boarding;
     }
 
-    private static boolean isDirectRoute(World world, TransportFlights.Flight tf, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {
-        final FlightMissions.Mission mission = world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow();
-        return fromAirportIds.contains(mission.getDepartureAirportId()) && toAirportIds.contains(mission.getDestinationAirportId());
+    private static boolean flightStatusBeforeCheckin(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.Scheduled;
     }
 
-    private static void waitingForCheckin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak0 temporary code, need to put real code here
-        journey.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_HOUR));
+    private static boolean flightStatusAllowsCheckin(TransportFlights.Status status) {
+        return status == TransportFlights.Status.Checkin
+                || status == TransportFlights.Status.WaitingForBoarding
+                || status == TransportFlights.Status.Boarding;
+    }
+
+    private static boolean flightStatusBeforeBoarding(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.Scheduled
+                || status == TransportFlights.Status.Checkin
+                || status == TransportFlights.Status.WaitingForBoarding;
     }
 }

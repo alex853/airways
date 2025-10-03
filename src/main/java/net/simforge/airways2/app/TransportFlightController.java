@@ -60,7 +60,8 @@ public class TransportFlightController {
                 mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
                 flight.getTotalTickets().toString(),
                 flight.getRemainedTickets().toString(),
-                flight.getPaxOnBoard().toString()
+                flight.getPaxCheckedIn(),
+                flight.getPaxOnBoard()
             );
     }
 
@@ -79,6 +80,7 @@ public class TransportFlightController {
         private String pArr;
         private String tTkts;
         private String rTkts;
-        private String pOnBrd;
+        private int ckdIn;
+        private int pOnBrd;
     }
 }

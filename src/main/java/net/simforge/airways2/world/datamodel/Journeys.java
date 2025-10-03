@@ -158,7 +158,7 @@ public class Journeys {
         Finished(10),
         //todo ak2 persons CouldNotFindPersons(11),
         CouldNotFindTickets(12),
-        //todo ak1 not sure we need it TooLateToBoard(13),
+        TooLateToBoard(13),
         //todo ak1 not sure we need it Terminated(14),
         ;
 

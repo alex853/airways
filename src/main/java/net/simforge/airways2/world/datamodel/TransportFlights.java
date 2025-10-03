@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -11,6 +12,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class TransportFlights {
@@ -24,7 +26,7 @@ public class TransportFlights {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // scheduledFlightId
             .withDataField(DataField.of(DataType.Signed32bit)) // total tickets - 10bits Y(economy), 8bits W(premium economy), 7bits J(business), 5bit F(first)
             .withDataField(DataField.of(DataType.Signed32bit)) // remained tickets
-            .withDataField(DataField.of(DataType.Signed32bit)) // pax on board
+            .withDataField(DataField.of(DataType.Signed32bit)) // checked-in / on board / ...
             .build();
 
     private final DataField statusField = storage.getDataField(0);
@@ -33,7 +35,10 @@ public class TransportFlights {
     private final DataField scheduledFlightIdField = storage.getDataField(3);
     private final DataField totalTicketsField = storage.getDataField(4);
     private final DataField remainedTicketsField = storage.getDataField(5);
-    private final DataField paxOnBoardField = storage.getDataField(6);
+    private final DataField paxCheckedInOnBoardField = storage.getDataField(6);
+    private final BitAccessField paxCheckedInOnBoardFieldBits = BitAccessField.instance(storage, paxCheckedInOnBoardField);
+    private final BitAccessField.Section paxCheckedInBitField = paxCheckedInOnBoardFieldBits.section(0, 10);
+    private final BitAccessField.Section paxOnBoardBitField = paxCheckedInOnBoardFieldBits.section(10, 10);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -56,7 +61,7 @@ public class TransportFlights {
         storage.set(id, scheduledFlightIdField, scheduledFlight != null ? scheduledFlight.getId() : 0);
         storage.set(id, totalTicketsField, totalTickets.toSigned32bit());
         storage.set(id, remainedTicketsField, totalTickets.toSigned32bit());
-        storage.set(id, paxOnBoardField, CabinLayout.NOBODY.toSigned32bit());
+        storage.set(id, paxCheckedInOnBoardField, 0);
         return flight;
     }
 
@@ -137,8 +142,22 @@ public class TransportFlights {
             storage.set(id, remainedTicketsField, remainedTickets.toSigned32bit());
         }
 
-        public CabinLayout getPaxOnBoard() {
-            return CabinLayout.fromSigned32bit(storage.getAsInt(id, paxOnBoardField));
+        public int getPaxCheckedIn() {
+            return paxCheckedInBitField.getInt(id);
+        }
+
+        public void setPaxCheckedIn(final int paxCheckedIn) {
+            checkArgument(paxCheckedIn >= 0);
+            paxCheckedInBitField.setInt(id, paxCheckedIn);
+        }
+
+        public int getPaxOnBoard() {
+            return paxOnBoardBitField.getInt(id);
+        }
+
+        public void setPaxOnBoard(final int paxOnBoard) {
+            checkArgument(paxOnBoard >= 0);
+            paxOnBoardBitField.setInt(id, paxOnBoard);
         }
     }
 
