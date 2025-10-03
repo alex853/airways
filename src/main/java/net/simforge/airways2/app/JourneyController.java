@@ -18,17 +18,17 @@ public class JourneyController {
     @GetMapping("/all")
     public List<JourneyDto> getAll() {
         return worldBean.read(world -> world.journeys().all().stream()
-                .map(JourneyController::toDto)
+                .map(j -> toDto(world, j))
                 .toList());
     }
 
-    private static JourneyDto toDto(final Journeys.Journey e) {
+    private static JourneyDto toDto(final World world, final Journeys.Journey e) {
         return new JourneyDto(
                 e.getId(),
                 e.getStatus().name(),
                 WebTime.ts(e.getHeartbeatTime()),
-                e.getFromCityId(),
-                e.getToCityId(),
+                world.cities().byId(e.getFromCityId()).orElseThrow().getName(),
+                world.cities().byId(e.getToCityId()).orElseThrow().getName(),
                 e.getGroupSize(),
                 e.getTransportFlight1Id() != 0 ? e.getTransportFlight1Id() : null);
     }
