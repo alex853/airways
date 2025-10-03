@@ -29,6 +29,7 @@ public class JourneyController {
     private static JourneyDto toDto(final World world, final Journeys.Journey e) {
         final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
         final Optional<FlightMissions.Mission> fm1 = tf1.map(f -> world.flightMissions().byId(f.getFlightMissionId())).orElse(Optional.empty());
+        // todo ak0 'stopover support' - tf2
         return new JourneyDto(
                 e.getId(),
                 e.getStatus().name(),

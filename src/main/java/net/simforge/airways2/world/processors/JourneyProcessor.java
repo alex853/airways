@@ -59,26 +59,26 @@ public class JourneyProcessor {
         final int toCityId = journey.getToCityId();
         final Set<Integer> toAirportIds = world.airport2city().allByCityId(toCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
 
+        // todo ak0 'stopover support'
         final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
                 && isThereDirectRouteAvailable(world, tf, fromAirportIds, toAirportIds)
                 && tf.getRemainedTickets().getTotal() >= journey.getGroupSize());
 
         if (foundFlights.isEmpty()) {
             journey.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_DAY));
+            // todo ak1 counter of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
             return;
         }
 
         final TransportFlights.Flight flight = foundFlights.iterator().next();
 
         bookDirectFlightJourney(world, journey, flight);
+
+        journeyControl.waitForCheckin(journey);
     }
 
-    private static void bookDirectFlightJourney(World world, Journeys.Journey journey, TransportFlights.Flight flight) {
-        journey.setStatus(Journeys.Status.WaitingForCheckIn);
-        journey.setHeartbeatTime(world.getWorldTime());
-
+    private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
         journey.setTransportFlight1Id(flight.getId());
-
         // todo ak3 support required service type
         final CabinLayout remainedTickets = flight.getRemainedTickets();
         final int newEconomy = remainedTickets.getEconomy() - journey.getGroupSize();
@@ -157,18 +157,22 @@ public class JourneyProcessor {
 
     private static void justArrived(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         // todo ak1 update stats for a airport pair
-        // todo ak0 check tf1/tf2/... and fly the next leg if exists
-        journey.setTransportFlight1Id(0);
 
-        journey.setStatus(Journeys.Status.ItinerariesDone);
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+        journey.setTransportFlight1Id(journey.getTransportFlight2Id());
+        journey.setTransportFlight2Id(0);
+        if (journey.getTransportFlight1Id() == 0) {
+            journey.setStatus(Journeys.Status.ItinerariesDone);
+            journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+        } else {
+            journeyControl.waitForCheckin(journey);
+        }
     }
 
     private static void itinerariesDone(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         // todo ak1 update stats for a city2city flow
-        // todo ak1 extension - roundtrip support
-        //                      if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
-        //                      if this is a 'return trip' then finish the journey
+        // todo ak1 'roundtrip support'
+        //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
+        //          if this is a 'return trip' then finish the journey
 
         journey.setStatus(Journeys.Status.Finished);
     }

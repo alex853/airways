@@ -142,6 +142,14 @@ public class Journeys {
         public void setTransportFlight1Id(final int transportFlight1Id) {
             storage.set(id, transportFlight1IdField, transportFlight1Id);
         }
+
+        public int getTransportFlight2Id() {
+            return storage.getAsInt(id, transportFlight2IdField);
+        }
+
+        public void setTransportFlight2Id(final int transportFlight2Id) {
+            storage.set(id, transportFlight2IdField, transportFlight2Id);
+        }
     }
 
     public enum Status {

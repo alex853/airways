@@ -5,6 +5,8 @@ import net.simforge.airways2.world.datamodel.City2CityFlows;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 
+import java.util.EnumSet;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -28,6 +30,16 @@ public class JourneyControl {
                 c2cFlow.getNextGroupSize());
         journey.setHeartbeatTime(world.getWorldTime());
         return journey;
+    }
+
+    public void waitForCheckin(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(EnumSet.of(
+                        Journeys.Status.LookingForTickets,
+                        Journeys.Status.JustArrived)
+                .contains(journey.getStatus()));
+        journey.setStatus(Journeys.Status.WaitingForCheckIn);
+        journey.setHeartbeatTime(world.getWorldTime());
     }
 
     public void scheduleDeboardingForAllOnBoardJourneys(final TransportFlights.Flight transportFlight) {
