@@ -56,41 +56,127 @@ public class JourneyProcessor {
 
     private static void lookingForTickets(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         // todo ak1 'roundtrip support' - consider 'direction' when determining fromCityId and toCityId
-        final int fromCityId = journey.getFromCityId();
-        final Set<Integer> fromAirportIds = world.airport2city().allByCityId(fromCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
 
-        final int toCityId = journey.getToCityId();
-        final Set<Integer> toAirportIds = world.airport2city().allByCityId(toCityId).stream().map(Airport2City.Link::getAirportId).collect(Collectors.toSet());
+        final Set<Integer> fromAirportIds = world.airport2city()
+                .allByCityId(journey.getFromCityId()).stream()
+                .map(Airport2City.Link::getAirportId)
+                .collect(Collectors.toSet());
+        final Set<Integer> toAirportIds = world.airport2city()
+                .allByCityId(journey.getToCityId()).stream()
+                .map(Airport2City.Link::getAirportId)
+                .collect(Collectors.toSet());
 
-        // todo ak0 'stopover support'
-        final Collection<TransportFlights.Flight> foundFlights = world.transportFlights().filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
-                && isThereDirectRouteAvailable(world, tf, fromAirportIds, toAirportIds)
-                && tf.getRemainedTickets().getTotal() >= journey.getGroupSize());
-
-        if (foundFlights.isEmpty()) {
-            journey.setHeartbeatTime(world.getWorldTime() + (int)(Math.random() * Time.ONE_DAY));
-            // todo ak1 counter of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
+        final Collection<TransportFlights.Flight> foundDirectFlights = findDirectFlights(world, journey, fromAirportIds, toAirportIds);
+        if (!foundDirectFlights.isEmpty()) {
+            final TransportFlights.Flight directFlight = foundDirectFlights.iterator().next();
+            bookDirectFlightJourney(world, journey, directFlight);
+            journeyControl.waitForCheckin(journey);
             return;
         }
 
-        final TransportFlights.Flight flight = foundFlights.iterator().next();
+        final Collection<List<TransportFlights.Flight>> stopoverRoutes = findStopoverRoutes(world, journey, fromAirportIds, toAirportIds);
+        if (!stopoverRoutes.isEmpty()) {
+            final List<TransportFlights.Flight> stopoverRoute = stopoverRoutes.iterator().next();
+            if (stopoverRoute.size() == 2) {
+                final TransportFlights.Flight flight1 = stopoverRoute.get(0);
+                final TransportFlights.Flight flight2 = stopoverRoute.get(1);
+                bookStopoverFlightsJourney(world, journey, flight1, flight2);
+                journeyControl.waitForCheckin(journey);
+                return;
+            }
+        }
 
-        bookDirectFlightJourney(world, journey, flight);
+        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_DAY));
+        // todo ak1 counter of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
+    }
 
-        journeyControl.waitForCheckin(journey);
+    private static Collection<TransportFlights.Flight> findDirectFlights(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
+        final int TIME_RESERVE = 4 * Time.ONE_HOUR;
+
+        return world.transportFlights()
+                .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
+                                && isThereEnoughTickets(journey, tf)).stream()
+                .map(tf -> toTfm(world, tf))
+                .filter(tfm -> flightDepartsLaterThan(tfm, world.getWorldTime() + TIME_RESERVE)
+                        && isThereDirectRouteAvailable(tfm, fromAirportIds, toAirportIds))
+                .map(tfm -> tfm.tf)
+                .toList();
+    }
+
+    private static Collection<List<TransportFlights.Flight>> findStopoverRoutes(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
+        final Collection<List<TransportFlights.Flight>> result = new ArrayList<>();
+
+        final int TIME_RESERVE = 4 * Time.ONE_HOUR;
+
+        final Collection<TFM> allFlight1s = world.transportFlights()
+                .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
+                        && isThereEnoughTickets(journey, tf)).stream()
+                .map(tf -> toTfm(world, tf))
+                .filter(tfm -> flightDepartsFrom(tfm, fromAirportIds)
+                        && flightDepartsLaterThan(tfm, world.getWorldTime() + TIME_RESERVE)
+                ).toList();
+
+        for (final TFM flight1 : allFlight1s) {
+            final Collection<TFM> allFlight2s = world.transportFlights()
+                    .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
+                            && isThereEnoughTickets(journey, tf)).stream()
+                    .map(tf -> toTfm(world, tf))
+                    .filter(tfm -> flightDepartsFrom(tfm, Collections.singleton(flight1.fm.getDestinationAirportId()))
+                            && flightArrivesTo(tfm, toAirportIds)
+                            && flightDepartsLaterThan(tfm, flight1.fm.getPlannedArrivalWorldTime() + TIME_RESERVE)
+                    ).toList();
+            allFlight2s.forEach(flight2 -> result.add(Arrays.asList(flight1.tf, flight2.tf)));
+        }
+
+        return result;
+    }
+
+    private static boolean flightDepartsLaterThan(TFM tfm, int departureTimeThreshold) {
+        return tfm.fm.getPlannedDepartureWorldTime() >= departureTimeThreshold;
+    }
+
+    private static boolean flightDepartsFrom(TFM tfm, Set<Integer> fromAirportIds) {
+        return fromAirportIds.contains(tfm.fm.getDepartureAirportId());
+    }
+
+    private static boolean flightArrivesTo(TFM tfm, Set<Integer> toAirportIds) {
+        return toAirportIds.contains(tfm.fm.getDestinationAirportId());
+    }
+
+    private static class TFM {
+        private final TransportFlights.Flight tf;
+        private final FlightMissions.Mission fm;
+
+        public TFM(TransportFlights.Flight tf, FlightMissions.Mission fm) {
+            this.tf = tf;
+            this.fm = fm;
+        }
+    }
+
+    private static TFM toTfm(final World world, final TransportFlights.Flight tf) {
+        return new TFM(tf, world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow());
+    }
+
+    // todo ak3 'cabin service'
+    private static boolean isThereEnoughTickets(Journeys.Journey journey, TransportFlights.Flight tf) {
+        return tf.getRemainedTickets().getTotal() >= journey.getGroupSize();
     }
 
     private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
         journey.setTransportFlight1Id(flight.getId());
-        // todo ak3 support required service type
-        final CabinLayout remainedTickets = flight.getRemainedTickets();
-        final int newEconomy = remainedTickets.getEconomy() - journey.getGroupSize();
-        flight.setRemainedTickets(CabinLayout.Y(newEconomy));
+        TransportFlightControl.instance(world).obtainFlightTickets(flight, journey.getGroupSize(), CabinLayout.Service.Y);
     }
 
-    private static boolean isThereDirectRouteAvailable(World world, TransportFlights.Flight tf, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {
-        final FlightMissions.Mission mission = world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow();
-        return fromAirportIds.contains(mission.getDepartureAirportId()) && toAirportIds.contains(mission.getDestinationAirportId());
+    private static void bookStopoverFlightsJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight1, final TransportFlights.Flight flight2) {
+        journey.setTransportFlight1Id(flight1.getId());
+        TransportFlightControl.instance(world).obtainFlightTickets(flight1, journey.getGroupSize(), CabinLayout.Service.Y);
+
+        journey.setTransportFlight2Id(flight2.getId());
+        TransportFlightControl.instance(world).obtainFlightTickets(flight2, journey.getGroupSize(), CabinLayout.Service.Y);
+    }
+
+    private static boolean isThereDirectRouteAvailable(TFM tfm, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {
+        return fromAirportIds.contains(tfm.fm.getDepartureAirportId()) && toAirportIds.contains(tfm.fm.getDestinationAirportId());
     }
 
     private static void waitingForCheckin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {

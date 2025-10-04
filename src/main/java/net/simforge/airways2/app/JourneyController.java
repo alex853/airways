@@ -28,8 +28,11 @@ public class JourneyController {
 
     private static JourneyDto toDto(final World world, final Journeys.Journey e) {
         final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
-        final Optional<FlightMissions.Mission> fm1 = tf1.map(f -> world.flightMissions().byId(f.getFlightMissionId())).orElse(Optional.empty());
-        // todo ak0 'stopover support' - tf2
+        final Optional<FlightMissions.Mission> fm1 = tf1.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
+
+        final Optional<TransportFlights.Flight> tf2 = world.transportFlights().byId(e.getTransportFlight1Id());
+        final Optional<FlightMissions.Mission> fm2 = tf2.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
+
         return new JourneyDto(
                 e.getId(),
                 e.getStatus().name(),
@@ -39,10 +42,14 @@ public class JourneyController {
                 e.getToCityId(),
                 world.cities().byId(e.getToCityId()).orElseThrow().getName(),
                 e.getGroupSize(),
-                tf1.map(f -> f.getId()).orElse(null),
+                tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
                 fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
-                fm1.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null)
+                fm1.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null),
+                tf2.map(TransportFlights.Flight::getId).orElse(null),
+                tf2.map(f -> f.getStatus().name()).orElse(null),
+                fm2.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
+                fm2.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null)
         );
     }
 
@@ -61,5 +68,9 @@ public class JourneyController {
         private String tf1St;
         private String tf1From;
         private String tf1To;
+        private Integer tf2Id;
+        private String tf2St;
+        private String tf2From;
+        private String tf2To;
     }
 }

@@ -43,6 +43,13 @@ public class TransportFlightControl {
         return transportFlight;
     }
 
+    // todo ak3 'cabin service'
+    public void obtainFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
+        final CabinLayout remainedTickets = flight.getRemainedTickets();
+        final int newEconomy = remainedTickets.getEconomy() - tickets;
+        flight.setRemainedTickets(CabinLayout.Y(newEconomy));
+    }
+
     public boolean checkinTimeComes(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Scheduled);
