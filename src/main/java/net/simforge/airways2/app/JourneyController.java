@@ -30,7 +30,7 @@ public class JourneyController {
         final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
         final Optional<FlightMissions.Mission> fm1 = tf1.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
 
-        final Optional<TransportFlights.Flight> tf2 = world.transportFlights().byId(e.getTransportFlight1Id());
+        final Optional<TransportFlights.Flight> tf2 = world.transportFlights().byId(e.getTransportFlight2Id());
         final Optional<FlightMissions.Mission> fm2 = tf2.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
 
         return new JourneyDto(
