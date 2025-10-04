@@ -44,6 +44,12 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(164, "AW164", "F-AUWD", "EIDW", "LFPG", "13:00"),
             new ScheduledFlight(165, "AW165", "F-AUWD", "LFPG", "EGPH", "16:00"),
             new ScheduledFlight(166, "AW166", "F-AUWD", "EGPH", "LFPG", "19:00"),
+            new ScheduledFlight(171, "AW171", "F-AUWE", "LFPG", "LIMC", "04:30"),
+            new ScheduledFlight(172, "AW172", "F-AUWE", "LIMC", "LFPG", "08:00"),
+            new ScheduledFlight(173, "AW173", "F-AUWE", "LFPG", "LEMD", "11:30"),
+            new ScheduledFlight(174, "AW174", "F-AUWE", "LEMD", "LFPG", "15:30"),
+//            new ScheduledFlight(175, "AW175", "F-AUWE", "LFPG", "EGPH", "16:00"),
+//            new ScheduledFlight(176, "AW176", "F-AUWE", "EGPH", "LFPG", "19:00"),
     };
 
     public static void process(final World world) {
