@@ -287,6 +287,14 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/journey/set-heartbeat-to-now")
+    public String kickAllLookingForTickets(@RequestParam(name = "aircraftId") final int journeyId) {
+        return worldBean.modifySync(world -> {
+            world.journeys().byId(journeyId).orElseThrow().setHeartbeatTime(world.getWorldTime());
+            return "DONE";
+        });
+    }
+
     @GetMapping("/fix-682")
     public void fix682() {
         worldBean.modifySync(world -> {
