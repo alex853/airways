@@ -28,6 +28,8 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
             new ScheduledFlight(121, "AW121", "F-AUWA", "LFPG", "LIRF", "11:00"),
             new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
+            new ScheduledFlight(103, "AW103", "F-AUWA", "LFPG", "EGLL", "19:00"),
+            new ScheduledFlight(104, "AW104", "F-AUWA", "EGLL", "LFPG", "22:00"),
             new ScheduledFlight(131, "AW131", "F-AUWB", "LFPG", "EDDM", "06:00"),
             new ScheduledFlight(132, "AW132", "F-AUWB", "EDDM", "LFPG", "10:00"),
             new ScheduledFlight(141, "AW141", "F-AUWB", "LFPG", "LEBL", "14:00"),
