@@ -87,7 +87,7 @@ public class JourneyProcessor {
         }
 
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_DAY));
-        // todo ak1 counter of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
+        // todo ak1 'limiting counter' to limit number of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
     }
 
     private static Collection<TransportFlights.Flight> findDirectFlights(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
@@ -157,9 +157,8 @@ public class JourneyProcessor {
         return new TFM(tf, world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow());
     }
 
-    // todo ak0 'cabin service'
     private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
-        return tf.getRemainedTickets().getTotal() >= journey.getGroupSize();
+        return tf.getRemainedTickets().get(journey.getCabinService()) >= journey.getGroupSize();
     }
 
     private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
@@ -182,10 +181,10 @@ public class JourneyProcessor {
     private static void waitingForCheckin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak1 cancel journey, update stats
+            // todo ak1 cancel journey, 'update stats'
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
-            // todo ak1 what if mission is empty - cancel journey, update stats
+            // todo ak1 what if mission is empty - cancel journey, 'update stats'
             journey.setHeartbeatTime(TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
             checkin(world, journeyControl, journey);
@@ -205,10 +204,10 @@ public class JourneyProcessor {
     private static void waitingForBoarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak1 cancel journey, update stats
+            // todo ak1 cancel journey, 'update stats'
         } else if (TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
-            // todo ak1 what if mission is empty - cancel journey, update stats
+            // todo ak1 what if mission is empty - cancel journey, 'update stats'
             journey.setHeartbeatTime(TransportFlightHelper.calcBoardingStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.BOARDING_DURATION));
         } else if (flight.get().getStatus() == TransportFlights.Status.Boarding) {
             boarding(world, journeyControl, journey);
@@ -228,7 +227,7 @@ public class JourneyProcessor {
     private static void waitingForDeboarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak1 cancel journey, update stats
+            // todo ak1 cancel journey, 'update stats'
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
             deboarding(world, journeyControl, journey);
         } else { // todo ak2 ???
@@ -245,7 +244,7 @@ public class JourneyProcessor {
     }
 
     private static void justArrived(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak1 update stats for a airport pair
+        // todo ak1 'update stats' small increase to all c2c-s which can be connected via this airport pair
 
         journey.setTransportFlight1Id(journey.getTransportFlight2Id());
         journey.setTransportFlight2Id(0);
@@ -258,7 +257,8 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak1 update stats for a city2city flow
+        // todo ak1 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
+
         // todo ak1 'roundtrip support'
         //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
         //          if this is a 'return trip' then finish the journey

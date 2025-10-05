@@ -40,7 +40,7 @@ public class TransportFlightControl {
         final TransportFlights.Flight transportFlight = world.transportFlights().create(
                 flightMission,
                 scheduledFlight,
-                CabinLayout.Y(160));
+                CabinLayout.JY(8, 138));
 
         final int checkinStartsAt = TransportFlightHelper.calcCheckinStartTime(flightMission);
         transportFlight.setHeartbeatTime(checkinStartsAt);
@@ -53,10 +53,12 @@ public class TransportFlightControl {
     }
 
     public void obtainFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
-        // todo ak0 'cabin service' support and checks
+        checkNotNull(flight);
+        checkArgument(tickets >= 0);
+        checkNotNull(service);
+
         final CabinLayout remainedTickets = flight.getRemainedTickets();
-        final int newEconomy = remainedTickets.getEconomy() - tickets;
-        flight.setRemainedTickets(CabinLayout.Y(newEconomy));
+        flight.setRemainedTickets(remainedTickets.occupySeats(tickets, service));
     }
 
     public boolean ifCheckInTimeComes(final TransportFlights.Flight transportFlight) {

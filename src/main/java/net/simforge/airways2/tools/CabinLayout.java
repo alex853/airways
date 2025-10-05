@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public class CabinLayout {
     private static final int ECONOMY_LENGTH = 10;
@@ -48,6 +49,12 @@ public class CabinLayout {
         return new CabinLayout(economy, 0, 0, 0);
     }
 
+    public static CabinLayout JY(final int business, final int economy) {
+        checkArgument(0 <= business && business <= BUSINESS_MAX);
+        checkArgument(0 <= economy && economy <= ECONOMY_MAX);
+        return new CabinLayout(economy, 0, business, 0);
+    }
+
     public static CabinLayout FJWY(final int first, final int business, final int premiumEconomy, final int economy) {
         checkArgument(0 <= economy && economy <= ECONOMY_MAX);
         checkArgument(0 <= premiumEconomy && premiumEconomy <= PREMIUM_ECONOMY_MAX);
@@ -74,6 +81,25 @@ public class CabinLayout {
 
     public int getTotal() {
         return economy + premiumEconomy + business + first;
+    }
+
+    public int get(final Service cabinService) {
+        return switch (cabinService) {
+            case Y -> economy;
+            case W -> premiumEconomy;
+            case J -> business;
+            case F -> first;
+        };
+    }
+
+    public CabinLayout occupySeats(final int seats, final Service service) {
+        checkArgument(seats >= 0);
+        checkNotNull(service);
+        return new CabinLayout(
+                economy - (service == Service.Y ? seats : 0),
+                premiumEconomy - (service == Service.W ? seats : 0),
+                business - (service == Service.J ? seats : 0),
+                first - (service == Service.F ? seats : 0));
     }
 
     public int toSigned32bit() {
