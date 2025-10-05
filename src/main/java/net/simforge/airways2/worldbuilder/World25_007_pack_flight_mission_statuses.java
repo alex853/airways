@@ -5,6 +5,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 
 import java.io.IOException;
 
+@Deprecated
 public class World25_007_pack_flight_mission_statuses {
     public static void main(String[] args) throws IOException {
         final World world = World25.load();

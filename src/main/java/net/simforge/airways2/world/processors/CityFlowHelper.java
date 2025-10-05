@@ -15,6 +15,9 @@ public class CityFlowHelper {
     public static final int REDISTRIBUTION_PERIOD = 24 * Time.ONE_HOUR;
     public static final float FLOW_UNITS_THRESHOLD = 0.1f;
     private static final int ONE_DISTANCE_UNIT_NM = 500;
+    private static final int FULL_UNITS_MINIMAL_DISTANCE_NM = 250;
+    private static final int ZERO_UNITS_DISTANCE_NM = 50;
+
     public static final float BASE_MOBILITY_PERCENT = 0.001f; // 0.1%
 
     public static final float DEFAULT_ATTRACTION_FACTOR = 1.0f;
@@ -25,18 +28,27 @@ public class CityFlowHelper {
     private static final float MAX_SUCCESS_RATE = 1.0f;
 
     public static float getFlowUnits(final World world, final CityFlows.Flow fromCityFlow, final CityFlows.Flow toCityFlow) {
-        final float attractionUnits = toCityFlow.getAttractionFactor();
-
         final Cities.City fromCity = world.cities().byId(fromCityFlow.getId()).orElseThrow();
         final Cities.City toCity = world.cities().byId(toCityFlow.getId()).orElseThrow();
 
         final float dist = (float) Geo.distance(fromCity.getCoords(), toCity.getCoords());
 
-        final float distUnits = Math.max(dist / ONE_DISTANCE_UNIT_NM, 1);
+        final float attractionUnits = toCityFlow.getAttractionFactor();
 
-        // higher attraction - higher flow units
-        // longer distance - lower flow units
-        return attractionUnits / distUnits;
+        return calcFlowUnits(dist, attractionUnits);
+    }
+
+    // higher attraction - higher flow units
+    // longer distance - lower flow units
+    public static float calcFlowUnits(final float dist, final float attractionUnits) {
+        if (dist <= ZERO_UNITS_DISTANCE_NM) {
+            return 0;
+        } else if (dist <= FULL_UNITS_MINIMAL_DISTANCE_NM) {
+            return attractionUnits * (dist - ZERO_UNITS_DISTANCE_NM) / (FULL_UNITS_MINIMAL_DISTANCE_NM - ZERO_UNITS_DISTANCE_NM);
+        } else {
+            final float distUnits = Math.max(dist / ONE_DISTANCE_UNIT_NM, 1);
+            return attractionUnits / distUnits;
+        }
     }
 
     public static int randomGroupSize() {

@@ -52,9 +52,9 @@ public class TransportFlightControl {
         return transportFlight;
     }
 
-    // todo ak3 'cabin service'
+    // todo ak0 'cabin service'
     public void obtainFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
-        // todo ak3 'cabin service' checks
+        // todo ak0 'cabin service' checks
         final CabinLayout remainedTickets = flight.getRemainedTickets();
         final int newEconomy = remainedTickets.getEconomy() - tickets;
         flight.setRemainedTickets(CabinLayout.Y(newEconomy));

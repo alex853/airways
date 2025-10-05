@@ -157,7 +157,7 @@ public class JourneyProcessor {
         return new TFM(tf, world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow());
     }
 
-    // todo ak3 'cabin service'
+    // todo ak0 'cabin service'
     private static boolean isThereEnoughTickets(Journeys.Journey journey, TransportFlights.Flight tf) {
         return tf.getRemainedTickets().getTotal() >= journey.getGroupSize();
     }
