@@ -163,15 +163,15 @@ public class JourneyProcessor {
 
     private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
         journey.setTransportFlight1Id(flight.getId());
-        TransportFlightControl.instance(world).obtainFlightTickets(flight, journey.getGroupSize(), CabinLayout.Service.Y);
+        TransportFlightControl.instance(world).obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
     }
 
     private static void bookStopoverFlightsJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight1, final TransportFlights.Flight flight2) {
         journey.setTransportFlight1Id(flight1.getId());
-        TransportFlightControl.instance(world).obtainFlightTickets(flight1, journey.getGroupSize(), CabinLayout.Service.Y);
+        TransportFlightControl.instance(world).obtainFlightTickets(flight1, journey.getGroupSize(), journey.getCabinService());
 
         journey.setTransportFlight2Id(flight2.getId());
-        TransportFlightControl.instance(world).obtainFlightTickets(flight2, journey.getGroupSize(), CabinLayout.Service.Y);
+        TransportFlightControl.instance(world).obtainFlightTickets(flight2, journey.getGroupSize(), journey.getCabinService());
     }
 
     private static boolean isThereDirectRouteAvailable(TFM tfm, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {
