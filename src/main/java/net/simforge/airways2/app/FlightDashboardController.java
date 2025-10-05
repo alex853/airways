@@ -27,7 +27,9 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flyi
 @RestController
 @RequestMapping("/flight-dashboard")
 @CrossOrigin
-public class FlightDashboardController { // todo ak2 migrate ids to sqids
+public class FlightDashboardController {
+    // todo ak1 migrate ids to sqids
+    // todo ak1 check that there is enough logging and event-logging
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -86,7 +88,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
 
     private String getFlightMissionPermittedActions(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
-            case Dispatched -> "start"; // todo ak1 deny start too early
+            case Dispatched -> "start"; // todo ak0 deny start too early
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : null;
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : null;
@@ -99,9 +101,9 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> CheckIn.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case CheckIn -> null; // todo ak1
+            case CheckIn -> null; // todo ak0
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
-            case Boarding -> WaitingForDeparture.name() + " till around ??:??"; // todo ak1
+            case Boarding -> WaitingForDeparture.name() + " till around ??:??"; // todo ak0
             case WaitingForDeparture -> Departure.name();
             case Departure -> Flying.name();
             case Flying -> Arrival.name();
@@ -129,7 +131,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"start".equals(permitted)) {
                 throw new IllegalStateException("start is not permitted");
             }
@@ -152,7 +154,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
-            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak1 permitted actions review
+            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak0 permitted actions review
             if (!"start-boarding".equals(permitted)) {
                 throw new IllegalStateException("start-boarding is not permitted");
             }
@@ -171,7 +173,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"blocks-off".equals(permitted)) {
                 throw new IllegalStateException("blocks-off is not permitted");
             }
@@ -191,7 +193,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"takeoff".equals(permitted)) {
                 throw new IllegalStateException("takeoff is not permitted");
             }
@@ -232,7 +234,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"blocks-on".equals(permitted)) {
                 throw new IllegalStateException("blocks-on is not permitted");
             }
@@ -255,7 +257,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
-            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak1 permitted actions review
+            final String permitted = getTransportFlightPermittedActions(transportFlight, flight); // todo ak0 permitted actions review
             if (!"start-deboarding".equals(permitted)) {
                 throw new IllegalStateException("start-deboarding is not permitted");
             }
@@ -275,7 +277,7 @@ public class FlightDashboardController { // todo ak2 migrate ids to sqids
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"finish".equals(permitted)) {
                 throw new IllegalStateException("finish is not permitted");
             }
