@@ -39,26 +39,26 @@ public class TransportFlightProcessor {
         transportFlight.setHeartbeatTime(0);
         switch (transportFlight.getStatus()) {
             case Scheduled -> {
-                if (tfControl.checkinTimeComes(transportFlight)) {
+                if (tfControl.ifCheckInTimeComes(transportFlight)) {
                     tfControl.startCheckIn(transportFlight);
                 }
             }
             case CheckIn -> {
-                if (tfControl.checkinTimeEnds(transportFlight) || tfControl.allPaxCheckedIn(transportFlight)) {
+                if (tfControl.ifCheckInTimeEnds(transportFlight) || tfControl.areAllPaxCheckedIn(transportFlight)) {
                     tfControl.waitForBoarding(transportFlight);
                 } else {
                     tfControl.continueCheckIn(transportFlight);
                 }
             }
             case Boarding -> {
-                if (tfControl.boardingTimeEnds(transportFlight) || tfControl.allPaxBoarded(transportFlight)) {
+                if (tfControl.ifBoardingTimeEnds(transportFlight) || tfControl.areAllPaxBoarded(transportFlight)) {
                     tfControl.waitForDeparture(transportFlight);
                 } else {
                     tfControl.continueBoarding(transportFlight);
                 }
             }
             case Deboarding -> {
-                if (tfControl.allPaxDeboarded(transportFlight)) {
+                if (tfControl.areAllPaxDeboarded(transportFlight)) {
                     tfControl.finish(transportFlight);
                 } else {
                     tfControl.continueDeboarding(transportFlight);

@@ -19,6 +19,7 @@ public class FlightsCleanup {
                 .filter(f -> f.getStatus() == FlightMissions.Status.Cancelled
                         && f.getPlannedDepartureWorldTime() <= worldTime - 1 * Time.ONE_DAY);
         cancelled.forEach(f -> {
+            // todo ak2 'event log cleanup refinement' - remove event-logs
             world.flightMissions().deleteById(f.getId());
             removeTransportFlights(world, f);
         });
@@ -27,6 +28,7 @@ public class FlightsCleanup {
                 .filter(f -> f.getStatus() == FlightMissions.Status.Finished
                         && f.getActualArrivalWorldTime() <= worldTime - 10 * Time.ONE_DAY);
         finished.forEach(f -> {
+            // todo ak2 'event log cleanup refinement' - remove event-logs
             world.flightMissions().deleteById(f.getId());
             removeTransportFlights(world, f);
         });

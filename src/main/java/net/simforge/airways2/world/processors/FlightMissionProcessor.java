@@ -46,17 +46,21 @@ public class FlightMissionProcessor {
 
     private static void processMission(final World world, final FlightMissions.Mission mission) {
         final int worldTime = world.getWorldTime();
+        final LocalDateTime now = Time.toLdt(worldTime);
+
         final FlightMissionControl flightControl = world.flightMissionControl();
+        final TransportFlightControl tfControl = TransportFlightControl.instance(world);
+
         final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
         final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);
-        final LocalDateTime now = Time.toLdt(worldTime);
+
         switch (mission.getStatus()) {
             case Preflight -> {
                 if (!mission.isModePc()) {
                     transportFlight.ifPresent(tf -> {
                         if (TransportFlightHelper.calcBoardingStartTime(mission) <= worldTime) {
                             if (TransportFlightHelper.flightStatusAllowsToStartBoarding(tf.getStatus())) {
-                                TransportFlightControl.instance(world).startBoarding(tf);
+                                tfControl.startBoarding(tf);
                             }
                         }
                     });
@@ -77,7 +81,7 @@ public class FlightMissionProcessor {
             case Arrival -> {
                 if (!mission.isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                     flightControl.blocksOn(mission);
-                    transportFlight.ifPresent(tf -> TransportFlightControl.instance(world).scheduleAutomaticDeboarding(tf));
+                    transportFlight.ifPresent(tfControl::scheduleAutomaticDeboarding);
                 }
             }
             case Postflight -> {

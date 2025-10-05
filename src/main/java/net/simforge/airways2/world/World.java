@@ -147,6 +147,10 @@ public class World {
         eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), null, null);
     }
 
+    public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1) {
+        eventLog.log(getWorldTime(), eventType, object1, null, null, null);
+    }
+
     public Countries countries() {
         return countries;
     }

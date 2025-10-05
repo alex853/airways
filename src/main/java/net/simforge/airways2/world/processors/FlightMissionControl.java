@@ -8,14 +8,16 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-// todo ak2 add precondition checks for all the statuses
+// todo ak1 add precondition checks for all the statuses
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
     private final World world;
+    private final TransportFlightControl tfControl;
 
     public FlightMissionControl(final World world) {
         this.world = world;
+        this.tfControl = TransportFlightControl.instance(world);
     }
 
     public void startOrCancel(final FlightMissions.Mission mission) {
@@ -27,6 +29,7 @@ public class FlightMissionControl {
 
             world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
+            // todo ak1 t/f actions?
 
             return;
         }
@@ -39,6 +42,7 @@ public class FlightMissionControl {
             world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
                     mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
+            // todo ak1 t/f actions?
 
             return;
         }
@@ -75,6 +79,8 @@ public class FlightMissionControl {
 
         world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
+
+        // todo ak1 t/f actions?
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {
@@ -82,34 +88,19 @@ public class FlightMissionControl {
         mission.setActualDepartureWorldTime(world.getWorldTime());
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-
-        // todo ak3 scheduling.fireEvent(session, BlocksOff.class, flight);
-
-        // todo ak3   (was not implemented in #old) pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
-
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
-            tf.setStatus(TransportFlights.Status.Departure);
-            log.info("t/f #{} - departure", tf.getId());
-        });
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightDepartsFromGate);
 
         world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     public void takeoff(final FlightMissions.Mission mission) {
-        // todo ak3 Pilot pilot = ctx.getPilot();
-
         mission.setStatus(FlightMissions.Status.Flying);
         mission.setActualTakeoffWorldTime(world.getWorldTime());
 
-        // todo ak3 scheduling.fireEvent(session, Takeoff.class, flight);
-
-        // todo ak3 (not implemented in #old) pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
-
-        // todo ak3 Person person = pilot.getPerson();
-        // todo ak3 person.setLocationAirport(null);
+        // todo ak3 pilot/pilots/cabin crew - set status, location
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setLocationStatus(Aircrafts.LocationStatus.Flying);
@@ -119,38 +110,27 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
-            tf.setStatus(TransportFlights.Status.Flying);
-            log.info("t/f #{} - flying", tf.getId());
-        });
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightTakeoffs);
 
         world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
     }
 
     public void landing(final FlightMissions.Mission mission, Airports.Airport landingAirport) {
-        // todo ak3 Pilot pilot = ctx.getPilot();
-        // todo ak3 Person person = pilot.getPerson();
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         mission.setStatus(FlightMissions.Status.Arrival);
         mission.setActualLandingWorldTime(world.getWorldTime());
         mission.setActualLandingAirportId(landingAirport.getId());
 
-        // todo ak3 scheduling.fireEvent(session, Landing.class, flight);
-
-        // todo ak3        person.setLocationAirport(flight.getToAirport());
-        // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
+        // todo ak3 pilot/pilots/cabin crew - set status, location
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingIn);
         aircraft.setLocationAirportId(landingAirport.getId());
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
-            tf.setStatus(TransportFlights.Status.Arrival);
-            log.info("t/f #{} - arrival", tf.getId());
-        });
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightLands);
 
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
         log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()));
@@ -169,14 +149,9 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        // todo ak3 scheduling.fireEvent(session, BlocksOn.class, flight);
+        // todo ak3 pilot/pilots/cabin crew - set status, location
 
-        // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
-
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
-            tf.setStatus(TransportFlights.Status.WaitingForDeboarding);
-            log.info("t/f #{} - waiting for deboarding", tf.getId());
-        });
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightArrivesToGate);
 
         world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
@@ -185,16 +160,12 @@ public class FlightMissionControl {
     public void finish(final FlightMissions.Mission mission) {
         mission.setStatus(FlightMissions.Status.Finished);
 
-        // todo ak3 pilot.setStatus(Pilot.Status.Idle);
-        // todo ak3               pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
-
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
 
-        // todo ak3 pilotAssignment.setStatus(PilotAssignment.Status.Done);
-
-        // todo ak3 aircraftAssignment.setStatus(AircraftAssignment.Status.Done);
+        // todo ak3 pilot/pilots/cabin crew - set status, location
+        // todo ak3 pilot assignements / aircraft assignments?
 
         world.log(EventLog.EventType.FlightFinished, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - flight finished", mission.getId());
