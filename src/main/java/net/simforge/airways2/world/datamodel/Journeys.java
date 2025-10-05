@@ -1,8 +1,10 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
+import net.simforge.airways2.tools.CabinLayout;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -42,6 +44,8 @@ public class Journeys {
     private final DataField toCityIdField = storage.getDataField(3);
     private final DataField groupSizeField = storage.getDataField(4);
     private final DataField typeModeField = storage.getDataField(5);
+    private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeField);
+    private final BitAccessField.Section typeModeServiceBitField = typeModeFieldBits.section(0, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
 
@@ -70,7 +74,7 @@ public class Journeys {
                 && journey.getHeartbeatTime() != 0);
     }
 
-    public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize) {
+    public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize, final CabinLayout.Service service) {
         checkNotNull(status);
         checkArgument(fromCityId >= 1);
         checkArgument(toCityId >= 1);
@@ -83,6 +87,7 @@ public class Journeys {
         storage.set(id, fromCityIdField, fromCityId);
         storage.set(id, toCityIdField, toCityId);
         storage.set(id, groupSizeField, groupSize);
+        typeModeServiceBitField.setInt(id, service.ordinal());
 
         return journey;
     }
@@ -133,6 +138,10 @@ public class Journeys {
 
         public int getGroupSize() {
             return storage.getAsInt(id, groupSizeField);
+        }
+
+        public CabinLayout.Service getCabinService() {
+            return CabinLayout.Service.values()[typeModeServiceBitField.getInt(id)];
         }
 
         public int getTransportFlight1Id() {

@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Cities;
@@ -84,5 +85,18 @@ public class CityFlowHelper {
 
     public static float boundSuccessRate(final float successRate) {
         return Math.min(Math.max(successRate, MIN_SUCCESS_RATE), MAX_SUCCESS_RATE);
+    }
+
+    public static CabinLayout.Service randomCabinService() {
+        final int rnd = (int) (Math.random() * 100);
+        if (rnd == 0) {
+            return CabinLayout.Service.F;
+        } else if (rnd < 7) {
+            return CabinLayout.Service.J;
+        } else if (rnd < 20) {
+            return CabinLayout.Service.W;
+        } else {
+            return CabinLayout.Service.Y;
+        }
     }
 }

@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
@@ -48,10 +49,11 @@ public class City2CityFlowsProcessor {
         }
 
         final boolean directOrBackDirection = CityFlowHelper.randomDirection(); // todo ak1 'roundtrip support' - remove this
+        final CabinLayout.Service service = CityFlowHelper.randomCabinService();
 
-        log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), directOrBackDirection);
+        log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, service {}, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), service.name(), directOrBackDirection);
 
-        final Journeys.Journey journey = JourneyControl.instance(world).create(c2cFlow, directOrBackDirection);
+        JourneyControl.instance(world).create(c2cFlow, service, directOrBackDirection);
         // todo ak2 AirwaysApp.getScheduling().startActivity(session, LookingForPersons.class, journey, JavaTime.nowUtc().plusDays(1));
 
         c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());

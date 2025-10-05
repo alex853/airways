@@ -26,22 +26,23 @@ public class JourneyController {
                 .toList());
     }
 
-    private static JourneyDto toDto(final World world, final Journeys.Journey e) {
-        final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(e.getTransportFlight1Id());
+    private static JourneyDto toDto(final World world, final Journeys.Journey j) {
+        final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(j.getTransportFlight1Id());
         final Optional<FlightMissions.Mission> fm1 = tf1.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
 
-        final Optional<TransportFlights.Flight> tf2 = world.transportFlights().byId(e.getTransportFlight2Id());
+        final Optional<TransportFlights.Flight> tf2 = world.transportFlights().byId(j.getTransportFlight2Id());
         final Optional<FlightMissions.Mission> fm2 = tf2.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
 
         return new JourneyDto(
-                e.getId(),
-                e.getStatus().name(),
-                WebTime.ts(e.getHeartbeatTime()),
-                e.getFromCityId(),
-                world.cities().byId(e.getFromCityId()).orElseThrow().getName(),
-                e.getToCityId(),
-                world.cities().byId(e.getToCityId()).orElseThrow().getName(),
-                e.getGroupSize(),
+                j.getId(),
+                j.getStatus().name(),
+                WebTime.ts(j.getHeartbeatTime()),
+                j.getFromCityId(),
+                world.cities().byId(j.getFromCityId()).orElseThrow().getName(),
+                j.getToCityId(),
+                world.cities().byId(j.getToCityId()).orElseThrow().getName(),
+                j.getGroupSize(),
+                j.getCabinService().name(),
                 tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
                 fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
@@ -64,6 +65,7 @@ public class JourneyController {
         private int tCId;
         private String tCN;
         private int gs;
+        private String cs;
         private Integer tf1Id;
         private String tf1St;
         private String tf1From;

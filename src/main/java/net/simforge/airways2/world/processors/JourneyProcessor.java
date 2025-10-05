@@ -158,7 +158,7 @@ public class JourneyProcessor {
     }
 
     // todo ak0 'cabin service'
-    private static boolean isThereEnoughTickets(Journeys.Journey journey, TransportFlights.Flight tf) {
+    private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
         return tf.getRemainedTickets().getTotal() >= journey.getGroupSize();
     }
 

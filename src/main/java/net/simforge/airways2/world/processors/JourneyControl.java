@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
 import net.simforge.airways2.world.datamodel.Journeys;
@@ -21,13 +22,14 @@ public class JourneyControl {
         return new JourneyControl(world);
     }
 
-    public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final boolean directOrBackDirection) {
+    public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final CabinLayout.Service service, final boolean directOrBackDirection) {
         checkNotNull(c2cFlow);
         final Journeys.Journey journey = world.journeys().create(
                 Journeys.Status.LookingForTickets,
                 directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak1 'roundtrip support' - remove this switching
                 directOrBackDirection ? c2cFlow.getToCityId() : c2cFlow.getFromCityId(),
-                c2cFlow.getNextGroupSize());
+                c2cFlow.getNextGroupSize(),
+                service);
         journey.setHeartbeatTime(world.getWorldTime());
         return journey;
     }
