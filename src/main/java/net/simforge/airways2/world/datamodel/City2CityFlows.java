@@ -74,7 +74,7 @@ public class City2CityFlows {
         try (final Timing.Timer ignored = Timing.label("City2CityFlows - nextForHeartbeat")) {
             return storage.findFirst(flow -> flow.getHeartbeatTime() <= worldTime
                     && flow.getHeartbeatTime() != 0
-                    && flow.getFromCityId() == 1); // todo ak2 remove these conditions
+                    && (flow.getFromCityId() == 1 || flow.getFromCityId() == 15 || flow.getFromCityId() == 16)); // todo ak2 remove these conditions
             // todo ak2 add paris (4) ?
         }
     }

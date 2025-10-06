@@ -3,12 +3,11 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.EventLog;
-import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.airways2.world.datamodel.ScheduledFlights;
-import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,10 +36,18 @@ public class TransportFlightControl {
 
     public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission,
                                                          final ScheduledFlights.Flight scheduledFlight) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
+        final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        final CabinLayout cabinLayout = switch (aircraftType) {
+            case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
+            case "A320" -> CabinLayout.JY(8, 138);
+            default -> CabinLayout.Y(99);
+        };
+
         final TransportFlights.Flight transportFlight = world.transportFlights().create(
                 flightMission,
                 scheduledFlight,
-                CabinLayout.JY(8, 138));
+                cabinLayout);
 
         final int checkinStartsAt = TransportFlightHelper.calcCheckinStartTime(flightMission);
         transportFlight.setHeartbeatTime(checkinStartsAt);
