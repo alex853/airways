@@ -33,22 +33,26 @@ public class CityFlowHelper {
         final Cities.City toCity = world.cities().byId(toCityFlow.getId()).orElseThrow();
 
         final float dist = (float) Geo.distance(fromCity.getCoords(), toCity.getCoords());
+        float distanceUnits = calcDistanceUnits(dist);
+
+        final float fromCityPopulationUnit = fromCity.getPopulation() / 1000000.0f;
+        final float toCityPopulationUnit = toCity.getPopulation() / 1000000.0f;
 
         final float attractionUnits = toCityFlow.getAttractionFactor();
 
-        return calcFlowUnits(dist, attractionUnits);
+        return attractionUnits * distanceUnits * fromCityPopulationUnit * toCityPopulationUnit;
     }
 
     // higher attraction - higher flow units
     // longer distance - lower flow units
-    public static float calcFlowUnits(final float dist, final float attractionUnits) {
+    public static float calcDistanceUnits(final float dist) {
         if (dist <= ZERO_UNITS_DISTANCE_NM) {
             return 0;
         } else if (dist <= FULL_UNITS_MINIMAL_DISTANCE_NM) {
-            return attractionUnits * (dist - ZERO_UNITS_DISTANCE_NM) / (FULL_UNITS_MINIMAL_DISTANCE_NM - ZERO_UNITS_DISTANCE_NM);
+            return (dist - ZERO_UNITS_DISTANCE_NM) / (FULL_UNITS_MINIMAL_DISTANCE_NM - ZERO_UNITS_DISTANCE_NM);
         } else {
             final float distUnits = Math.max(dist / ONE_DISTANCE_UNIT_NM, 1);
-            return attractionUnits / distUnits;
+            return 1 / distUnits;
         }
     }
 
