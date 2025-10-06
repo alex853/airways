@@ -101,7 +101,7 @@ public class FlightDashboardController {
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> CheckIn.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case CheckIn -> WaitingForBoarding + " since " + WebTime.hhmmOrNull(TransportFlightHelper.calcBoardingEndTime(flight));
+            case CheckIn -> WaitingForBoarding.name() + " since " + WebTime.hhmmOrNull(TransportFlightHelper.calcBoardingEndTime(flight));
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
             case Boarding -> WaitingForDeparture.name() + " when " + Boarding.name() + " finishes";
             case WaitingForDeparture -> Departure.name();
