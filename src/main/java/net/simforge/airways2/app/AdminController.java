@@ -329,4 +329,15 @@ public class AdminController {
             return null;
         });
     }
+
+    @GetMapping("/f1-tour-fixes")
+    public void f1TourFixes() {
+        worldBean.modifySync(world -> {
+            final Cities.City sanFrancisco = world.cities().all().stream().filter(c -> c.getName().equalsIgnoreCase("San Francisco")).findFirst().orElseThrow();
+            sanFrancisco.setName("San Francisco");
+            sanFrancisco.setPopulation(7520000);
+
+            return null;
+        });
+    }
 }

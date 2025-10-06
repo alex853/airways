@@ -99,8 +99,16 @@ public class Cities {
             return storage.getAsInt(id, populationField);
         }
 
+        public void setPopulation(final int population) {
+            storage.set(id, populationField, population);
+        }
+
         public String getName() {
             return strings.byId(storage.getAsInt(id, nameIdField));
+        }
+
+        public void setName(final String name) {
+            storage.set(id, nameIdField, strings.findOrAdd(name));
         }
 
         public Geo.Coords getCoords() {
