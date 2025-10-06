@@ -320,4 +320,13 @@ public class AdminController {
             return null;
         });
     }
+
+    @GetMapping("/reset-city-redistribution")
+    public void resetCityRedistribution() {
+        worldBean.modifySync(world -> {
+            world.cityFlows().all().forEach(cf -> cf.setLastRedistributionTime(0));
+
+            return null;
+        });
+    }
 }
