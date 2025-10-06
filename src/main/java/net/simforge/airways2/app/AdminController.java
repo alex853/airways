@@ -340,6 +340,12 @@ public class AdminController {
             sanFrancisco.setName("San Francisco");
             sanFrancisco.setPopulation(7650000);
 
+            world.aircrafts().byRegNo("F-AUWV").orElseThrow().setAircraftOperatorId(0);
+            world.aircrafts().byRegNo("F-AUWW").orElseThrow().setAircraftOperatorId(0);
+            world.aircrafts().byRegNo("F-AUWX").orElseThrow().setAircraftOperatorId(0);
+            world.aircrafts().byRegNo("F-AUWY").orElseThrow().setAircraftOperatorId(0);
+            world.aircrafts().byRegNo("F-AUWZ").orElseThrow().setAircraftOperatorId(0);
+
             return null;
         });
     }
