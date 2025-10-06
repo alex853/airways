@@ -55,7 +55,7 @@ public class Cities {
 
     public Optional<City> byCountryIdAndName(final int countryId, final String cityName) {
         checkNotNull(cityName, "cityName should not be null");
-        return storage.findFirst(c -> c.getCountryId() == countryId && cityName.equals(c.getName()));
+        return storage.findFirst(c -> c.getCountryId() == countryId && cityName.equalsIgnoreCase(c.getName()));
     }
 
     public City create(final int countryId,

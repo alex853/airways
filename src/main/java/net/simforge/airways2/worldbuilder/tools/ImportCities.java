@@ -73,6 +73,8 @@ public class ImportCities {
                 filters.add(new CountryCodeFilter(arg.substring("country-code:".length())));
             } else if (arg.startsWith("min-population:")) {
                 filters.add(new MinPopulationFilter(Integer.parseInt(arg.substring("min-population:".length()))));
+            } else if (arg.startsWith("city-name:")) {
+                filters.add(new CityNameFilter(arg.substring("city-name:".length())));
             }
         }
 
@@ -115,6 +117,19 @@ public class ImportCities {
         @Override
         public boolean check(final Csv csv, final int row) {
             return minPopulation <= Integer.parseInt(csv.value(row, "CityPopulation"));
+        }
+    }
+
+    private static class CityNameFilter implements Filter {
+        private final String cityName;
+
+        public CityNameFilter(final String cityName) {
+            this.cityName = cityName;
+        }
+
+        @Override
+        public boolean check(final Csv csv, final int row) {
+            return cityName.equalsIgnoreCase(csv.value(row, "CityName"));
         }
     }
 }
