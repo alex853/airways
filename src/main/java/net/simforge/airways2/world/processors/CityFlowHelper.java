@@ -66,7 +66,7 @@ public class CityFlowHelper {
         final double requiredFlowToDistribute = remainingFlow / flow.getFlowFraction() / flow.getSuccessRate();
 
         final int time = (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
-        log.warn("calcTimeToAccumulateFlow - dailyFlow {}, remainingFlow {}, flow fraction {}, success rate {}, requiredFlowToDistribute {}, time {}",
+        log.debug("calcTimeToAccumulateFlow - dailyFlow {}, remainingFlow {}, flow fraction {}, success rate {}, requiredFlowToDistribute {}, time {}",
                 dailyFlow, remainingFlow, flow.getFlowFraction(), flow.getSuccessRate(), requiredFlowToDistribute, time);
 
         return time;

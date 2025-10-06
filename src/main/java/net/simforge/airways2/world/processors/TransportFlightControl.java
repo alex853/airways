@@ -45,9 +45,8 @@ public class TransportFlightControl {
         final int checkinStartsAt = TransportFlightHelper.calcCheckinStartTime(flightMission);
         transportFlight.setHeartbeatTime(checkinStartsAt);
 
-        // todo ak1 scheduledFlight logging?
-        world.log(EventLog.EventType.TransportFlightCreated, EventLog.id(transportFlight), flightMission);
-        log.info("t/f #{} - created t/f for f/m #{}", transportFlight.getId(), flightMission.getId());
+        world.log(EventLog.EventType.TransportFlightCreated, EventLog.id(transportFlight), flightMission, scheduledFlight != null ? EventLog.id(scheduledFlight) : null);
+        log.info("t/f #{} - created t/f for f/m #{}, s/f #{}", transportFlight.getId(), flightMission.getId(), scheduledFlight != null ? scheduledFlight.getId() : "///");
 
         return transportFlight;
     }

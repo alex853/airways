@@ -213,7 +213,7 @@ public class FlightDashboardController {
             checkArgument(flight.isModePc(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
 
-            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak1 permitted actions review
+            final String permitted = getFlightMissionPermittedActions(flight, transportFlight, world); // todo ak0 permitted actions review
             if (!"landing".equals(permitted)) {
                 throw new IllegalStateException("landing is not permitted");
             }

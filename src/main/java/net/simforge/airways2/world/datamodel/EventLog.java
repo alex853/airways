@@ -218,7 +218,8 @@ public class EventLog {
         FlightMission(2),
         Aircraft(3),
         Airport(4),
-        TransportFlight(5);
+        TransportFlight(5),
+        ScheduledFlight(6);
 
         private final int code;
 
@@ -258,6 +259,11 @@ public class EventLog {
     public static EventLogId id(final TransportFlights.Flight flight) {
         checkNotNull(flight);
         return new EventLogId(ObjectType.TransportFlight, flight.getId());
+    }
+
+    public static EventLogId id(final ScheduledFlights.Flight flight) {
+        checkNotNull(flight);
+        return new EventLogId(ObjectType.ScheduledFlight, flight.getId());
     }
 
     public static EventLogId pilotId(int pilotId) { // todo ak3 review all the usages when pilot will be introduced
