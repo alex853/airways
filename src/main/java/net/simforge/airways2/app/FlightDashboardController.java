@@ -122,8 +122,10 @@ public class FlightDashboardController {
 
     private String getTransportFlightShownElements(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
-            case CheckIn -> "start-boarding-disabled";
-            case WaitingForBoarding -> flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled";
+            case Scheduled -> "sold";
+            case CheckIn -> "sold,start-boarding-disabled";
+            case WaitingForBoarding -> "sold," + (flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled");
+            case Boarding -> "sold";
             case WaitingForDeparture, Departure, Flying -> "on-board";
             case Arrival -> "on-board,start-deboarding-disabled";
             case WaitingForDeboarding -> "on-board,start-deboarding";
