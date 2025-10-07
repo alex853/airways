@@ -125,8 +125,8 @@ public class FlightDashboardController {
             case CheckIn -> "start-boarding-disabled";
             case WaitingForBoarding -> flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled";
             case WaitingForDeparture, Departure, Flying -> "on-board";
-            case Arrival -> "start-deboarding-disabled,on-board";
-            case WaitingForDeboarding -> "start-deboarding";
+            case Arrival -> "on-board,start-deboarding-disabled";
+            case WaitingForDeboarding -> "on-board,start-deboarding";
             default -> null;
         };
     }
