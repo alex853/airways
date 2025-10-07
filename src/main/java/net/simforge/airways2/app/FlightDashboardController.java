@@ -68,10 +68,9 @@ public class FlightDashboardController {
                     transportFlight.getStatus().name(),
                     getNextPlannedTransportFlightStatus(transportFlight, flight),
                     getTransportFlightShownElements(transportFlight, flight),
-                    transportFlight.getTotalTickets().toString(),
-                    transportFlight.getRemainedTickets().toString(),
-                    null, // todo ak0 substraction
+                    transportFlight.getTotalTickets().getTotal(),
                     transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
+                    transportFlight.getRemainedTickets().toString(),
                     transportFlight.getPaxCheckedIn(),
                     transportFlight.getPaxOnBoard()
             ) : null;
@@ -123,12 +122,12 @@ public class FlightDashboardController {
     private String getTransportFlightShownElements(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> "sold";
-            case CheckIn -> "sold,start-boarding-disabled";
-            case WaitingForBoarding -> "sold," + (flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled");
-            case Boarding -> "sold";
+            case CheckIn -> "sold,check-in,start-boarding-disabled";
+            case WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled");
+            case Boarding -> "sold,boarding";
             case WaitingForDeparture, Departure, Flying -> "on-board";
             case Arrival -> "on-board,start-deboarding-disabled";
-            case WaitingForDeboarding -> "on-board,start-deboarding";
+            case WaitingForDeboarding -> "on-board,deboarding,start-deboarding";
             default -> null;
         };
     }
@@ -337,10 +336,9 @@ public class FlightDashboardController {
         private String status;
         private String nextPlannedStatus;
         private String shownElements;
-        private String totalTickets;
+        private int totalSeats;
+        private int soldSeats;
         private String remainedTickets;
-        private String soldTickets;
-        private int sold;
         private int checkedIn;
         private int onBoard;
     }
