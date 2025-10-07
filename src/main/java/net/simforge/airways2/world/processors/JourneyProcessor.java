@@ -55,7 +55,7 @@ public class JourneyProcessor {
     }
 
     private static void lookingForTickets(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak1 'roundtrip support' - consider 'direction' when determining fromCityId and toCityId
+        // todo ak0 'roundtrip support' - consider 'direction' when determining fromCityId and toCityId
 
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getFromCityId()).stream()
@@ -257,9 +257,9 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak1 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
+        // todo ak0 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
 
-        // todo ak1 'roundtrip support'
+        // todo ak0 'roundtrip support'
         //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
         //          if this is a 'return trip' then finish the journey
 

@@ -48,7 +48,7 @@ public class City2CityFlowsProcessor {
             return;
         }
 
-        final boolean directOrBackDirection = CityFlowHelper.randomDirection(); // todo ak1 'roundtrip support' - remove this
+        final boolean directOrBackDirection = CityFlowHelper.randomDirection(); // todo ak0 'roundtrip support' - remove this
         final CabinLayout.Service service = CityFlowHelper.randomCabinService();
 
         log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, service {}, direct direction - {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), c2cFlow.getNextGroupSize(), service.name(), directOrBackDirection);

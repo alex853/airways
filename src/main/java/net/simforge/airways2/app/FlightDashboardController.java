@@ -29,7 +29,6 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flyi
 @CrossOrigin
 public class FlightDashboardController {
     // todo ak1 migrate ids to sqids
-    // todo ak0 check that there is enough logging and event-logging
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -147,6 +146,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("start is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - start-flight", flightId);
             world.flightMissionControl().startOrCancel(flight);
 
             return getStatus(flightId);
@@ -170,6 +170,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("start-boarding is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
             TransportFlightControl.instance(world).startBoarding(transportFlight);
             return getStatus(flightId);
         });
@@ -189,6 +190,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("blocks-off is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
             world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -209,6 +211,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("takeoff is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - takeoff", flightId);
             world.flightMissionControl().takeoff(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -229,6 +232,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("landing is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - landing", flightId);
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
@@ -250,6 +254,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("blocks-on is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
             world.flightMissionControl().blocksOn(flight); // t/f update is inside
 
             return getStatus(flightId);
@@ -273,6 +278,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("start-deboarding is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
             TransportFlightControl.instance(world).startDeboarding(transportFlight);
 
             return getStatus(flightId);
@@ -293,6 +299,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("finish is not permitted");
             }
 
+            log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);
 
             return getStatus(flightId);

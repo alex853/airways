@@ -26,7 +26,7 @@ public class JourneyControl {
         checkNotNull(c2cFlow);
         final Journeys.Journey journey = world.journeys().create(
                 Journeys.Status.LookingForTickets,
-                directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak1 'roundtrip support' - remove this switching
+                directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak0 'roundtrip support' - remove this switching
                 directOrBackDirection ? c2cFlow.getToCityId() : c2cFlow.getFromCityId(),
                 c2cFlow.getNextGroupSize(),
                 service);
