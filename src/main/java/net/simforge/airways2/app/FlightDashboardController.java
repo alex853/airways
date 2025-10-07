@@ -29,7 +29,7 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flyi
 @CrossOrigin
 public class FlightDashboardController {
     // todo ak1 migrate ids to sqids
-    // todo ak1 check that there is enough logging and event-logging
+    // todo ak0 check that there is enough logging and event-logging
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -67,7 +67,13 @@ public class FlightDashboardController {
                     transportFlight.getId(),
                     transportFlight.getStatus().name(),
                     getNextPlannedTransportFlightStatus(transportFlight, flight),
-                    getTransportFlightPermittedActions(transportFlight, flight)
+                    getTransportFlightPermittedActions(transportFlight, flight),
+                    transportFlight.getTotalTickets(),
+                    transportFlight.getRemainedTickets(),
+                    null, // todo ak0
+                    -1, // todo ak0
+                    transportFlight.getPaxCheckedIn(),
+                    transportFlight.getPaxOnBoard()
             ) : null;
 
             return new StatusDto(aircraftDto, flightDto, transportFlightDto);
@@ -328,5 +334,11 @@ public class FlightDashboardController {
         private String status;
         private String nextPlannedStatus;
         private String permittedActions;
+        private String totalTickets;
+        private String remainedTickets;
+        private String soldTickets;
+        private int sold;
+        private int checkedIn;
+        private int onBoard;
     }
 }
