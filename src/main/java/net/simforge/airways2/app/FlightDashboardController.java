@@ -68,10 +68,10 @@ public class FlightDashboardController {
                     transportFlight.getStatus().name(),
                     getNextPlannedTransportFlightStatus(transportFlight, flight),
                     getTransportFlightPermittedActions(transportFlight, flight),
-                    transportFlight.getTotalTickets(),
-                    transportFlight.getRemainedTickets(),
-                    null, // todo ak0
-                    -1, // todo ak0
+                    transportFlight.getTotalTickets().toString(),
+                    transportFlight.getRemainedTickets().toString(),
+                    null, // todo ak0 substraction
+                    transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
                     transportFlight.getPaxCheckedIn(),
                     transportFlight.getPaxOnBoard()
             ) : null;
