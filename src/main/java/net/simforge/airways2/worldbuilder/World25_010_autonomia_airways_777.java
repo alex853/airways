@@ -8,6 +8,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 
 import java.io.IOException;
 
+@Deprecated
 public class World25_010_autonomia_airways_777 {
     public static void main(String[] args) throws IOException {
         final World world = World25.load();

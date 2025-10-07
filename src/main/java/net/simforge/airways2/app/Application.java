@@ -1,7 +1,6 @@
 package net.simforge.airways2.app;
 
 import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
-import net.simforge.airways2.worldbuilder.World25_010_autonomia_airways_777;
 import net.simforge.airways2.worldbuilder.World25_099_f1_tour;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +32,6 @@ public class Application {
         }
 
         World25_009_create_some_airports.main(args);
-        World25_010_autonomia_airways_777.main(args);
         World25_099_f1_tour.main(args);
 
         SpringApplication.run(Application.class, args);
