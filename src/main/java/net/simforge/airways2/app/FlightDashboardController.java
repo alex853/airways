@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.FlightMissions.Status.*;
@@ -274,7 +276,7 @@ public class FlightDashboardController {
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
             final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            if (!"start-deboarding".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("start-deboarding")) {
                 throw new IllegalStateException("start-deboarding is not permitted");
             }
 
