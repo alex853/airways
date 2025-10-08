@@ -125,7 +125,7 @@ public class FlightDashboardController {
             case Scheduled -> "sold";
             case CheckIn -> "sold,check-in,start-boarding-disabled";
             case WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled");
-            case Boarding -> "sold,on-board";
+            case Boarding -> "sold,check-in,on-board";
             case WaitingForDeparture, Departure, Flying -> "on-board";
             case Arrival -> "on-board,start-deboarding-disabled";
             case WaitingForDeboarding -> "on-board,start-deboarding";
