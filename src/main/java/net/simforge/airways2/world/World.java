@@ -225,6 +225,7 @@ public class World {
 
         setWorldTime(newWorldTime);
 
+        // todo ak0 to add limiters to each processor
         try {
             FlightMissionProcessor.process(this);
             RandomFlightMissionGenerator.process(this);
