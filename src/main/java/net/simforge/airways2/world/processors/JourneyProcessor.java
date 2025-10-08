@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 // todo ak0 what if boarding has delayed? 
 //          there is the fix however it seems like time of boarding start should be stored somewhere
 //          and all following actions should be based on that time
+// todo ak0 GateProgress class, available via world.gateProgress()... and it calculates the speed and implements boarding/deboarding process
 // todo ak0 approach around check-in, boarding, deboarding is a bit non-natural
 //          durations do not depend on airplane size, amount of doors open, etc
 //          it can be improved
