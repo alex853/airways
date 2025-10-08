@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.processors;
 
-import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airport2City;
@@ -24,16 +23,23 @@ public class JourneyProcessor {
 
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
+        int processedThisTime = 0;
 
         final JourneyControl journeyControl = JourneyControl.instance(world);
         while (true) {
             final Optional<Journeys.Journey> journey = world.journeys().nextForHeartbeat(worldTime);
             if (journey.isEmpty()) {
-                break;
+                return;
+            }
+
+            if (processedThisTime == 10) {
+                log.warn("TOO MANY JOURNEYS TO PROCESS, found j/y #{}, exiting", journey.get().getId());
+                return;
             }
 
             try {
                 processJourney(world, journeyControl, journey.get());
+                processedThisTime++;
             } catch (final RuntimeException e) {
                 log.warn("j/y #{} processing error", journey.get().getId(), e);
                 throw e;
