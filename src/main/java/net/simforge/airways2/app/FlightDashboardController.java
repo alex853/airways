@@ -144,7 +144,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"start".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("start")) {
                 throw new IllegalStateException("start is not permitted");
             }
 
@@ -168,7 +168,7 @@ public class FlightDashboardController {
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
             final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            if (!"start-boarding".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("start-boarding")) {
                 throw new IllegalStateException("start-boarding is not permitted");
             }
 
@@ -188,7 +188,7 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"blocks-off".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("blocks-off")) {
                 throw new IllegalStateException("blocks-off is not permitted");
             }
 
@@ -209,7 +209,7 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"takeoff".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("takeoff")) {
                 throw new IllegalStateException("takeoff is not permitted");
             }
 
@@ -230,7 +230,7 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"landing".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("landing")) {
                 throw new IllegalStateException("landing is not permitted");
             }
 
@@ -252,7 +252,7 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"blocks-on".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("blocks-on")) {
                 throw new IllegalStateException("blocks-on is not permitted");
             }
 
@@ -297,7 +297,7 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!"finish".equals(permitted)) {
+            if (!Arrays.asList(permitted.split(",")).contains("finish")) {
                 throw new IllegalStateException("finish is not permitted");
             }
 
