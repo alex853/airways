@@ -12,7 +12,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// todo ak3 approach around check-in, boarding, deboarding is a bit non-natural
+// todo ak0 what if boarding has delayed? 
+//          there is the fix however it seems like time of boarding start should be stored somewhere
+//          and all following actions should be based on that time
+// todo ak0 approach around check-in, boarding, deboarding is a bit non-natural
 //          durations do not depend on airplane size, amount of doors open, etc
 //          it can be improved
 //          however the existing solution should work relatively fine
@@ -192,7 +195,7 @@ public class JourneyProcessor {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, 'update stats'
             journey.setHeartbeatTime(Math.max(
-                    TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak2 consider actual times here
+                    TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak0 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
             checkin(world, journeyControl, journey);
@@ -217,7 +220,7 @@ public class JourneyProcessor {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             // todo ak1 what if mission is empty - cancel journey, 'update stats'
             journey.setHeartbeatTime(Math.max(
-                    TransportFlightHelper.calcBoardingStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.BOARDING_DURATION), // todo ak2 consider actual times here
+                    TransportFlightHelper.calcBoardingStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.BOARDING_DURATION), // todo ak0 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
         } else if (flight.get().getStatus() == TransportFlights.Status.Boarding) {
             boarding(world, journeyControl, journey);
@@ -228,7 +231,7 @@ public class JourneyProcessor {
 
     private static void boarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.OnBoard);
-        // heartbeat is turned off till deboarding
+        // journey heartbeat is turned off till deboarding
 
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         flight.setPaxOnBoard(flight.getPaxOnBoard() + journey.getGroupSize());
@@ -240,8 +243,8 @@ public class JourneyProcessor {
             // todo ak1 cancel journey, 'update stats'
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
             deboarding(world, journeyControl, journey);
-        } else { // todo ak2 ???
-            // todo ak2 ???
+        } else {
+            // todo ak1 ???
         }
     }
 
