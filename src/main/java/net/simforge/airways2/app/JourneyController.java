@@ -26,6 +26,14 @@ public class JourneyController {
                 .toList());
     }
 
+    @GetMapping("/stats")
+    public Map<String, Integer> getStats() {
+        return worldBean.read(world -> world.journeys().all().stream()
+                .collect(Collectors.groupingBy(
+                    j -> j.getStatus(),
+                    Collectors.summingInt(j -> j.getGroupSize()))));
+    }
+
     private static JourneyDto toDto(final World world, final Journeys.Journey j) {
         final Optional<TransportFlights.Flight> tf1 = world.transportFlights().byId(j.getTransportFlight1Id());
         final Optional<FlightMissions.Mission> fm1 = tf1.flatMap(f -> world.flightMissions().byId(f.getFlightMissionId()));
