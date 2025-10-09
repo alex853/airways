@@ -32,7 +32,7 @@ public class JourneyController {
     public Map<String, Integer> getStats() {
         return worldBean.read(world -> world.journeys().all().stream()
                 .collect(Collectors.groupingBy(
-                    j -> j.getStatus(),
+                    j -> j.getStatus().name(),
                     Collectors.summingInt(j -> j.getGroupSize()))));
     }
 
