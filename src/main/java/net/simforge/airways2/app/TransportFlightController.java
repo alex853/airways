@@ -66,7 +66,7 @@ public class TransportFlightController {
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 flight.getScheduledFlightId(),
-                mission.map(m -> m.isPcMode()).orElse(false),
+                mission.map(m -> m.isModePc()).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
