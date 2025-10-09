@@ -62,6 +62,8 @@ public class TransportFlightController {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
         return new FlightDto(
                 flight.getId(),
+                mission.getId(),
+                mission.isPcMode(),
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
@@ -82,6 +84,8 @@ public class TransportFlightController {
     @AllArgsConstructor
     private static class FlightDto {
         private int id;
+        private int fmId;
+        private boolean pcMode;
         private String st;
         private String hrtBt;
         private int fmId;
