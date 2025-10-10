@@ -106,6 +106,10 @@ public class Aircrafts {
         return recordId -> storage.getAsInt(recordId, locationStatusField) == locationStatus.code();
     }
 
+    public Storage.Condition<Aircraft> byLocationAirportId(final int locationAirportId) {
+        return recordId -> storage.getAsInt(recordId, locationAirportIdField) == locationAirportId;
+    }
+
     public class Aircraft {
         private final int id;
 

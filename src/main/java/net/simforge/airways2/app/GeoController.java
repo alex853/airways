@@ -114,7 +114,8 @@ public class GeoController {
                                             .count();
                                     try (final Timing.Timer ignored6 = Timing.label("GeoController - getAirportDetails # part6")) {
                                         final Collection<Aircrafts.Aircraft> aircraftLocatedAtAirport = world.aircrafts()
-                                                .filter(a -> a.getLocationAirportId() == airport.getId());
+                                                .filter(world.aircrafts().byLocationAirportId(airport.getId()))
+                                                .toList();
                                         final int aircraftParked = (int) aircraftLocatedAtAirport.stream()
                                                 .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
                                                         && a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle)
