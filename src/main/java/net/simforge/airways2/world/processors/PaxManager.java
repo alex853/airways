@@ -50,16 +50,16 @@ public class PaxManager {
     private void tick(final TransportFlights.Flight transportFlight) {
         Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
-            log.info("t/f #{} boarding - no data found, creating new", transportFlight.getId());
-
             final int actualOnBoard = world.journeys()
                     .filter(j -> j.getTransportFlight1Id() == transportFlight.getId()
                             && j.getStatus() == Journeys.Status.OnBoard).stream()
                     .map(Journeys.Journey::getGroupSize)
                     .reduce(0, Integer::sum);
-            transportFlight.setPaxOnBoard(actualOnBoard);
 
             final int remainingToBoard = transportFlight.getPaxCheckedIn() - actualOnBoard;
+
+            transportFlight.setPaxOnBoard(actualOnBoard);
+            log.info("t/f #{} boarding - no data found, creating new, actual on board {}, remaining to board {}", transportFlight.getId(), actualOnBoard, remainingToBoard);
 
             boarding = new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
             boardings.put(transportFlight.getId(), boarding);
