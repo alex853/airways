@@ -24,9 +24,11 @@ public class JourneyControl {
 
     public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final CabinLayout.Service service, final boolean directOrBackDirection) {
         checkNotNull(c2cFlow);
+        checkNotNull(service);
+
         final Journeys.Journey journey = world.journeys().create(
                 Journeys.Status.LookingForTickets,
-                directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak0 'roundtrip support' - remove this switching
+                directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak1 'roundtrip support' - remove this switching
                 directOrBackDirection ? c2cFlow.getToCityId() : c2cFlow.getFromCityId(),
                 c2cFlow.getNextGroupSize(),
                 service);
@@ -40,8 +42,28 @@ public class JourneyControl {
                         Journeys.Status.LookingForTickets,
                         Journeys.Status.JustArrived)
                 .contains(journey.getStatus()));
+
         journey.setStatus(Journeys.Status.WaitingForCheckIn);
         journey.setHeartbeatTime(world.getWorldTime());
+    }
+
+    public void board(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.WaitingForBoarding);
+
+        journey.setStatus(Journeys.Status.OnBoard);
+    }
+
+    public void tooLateToBoard(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(EnumSet.of(
+                        Journeys.Status.WaitingForCheckIn,
+                        Journeys.Status.WaitingForBoarding)
+                .contains(journey.getStatus()));
+
+        // todo ak1 'cancel journey safely' with removal all following tickets etc
+        // todo ak1 'update stats'
+        journey.setStatus(Journeys.Status.TooLateToBoard);
     }
 
     public void scheduleDeboardingForAllOnBoardJourneys(final TransportFlights.Flight transportFlight) {

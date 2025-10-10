@@ -49,7 +49,7 @@ public class FlightMissionProcessor {
         final LocalDateTime now = Time.toLdt(worldTime);
 
         final FlightMissionControl flightControl = world.flightMissionControl();
-        final TransportFlightControl tfControl = TransportFlightControl.instance(world);
+        final TransportFlightControl tfControl = world.transportFlightControl();
 
         final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
         final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);

@@ -7,27 +7,25 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
 
 public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
-    private static final int BOARDING_TICK = Time.ONE_MINUTE;
+    private static final int BOARDING_TICK = Time.TICK;
     private static final int DEBOARDING_TICK = Time.ONE_MINUTE;
 
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
     private final World world;
 
-    private TransportFlightControl(final World world) {
+    public TransportFlightControl(final World world) {
         this.world = world;
     }
 
-    public static TransportFlightControl instance(final World world) {
-        return new TransportFlightControl(world);
+    private PaxManager paxManager() {
+        return world.paxManager();
     }
 
     public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission) {
@@ -109,7 +107,7 @@ public class TransportFlightControl {
         return transportFlight.getPaxCheckedIn() == ticketsSold;
     }
 
-    public boolean ifCheckInTimeEnds(final TransportFlights.Flight transportFlight) {
+    public boolean isCheckInFinishTimePassed(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
 
@@ -133,6 +131,8 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(TransportFlightHelper.flightStatusAllowsToStartBoarding(transportFlight.getStatus()));
 
+        paxManager().startBoarding(transportFlight);
+
         transportFlight.setStatus(TransportFlights.Status.Boarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
 
@@ -143,6 +143,9 @@ public class TransportFlightControl {
     public void continueBoarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+
+        paxManager().continueBoarding(transportFlight);
+
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
     }
 
@@ -151,17 +154,18 @@ public class TransportFlightControl {
         return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak2 another check against sold tickets?
     }
 
-    public boolean ifBoardingTimeEnds(final TransportFlights.Flight transportFlight) {
+    public boolean isBoardingFinishTimePassed(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-        final FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
-        final int checkinEndTime = TransportFlightHelper.calcBoardingEndTime(flightMission);
-        return checkinEndTime < world.getWorldTime();
+
+        return paxManager().wasBoardingFinishTimePassed(transportFlight);
     }
 
     public void waitForDeparture(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+
+        paxManager().finishBoarding(transportFlight);
 
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);

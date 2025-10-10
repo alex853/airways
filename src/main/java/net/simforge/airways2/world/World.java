@@ -47,6 +47,9 @@ public class World {
             .build();
 
     private final FlightMissionControl flightMissionControl = new FlightMissionControl(this);
+    private final TransportFlightControl transportFlightControl = new TransportFlightControl(this);
+    private final JourneyControl journeyControl = JourneyControl.instance(this);
+    private final PaxManager paxManager = new PaxManager(this);
 
     private static final int worldTimeStep = 10;
 
@@ -199,6 +202,10 @@ public class World {
         return transportFlights;
     }
 
+    public TransportFlightControl transportFlightControl() {
+        return transportFlightControl;
+    }
+
     public Airport2AirportDailyFlightStats airport2airportDailyFlightStats() {
         return airport2airportDailyFlightStats;
     }
@@ -215,6 +222,14 @@ public class World {
         return journeys;
     }
 
+    public JourneyControl journeyControl() {
+        return journeyControl;
+    }
+
+    public PaxManager paxManager() {
+        return paxManager;
+    }
+
     public boolean process(final int expectedWorldTime) {
         final int processedWorldTime = getWorldTime();
         final int newWorldTime = processedWorldTime + worldTimeStep;
@@ -225,7 +240,7 @@ public class World {
 
         setWorldTime(newWorldTime);
 
-        // todo ak0 to add limiters to each processor
+        // todo ak1 to add limiters to each processor
         try {
             FlightMissionProcessor.process(this);
             RandomFlightMissionGenerator.process(this);

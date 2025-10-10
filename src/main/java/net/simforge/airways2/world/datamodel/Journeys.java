@@ -65,6 +65,10 @@ public class Journeys {
         return storage.filter(condition);
     }
 
+    public Optional<Journey> findFirst(final Predicate<Journey> condition) {
+        return storage.findFirst(condition);
+    }
+
     public Optional<Journey> byId(final int id) {
         return storage.byId(id);
     }

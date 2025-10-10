@@ -75,7 +75,7 @@ public class ManualDispatchController {
             log.info("f/m #{} - flight dispatched via web-page, aircraft {}, flight mode {}", mission.getId(), aircraft.getRegNo(), flightMode);
 
             if ("schedule".equals(tfMode)) {
-                TransportFlightControl.instance(world).createTransportFlight(mission);
+                world.transportFlightControl().createTransportFlight(mission);
             }
 
             return new DispatchFlightResponseDto(mission.getId());

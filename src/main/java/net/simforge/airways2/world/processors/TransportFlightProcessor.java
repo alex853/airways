@@ -14,7 +14,7 @@ public class TransportFlightProcessor {
 
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
-        final TransportFlightControl tfControl = TransportFlightControl.instance(world);
+        final TransportFlightControl tfControl = world.transportFlightControl();
 
         EventProcessing.process(world, StartAutomaticDeboarding, event -> world.transportFlights()
                 .byId(event.getObjectId())
@@ -27,7 +27,7 @@ public class TransportFlightProcessor {
             }
 
             try {
-                processTransportFlight(world, tfControl, transportFlight.get());
+                processTransportFlight(world, transportFlight.get());
             } catch (final RuntimeException e) {
                 log.warn("t/f #{} processing error", transportFlight.get().getId(), e);
                 throw e;
@@ -35,7 +35,9 @@ public class TransportFlightProcessor {
         }
     }
 
-    private static void processTransportFlight(final World world, final TransportFlightControl tfControl, final TransportFlights.Flight transportFlight) {
+    private static void processTransportFlight(final World world, final TransportFlights.Flight transportFlight) {
+        final TransportFlightControl tfControl = world.transportFlightControl();
+
         transportFlight.setHeartbeatTime(0);
         switch (transportFlight.getStatus()) {
             case Scheduled -> {
@@ -44,14 +46,14 @@ public class TransportFlightProcessor {
                 }
             }
             case CheckIn -> {
-                if (tfControl.ifCheckInTimeEnds(transportFlight) || tfControl.areAllPaxCheckedIn(transportFlight)) {
+                if (tfControl.isCheckInFinishTimePassed(transportFlight) || tfControl.areAllPaxCheckedIn(transportFlight)) {
                     tfControl.waitForBoarding(transportFlight);
                 } else {
                     tfControl.continueCheckIn(transportFlight);
                 }
             }
             case Boarding -> {
-                if (tfControl.ifBoardingTimeEnds(transportFlight) || tfControl.areAllPaxBoarded(transportFlight)) {
+                if (tfControl.isBoardingFinishTimePassed(transportFlight) || tfControl.areAllPaxBoarded(transportFlight)) {
                     tfControl.waitForDeparture(transportFlight);
                 } else {
                     tfControl.continueBoarding(transportFlight);

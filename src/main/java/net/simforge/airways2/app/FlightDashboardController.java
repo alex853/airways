@@ -67,7 +67,7 @@ public class FlightDashboardController {
             final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
                     transportFlight.getId(),
                     transportFlight.getStatus().name(),
-                    getNextPlannedTransportFlightStatus(transportFlight, flight),
+                    getNextPlannedTransportFlightStatus(transportFlight, flight, world),
                     getTransportFlightShownElements(transportFlight, flight),
                     transportFlight.getTotalTickets().getTotal(),
                     transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
@@ -104,12 +104,12 @@ public class FlightDashboardController {
         };
     }
 
-    private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
+    private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight, World world) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> CheckIn.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case CheckIn -> WaitingForBoarding.name() + " since " + WebTime.hhmmOrNull(TransportFlightHelper.calcBoardingEndTime(flight));
+            case CheckIn -> WaitingForBoarding.name() + " since " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
-            case Boarding -> WaitingForDeparture.name() + " when " + Boarding.name() + " finishes";
+            case Boarding -> WaitingForDeparture.name() + " at ~" + WebTime.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
             case WaitingForDeparture -> Departure.name();
             case Departure -> Flying.name();
             case Flying -> Arrival.name();
@@ -173,7 +173,7 @@ public class FlightDashboardController {
             }
 
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
-            TransportFlightControl.instance(world).startBoarding(transportFlight);
+            world.transportFlightControl().startBoarding(transportFlight);
             return getStatus(flightId);
         });
     }
@@ -281,7 +281,7 @@ public class FlightDashboardController {
             }
 
             log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
-            TransportFlightControl.instance(world).startDeboarding(transportFlight);
+            world.transportFlightControl().startDeboarding(transportFlight);
 
             return getStatus(flightId);
         });

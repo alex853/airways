@@ -13,11 +13,13 @@ public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
     private final World world;
-    private final TransportFlightControl tfControl;
 
     public FlightMissionControl(final World world) {
         this.world = world;
-        this.tfControl = TransportFlightControl.instance(world);
+    }
+
+    private TransportFlightControl transportFlightControl() {
+        return world.transportFlightControl();
     }
 
     public void startOrCancel(final FlightMissions.Mission mission) {
@@ -90,7 +92,7 @@ public class FlightMissionControl {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightDepartsFromGate);
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightDepartsFromGate);
 
         world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
@@ -110,7 +112,7 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightTakeoffs);
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightTakeoffs);
 
         world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
@@ -130,7 +132,7 @@ public class FlightMissionControl {
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightLands);
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightLands);
 
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
         log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()));
@@ -151,7 +153,7 @@ public class FlightMissionControl {
 
         // todo ak3 pilot/pilots/cabin crew - set status, location
 
-        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tfControl::whenFlightArrivesToGate);
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightArrivesToGate);
 
         world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
