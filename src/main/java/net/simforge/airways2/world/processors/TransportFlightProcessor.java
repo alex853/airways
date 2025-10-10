@@ -5,8 +5,6 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
 
 public class TransportFlightProcessor {
@@ -20,19 +18,8 @@ public class TransportFlightProcessor {
                 .byId(event.getObjectId())
                 .ifPresent(tfControl::startDeboarding));
 
-        while (true) {
-            final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().nextForHeartbeat(worldTime);
-            if (transportFlight.isEmpty()) {
-                break;
-            }
-
-            try {
-                processTransportFlight(world, transportFlight.get());
-            } catch (final RuntimeException e) {
-                log.warn("t/f #{} processing error", transportFlight.get().getId(), e);
-                throw e;
-            }
-        }
+        Processing.heartbeat(() -> world.transportFlights().nextForHeartbeat(worldTime),
+                transportFlight -> processTransportFlight(world, transportFlight));
     }
 
     private static void processTransportFlight(final World world, final TransportFlights.Flight transportFlight) {
