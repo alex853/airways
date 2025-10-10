@@ -30,7 +30,7 @@ public class Processing {
             }
             circuitBreakerCounter++;
 
-            try (final Timing.Timer ignored = Timing.label("Processing.heartbeat - " + processor.getClass().getName())) {
+            try (final Timing.Timer ignored = Timing.label("Processing.heartbeat - " + extractClassName(processor.getClass().getName()))) {
                 processor.accept(next.get());
             } catch (final RuntimeException e) {
                 log.warn("heartbeat processing error for object {}", next.get(), e);
@@ -39,7 +39,17 @@ public class Processing {
         }
     }
 
-    public static void event(final World world, final EventsToProcess.Type eventType, final Consumer<EventsToProcess.Event> handler) {
+    private static String extractClassName(final String name) {
+        final int lastDot = name.lastIndexOf('.');
+        final int firstDollar = name.indexOf('$', lastDot);
+        return (lastDot >= 0 && firstDollar >= 0)
+                ? name.substring(lastDot+1, firstDollar)
+                : name;
+    }
+
+    public static void event(final World world,
+                             final EventsToProcess.Type eventType,
+                             final Consumer<EventsToProcess.Event> handler) {
         final int worldTime = world.getWorldTime();
         final EventsToProcess eventsToProcess = world.eventsToProcess();
 
