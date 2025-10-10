@@ -76,10 +76,6 @@ public class CityFlowHelper {
         return time;
     }
 
-    public static boolean randomDirection() {
-        return Math.random() < 0.5;
-    }
-
     public static int getDailyFlow(final World world, City2CityFlows.Flow c2cFlow) {
         final CityFlows.Flow fromCityFlow = world.cityFlows().fromCityFlow(c2cFlow).orElseThrow();
         final Cities.City fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow();

@@ -14,22 +14,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class JourneyControl {
     private final World world;
 
-    private JourneyControl(World world) {
+    public JourneyControl(World world) {
         this.world = world;
     }
 
-    public static JourneyControl instance(final World world) {
-        return new JourneyControl(world);
-    }
-
-    public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final CabinLayout.Service service, final boolean directOrBackDirection) {
+    public Journeys.Journey create(final City2CityFlows.Flow c2cFlow, final CabinLayout.Service service) {
         checkNotNull(c2cFlow);
         checkNotNull(service);
 
         final Journeys.Journey journey = world.journeys().create(
                 Journeys.Status.LookingForTickets,
-                directOrBackDirection ? c2cFlow.getFromCityId() : c2cFlow.getToCityId(), // todo ak1 'roundtrip support' - remove this switching
-                directOrBackDirection ? c2cFlow.getToCityId() : c2cFlow.getFromCityId(),
+                c2cFlow.getFromCityId(),
+                c2cFlow.getToCityId(),
                 c2cFlow.getNextGroupSize(),
                 service);
         journey.setHeartbeatTime(world.getWorldTime());

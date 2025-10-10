@@ -37,14 +37,17 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .build();
 
-    private final DataField statusField = storage.getDataField(0);
+    private final DataField statusRawField = storage.getDataField(0);
+    private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
+    private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
+    private final BitAccessField.Section returningBackBitField = statusFieldBits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(1);
     private final DataField fromCityIdField = storage.getDataField(2);
     private final DataField toCityIdField = storage.getDataField(3);
     private final DataField groupSizeField = storage.getDataField(4);
-    private final DataField typeModeField = storage.getDataField(5);
-    private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeField);
-    private final BitAccessField.Section typeModeServiceBitField = typeModeFieldBits.section(0, 2);
+    private final DataField typeModeRawField = storage.getDataField(5);
+    private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeRawField);
+    private final BitAccessField.Section cabinServiceBitField = typeModeFieldBits.section(0, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
 
@@ -89,7 +92,8 @@ public class Journeys {
         storage.set(id, fromCityIdField, fromCityId);
         storage.set(id, toCityIdField, toCityId);
         storage.set(id, groupSizeField, groupSize);
-        typeModeServiceBitField.setInt(id, service.ordinal());
+        cabinServiceBitField.setInt(id, service.ordinal());
+        returningBackBitField.setBoolean(id, false);
 
         return journey;
     }
@@ -114,12 +118,20 @@ public class Journeys {
         }
 
         public int getStatusCode() {
-            return storage.getAsInt(id, statusField);
+            return statusBitField.getInt(id);
         }
 
         public void setStatus(final Status status) {
             checkNotNull(status);
-            storage.set(id, statusField, status.code());
+            statusBitField.setInt(id, status.code());
+        }
+
+        public boolean isReturningBack() {
+            return returningBackBitField.getBoolean(id);
+        }
+
+        public void setReturningBack(final boolean returningBack) {
+            returningBackBitField.setBoolean(id, returningBack);
         }
 
         public int getHeartbeatTime() {
@@ -134,8 +146,18 @@ public class Journeys {
             return storage.getAsInt(id, fromCityIdField);
         }
 
+        public void setFromCityId(final int fromCityId) {
+            checkArgument(fromCityId > 0);
+            storage.set(id, fromCityIdField, fromCityId);
+        }
+
         public int getToCityId() {
             return storage.getAsInt(id, toCityIdField);
+        }
+
+        public void setToCityId(final int toCityId) {
+            checkArgument(toCityId > 0);
+            storage.set(id, toCityIdField, toCityId);
         }
 
         public int getGroupSize() {
@@ -143,7 +165,7 @@ public class Journeys {
         }
 
         public CabinLayout.Service getCabinService() {
-            return CabinLayout.Service.values()[typeModeServiceBitField.getInt(id)];
+            return CabinLayout.Service.values()[cabinServiceBitField.getInt(id)];
         }
 
         public int getTransportFlight1Id() {
@@ -166,7 +188,7 @@ public class Journeys {
     public Storage.Condition<Journey> byStatus(final Status status) {
         checkNotNull(status);
 
-        return recordId -> storage.getAsInt(recordId, statusField) == status.code();
+        return recordId -> statusBitField.getInt(recordId) == status.code();
     }
 
     public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status) {
@@ -174,7 +196,7 @@ public class Journeys {
         checkNotNull(status);
 
         return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
-                && storage.getAsInt(recordId, statusField) == status.code();
+                && statusBitField.getInt(recordId) == status.code();
     }
 
     public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status1, final Status status2) {
@@ -183,12 +205,12 @@ public class Journeys {
         checkNotNull(status2);
 
         return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
-                && (storage.getAsInt(recordId, statusField) == status1.code()
-                || storage.getAsInt(recordId, statusField) == status2.code());
+                && (statusBitField.getInt(recordId) == status1.code()
+                || statusBitField.getInt(recordId) == status2.code());
     }
 
     public enum Status {
-        LookingForPersons(0),
+        //todo ak2 LookingForPersons(0),
         LookingForTickets(1),
         //todo ak2 persons WaitingForFlight(2),
         //todo ak2 persons TransferToAirport(3),

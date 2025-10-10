@@ -48,7 +48,7 @@ public class World {
 
     private final FlightMissionControl flightMissionControl = new FlightMissionControl(this);
     private final TransportFlightControl transportFlightControl = new TransportFlightControl(this);
-    private final JourneyControl journeyControl = JourneyControl.instance(this);
+    private final JourneyControl journeyControl = new JourneyControl(this);
     private final PaxManager paxManager = new PaxManager(this);
 
     private static final int worldTimeStep = 10;

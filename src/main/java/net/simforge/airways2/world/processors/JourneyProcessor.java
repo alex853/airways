@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airport2City;
@@ -14,29 +15,29 @@ import java.util.stream.Collectors;
 
 public class JourneyProcessor {
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
+    private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
+    private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
     private static final int CLEANUP_TIMEOUT = 3 * Time.ONE_DAY;
 
     public static void process(final World world) {
         Processing.heartbeat(() -> world.journeys().nextForHeartbeat(world.getWorldTime()),
-                journey -> processJourney(world, world.journeyControl(), journey));
+                journey -> processJourney(world, journey));
     }
 
-    private static void processJourney(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void processJourney(final World world, final Journeys.Journey journey) {
         journey.setHeartbeatTime(0);
         switch (journey.getStatus()) {
-            case LookingForTickets -> lookingForTickets(world, journeyControl, journey);
-            case WaitingForCheckIn -> waitingForCheckin(world, journeyControl, journey);
-            case WaitingForBoarding -> waitingForBoarding(world, journeyControl, journey);
-            case WaitingForDeboarding -> waitingForDeboarding(world, journeyControl, journey);
-            case JustArrived -> justArrived(world, journeyControl, journey);
-            case ItinerariesDone -> itinerariesDone(world, journeyControl, journey);
-            case Finished -> cleanup(world, journeyControl, journey);
+            case LookingForTickets -> lookingForTickets(world, journey);
+            case WaitingForCheckIn -> waitingForCheckin(world, journey);
+            case WaitingForBoarding -> waitingForBoarding(world, journey);
+            case WaitingForDeboarding -> waitingForDeboarding(world, journey);
+            case JustArrived -> justArrived(world, journey);
+            case ItinerariesDone -> itinerariesDone(world, journey);
+            case Finished -> cleanup(world, journey);
         }
     }
 
-    private static void lookingForTickets(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
-        // todo ak1 'roundtrip support' - consider 'direction' when determining fromCityId and toCityId
-
+    private static void lookingForTickets(final World world, final Journeys.Journey journey) {
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getFromCityId()).stream()
                 .map(Airport2City.Link::getAirportId)
@@ -50,7 +51,7 @@ public class JourneyProcessor {
         if (!foundDirectFlights.isEmpty()) {
             final TransportFlights.Flight directFlight = foundDirectFlights.iterator().next();
             bookDirectFlightJourney(world, journey, directFlight);
-            journeyControl.waitForCheckin(journey);
+            world.journeyControl().waitForCheckin(journey);
             return;
         }
 
@@ -61,13 +62,13 @@ public class JourneyProcessor {
                 final TransportFlights.Flight flight1 = stopoverRoute.get(0);
                 final TransportFlights.Flight flight2 = stopoverRoute.get(1);
                 bookStopoverFlightsJourney(world, journey, flight1, flight2);
-                journeyControl.waitForCheckin(journey);
+                world.journeyControl().waitForCheckin(journey);
                 return;
             }
         }
 
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_DAY));
-        // todo ak1 'limiting counter' to limit number of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
+        // todo ak0 'limiting counter' to limit number of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
     }
 
     private static Collection<TransportFlights.Flight> findDirectFlights(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
@@ -158,7 +159,7 @@ public class JourneyProcessor {
         return fromAirportIds.contains(tfm.fm.getDepartureAirportId()) && toAirportIds.contains(tfm.fm.getDestinationAirportId());
     }
 
-    private static void waitingForCheckin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void waitingForCheckin(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
@@ -171,13 +172,13 @@ public class JourneyProcessor {
                     TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak1 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
-            checkin(world, journeyControl, journey);
+            checkin(world, journey);
         } else { // checkin & boarding finished -> journey is too late
-            journeyControl.tooLateToBoard(journey);
+            world.journeyControl().tooLateToBoard(journey);
         }
     }
 
-    private static void checkin(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void checkin(final World world, final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForBoarding);
         journey.setHeartbeatTime(world.getWorldTime());
 
@@ -186,30 +187,30 @@ public class JourneyProcessor {
         flight.setPaxCheckedIn(flight.getPaxCheckedIn() + journey.getGroupSize());
     }
 
-    private static void waitingForBoarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void waitingForBoarding(final World world, final Journeys.Journey journey) {
         // most of the logic is in pax manager
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
             // todo ak1 'update stats'
         } else if (!TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
-            journeyControl.tooLateToBoard(journey);
+            world.journeyControl().tooLateToBoard(journey);
         }
     }
 
-    private static void waitingForDeboarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
             // todo ak1 'update stats'
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
-            deboarding(world, journeyControl, journey);
+            deboarding(world, journey);
         } else {
             // todo ak1 ???
         }
     }
 
-    private static void deboarding(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void deboarding(final World world, final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.JustArrived);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
 
@@ -218,7 +219,7 @@ public class JourneyProcessor {
         flight.setPaxOnBoard(flight.getPaxOnBoard() - journey.getGroupSize());
     }
 
-    private static void justArrived(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void justArrived(final World world, final Journeys.Journey journey) {
         // todo ak1 'update stats' small increase to all c2c-s which can be connected via this airport pair
 
         journey.setTransportFlight1Id(journey.getTransportFlight2Id());
@@ -227,22 +228,34 @@ public class JourneyProcessor {
             journey.setStatus(Journeys.Status.ItinerariesDone);
             journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
         } else {
-            journeyControl.waitForCheckin(journey);
+            world.journeyControl().waitForCheckin(journey);
         }
     }
 
-    private static void itinerariesDone(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void itinerariesDone(final World world, final Journeys.Journey journey) {
         // todo ak1 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
 
-        // todo ak1 'roundtrip support'
-        //          if this is a trip 'to', then switch flag 'return trip' and switch to 'looking for tickets'
-        //          if this is a 'return trip' then finish the journey
+        if (journey.isReturningBack()) {
+            journey.setStatus(Journeys.Status.Finished);
+            journey.setHeartbeatTime(world.getWorldTime() + CLEANUP_TIMEOUT);
 
-        journey.setStatus(Journeys.Status.Finished);
-        journey.setHeartbeatTime(world.getWorldTime() + CLEANUP_TIMEOUT);
+            log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
+        } else {
+            journey.setReturningBack(true);
+
+            final int fromCityId = journey.getFromCityId();
+            final int toCityId = journey.getToCityId();
+            journey.setFromCityId(toCityId);
+            journey.setToCityId(fromCityId);
+
+            journey.setStatus(Journeys.Status.LookingForTickets);
+            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
+
+            log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
+        }
     }
 
-    private static void cleanup(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {
+    private static void cleanup(final World world, final Journeys.Journey journey) {
         world.journeys().deleteById(journey.getId());
     }
 }

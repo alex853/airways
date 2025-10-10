@@ -218,7 +218,7 @@ public class TransportFlightControl {
         log.info("t/f #{} - deboarding started", transportFlight.getId());
         world.log(EventLog.EventType.TransportFlightDeboardingStarted, EventLog.id(transportFlight));
 
-        JourneyControl.instance(world).scheduleDeboardingForAllOnBoardJourneys(transportFlight);
+        world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
     }
 
     public void continueDeboarding(final TransportFlights.Flight transportFlight) {

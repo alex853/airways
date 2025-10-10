@@ -42,12 +42,10 @@ public class BitAccessField {
 
     public class Section {
         private final int offset;
-        private final int length;
         private final int mask;
 
         private Section(final int offset, final int length) {
             this.offset = offset;
-            this.length = length;
             this.mask = ((1 << length) - 1) << offset;
         }
 
@@ -58,6 +56,19 @@ public class BitAccessField {
 
         public void setInt(final int recordId, final int value) {
             final int shiftedValue = value << offset;
+            final int raw = storage.getAsInt(recordId, dataField);
+            final int otherSections = (raw & ~mask);
+            final int newRaw = shiftedValue | otherSections;
+            storage.set(recordId, dataField, newRaw);
+        }
+
+        public boolean getBoolean(final int recordId) {
+            final int raw = storage.getAsInt(recordId, dataField);
+            return (raw & mask) != 0;
+        }
+
+        public void setBoolean(final int recordId, final boolean value) {
+            final int shiftedValue = value ? mask : 0;
             final int raw = storage.getAsInt(recordId, dataField);
             final int otherSections = (raw & ~mask);
             final int newRaw = shiftedValue | otherSections;
