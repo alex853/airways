@@ -182,7 +182,7 @@ public class EventLog {
         AircraftLanding(312),
         AircraftArrivedToGate(313),
 
-        TransportFlightCreatedOLD(400), // todo ak1 remove it in middle of october
+        TransportFlightCreatedOLD(400), // todo ak1 remove it in beginning of november
 
         TransportFlightCreated(500),
         TransportFlightCheckInStarted(501),

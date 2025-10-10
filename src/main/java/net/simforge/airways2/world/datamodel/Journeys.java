@@ -48,6 +48,7 @@ public class Journeys {
     private final DataField typeModeRawField = storage.getDataField(5);
     private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeRawField);
     private final BitAccessField.Section cabinServiceBitField = typeModeFieldBits.section(0, 2);
+    private final BitAccessField.Section attemptCounterBitField = typeModeFieldBits.section(2, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
 
@@ -94,6 +95,7 @@ public class Journeys {
         storage.set(id, groupSizeField, groupSize);
         cabinServiceBitField.setInt(id, service.ordinal());
         returningBackBitField.setBoolean(id, false);
+        attemptCounterBitField.setInt(id, 0);
 
         return journey;
     }
@@ -132,6 +134,15 @@ public class Journeys {
 
         public void setReturningBack(final boolean returningBack) {
             returningBackBitField.setBoolean(id, returningBack);
+        }
+
+        public int getAttemptCounter() {
+            return attemptCounterBitField.getInt(id);
+        }
+
+        public void setAttemptCounter(final int attemptCounter) {
+            checkArgument(0 <= attemptCounter && attemptCounter <= 3);
+            attemptCounterBitField.setInt(id, attemptCounter);
         }
 
         public int getHeartbeatTime() {

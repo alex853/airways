@@ -17,7 +17,6 @@ public class JourneyProcessor {
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
     private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
     private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
-    private static final int CLEANUP_TIMEOUT = 3 * Time.ONE_DAY;
 
     public static void process(final World world) {
         Processing.heartbeat(() -> world.journeys().nextForHeartbeat(world.getWorldTime()),
@@ -33,7 +32,7 @@ public class JourneyProcessor {
             case WaitingForDeboarding -> waitingForDeboarding(world, journey);
             case JustArrived -> justArrived(world, journey);
             case ItinerariesDone -> itinerariesDone(world, journey);
-            case Finished -> cleanup(world, journey);
+            case Finished, CouldNotFindTickets, TooLateToBoard -> cleanup(world, journey);
         }
     }
 
@@ -67,8 +66,12 @@ public class JourneyProcessor {
             }
         }
 
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_DAY));
-        // todo ak0 'limiting counter' to limit number of searches and in case of reaching some limit then journey goes to could-find-tickets and then it decreases stats
+        if (journey.getAttemptCounter() < 3) {
+            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_HOUR, Time.ONE_DAY));
+            journey.setAttemptCounter(journey.getAttemptCounter() + 1);
+        } else {
+            world.journeyControl().couldNotFindTickets(journey);
+        }
     }
 
     private static Collection<TransportFlights.Flight> findDirectFlights(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
@@ -236,10 +239,7 @@ public class JourneyProcessor {
         // todo ak1 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
 
         if (journey.isReturningBack()) {
-            journey.setStatus(Journeys.Status.Finished);
-            journey.setHeartbeatTime(world.getWorldTime() + CLEANUP_TIMEOUT);
-
-            log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
+            world.journeyControl().finish(journey);
         } else {
             journey.setReturningBack(true);
 
@@ -249,6 +249,7 @@ public class JourneyProcessor {
             journey.setToCityId(fromCityId);
 
             journey.setStatus(Journeys.Status.LookingForTickets);
+            journey.setAttemptCounter(0);
             journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
 
             log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());

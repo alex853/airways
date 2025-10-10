@@ -1,10 +1,13 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
 
@@ -12,6 +15,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class JourneyControl {
+    private static final Logger log = LoggerFactory.getLogger(JourneyControl.class);
+
+    private static final int TERMINAL_STATUS_DURATION = 3 * Time.ONE_DAY;
+
     private final World world;
 
     public JourneyControl(World world) {
@@ -50,6 +57,18 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.OnBoard);
     }
 
+    public void finish(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
+
+        // todo ak0 'update stats'
+
+        journey.setStatus(Journeys.Status.Finished);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
+    }
+
     public void tooLateToBoard(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(EnumSet.of(
@@ -58,8 +77,22 @@ public class JourneyControl {
                 .contains(journey.getStatus()));
 
         // todo ak1 'cancel journey safely' with removal all following tickets etc
-        // todo ak1 'update stats'
+        // todo ak0 'update stats'
         journey.setStatus(Journeys.Status.TooLateToBoard);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        log.info("j/y #{} - too late to board, cleanup scheduled", journey.getId());
+    }
+
+    public void couldNotFindTickets(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
+
+        // todo ak0 'update stats'
+        journey.setStatus(Journeys.Status.CouldNotFindTickets);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
 
     public void scheduleDeboardingForAllOnBoardJourneys(final TransportFlights.Flight transportFlight) {

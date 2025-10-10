@@ -111,6 +111,7 @@ public class Storage<T> {
         return count;
     }
 
+    @Deprecated
     public Collection<T> all() {
         final List<T> result = new ArrayList<>();
         for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
