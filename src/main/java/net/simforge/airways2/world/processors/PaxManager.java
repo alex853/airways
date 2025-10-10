@@ -190,6 +190,8 @@ public class PaxManager {
         public void finishCurrToBoard() {
             currToBoardId = 0;
             confirmedOnBoard += currToBoardTotal;
+            currToBoardBoarded = 0;
+            currToBoardTotal = 0;
         }
 
         public int getEstimatedBoardingFinishTime() {
@@ -197,7 +199,7 @@ public class PaxManager {
         }
 
         public int getOnBoardIncludingCurr() {
-            return confirmedOnBoard + (int) currToBoardBoarded;
+            return confirmedOnBoard + (hasCurrToBoard() ? (int) currToBoardBoarded : 0);
         }
 
         @Override
