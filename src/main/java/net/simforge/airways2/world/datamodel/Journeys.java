@@ -65,8 +65,8 @@ public class Journeys {
         return storage.filter(condition);
     }
 
-    public Optional<Journey> findFirst(final Predicate<Journey> condition) {
-        return storage.findFirst(condition);
+    public Optional<Journey> findFirst(final Storage.Condition<Journey> condition) {
+        return storage.findFirst1(condition);
     }
 
     public Optional<Journey> byId(final int id) {
@@ -74,8 +74,7 @@ public class Journeys {
     }
 
     public Optional<Journey> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(journey -> journey.getHeartbeatTime() <= worldTime
-                && journey.getHeartbeatTime() != 0);
+        return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
     }
 
     public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize, final CabinLayout.Service service) {
@@ -163,6 +162,14 @@ public class Journeys {
         public void setTransportFlight2Id(final int transportFlight2Id) {
             storage.set(id, transportFlight2IdField, transportFlight2Id);
         }
+    }
+
+    public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status) {
+        checkArgument(transportFlightId > 0);
+        checkNotNull(status);
+
+        return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
+                && storage.getAsInt(recordId, statusField) == status.code();
     }
 
     public enum Status {

@@ -148,6 +148,7 @@ public class Storage<T> {
         return result;
     }
 
+    @Deprecated
     public Optional<T> findFirst(final Predicate<T> condition) {
         for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (isDeleted(recordId)) {
@@ -157,6 +158,20 @@ public class Storage<T> {
             final T instance = instantiator.create(recordId);
             if (condition.test(instance)) {
                 return Optional.of(instance);
+            }
+        }
+        return Optional.empty();
+    }
+
+    // todo ak0 rename when all findFirst usages will be wiped out
+    public Optional<T> findFirst1(final Condition<T> condition) {
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+
+            if (condition.test(recordId)) {
+                return Optional.of(instantiator.create(recordId));
             }
         }
         return Optional.empty();
@@ -533,5 +548,21 @@ public class Storage<T> {
 
     public interface Instantiator<T> {
         T create(int recordId);
+    }
+
+    public interface Condition<T> {
+        boolean test(int recordId);
+    }
+
+    public Condition<T> nextForHeartbeatCondition(final DataField heartbeatTimeField, final int worldTime) {
+        checkNotNull(heartbeatTimeField);
+        checkDataFieldIsInStorage(heartbeatTimeField);
+        checkArgument(heartbeatTimeField.dataType() == DataType.Signed32bit);
+        checkArgument(worldTime > 0);
+
+        return recordId -> {
+            final int heartbeatTime = getAsInt(recordId, heartbeatTimeField);
+            return heartbeatTime <= worldTime && heartbeatTime != 0;
+        };
     }
 }

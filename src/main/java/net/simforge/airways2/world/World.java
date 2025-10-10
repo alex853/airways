@@ -240,7 +240,8 @@ public class World {
 
         setWorldTime(newWorldTime);
 
-        // todo ak1 to add limiters to each processor
+        // todo ak0 add limiters to each processor
+        // todo ak0 add time tracking to each processor
         try {
             FlightMissionProcessor.process(this);
             RandomFlightMissionGenerator.process(this);
