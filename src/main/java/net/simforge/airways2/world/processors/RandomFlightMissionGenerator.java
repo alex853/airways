@@ -39,9 +39,10 @@ public class RandomFlightMissionGenerator {
 
         final Aircrafts.Aircraft aircraft = aircraftWithoutMission.get(0);
         final Airports.Airport destinationAirport = selectRandomDestination(world, aircraft);
-        final int departureTime = world.getWorldTime() + Time.ONE_HOUR;
+        final int departureTime = world.getWorldTime() + 4 * Time.ONE_HOUR;
 
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
+        world.transportFlightControl().createTransportFlight(mission);
 
         world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.pilotId(0), mission, aircraft);
         log.info("f/m #{} - flight dispatched randomly, aircraft {}", mission.getId(), aircraft.getRegNo());
