@@ -16,7 +16,7 @@ public class TransportFlightProcessor {
         final int worldTime = world.getWorldTime();
         final TransportFlightControl tfControl = world.transportFlightControl();
 
-        EventProcessing.process(world, StartAutomaticDeboarding, event -> world.transportFlights()
+        Processing.event(world, StartAutomaticDeboarding, event -> world.transportFlights()
                 .byId(event.getObjectId())
                 .ifPresent(tfControl::startDeboarding));
 

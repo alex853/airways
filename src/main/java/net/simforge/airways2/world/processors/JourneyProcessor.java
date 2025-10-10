@@ -17,29 +17,8 @@ public class JourneyProcessor {
     private static final int CLEANUP_TIMEOUT = 3 * Time.ONE_DAY;
 
     public static void process(final World world) {
-        final int worldTime = world.getWorldTime();
-        int processedThisTime = 0;
-
-        final JourneyControl journeyControl = JourneyControl.instance(world);
-        while (true) {
-            final Optional<Journeys.Journey> journey = world.journeys().nextForHeartbeat(worldTime);
-            if (journey.isEmpty()) {
-                return;
-            }
-
-            if (processedThisTime == 10) {
-                log.warn("TOO MANY JOURNEYS TO PROCESS, found j/y #{}, exiting", journey.get().getId());
-                return;
-            }
-
-            try {
-                processJourney(world, journeyControl, journey.get());
-                processedThisTime++;
-            } catch (final RuntimeException e) {
-                log.warn("j/y #{} processing error", journey.get().getId(), e);
-                throw e;
-            }
-        }
+        Processing.heartbeat(() -> world.journeys().nextForHeartbeat(world.getWorldTime()),
+                journey -> processJourney(world, world.journeyControl(), journey));
     }
 
     private static void processJourney(final World world, final JourneyControl journeyControl, final Journeys.Journey journey) {

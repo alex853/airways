@@ -20,28 +20,10 @@ public class FlightMissionProcessor {
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
 
-        EventProcessing.process(world, PilotOnDuty, event -> {
-            final int flightId = event.getObjectId();
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-            if (mission.isModePc()) {
-                return;
-            }
-            world.flightMissionControl().startOrCancel(mission);
-        });
+        Processing.event(world, PilotOnDuty, event -> processPilotOnDutyEvent(world, event));
 
-        while (true) {
-            final Optional<FlightMissions.Mission> mission = world.flightMissions().nextForHeartbeat(worldTime);
-            if (mission.isEmpty()) {
-                break;
-            }
-
-            try {
-                processMission(world, mission.get());
-            } catch (final RuntimeException e) {
-                log.warn("f/m #{} - flight processing error - {}", mission.get().getId(), mission.get().getStatus(), e);
-                throw e;
-            }
-        }
+        Processing.heartbeat(() -> world.flightMissions().nextForHeartbeat(worldTime),
+                mission -> processMission(world, mission));
     }
 
     private static void processMission(final World world, final FlightMissions.Mission mission) {
@@ -139,5 +121,14 @@ public class FlightMissionProcessor {
                 world.flightMissionControl().landing(mission, toAirport);
             }
         }
+    }
+
+    private static void processPilotOnDutyEvent(World world, EventsToProcess.Event event) {
+        final int flightId = event.getObjectId();
+        final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
+        if (mission.isModePc()) {
+            return;
+        }
+        world.flightMissionControl().startOrCancel(mission);
     }
 }
