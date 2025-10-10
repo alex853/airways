@@ -10,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/journey")
@@ -24,6 +26,14 @@ public class JourneyController {
         return worldBean.read(world -> world.journeys().all().stream()
                 .map(j -> toDto(world, j))
                 .toList());
+    }
+
+    @GetMapping("/stats")
+    public Map<String, Integer> getStats() {
+        return worldBean.read(world -> world.journeys().all().stream()
+                .collect(Collectors.groupingBy(
+                    j -> j.getStatus().name(),
+                    Collectors.summingInt(j -> j.getGroupSize()))));
     }
 
     private static JourneyDto toDto(final World world, final Journeys.Journey j) {

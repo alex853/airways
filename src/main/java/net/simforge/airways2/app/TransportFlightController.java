@@ -44,6 +44,19 @@ public class TransportFlightController {
                 .toList());
     }
 
+    @GetMapping("/actual-manual")
+    public List<FlightDto> getActualManual() {
+        return worldBean.read(world -> world.transportFlights()
+                .filter(f -> world.flightMissions()
+                        .byId(f.getFlightMissionId())
+                        .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
+                            && ff.isModePc())
+                        .orElse(false)).stream()
+                .map(f -> from(world, f))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .toList());
+    }
+
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
@@ -53,6 +66,7 @@ public class TransportFlightController {
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 flight.getScheduledFlightId(),
+                mission.map(m -> m.isModePc()).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
@@ -73,6 +87,7 @@ public class TransportFlightController {
         private String hrtBt;
         private int fmId;
         private int sfId;
+        private boolean pcMode;
         private String dep;
         private String dest;
         private String dof;
