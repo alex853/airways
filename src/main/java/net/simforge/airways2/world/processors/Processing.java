@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.EventsToProcess;
 import org.slf4j.Logger;
@@ -29,7 +30,7 @@ public class Processing {
             }
             circuitBreakerCounter++;
 
-            try {
+            try (final Timing.Timer ignored = Timing.label("Processing.heartbeat - " + processor.getClass().getName())) {
                 processor.accept(next.get());
             } catch (final RuntimeException e) {
                 log.warn("heartbeat processing error for object {}", next.get(), e);
@@ -51,12 +52,14 @@ public class Processing {
             }
 
             if (circuitBreakerCounter == CIRCUIT_BREAKER_COUNTER_LIMIT) {
-                log.warn("too many objects to process, the last one is {}", event.get());
+                log.warn("too many events to process, the last one is {}", event.get());
                 break;
             }
             circuitBreakerCounter++;
 
-            handler.accept(event.get());
+            try (final Timing.Timer ignored = Timing.label("Processing.event - " + eventType.name())) {
+                handler.accept(event.get());
+            }
 
             event.get().setProcessedStatus();
         }
