@@ -131,6 +131,7 @@ public class Storage<T> {
         return Optional.of(instantiator.create(recordId));
     }
 
+    @Deprecated
     public Collection<T> filter(final Predicate<T> condition) {
         final List<T> result = new ArrayList<>();
         for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
@@ -163,20 +164,23 @@ public class Storage<T> {
         return Optional.empty();
     }
 
-    // todo ak0 rename when all findFirst usages will be wiped out
-    public Optional<T> findFirst1(final Condition<T> condition) {
-        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
-            if (isDeleted(recordId)) {
-                continue;
-            }
-
-            if (condition.test(recordId)) {
-                return Optional.of(instantiator.create(recordId));
-            }
-        }
-        return Optional.empty();
+    // todo ak0 rename when all filter usages will be wiped out
+    public Stream<T> filter1(final Condition<T> condition) {
+        return IntStream.rangeClosed(1, getTotalStoredRecordCount())
+                .filter(recordId -> !isDeleted(recordId))
+                .filter(recordId -> condition.test(recordId))
+                .mapToObj(recordId -> instantiator.create(recordId));
     }
 
+    // todo ak0 rename when all findFirst usages will be wiped out
+    public Optional<T> findFirst1(final Condition<T> condition) {
+        return IntStream.rangeClosed(1, getTotalStoredRecordCount())
+                .filter(recordId -> !isDeleted(recordId))
+                .filter(recordId -> condition.test(recordId))
+                .mapToObj(recordId -> instantiator.create(recordId))
+                .findFirst();
+    }
+    
     public int addRecord() {
         // todo ak3 optimization - ids of deleted records can be temporarily stored somewhere to improve performance
         int deletedRecordId = 0;
