@@ -9,9 +9,8 @@ import net.simforge.airways2.tools.CabinLayout;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -57,12 +56,12 @@ public class Journeys {
         storage.save(rootPath);
     }
 
-    public Collection<Journey> all() {
-        return storage.all();
+    public Stream<Journey> all() {
+        return storage.all1();
     }
 
-    public Collection<Journey> filter(final Predicate<Journey> condition) {
-        return storage.filter(condition);
+    public Stream<Journey> filter(final Storage.Condition<Journey> condition) {
+        return storage.filter1(condition);
     }
 
     public Optional<Journey> findFirst(final Storage.Condition<Journey> condition) {
@@ -164,12 +163,28 @@ public class Journeys {
         }
     }
 
+    public Storage.Condition<Journey> byStatus(final Status status) {
+        checkNotNull(status);
+
+        return recordId -> storage.getAsInt(recordId, statusField) == status.code();
+    }
+
     public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status) {
         checkArgument(transportFlightId > 0);
         checkNotNull(status);
 
         return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
                 && storage.getAsInt(recordId, statusField) == status.code();
+    }
+
+    public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status1, final Status status2) {
+        checkArgument(transportFlightId > 0);
+        checkNotNull(status1);
+        checkNotNull(status2);
+
+        return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
+                && (storage.getAsInt(recordId, statusField) == status1.code()
+                || storage.getAsInt(recordId, statusField) == status2.code());
     }
 
     public enum Status {

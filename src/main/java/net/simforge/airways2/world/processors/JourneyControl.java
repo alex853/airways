@@ -70,8 +70,8 @@ public class JourneyControl {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
 
-        world.journeys().filter(j -> j.getStatus() == Journeys.Status.OnBoard
-                        && j.getTransportFlight1Id() == transportFlight.getId())
+        world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
                 .forEach(this::scheduleDeboardingAtRandomTime);
     }
 

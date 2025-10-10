@@ -281,7 +281,7 @@ public class AdminController {
     public String kickAllLookingForTickets() {
         return worldBean.modifySync(world -> {
             world.journeys()
-                    .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                    .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
             return "DONE";
         });

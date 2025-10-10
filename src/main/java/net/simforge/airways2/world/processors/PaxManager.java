@@ -51,8 +51,7 @@ public class PaxManager {
         Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
             final int actualOnBoard = world.journeys()
-                    .filter(j -> j.getTransportFlight1Id() == transportFlight.getId()
-                            && j.getStatus() == Journeys.Status.OnBoard).stream()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
                     .map(Journeys.Journey::getGroupSize)
                     .reduce(0, Integer::sum);
 
@@ -122,11 +121,10 @@ public class PaxManager {
         log.info("t/f #{} - boarding - finish", transportFlight.getId());
 
         final Collection<Journeys.Journey> failedToBoardJourneys = world.journeys()
-                .filter(j -> j.getTransportFlight1Id() == transportFlight.getId()
-                        && EnumSet.of(
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
                         Journeys.Status.WaitingForCheckIn,
-                        Journeys.Status.WaitingForBoarding
-                ).contains(j.getStatus()));
+                        Journeys.Status.WaitingForBoarding))
+                .toList();
         log.info("t/f #{} - boarding - found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
 
         failedToBoardJourneys.forEach(j -> journeyControl().tooLateToBoard(j));

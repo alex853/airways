@@ -166,27 +166,27 @@ public class Storage<T> {
         return Optional.empty();
     }
 
-    // todo ak0 rename when all .all() usages will be wiped out
+    // todo ak1 rename when all .all() usages will be wiped out
     public Stream<T> all1() {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
-                .mapToObj(recordId -> instantiator.create(recordId));
+                .mapToObj(instantiator::create);
     }
 
-    // todo ak0 rename when all .filter() usages will be wiped out
+    // todo ak1 rename when all .filter() usages will be wiped out
     public Stream<T> filter1(final Condition<T> condition) {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
-                .filter(recordId -> condition.test(recordId))
-                .mapToObj(recordId -> instantiator.create(recordId));
+                .filter(condition::test)
+                .mapToObj(instantiator::create);
     }
 
-    // todo ak0 rename when all .findFirst() usages will be wiped out
+    // todo ak1 rename when all .findFirst() usages will be wiped out
     public Optional<T> findFirst1(final Condition<T> condition) {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
-                .filter(recordId -> condition.test(recordId))
-                .mapToObj(recordId -> instantiator.create(recordId))
+                .filter(condition::test)
+                .mapToObj(instantiator::create)
                 .findFirst();
     }
     

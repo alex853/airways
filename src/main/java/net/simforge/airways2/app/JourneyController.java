@@ -23,17 +23,17 @@ public class JourneyController {
 
     @GetMapping("/all")
     public List<JourneyDto> getAll() {
-        return worldBean.read(world -> world.journeys().all().stream()
+        return worldBean.read(world -> world.journeys().all()
                 .map(j -> toDto(world, j))
                 .toList());
     }
 
     @GetMapping("/stats")
     public Map<String, Integer> getStats() {
-        return worldBean.read(world -> world.journeys().all().stream()
+        return worldBean.read(world -> world.journeys().all()
                 .collect(Collectors.groupingBy(
                     j -> j.getStatus().name(),
-                    Collectors.summingInt(j -> j.getGroupSize()))));
+                    Collectors.summingInt(Journeys.Journey::getGroupSize))));
     }
 
     private static JourneyDto toDto(final World world, final Journeys.Journey j) {
