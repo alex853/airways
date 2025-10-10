@@ -53,6 +53,8 @@ public class JourneyController {
                 world.cities().byId(j.getToCityId()).orElseThrow().getName(),
                 j.getGroupSize(),
                 j.getCabinService().name(),
+                j.isReturningBack() ? 1 : 0,
+                j.getAttemptCounter(),
                 tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
                 fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
@@ -76,6 +78,8 @@ public class JourneyController {
         private String tCN;
         private int gs;
         private String cs;
+        private int dir;
+        private int atCnt;
         private Integer tf1Id;
         private String tf1St;
         private String tf1From;
