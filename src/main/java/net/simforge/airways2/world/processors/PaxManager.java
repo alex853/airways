@@ -57,6 +57,8 @@ public class PaxManager {
                             && j.getStatus() == Journeys.Status.OnBoard).stream()
                     .map(Journeys.Journey::getGroupSize)
                     .reduce(0, Integer::sum);
+            transportFlight.setPaxOnBoard(actualOnBoard);
+
             final int remainingToBoard = transportFlight.getPaxCheckedIn() - actualOnBoard;
 
             boarding = new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
