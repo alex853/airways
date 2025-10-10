@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -56,12 +56,12 @@ public class Aircrafts {
         storage.save(rootPath);
     }
 
-    public Collection<Aircraft> all() {
-        return storage.all();
+    public Stream<Aircraft> all() {
+        return storage.all1();
     }
 
-    public Collection<Aircraft> filter(final Predicate<Aircraft> condition) {
-        return storage.filter(condition);
+    public Stream<Aircraft> filter(final Storage.Condition<Aircraft> condition) {
+        return storage.filter1(condition);
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
@@ -98,6 +98,12 @@ public class Aircrafts {
     public Optional<Aircraft> byRegNo(final String regNo) {
         checkNotNull(regNo, "regNo is mandatory");
         return storage.findFirst(a -> a.getRegNo().equals(regNo));
+    }
+
+    public Storage.Condition<Aircraft> byLocationStatus(final LocationStatus locationStatus) {
+        checkNotNull(locationStatus);
+
+        return recordId -> storage.getAsInt(recordId, locationStatusField) == locationStatus.code();
     }
 
     public class Aircraft {

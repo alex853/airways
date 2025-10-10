@@ -25,7 +25,7 @@ public class AircraftController {
     @GetMapping("/all")
     public List<FullAircraftDto> getAll() {
         try (final Timing.Timer ignored = Timing.label("AircraftController - getAll")) {
-            return worldBean.read(world -> world.aircrafts().all().stream()
+            return worldBean.read(world -> world.aircrafts().all()
                     .map(a -> new FullAircraftDto(
                             a.getId(),
                             world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
@@ -45,8 +45,8 @@ public class AircraftController {
     @GetMapping("/flying")
     public List<FlyingAircraftDto> getFlying() {
         try (final Timing.Timer ignored = Timing.label("AircraftController - getFlying")) {
-            return worldBean.read(world -> world.aircrafts().all().stream()
-                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying)
+            return worldBean.read(world -> world.aircrafts()
+                    .filter(world.aircrafts().byLocationStatus(Aircrafts.LocationStatus.Flying))
                     .map(a -> {
                         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
                         return new FlyingAircraftDto(
