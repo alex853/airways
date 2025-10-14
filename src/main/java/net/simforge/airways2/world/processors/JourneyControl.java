@@ -61,7 +61,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.OnBoard);
     }
 
-    public void finish(final Journeys.Journey journey) {
+    public void switchToReturnTrip(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
 
