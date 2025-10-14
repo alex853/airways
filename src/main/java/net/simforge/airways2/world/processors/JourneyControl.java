@@ -18,6 +18,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class JourneyControl {
     private static final Logger log = LoggerFactory.getLogger(JourneyControl.class);
 
+    private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
+    private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
+
     private static final int TERMINAL_STATUS_DURATION = 3 * Time.ONE_DAY;
 
     private final World world;
@@ -60,12 +63,32 @@ public class JourneyControl {
 
     public void finish(final Journeys.Journey journey) {
         checkNotNull(journey);
-        checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
+        checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
+
+        journey.setReturningBack(true);
+
+        final int fromCityId = journey.getFromCityId();
+        final int toCityId = journey.getToCityId();
+        journey.setFromCityId(toCityId);
+        journey.setToCityId(fromCityId);
+
+        journey.setStatus(Journeys.Status.LookingForTickets);
+        journey.setAttemptCounter(0);
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
+
+        updateCity2CityFlowSuccessRate(journey, 0.004f);
+
+        log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
+    }
+
+    public void finish(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
 
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        updateCity2CityFlowSuccessRate(journey, 0.01f); // todo ak1 itinenaries done
+        updateCity2CityFlowSuccessRate(journey, 0.006f);
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
