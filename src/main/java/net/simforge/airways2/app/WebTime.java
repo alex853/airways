@@ -36,4 +36,23 @@ public class WebTime {
                 ? JavaTime.toHhmm(time)
                 : null;
     }
+
+    public static String hhmmPlusDaysOrNull(final int time) {
+        if (time == 0) {
+            return null;
+        }
+        
+        final LocalDateTime ldt = Time.toLdt(time);
+        final LocalDateTime now = JavaTime.now();
+
+        final String hhmm = JavaTime.toHhmm(time);
+
+        final long daysDiff = Duration.between(now.toLocalDate().atStartOfDay(), ldt.toLocalDate().atStartOfDay()).toDays();
+
+        if (daysDiff == 0) {
+            return hhmm;
+        } else {
+            return hhmm + (daysDiff > 0 ? "+" : "") + daysDiff;
+        }
+    }
 }
