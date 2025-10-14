@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.FlightMissionToTimeline;
+import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,7 @@ public class TransportFlightController {
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
+        final Optional<FlightTimeline> timeline mission.flatMap(m -> FlightMissionToTimeline.byMission(m);
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
