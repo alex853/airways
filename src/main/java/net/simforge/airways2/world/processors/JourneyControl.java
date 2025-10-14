@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -135,7 +136,7 @@ public class JourneyControl {
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
     }
 
-    // todo ak0 refactor
+    // todo ak0 refactor - move to another class
     private void updateCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
         // todo ak0 another direction!
         final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(journey.getFromCityId(), journey.getToCityId());
@@ -150,6 +151,11 @@ public class JourneyControl {
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flows - {}->{} - success rate update - src {}, delta {}, new {}", journey.getFromCityId(), journey.getToCityId(), originalSuccessRate, successRateDelta, newSuccessRate);
+        log.info("update c2c flows - {}->{} - success rate update for delta% {} - src {}, delta {}, new {}, new reread {}", journey.getFromCityId(), journey.getToCityId(), 
+                 deltaPercents, 
+                 Formatting.df7z.format(originalSuccessRate), 
+                 Formatting.df7z.format(successRateDelta), 
+                 Formatting.df7z.format(newSuccessRate),
+                 Formatting.df7z.format(journey.getSuccessRate()));
     }
 }
