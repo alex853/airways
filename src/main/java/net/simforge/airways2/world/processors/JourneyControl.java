@@ -151,7 +151,7 @@ public class JourneyControl {
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flows - {}->{} - success rate update {}% - src {}, delta {}, new {}, new reread {}", journey.getFromCityId(), journey.getToCityId(), 
+        log.info("update c2c flows - {}->{} - success rate update {}% - src {}, delta {}, new {} (stored {})", journey.getFromCityId(), journey.getToCityId(), 
                  deltaPercents, 
                  Formatting.df7z.format(originalSuccessRate), 
                  Formatting.df7z.format(successRateDelta), 
