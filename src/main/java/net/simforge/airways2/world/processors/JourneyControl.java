@@ -156,6 +156,6 @@ public class JourneyControl {
                  Formatting.df7z.format(originalSuccessRate), 
                  Formatting.df7z.format(successRateDelta), 
                  Formatting.df7z.format(newSuccessRate),
-                 Formatting.df7z.format(journey.getSuccessRate()));
+                 Formatting.df7z.format(flow.get().getSuccessRate()));
     }
 }
