@@ -65,7 +65,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        tuneCity2CityFlowSuccessRate(journey, 0.01f); // todo ak1 itinenaries done
+        updateCity2CityFlowSuccessRate(journey, 0.01f); // todo ak1 itinenaries done
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -92,7 +92,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        tuneCity2CityFlowSuccessRate(journey, -1f);
+        updateCity2CityFlowSuccessRate(journey, -1f);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
@@ -112,7 +112,7 @@ public class JourneyControl {
     }
 
     // todo ak0 refactor
-    private void tuneCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
+    private void updateCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
         // todo ak0 another direction!
         final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(journey.getFromCityId(), journey.getToCityId());
         if (flow.isEmpty()) {
@@ -124,8 +124,8 @@ public class JourneyControl {
         final float successRateToItsLimit = deltaPercents > 0 ? 1.0 - originalSuccessRate : originalSuccessRate;
         final float successRateDelta = successRateToItsLimit * (deltaPercents/100);
         final float newSuccessRate = originalSuccessRate + successRateDelta;
-        flow.get().setAvailability(newAvailability);
+        flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flows - {}->{} - availability tuning - src {}, delta {}, new {}", journey.getFromCityId(), journey.getToCityId(), originalSuccessRate, successRateDelta, newSuccessRate);
+        log.info("update c2c flows - {}->{} - success rate update - src {}, delta {}, new {}", journey.getFromCityId(), journey.getToCityId(), originalSuccessRate, successRateDelta, newSuccessRate);
     }
 }
