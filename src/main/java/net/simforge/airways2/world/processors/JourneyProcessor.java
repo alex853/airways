@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 
 public class JourneyProcessor {
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
-    private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
-    private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
 
     public static void process(final World world) {
         Processing.heartbeat(() -> world.journeys().nextForHeartbeat(world.getWorldTime()),
@@ -236,23 +234,10 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
-        // todo ak1 'update stats' big increase to c2c between original journey c2c and to reciprocal c2c
-
         if (journey.isReturningBack()) {
             world.journeyControl().finish(journey);
         } else {
-            journey.setReturningBack(true);
-
-            final int fromCityId = journey.getFromCityId();
-            final int toCityId = journey.getToCityId();
-            journey.setFromCityId(toCityId);
-            journey.setToCityId(fromCityId);
-
-            journey.setStatus(Journeys.Status.LookingForTickets);
-            journey.setAttemptCounter(0);
-            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
-
-            log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
+            world.journeyControl().switchToReturnTrip(journey);
         }
     }
 
