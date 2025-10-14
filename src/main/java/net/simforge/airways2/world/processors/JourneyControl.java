@@ -121,7 +121,7 @@ public class JourneyControl {
         }
 
         final float originalSuccessRate = flow.get().getSuccessRate();
-        final float successRateToItsLimit = deltaPercents > 0 ? 1.0 - originalSuccessRate : originalSuccessRate;
+        final float successRateToItsLimit = deltaPercents > 0 ? 1.0f - originalSuccessRate : originalSuccessRate;
         final float successRateDelta = successRateToItsLimit * (deltaPercents/100);
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
