@@ -3,6 +3,7 @@ package net.simforge.airways2.app;
 import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.JavaTime;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -43,7 +44,7 @@ public class WebTime {
         }
         
         final LocalDateTime ldt = Time.toLdt(time);
-        final LocalDateTime now = JavaTime.now();
+        final LocalDateTime now = JavaTime.nowUtc();
 
         final String hhmm = JavaTime.toHhmm(time);
 
