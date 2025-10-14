@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -64,7 +65,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        tuneCity2CityFlowSuccessRate(journey, 0.01); // todo ak1 itinenaries done
+        tuneCity2CityFlowSuccessRate(journey, 0.01f); // todo ak1 itinenaries done
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -91,7 +92,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        tuneCity2CityFlowSuccessRate(journey, -1);
+        tuneCity2CityFlowSuccessRate(journey, -1f);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
