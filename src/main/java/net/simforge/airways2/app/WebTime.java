@@ -46,7 +46,7 @@ public class WebTime {
         final LocalDateTime ldt = Time.toLdt(time);
         final LocalDateTime now = JavaTime.nowUtc();
 
-        final String hhmm = JavaTime.toHhmm(time);
+        final String hhmm = JavaTime.toHhmm(ldt.toLocalTime());
 
         final long daysDiff = Duration.between(now.toLocalDate().atStartOfDay(), ldt.toLocalDate().atStartOfDay()).toDays();
 
