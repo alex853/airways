@@ -61,7 +61,7 @@ public class City2CityFlows {
         checkArgument(fromCityId >= 1);
         checkArgument(toCityId >= 1);
 
-        return storage.findFirst(id -> storage.getAsInt(fromCityId, fromCityIdField) == fromCityId && storage.getAsInt(toCityId, toCityIdField) == toCityId);
+        return storage.findFirst(id -> storage.getAsInt(id, fromCityIdField) == fromCityId && storage.getAsInt(id, toCityIdField) == toCityId);
     }
 
     public Flow createInactive(final int fromCityId, final int toCityId) {
