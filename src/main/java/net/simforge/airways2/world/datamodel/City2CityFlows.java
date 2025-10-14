@@ -57,6 +57,13 @@ public class City2CityFlows {
         }
     }
 
+    public Optional<Flow> getFromCityIdToCityId(final int fromCityId, final int toCityId) {
+        checkArgument(fromCityId >= 1);
+        checkArgument(toCityId >= 1);
+
+        return storage.findFirst(id -> storage.getAsInt(fromCityId, fromCityIdField) == fromCityId && storage.getAsInt(toCityId, toCityIdField) == toCityId);
+    }
+
     public Flow createInactive(final int fromCityId, final int toCityId) {
         checkArgument(allFromCityId(fromCityId).stream().filter(f -> f.getToCityId() == toCityId).findFirst().isEmpty());
 
