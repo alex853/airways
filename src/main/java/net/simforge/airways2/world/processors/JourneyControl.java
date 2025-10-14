@@ -61,10 +61,10 @@ public class JourneyControl {
         checkNotNull(journey);
         checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
 
-        // todo ak0 'update stats'
-
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        tuneCity2CityFlowAvailability(journey, 0.01); // todo ak1 itinenaries done
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -88,9 +88,10 @@ public class JourneyControl {
         checkNotNull(journey);
         checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
 
-        // todo ak0 'update stats'
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        tuneCity2CityFlowAvailability(journey, -1);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
@@ -107,5 +108,22 @@ public class JourneyControl {
     private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
+    }
+
+    private void tuneCity2CityFlowAvailability(final Journeys.Journey journey, final float deltaPercents) {
+        // todo ak1 another direction!
+        final Optional<City2CityFlows.Flow> flow = journey.city2cityFlows().getFromCityIdToCityId(journey.getFromCityId(), journey.getToCityId());
+        if (flow.isEmpty()) {
+            log.warn("update c2c flows - {}->{} - no flow found", journey.getFromCityId(), journey.getToCityId());
+            return;
+        }
+
+        final float originalSuccessRate = flow.get().getSuccessRate();
+        final float successRateToItsLimit = deltaPercents > 0 ? 1.0 - originalSuccessRate : originalSuccessRate;
+        final float successRateDelta = availabilityToItsLimit * (deltaPercents/100);
+        final float newSuccessRate = originalSuccessRate + successRateDelta;
+        flow.get().setAvailability(newAvailability);
+
+        log.info("update c2c flows - {}->{} - availability tuning - src {}, delta {}, new {}", journey.getFromCityId(), journey.getToCityId(), originalSuccessRate, successRateDelta, newSuccessRate);
     }
 }
