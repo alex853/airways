@@ -67,7 +67,6 @@ public class TransportFlightController {
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
         final Optional<FlightTimeline> timeline = mission.map(m -> FlightMissionToTimeline.byMission(m));
-        timeline.ifPresent(t -> log.info("Timeline: {}", t));
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
