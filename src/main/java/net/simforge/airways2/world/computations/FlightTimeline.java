@@ -29,28 +29,6 @@ public class FlightTimeline {
         return result;
     }
 
-    /*public static FlightTimeline byFlight(Flight flight) {
-        FlightTimeline timeline = byScheduledDepartureArrivalTime(flight.getScheduledDepartureTime(), flight.getScheduledArrivalTime());
-
-        if (flight.getActualDepartureTime() != null) {
-            timeline.getBlocksOff().setActualTime(flight.getActualDepartureTime());
-        }
-
-        if (flight.getActualTakeoffTime() != null) {
-            timeline.getTakeoff().setActualTime(flight.getActualTakeoffTime());
-        }
-
-        if (flight.getActualLandingTime() != null) {
-            timeline.getLanding().setActualTime(flight.getActualLandingTime());
-        }
-
-        if (flight.getActualArrivalTime() != null) {
-            timeline.getBlocksOn().setActualTime(flight.getActualArrivalTime());
-        }
-
-        return timeline;
-    }*/
-
     private Milestone start;
     private Milestone blocksOff;
     private Milestone takeoff;
@@ -147,6 +125,18 @@ public class FlightTimeline {
         return sum;
     }
 
+    @Override
+    public String toString() {
+        return "FlightTimeline{" +
+                "start=" + start +
+                ", blocksOff=" + blocksOff +
+                ", takeoff=" + takeoff +
+                ", landing=" + landing +
+                ", blocksOn=" + blocksOn +
+                ", finish=" + finish +
+                '}';
+    }
+
     public class Milestone {
         private MilestoneType type;
         private LocalDateTime scheduledTime;
@@ -176,6 +166,16 @@ public class FlightTimeline {
             this.actualTime = actualTime; // todo ak3 checks
 
             updateEstimatedTimes();
+        }
+
+        @Override
+        public String toString() {
+            return "Milestone{" +
+                    "type=" + type +
+                    ", scheduledTime=" + scheduledTime +
+                    ", actualTime=" + actualTime +
+                    ", estimatedTime=" + estimatedTime +
+                    '}';
         }
 
         private void updateScheduleTime_up() {
@@ -211,6 +211,15 @@ public class FlightTimeline {
 
             from.nextStage = this;
             to.previousStage = this;
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{" +
+                    "from=" + (from != null ? from.type : null) +
+                    ", to=" + (to != null ? to.type : null) +
+                    ", scheduledDuration=" + scheduledDuration +
+                    '}';
         }
     }
 
