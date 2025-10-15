@@ -138,10 +138,14 @@ public class JourneyControl {
 
     // todo ak0 refactor - move to another class
     private void updateCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
-        // todo ak0 another direction!
-        final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(journey.getFromCityId(), journey.getToCityId());
+        updateCity2CityFlowSuccessRateOneDirection(journey.getFromCityId(), journey.getToCityId());
+        updateCity2CityFlowSuccessRateOneDirection(journey.getToCityId(), journey.getFromCityId());
+    }
+
+    private void updateCity2CityFlowSuccessRateOneDirection(final int fromCityId, final int toCityId, final float deltaPercents) {
+        final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId);
         if (flow.isEmpty()) {
-            log.warn("update c2c flows - {}->{} - no flow found", journey.getFromCityId(), journey.getToCityId());
+            log.warn("update c2c flows - {}->{} - no flow found", fromCityId, toCityId);
             return;
         }
 
@@ -151,7 +155,7 @@ public class JourneyControl {
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flows - {}->{} - success rate update {}% - src {}, delta {}, new {} (stored {})", journey.getFromCityId(), journey.getToCityId(), 
+        log.info("update c2c flows - {}->{} - success rate update {}% - src {}, delta {}, new {} (stored {})", fromCityId, toCityId, 
                  deltaPercents, 
                  Formatting.df7z.format(originalSuccessRate), 
                  Formatting.df7z.format(successRateDelta), 
