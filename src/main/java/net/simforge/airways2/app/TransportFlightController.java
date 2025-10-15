@@ -22,6 +22,8 @@ import java.util.Optional;
 @RequestMapping("/transport-flight")
 @CrossOrigin
 public class TransportFlightController {
+    private static final Logger log = LoggerFactory.getLogger(TransportFlightController.class);
+
     @Autowired
     private WorldRunnerBean worldBean;
 
