@@ -78,7 +78,7 @@ public class JourneyControl {
         journey.setAttemptCounter(0);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
 
-        updateCity2CityFlowSuccessRate(journey, 0.004f);
+        updateCity2CityFlowSuccessRate(journey, 0.04f);
 
         log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
     }
@@ -90,7 +90,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        updateCity2CityFlowSuccessRate(journey, 0.006f);
+        updateCity2CityFlowSuccessRate(journey, 0.06f);
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -117,7 +117,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        updateCity2CityFlowSuccessRate(journey, -1f);
+        updateCity2CityFlowSuccessRate(journey, -1.0f);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
