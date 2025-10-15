@@ -138,8 +138,8 @@ public class JourneyControl {
 
     // todo ak0 refactor - move to another class
     private void updateCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
-        updateCity2CityFlowSuccessRateOneDirection(journey.getFromCityId(), journey.getToCityId());
-        updateCity2CityFlowSuccessRateOneDirection(journey.getToCityId(), journey.getFromCityId());
+        updateCity2CityFlowSuccessRateOneDirection(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
+        updateCity2CityFlowSuccessRateOneDirection(journey.getToCityId(), journey.getFromCityId(), deltaPercents);
     }
 
     private void updateCity2CityFlowSuccessRateOneDirection(final int fromCityId, final int toCityId, final float deltaPercents) {
