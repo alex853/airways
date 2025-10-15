@@ -73,8 +73,11 @@ public class TransportFlightController {
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
+                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedDepartureWorldTime())).orElse(null),
+                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualDepartureWorldTime())).orElse(null),
+                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse(null),
+                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualArrivalWorldTime())).orElse(null),
+                null, // todo ak0 estimated arrival time
                 flight.getTotalTickets().toString(),
                 flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() > 0 ? flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() : null,
                 flight.getPaxCheckedIn() > 0 ? flight.getPaxCheckedIn() : null,
@@ -95,7 +98,10 @@ public class TransportFlightController {
         private String dest;
         private String dof;
         private String pDep;
+        private String aDep;
         private String pArr;
+        private String aArr;
+        private String eArr;
         private String tTkts;
         private Integer sTkts;
         private Integer ckdIn;
