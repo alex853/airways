@@ -77,7 +77,7 @@ public class TransportFlightController {
                 mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualDepartureWorldTime())).orElse(null),
                 mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse(null),
                 mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualArrivalWorldTime())).orElse(null),
-                null, // todo ak0 estimated arrival time
+                timeline.map(t -> WebTime.hhmmPlusDaysOrNull(t.getBlocksOn().getEstimatedTime())).orElse(null),
                 flight.getTotalTickets().toString(),
                 flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() > 0 ? flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() : null,
                 flight.getPaxCheckedIn() > 0 ? flight.getPaxCheckedIn() : null,
