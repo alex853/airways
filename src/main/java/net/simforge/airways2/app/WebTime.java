@@ -43,12 +43,15 @@ public class WebTime {
             return null;
         }
         
-        final LocalDateTime ldt = Time.toLdt(time);
+        return hhmmPlusDaysOrNull(Time.toLdt(time));
+    }
+
+    public static String hhmmPlusDaysOrNull(final LocalDateTime time) {
         final LocalDateTime now = JavaTime.nowUtc();
 
-        final String hhmm = JavaTime.toHhmm(ldt.toLocalTime());
+        final String hhmm = JavaTime.toHhmm(time.toLocalTime());
 
-        final long daysDiff = Duration.between(now.toLocalDate().atStartOfDay(), ldt.toLocalDate().atStartOfDay()).toDays();
+        final long daysDiff = Duration.between(now.toLocalDate().atStartOfDay(), time.toLocalDate().atStartOfDay()).toDays();
 
         if (daysDiff == 0) {
             return hhmm;
