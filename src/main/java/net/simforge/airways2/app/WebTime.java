@@ -47,6 +47,10 @@ public class WebTime {
     }
 
     public static String hhmmPlusDaysOrNull(final LocalDateTime time) {
+        if (time == null) {
+            return null;
+        }
+
         final LocalDateTime now = JavaTime.nowUtc();
 
         final String hhmm = JavaTime.toHhmm(time.toLocalTime());
