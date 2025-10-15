@@ -109,7 +109,7 @@ public class PaxManager {
 
         final Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
-            return true;
+            return true; // todo ak0 restore boardingprocess structure and estimate the time, otherwise this will break all boardings which overlap with world restarts
         }
         return boarding.getEstimatedBoardingFinishTime() <= world.getWorldTime();
     }
