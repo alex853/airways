@@ -13,7 +13,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class JourneyProcessor {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
 
     public static void process(final World world) {
@@ -125,14 +128,7 @@ public class JourneyProcessor {
         return toAirportIds.contains(tfm.fm.getDestinationAirportId());
     }
 
-    private static class TFM {
-        private final TransportFlights.Flight tf;
-        private final FlightMissions.Mission fm;
-
-        public TFM(TransportFlights.Flight tf, FlightMissions.Mission fm) {
-            this.tf = tf;
-            this.fm = fm;
-        }
+    private record TFM(TransportFlights.Flight tf, FlightMissions.Mission fm) {
     }
 
     private static TFM toTfm(final World world, final TransportFlights.Flight tf) {
@@ -162,13 +158,12 @@ public class JourneyProcessor {
 
     private static void waitingForCheckin(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        //noinspection StatementWithEmptyBody todo ak1 resolve it
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
-            // todo ak1 'update stats'
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
-            // todo ak1 what if mission is empty - 'cancel journey safely'
-            // todo ak1 what if mission is empty - 'update stats'
+            checkArgument(mission.isPresent()); // todo ak1 what if mission is empty - 'cancel journey safely'
             journey.setHeartbeatTime(Math.max(
                     TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak1 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
@@ -191,9 +186,9 @@ public class JourneyProcessor {
     private static void waitingForBoarding(final World world, final Journeys.Journey journey) {
         // most of the logic is in pax manager
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        //noinspection StatementWithEmptyBody todo ak1 resolve this
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
-            // todo ak1 'update stats'
         } else if (!TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
             world.journeyControl().tooLateToBoard(journey);
         }
@@ -201,10 +196,11 @@ public class JourneyProcessor {
 
     private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
+        //noinspection StatementWithEmptyBody todo ak1 resolve this
         if (flight.isEmpty()) {
             // todo ak1 'cancel journey safely'
-            // todo ak1 'update stats'
-        } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
+        } else //noinspection StatementWithEmptyBody todo ak1 resolve this
+            if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
             deboarding(world, journey);
         } else {
             // todo ak1 ???
@@ -221,7 +217,7 @@ public class JourneyProcessor {
     }
 
     private static void justArrived(final World world, final Journeys.Journey journey) {
-        // todo ak1 'update stats' small increase to all c2c-s which can be connected via this airport pair
+        // todo ak0 'update stats' - airport pair delta
 
         journey.setTransportFlight1Id(journey.getTransportFlight2Id());
         journey.setTransportFlight2Id(0);

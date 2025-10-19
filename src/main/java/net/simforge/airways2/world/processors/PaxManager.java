@@ -128,6 +128,8 @@ public class PaxManager {
         log.info("t/f #{} - boarding - found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
 
         failedToBoardJourneys.forEach(j -> journeyControl().tooLateToBoard(j));
+
+        boardings.remove(transportFlight.getId());
     }
 
     private static class Boarding {

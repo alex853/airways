@@ -1,7 +1,6 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.CabinLayout;
-import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
-import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -78,7 +76,7 @@ public class JourneyControl {
         journey.setAttemptCounter(0);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
 
-        updateCity2CityFlowSuccessRate(journey, 0.04f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.04f);
 
         log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
     }
@@ -90,7 +88,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        updateCity2CityFlowSuccessRate(journey, 0.06f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.06f);
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -103,7 +101,7 @@ public class JourneyControl {
                 .contains(journey.getStatus()));
 
         // todo ak1 'cancel journey safely' with removal all following tickets etc
-        // todo ak0 'update stats'
+        // todo ak0 'update stats' - airport pair delta
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
@@ -117,7 +115,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        updateCity2CityFlowSuccessRate(journey, -1.0f);
+        world.c2cFlowControl().updateSuccessRate(journey, -1.0f);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
@@ -134,32 +132,5 @@ public class JourneyControl {
     private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
-    }
-
-    // todo ak0 refactor - move to another class
-    private void updateCity2CityFlowSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
-        updateCity2CityFlowSuccessRateOneDirection(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
-        updateCity2CityFlowSuccessRateOneDirection(journey.getToCityId(), journey.getFromCityId(), deltaPercents);
-    }
-
-    private void updateCity2CityFlowSuccessRateOneDirection(final int fromCityId, final int toCityId, final float deltaPercents) {
-        final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId);
-        if (flow.isEmpty()) {
-            log.warn("update c2c flows - {}->{} - no flow found", fromCityId, toCityId);
-            return;
-        }
-
-        final float originalSuccessRate = flow.get().getSuccessRate();
-        final float successRateToItsLimit = deltaPercents > 0 ? 1.0f - originalSuccessRate : originalSuccessRate;
-        final float successRateDelta = successRateToItsLimit * (deltaPercents/100);
-        final float newSuccessRate = originalSuccessRate + successRateDelta;
-        flow.get().setSuccessRate(newSuccessRate);
-
-        log.info("update c2c flows - {}->{} - success rate update {}% - src {}, delta {}, new {} (stored {})", fromCityId, toCityId, 
-                 deltaPercents, 
-                 Formatting.df7z.format(originalSuccessRate), 
-                 Formatting.df7z.format(successRateDelta), 
-                 Formatting.df7z.format(newSuccessRate),
-                 Formatting.df7z.format(flow.get().getSuccessRate()));
     }
 }

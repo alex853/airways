@@ -51,6 +51,8 @@ public class World {
     private final JourneyControl journeyControl = new JourneyControl(this);
     private final PaxManager paxManager = new PaxManager(this);
 
+    private final City2CityFlowControl c2cFlowControl = new City2CityFlowControl(this);
+
     private static final int worldTimeStep = 10;
 
     private World(final WorldStorageStrategy worldStorageStrategy) {
@@ -101,6 +103,7 @@ public class World {
 
     public void save() throws IOException {
         worldStorageStrategy.save(rootPath -> {
+            //noinspection DuplicatedCode
             strings.save(rootPath);
 
             eventsToProcess.save(rootPath);
@@ -113,6 +116,7 @@ public class World {
 
             aircraftTypes.save(rootPath);
             aircrafts.save(rootPath);
+            //noinspection DuplicatedCode
             aircraftOperators.save(rootPath);
             flightMissions.save(rootPath);
 
@@ -228,6 +232,10 @@ public class World {
 
     public PaxManager paxManager() {
         return paxManager;
+    }
+
+    public City2CityFlowControl c2cFlowControl() {
+        return c2cFlowControl;
     }
 
     public boolean process(final int expectedWorldTime) {

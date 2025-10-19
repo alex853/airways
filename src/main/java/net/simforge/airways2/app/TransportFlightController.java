@@ -24,8 +24,10 @@ import java.util.Optional;
 @RequestMapping("/transport-flight")
 @CrossOrigin
 public class TransportFlightController {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(TransportFlightController.class);
 
+    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     private WorldRunnerBean worldBean;
 
@@ -66,14 +68,14 @@ public class TransportFlightController {
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
-        final Optional<FlightTimeline> timeline = mission.map(m -> FlightMissionToTimeline.byMission(m));
+        final Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 flight.getScheduledFlightId(),
-                mission.map(m -> m.isModePc()).orElse(false),
+                mission.map(FlightMissions.Mission::isModePc).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
