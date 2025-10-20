@@ -217,16 +217,7 @@ public class JourneyProcessor {
     }
 
     private static void justArrived(final World world, final Journeys.Journey journey) {
-        // todo ak0 'update stats' - airport pair delta
-
-        journey.setTransportFlight1Id(journey.getTransportFlight2Id());
-        journey.setTransportFlight2Id(0);
-        if (journey.getTransportFlight1Id() == 0) {
-            journey.setStatus(Journeys.Status.ItinerariesDone);
-            journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
-        } else {
-            world.journeyControl().waitForCheckin(journey);
-        }
+        world.journeyControl().justArrived(journey);
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
