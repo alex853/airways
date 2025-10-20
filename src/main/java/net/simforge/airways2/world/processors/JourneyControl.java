@@ -65,7 +65,7 @@ public class JourneyControl {
         world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
     }
 
-    public void justArrived(final World world, final Journeys.Journey journey) {
+    public void justArrived(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.JustArrived);
 
