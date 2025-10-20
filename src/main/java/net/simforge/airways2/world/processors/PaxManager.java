@@ -92,7 +92,7 @@ public class PaxManager {
             if (boarding.getRemainingToBoard() == 0) {
                 return 0;
             }
-            boardings.put(transportFlight.getId(), transportFlight);
+            boardings.put(transportFlight.getId(), boarding);
         }
         return boarding.getEstimatedBoardingFinishTime();
     }
@@ -107,7 +107,7 @@ public class PaxManager {
             if (boarding.getRemainingToBoard() == 0) {
                 return true;
             }
-            boardings.put(transportFlight.getId(), transportFlight);
+            boardings.put(transportFlight.getId(), boarding);
         }
         return boarding.getEstimatedBoardingFinishTime() <= world.getWorldTime();
     }
