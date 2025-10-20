@@ -165,6 +165,10 @@ public class PaxManager {
                     + boardingTimeReserve;
         }
 
+        public int getRemainingToBoard() {
+            return remainingToBoard;
+        }
+        
         public boolean hasCurrToBoard() {
             return currToBoardId != 0;
         }
