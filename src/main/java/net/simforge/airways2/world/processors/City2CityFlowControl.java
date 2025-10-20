@@ -9,6 +9,7 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public class City2CityFlowControl {
