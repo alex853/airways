@@ -3,7 +3,9 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +21,25 @@ public class City2CityFlowControl {
     }
 
     public void updateSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
-        updateCity2CityFlowSuccessRateOneDirection(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
-        updateCity2CityFlowSuccessRateOneDirection(journey.getToCityId(), journey.getFromCityId(), deltaPercents);
+        updateCity2CityFlowSuccessRateBothDirections(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
+    }
+
+    public void updateSuccessRate(final TransportFlights.Flight transportFlight, final float deltaPercents) {
+        final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
+
+        final int fromAirportId = mission.getDepartureAirportId();
+        final int toAirportId = mission.getArrivalAirportId();
+
+        final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).stream().map(l -> l.getCityId()).toList();
+        final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).stream().map(l -> l.getCityId()).toList();
+        // todo ak1 check for intersection? what to do in case of intersection?
+
+        fromCityIds.stream().forEach(fromCityId -> toCityIds.stream().forEach(toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
+    }
+
+    private void updateCity2CityFlowSuccessRateBothDirections(final int fromCityId, final int toCityId, final float deltaPercents) {
+        updateCity2CityFlowSuccessRateOneDirection(fromCityId, toCityId, deltaPercents);
+        updateCity2CityFlowSuccessRateOneDirection(toCityId, fromCityId, deltaPercents);
     }
 
     private void updateCity2CityFlowSuccessRateOneDirection(final int fromCityId, final int toCityId, final float deltaPercents) {
