@@ -52,6 +52,8 @@ public class JourneyControl {
 
         journey.setStatus(Journeys.Status.WaitingForCheckIn);
         journey.setHeartbeatTime(world.getWorldTime());
+
+        world.c2cFlowControl().updateSuccessRate(journey, 0.005f);
     }
 
     public void board(final Journeys.Journey journey) {
@@ -59,6 +61,8 @@ public class JourneyControl {
         checkArgument(journey.getStatus() == Journeys.Status.WaitingForBoarding);
 
         journey.setStatus(Journeys.Status.OnBoard);
+
+        world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
     }
 
     public void switchToReturnTrip(final Journeys.Journey journey) {
@@ -101,9 +105,13 @@ public class JourneyControl {
                 .contains(journey.getStatus()));
 
         // todo ak1 'cancel journey safely' with removal all following tickets etc
-        // todo ak0 'update stats' - airport pair delta
+
+        final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);
 
         log.info("j/y #{} - too late to board, cleanup scheduled", journey.getId());
     }
