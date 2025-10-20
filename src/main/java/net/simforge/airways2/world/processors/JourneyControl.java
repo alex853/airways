@@ -65,6 +65,23 @@ public class JourneyControl {
         world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
     }
 
+    public void justArrived(final World world, final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.JustArrived);
+
+        final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.005f);
+
+        shiftToNextTransportFlight(journey);
+
+        if (noMoreTransportFlights(journey)) {
+            journey.setStatus(Journeys.Status.ItinerariesDone);
+            journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+        } else {
+            waitForCheckin(journey);
+        }
+    }
+
     public void switchToReturnTrip(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
@@ -107,11 +124,10 @@ public class JourneyControl {
         // todo ak1 'cancel journey safely' with removal all following tickets etc
 
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);
         
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
-
-        world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);
 
         log.info("j/y #{} - too late to board, cleanup scheduled", journey.getId());
     }
@@ -137,6 +153,15 @@ public class JourneyControl {
                 .forEach(this::scheduleDeboardingAtRandomTime);
     }
 
+    private boolean noMoreTransportFlights(final Journeys.Journey journey) {
+        return journey.getTransportFlight1Id() == 0;
+    }
+
+    private void shiftToNextTransportFlight(final Journeys.Journey journey) {
+        journey.setTransportFlight1Id(journey.getTransportFlight2Id());
+        journey.setTransportFlight2Id(0);
+    }
+    
     private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
