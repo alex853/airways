@@ -50,17 +50,7 @@ public class PaxManager {
     private void tick(final TransportFlights.Flight transportFlight) {
         Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
-            final int actualOnBoard = world.journeys()
-                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
-                    .map(Journeys.Journey::getGroupSize)
-                    .reduce(0, Integer::sum);
-
-            final int remainingToBoard = transportFlight.getPaxCheckedIn() - actualOnBoard;
-
-            transportFlight.setPaxOnBoard(actualOnBoard);
-            log.info("t/f #{} - boarding - no data found, creating new, actual on board {}, remaining to board {}", transportFlight.getId(), actualOnBoard, remainingToBoard);
-
-            boarding = new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
+            boarding = restoreBoardingState(transportFlight);
             boardings.put(transportFlight.getId(), boarding);
         }
 
@@ -96,9 +86,13 @@ public class PaxManager {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        final Boarding boarding = boardings.get(transportFlight.getId());
+        Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
-            return 0;
+            boarding = restoreBoardingState(transportFlight);
+            if (boarding.getRemainingToBoard() == 0) {
+                return 0;
+            }
+            boardings.put(transportFlight.getId(), transportFlight);
         }
         return boarding.getEstimatedBoardingFinishTime();
     }
@@ -107,9 +101,13 @@ public class PaxManager {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        final Boarding boarding = boardings.get(transportFlight.getId());
+        Boarding boarding = boardings.get(transportFlight.getId());
         if (boarding == null) {
-            return true; // todo ak0 restore boardingprocess structure and estimate the time, otherwise this will break all boardings which overlap with world restarts
+            boarding = restoreBoardingState(transportFlight);
+            if (boarding.getRemainingToBoard() == 0) {
+                return true;
+            }
+            boardings.put(transportFlight.getId(), transportFlight);
         }
         return boarding.getEstimatedBoardingFinishTime() <= world.getWorldTime();
     }
@@ -132,11 +130,26 @@ public class PaxManager {
         boardings.remove(transportFlight.getId());
     }
 
+    private Boarding restoreBoardingState(final TransportFlights.Flight transportFlight) {
+        final int actualOnBoard = world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
+
+        final int remainingToBoard = transportFlight.getPaxCheckedIn() - actualOnBoard;
+
+        transportFlight.setPaxOnBoard(actualOnBoard);
+        log.info("t/f #{} - boarding - no data found, creating new, actual on board {}, remaining to board {}", transportFlight.getId(), actualOnBoard, remainingToBoard);
+
+        return new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
+    }
+
     private static class Boarding {
         private static final int boardingTimeReserve = 3 * Time.ONE_MINUTE;
         private static final int ratePaxPerMinute = 15;
 
         private int confirmedOnBoard;
+        private int remainingToBoard;
         private int estimatedBoardingFinishTime;
 
         private int currToBoardLastTime;
@@ -146,7 +159,7 @@ public class PaxManager {
 
         public Boarding(final int actualOnBoard, final int remainingToBoard, final int worldTime) {
             this.confirmedOnBoard = actualOnBoard;
-
+            this.remainingToBoard = remainingToBoard;
             this.estimatedBoardingFinishTime = worldTime
                     + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
                     + boardingTimeReserve;
@@ -190,6 +203,7 @@ public class PaxManager {
         public void finishCurrToBoard() {
             currToBoardId = 0;
             confirmedOnBoard += currToBoardTotal;
+            remainingToBoard -= currToBoardTotal;
             currToBoardBoarded = 0;
             currToBoardTotal = 0;
         }
@@ -206,7 +220,8 @@ public class PaxManager {
         public String toString() {
             return "Boarding{" +
                     "confirmedOnBoard: " + confirmedOnBoard +
-                    ", estimatedBoardingEndTime: " + WebTime.hhmmOrNull(estimatedBoardingFinishTime) +
+                    ", remainingToBoard: " + remainingToBoard +
+                    ", estimatedBoardingFinishTime: " + WebTime.hhmmOrNull(estimatedBoardingFinishTime) +
                     ", currToBoardId: " + currToBoardId +
                     ", currToBoardTotal: " + currToBoardTotal +
                     ", currToBoardBoarded: " + currToBoardBoarded +
