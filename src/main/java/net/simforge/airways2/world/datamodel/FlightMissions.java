@@ -99,6 +99,8 @@ public class FlightMissions {
         return storage.all();
     }
 
+    // todo ak1 rework
+    @Deprecated
     public Collection<Mission> filter(final Predicate<Mission> condition) {
         return storage.filter(condition);
     }
@@ -107,24 +109,17 @@ public class FlightMissions {
         return storage.byId(id);
     }
 
-    public Collection<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
+    public Stream<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
         checkNotNull(aircraft, "aircraft is mandatory");
-        return storage.filter(m -> m.getAircraftId() == aircraft.getId());
+        return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftIdField) == aircraft.getId());
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
-        final List<FlightMissions.Mission> allMissions = new ArrayList<>(allForAircraft(aircraft));
-        allMissions.sort(FlightMissions.sortByDepartureTimeFromFutureToPast);
-        if (allMissions.isEmpty()) {
-            return Optional.empty();
-        } else {
-            return Optional.of(allMissions.get(0));
-        }
+        return allForAircraft(aircraft).min(FlightMissions.sortByDepartureTimeFromFutureToPast);
     }
 
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(mission -> mission.getHeartbeatTime() <= worldTime
-                && mission.getHeartbeatTime() != 0);
+        return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
     }
 
     public class Mission {
@@ -271,9 +266,6 @@ public class FlightMissions {
             if (days == 0) {
                 return null;
             }
-            if (days > 300) {
-                log.error("getDateOfFlight - too big day " + days, new IllegalStateException());
-            }
             return DAY_BEFORE_FIRST_DAY.plusDays(days);
         }
 
@@ -281,9 +273,6 @@ public class FlightMissions {
             final int days = dateOfFlight != null
                     ? (int) ChronoUnit.DAYS.between(DAY_BEFORE_FIRST_DAY, dateOfFlight)
                     : 0;
-            if (days > 300) {
-                log.error("setDateOfFlight - too big day " + days, new IllegalStateException());
-            }
             storage.setUnsafe(id, dateOfFlightField, days);
         }
 
