@@ -333,10 +333,10 @@ public class AdminController {
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
-            final Cities.City singapore = world.cities().all().stream().filter(c -> c.getName().equalsIgnoreCase("Singapore")).findFirst().orElseThrow();
+            final Cities.City singapore = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Singapore")).findFirst().orElseThrow();
             singapore.setPopulation(6037000);
 
-            final Cities.City sanFrancisco = world.cities().all().stream().filter(c -> c.getName().equalsIgnoreCase("San Francisco")).findFirst().orElseThrow();
+            final Cities.City sanFrancisco = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("San Francisco")).findFirst().orElseThrow();
             sanFrancisco.setName("San Francisco");
             sanFrancisco.setPopulation(7650000);
 

@@ -8,8 +8,8 @@ import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -45,7 +45,7 @@ public class Cities {
         storage.save(rootPath);
     }
 
-    public Collection<City> all() {
+    public Stream<City> all() {
         return storage.all();
     }
 

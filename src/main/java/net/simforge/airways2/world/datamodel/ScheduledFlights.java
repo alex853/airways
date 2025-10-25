@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class ScheduledFlights {
     private final Storage<Flight> storage = Storage.<Flight>builder()
@@ -33,7 +34,7 @@ public class ScheduledFlights {
         storage.save(rootPath);
     }
 
-    public Collection<Flight> all() {
+    public Stream<Flight> all() {
         return storage.all();
     }
 
@@ -41,8 +42,9 @@ public class ScheduledFlights {
         return storage.byId(id);
     }
 
+    // todo ak1 rework
     public Collection<Flight> byScheduleId(final int scheduleId) {
-        return all().stream().filter(f -> f.getScheduleId() == scheduleId).toList();
+        return all().filter(f -> f.getScheduleId() == scheduleId).toList();
     }
 
     public Flight create(final int scheduleId, final int flightMissionId) {

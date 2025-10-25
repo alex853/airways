@@ -8,8 +8,8 @@ import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -68,7 +68,7 @@ public class Airports {
         return storage.findFirst(a -> icao.equals(a.getIcao()));
     }
 
-    public Collection<Airport> all() {
+    public Stream<Airport> all() {
         return storage.all();
     }
 

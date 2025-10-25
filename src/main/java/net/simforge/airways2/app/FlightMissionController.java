@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -25,7 +24,7 @@ public class FlightMissionController {
 
     @GetMapping("/all")
     public List<FlightMissionDto> getAll() {
-        return worldBean.read(world -> world.flightMissions().all().stream()
+        return worldBean.read(world -> world.flightMissions().all()
                 .map(f -> new FlightMissionDto(
                         f.getId(),
                         f.getAircraftId(),
@@ -48,11 +47,10 @@ public class FlightMissionController {
     @GetMapping("/current-flights")
     public List<EnhancedFlightMissionDto> getCurrentFlights() {
         return worldBean.read(world -> {
-            final Collection<FlightMissions.Mission> flights = world.flightMissions().all();
             final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
             final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
             final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
-            return flights.stream()
+            return world.flightMissions().all()
                     .filter(f -> switch (f.getStatus()) {
                         case PlannedManually, PlannedViaSchedule, Cancelled -> condition.test(f.getPlannedDepartureWorldTime());
                         case Dispatched -> f.getPlannedDepartureWorldTime() <= toTime;

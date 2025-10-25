@@ -21,7 +21,7 @@ public class EventLogController {
 
     @GetMapping("/all")
     public List<EventDto> getAll() {
-        return worldBean.read(world -> world.eventLog().all().stream()
+        return worldBean.read(world -> world.eventLog().all()
                 .map(EventLogController::toDto)
                 .toList());
     }

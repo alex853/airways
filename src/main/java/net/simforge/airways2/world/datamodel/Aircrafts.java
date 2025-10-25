@@ -57,7 +57,7 @@ public class Aircrafts {
     }
 
     public Stream<Aircraft> all() {
-        return storage.all1();
+        return storage.all();
     }
 
     public Stream<Aircraft> filter(final Storage.Condition<Aircraft> condition) {

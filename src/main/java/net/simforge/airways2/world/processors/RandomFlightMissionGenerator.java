@@ -51,7 +51,7 @@ public class RandomFlightMissionGenerator {
     private static Airports.Airport selectRandomDestination(World world, Aircrafts.Aircraft aircraft) {
         final int locationAirportId = aircraft.getLocationAirportId();
         final Airports.Airport locationAirport = world.airports().byId(locationAirportId).orElseThrow();
-        final List<Airports.Airport> possibleDestinations = world.airports().all().stream()
+        final List<Airports.Airport> possibleDestinations = world.airports().all()
                 .filter(airport -> airport.getId() != locationAirportId
                         && Geo.distance(locationAirport.getCoords(), airport.getCoords()) >= 100
                         && Geo.distance(locationAirport.getCoords(), airport.getCoords()) <= 2000) // A320 practical range

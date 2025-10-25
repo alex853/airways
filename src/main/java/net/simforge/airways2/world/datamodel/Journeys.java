@@ -61,7 +61,7 @@ public class Journeys {
     }
 
     public Stream<Journey> all() {
-        return storage.all1();
+        return storage.all();
     }
 
     public Stream<Journey> filter(final Storage.Condition<Journey> condition) {

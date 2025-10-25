@@ -46,7 +46,7 @@ class StorageRecordsTest {
         storage.deleteRecord(recordId);
 
         assertEquals(0, storage.getCount());
-        assertTrue(storage.all().isEmpty());
+        assertTrue(storage.all().toList().isEmpty());
     }
 
     @Test
@@ -59,7 +59,7 @@ class StorageRecordsTest {
         assertEquals(2, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id, record3Id},
-                storage.all().toArray(new Object[0]));
+                storage.all().toList().toArray(new Object[0]));
     }
 
     @Test
@@ -72,7 +72,7 @@ class StorageRecordsTest {
         assertEquals(2, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id, record2Id},
-                storage.all().toArray(new Object[0]));
+                storage.all().toList().toArray(new Object[0]));
     }
 
     @Test
@@ -86,7 +86,7 @@ class StorageRecordsTest {
         assertEquals(1, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id},
-                storage.all().toArray(new Object[0]));
+                storage.all().toList().toArray(new Object[0]));
     }
 
     @Test
@@ -116,7 +116,7 @@ class StorageRecordsTest {
         assertEquals(3, storage.getCount());
         assertArrayEquals(
                 new Integer[] {record1Id, newlyAddedRecordId, record3Id},
-                storage.all().toArray(new Object[0]));
+                storage.all().toList().toArray(new Object[0]));
     }
 
     @Test

@@ -12,9 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkState;
 
@@ -51,7 +51,7 @@ public class CityFlows {
         storage.save(rootPath);
     }
 
-    public Collection<Flow> all() {
+    public Stream<Flow> all() {
         return storage.all();
     }
 
@@ -66,7 +66,7 @@ public class CityFlows {
     }
 
     public void createMissingCityFlows() {
-        final List<Integer> cityIds = world.cities().all().stream().map(Cities.City::getId).sorted().toList();
+        final List<Integer> cityIds = world.cities().all().map(Cities.City::getId).sorted().toList();
 
         for (final int cityId : cityIds) {
             final Optional<Flow> flow = storage.byId(cityId);

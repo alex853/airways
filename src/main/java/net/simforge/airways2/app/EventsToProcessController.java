@@ -19,7 +19,7 @@ public class EventsToProcessController {
 
     @GetMapping("/all")
     public List<EventDto> getAll() {
-        return worldBean.read(world -> world.eventsToProcess().all().stream()
+        return worldBean.read(world -> world.eventsToProcess().all()
                 .map(e -> new EventDto(
                         e.getId(),
                         e.getStatusRaw() + " - " + e.getStatus(),

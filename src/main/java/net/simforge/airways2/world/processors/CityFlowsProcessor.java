@@ -25,7 +25,7 @@ public class CityFlowsProcessor {
         // todo ak3 city flow status?
         log.info("city flow #{}, '{}' - lets redistribute", thisCity.get().getId(), city.getName());
 
-        final Collection<CityFlows.Flow> reachableCities = world.cityFlows().all().stream()
+        final Collection<CityFlows.Flow> reachableCities = world.cityFlows().all()
                 .filter(f -> f.getId() != thisCity.get().getId())
                 .filter(f -> CityFlowHelper.getFlowUnits(world, f, thisCity.get()) >= CityFlowHelper.FLOW_UNITS_THRESHOLD)
                 .toList();

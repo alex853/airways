@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -94,7 +95,7 @@ public class FlightMissions {
         storage.deleteRecord(id);
     }
 
-    public Collection<Mission> all() {
+    public Stream<Mission> all() {
         return storage.all();
     }
 

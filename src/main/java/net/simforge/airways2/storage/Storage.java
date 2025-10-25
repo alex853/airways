@@ -111,19 +111,6 @@ public class Storage<T> {
         return count;
     }
 
-    @Deprecated
-    public Collection<T> all() {
-        final List<T> result = new ArrayList<>();
-        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
-            if (isDeleted(recordId)) {
-                continue;
-            }
-
-            result.add(instantiator.create(recordId));
-        }
-        return result;
-    }
-
     public Optional<T> byId(final int recordId) {
         if (isOutOfBounds(recordId)) {
             return Optional.empty();
@@ -167,8 +154,7 @@ public class Storage<T> {
         return Optional.empty();
     }
 
-    // todo ak1 rename when all .all() usages will be wiped out
-    public Stream<T> all1() {
+    public Stream<T> all() {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
                 .mapToObj(instantiator::create);

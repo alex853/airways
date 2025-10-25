@@ -66,7 +66,7 @@ public class VatsimTrackerTest {
         egkk = world.airports().create(51.1481, -0.190278, null, "EGKK", "Gatwick");
         egss = world.airports().create(51.885, 0.235, null, "EGSS", "Stansted");
 
-        worldIcaos = world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet());
+        worldIcaos = world.airports().all().map(Airports.Airport::getIcao).collect(Collectors.toSet());
 
         final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().create("A320", "320");
         final AircraftOperators.AircraftOperator shadowJet = world.aircraftOperators().create(World25.ShadowJetIata, World25.ShadowJetIcao, "ShadowJet");

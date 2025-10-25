@@ -27,7 +27,7 @@ public class GeoController {
     @GetMapping("/countries")
     public List<CountryDto> getCountries() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCountries")) {
-            return worldBean.read(world -> world.countries().all().stream()
+            return worldBean.read(world -> world.countries().all()
                     .map(c -> new CountryDto(
                             c.getId(),
                             c.getCode(),
@@ -39,7 +39,7 @@ public class GeoController {
     @GetMapping("/cities")
     public List<CityDto> getCities() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCities")) {
-            return worldBean.read(world -> world.cities().all().stream()
+            return worldBean.read(world -> world.cities().all()
                     .map(c -> new CityDto(
                             c.getId(),
                             c.getCountryId(),
@@ -57,7 +57,7 @@ public class GeoController {
     @GetMapping("/airports")
     public List<AirportDto> getAirports() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getAirports")) {
-            return worldBean.read(world -> world.airports().all().stream()
+            return worldBean.read(world -> world.airports().all()
                     .map(a -> new AirportDto(
                             a.getId(),
                             a.getLatitude(),

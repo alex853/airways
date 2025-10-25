@@ -84,8 +84,8 @@ public class Airport2AirportDailyFlightStats {
 
         final List<FlightStats> toBeRemoved = new ArrayList<>();
 
-        final Collection<FlightStats> all = storage.all();
-        all.forEach(c -> {
+        final int recordCount = storage.getCount();
+        storage.all().forEach(c -> {
             c.rotateCountsAtMidnight();
             if (c.getTotalCount() == 0) {
                 toBeRemoved.add(c);
@@ -94,7 +94,7 @@ public class Airport2AirportDailyFlightStats {
 
         toBeRemoved.forEach(c -> storage.deleteRecord(c.id));
 
-        log.info("midnight count rotation - DONE, processed {} records, removed {} records", all.size(), toBeRemoved.size());
+        log.info("midnight count rotation - DONE, processed {} records, removed {} records", recordCount, toBeRemoved.size());
     }
 
     public Collection<FlightStats> allByFromAirportId(final int fromAirportId) {

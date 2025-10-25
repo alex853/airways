@@ -6,8 +6,8 @@ import net.simforge.airways2.storage.Storage;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -42,7 +42,7 @@ public class AircraftTypes {
         return new AircraftType(recordId);
     }
 
-    public Collection<AircraftType> all() {
+    public Stream<AircraftType> all() {
         return storage.all();
     }
 

@@ -33,8 +33,7 @@ public class TransportFlightController {
 
     @GetMapping("/all")
     public List<FlightDto> getAll() {
-        return worldBean.read(world -> world.transportFlights()
-                .all().stream()
+        return worldBean.read(world -> world.transportFlights().all()
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList());

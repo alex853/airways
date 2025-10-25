@@ -48,7 +48,7 @@ public class ImportMajorAirportsInVicinityOfCities {
 
             final Geo.Coords airportCoords = Geo.coords(Double.parseDouble(latStr), Double.parseDouble(lonStr));
 
-            cities.all().stream()
+            cities.all()
                     .filter(city -> Geo.distance(airportCoords, Geo.coords(city.getLatitude(), city.getLongitude())) < 50)
                     .forEach(city -> {
                         final Airports.Airport airport;

@@ -7,8 +7,8 @@ import net.simforge.airways2.storage.Strings;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -47,7 +47,7 @@ public class Countries {
         return storage.findFirst(c -> code.equals(c.getCode()));
     }
 
-    public Collection<Country> all() {
+    public Stream<Country> all() {
         return storage.all();
     }
 

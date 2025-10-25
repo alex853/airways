@@ -49,7 +49,7 @@ public class PilotContext {
         this.worldAccess = worldAccess;
         this.pilotNumber = pilotNumber;
         if (worldIcaos.isEmpty()) {
-            worldIcaos.addAll(worldAccess.read(world -> world.airports().all().stream().map(Airports.Airport::getIcao).collect(Collectors.toSet())));
+            worldIcaos.addAll(worldAccess.read(world -> world.airports().all().map(Airports.Airport::getIcao).collect(Collectors.toSet())));
         }
     }
 
