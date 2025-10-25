@@ -52,7 +52,7 @@ public class DiskStorageStrategy implements WorldStorageStrategy {
         final Set<Long> processesDays = new TreeSet<>();
         allBackups.forEach(backup -> {
             final long ts = Long.parseLong(backup);
-            final long daysSinceNow = (ts - now) / (24 * 60 * 60 * 1000);
+            final long daysSinceNow = (now - ts) / (24 * 60 * 60 * 1000);
             if (daysSinceNow == 0) {
                 return; // do not reduce backups in last 24 hours
             }
