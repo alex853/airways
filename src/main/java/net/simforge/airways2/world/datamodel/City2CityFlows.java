@@ -79,13 +79,7 @@ public class City2CityFlows {
 
     public Optional<Flow> nextForHeartbeat(final int worldTime) {
         try (final Timing.Timer ignored = Timing.label("City2CityFlows - nextForHeartbeat")) {
-            return storage.findFirst(flow -> flow.getHeartbeatTime() <= worldTime
-                    && flow.getHeartbeatTime() != 0
-                    && (flow.getFromCityId() == 1 // london
-                        || flow.getFromCityId() == 4 // paris
-                        || flow.getFromCityId() == 15 // singapore
-                        || flow.getFromCityId() == 16)); // san francisco
-            // todo ak2 remove these conditions
+            return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
         }
     }
 
