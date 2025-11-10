@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class Processing {
-    private static final Logger log = LoggerFactory.getLogger(FlightMissionProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(Processing.class);
     private static final int CIRCUIT_BREAKER_COUNTER_LIMIT = 1_000_000;
 
     public static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
@@ -25,7 +25,7 @@ public class Processing {
             }
 
             if (circuitBreakerCounter == CIRCUIT_BREAKER_COUNTER_LIMIT) {
-                log.warn("too many objects to process, the last one is {}", next.get());
+                log.error("too many objects to process, the last one is {}", next.get());
                 break;
             }
             circuitBreakerCounter++;
@@ -33,7 +33,7 @@ public class Processing {
             try (final Timing.Timer ignored = Timing.label("Processing.heartbeat - " + extractClassName(processor.getClass().getName()))) {
                 processor.accept(next.get());
             } catch (final RuntimeException e) {
-                log.warn("heartbeat processing error for object {}", next.get(), e);
+                log.error("heartbeat processing error for object {}", next.get(), e);
                 throw e;
             }
         }
@@ -62,7 +62,7 @@ public class Processing {
             }
 
             if (circuitBreakerCounter == CIRCUIT_BREAKER_COUNTER_LIMIT) {
-                log.warn("too many events to process, the last one is {}", event.get());
+                log.error("too many events to process, the last one is {}", event.get());
                 break;
             }
             circuitBreakerCounter++;
