@@ -22,8 +22,12 @@ public class JourneyController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/all")
-    public List<JourneyDto> getAll() {
+    public List<JourneyDto> getAll(
+            @RequestParam(name = "offset", required = false) final Integer offset,
+            @RequestParam(name = "limit", required = false) final Integer limit) {
         return worldBean.read(world -> world.journeys().all()
+                .skip(offset != null ? offset : 0)
+                .limit(limit != null ? limit : Long.MAX_VALUE)
                 .map(j -> toDto(world, j))
                 .toList());
     }
