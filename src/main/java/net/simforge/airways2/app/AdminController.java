@@ -295,16 +295,19 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/fix-682")
-    public void fix682() {
-        worldBean.modifySync(world -> {
-            final int flightId = 682;
+    @GetMapping("/link-eglf")
+    public String fix682() {
+        return worldBean.modifySync(world -> {
+            final Airports.Airport eglf = world.airports().byIcao("EGLF").orElseThrow();
+            final Cities.City london = world.cities().byId(1).orElseThrow();
+            final Optional<Airport2City.Link> link = world.airport2city().byAirportIdAndCityId(eglf.getId(), london.getId());
 
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+            if (link.isPresent()) {
+                return "link exists";
+            }
 
-            transportFlight.setHeartbeatTime(world.getWorldTime());
-
-            return null;
+            world.airport2city().create(eglf.getId(), london.getId());
+            return "link created";
         });
     }
 
