@@ -2,10 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.City2CityFlows;
-import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.airways2.world.datamodel.Journeys;
-import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,11 +28,11 @@ public class City2CityFlowControl {
         final int fromAirportId = mission.getDepartureAirportId();
         final int toAirportId = mission.getDestinationAirportId(); // todo ak1 actual landing airport?
 
-        final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).stream().map(l -> l.getCityId()).toList();
-        final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).stream().map(l -> l.getCityId()).toList();
+        final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).stream().map(Airport2City.Link::getCityId).toList();
+        final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).stream().map(Airport2City.Link::getCityId).toList();
         // todo ak1 check for intersection? what to do in case of intersection?
 
-        fromCityIds.stream().forEach(fromCityId -> toCityIds.stream().forEach(toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
+        fromCityIds.forEach(fromCityId -> toCityIds.forEach(toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
     }
 
     private void updateCity2CityFlowSuccessRateBothDirections(final int fromCityId, final int toCityId, final float deltaPercents) {
@@ -50,7 +47,7 @@ public class City2CityFlowControl {
         final String toCity = world.cities().byId(toCityId).orElseThrow().getName();
 
         if (flow.isEmpty()) {
-            log.warn("update c2c flow success rate - {}->{} - no flow found", fromCity, toCity);
+            log.warn("update c2c flow success rate [{} -> {}] no flow found", fromCity, toCity);
             return;
         }
 
@@ -60,7 +57,7 @@ public class City2CityFlowControl {
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flow success rate - {}->{} - success rate update {}% - src {}, delta {}, new {} (stored {})", fromCity, toCity,
+        log.info("update c2c flow success rate [{} -> {}] success rate update {}% - src {}, delta {}, new {} (stored {})", fromCity, toCity,
                 deltaPercents,
                 Formatting.df7z.format(originalSuccessRate),
                 Formatting.df7z.format(successRateDelta),

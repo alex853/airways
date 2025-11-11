@@ -25,25 +25,25 @@ public class City2CityFlowsProcessor {
 
         if (c2cFlow.getSuccessRate() == 0) {
             c2cFlow.setSuccessRate(CityFlowHelper.STARTING_SUCCESS_RATE);
-            log.warn("City2CityFlow {}-{} - success rate was ZERO, set to default {}", fromCity, toCity, CityFlowHelper.STARTING_SUCCESS_RATE);
+            log.warn("process City2CityFlow [{} -> {}] success rate was ZERO, set to default {}", fromCity, toCity, CityFlowHelper.STARTING_SUCCESS_RATE);
         }
 
         if (!c2cFlow.isActive()) {
             c2cFlow.setHeartbeatTime(0);
-            log.warn("City2CityFlow {}-{} - inactive, heartbeat set to null", fromCity, toCity);
+            log.warn("process City2CityFlow [{} -> {}] inactive, heartbeat set to null", fromCity, toCity);
             return;
         }
 
         if (c2cFlow.getNextGroupSize() == 0) {
             c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
-            log.warn("City2CityFlow {}-{} - next group size was zero, set to {}", fromCity, toCity, c2cFlow.getNextGroupSize());
+            log.warn("process City2CityFlow [{} -> {}] next group size was zero, set to {}", fromCity, toCity, c2cFlow.getNextGroupSize());
         }
 
         final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime())
                 + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow);
         if (timeToAccumulateFlow > worldTime) {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
-            log.warn("City2CityFlow {}-{} - time to accumulate next group has not been reached world time, current accumulated time {}, time to accumulate next group {}, waiting",
+            log.warn("process City2CityFlow [{} -> {}] time to accumulate next group has not been reached world time, current accumulated time {}, time to accumulate next group {}, waiting",
                     fromCity, toCity, Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(timeToAccumulateFlow));
             return;
         }
@@ -57,7 +57,7 @@ public class City2CityFlowsProcessor {
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
         c2cFlow.setHeartbeatTime(c2cFlow.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
 
-        log.info("City2CityFlow {}-{} - GENERATING journey for group of {} persons, service {}, new next group size {}, new time to accumulate {}, new heartbeat time {}",
+        log.info("process City2CityFlow [{} -> {}] GENERATING journey for group of {} persons, service {}, new next group size {}, new time to accumulate {}, new heartbeat time {}",
                 fromCity, toCity, groupSizeBeingGenerated, service.name(), c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
     }
 }
