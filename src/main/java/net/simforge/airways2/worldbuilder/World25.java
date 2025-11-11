@@ -9,6 +9,8 @@ public class World25 {
     public static final String name = "World25";
     public static final String ShadowJetIata = "SJ";
     public static final String ShadowJetIcao = "SJT";
+    public static final String BusyBirdsIata = "BB";
+    public static final String BusyBirdsIcao = "BBD";
 
     public static final DiskStorageStrategy diskStorageStrategy = new DiskStorageStrategy(World25.name);
 
