@@ -73,7 +73,7 @@ public class ScheduledFlightMissionGenerator {
         if (finalSchedule == null) {
             finalSchedule = Stream.of(
                     Arrays.asList(schedule),
-                    generateRoundtripSchedule(world, "AW", 200, "F-AUWF", "LFPG", "EGLL", "EGLL", "EGLL", "EGLL")
+                    generateRoundtripSchedule(world, "AW", 200, "F-AUWF", "LFPG", "EGLL", "EGLL", "EGLL", "EGLL", "EGLL")
                 ).flatMap(List::stream).collect(Collectors.toList());
         }
 
@@ -123,7 +123,7 @@ public class ScheduledFlightMissionGenerator {
     private static List<ScheduledFlight> generateRoundtripSchedule(final World world, final String iataCode, final int baseFlightNumber, final String regNo, final String baseIcao, final String... roundtripDestinationsIcao) {
         final List<ScheduledFlight> result = new ArrayList<>();
 
-        final int prevFinishToNextStartMinimalTime = 20;
+        final int prevFinishToNextStartMinimalTime = 30;
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byRegNo(regNo).orElseThrow();
         final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
@@ -148,24 +148,29 @@ public class ScheduledFlightMissionGenerator {
 
             final int startToBlocksOffMinutes = (int) (flightTimeline.getScheduledDuration(flightTimeline.getStart(), flightTimeline.getBlocksOff()).getSeconds() / 60);;
 
-            log.info(new ScheduledFlight(
+            final ScheduledFlight flight1 = new ScheduledFlight(
                     currentFlightNumber,
                     iataCode + currentFlightNumber,
                     regNo,
                     baseIcao,
                     destinationIcao,
-                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime/2 + startToBlocksOffMinutes))).toString());
-
-            log.info(new ScheduledFlight(
-                    currentFlightNumber+1,
-                    iataCode + (currentFlightNumber+1),
+                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToBlocksOffMinutes)));
+            final ScheduledFlight flight2 = new ScheduledFlight(
+                    currentFlightNumber + 1,
+                    iataCode + (currentFlightNumber + 1),
                     regNo,
                     destinationIcao,
                     baseIcao,
-                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime/2 + startToFinishMinutes + prevFinishToNextStartMinimalTime + startToBlocksOffMinutes))).toString());
+                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToFinishMinutes + prevFinishToNextStartMinimalTime + startToBlocksOffMinutes)));
+
+            result.add(flight1);
+            result.add(flight2);
 
             currentFlightNumber += 2;
             currentTime += fullRoundtripDuration;
+
+            log.info(flight1.toString());
+            log.info(flight2.toString());
         }
 
         return result;
