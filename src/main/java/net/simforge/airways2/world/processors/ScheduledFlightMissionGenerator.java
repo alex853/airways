@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.AircraftPerformanceData;
+import net.simforge.airways2.world.computations.FlightTimeline;
+import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.commons.misc.JavaTime;
 import org.slf4j.Logger;
@@ -12,10 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class ScheduledFlightMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(ScheduledFlightMissionGenerator.class);
@@ -71,8 +73,8 @@ public class ScheduledFlightMissionGenerator {
         if (finalSchedule == null) {
             finalSchedule = Stream.of(
                     Arrays.asList(schedule),
-                    generateRoundtripSchedule(200, "F-AUWF", "LFPG", "EGLL", "EGLL", "EGLL", "EGLL")
-                ).flatMap(List::stream).collect(Collectors.toList())
+                    generateRoundtripSchedule(world, "AW", 200, "F-AUWF", "LFPG", "EGLL", "EGLL", "EGLL", "EGLL")
+                ).flatMap(List::stream).collect(Collectors.toList());
         }
 
         finalSchedule.forEach(each -> scheduleFlight(world, each));
@@ -118,14 +120,67 @@ public class ScheduledFlightMissionGenerator {
         }
     }
 
-    private static List<ScheduledFlight> generateRoundtripSchedule(final String iataCode, final int baseFlightNumber, final String regNo, final String baseAirport, final String[] roundtripDestinations) {
-        final List<ScheduledFlight> result = new ArrayList<ScheduledFlight>();
+    private static List<ScheduledFlight> generateRoundtripSchedule(final World world, final String iataCode, final int baseFlightNumber, final String regNo, final String baseIcao, final String... roundtripDestinationsIcao) {
+        final List<ScheduledFlight> result = new ArrayList<>();
 
-        int currentTime = minimalTurnaroundTimeMinutes;
-        
-        
+        final int prevFinishToNextStartMinimalTime = 20;
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byRegNo(regNo).orElseThrow();
+        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
+
+        final Airports.Airport baseAirport = world.airports().byIcao(baseIcao).orElseThrow();
+
+        int currentTime = 0;
+        int currentFlightNumber = baseFlightNumber;
+        for (final String destinationIcao : roundtripDestinationsIcao) {
+            final Airports.Airport destinationAirport = world.airports().byIcao(destinationIcao).orElseThrow();
+            final SimpleFlight simpleFlight = SimpleFlight.forRoute(baseAirport.getCoords(), destinationAirport.getCoords(), performanceData);
+            final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
+
+            final int startToFinishMinutes = (int) (flightTimeline.getScheduledDuration(flightTimeline.getStart(), flightTimeline.getFinish()).getSeconds() / 60);
+
+            final int fullRoundtripDuration = 2*(startToFinishMinutes + prevFinishToNextStartMinimalTime);
+            if (currentTime + fullRoundtripDuration > 1440) {
+                log.warn("{} - unable to add {} roundtrip", regNo, destinationIcao);
+                continue;
+            }
+
+            final int startToBlocksOffMinutes = (int) (flightTimeline.getScheduledDuration(flightTimeline.getStart(), flightTimeline.getBlocksOff()).getSeconds() / 60);;
+
+            log.info(new ScheduledFlight(
+                    currentFlightNumber,
+                    iataCode + currentFlightNumber,
+                    regNo,
+                    baseIcao,
+                    destinationIcao,
+                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime/2 + startToBlocksOffMinutes))).toString());
+
+            log.info(new ScheduledFlight(
+                    currentFlightNumber+1,
+                    iataCode + (currentFlightNumber+1),
+                    regNo,
+                    destinationIcao,
+                    baseIcao,
+                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime/2 + startToFinishMinutes + prevFinishToNextStartMinimalTime + startToBlocksOffMinutes))).toString());
+
+            currentFlightNumber += 2;
+            currentTime += fullRoundtripDuration;
+        }
+
+        return result;
     }
-    
+
+    private static String hhmm(final int mins) {
+        final int h = mins / 60;
+        final int m = mins % 60;
+        return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+    }
+
+    private static int align5min(final int mins) {
+        return 5*((mins / 5) + (mins % 5 == 0 ? 0 : 1));
+    }
+
     @Data
     @AllArgsConstructor
     private static class ScheduledFlight {
