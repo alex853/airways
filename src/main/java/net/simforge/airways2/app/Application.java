@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.worldbuilder.World25_003_autonomia_airways;
 import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
 import net.simforge.airways2.worldbuilder.World25_011_busybirds;
 import net.simforge.airways2.worldbuilder.World25_099_f1_tour;
