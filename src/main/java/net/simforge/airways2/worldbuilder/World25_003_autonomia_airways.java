@@ -26,6 +26,11 @@ public class World25_003_autonomia_airways {
         createAircraft(world, airline, type, "F-AUWC", lfpg);
         createAircraft(world, airline, type, "F-AUWD", lfpg);
         createAircraft(world, airline, type, "F-AUWE", lfpg);
+        createAircraft(world, airline, type, "F-AUWF", lfpg);
+        createAircraft(world, airline, type, "F-AUWG", lfpg);
+        createAircraft(world, airline, type, "F-AUWH", lfpg);
+        createAircraft(world, airline, type, "F-AUWI", lfpg);
+        createAircraft(world, airline, type, "F-AUWJ", lfpg);
 
         world.save();
     }
