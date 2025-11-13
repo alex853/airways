@@ -60,13 +60,22 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(108, "AW108", "F-AUWE", "EGLL", "LFPG", "22:30"),
     };
 
+    private static List<ScheduledFlight> finalSchedule;
+
     public static void process(final World world) {
         if (System.currentTimeMillis() - lastExecution < 3600000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
-        Arrays.stream(schedule).forEach(each -> scheduleFlight(world, each));
+        if (finalSchedule == null) {
+            finalSchedule = Stream.of(
+                    Arrays.asList(schedule),
+                    generateRoundtripSchedule(200, "F-AUWF", "LFPG", "EGLL", "EGLL", "EGLL", "EGLL")
+                ).flatMap(List::stream).collect(Collectors.toList())
+        }
+
+        finalSchedule.forEach(each -> scheduleFlight(world, each));
     }
 
     private static void scheduleFlight(final World world, final ScheduledFlight schedule) {
@@ -109,6 +118,14 @@ public class ScheduledFlightMissionGenerator {
         }
     }
 
+    private static List<ScheduledFlight> generateRoundtripSchedule(final String iataCode, final int baseFlightNumber, final String regNo, final String baseAirport, final String[] roundtripDestinations) {
+        final List<ScheduledFlight> result = new ArrayList<ScheduledFlight>();
+
+        int currentTime = minimalTurnaroundTimeMinutes;
+        
+        
+    }
+    
     @Data
     @AllArgsConstructor
     private static class ScheduledFlight {
