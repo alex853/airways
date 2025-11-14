@@ -8,6 +8,7 @@ import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,12 +69,13 @@ public class TransportFlightController {
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
         final Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
+        final Optional<ScheduledFlights.Flight> scheduledFlight = mission.map(m -> world.scheduledFlights().byId(m.getScheduledFlightId()).orElse(null));
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
-                ScheduledFlightMissionGenerator.getFlightNumberById(flight.getScheduledFlightId()),
+                scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId())),
                 mission.map(FlightMissions.Mission::isModePc).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
