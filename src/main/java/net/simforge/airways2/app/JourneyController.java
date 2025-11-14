@@ -59,6 +59,7 @@ public class JourneyController {
                 j.getCabinService().name(),
                 j.isReturningBack() ? 1 : 0,
                 j.getAttemptCounter(),
+                j.isSpecialProcessing() ? "S" : "n",
                 tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
                 fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
@@ -84,6 +85,7 @@ public class JourneyController {
         private String cs;
         private int dir;
         private int atCnt;
+        private String sp;
         private Integer tf1Id;
         private String tf1St;
         private String tf1From;

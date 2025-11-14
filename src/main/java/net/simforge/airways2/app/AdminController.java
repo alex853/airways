@@ -307,6 +307,14 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/journey/special-processing/981")
+    public String turnJ981ToSpecialProcessing() {
+        return worldBean.modifySync(world -> {
+            world.journeys().byId(981).orElseThrow().setSpecialProcessing(true);
+            return "DONE";
+        });
+    }
+
     @GetMapping("/link-eglf")
     public String fix682() {
         return worldBean.modifySync(world -> {

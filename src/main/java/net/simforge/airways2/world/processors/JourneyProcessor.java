@@ -26,6 +26,12 @@ public class JourneyProcessor {
 
     private static void processJourney(final World world, final Journeys.Journey journey) {
         journey.setHeartbeatTime(0);
+
+        if (journey.isSpecialProcessing()) {
+            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
+            return;
+        }
+
         switch (journey.getStatus()) {
             case LookingForTickets -> lookingForTickets(world, journey);
             case WaitingForCheckIn -> waitingForCheckin(world, journey);
