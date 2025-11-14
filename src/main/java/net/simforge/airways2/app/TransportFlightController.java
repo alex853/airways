@@ -70,7 +70,7 @@ public class TransportFlightController {
                                   final TransportFlights.Flight flight) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
         final Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
-        final Optional<ScheduledFlights.Flight> scheduledFlight = mission.map(m -> world.scheduledFlights().byId(m.getScheduledFlightId()).orElse(null));
+        final Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(flight.getScheduledFlightId());
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
