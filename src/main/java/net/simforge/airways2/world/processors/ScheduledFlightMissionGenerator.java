@@ -68,7 +68,7 @@ public class ScheduledFlightMissionGenerator {
         if (finalSchedule == null) {
             return null;
         }
-        return finalSchedule.stream().filter(s -> s.scheduleId == scheduledId).findFirst().map(s -> s.flightNo).orElse(null);
+        return finalSchedule.stream().filter(s -> s.scheduleId == scheduleId).findFirst().map(s -> s.flightNo).orElse(null);
     }
 
     public static void process(final World world) {
