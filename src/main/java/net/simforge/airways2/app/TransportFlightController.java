@@ -73,7 +73,7 @@ public class TransportFlightController {
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
-                flight.getScheduledFlightId(),
+                ScheduledFlightMissionGenerator.getFlightNumberById(flight.getScheduledFlightId()),
                 mission.map(FlightMissions.Mission::isModePc).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
@@ -97,7 +97,7 @@ public class TransportFlightController {
         private String st;
         private String hrtBt;
         private int fmId;
-        private int sfId;
+        private String sfNo;
         private boolean pcMode;
         private String dep;
         private String dest;
