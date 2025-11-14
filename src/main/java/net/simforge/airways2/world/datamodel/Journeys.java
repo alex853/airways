@@ -80,6 +80,10 @@ public class Journeys {
         return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
     }
 
+    public Stream<Journey> allWithZeroHeartbeat() {
+        return storage.filter1(storage.byZeroHeartbeat(heartbeatTimeField));
+    }
+
     public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize, final CabinLayout.Service service) {
         checkNotNull(status);
         checkArgument(fromCityId >= 1);

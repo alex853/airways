@@ -565,4 +565,8 @@ public class Storage<T> {
             return heartbeatTime <= worldTime && heartbeatTime != 0;
         };
     }
+
+    public Storage.Condition<T> byZeroHeartbeat(final DataField heartbeatTimeField) {
+        return recordId -> getAsInt(recordId, heartbeatTimeField) == 0;
+    }
 }

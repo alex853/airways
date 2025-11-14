@@ -36,10 +36,12 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @CrossOrigin
 public class AdminController {
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
-    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();;
+    private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     private WorldRunnerBean worldBean;
+    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     private VatsimTrackerBean vatsimTracker;
 
@@ -181,12 +183,14 @@ public class AdminController {
 
     private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        //noinspection IfStatementWithIdenticalBranches
         if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
             aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
 
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
         } else {
+            //noinspection DuplicatedCode
             final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
 
             aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
@@ -295,6 +299,14 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/journey/delete-all-without-heartbeat")
+    public String deleteAllJourneysWithoutHeartbeat() {
+        return worldBean.modifySync(world -> {
+            world.journeys().allWithZeroHeartbeat().forEach(j -> world.journeys().deleteById(j.getId()));
+            return "DONE";
+        });
+    }
+
     @GetMapping("/link-eglf")
     public String fix682() {
         return worldBean.modifySync(world -> {
@@ -316,7 +328,7 @@ public class AdminController {
         worldBean.modifySync(world -> {
             final int journeyId = 129;
 
-            final Journeys.Journey journey = world.journeys().byId(journeyId).orElse(null);
+            final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
             journey.setHeartbeatTime(world.getWorldTime() + 5 * Time.ONE_MINUTE);
 
