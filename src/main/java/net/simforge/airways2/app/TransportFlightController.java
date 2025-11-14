@@ -8,6 +8,7 @@ import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.ScheduledFlights;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
