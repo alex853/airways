@@ -64,6 +64,13 @@ public class ScheduledFlightMissionGenerator {
 
     private static List<ScheduledFlight> finalSchedule;
 
+    public static String getFlightNumberById(final int scheduleId) {
+        if (finalSchedule == null) {
+            return null;
+        }
+        return finalSchedule.stream().filter(s -> s.scheduleId == scheduledId).findFirst().map(s -> s.flightNo).orElse(null);
+    }
+
     public static void process(final World world) {
         if (System.currentTimeMillis() - lastExecution < 3600000) {
             return;
