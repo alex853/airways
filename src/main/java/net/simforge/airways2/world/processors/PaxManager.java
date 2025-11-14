@@ -13,8 +13,8 @@ import java.util.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// todo ak1 the same can be done for deboarding
-// todo ak1 the same can be done for check-in
+// todo ak2 the same can be done for deboarding
+// todo ak2 the same can be done for check-in
 public class PaxManager {
     private static final Logger log = LoggerFactory.getLogger(PaxManager.class);
 

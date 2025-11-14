@@ -31,7 +31,7 @@ public class FlightMissionControl {
 
             world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
-            // todo ak1 t/f actions?
+            // todo ak0 t/f actions in case of flight cancellation
 
             return;
         }
@@ -44,7 +44,7 @@ public class FlightMissionControl {
             world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
                     mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
-            // todo ak1 t/f actions?
+            // todo ak0 t/f actions in case of flight cancellation
 
             return;
         }
@@ -82,7 +82,7 @@ public class FlightMissionControl {
         world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
-        // todo ak1 t/f actions?
+        // todo ak0 t/f actions in case of flight cancellation
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {

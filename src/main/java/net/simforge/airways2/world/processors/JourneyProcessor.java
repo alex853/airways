@@ -160,10 +160,10 @@ public class JourneyProcessor {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         //noinspection StatementWithEmptyBody todo ak1 resolve it
         if (flight.isEmpty()) {
-            // todo ak1 'cancel journey safely'
+            // todo ak0 'cancel journey safely'
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
-            checkArgument(mission.isPresent()); // todo ak1 what if mission is empty - 'cancel journey safely'
+            checkArgument(mission.isPresent()); // todo ak0 what if mission is empty - 'cancel journey safely'
             journey.setHeartbeatTime(Math.max(
                     TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak1 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
@@ -178,7 +178,7 @@ public class JourneyProcessor {
         journey.setStatus(Journeys.Status.WaitingForBoarding);
         journey.setHeartbeatTime(world.getWorldTime());
 
-        // todo ak1 move into tfc or rework into pax manager
+        // todo ak2 move into tfc or rework into pax manager
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         flight.setPaxCheckedIn(flight.getPaxCheckedIn() + journey.getGroupSize());
     }
@@ -186,9 +186,9 @@ public class JourneyProcessor {
     private static void waitingForBoarding(final World world, final Journeys.Journey journey) {
         // most of the logic is in pax manager
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
-        //noinspection StatementWithEmptyBody todo ak1 resolve this
+        //noinspection StatementWithEmptyBody todo ak0 resolve this
         if (flight.isEmpty()) {
-            // todo ak1 'cancel journey safely'
+            // todo ak0 'cancel journey safely'
         } else if (!TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
             world.journeyControl().tooLateToBoard(journey);
         }
@@ -196,10 +196,10 @@ public class JourneyProcessor {
 
     private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
-        //noinspection StatementWithEmptyBody todo ak1 resolve this
+        //noinspection StatementWithEmptyBody todo ak0 resolve this
         if (flight.isEmpty()) {
-            // todo ak1 'cancel journey safely'
-        } else //noinspection StatementWithEmptyBody todo ak1 resolve this
+            // todo ak0 'cancel journey safely'
+        } else //noinspection StatementWithEmptyBody todo ak0 resolve this
             if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
             deboarding(world, journey);
         } else {
@@ -211,7 +211,7 @@ public class JourneyProcessor {
         journey.setStatus(Journeys.Status.JustArrived);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
 
-        // todo ak1 move into tfc or rework into pax manager
+        // todo ak2 move into tfc or rework into pax manager
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         flight.setPaxOnBoard(flight.getPaxOnBoard() - journey.getGroupSize());
     }
