@@ -76,7 +76,7 @@ public class TransportFlightController {
                 flight.getStatus().name(),
                 WebTime.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
-                scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId())),
+                scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId())).orElse(null),
                 mission.map(FlightMissions.Mission::isModePc).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
