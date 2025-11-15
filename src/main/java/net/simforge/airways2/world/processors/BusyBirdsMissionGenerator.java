@@ -28,6 +28,8 @@ public class BusyBirdsMissionGenerator {
     }
 
     private static void processJourney(final World world, final Journeys.Journey journey) {
+        log.info("journey {} -> {}, pax {}", journey.getFromCityId(), journey.getToCityId(), journey.getGroupSize());
+
         final AircraftOperators.AircraftOperator busyBirdsOperator = world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
 
         final Optional<Airports.Airport> fromAirport = chooseAirport(world,
