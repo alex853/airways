@@ -1,10 +1,7 @@
 package net.simforge.airways2.worldbuilder;
 
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.AircraftOperators;
-import net.simforge.airways2.world.datamodel.AircraftTypes;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.*;
 
 import java.io.IOException;
 
@@ -13,7 +10,7 @@ public class World25_011_busybirds {
         final World world = World25.load();
 
         final AircraftOperators aircraftOperators = world.aircraftOperators();
-        final AircraftOperators.AircraftOperator airline = aircraftOperators.byIata(World25.BusyBirdsIata)
+        final AircraftOperators.AircraftOperator busybirds = aircraftOperators.byIata(World25.BusyBirdsIata)
                 .orElseGet(() -> aircraftOperators.create(
                         World25.BusyBirdsIata,
                         World25.BusyBirdsIcao,
@@ -24,9 +21,13 @@ public class World25_011_busybirds {
         final AircraftTypes aircraftTypes = world.aircraftTypes();
         final AircraftTypes.AircraftType type = aircraftTypes.byIcao("C25C").orElseThrow();
 
-        createAircraft(world, airline, type, "BB-CJA", eglf);
-        createAircraft(world, airline, type, "BB-CJB", eglf);
-        createAircraft(world, airline, type, "BB-CJC", eglf);
+        createAircraft(world, busybirds, type, "BB-CJA", eglf);
+        createAircraft(world, busybirds, type, "BB-CJB", eglf);
+        createAircraft(world, busybirds, type, "BB-CJC", eglf);
+
+        if (!world.airportFacilities().hasFacility(eglf, busybirds, AirportFacilities.Type.BaseAirport)) {
+            world.airportFacilities().create(eglf, busybirds, AirportFacilities.Type.BaseAirport);
+        }
 
         world.save();
     }

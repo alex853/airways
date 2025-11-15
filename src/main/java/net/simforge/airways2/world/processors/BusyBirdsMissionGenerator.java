@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.processors;
 
-import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -105,17 +104,17 @@ public class BusyBirdsMissionGenerator {
                 .filter(a -> world.airportFacilities().hasFacility(a, aircraftOperator, AirportFacilities.Type.BusinessAviationTerminal))
                 .toList();
         if (!preferredBusinessTerminals.isEmpty()) {
-            return Optional.of(preferredBusinessTerminals.get(Tools.random(0, preferredBusinessTerminals.size())));
+            return Optional.of(preferredBusinessTerminals.get((int) (Math.random()*preferredBusinessTerminals.size())));
         }
 
         final List<Airports.Airport> anyBusinessTerminals = airports.stream()
                 .filter(a -> world.airportFacilities().hasFacility(a, AirportFacilities.Type.BusinessAviationTerminal))
                 .toList();
         if (!anyBusinessTerminals.isEmpty()) {
-            return Optional.of(anyBusinessTerminals.get(Tools.random(0, anyBusinessTerminals.size())));
+            return Optional.of(anyBusinessTerminals.get((int) (Math.random()*anyBusinessTerminals.size())));
         }
 
-        return Optional.of(airports.get(Tools.random(0, airports.size())));
+        return Optional.of(airports.get((int) (Math.random()*airports.size())));
     }
 
     private static Optional<Airports.Airport> findNearestBaseAirport(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
