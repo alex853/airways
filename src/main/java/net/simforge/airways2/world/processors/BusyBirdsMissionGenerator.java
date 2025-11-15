@@ -63,10 +63,10 @@ public class BusyBirdsMissionGenerator {
         final boolean needFerryFlightToDepartureAirport = aircraft.get().getLocationAirportId() != fromAirport.get().getId();
 
         if (needFerryFlightToDepartureAirport) {
-            log.info("FLIGHT - FERRY   - {}, {} -> {}", aircraft.get().getRegNo(), world.airports().getIcao(aircraft.get().getLocationAirportId()), fromAirport.get().getIcao());
+            log.info("FLIGHT - reposition - {}, {} -> {}", aircraft.get().getRegNo(), world.airports().getIcao(aircraft.get().getLocationAirportId()), fromAirport.get().getIcao());
         }
 
-        log.info("FLIGHT - REVENUE - {}, {} -> {}", aircraft.get().getRegNo(), fromAirport.get().getIcao(), toAirport.get().getIcao());
+        log.info("FLIGHT - REVENUE    - {}, {} -> {}", aircraft.get().getRegNo(), fromAirport.get().getIcao(), toAirport.get().getIcao());
 
         final Optional<Airports.Airport> baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport.get());
         if (baseAirport.isEmpty()) {
@@ -76,7 +76,7 @@ public class BusyBirdsMissionGenerator {
 
         final boolean needFerryFlightToBaseAirport = toAirport.get().getId() != baseAirport.get().getId();
         if (needFerryFlightToBaseAirport) {
-            log.info("FLIGHT - FERRY   - {}, {} -> {}", aircraft.get().getRegNo(), toAirport.get().getIcao(), baseAirport.get().getIcao());
+            log.info("FLIGHT - reposition - {}, {} -> {}", aircraft.get().getRegNo(), toAirport.get().getIcao(), baseAirport.get().getIcao());
         }
     }
 
