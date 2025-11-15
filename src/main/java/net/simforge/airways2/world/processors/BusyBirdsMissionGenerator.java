@@ -18,9 +18,6 @@ public class BusyBirdsMissionGenerator {
     private static long lastExecution;
 
     public static void process(final World world) {
-        if (LocalDateTime.now().getMinute() != 0) {
-            return;
-        }
         if (System.currentTimeMillis() - lastExecution < 600000) {
             return;
         }
