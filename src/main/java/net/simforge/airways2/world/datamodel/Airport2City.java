@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -52,11 +53,20 @@ public class Airport2City {
         }
     }
 
+    @Deprecated
     public Collection<Link> allByCityId(final int cityId) {
         checkArgument(cityId > 0);
 
         try (final Timing.Timer ignored = Timing.label("Airport2City - allByCityId")) {
             return storage.filter(l -> l.getCityId() == cityId);
+        }
+    }
+
+    public Stream<Link> linksByCityId(final int cityId) {
+        checkArgument(cityId > 0);
+
+        try (final Timing.Timer ignored = Timing.label("Airport2City - linksByCityId")) {
+            return storage.filter1(recordId -> storage.getAsInt(recordId, cityIdField) == cityId);
         }
     }
 

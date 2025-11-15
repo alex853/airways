@@ -25,6 +25,7 @@ public class World {
     private final Cities cities = new Cities(this.strings);
     private final Airports airports = new Airports(this.strings);
     private final Airport2City airport2city = new Airport2City();
+    private final AirportFacilities airportFacilities = new AirportFacilities();
 
     private final AircraftTypes aircraftTypes = new AircraftTypes();
     private final Aircrafts aircrafts = new Aircrafts(this.strings);
@@ -77,6 +78,7 @@ public class World {
             world.cities.loadIfExists(rootPath);
             world.airports.loadIfExists(rootPath);
             world.airport2city.loadIfExists(rootPath);
+            world.airportFacilities.loadIfExists(rootPath);
 
             world.aircraftTypes.loadIfExists(rootPath);
             world.aircrafts.loadIfExists(rootPath);
@@ -113,10 +115,11 @@ public class World {
             cities.save(rootPath);
             airports.save(rootPath);
             airport2city.save(rootPath);
+            airportFacilities.save(rootPath);
 
             aircraftTypes.save(rootPath);
-            aircrafts.save(rootPath);
             //noinspection DuplicatedCode
+            aircrafts.save(rootPath);
             aircraftOperators.save(rootPath);
             flightMissions.save(rootPath);
 
@@ -176,6 +179,10 @@ public class World {
 
     public Airport2City airport2city() {
         return airport2city;
+    }
+
+    public AirportFacilities airportFacilities() {
+        return airportFacilities;
     }
 
     public AircraftTypes aircraftTypes() {

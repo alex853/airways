@@ -97,7 +97,7 @@ public class Aircrafts {
 
     public Optional<Aircraft> byRegNo(final String regNo) {
         checkNotNull(regNo, "regNo is mandatory");
-        return storage.findFirst(a -> a.getRegNo().equals(regNo));
+        return storage.findFirst1(recordId -> regNo.equals(strings.byId(storage.getAsInt(recordId, regNoIdField))));
     }
 
     public Storage.Condition<Aircraft> byLocationStatus(final LocationStatus locationStatus) {

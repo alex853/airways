@@ -233,6 +233,10 @@ public class Journeys {
                 || statusBitField.getInt(recordId) == status2.code());
     }
 
+    public Storage.Condition<Journey> bySpecialProcessing() {
+        return specialProcessingBitField::getBoolean;
+    }
+
     public enum Status {
         //todo ak2 LookingForPersons(0),
         LookingForTickets(1),
