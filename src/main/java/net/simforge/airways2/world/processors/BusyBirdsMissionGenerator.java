@@ -26,6 +26,7 @@ public class BusyBirdsMissionGenerator {
         // todo ak select only those which in looking for tickets
         final Optional<Journeys.Journey> first = world.journeys().filter(world.journeys().bySpecialProcessing()).findFirst();
         if (first.isEmpty()) {
+            log.warn("no journey found");
             return;
         }
 
