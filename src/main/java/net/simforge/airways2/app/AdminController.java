@@ -307,10 +307,10 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/journey/special-processing/981")
-    public String turnJ981ToSpecialProcessing() {
+    @GetMapping("/journey/special-processing")
+    public String turnToSpecialProcessing(@RequestParam("jId") final int jId) {
         return worldBean.modifySync(world -> {
-            world.journeys().byId(981).orElseThrow().setSpecialProcessing(true);
+            world.journeys().byId(jId).orElseThrow().setSpecialProcessing(true);
             return "DONE";
         });
     }

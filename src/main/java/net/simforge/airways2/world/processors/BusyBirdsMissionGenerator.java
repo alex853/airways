@@ -8,7 +8,6 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -18,21 +17,19 @@ public class BusyBirdsMissionGenerator {
     private static long lastExecution;
 
     public static void process(final World world) {
-        if (System.currentTimeMillis() - lastExecution < 600000) {
+        if (System.currentTimeMillis() - lastExecution < 60000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
+        log.info("processing journeys");
+
         // todo ak select only those which in looking for tickets
-        final Optional<Journeys.Journey> first = world.journeys().filter(world.journeys().bySpecialProcessing()).findFirst();
-        if (first.isEmpty()) {
-            log.warn("no journey found");
-            return;
-        }
+        world.journeys().filter(world.journeys().bySpecialProcessing()).forEach(j -> processJourney(world, j));
+    }
 
+    private static void processJourney(final World world, final Journeys.Journey journey) {
         final AircraftOperators.AircraftOperator busyBirdsOperator = world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
-
-        final Journeys.Journey journey = first.get();
 
         final Optional<Airports.Airport> fromAirport = chooseAirport(world,
                 busyBirdsOperator,
@@ -65,7 +62,7 @@ public class BusyBirdsMissionGenerator {
         final boolean needFerryFlightToDepartureAirport = aircraft.get().getLocationAirportId() != fromAirport.get().getId();
 
         if (needFerryFlightToDepartureAirport) {
-            log.info("FLIGHT - FERRY   - {}, {} -> {}", aircraft.get().getRegNo(), world.airports().getIcao(aircraft.get().getLocationAirportId()), toAirport.get().getIcao());
+            log.info("FLIGHT - FERRY   - {}, {} -> {}", aircraft.get().getRegNo(), world.airports().getIcao(aircraft.get().getLocationAirportId()), fromAirport.get().getIcao());
         }
 
         log.info("FLIGHT - REVENUE - {}, {} -> {}", aircraft.get().getRegNo(), fromAirport.get().getIcao(), toAirport.get().getIcao());
