@@ -344,7 +344,7 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/reset-city-redistribution")
+    @GetMapping("/flows/reset-city-redistribution")
     public void resetCityRedistribution() {
         worldBean.modifySync(world -> {
             world.cityFlows().all().forEach(cf -> cf.setLastRedistributionTime(0));
