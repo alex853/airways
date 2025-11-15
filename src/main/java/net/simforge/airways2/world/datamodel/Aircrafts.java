@@ -110,6 +110,10 @@ public class Aircrafts {
         return recordId -> storage.getAsInt(recordId, locationAirportIdField) == locationAirportId;
     }
 
+    public Stream<Aircraft> byAircraftOperatorId(final int aircraftOperatorId) {
+        return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftOperatorIdField) == aircraftOperatorId);
+    }
+
     public class Aircraft {
         private final int id;
 

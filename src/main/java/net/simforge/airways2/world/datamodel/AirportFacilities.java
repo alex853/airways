@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
@@ -64,6 +65,33 @@ public class AirportFacilities {
         return new Facility(recordId);
     }
 
+    public boolean hasFacility(final Airports.Airport airport, final Type type) {
+        checkNotNull(airport);
+        checkNotNull(type);
+        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
+                        && readType(recordId) == type)
+                .findAny()
+                .isPresent();
+    }
+
+    public boolean hasFacility(final Airports.Airport airport, final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
+        checkNotNull(airport);
+        checkNotNull(aircraftOperator);
+        checkNotNull(type);
+        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
+                        && readAircraftOperatorId(recordId) == aircraftOperator.getId()
+                        && readType(recordId) == type)
+                .findAny()
+                .isPresent();
+    }
+
+    public Stream<Facility> by(final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
+        checkNotNull(aircraftOperator);
+        checkNotNull(type);
+        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperator.getId()
+                && readType(recordId) == type);
+    }
+
     public class Facility {
         private final int id;
 
@@ -76,20 +104,28 @@ public class AirportFacilities {
         }
 
         public int getAirportId() {
-            return storage.getAsInt(id, airportIdField);
+            return readAirportId(id);
         }
 
         public int getAircraftOperatorId() {
-            return storage.getAsInt(id, aircraftOperatorIdField);
-        }
-
-        public int getTypeRaw() {
-            return storage.getAsInt(id, typeField);
+            return readAircraftOperatorId(id);
         }
 
         public Type getType() {
-            return Type.byCode(getTypeRaw());
+            return readType(id);
         }
+    }
+
+    private int readAirportId(int recordId) {
+        return storage.getAsInt(recordId, airportIdField);
+    }
+
+    private int readAircraftOperatorId(final int recordId) {
+        return storage.getAsInt(recordId, aircraftOperatorIdField);
+    }
+
+    private Type readType(final int recordId) {
+        return Type.byCode(storage.getAsInt(recordId, typeField));
     }
 
     public enum Type {

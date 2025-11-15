@@ -270,6 +270,8 @@ public class World {
 
             MiscCleanups.process(this);
             FlightsCleanup.process(this);
+
+            BusyBirdsMissionGenerator.process(this);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }
