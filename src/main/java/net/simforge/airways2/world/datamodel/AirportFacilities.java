@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AirportFacilities {
@@ -43,7 +44,7 @@ public class AirportFacilities {
                            final Type type) {
         checkNotNull(airport);
         checkNotNull(type);
-        // todo ak check for presence
+        checkArgument(!hasFacility(airport, type));
         final int recordId = storage.addRecord();
         storage.set(recordId, airportIdField, airport.getId());
         storage.set(recordId, aircraftOperatorIdField, 0);
@@ -57,7 +58,7 @@ public class AirportFacilities {
         checkNotNull(airport);
         checkNotNull(aircraftOperator);
         checkNotNull(type);
-        // todo ak check for presence
+        checkArgument(!hasFacility(airport, aircraftOperator, type));
         final int recordId = storage.addRecord();
         storage.set(recordId, airportIdField, airport.getId());
         storage.set(recordId, aircraftOperatorIdField, aircraftOperator.getId());
