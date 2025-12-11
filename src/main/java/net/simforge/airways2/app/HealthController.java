@@ -51,6 +51,27 @@ public class HealthController {
                 .body(statusDto);
     }
 
+    @GetMapping("/status-code")
+    public ResponseEntity<StatusDto> getStatusCode() {
+        final int worldTime = worldBean.read(World::getWorldTime);
+        final LocalDateTime worldTimeLdt = Time.toLdt(worldTime);
+
+        final String lastProcessedVatsimReport = vatsimTrackerBean.getLastProcessedReport();
+        final LocalDateTime lastProcessedVatsimReportLdt = ReportUtils.fromTimestampJava(lastProcessedVatsimReport);
+
+        final boolean status = isWithin10MinsFromNow(worldTimeLdt)
+                && isWithin10MinsFromNow(lastProcessedVatsimReportLdt);
+
+        final StatusDto statusDto = new StatusDto(
+                status ? "ok" : "fail",
+                null,
+                null);
+
+        return ResponseEntity
+                .status(status ? HttpStatus.OK : HttpStatus.EXPECTATION_FAILED)
+                .body(statusDto);
+    }
+
     private static boolean isWithin10MinsFromNow(final LocalDateTime ldt) {
         final LocalDateTime now = JavaTime.nowUtc();
         return Duration.between(ldt, now).getSeconds() < 10*Time.ONE_MINUTE;
