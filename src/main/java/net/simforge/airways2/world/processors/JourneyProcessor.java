@@ -138,7 +138,9 @@ public class JourneyProcessor {
     }
 
     private static TFM toTfm(final World world, final TransportFlights.Flight tf) {
-        return new TFM(tf, world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow());
+        return new TFM(tf, world.flightMissions()
+                .byId(tf.getFlightMissionId())
+                .orElseThrow(() -> new IllegalStateException("Unable to find F/M # " + tf.getFlightMissionId() + " for T/F " + tf)));
     }
 
     private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
