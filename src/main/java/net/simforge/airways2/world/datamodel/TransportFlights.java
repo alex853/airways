@@ -160,6 +160,11 @@ public class TransportFlights {
             checkArgument(paxOnBoard >= 0);
             paxOnBoardBitField.setInt(id, paxOnBoard);
         }
+
+        @Override
+        public String toString() {
+            return String.format("{ id: %s, status: %s }", id, getStatus());
+        }
     }
 
     public enum Status {
