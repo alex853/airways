@@ -248,14 +248,6 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/flight/delete")
-    public String deleteFlight(@RequestParam(name = "flightId") final int flightId) {
-        return worldBean.modifySync(world -> {
-            world.flightMissions().deleteById(flightId);
-            return "F/M # " + flightId + " deleted";
-        });
-    }
-
     @GetMapping("/aircraft/reset-status")
     public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
         return worldBean.modifySync(world -> {
@@ -296,6 +288,14 @@ public class AdminController {
         return worldBean.modifySync(world -> {
             world.journeys().byId(journeyId).orElseThrow().setHeartbeatTime(world.getWorldTime());
             return "DONE";
+        });
+    }
+
+    @GetMapping("/journey/remove")
+    public String journeyFlight(@RequestParam(name = "journeyId") final int journeyId) {
+        return worldBean.modifySync(world -> {
+            world.journeys().deleteById(journeyId);
+            return "JRY # " + journeyId + " removed";
         });
     }
 
