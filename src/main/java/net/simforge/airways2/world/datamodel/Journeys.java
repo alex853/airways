@@ -207,6 +207,11 @@ public class Journeys {
         public void setTransportFlight2Id(final int transportFlight2Id) {
             storage.set(id, transportFlight2IdField, transportFlight2Id);
         }
+
+        @Override
+        public String toString() {
+            return String.format("{ id: %s, status: %s }", id, getStatus());
+        }
     }
 
     public Storage.Condition<Journey> byStatus(final Status status) {
