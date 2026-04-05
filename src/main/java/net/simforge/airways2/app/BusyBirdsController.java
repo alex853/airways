@@ -29,7 +29,7 @@ public class BusyBirdsController {
                         final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
                         final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
                         final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-                        final int pay = (int) (((distance / 500.0) * 5000.0 + 2000.0) * (1 + fromCity.getId()/1000.0) * (1 + toCity.getId()/1000.0));
+                        final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0) * (1 + fromCity.getId()/1000.0) * (1 + toCity.getId()/1000.0));
 
                         return new MissionDto( // todo ak0 some filtering by status
                                 j.getId(),
