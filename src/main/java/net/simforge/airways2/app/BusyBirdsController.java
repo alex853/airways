@@ -27,7 +27,8 @@ public class BusyBirdsController {
                             j.getFromCityId(),
                             world.cities().byId(j.getFromCityId()).get().getName(),
                             j.getToCityId(),
-                            world.cities().byId(j.getToCityId()).get().getName()))
+                            world.cities().byId(j.getToCityId()).get().getName(),
+                            j.getGroupSize()))
                     .toList());
         }
     }
@@ -40,5 +41,6 @@ public class BusyBirdsController {
         private String fromCityName;
         private int toCityId;
         private String toCityName;
+        private int pax;
     }
 }
