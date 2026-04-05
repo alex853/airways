@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.commons.misc.Geo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,13 +25,22 @@ public class BusyBirdsController {
     public List<MissionDto> getMissionsToBook() {
         try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getMissionsToBook")) {
             return worldBean.read(world -> world.journeys().filter(world.journeys().bySpecialProcessing())
-                    .map(j -> new MissionDto( // todo ak0 some filtering by status
-                            j.getId(),
-                            j.getFromCityId(),
-                            world.cities().byId(j.getFromCityId()).get().getName(),
-                            j.getToCityId(),
-                            world.cities().byId(j.getToCityId()).get().getName(),
-                            j.getGroupSize()))
+                    .map(j -> {
+                        final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
+                        final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
+                        final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
+                        final int pay = (int) (((distance / 500.0) * 5000.0 + 2000.0) * (1 + fromCity.getId()/1000.0) * (1 + toCity.getId()/1000.0));
+
+                        return new MissionDto( // todo ak0 some filtering by status
+                                j.getId(),
+                                j.getFromCityId(),
+                                fromCity.getName(),
+                                j.getToCityId(),
+                                toCity.getName(),
+                                j.getGroupSize(),
+                                distance,
+                                pay);
+                    })
                     .toList());
         }
     }
@@ -59,6 +70,8 @@ public class BusyBirdsController {
         private int toCityId;
         private String toCityName;
         private int pax;
+        private int distance;
+        private int pay;
     }
 
     @Data
