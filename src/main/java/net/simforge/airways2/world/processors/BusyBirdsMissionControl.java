@@ -119,8 +119,8 @@ public class BusyBirdsMissionControl {
 
         public MissionPlan(final Status status, final List<Leg> legs, final List<String> messages) {
             this.status = status;
-            this.legs = Collections.unmodifiableList(legs);
-            this.messages = Collections.unmodifiableList(messages);
+            this.legs = legs != null ? Collections.unmodifiableList(legs) : null;
+            this.messages = messages != null ? Collections.unmodifiableList(messages) : null;
         }
 
         public Status getStatus() {
