@@ -5,12 +5,11 @@ import lombok.Data;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.Journeys;
+import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.commons.misc.Geo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -64,9 +63,34 @@ public class BusyBirdsController {
         }
     }
 
+    @PostMapping("/mission/get-plan")
+    public GetPlanResponse getPlan(@RequestParam(name = "missionId") final int missionId,
+                                   @RequestParam(name = "aircraftId") final int aircraftId) {
+        try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
+            return worldBean.read(world -> {
+                final BusyBirdsMissionControl bbControl = world.busyBirdsMissionControl();
+                final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
+                final Journeys.Journey journey = world.journeys().byId(missionId).get();
+                final BusyBirdsMissionControl.MissionPlan plan = bbControl.buildPlan(journey, aircraft);
+                if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
+                    return new GetPlanResponse("failure", null, plan.getMessages());
+                }
+
+                final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
+                        leg.getType().name(),
+                        leg.getFromAirport().getIcao(),
+                        leg.getToAirport().getIcao(),
+                        leg.getPax()
+                )).toList();
+
+                return new GetPlanResponse("success", legDtos, null);
+            });
+        }
+    }
+
     @Data
     @AllArgsConstructor
-    private static class MissionDto {
+    public static class MissionDto {
         private int id;
         private int fromCityId;
         private String fromCityName;
@@ -79,11 +103,28 @@ public class BusyBirdsController {
 
     @Data
     @AllArgsConstructor
-    private static class AircraftDto {
+    public static class AircraftDto {
         private int id;
         private String typeCode;
         private String regNo;
         private int locationAirportId;
         private String locationAirportIcao;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class GetPlanResponse {
+        private String status;
+        private List<LegDto> legs;
+        private List<String> messages;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class LegDto {
+        private String type; // reposition, revenue
+        private String fromAirportIcao;
+        private String toAirportIcao;
+        private int pax;
     }
 }

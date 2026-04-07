@@ -54,6 +54,8 @@ public class World {
 
     private final City2CityFlowControl c2cFlowControl = new City2CityFlowControl(this);
 
+    private final BusyBirdsMissionControl busyBirdsMissionControl = new BusyBirdsMissionControl(this);
+
     private static final int worldTimeStep = 10;
 
     private World(final WorldStorageStrategy worldStorageStrategy) {
@@ -244,6 +246,8 @@ public class World {
     public City2CityFlowControl c2cFlowControl() {
         return c2cFlowControl;
     }
+
+    public BusyBirdsMissionControl busyBirdsMissionControl() { return busyBirdsMissionControl; }
 
     public boolean process(final int expectedWorldTime) {
         final int processedWorldTime = getWorldTime();
