@@ -111,6 +111,10 @@ public class Airports {
             return Geo.coords(getLatitude(), getLongitude());
         }
 
+        public boolean isExcluded() {
+            return "LFPY".equals(getName()); // todo ak3 extend airports storage and add some field to support 'exclusion';
+        }
+
         @Override
         public String toString() {
             return "{ icao: " + getIcao() + " }";

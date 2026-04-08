@@ -53,8 +53,8 @@ public class Strings {
         return new String(strings, startingIndex + 1, length);
     }
 
-    public int findOrAdd(final String name) {
-        final byte[] target = name.getBytes();
+    public int find(String str) {
+        final byte[] target = str.getBytes();
         for (int id = 1; id < indices.length; id++) {
             final int startingIndex = indices[id];
             final int length = Byte.toUnsignedInt(strings[startingIndex]);
@@ -68,6 +68,16 @@ public class Strings {
                 return id;
             }
         }
+        return -1;
+    }
+
+    public int findOrAdd(String str) {
+        int foundId = find(str);
+        if (foundId != -1) {
+            return foundId;
+        }
+
+        final byte[] target = str.getBytes();
 
         final int[] newIndices = new int[indices.length + 1];
         System.arraycopy(indices, 0, newIndices, 0, indices.length);
