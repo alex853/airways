@@ -334,13 +334,26 @@ public class AdminController {
     }
 
     @GetMapping("/fix-129")
-    public void fix() {
+    public void fix129() {
         worldBean.modifySync(world -> {
             final int journeyId = 129;
 
             final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
             journey.setHeartbeatTime(world.getWorldTime() + 5 * Time.ONE_MINUTE);
+
+            return null;
+        });
+    }
+
+    @GetMapping("/fix-981")
+    public void fix981() {
+        worldBean.modifySync(world -> {
+            final int journeyId = 981;
+
+            final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
+
+            journey.setTransportFlight1Id(114);
 
             return null;
         });

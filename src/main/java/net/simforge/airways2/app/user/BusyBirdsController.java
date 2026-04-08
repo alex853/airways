@@ -139,7 +139,7 @@ public class BusyBirdsController {
 
                     if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
                         final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(journey.getGroupSize(), 0, 0, 0));
-                        journey.setTransportFlight1Id(flight.getId());
+                        journey.setTransportFlight1Id(transportFlight.getId());
                         world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getCabinService());
                         world.journeyControl().waitForCheckin(journey);
                         messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
