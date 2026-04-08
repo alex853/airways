@@ -36,6 +36,11 @@ public class CabinLayout {
     private final int first;
 
     private CabinLayout(final int economy, final int premiumEconomy, final int business, final int first) {
+        checkArgument(economy >= 0 && economy <= ECONOMY_MAX);
+        checkArgument(premiumEconomy >= 0 && premiumEconomy <= PREMIUM_ECONOMY_MAX);
+        checkArgument(business >= 0 && business <= BUSINESS_MAX);
+        checkArgument(first >= 0 && first <= FIRST_MAX);
+
         this.economy = economy;
         this.premiumEconomy = premiumEconomy;
         this.business = business;

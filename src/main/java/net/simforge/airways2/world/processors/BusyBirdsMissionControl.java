@@ -18,10 +18,14 @@ public class BusyBirdsMissionControl {
         this.world = world;
     }
 
+    public AircraftOperators.AircraftOperator getBusyBirdsOperator() {
+        return world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
+    }
+
     public BusyBirdsMissionControl.MissionPlan buildPlan(final Journeys.Journey journey, final Aircrafts.Aircraft aircraft) {
         final List<String> messages = new ArrayList<>();
 
-        final AircraftOperators.AircraftOperator busyBirdsOperator = world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
+        final AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
 
         if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
             messages.add("aircraft is not parked at airport");
@@ -110,6 +114,10 @@ public class BusyBirdsMissionControl {
         return world.airportFacilities().by(aircraftOperator, AirportFacilities.Type.BaseAirport)
                 .map(f -> world.airports().byId(f.getAirportId()).orElseThrow())
                 .min(Comparator.comparingDouble(a -> Geo.distance(a.getCoords(), airport.getCoords())));
+    }
+
+    public void checkUserHasAccessToBusyBirds(int userId) {
+        // todo ak2 put here some check if user has access to BusyBirds OR throw exception!
     }
 
     public static class MissionPlan {

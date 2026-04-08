@@ -28,20 +28,31 @@ public class TransportFlightControl {
         return world.paxManager();
     }
 
-    public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission) {
-        return createTransportFlight(flightMission, null);
+    public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission) {
+        return createTransportFlight(flightMission, null, null);
     }
 
-    public TransportFlights.Flight createTransportFlight(final FlightMissions.Mission flightMission,
-                                                         final ScheduledFlights.Flight scheduledFlight) {
+    public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission, CabinLayout cabinLayout) {
+        return createTransportFlight(flightMission, null, cabinLayout);
+    }
+
+    public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission,
+                                                         ScheduledFlights.Flight scheduledFlight) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
         final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+
         final CabinLayout cabinLayout = switch (aircraftType) {
             case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
             case "A320" -> CabinLayout.JY(8, 138);
             default -> CabinLayout.Y(99);
         };
 
+        return createTransportFlight(flightMission, scheduledFlight, cabinLayout);
+    }
+
+    public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission,
+                                                         ScheduledFlights.Flight scheduledFlight,
+                                                         CabinLayout cabinLayout) {
         final TransportFlights.Flight transportFlight = world.transportFlights().create(
                 flightMission,
                 scheduledFlight,
