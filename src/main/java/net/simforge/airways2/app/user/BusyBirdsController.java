@@ -9,6 +9,8 @@ import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.commons.misc.Geo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,11 +20,17 @@ import java.util.List;
 @RequestMapping("/busy-birds")
 @CrossOrigin
 public class BusyBirdsController {
+    // todo ak1 migrate ids to sqids
+
+    private static final Logger log = LoggerFactory.getLogger(BusyBirdsController.class);
+
     @Autowired
     private WorldRunnerBean worldBean;
 
     @GetMapping("/mission/to-book")
-    public List<MissionDto> getMissionsToBook() {
+    public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") Long userId) {
+        log.info("getMissionsToBook for user {}", userId);
+
         try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getMissionsToBook")) {
             return worldBean.read(world -> world.journeys().filter(world.journeys().bySpecialProcessing())
                     .map(j -> {
