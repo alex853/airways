@@ -294,6 +294,7 @@ public class FlightDashboardController {
                 getFlightMissionShownElements(flight, transportFlight, world),
                 world.airports().getIcao(flight.getDepartureAirportId()),
                 world.airports().getIcao(flight.getDestinationAirportId()),
+                TimeTools.ymdOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime())
         );
@@ -400,6 +401,7 @@ public class FlightDashboardController {
         private String shownElements;
         private String depIcao;
         private String destIcao;
+        private String planDOF;
         private String planDepTime;
         private String planArrTime;
     }
