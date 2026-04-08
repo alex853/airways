@@ -38,6 +38,7 @@ public class BusyBirdsController {
                 world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
                 return world.journeys().filter(world.journeys().bySpecialProcessing())
+                        .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                         .map(j -> {
                             final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
                             final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
@@ -48,7 +49,7 @@ public class BusyBirdsController {
                                     * (1 + toCity.getId() / 1000.0)
                                     * (1 + j.getId() / 1000.0));
 
-                            return new MissionDto( // todo ak1 some filtering by status
+                            return new MissionDto(
                                     j.getId(),
                                     j.getFromCityId(),
                                     fromCity.getName(),
