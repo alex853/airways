@@ -359,6 +359,19 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/fix-817")
+    public void fix817() {
+        worldBean.modifySync(world -> {
+            final int journeyId = 817;
+
+            final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
+
+            journey.setStatus(Journeys.Status.LookingForTickets);
+
+            return null;
+        });
+    }
+
     @GetMapping("/flows/reset-city-redistribution")
     public void resetCityRedistribution() {
         worldBean.modifySync(world -> {
