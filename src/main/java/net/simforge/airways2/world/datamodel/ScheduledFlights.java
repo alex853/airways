@@ -42,7 +42,7 @@ public class ScheduledFlights {
         return storage.byId(id);
     }
 
-    // todo ak1 rework
+    // todo ak0 rework
     public Collection<Flight> byScheduleId(final int scheduleId) {
         return all().filter(f -> f.getScheduleId() == scheduleId).toList();
     }

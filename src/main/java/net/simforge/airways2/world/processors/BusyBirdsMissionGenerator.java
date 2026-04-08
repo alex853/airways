@@ -50,7 +50,7 @@ public class BusyBirdsMissionGenerator {
 
         log.info("processing journeys");
 
-        // todo ak select only those which in looking for tickets
+        // todo ak2 select only those which in looking for tickets
         world.journeys().filter(world.journeys().bySpecialProcessing()).forEach(j -> processJourney(world, j));
     }
 
@@ -107,13 +107,13 @@ public class BusyBirdsMissionGenerator {
         }
     }
 
-    // todo ak take into account aircraft max range
+    // todo ak2 take into account aircraft max range
 
     private static Optional<Aircrafts.Aircraft> findNearestSuitableAircraft(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
         return world.aircrafts()
                 .byAircraftOperatorId(aircraftOperator.getId())
                 .filter(Aircrafts::isIdleAndParkedAtAirport)
-                // todo ak check aircraft seats vs journey size
+                // todo ak2 check aircraft seats vs journey size
                 .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
     }
 

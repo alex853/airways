@@ -51,11 +51,226 @@ public class FlightDashboardController {
     }
 
     @GetMapping("/status")
-    public StatusDto getStatus(@RequestParam(name = "flightId") int flightId) { // todo ak0 userId
+    public StatusDto getStatus(@RequestAttribute("userId") int userId,
+                               @RequestParam(name = "flightId") int flightId) {
         return worldBean.read(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
             return toStatusDto(world, flight);
         });
+    }
+
+    @PostMapping("/start-flight")
+    public StatusDto startFlight(@RequestAttribute("userId") int userId,
+                                 @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("start")) {
+                throw new IllegalStateException("start is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - start-flight", flightId);
+            world.flightMissionControl().startOrCancel(flight);
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/start-boarding")
+    public StatusDto startBoarding(@RequestAttribute("userId") int userId,
+                                   @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkNotNull(transportFlight, "transport flight is required for start-boarding");
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
+
+            final String permitted = getTransportFlightShownElements(transportFlight, flight);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("start-boarding")) {
+                throw new IllegalStateException("start-boarding is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
+            world.transportFlightControl().startBoarding(transportFlight);
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/blocks-off")
+    public StatusDto blocksOff(@RequestAttribute("userId") int userId,
+                               @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
+
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("blocks-off")) {
+                throw new IllegalStateException("blocks-off is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
+            world.flightMissionControl().blocksOff(flight); // t/f update is inside
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/takeoff")
+    public StatusDto takeoff(@RequestAttribute("userId") int userId,
+                             @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
+
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("takeoff")) {
+                throw new IllegalStateException("takeoff is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - takeoff", flightId);
+            world.flightMissionControl().takeoff(flight); // t/f update is inside
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/landing")
+    public StatusDto landing(@RequestAttribute("userId") int userId,
+                             @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
+
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("landing")) {
+                throw new IllegalStateException("landing is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - landing", flightId);
+            final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
+            world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/blocks-on")
+    public StatusDto blocksOn(@RequestAttribute("userId") int userId,
+                              @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
+
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("blocks-on")) {
+                throw new IllegalStateException("blocks-on is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
+            world.flightMissionControl().blocksOn(flight); // t/f update is inside
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/start-deboarding")
+    public StatusDto startDeboarding(@RequestAttribute("userId") int userId,
+                                     @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkNotNull(transportFlight, "transport flight is required for start-deboarding");
+
+            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
+
+            final String permitted = getTransportFlightShownElements(transportFlight, flight);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("start-deboarding")) {
+                throw new IllegalStateException("start-deboarding is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
+            world.transportFlightControl().startDeboarding(transportFlight);
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    @PostMapping("/finish-flight")
+    public StatusDto finish(@RequestAttribute("userId") int userId,
+                            @RequestParam(name = "flightId") final int flightId) {
+        return worldBean.modifySync(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
+
+            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
+            checkNotNull(permitted);
+            if (!Arrays.asList(permitted.split(",")).contains("finish")) {
+                throw new IllegalStateException("finish is not permitted");
+            }
+
+            log.info("f/m #{} - flight-dashboard - finish", flightId);
+            world.flightMissionControl().finish(flight);
+
+            return toStatusDto(world, flight);
+        });
+    }
+
+    private void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
+        if (flight.getUserId() != userId) {
+            throw new IllegalArgumentException("flight does not relate to the user");
+        }
     }
 
     private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
@@ -150,180 +365,6 @@ public class FlightDashboardController {
             case Deboarding -> "on-board";
             default -> null;
         };
-    }
-
-    @PostMapping("/start-flight")
-    public StatusDto startFlight(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
-
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("start")) {
-                throw new IllegalStateException("start is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - start-flight", flightId);
-            world.flightMissionControl().startOrCancel(flight);
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/start-boarding")
-    public StatusDto startBoarding(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkNotNull(transportFlight, "transport flight is required for start-boarding");
-
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
-            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
-
-            final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            if (!Arrays.asList(permitted.split(",")).contains("start-boarding")) {
-                throw new IllegalStateException("start-boarding is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
-            world.transportFlightControl().startBoarding(transportFlight);
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/blocks-off")
-    public StatusDto blocksOff(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
-
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("blocks-off")) {
-                throw new IllegalStateException("blocks-off is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
-            world.flightMissionControl().blocksOff(flight); // t/f update is inside
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/takeoff")
-    public StatusDto takeoff(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
-
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("takeoff")) {
-                throw new IllegalStateException("takeoff is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - takeoff", flightId);
-            world.flightMissionControl().takeoff(flight); // t/f update is inside
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/landing")
-    public StatusDto landing(@RequestParam(name = "flightId") final int flightId) {
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
-
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("landing")) {
-                throw new IllegalStateException("landing is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - landing", flightId);
-            final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
-            world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/blocks-on")
-    public StatusDto blocksOn(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
-
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("blocks-on")) {
-                throw new IllegalStateException("blocks-on is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
-            world.flightMissionControl().blocksOn(flight); // t/f update is inside
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/start-deboarding")
-    public StatusDto startDeboarding(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkNotNull(transportFlight, "transport flight is required for start-deboarding");
-
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
-            checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
-            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
-
-            final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            if (!Arrays.asList(permitted.split(",")).contains("start-deboarding")) {
-                throw new IllegalStateException("start-deboarding is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
-            world.transportFlightControl().startDeboarding(transportFlight);
-
-            return getStatus(flightId);
-        });
-    }
-
-    @PostMapping("/finish-flight")
-    public StatusDto finish(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
-        return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
-
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            if (!Arrays.asList(permitted.split(",")).contains("finish")) {
-                throw new IllegalStateException("finish is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - finish", flightId);
-            world.flightMissionControl().finish(flight);
-
-            return getStatus(flightId);
-        });
     }
 
     @Data

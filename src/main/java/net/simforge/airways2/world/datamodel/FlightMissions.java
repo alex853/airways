@@ -106,7 +106,7 @@ public class FlightMissions {
         return storage.all();
     }
 
-    // todo ak1 rework
+    // todo ak0 rework
     @Deprecated
     public Collection<Mission> filter(final Predicate<Mission> condition) {
         return storage.filter(condition);
