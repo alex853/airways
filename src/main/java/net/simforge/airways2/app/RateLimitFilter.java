@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class RateLimitFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
 
-    private static final int LIMIT = 3;
+    private static final int LIMIT = 10;
 
     private final AtomicInteger requestCount = new AtomicInteger(0);
     private final AtomicLong currentSecond = new AtomicLong(System.currentTimeMillis() / 1000);
