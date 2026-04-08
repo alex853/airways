@@ -28,7 +28,7 @@ public class BusyBirdsController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/mission/to-book")
-    public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") Long userId) {
+    public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") int userId) { // todo ak0 userId
         log.info("getMissionsToBook for user {}", userId);
 
         try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getMissionsToBook")) {
@@ -57,7 +57,7 @@ public class BusyBirdsController {
     }
 
     @GetMapping("/aircraft/available")
-    public List<AircraftDto> getAvailableAircraft() {
+    public List<AircraftDto> getAvailableAircraft() { // todo ak0 userId
         try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
             return worldBean.read(world -> world.aircrafts()
                     .byAircraftOperatorId(3) // todo ak3 this operatorId should go into some constant
@@ -74,7 +74,7 @@ public class BusyBirdsController {
 
     @PostMapping("/mission/get-plan")
     public GetPlanResponse getPlan(@RequestParam(name = "missionId") final int missionId,
-                                   @RequestParam(name = "aircraftId") final int aircraftId) {
+                                   @RequestParam(name = "aircraftId") final int aircraftId) { // todo ak0 userId
         try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
             return worldBean.read(world -> {
                 final BusyBirdsMissionControl bbControl = world.busyBirdsMissionControl();

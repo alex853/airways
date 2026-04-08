@@ -40,7 +40,9 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned8bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
+            // ---------------------------------------------------------------------------------------------------------
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // userId
             .build();
 
     private static final int pcModeMask = 0b10000000;
@@ -61,6 +63,11 @@ public class FlightMissions {
     private final DataField reserved8bitsField2 = storage.getDataField(10);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField3 = storage.getDataField(11);
+    @SuppressWarnings("unused")
+    private final DataField reserved24bitsField4 = storage.getDataField(12);
+    @SuppressWarnings("unused")
+    private final DataField reserved16bitsField5 = storage.getDataField(13);
+    private final DataField userIdField = storage.getDataField(14);
 
     private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
 
@@ -112,6 +119,11 @@ public class FlightMissions {
     public Stream<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
         checkNotNull(aircraft, "aircraft is mandatory");
         return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftIdField) == aircraft.getId());
+    }
+
+    public Stream<Mission> allByUserId(final int userId) {
+        checkArgument(userId > 0, "userId is mandatory");
+        return storage.filter1(recordId -> storage.getAsInt(recordId, userIdField) == userId);
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
@@ -276,6 +288,14 @@ public class FlightMissions {
             storage.setUnsafe(id, dateOfFlightField, days);
         }
 
+        public int getUserId() {
+            return storage.getAsInt(id, userIdField);
+        }
+
+        public void setUserId(final int userId) {
+            storage.set(id, userIdField, userId);
+        }
+
         private int getTime12bit(final DataField dataField, final boolean high) {
             final LocalDate dateOfFlight = getDateOfFlight();
             final int value = read12bits(dataField, high);
@@ -334,19 +354,19 @@ public class FlightMissions {
 
     public enum Status {
         // available 0
-        PlannedManually(1), // old: 1
-        PlannedViaSchedule(2), // old: 2
+        PlannedManually(1),
+        PlannedViaSchedule(2),
         // available 3
-        Dispatched(4), // old: 20
-        Preflight(5), // old: 30
-        Departure(6), // old: 40
-        Flying(7), // old: 50
-        Arrival(8), // old: 60
-        Postflight(9), // old: 70
-        Finished(10), // old: -> 100
+        Dispatched(4),
+        Preflight(5),
+        Departure(6),
+        Flying(7),
+        Arrival(8),
+        Postflight(9),
+        Finished(10),
         // available 11
         // available 12
-        Cancelled(13); // old: 99
+        Cancelled(13);
         // available 14
         // available 15
 
@@ -369,5 +389,6 @@ public class FlightMissions {
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureWorldTime() - m1.getPlannedDepartureWorldTime();
+    public static final Comparator<Mission> sortByDepartureTimeFromPastToFuture = (m1, m2) -> m1.getPlannedDepartureWorldTime() - m2.getPlannedDepartureWorldTime();
 
 }

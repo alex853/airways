@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -37,48 +38,64 @@ public class FlightDashboardController {
     @Autowired
     private WorldRunnerBean worldBean;
 
+    @GetMapping("/my-flights")
+    public MyFlightsResponse getMyFlights(@RequestAttribute("userId") int userId) {
+        return worldBean.read(world -> {
+            List<FlightMissions.Mission> userFlights = world.flightMissions()
+                    .allByUserId(userId)
+                    .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
+                    .toList();
+
+            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f)).toList());
+        });
+    }
+
     @GetMapping("/status")
-    public StatusDto getStatus(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto getStatus(@RequestParam(name = "flightId") int flightId) { // todo ak0 userId
         return worldBean.read(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
-
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
-            final AircraftDto aircraftDto = new AircraftDto(
-                    aircraft.getId(),
-                    world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao(),
-                    aircraft.getRegNo(),
-                    aircraft.getLocationStatus().name(),
-                    aircraft.getOperationalStatus().name()
-            );
-
-            final FlightDto flightDto = new FlightDto(
-                    flightId,
-                    flight.getStatus().name(),
-                    getNextPlannedFlightMissionStatus(flight),
-                    getFlightMissionShownElements(flight, transportFlight, world),
-                    world.airports().getIcao(flight.getDepartureAirportId()),
-                    world.airports().getIcao(flight.getDestinationAirportId()),
-                    TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
-                    TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime())
-            );
-
-            final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
-                    transportFlight.getId(),
-                    transportFlight.getStatus().name(),
-                    getNextPlannedTransportFlightStatus(transportFlight, flight, world),
-                    getTransportFlightShownElements(transportFlight, flight),
-                    transportFlight.getTotalTickets().getTotal(),
-                    transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
-                    transportFlight.getRemainedTickets().toString(),
-                    transportFlight.getPaxCheckedIn(),
-                    transportFlight.getPaxOnBoard()
-            ) : null;
-
-            return new StatusDto(aircraftDto, flightDto, transportFlightDto);
+            return toStatusDto(world, flight);
         });
+    }
+
+    private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
+        checkArgument(flight.isModePc(), "flight should be in manual mode");
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
+        final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
+
+        final AircraftDto aircraftDto = new AircraftDto(
+                aircraft.getId(),
+                world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao(),
+                aircraft.getRegNo(),
+                aircraft.getLocationStatus().name(),
+                aircraft.getOperationalStatus().name()
+        );
+
+        final FlightDto flightDto = new FlightDto(
+                flight.getId(),
+                flight.getStatus().name(),
+                getNextPlannedFlightMissionStatus(flight),
+                getFlightMissionShownElements(flight, transportFlight, world),
+                world.airports().getIcao(flight.getDepartureAirportId()),
+                world.airports().getIcao(flight.getDestinationAirportId()),
+                TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
+                TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime())
+        );
+
+        final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
+                transportFlight.getId(),
+                transportFlight.getStatus().name(),
+                getNextPlannedTransportFlightStatus(transportFlight, flight, world),
+                getTransportFlightShownElements(transportFlight, flight),
+                transportFlight.getTotalTickets().getTotal(),
+                transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
+                transportFlight.getRemainedTickets().toString(),
+                transportFlight.getPaxCheckedIn(),
+                transportFlight.getPaxOnBoard()
+        ) : null;
+
+        return new StatusDto(aircraftDto, flightDto, transportFlightDto);
     }
 
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
@@ -136,7 +153,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-flight")
-    public StatusDto startFlight(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto startFlight(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
 
@@ -157,7 +174,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-boarding")
-    public StatusDto startBoarding(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto startBoarding(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -180,7 +197,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/blocks-off")
-    public StatusDto blocksOff(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto blocksOff(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -201,7 +218,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/takeoff")
-    public StatusDto takeoff(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto takeoff(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -244,7 +261,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/blocks-on")
-    public StatusDto blocksOn(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto blocksOn(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -265,7 +282,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-deboarding")
-    public StatusDto startDeboarding(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto startDeboarding(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -289,7 +306,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/finish-flight")
-    public StatusDto finish(@RequestParam(name = "flightId") final int flightId) {
+    public StatusDto finish(@RequestParam(name = "flightId") final int flightId) { // todo ak0 userId
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -307,6 +324,12 @@ public class FlightDashboardController {
 
             return getStatus(flightId);
         });
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class MyFlightsResponse {
+        private List<StatusDto> flights;
     }
 
     @Data
