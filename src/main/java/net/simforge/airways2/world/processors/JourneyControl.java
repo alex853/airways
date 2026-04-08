@@ -121,7 +121,7 @@ public class JourneyControl {
                         Journeys.Status.WaitingForBoarding)
                 .contains(journey.getStatus()));
 
-        // todo ak0 'cancel journey safely' with removal all following tickets etc
+        // todo ak2 'cancel journey safely' with removal all following tickets etc
 
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);

@@ -26,11 +26,11 @@ public class City2CityFlowControl {
         final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
 
         final int fromAirportId = mission.getDepartureAirportId();
-        final int toAirportId = mission.getDestinationAirportId(); // todo ak1 actual landing airport?
+        final int toAirportId = mission.getDestinationAirportId(); // todo ak2 actual landing airport?
 
         final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).stream().map(Airport2City.Link::getCityId).toList();
         final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).stream().map(Airport2City.Link::getCityId).toList();
-        // todo ak1 check for intersection? what to do in case of intersection?
+        // todo ak2 check for intersection? what to do in case of intersection?
 
         fromCityIds.forEach(fromCityId -> toCityIds.forEach(toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
     }

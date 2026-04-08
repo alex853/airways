@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-// todo ak1 do not process vatsim reports later than world time!!!
+// todo ak2 do not process vatsim reports later than world time!!!
 @Component
 public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(VatsimTrackerBean.class);

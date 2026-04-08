@@ -160,7 +160,7 @@ public class Storage<T> {
                 .mapToObj(instantiator::create);
     }
 
-    // todo ak1 rename when all .filter() usages will be wiped out
+    // todo ak3 rename when all .filter() usages will be wiped out
     public Stream<T> filter1(final Condition<T> condition) {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
@@ -168,7 +168,7 @@ public class Storage<T> {
                 .mapToObj(instantiator::create);
     }
 
-    // todo ak1 rename when all .findFirst() usages will be wiped out
+    // todo ak3 rename when all .findFirst() usages will be wiped out
     public Optional<T> findFirst1(final Condition<T> condition) {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
