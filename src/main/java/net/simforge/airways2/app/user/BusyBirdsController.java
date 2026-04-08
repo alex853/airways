@@ -21,7 +21,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/busy-birds")
-@CrossOrigin
 public class BusyBirdsController {
     // todo ak1 migrate ids to sqids
 
