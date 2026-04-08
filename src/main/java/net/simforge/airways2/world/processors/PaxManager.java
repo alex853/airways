@@ -1,6 +1,6 @@
 package net.simforge.airways2.world.processors;
 
-import net.simforge.airways2.app.WebTime;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Journeys;
@@ -225,11 +225,11 @@ public class PaxManager {
             return "Boarding{" +
                     "confirmedOnBoard: " + confirmedOnBoard +
                     ", remainingToBoard: " + remainingToBoard +
-                    ", estimatedBoardingFinishTime: " + WebTime.hhmmOrNull(estimatedBoardingFinishTime) +
+                    ", estimatedBoardingFinishTime: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
                     ", currToBoardId: " + currToBoardId +
                     ", currToBoardTotal: " + currToBoardTotal +
                     ", currToBoardBoarded: " + currToBoardBoarded +
-                    ", currToBoardLastTime: " + WebTime.hhmmOrNull(currToBoardLastTime) +
+                    ", currToBoardLastTime: " + TimeTools.hhmmOrNull(currToBoardLastTime) +
                     '}';
         }
     }

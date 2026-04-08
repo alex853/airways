@@ -1,7 +1,8 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.tools;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -9,7 +10,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 
 @Data
 @AllArgsConstructor
-class EnhancedFlightMissionDto {
+public class EnhancedFlightMissionDto {
     private int id;
     private int acId;
     private String acReg;
@@ -39,12 +40,12 @@ class EnhancedFlightMissionDto {
                 world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao(),
                 world.airports().byId(mission.getDestinationAirportId()).orElseThrow().getIcao(),
                 mission.getDateOfFlight().toString(),
-                WebTime.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
-                WebTime.hhmmOrNull(mission.getPlannedArrivalWorldTime()),
-                WebTime.hhmmOrNull(mission.getActualDepartureWorldTime()),
-                WebTime.hhmmOrNull(mission.getActualTakeoffWorldTime()),
-                WebTime.hhmmOrNull(mission.getActualLandingWorldTime()),
-                WebTime.hhmmOrNull(mission.getActualArrivalWorldTime()),
+                TimeTools.hhmmOrNull(mission.getPlannedDepartureWorldTime()),
+                TimeTools.hhmmOrNull(mission.getPlannedArrivalWorldTime()),
+                TimeTools.hhmmOrNull(mission.getActualDepartureWorldTime()),
+                TimeTools.hhmmOrNull(mission.getActualTakeoffWorldTime()),
+                TimeTools.hhmmOrNull(mission.getActualLandingWorldTime()),
+                TimeTools.hhmmOrNull(mission.getActualArrivalWorldTime()),
                 world.airports().byId(mission.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null));
     }
 }

@@ -1,7 +1,9 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.datamodel.EventLog;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -40,7 +42,7 @@ public class EventLogController {
     private static EventDto toDto(final EventLog.Event e) {
         return new EventDto(
                 e.getId(),
-                WebTime.ts(e.getTime()),
+                TimeTools.ts(e.getTime()),
                 e.getTypeRaw() + " - " + e.getType(),
                 e.getObject1Type() + " - " + e.getObject1Id(),
                 e.getObject2Type() + " - " + e.getObject2Id(),

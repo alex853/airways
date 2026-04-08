@@ -1,7 +1,9 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
+import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.commons.misc.JavaTime;

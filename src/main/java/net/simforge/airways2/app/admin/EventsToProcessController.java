@@ -1,7 +1,9 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.tools.TimeTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +27,7 @@ public class EventsToProcessController {
                         e.getStatusRaw() + " - " + e.getStatus(),
                         e.getTypeRaw() + " - " + e.getType(),
                         e.getObjectId(),
-                        WebTime.ts(e.getTime())))
+                        TimeTools.ts(e.getTime())))
                 .toList());
     }
 

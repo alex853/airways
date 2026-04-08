@@ -1,8 +1,10 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Timing;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
@@ -58,9 +60,9 @@ public class AircraftController {
                                 mission.map(m -> (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId())).orElse(0),
                                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
-                                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
-                                mission.map(m -> WebTime.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
-                                mission.map(m -> WebTime.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
+                                mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
+                                mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
+                                mission.map(m -> TimeTools.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
                                 null);
                     })
                     .toList());

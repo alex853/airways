@@ -1,7 +1,9 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.FlightMissionToTimeline;
@@ -74,18 +76,18 @@ public class TransportFlightController {
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
-                WebTime.ts(flight.getHeartbeatTime()),
+                TimeTools.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId())).orElse(null),
                 mission.map(FlightMissions.Mission::isModePc).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedDepartureWorldTime())).orElse(null),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualDepartureWorldTime())).orElse(null),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse(null),
-                mission.map(m -> WebTime.hhmmPlusDaysOrNull(m.getActualArrivalWorldTime())).orElse(null),
-                timeline.map(t -> WebTime.hhmmPlusDaysOrNull(t.getBlocksOn().getEstimatedTime())).orElse(null),
+                mission.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getPlannedDepartureWorldTime())).orElse(null),
+                mission.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getActualDepartureWorldTime())).orElse(null),
+                mission.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse(null),
+                mission.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getActualArrivalWorldTime())).orElse(null),
+                timeline.map(t -> TimeTools.hhmmPlusDaysOrNull(t.getBlocksOn().getEstimatedTime())).orElse(null),
                 flight.getTotalTickets().toString(),
                 flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() > 0 ? flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() : null,
                 flight.getPaxCheckedIn() > 0 ? flight.getPaxCheckedIn() : null,

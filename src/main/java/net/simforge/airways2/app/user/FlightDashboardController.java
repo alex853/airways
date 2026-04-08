@@ -1,13 +1,14 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.tools.TimeTools;
+import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
-import net.simforge.airways2.world.processors.TransportFlightControl;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.slf4j.Logger;
@@ -60,8 +61,8 @@ public class FlightDashboardController {
                     getFlightMissionShownElements(flight, transportFlight, world),
                     world.airports().getIcao(flight.getDepartureAirportId()),
                     world.airports().getIcao(flight.getDestinationAirportId()),
-                    WebTime.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
-                    WebTime.hhmmOrNull(flight.getPlannedArrivalWorldTime())
+                    TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
+                    TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime())
             );
 
             final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
@@ -82,10 +83,10 @@ public class FlightDashboardController {
 
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
         return switch (flight.getStatus()) {
-            case Dispatched -> Preflight.name() + " at " + WebTime.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
+            case Dispatched -> Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
             case Preflight -> Departure.name() + " when Captain decides";
             case Departure -> Flying.name() + " when Captain decides";
-            case Flying -> Arrival.name() + " not earlier than " + WebTime.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
+            case Flying -> Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
             case Arrival -> Postflight.name() + " just after Blocks On";
             case Postflight -> Finished.name() + " after Deboarding";
             default -> null;
@@ -106,10 +107,10 @@ public class FlightDashboardController {
 
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight, World world) {
         return switch (transportFlight.getStatus()) {
-            case Scheduled -> CheckIn.name() + " at " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case CheckIn -> WaitingForBoarding.name() + " since " + WebTime.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
+            case Scheduled -> CheckIn.name() + " at " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
+            case CheckIn -> WaitingForBoarding.name() + " since " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
             case WaitingForBoarding -> Boarding.name() + " when Captain clears";
-            case Boarding -> WaitingForDeparture.name() + " at ~" + WebTime.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
+            case Boarding -> WaitingForDeparture.name() + " at ~" + TimeTools.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
             case WaitingForDeparture -> Departure.name();
             case Departure -> Flying.name();
             case Flying -> Arrival.name();

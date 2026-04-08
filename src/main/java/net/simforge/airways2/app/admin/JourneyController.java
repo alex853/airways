@@ -1,7 +1,9 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -50,7 +52,7 @@ public class JourneyController {
         return new JourneyDto(
                 j.getId(),
                 j.getStatus().name(),
-                WebTime.ts(j.getHeartbeatTime()),
+                TimeTools.ts(j.getHeartbeatTime()),
                 j.getFromCityId(),
                 world.cities().byId(j.getFromCityId()).orElseThrow().getName(),
                 j.getToCityId(),

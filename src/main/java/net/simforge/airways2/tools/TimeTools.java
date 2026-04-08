@@ -1,4 +1,4 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.tools;
 
 import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.JavaTime;
@@ -7,7 +7,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-public class WebTime {
+public class TimeTools {
     public static String ts(final int time) {
         return (time != 0)
                 ? Time.toLdt(time).toString()

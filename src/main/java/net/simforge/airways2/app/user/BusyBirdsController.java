@@ -1,7 +1,8 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Cities;

@@ -1,7 +1,10 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.admin;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.tools.EnhancedFlightMissionDto;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -30,15 +33,15 @@ public class FlightMissionController {
                         f.getAircraftId(),
                         f.getStatusCode() + " - " + f.getStatus(),
                         (f.isModePc() ? "P" : "n") + (f.isUnusedMode() ? "+" : "_"),
-                        WebTime.ts(f.getHeartbeatTime()),
+                        TimeTools.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),
-                        WebTime.ts(f.getPlannedDepartureWorldTime()),
-                        WebTime.ts(f.getPlannedArrivalWorldTime()),
-                        WebTime.ts(f.getActualDepartureWorldTime()),
-                        WebTime.ts(f.getActualTakeoffWorldTime()),
-                        WebTime.ts(f.getActualLandingWorldTime()),
-                        WebTime.ts(f.getActualArrivalWorldTime()),
+                        TimeTools.ts(f.getPlannedDepartureWorldTime()),
+                        TimeTools.ts(f.getPlannedArrivalWorldTime()),
+                        TimeTools.ts(f.getActualDepartureWorldTime()),
+                        TimeTools.ts(f.getActualTakeoffWorldTime()),
+                        TimeTools.ts(f.getActualLandingWorldTime()),
+                        TimeTools.ts(f.getActualArrivalWorldTime()),
                         world.airports().byId(f.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null)
                         ))
                 .toList());
