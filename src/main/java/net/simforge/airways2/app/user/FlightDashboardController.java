@@ -30,7 +30,7 @@ import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flyi
 
 @RestController
 @RequestMapping("/flight-dashboard")
-@CrossOrigin
+@CrossOrigin(allowedHeaders = "*", origins = "*")
 public class FlightDashboardController {
     // todo ak1 migrate ids to sqids
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
