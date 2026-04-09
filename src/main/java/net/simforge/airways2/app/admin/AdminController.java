@@ -189,6 +189,20 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/flight/remove-obsolete")
+    public String removeObsoleteFlights(@RequestParam(name = "days", defaultValue = "90") final int days) {
+        List<FlightMissions.Mission> flightsToRemove = worldBean.read(world -> {
+            final int thresholdTime = world.getWorldTime() - days * Time.ONE_DAY;
+            return world.flightMissions().all()
+                    .filter(f -> f.getPlannedDepartureWorldTime() <= thresholdTime)
+                    .toList();
+        });
+
+        flightsToRemove.forEach(f -> removeFlight(f.getId()));
+
+        return "Removed " + flightsToRemove.size() + " obsolete flights with 'days' set to " + days;
+    }
+
     private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         //noinspection IfStatementWithIdenticalBranches
