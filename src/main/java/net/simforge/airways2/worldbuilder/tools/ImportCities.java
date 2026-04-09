@@ -43,7 +43,7 @@ public class ImportCities {
             final double cityLatitude = Double.parseDouble(csv.value(row, "CityLatitude"));
             final double cityLongitude = Double.parseDouble(csv.value(row, "CityLongitude"));
 
-            log.info("Processing {}, {} -> {}, {}", countryName, countryCode, cityName, cityPopulation);
+            log.info("Processing '{}', '{}' -> '{}', '{}'", countryName, countryCode, cityName, cityPopulation);
 
             final Optional<Countries.Country> existingCountry = countries.byCode(countryCode);
             final int countryId = existingCountry.map(Countries.Country::getId)
@@ -59,7 +59,7 @@ public class ImportCities {
                     cityLatitude,
                     cityLongitude,
                     cityPopulation);
-            log.info("\tCity {} created", cityName);
+            log.info("\tCity '{}' created", cityName);
         }
 
         world.save();

@@ -14,7 +14,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 // todo ak2 othh missing
-// todo ak2 eddt existing
 // todo ak2 check null airport cases
 // todo ak2 go through aircraft types
 // todo ak2 aircraft types with errors
