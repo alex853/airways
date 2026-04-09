@@ -28,8 +28,9 @@ public class TransportFlightControl {
         return world.paxManager();
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission) {
-        return createTransportFlight(flightMission, null, null);
+        return createTransportFlight(flightMission, chooseDefaultCabinLayout(flightMission));
     }
 
     public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission, CabinLayout cabinLayout) {
@@ -38,21 +39,15 @@ public class TransportFlightControl {
 
     public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission,
                                                          ScheduledFlights.Flight scheduledFlight) {
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
-        final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
-
-        final CabinLayout cabinLayout = switch (aircraftType) {
-            case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
-            case "A320" -> CabinLayout.JY(8, 138);
-            default -> CabinLayout.Y(99);
-        };
-
-        return createTransportFlight(flightMission, scheduledFlight, cabinLayout);
+        return createTransportFlight(flightMission, scheduledFlight, chooseDefaultCabinLayout(flightMission));
     }
 
     public TransportFlights.Flight createTransportFlight(FlightMissions.Mission flightMission,
                                                          ScheduledFlights.Flight scheduledFlight,
                                                          CabinLayout cabinLayout) {
+        checkNotNull(flightMission);
+        checkNotNull(cabinLayout);
+
         final TransportFlights.Flight transportFlight = world.transportFlights().create(
                 flightMission,
                 scheduledFlight,
@@ -65,6 +60,17 @@ public class TransportFlightControl {
         log.info("t/f #{} - created t/f for f/m #{}, s/f #{}", transportFlight.getId(), flightMission.getId(), scheduledFlight != null ? scheduledFlight.getId() : "///");
 
         return transportFlight;
+    }
+
+    private CabinLayout chooseDefaultCabinLayout(FlightMissions.Mission flightMission) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
+        final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+
+        return switch (aircraftType) {
+            case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
+            case "A320" -> CabinLayout.JY(8, 138);
+            default -> CabinLayout.Y(99);
+        };
     }
 
     public void obtainFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
