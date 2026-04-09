@@ -4,6 +4,8 @@ import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
+import net.simforge.airways2.tools.Formatting;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -402,6 +404,15 @@ public class FlightMissions {
             return;
         }
         heartbeatTimeIndex.computeIfAbsent(heartbeatTime, k -> new ArrayList<>()).add(recordId);
+    }
+
+    public String printHeartbeatTimeIndex() {
+        StringBuffer sb = new StringBuffer();
+        heartbeatTimeIndex.forEach((ts, list) -> sb
+                .append(TimeTools.ts(ts)).append('\n')
+                .append(list.toString()).append('\n')
+                .append('\n'));
+        return sb.toString();
     }
 
     public enum Status {

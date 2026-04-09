@@ -203,6 +203,11 @@ public class AdminController {
         return "Removed " + flightsToRemove.size() + " obsolete flights with 'days' set to " + days;
     }
 
+    @GetMapping(value = "/flight/heartbeat-time-index", produces = "text/plain")
+    public String showFlightMissionHeartbeatTimeIndex() {
+        return worldBean.read(world -> world.flightMissions().printHeartbeatTimeIndex());
+    }
+
     private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         //noinspection IfStatementWithIdenticalBranches
