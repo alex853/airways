@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -71,11 +72,14 @@ public class FlightMissions {
 
     private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
 
+    private final TreeMap<Integer, List<Integer>> heartbeatTimeIndex = new TreeMap<>();
+
     public FlightMissions() {
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        heartbeatTimeIndex_rebuild();
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -131,7 +135,17 @@ public class FlightMissions {
     }
 
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
+        try (Timing.Timer ignored = Timing.label("FlightMissions.nextForHeartbeat")) {
+            int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
+            if (minimalHeartbeatTime > worldTime) {
+                return Optional.empty();
+            }
+            List<Integer> ids = heartbeatTimeIndex.get(minimalHeartbeatTime);
+            if (ids == null || ids.isEmpty()) {
+                return Optional.empty();
+            }
+            return storage.byId(ids.get(0));
+        }
     }
 
     public class Mission {
@@ -204,7 +218,16 @@ public class FlightMissions {
         }
 
         public void setHeartbeatTime(final int heartbeatTime) {
+            int oldHeartbeatTime = storage.getAsInt(id, heartbeatTimeField);
+            if (oldHeartbeatTime != 0) {
+                heartbeatTimeIndex_remove(oldHeartbeatTime, id);
+            }
+
             storage.set(id, heartbeatTimeField, heartbeatTime);
+
+            if (heartbeatTime != 0) {
+                heartbeatTimeIndex_add(heartbeatTime, id);
+            }
         }
 
         public int getDepartureAirportId() {
@@ -350,6 +373,26 @@ public class FlightMissions {
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
         }
+    }
+
+    private void heartbeatTimeIndex_rebuild() {
+        heartbeatTimeIndex.clear();
+        storage.all().forEach(m -> heartbeatTimeIndex_add(m.getHeartbeatTime(), m.getId()));
+    }
+
+    private void heartbeatTimeIndex_remove(int heartbeatTime, int recordId) {
+        List<Integer> ids = heartbeatTimeIndex.get(heartbeatTime);
+        if (ids == null) {
+            return;
+        }
+        ids.remove(recordId);
+        if (ids.isEmpty()) {
+            heartbeatTimeIndex.remove(heartbeatTime);
+        }
+    }
+
+    private void heartbeatTimeIndex_add(int heartbeatTime, int recordId) {
+        heartbeatTimeIndex.computeIfAbsent(heartbeatTime, k -> new ArrayList<>()).add(recordId);
     }
 
     public enum Status {
