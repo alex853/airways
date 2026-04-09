@@ -3,6 +3,7 @@ package net.simforge.airways2.app.admin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
@@ -88,6 +89,11 @@ public class AdminController {
                     .contentLength(bytes.length)
                     .body(bytes);
         }
+    }
+
+    @GetMapping(value = "/timing", produces = "text/plain")
+    public String getTiming() {
+        return Timing.printStatusToString();
     }
 
     @GetMapping("/vatsim/flight-stats")
@@ -181,6 +187,20 @@ public class AdminController {
             world.flightMissions().deleteById(flightId);
             return "F/M # " + flightId + " removed, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
         });
+    }
+
+    @GetMapping("/flight/remove-obsolete")
+    public String removeObsoleteFlights(@RequestParam(name = "days", defaultValue = "90") final int days) {
+        List<FlightMissions.Mission> flightsToRemove = worldBean.read(world -> {
+            final int thresholdTime = world.getWorldTime() - days * Time.ONE_DAY;
+            return world.flightMissions().all()
+                    .filter(f -> f.getPlannedDepartureWorldTime() <= thresholdTime)
+                    .toList();
+        });
+
+        flightsToRemove.forEach(f -> removeFlight(f.getId()));
+
+        return "Removed " + flightsToRemove.size() + " obsolete flights with 'days' set to " + days;
     }
 
     private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {

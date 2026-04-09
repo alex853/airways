@@ -37,8 +37,7 @@ public class BusyBirdsController {
             return worldBean.read(world -> {
                 world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-                return world.journeys().filter(world.journeys().bySpecialProcessing())
-                        .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                return world.busyBirdsMissionControl().getJourneysToBook().stream()
                         .map(j -> {
                             final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
                             final Cities.City toCity = world.cities().byId(j.getToCityId()).get();

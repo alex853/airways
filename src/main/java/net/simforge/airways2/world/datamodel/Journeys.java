@@ -242,6 +242,10 @@ public class Journeys {
         return specialProcessingBitField::getBoolean;
     }
 
+    public Storage.Condition<Journey> byNoSpecialProcessing() {
+        return recordId -> !specialProcessingBitField.getBoolean(recordId);
+    }
+
     public enum Status {
         //todo ak2 LookingForPersons(0),
         LookingForTickets(1),

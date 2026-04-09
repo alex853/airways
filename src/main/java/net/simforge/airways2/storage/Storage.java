@@ -170,11 +170,14 @@ public class Storage<T> {
 
     // todo ak3 rename when all .findFirst() usages will be wiped out
     public Optional<T> findFirst1(final Condition<T> condition) {
-        return IntStream.rangeClosed(1, getTotalStoredRecordCount())
+        final OptionalInt first = IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
                 .filter(condition::test)
-                .mapToObj(instantiator::create)
                 .findFirst();
+        if (first.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(instantiator.create(first.getAsInt()));
     }
     
     public int addRecord() {

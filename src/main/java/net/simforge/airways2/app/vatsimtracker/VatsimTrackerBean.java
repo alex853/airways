@@ -120,6 +120,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
 
                     final AtomicInteger onlinePositions = new AtomicInteger();
                     final AtomicInteger offlinePositions = new AtomicInteger();
+                    final List<Integer> erroneousPositions = new ArrayList<>();
                     trackedPilots.forEach((pilotNumber, context) -> {
                         try {
                             final Position position = pilotNumberToPosition.get(pilotNumber);
@@ -134,6 +135,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                             }
                         } catch (final Exception e) {
                             log.error("error on processing position of pilot #" + pilotNumber, e);
+                            erroneousPositions.add(pilotNumber);
                         }
                     });
 
@@ -143,14 +145,16 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                     positions.stream()
                             .filter(p -> p.isInAirport() && worldIcaos.contains(p.getAirportIcao()))
                             .forEach(p -> {
-                                if (!trackedPilots.containsKey(p.getPilotNumber())) {
+                                int pilotNumber = p.getPilotNumber();
+                                if (!trackedPilots.containsKey(pilotNumber)) {
                                     try {
-                                        final PilotContext pc = new PilotContext(worldBean, p.getPilotNumber());
+                                        final PilotContext pc = new PilotContext(worldBean, pilotNumber);
                                         pc.newPilotContextInAirport(p);
-                                        trackedPilots.put(p.getPilotNumber(), pc);
+                                        trackedPilots.put(pilotNumber, pc);
                                         newPilots.incrementAndGet();
                                     } catch (final Exception e) {
-                                        log.error("error on processing position of pilot #" + p.getPilotNumber(), e);
+                                        log.error("error on processing position of pilot #" + pilotNumber, e);
+                                        erroneousPositions.add(pilotNumber);
                                     }
                                 }
                             });
@@ -162,6 +166,11 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                             .map(PilotContext::getPilotNumber)
                             .toList();
                     pilotNumbersForRemoval.forEach(trackedPilots::remove);
+
+                    if (!erroneousPositions.isEmpty()) {
+                        log.warn("ERRONEOUS POSITIONS FOUND FOR THE FOLLOWING PILOTS {} and their contexts will be removed", erroneousPositions);
+                        erroneousPositions.forEach(trackedPilots::remove);
+                    }
 
                     //log.info("report {} - pilot removal completed, removed {} records", nextReport, pilotNumbersForRemoval.size());
 

@@ -48,7 +48,7 @@ public class GeoController {
                             c.getPopulation(),
                             c.getLatitude(),
                             c.getLongitude(),
-                            world.airport2city().allByCityId(c.getId()).stream()
+                            world.airport2city().allByCityId(c.getId())
                                     .map(l -> world.airports().getIcao(l.getAirportId()))
                                     .toList()))
                     .toList());
@@ -77,7 +77,7 @@ public class GeoController {
                 try (final Timing.Timer ignored1 = Timing.label("GeoController - getAirportDetails # part1")) {
                     final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
                     try (final Timing.Timer ignored2 = Timing.label("GeoController - getAirportDetails # part2")) {
-                        final List<String> connectedCities = world.airport2city().allByAirportId(airport.getId()).stream()
+                        final List<String> connectedCities = world.airport2city().allByAirportId(airport.getId())
                                 .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
                                 .sorted(Comparator.comparing(Cities.City::getPopulation))
                                 .map(Cities.City::getName)

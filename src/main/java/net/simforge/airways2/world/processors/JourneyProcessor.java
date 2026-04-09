@@ -27,11 +27,6 @@ public class JourneyProcessor {
     private static void processJourney(final World world, final Journeys.Journey journey) {
         journey.setHeartbeatTime(0);
 
-        if (journey.isSpecialProcessing()) {
-            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
-            return;
-        }
-
         switch (journey.getStatus()) {
             case LookingForTickets -> lookingForTickets(world, journey);
             case WaitingForCheckIn -> waitingForCheckin(world, journey);
@@ -44,12 +39,17 @@ public class JourneyProcessor {
     }
 
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
+        if (journey.isSpecialProcessing()) {
+            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
+            return;
+        }
+
         final Set<Integer> fromAirportIds = world.airport2city()
-                .allByCityId(journey.getFromCityId()).stream()
+                .allByCityId(journey.getFromCityId())
                 .map(Airport2City.Link::getAirportId)
                 .collect(Collectors.toSet());
         final Set<Integer> toAirportIds = world.airport2city()
-                .allByCityId(journey.getToCityId()).stream()
+                .allByCityId(journey.getToCityId())
                 .map(Airport2City.Link::getAirportId)
                 .collect(Collectors.toSet());
 

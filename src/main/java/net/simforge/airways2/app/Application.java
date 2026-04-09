@@ -1,9 +1,6 @@
 package net.simforge.airways2.app;
 
-import net.simforge.airways2.worldbuilder.World25_003_autonomia_airways;
-import net.simforge.airways2.worldbuilder.World25_009_create_some_airports;
-import net.simforge.airways2.worldbuilder.World25_011_busybirds;
-import net.simforge.airways2.worldbuilder.World25_099_f1_tour;
+import net.simforge.airways2.worldbuilder.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -14,7 +11,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 // todo ak2 othh missing
-// todo ak2 eddt existing
 // todo ak2 check null airport cases
 // todo ak2 go through aircraft types
 // todo ak2 aircraft types with errors
@@ -36,6 +32,7 @@ public class Application {
         World25_003_autonomia_airways.main(args);
         World25_009_create_some_airports.main(args);
         World25_011_busybirds.main(args);
+        World25_012_selected_cities.main(args);
         World25_099_f1_tour.main(args);
 
         SpringApplication.run(Application.class, args);

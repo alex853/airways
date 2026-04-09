@@ -60,7 +60,7 @@ public class ImportMajorAirportsInVicinityOfCities {
                                     null, // todo ak3 iata to be added
                                     icao,
                                     name);
-                            log.info("\tAirport {} created", icao);
+                            log.info("\tAirport '{}' created", icao);
                         } else {
                             airport = airportByIcao.get();
                         }

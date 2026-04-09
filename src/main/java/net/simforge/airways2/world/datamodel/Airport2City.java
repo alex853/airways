@@ -7,7 +7,6 @@ import net.simforge.airways2.storage.Storage;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -40,33 +39,32 @@ public class Airport2City {
         checkArgument(airportId > 0);
         checkArgument(cityId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City - byAirportIdAndCityId")) {
-            return storage.findFirst(l -> l.getAirportId() == airportId && l.getCityId() == cityId);
+        try (final Timing.Timer ignored = Timing.label("Airport2City.byAirportIdAndCityId")) {
+            return storage.findFirst1(recordId -> readAirportId(recordId) == airportId && readCityId(recordId) == cityId);
         }
     }
 
-    public Collection<Link> allByAirportId(final int airportId) {
+    public Stream<Link> allByAirportId(final int airportId) {
         checkArgument(airportId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City - allByAirportId")) {
-            return storage.filter(l -> l.getAirportId() == airportId);
+        try (final Timing.Timer ignored = Timing.label("Airport2City.allByAirportId")) {
+            return storage.filter1(recordId -> readAirportId(recordId) == airportId);
         }
     }
 
-    @Deprecated
-    public Collection<Link> allByCityId(final int cityId) {
+    public Stream<Link> allByCityId(final int cityId) {
         checkArgument(cityId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City - allByCityId")) {
-            return storage.filter(l -> l.getCityId() == cityId);
+        try (final Timing.Timer ignored = Timing.label("Airport2City.allByCityId")) {
+            return storage.filter1(recordId -> readCityId(recordId) == cityId);
         }
     }
 
     public Stream<Link> linksByCityId(final int cityId) {
         checkArgument(cityId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City - linksByCityId")) {
-            return storage.filter1(recordId -> storage.getAsInt(recordId, cityIdField) == cityId);
+        try (final Timing.Timer ignored = Timing.label("Airport2City.linksByCityId")) {
+            return storage.filter1(recordId -> readCityId(recordId) == cityId);
         }
     }
 
@@ -89,11 +87,19 @@ public class Airport2City {
         }
 
         public int getAirportId() {
-            return storage.getAsInt(id, airportIdField);
+            return readAirportId(id);
         }
 
         public int getCityId() {
-            return storage.getAsInt(id, cityIdField);
+            return readCityId(id);
         }
+    }
+
+    private int readAirportId(int recordId) {
+        return storage.getAsInt(recordId, airportIdField);
+    }
+
+    private int readCityId(int recordId) {
+        return storage.getAsInt(recordId, cityIdField);
     }
 }

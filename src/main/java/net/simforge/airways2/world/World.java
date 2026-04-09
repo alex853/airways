@@ -1,5 +1,6 @@
 package net.simforge.airways2.world;
 
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -260,22 +261,22 @@ public class World {
         setWorldTime(newWorldTime);
 
         try {
-            FlightMissionProcessor.process(this);
-            TransportFlightProcessor.process(this);
-            JourneyProcessor.process(this);
+            timing("FlightMissionProcessor", () -> FlightMissionProcessor.process(this));
+            timing("TransportFlightProcessor", () -> TransportFlightProcessor.process(this));
+            timing("JourneyProcessor", () -> JourneyProcessor.process(this));
 
-            RandomFlightMissionGenerator.process(this);
-            ScheduledFlightMissionGenerator.process(this);
+            timing("RandomFlightMissionGenerator", () -> RandomFlightMissionGenerator.process(this));
+            timing("ScheduledFlightMissionGenerator", () -> ScheduledFlightMissionGenerator.process(this));
 
-            Airport2AirportDailyFlightStatsRotation.process(this);
+            timing("Airport2AirportDailyFlightStatsRotation", () -> Airport2AirportDailyFlightStatsRotation.process(this));
 
-            CityFlowsProcessor.process(this);
-            City2CityFlowsProcessor.process(this);
+            timing("CityFlowsProcessor", () -> CityFlowsProcessor.process(this));
+            timing("City2CityFlowsProcessor", () -> City2CityFlowsProcessor.process(this));
 
-            MiscCleanups.process(this);
-            FlightsCleanup.process(this);
+            timing("MiscCleanups", () -> MiscCleanups.process(this));
+            timing("FlightsCleanup", () -> FlightsCleanup.process(this));
 
-            BusyBirdsMissionGenerator.process(this);
+            timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }
@@ -296,5 +297,17 @@ public class World {
             worldTime.addRecord();
         }
         worldTime.set(1, worldTime.getDataField(0), newWorldTime);
+    }
+
+    private void timing(String name, ProcessorCall call) {
+        try (Timing.Timer ignored = Timing.label("World.processors - " + name)) {
+            call.call();
+        } catch (Exception e) {
+            log.error("error during world processor " + name, e);
+        }
+    }
+
+    private interface ProcessorCall {
+        void call();
     }
 }
