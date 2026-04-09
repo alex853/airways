@@ -19,15 +19,27 @@ public class World25_011_busybirds {
         final Airports.Airport eglf = world.airports().byIcao("EGLF").orElseThrow();
 
         final AircraftTypes aircraftTypes = world.aircraftTypes();
-        final AircraftTypes.AircraftType type = aircraftTypes.byIcao("C25C").orElseThrow();
+        final AircraftTypes.AircraftType c25c = aircraftTypes.byIcao("C25C").orElseThrow();
 
-        createAircraft(world, busybirds, type, "BB-CJA", eglf);
-        createAircraft(world, busybirds, type, "BB-CJB", eglf);
-        createAircraft(world, busybirds, type, "BB-CJC", eglf);
+        createAircraft(world, busybirds, c25c, "BB-CJA", eglf);
+        createAircraft(world, busybirds, c25c, "BB-CJB", eglf);
+        createAircraft(world, busybirds, c25c, "BB-CJC", eglf);
 
         if (!world.airportFacilities().hasFacility(eglf, busybirds, AirportFacilities.Type.BaseAirport)) {
             world.airportFacilities().create(eglf, busybirds, AirportFacilities.Type.BaseAirport);
         }
+
+        final AircraftTypes.AircraftType ga7c = aircraftTypes.byIcao("GA7C")
+                .orElseGet(() -> aircraftTypes.create("GA7C", "GL7"));
+
+        createAircraft(world, busybirds, ga7c, "BB-GLA", eglf);
+        createAircraft(world, busybirds, ga7c, "BB-GLB", eglf);
+
+        final AircraftTypes.AircraftType glf6 = aircraftTypes.byIcao("GLF6")
+                .orElseGet(() -> aircraftTypes.create("GLF6", "GJ6"));
+
+        createAircraft(world, busybirds, glf6, "BB-GLC", eglf);
+        createAircraft(world, busybirds, glf6, "BB-GLD", eglf);
 
         world.save();
     }
