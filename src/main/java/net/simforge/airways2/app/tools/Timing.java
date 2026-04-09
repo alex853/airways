@@ -65,7 +65,11 @@ public class Timing {
         }
 
         public String logInfoMessage() {
-            return String.format("Timing info : %s AVG: %s ms, CALLS: %s", Str.al(label, 60), Str.ar(df3.format(totalDuration / (float) count /  1_000_000.0f), 7), count);
+            return String.format("Timing info : %s AVG: %s ms, CALLS: %s, TOTAL: %s s",
+                    Str.al(label, 60),
+                    Str.ar(df3.format(totalDuration / (float) count / 1_000_000.0f), 7),
+                    count,
+                    Str.ar(df3.format(totalDuration / 1_000.0f), 7));
         }
     }
 }
