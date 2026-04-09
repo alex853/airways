@@ -21,7 +21,7 @@ public class City2CityFlowsProcessor {
 
         final City2CityFlows.Flow c2cFlow = flowO.get();
         final String fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow().getName();
-        final String toCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow().getName();
+        final String toCity = world.cities().byId(c2cFlow.getToCityId()).orElseThrow().getName();
 
         if (c2cFlow.getSuccessRate() == 0) {
             c2cFlow.setSuccessRate(CityFlowHelper.STARTING_SUCCESS_RATE);
