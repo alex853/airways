@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 
 public class Processing {
     private static final Logger log = LoggerFactory.getLogger(Processing.class);
-    private static final int CIRCUIT_BREAKER_COUNTER_LIMIT = 1_000_000;
+    private static final int CIRCUIT_BREAKER_COUNTER_LIMIT = 1_000;
 
     public static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
                                      final Consumer<T> processor) {
