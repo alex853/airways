@@ -334,6 +334,30 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/journey/delete-invalid", produces = "text/plain")
+    public String deleteInvalidJourneys() {
+        return worldBean.modifySync(world -> {
+            String result = "";
+
+            List<Journeys.Journey> waitingForBoardingWithBrokenTransportFlights = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
+                    .filter(j -> world.transportFlights().byId(j.getTransportFlight1Id()).isEmpty())
+                    .toList();
+            result = result + "WaitingForBoarding with broken transport flights:\n";
+            result = result + "  found . . . . . . " + waitingForBoardingWithBrokenTransportFlights.size() + "\n";
+
+            int toProcess = Math.min(waitingForBoardingWithBrokenTransportFlights.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                world.journeys().deleteById(waitingForBoardingWithBrokenTransportFlights.get(i).getId());
+            }
+
+            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + "\n";
+
+            return result;
+        });
+    }
+
     @GetMapping("/journey/special-processing")
     public String turnToSpecialProcessing(@RequestParam("jId") final int jId) {
         return worldBean.modifySync(world -> {
