@@ -339,6 +339,8 @@ public class AdminController {
         return worldBean.modifySync(world -> {
             String result = "";
 
+
+
             List<Journeys.Journey> waitingForBoardingWithBrokenTransportFlights = world.journeys().allWithZeroHeartbeat()
                     .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
                     .filter(j -> world.transportFlights().byId(j.getTransportFlight1Id()).isEmpty())
@@ -353,6 +355,40 @@ public class AdminController {
 
             result = result + "  deleted . . . . . " + toProcess + "\n";
             result = result + "\n";
+
+
+
+            List<Journeys.Journey> waitingForCheckinWithBrokenTransportFlights = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn)
+                    .filter(j -> world.transportFlights().byId(j.getTransportFlight1Id()).isEmpty())
+                    .toList();
+            result = result + "WaitingForCheckin with broken transport flights:\n";
+            result = result + "  found . . . . . . " + waitingForCheckinWithBrokenTransportFlights.size() + "\n";
+
+            toProcess = Math.min(waitingForCheckinWithBrokenTransportFlights.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                world.journeys().deleteById(waitingForCheckinWithBrokenTransportFlights.get(i).getId());
+            }
+
+            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + "\n";
+
+
+
+            List<Journeys.Journey> lookingForTicketsWithoutHeartbeat = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                    .toList();
+            result = result + "LookingForTickets without heartbeat:\n";
+            result = result + "  found . . . . . . " + lookingForTicketsWithoutHeartbeat.size() + "\n";
+
+            toProcess = Math.min(lookingForTicketsWithoutHeartbeat.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                lookingForTicketsWithoutHeartbeat.get(i).setHeartbeatTime(world.getWorldTime());
+            }
+
+            result = result + "  updated . . . . . " + toProcess + "\n";
+            result = result + "\n";
+
 
             return result;
         });
