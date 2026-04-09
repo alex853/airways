@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Timing {
     private static final Logger log = LoggerFactory.getLogger(Timing.class);
     private static final ConcurrentHashMap<String, LabelData> data = new ConcurrentHashMap<>();
-    private static final int PRINT_STATUS_EVERY_N_MEASURES = 100_000_000;
+    private static final int PRINT_STATUS_EVERY_N_MEASURES = 1_000_000_000;
     private static final AtomicInteger counterToStatusPrinting = new AtomicInteger(PRINT_STATUS_EVERY_N_MEASURES);
 
     public static Timer label(final String label) {
@@ -71,7 +71,7 @@ public class Timing {
             totalDuration += duration;
         }
 
-        public String logInfoMessage() {
+        public synchronized String logInfoMessage() {
             return String.format("Timing info : %s AVG: %s ms, CALLS: %s, TOTAL: %s s",
                     Str.al(label, 60),
                     Str.ar(df3.format(totalDuration / (float) count / 1_000_000.0d), 8),
