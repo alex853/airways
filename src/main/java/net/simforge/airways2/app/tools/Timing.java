@@ -33,6 +33,13 @@ public class Timing {
         counterToStatusPrinting.set(PRINT_STATUS_EVERY_N_MEASURES);
     }
 
+    public static String printStatusToString() {
+        return data.values().stream()
+                .map(LabelData::logInfoMessage)
+                .sorted()
+                .reduce("", (a, b) -> a + "\n" + b);
+    }
+
     public static class Timer implements AutoCloseable {
         private final LabelData labelData;
         private final long start = System.nanoTime();
