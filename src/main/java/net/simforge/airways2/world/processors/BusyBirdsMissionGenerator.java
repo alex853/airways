@@ -63,7 +63,7 @@ public class BusyBirdsMissionGenerator {
                 .filter(j -> j.getCabinService() == CabinLayout.Service.F)
                 .toList();
         if (foundJourneys.isEmpty()) {
-            log.info("no first class journey(s) looking for tickets, nothing to pick up so far");
+            log.info("no first class journey looking for tickets found, nothing to pick up so far");
             return;
         }
 
