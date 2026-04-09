@@ -138,15 +138,24 @@ public class FlightMissions {
 
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
         try (Timing.Timer ignored = Timing.label("FlightMissions.nextForHeartbeat")) {
-            int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
-            if (minimalHeartbeatTime > worldTime) {
-                return Optional.empty();
+            while (true) {
+                if (heartbeatTimeIndex.isEmpty()) {
+                    return Optional.empty();
+                }
+
+                int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
+                List<Integer> ids = heartbeatTimeIndex.get(minimalHeartbeatTime);
+                if (ids == null || ids.isEmpty()) {
+                    heartbeatTimeIndex.remove(minimalHeartbeatTime);
+                    continue;
+                }
+
+                if (minimalHeartbeatTime > worldTime) {
+                    return Optional.empty();
+                } else {
+                    return storage.byId(ids.get(0));
+                }
             }
-            List<Integer> ids = heartbeatTimeIndex.get(minimalHeartbeatTime);
-            if (ids == null || ids.isEmpty()) {
-                return Optional.empty();
-            }
-            return storage.byId(ids.get(0));
         }
     }
 
