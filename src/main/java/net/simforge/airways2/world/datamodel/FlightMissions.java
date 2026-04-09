@@ -219,15 +219,11 @@ public class FlightMissions {
 
         public void setHeartbeatTime(final int heartbeatTime) {
             int oldHeartbeatTime = storage.getAsInt(id, heartbeatTimeField);
-            if (oldHeartbeatTime != 0) {
-                heartbeatTimeIndex_remove(oldHeartbeatTime, id);
-            }
+            heartbeatTimeIndex_remove(oldHeartbeatTime, id);
 
             storage.set(id, heartbeatTimeField, heartbeatTime);
 
-            if (heartbeatTime != 0) {
-                heartbeatTimeIndex_add(heartbeatTime, id);
-            }
+            heartbeatTimeIndex_add(heartbeatTime, id);
         }
 
         public int getDepartureAirportId() {
@@ -397,6 +393,9 @@ public class FlightMissions {
     }
 
     private void heartbeatTimeIndex_add(int heartbeatTime, int recordId) {
+        if (heartbeatTime == 0) {
+            return;
+        }
         heartbeatTimeIndex.computeIfAbsent(heartbeatTime, k -> new ArrayList<>()).add(recordId);
     }
 
