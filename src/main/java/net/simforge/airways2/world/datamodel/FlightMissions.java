@@ -379,8 +379,10 @@ public class FlightMissions {
         heartbeatTimeIndex.clear();
         storage.all().forEach(m -> heartbeatTimeIndex_add(m.getHeartbeatTime(), m.getId()));
         int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
-        log.info("heartbeatTimeIndex_rebuild minimalHeartbeatTime: {}", minimalHeartbeatTime);
-        log.info("heartbeatTimeIndex_rebuild minimalHeartbeatTime list: {}", heartbeatTimeIndex.get(minimalHeartbeatTime));
+        log.info("heartbeatTimeIndex_rebuild minimalHeartbeatTime: {}, size {}, size {}",
+                minimalHeartbeatTime,
+                heartbeatTimeIndex.get(minimalHeartbeatTime).size(),
+                heartbeatTimeIndex.size());
     }
 
     private void heartbeatTimeIndex_remove(int heartbeatTime, int recordId) {
