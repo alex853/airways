@@ -46,16 +46,16 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
                 try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 0 - cycle")) {
 
-                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 1 - writeLock.lock"))  {
+                    try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 01 - writeLock.lock"))  {
                         lock.writeLock().lock();
                     }
 
                     try {
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 3 - world.process")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 03 - world.process")) {
                             needToCatchTime = world.process(now);
                         }
 
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 4 - action.perform")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 04 - action.perform")) {
                             while (!actionQueue.isEmpty()) {
                                 final ActionContext<?> actionContext = actionQueue.poll();
                                 actionContext.perform(world);
@@ -63,19 +63,19 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                         }
 
                         if (lastSaved + saveWorldPeriod < now) {
-                            try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 6 - saveWorld")) {
+                            try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 06 - saveWorld")) {
                                 saveWorld();
                             }
                             lastSaved = now;
                         }
                     } finally {
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 7 - writeLock.unlock")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 07 - writeLock.unlock")) {
                             lock.writeLock().unlock();
                         }
                     }
 
                     if (lastSaved == now) {
-                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 8 - reduceWorldBackupCounts")) {
+                        try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 08 - reduceWorldBackupCounts")) {
                             reduceWorldBackupCounts();
                         }
                     }
