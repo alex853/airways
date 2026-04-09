@@ -43,7 +43,7 @@ public class BusyBirdsMissionGenerator {
     private static long lastExecution;
 
     public static void process(final World world) {
-        if (System.currentTimeMillis() - lastExecution < 60000) {
+        if (System.currentTimeMillis() - lastExecution < 60 * 60 * 1000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
@@ -52,18 +52,18 @@ public class BusyBirdsMissionGenerator {
         int journeysToPickUp = maxJourneyCount - journeysToBook.size();
 
         if (journeysToPickUp <= 0) {
-            log.info("there are {} journeys to book available, limit is set to {} journeys, no need to pick up more", journeysToBook.size(), maxJourneyCount);
+            log.info("there are {} journey(s) to book available, limit is set to {} journeys, no need to pick up more", journeysToBook.size(), maxJourneyCount);
             return;
         }
 
-        log.info("there are {} journeys to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
+        log.info("there are {} journey(s) to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
 
         List<Journeys.Journey> foundJourneys = world.journeys().filter(world.journeys().byNoSpecialProcessing())
                 .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                 .filter(j -> j.getCabinService() == CabinLayout.Service.F)
                 .toList();
         if (foundJourneys.isEmpty()) {
-            log.info("no first class journeys looking for tickets, nothing to pick up more");
+            log.info("no first class journey(s) looking for tickets, nothing to pick up more");
             return;
         }
 
