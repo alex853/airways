@@ -8,7 +8,6 @@ import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.commons.io.Csv;
-import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.Geo;
 import net.simforge.networkview.core.Position;
 import net.simforge.networkview.core.report.ReportUtils;
@@ -16,9 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -327,6 +324,7 @@ public class PilotContext {
             log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
             pilotLog("Event 'landing' at planned destination airport");
             FlightStats.event("landing - planned airport");
+            FlightStats.event("route " + flightplanToRoute(flightplan));
         } else if (worldIcaos.contains(landingAirportIcao)) {
             flightStage = FlightStage.Arriving;
 
@@ -654,6 +652,11 @@ public class PilotContext {
                 mission != null ? "#" + mission.getAircraftId() : "-",
                 flightplan != null ? flightplan.getDeparture() : "????",
                 flightplan != null ? flightplan.getDestination() : "????");
+    }
+
+    private String flightplanToRoute(final Flightplan flightplan) {
+        return (flightplan != null ? flightplan.getDeparture() : "????") + "-" +
+                (flightplan != null ? flightplan.getDestination() : "????");
     }
 
     private static Supplier<RuntimeException> elseThrowException(final String what) {
