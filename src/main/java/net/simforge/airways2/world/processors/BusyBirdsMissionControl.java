@@ -22,6 +22,12 @@ public class BusyBirdsMissionControl {
         return world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
     }
 
+    public List<Journeys.Journey> getJourneysToBook() {
+        return world.journeys().filter(world.journeys().bySpecialProcessing())
+                .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                .toList();
+    }
+
     public BusyBirdsMissionControl.MissionPlan buildPlan(final Journeys.Journey journey, final Aircrafts.Aircraft aircraft) {
         final List<String> messages = new ArrayList<>();
 
@@ -121,6 +127,18 @@ public class BusyBirdsMissionControl {
     public void checkUserHasAccessToBusyBirds(int userId) {
         // todo ak2 put here some check if user has access to BusyBirds OR throw exception!
     }
+
+
+    // todo ak2 take into account aircraft max range
+    // todo ak2 check aircraft seats vs journey size
+
+    private static Optional<Aircrafts.Aircraft> findNearestSuitableAircraft(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
+        return world.aircrafts()
+                .byAircraftOperatorId(aircraftOperator.getId())
+                .filter(Aircrafts::isIdleAndParkedAtAirport)
+                .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
+    }
+
 
     public static class MissionPlan {
         private final Status status;

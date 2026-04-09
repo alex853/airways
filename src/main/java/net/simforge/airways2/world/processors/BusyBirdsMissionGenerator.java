@@ -1,15 +1,13 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
-import net.simforge.airways2.worldbuilder.World25;
-import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 // constantly running process which finds some, few, not too many W or J journeys in looking for tickets status
 // and pick them up - mark them as 'special processing'
@@ -40,6 +38,8 @@ import java.util.Optional;
 // mission cancellation.....
 public class BusyBirdsMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionGenerator.class);
+    private static final int maxJourneyCount = 10;
+
     private static long lastExecution;
 
     public static void process(final World world) {
@@ -48,107 +48,33 @@ public class BusyBirdsMissionGenerator {
         }
         lastExecution = System.currentTimeMillis();
 
-        log.info("processing journeys");
+        List<Journeys.Journey> journeysToBook = world.busyBirdsMissionControl().getJourneysToBook();
+        int journeysToPickUp = maxJourneyCount - journeysToBook.size();
 
-        // todo ak2 select only those which in looking for tickets
-        world.journeys().filter(world.journeys().bySpecialProcessing()).forEach(j -> processJourney(world, j));
-    }
-
-    private static void processJourney(final World world, final Journeys.Journey journey) {
-        log.info("journey {} -> {}, pax {}", journey.getFromCityId(), journey.getToCityId(), journey.getGroupSize());
-
-        final AircraftOperators.AircraftOperator busyBirdsOperator = world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
-
-        final Optional<Airports.Airport> fromAirport = chooseAirport(world,
-                busyBirdsOperator,
-                world.airport2city().linksByCityId(journey.getFromCityId())
-                        .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
-                        .toList());
-        final Optional<Airports.Airport> toAirport = chooseAirport(world,
-                busyBirdsOperator,
-                world.airport2city().linksByCityId(journey.getToCityId())
-                        .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
-                        .toList());
-
-        if (fromAirport.isEmpty()) {
-            log.warn("unable to find suitable 'from' airport");
+        if (journeysToPickUp <= 0) {
+            log.info("there are {} journeys to book available, limit is set to {} journeys, no need to pick up more", journeysToBook.size(), maxJourneyCount);
             return;
         }
 
-        if (toAirport.isEmpty()) {
-            log.warn("unable to find suitable 'to' airport");
-            return;
-        }
+        log.info("there are {} journeys to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
 
-        final Optional<Aircrafts.Aircraft> aircraft = findNearestSuitableAircraft(world, busyBirdsOperator, fromAirport.get());
-
-        if (aircraft.isEmpty()) {
-            log.warn("unable to find suitable aircraft");
-            return;
-        }
-
-        final boolean needFerryFlightToDepartureAirport = aircraft.get().getLocationAirportId() != fromAirport.get().getId();
-
-        if (needFerryFlightToDepartureAirport) {
-            log.info("FLIGHT - reposition - {}, {} -> {}", aircraft.get().getRegNo(), world.airports().getIcao(aircraft.get().getLocationAirportId()), fromAirport.get().getIcao());
-        }
-
-        log.info("FLIGHT - REVENUE    - {}, {} -> {}", aircraft.get().getRegNo(), fromAirport.get().getIcao(), toAirport.get().getIcao());
-
-        final Optional<Airports.Airport> baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport.get());
-        if (baseAirport.isEmpty()) {
-            log.warn("unable to find suitable 'base' airport");
-            return;
-        }
-
-        final boolean needFerryFlightToBaseAirport = toAirport.get().getId() != baseAirport.get().getId();
-        if (needFerryFlightToBaseAirport) {
-            log.info("FLIGHT - reposition - {}, {} -> {}", aircraft.get().getRegNo(), toAirport.get().getIcao(), baseAirport.get().getIcao());
-        }
-    }
-
-    // todo ak2 take into account aircraft max range
-
-    private static Optional<Aircrafts.Aircraft> findNearestSuitableAircraft(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
-        return world.aircrafts()
-                .byAircraftOperatorId(aircraftOperator.getId())
-                .filter(Aircrafts::isIdleAndParkedAtAirport)
-                // todo ak2 check aircraft seats vs journey size
-                .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
-    }
-
-    private static Optional<Airports.Airport> chooseAirport(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final List<Airports.Airport> airports) {
-        if (airports.isEmpty()) {
-            return Optional.empty();
-        }
-
-        final Optional<Airports.Airport> baseAirport = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, aircraftOperator, AirportFacilities.Type.BaseAirport))
-                .findFirst();
-        if (baseAirport.isPresent()) {
-            return baseAirport;
-        }
-
-        final List<Airports.Airport> preferredBusinessTerminals = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, aircraftOperator, AirportFacilities.Type.BusinessAviationTerminal))
+        List<Journeys.Journey> foundJourneys = world.journeys().filter(world.journeys().byNoSpecialProcessing())
+                .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+                .filter(j -> j.getCabinService() == CabinLayout.Service.F)
                 .toList();
-        if (!preferredBusinessTerminals.isEmpty()) {
-            return Optional.of(preferredBusinessTerminals.get((int) (Math.random()*preferredBusinessTerminals.size())));
+        if (foundJourneys.isEmpty()) {
+            log.info("no first class journeys looking for tickets, nothing to pick up more");
+            return;
         }
 
-        final List<Airports.Airport> anyBusinessTerminals = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, AirportFacilities.Type.BusinessAviationTerminal))
-                .toList();
-        if (!anyBusinessTerminals.isEmpty()) {
-            return Optional.of(anyBusinessTerminals.get((int) (Math.random()*anyBusinessTerminals.size())));
-        }
+        int index = Tools.random(0, foundJourneys.size()-1);
+        Journeys.Journey journey = foundJourneys.get(index);
 
-        return Optional.of(airports.get((int) (Math.random()*airports.size())));
-    }
-
-    private static Optional<Airports.Airport> findNearestBaseAirport(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
-        return world.airportFacilities().by(aircraftOperator, AirportFacilities.Type.BaseAirport)
-                .map(f -> world.airports().byId(f.getAirportId()).orElseThrow())
-                .min(Comparator.comparingDouble(a -> Geo.distance(a.getCoords(), airport.getCoords())));
+        log.info("journey {} - from {} to {}, pax {} - picked up",
+                journey.toString(),
+                world.cities().byId(journey.getFromCityId()).get().getName(),
+                world.cities().byId(journey.getToCityId()).get().getName(),
+                journey.getGroupSize());
+        journey.setSpecialProcessing(true);
     }
 }
