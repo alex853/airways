@@ -81,11 +81,11 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     }
                 }
 
-                try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 9 - yieldOrSleep")) {
+                try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 9 - sleep")) {
                     if (needToCatchTime) {
-                        Thread.yield();
+                        Misc.sleep(10);
                     } else {
-                        Misc.sleepBM(10);
+                        Misc.sleep(1000);
                     }
                 }
             }
