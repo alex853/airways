@@ -386,10 +386,15 @@ public class FlightMissions {
         if (ids == null) {
             return;
         }
-        ids.remove(recordId);
         if (ids.isEmpty()) {
             heartbeatTimeIndex.remove(heartbeatTime);
+            return;
         }
+        int index = ids.indexOf(recordId);
+        if (index == -1) {
+            return;
+        }
+        ids.remove(index);
     }
 
     private void heartbeatTimeIndex_add(int heartbeatTime, int recordId) {
