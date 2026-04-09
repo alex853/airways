@@ -74,7 +74,7 @@ public class Timing {
         public synchronized String logInfoMessage() {
             return String.format("Timing info : %s AVG: %s ms, CALLS: %s, TOTAL: %s s",
                     Str.al(label, 60),
-                    Str.ar(df3.format(totalDuration / (float) count / 1_000_000.0d), 8),
+                    Str.ar(df3.format(totalDuration / (float) count / 1_000_000.0d), 10),
                     Str.ar(String.valueOf(count), 7),
                     Str.ar(df3.format(totalDuration / 1_000_000_000.0d), 10));
         }
