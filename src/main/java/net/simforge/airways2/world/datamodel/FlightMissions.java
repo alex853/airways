@@ -4,7 +4,6 @@ import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
-import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import org.slf4j.Logger;
@@ -152,9 +151,17 @@ public class FlightMissions {
 
                 if (minimalHeartbeatTime > worldTime) {
                     return Optional.empty();
-                } else {
-                    return storage.byId(ids.get(0));
                 }
+
+                int recordId = ids.get(0);
+                int actualHeartbeatTime = readHeartbeatTime(recordId);
+                if (actualHeartbeatTime != minimalHeartbeatTime) {
+                    log.warn("MISMATCH BETWEEN ACTUAL AND INDEXED HEARTBEAT TIMES");
+                    ids.remove(0);
+                    continue;
+                }
+
+                return storage.byId(recordId);
             }
         }
     }
@@ -225,11 +232,11 @@ public class FlightMissions {
         }
 
         public int getHeartbeatTime() {
-            return storage.getAsInt(id, heartbeatTimeField);
+            return readHeartbeatTime(id);
         }
 
         public void setHeartbeatTime(final int heartbeatTime) {
-            int oldHeartbeatTime = storage.getAsInt(id, heartbeatTimeField);
+            int oldHeartbeatTime = readHeartbeatTime(id);
             heartbeatTimeIndex_remove(oldHeartbeatTime, id);
 
             storage.set(id, heartbeatTimeField, heartbeatTime);
@@ -422,6 +429,10 @@ public class FlightMissions {
                 .append(list.toString()).append('\n')
                 .append('\n'));
         return sb.toString();
+    }
+
+    private int readHeartbeatTime(int recordId) {
+        return storage.getAsInt(recordId, heartbeatTimeField);
     }
 
     public enum Status {
