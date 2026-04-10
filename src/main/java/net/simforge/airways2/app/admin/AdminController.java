@@ -191,7 +191,7 @@ public class AdminController {
 
     @GetMapping(value = "/flight/remove-obsolete", produces = "text/plain")
     public String removeObsoleteFlights(@RequestParam(name = "days", defaultValue = "90") final int days,
-                                        @RequestParam(name = "max", defaultValue = "90") final int max) {
+                                        @RequestParam(name = "max", defaultValue = "10") final int max) {
         String result = "Days: " + days + ", Max: " + max + "\n";
 
         List<FlightMissions.Mission> flightsToRemove = worldBean.read(world -> {
