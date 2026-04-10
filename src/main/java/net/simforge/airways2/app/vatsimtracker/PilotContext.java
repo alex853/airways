@@ -444,7 +444,7 @@ public class PilotContext {
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
             final Airports.Airport positionAirport = world.airports().byIcao(flightplan.getFiledAt()).orElseThrow(elseThrowException(flightplan.getFiledAt()));
 
-            final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableOrCreate(
+            final Aircrafts.Aircraft aircraft = ShadowJetLogic.findAvailableAircraftOrCreateNew(
                     world,
                     aircraftType,
                     positionAirport);
@@ -455,6 +455,8 @@ public class PilotContext {
                     world.airports().byIcao(flightplan.getDestination()).orElseThrow(elseThrowException(flightplan.getDestination())),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
             mission.setModePc(true);
+
+            ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
 
             world.flightMissionControl().startOrCancel(mission);
 

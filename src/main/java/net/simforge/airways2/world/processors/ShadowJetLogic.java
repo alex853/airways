@@ -1,17 +1,16 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.AircraftOperators;
-import net.simforge.airways2.world.datamodel.AircraftTypes;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -20,7 +19,7 @@ public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
 
-    public static Aircrafts.Aircraft findAvailableOrCreate(
+    public static Aircrafts.Aircraft findAvailableAircraftOrCreateNew(
             final World world,
             final AircraftTypes.AircraftType aircraftType,
             final Airports.Airport locationAirport) {
@@ -81,5 +80,55 @@ public class ShadowJetLogic {
                 .collect(Collectors.joining());
 
         return "SJ-" + suffix;
+    }
+
+    public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
+        String from = world.airports().getIcao(mission.getDepartureAirportId());
+        String to = world.airports().getIcao(mission.getDestinationAirportId());
+        String route = from + "-" + to;
+
+        if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) {
+            return;
+        }
+
+        log.warn("Transport flight provision for ShadowJet has been started for route {}", route);
+
+        // todo ak1 cabin layout depending on aircraft type - lets collect few most frequently used aircraft types
+        // todo ak1 cabin layout depending on aircraft type - manually put that information into some dictionary
+        TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+        log.warn("T/f {} created", transportFlight);
+
+        int fromCityId = "EDDF-EDDM".equals(route) ? 27 : 7;
+        int toCityId = "EDDM-EDDF".equals(route) ? 7 : 27;
+
+        List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                .filter(j -> j.getFromCityId() == fromCityId
+                        && j.getToCityId() == toCityId
+                        && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 also needs changes
+                .toList();
+        log.warn("Found journeys: {}", journeys.stream().map(Journeys.Journey::getId).toList());
+
+        int journeyBooked = 0;
+        int paxBooked = 0;
+        for (int i = 0; i < Math.min(3, journeys.size()); i++) {
+            Journeys.Journey journey = journeys.get(i);
+
+            // todo ak1 copy&paste from JourneyProcessor
+            bookDirectFlightJourney(world, journey, transportFlight);
+            world.journeyControl().waitForCheckin(journey);
+
+            journeyBooked++;
+            paxBooked += journey.getGroupSize();
+
+            log.warn("Journey {} booked to the flight and checked-in", journey);
+        }
+
+        log.warn("Transport flight provisioned, {} journeys books with {} pax", journeyBooked, paxBooked);
+    }
+
+    // todo ak1 copy&paste from JourneyProcessor
+    private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        journey.setTransportFlight1Id(flight.getId());
+        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
     }
 }
