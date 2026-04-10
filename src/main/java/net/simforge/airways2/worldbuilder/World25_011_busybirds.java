@@ -25,8 +25,6 @@ public class World25_011_busybirds {
         createAircraft(world, busybirds, c25c, "BB-CJB", eglf);
         createAircraft(world, busybirds, c25c, "BB-CJC", eglf);
 
-        world.airportFacilities().createIfAbsent(eglf, busybirds, AirportFacilities.Type.BaseAirport);
-
         final AircraftTypes.AircraftType ga7c = aircraftTypes.byIcao("GA7C")
                 .orElseGet(() -> aircraftTypes.create("GA7C", "GL7"));
 
