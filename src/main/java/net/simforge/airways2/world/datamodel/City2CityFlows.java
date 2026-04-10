@@ -53,7 +53,7 @@ public class City2CityFlows {
 
     public Collection<Flow> allFromCityId(final int fromCityId) {
         try (final Timing.Timer ignored = Timing.label("City2CityFlows - allFromCityId")) {
-            return storage.filter(f -> f.getFromCityId() == fromCityId);
+            return storage.filter(f -> f.getFromCityId() == fromCityId); // todo ak1 migrate to filter1
         }
     }
 

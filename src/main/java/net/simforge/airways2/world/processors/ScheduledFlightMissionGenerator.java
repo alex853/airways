@@ -88,7 +88,7 @@ public class ScheduledFlightMissionGenerator {
     }
 
     private static void scheduleFlight(final World world, final ScheduledFlight schedule) {
-        final Collection<ScheduledFlights.Flight> scheduledFlights = world.scheduledFlights().byScheduleId(schedule.scheduleId);
+        final Collection<ScheduledFlights.Flight> scheduledFlights = world.scheduledFlights().byScheduleId(schedule.scheduleId).toList();
         final LocalDateTime worldDateTime = Time.toLdt(world.getWorldTime());
         final LocalDate worldDate = worldDateTime.toLocalDate();
         for (int i = 0; i <= schedulingDepthDays; i++) {

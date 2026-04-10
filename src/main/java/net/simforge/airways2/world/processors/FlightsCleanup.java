@@ -15,21 +15,24 @@ public class FlightsCleanup {
     public static void process(final World world) {
         final int worldTime = world.getWorldTime();
 
-        final Collection<FlightMissions.Mission> cancelled = world.flightMissions()
-                .filter(f -> f.getStatus() == FlightMissions.Status.Cancelled
-                        && f.getPlannedDepartureWorldTime() <= worldTime - 1 * Time.ONE_DAY);
+        FlightMissions fs = world.flightMissions();
+        final Collection<FlightMissions.Mission> cancelled = fs
+                .filter(fs.anyStatus(FlightMissions.Status.Cancelled))
+                .filter(f -> f.getPlannedDepartureWorldTime() <= worldTime - Time.ONE_DAY) // todo ak3 this can be improved by putting it into new filters
+                .toList();
         cancelled.forEach(f -> {
             // todo ak2 'event log cleanup refinement' - remove event-logs
-            world.flightMissions().deleteById(f.getId());
+            fs.deleteById(f.getId());
             removeTransportFlights(world, f);
         });
 
-        final Collection<FlightMissions.Mission> finished = world.flightMissions()
-                .filter(f -> f.getStatus() == FlightMissions.Status.Finished
-                        && f.getActualArrivalWorldTime() <= worldTime - 10 * Time.ONE_DAY);
+        final Collection<FlightMissions.Mission> finished = fs
+                .filter(fs.anyStatus(FlightMissions.Status.Finished))
+                .filter(f -> f.getActualArrivalWorldTime() <= worldTime - 10 * Time.ONE_DAY) // todo ak3 this can be improved by putting it into new filters
+                .toList();
         finished.forEach(f -> {
             // todo ak2 'event log cleanup refinement' - remove event-logs
-            world.flightMissions().deleteById(f.getId());
+            fs.deleteById(f.getId());
             removeTransportFlights(world, f);
         });
 

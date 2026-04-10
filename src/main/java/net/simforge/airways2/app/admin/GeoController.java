@@ -105,8 +105,12 @@ public class GeoController {
                                         .limit(3)
                                         .toList();
                                 try (final Timing.Timer ignored5 = Timing.label("GeoController - getAirportDetails # part5")) {
-                                    final Collection<FlightMissions.Mission> aliveFlights = world.flightMissions()
-                                            .filter(f -> isFlightAlive(f.getStatus()));
+                                    final Collection<FlightMissions.Mission> aliveFlights = world.flightMissions().filter(
+                                                    world.flightMissions().anyStatus(
+                                                            FlightMissions.Status.Departure,
+                                                            FlightMissions.Status.Flying,
+                                                            FlightMissions.Status.Arrival))
+                                            .toList();
                                     final int flightsOutbound = (int) aliveFlights.stream()
                                             .filter(f -> f.getDepartureAirportId() == airport.getId())
                                             .count();
@@ -140,12 +144,6 @@ public class GeoController {
                 }
             });
         }
-    }
-
-    private boolean isFlightAlive(final FlightMissions.Status status) {
-        return status == FlightMissions.Status.Departure
-                || status == FlightMissions.Status.Flying
-                || status == FlightMissions.Status.Arrival;
     }
 
     @Data

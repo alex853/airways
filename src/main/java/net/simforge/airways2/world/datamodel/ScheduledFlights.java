@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 public class ScheduledFlights {
     private final Storage<Flight> storage = Storage.<Flight>builder()
             .name("scheduled-flights")
@@ -19,6 +21,7 @@ public class ScheduledFlights {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // flightMissionId
             .build();
 
+    @SuppressWarnings("unused")
     private final DataField reservedByteField = storage.getDataField(0);
     private final DataField scheduleIdField = storage.getDataField(1);
     private final DataField flightMissionIdField = storage.getDataField(2);
@@ -42,9 +45,10 @@ public class ScheduledFlights {
         return storage.byId(id);
     }
 
-    // todo ak0 rework
-    public Collection<Flight> byScheduleId(final int scheduleId) {
-        return all().filter(f -> f.getScheduleId() == scheduleId).toList();
+    public Stream<Flight> byScheduleId(final int scheduleId) {
+        checkArgument(scheduleId > 0);
+
+        return storage.filter1(recordId -> readScheduleId(recordId) == scheduleId);
     }
 
     public Flight create(final int scheduleId, final int flightMissionId) {
@@ -58,6 +62,7 @@ public class ScheduledFlights {
         storage.deleteRecord(id);
     }
 
+    @SuppressWarnings("LombokGetterMayBeUsed")
     public class Flight {
         private final int id;
 
@@ -70,11 +75,15 @@ public class ScheduledFlights {
         }
 
         public int getScheduleId() {
-            return storage.getAsInt(id, scheduleIdField);
+            return readScheduleId(id);
         }
 
         public int getFlightMissionId() {
             return storage.getAsInt(id, flightMissionIdField);
         }
+    }
+
+    private int readScheduleId(int recordId) {
+        return storage.getAsInt(recordId, scheduleIdField);
     }
 }

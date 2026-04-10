@@ -65,11 +65,11 @@ public class Aircrafts {
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirport);
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak1 migrate to filter1
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned);
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak1 migrate to filter1
     }
 
     public Optional<Aircraft> byId(final int id) {
@@ -107,13 +107,18 @@ public class Aircrafts {
     }
 
     public Storage.Condition<Aircraft> byLocationAirportId(final int locationAirportId) {
+        checkArgument(locationAirportId > 0);
+
         return recordId -> storage.getAsInt(recordId, locationAirportIdField) == locationAirportId;
     }
 
     public Stream<Aircraft> byAircraftOperatorId(final int aircraftOperatorId) {
+        checkArgument(aircraftOperatorId > 0);
+
         return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftOperatorIdField) == aircraftOperatorId);
     }
 
+    @SuppressWarnings("LombokGetterMayBeUsed")
     public class Aircraft {
         private final int id;
 

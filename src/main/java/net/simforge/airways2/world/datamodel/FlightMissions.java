@@ -16,7 +16,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -104,6 +104,9 @@ public class FlightMissions {
     }
 
     public void deleteById(final int id) {
+        int oldHeartbeatTime = readHeartbeatTime(id);
+        heartbeatTimeIndex_remove(oldHeartbeatTime, id);
+
         storage.deleteRecord(id);
     }
 
@@ -111,10 +114,8 @@ public class FlightMissions {
         return storage.all();
     }
 
-    // todo ak0 rework
-    @Deprecated
-    public Collection<Mission> filter(final Predicate<Mission> condition) {
-        return storage.filter(condition);
+    public Stream<Mission> filter(final Storage.Condition<Mission> condition) {
+        return storage.filter1(condition);
     }
 
     public Optional<Mission> byId(final int id) {
@@ -133,6 +134,14 @@ public class FlightMissions {
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
         return allForAircraft(aircraft).min(FlightMissions.sortByDepartureTimeFromFutureToPast);
+    }
+
+    public Storage.Condition<Mission> anyStatus(Status... statuses) {
+        checkNotNull(statuses, "statuses is mandatory");
+        checkArgument(statuses.length > 0, "statuses is mandatory");
+        Set<Integer> codes = Arrays.stream(statuses).toList().stream().map(Status::code).collect(Collectors.toSet());
+
+        return recordId -> codes.contains(readStatusCode(recordId));
     }
 
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
@@ -156,7 +165,10 @@ public class FlightMissions {
                 int recordId = ids.get(0);
                 int actualHeartbeatTime = readHeartbeatTime(recordId);
                 if (actualHeartbeatTime != minimalHeartbeatTime) {
-                    log.warn("MISMATCH BETWEEN ACTUAL AND INDEXED HEARTBEAT TIMES");
+                    log.warn("MISMATCH BETWEEN ACTUAL AND INDEXED HEARTBEAT TIMES"); // todo ak1 will deletion fix resolve it?
+                    //noinspection EmptyTryBlock
+                    try (Timing.Timer ignored2 = Timing.label("FlightMissions.nextForHeartbeat.MISMATCH")) {} // this should highlight this occurence in the timing report
+
                     ids.remove(0);
                     continue;
                 }
@@ -186,8 +198,7 @@ public class FlightMissions {
         }
 
         public int getStatusCode() {
-            final int statusRaw = storage.getAsInt(id, statusField);
-            return statusRaw & ~allModesMask;
+            return readStatusCode(id);
         }
 
         public void setStatus(final Status status) {
@@ -387,6 +398,11 @@ public class FlightMissions {
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
         }
+    }
+
+    private int readStatusCode(int recordId) {
+        final int statusRaw = storage.getAsInt(recordId, statusField);
+        return statusRaw & ~allModesMask;
     }
 
     private void heartbeatTimeIndex_rebuild() {

@@ -74,8 +74,9 @@ public class TransportFlights {
         return storage.all();
     }
 
+    @Deprecated
     public Collection<Flight> filter(final Predicate<Flight> condition) {
-        return storage.filter(condition);
+        return storage.filter(condition); // todo ak1 migrate to filter1
     }
 
     public Optional<Flight> nextForHeartbeat(final int worldTime) {
@@ -91,6 +92,7 @@ public class TransportFlights {
         return storage.findFirst(f -> f.getFlightMissionId() == flightMissionId);
     }
 
+    @SuppressWarnings("LombokGetterMayBeUsed")
     public class Flight {
         private final int id;
 
