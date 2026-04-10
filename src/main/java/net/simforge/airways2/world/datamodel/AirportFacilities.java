@@ -93,6 +93,11 @@ public class AirportFacilities {
                 && readType(recordId) == type);
     }
 
+    public Stream<Facility> by(final Airports.Airport airport) {
+        checkNotNull(airport);
+        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId());
+    }
+
     public class Facility {
         private final int id;
 

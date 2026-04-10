@@ -4,10 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Timing;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.Cities;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -128,13 +125,21 @@ public class GeoController {
                                         final int aircraftActive = (int) aircraftLocatedAtAirport.stream()
                                                 .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
                                                 .count();
+
+                                        List<AirportFacilityDto> airportFacilityDtos = world.airportFacilities().by(airport)
+                                                .map(f -> new AirportFacilityDto(
+                                                        f.getAircraftOperatorId(),
+                                                        f.getType()
+                                                )).toList();
+
                                         return new AirportDetailsDto(
                                                 connectedCities,
                                                 top3connections,
                                                 flightsOutbound,
                                                 flightsInbound,
                                                 aircraftParked,
-                                                aircraftActive
+                                                aircraftActive,
+                                                airportFacilityDtos
                                         );
                                     }
                                 }
@@ -186,6 +191,14 @@ public class GeoController {
         private int flightsInbound;
         private int aircraftParked;
         private int aircraftActive;
+        private List<AirportFacilityDto> facilities;
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class AirportFacilityDto {
+        private int operatorId;
+        private AirportFacilities.Type type;
     }
 
     @Data
