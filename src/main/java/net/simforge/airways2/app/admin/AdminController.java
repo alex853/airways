@@ -189,8 +189,11 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/flight/remove-obsolete")
-    public String removeObsoleteFlights(@RequestParam(name = "days", defaultValue = "90") final int days) {
+    @GetMapping(value = "/flight/remove-obsolete", produces = "text/plain")
+    public String removeObsoleteFlights(@RequestParam(name = "days", defaultValue = "90") final int days,
+                                        @RequestParam(name = "max", defaultValue = "90") final int max) {
+        String result = "Days: " + days + ", Max: " + max + "\n";
+
         List<FlightMissions.Mission> flightsToRemove = worldBean.read(world -> {
             final int thresholdTime = world.getWorldTime() - days * Time.ONE_DAY;
             return world.flightMissions().all()
@@ -198,9 +201,17 @@ public class AdminController {
                     .toList();
         });
 
-        flightsToRemove.forEach(f -> removeFlight(f.getId()));
+        result = result + "Found " + flightsToRemove.size() + " obsolete flights\n";
+        int count = Math.min(flightsToRemove.size(), max);
+        result = result + count + " will be removed\n";
 
-        return "Removed " + flightsToRemove.size() + " obsolete flights with 'days' set to " + days;
+        for (int i = 0; i < count; i++) {
+            removeFlight(flightsToRemove.get(i).getId());
+        }
+
+        result = result + "Done\n";
+
+        return result;
     }
 
     @GetMapping(value = "/flight/heartbeat-time-index", produces = "text/plain")
