@@ -42,7 +42,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
             while (status == ThreadStatus.Running) {
                 final int now = (int) (System.currentTimeMillis() / 1000);
-                final boolean needToCatchTime;
+                boolean needToCatchTime;
 
                 try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 0 - cycle")) {
 
@@ -59,6 +59,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                             while (!actionQueue.isEmpty()) {
                                 final ActionContext<?> actionContext = actionQueue.poll();
                                 actionContext.perform(world);
+                                needToCatchTime = true; // if at least one event happens, then probably vatsim tracker or anything else is active
                             }
                         }
 

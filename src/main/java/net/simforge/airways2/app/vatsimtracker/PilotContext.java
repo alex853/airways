@@ -580,6 +580,8 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
+            // todo ak1 shadowjet - cancel t/f if exists and restore journeys
+
             FlightStats.event("cancelBeforeTakeoffIfExists");
 
             return null;
@@ -606,6 +608,8 @@ public class PilotContext {
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
+
+            // todo ak1 shadowjet - cancel t/f if exists and restore journeys
 
             FlightStats.event("cancelFromFlying");
 
