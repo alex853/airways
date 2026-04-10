@@ -7,6 +7,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -40,11 +41,16 @@ public class AirportFacilities {
         storage.save(rootPath);
     }
 
-    public Facility create(final Airports.Airport airport,
-                           final Type type) {
+    public Facility createIfAbsent(final Airports.Airport airport,
+                                   final Type type) {
         checkNotNull(airport);
         checkNotNull(type);
-        checkArgument(!hasFacility(airport, type));
+
+        Optional<Facility> existing = findFacility(airport, null, type);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
         final int recordId = storage.addRecord();
         storage.set(recordId, airportIdField, airport.getId());
         storage.set(recordId, aircraftOperatorIdField, 0);
@@ -52,13 +58,18 @@ public class AirportFacilities {
         return new Facility(recordId);
     }
 
-    public Facility create(final Airports.Airport airport,
-                           final AircraftOperators.AircraftOperator aircraftOperator,
-                           final Type type) {
+    public Facility createIfAbsent(final Airports.Airport airport,
+                                   final AircraftOperators.AircraftOperator aircraftOperator,
+                                   final Type type) {
         checkNotNull(airport);
         checkNotNull(aircraftOperator);
         checkNotNull(type);
-        checkArgument(!hasFacility(airport, aircraftOperator, type));
+
+        Optional<Facility> existing = findFacility(airport, aircraftOperator, type);
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
         final int recordId = storage.addRecord();
         storage.set(recordId, airportIdField, airport.getId());
         storage.set(recordId, aircraftOperatorIdField, aircraftOperator.getId());
@@ -69,21 +80,23 @@ public class AirportFacilities {
     public boolean hasFacility(final Airports.Airport airport, final Type type) {
         checkNotNull(airport);
         checkNotNull(type);
-        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
-                        && readType(recordId) == type)
-                .findAny()
-                .isPresent();
+
+        return findFacility(airport, null, type).isPresent();
     }
 
     public boolean hasFacility(final Airports.Airport airport, final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
         checkNotNull(airport);
         checkNotNull(aircraftOperator);
         checkNotNull(type);
+
+        return findFacility(airport, aircraftOperator, type).isPresent();
+    }
+
+    private Optional<Facility> findFacility(final Airports.Airport airport, final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
         return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
-                        && readAircraftOperatorId(recordId) == aircraftOperator.getId()
+                        && readAircraftOperatorId(recordId) == (aircraftOperator != null ? aircraftOperator.getId() : 0)
                         && readType(recordId) == type)
-                .findAny()
-                .isPresent();
+                .findFirst();
     }
 
     public Stream<Facility> by(final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {

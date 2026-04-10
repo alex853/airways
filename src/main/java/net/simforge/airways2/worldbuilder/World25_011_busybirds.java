@@ -25,9 +25,7 @@ public class World25_011_busybirds {
         createAircraft(world, busybirds, c25c, "BB-CJB", eglf);
         createAircraft(world, busybirds, c25c, "BB-CJC", eglf);
 
-        if (!world.airportFacilities().hasFacility(eglf, busybirds, AirportFacilities.Type.BaseAirport)) {
-            world.airportFacilities().create(eglf, busybirds, AirportFacilities.Type.BaseAirport);
-        }
+        world.airportFacilities().createIfAbsent(eglf, busybirds, AirportFacilities.Type.BaseAirport);
 
         final AircraftTypes.AircraftType ga7c = aircraftTypes.byIcao("GA7C")
                 .orElseGet(() -> aircraftTypes.create("GA7C", "GL7"));
@@ -40,6 +38,11 @@ public class World25_011_busybirds {
 
         createAircraft(world, busybirds, glf6, "BB-GLC", eglf);
         createAircraft(world, busybirds, glf6, "BB-GLD", eglf);
+
+        world.airportFacilities().createIfAbsent(eglf, busybirds, AirportFacilities.Type.BaseAirport);
+
+        world.airportFacilities().createIfAbsent(world.airports().byIcao("LFPB").get(), AirportFacilities.Type.BusinessAviationTerminal);
+        world.airportFacilities().createIfAbsent(world.airports().byIcao("EDDM").get(), AirportFacilities.Type.BusinessAviationTerminal);
 
         world.save();
     }
