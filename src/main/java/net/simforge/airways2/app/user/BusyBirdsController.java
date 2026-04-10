@@ -42,9 +42,9 @@ public class BusyBirdsController {
 
                         final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
                         final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
-                                * (1 + fromCity.getId() / 1000.0)
-                                * (1 + toCity.getId() / 1000.0)
-                                * (1 + j.getId() / 1000.0));
+                                * (1 + lastDigit(fromCity.getId())*0.01)
+                                * (1 + lastDigit(toCity.getId())*0.01)
+                                * (1 + lastDigit(j.getId())*0.01));
 
                         return new MissionDto(
                                 j.getId(),
@@ -142,6 +142,10 @@ public class BusyBirdsController {
 
             return new BookMissionResponse("success", messages);
         });
+    }
+
+    private static int lastDigit(int v) {
+        return v % 10;
     }
 
     @Data

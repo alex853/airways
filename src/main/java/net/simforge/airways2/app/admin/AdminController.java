@@ -219,6 +219,15 @@ public class AdminController {
         return worldBean.read(world -> world.flightMissions().printHeartbeatTimeIndex());
     }
 
+    @GetMapping(value = "/flight/clear-user-id", produces = "text/plain")
+    public String clearUserId() {
+        worldBean.modifySync(world -> {
+            world.flightMissions().allByUserId(1).forEach(m -> m.setUserId(0));
+            return null;
+        });
+        return "Done";
+    }
+
     private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         //noinspection IfStatementWithIdenticalBranches
