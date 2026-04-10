@@ -3,7 +3,6 @@ package net.simforge.airways2.app.user;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.WorldRunnerBean;
-import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
@@ -33,124 +32,116 @@ public class BusyBirdsController {
 
     @GetMapping("/mission/to-book")
     public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") int userId) {
-        try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getMissionsToBook")) {
-            return worldBean.read(world -> {
-                world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-                return world.busyBirdsMissionControl().getJourneysToBook().stream()
-                        .map(j -> {
-                            final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
-                            final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
+            return world.busyBirdsMissionControl().getJourneysToBook().stream()
+                    .map(j -> {
+                        final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
+                        final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
 
-                            final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-                            final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
-                                    * (1 + fromCity.getId() / 1000.0)
-                                    * (1 + toCity.getId() / 1000.0)
-                                    * (1 + j.getId() / 1000.0));
+                        final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
+                        final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
+                                * (1 + fromCity.getId() / 1000.0)
+                                * (1 + toCity.getId() / 1000.0)
+                                * (1 + j.getId() / 1000.0));
 
-                            return new MissionDto(
-                                    j.getId(),
-                                    j.getFromCityId(),
-                                    fromCity.getName(),
-                                    j.getToCityId(),
-                                    toCity.getName(),
-                                    j.getGroupSize(),
-                                    distance,
-                                    pay);
-                        })
-                        .toList();
-            });
-        }
+                        return new MissionDto(
+                                j.getId(),
+                                j.getFromCityId(),
+                                fromCity.getName(),
+                                j.getToCityId(),
+                                toCity.getName(),
+                                j.getGroupSize(),
+                                distance,
+                                pay);
+                    })
+                    .toList();
+        });
     }
 
     @GetMapping("/aircraft/available")
     public List<AircraftDto> getAvailableAircraft(@RequestAttribute("userId") int userId) {
-        try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
-            return worldBean.read(world -> {
-                world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-                return world.aircrafts()
-                        .byAircraftOperatorId(world.busyBirdsMissionControl().getBusyBirdsOperator().getId())
-                        .filter(Aircrafts::isIdleAndParkedAtAirport)
-                        .map(a -> new AircraftDto(
-                                a.getId(),
-                                world.aircraftTypes().byId(a.getAircraftTypeId()).get().getIcao(),
-                                a.getRegNo(),
-                                a.getLocationAirportId(),
-                                world.airports().byId(a.getLocationAirportId()).get().getIcao()))
-                        .toList();
-            });
-        }
+            return world.aircrafts()
+                    .byAircraftOperatorId(world.busyBirdsMissionControl().getBusyBirdsOperator().getId())
+                    .filter(Aircrafts::isIdleAndParkedAtAirport)
+                    .map(a -> new AircraftDto(
+                            a.getId(),
+                            world.aircraftTypes().byId(a.getAircraftTypeId()).get().getIcao(),
+                            a.getRegNo(),
+                            a.getLocationAirportId(),
+                            world.airports().byId(a.getLocationAirportId()).get().getIcao()))
+                    .toList();
+        });
     }
 
-    @GetMapping("/mission/get-plan")
-    public GetPlanResponse getPlan(@RequestAttribute("userId") int userId,
-                                   @RequestParam(name = "missionId") final int missionId,
-                                   @RequestParam(name = "aircraftId") final int aircraftId) {
-        try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
-            return worldBean.read(world -> {
-                world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+    @GetMapping("/mission/build-plan")
+    public BuildPlanResponse buildPlan(@RequestAttribute("userId") int userId,
+                                       @RequestParam(name = "missionId") final int missionId,
+                                       @RequestParam(name = "aircraftId") final int aircraftId) {
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-                final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
-                final Journeys.Journey journey = world.journeys().byId(missionId).get();
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
+            final Journeys.Journey journey = world.journeys().byId(missionId).get();
 
-                final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
+            final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
 
-                if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                    return new GetPlanResponse("failure", null, plan.getMessages());
-                }
+            if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
+                return new BuildPlanResponse("failure", null, plan.getMessages());
+            }
 
-                final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
-                        leg.getType().name(),
-                        leg.getFromAirport().getIcao(),
-                        leg.getToAirport().getIcao(),
-                        leg.getPax()
-                )).toList();
+            final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
+                    leg.getType().name(),
+                    leg.getFromAirport().getIcao(),
+                    leg.getToAirport().getIcao(),
+                    leg.getPax()
+            )).toList();
 
-                return new GetPlanResponse("success", legDtos, null);
-            });
-        }
+            return new BuildPlanResponse("success", legDtos, null);
+        });
     }
 
     @PutMapping("/mission/book")
     public BookMissionResponse bookMission(@RequestAttribute("userId") int userId,
                                            @RequestParam(name = "missionId") final int missionId,
                                            @RequestParam(name = "aircraftId") final int aircraftId) {
-        try (final Timing.Timer ignored = Timing.label("BusyBirdsController - getAvailableAircraft")) {
-            return worldBean.modifySync(world -> {
-                world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+        return worldBean.modifySync(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-                final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
-                final Journeys.Journey journey = world.journeys().byId(missionId).get();
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
+            final Journeys.Journey journey = world.journeys().byId(missionId).get();
 
-                final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
+            final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
 
-                if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                    return new BookMissionResponse("failure", plan.getMessages());
+            if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
+                return new BookMissionResponse("failure", plan.getMessages());
+            }
+
+            List<String> messages = new ArrayList<>();
+            int departureTime = world.getWorldTime() + Time.ONE_DAY;
+            for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
+                FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), departureTime);
+                flight.setModePc(true);
+                flight.setUserId(userId);
+                messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
+
+                if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
+                    final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(journey.getGroupSize(), 0, 0, 0));
+                    journey.setTransportFlight1Id(transportFlight.getId());
+                    world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getCabinService());
+                    world.journeyControl().waitForCheckin(journey);
+                    messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
 
-                List<String> messages = new ArrayList<>();
-                int departureTime = world.getWorldTime() + Time.ONE_DAY;
-                for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
-                    FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), departureTime);
-                    flight.setModePc(true);
-                    flight.setUserId(userId);
-                    messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
+                departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_DAY;
+            }
 
-                    if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
-                        final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(journey.getGroupSize(), 0, 0, 0));
-                        journey.setTransportFlight1Id(transportFlight.getId());
-                        world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getCabinService());
-                        world.journeyControl().waitForCheckin(journey);
-                        messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
-                    }
-
-                    departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_DAY;
-                }
-
-                return new BookMissionResponse("success", messages);
-            });
-        }
+            return new BookMissionResponse("success", messages);
+        });
     }
 
     @Data
@@ -178,7 +169,7 @@ public class BusyBirdsController {
 
     @Data
     @AllArgsConstructor
-    public static class GetPlanResponse {
+    public static class BuildPlanResponse {
         private String status;
         private List<LegDto> legs;
         private List<String> messages;
