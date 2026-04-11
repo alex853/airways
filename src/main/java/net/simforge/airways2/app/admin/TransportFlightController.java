@@ -102,7 +102,7 @@ public class TransportFlightController {
         Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(flight.getScheduledFlightId());
 
         Optional<String> scheduledFlightNumber = scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()));
-        String flightNumber = scheduledFlightNumber.orElse("Op:" + world.aircrafts().byId(mission.orElseThrow().getAircraftId()).orElseThrow().getAircraftOperatorId());
+        String flightNumber = mission.map(m -> scheduledFlightNumber.orElse("Op:" + world.aircrafts().byId(mission.orElseThrow().getAircraftId()).orElseThrow().getAircraftOperatorId())).orElse(null);
 
         return new FlightDto(
                 flight.getId(),
