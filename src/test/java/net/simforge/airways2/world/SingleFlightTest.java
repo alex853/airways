@@ -59,7 +59,7 @@ public class SingleFlightTest {
 
     @Test
     public void test__manual_flight__should_not_start_by_its_own() {
-        mission.setModePc(true);
+        mission.setModePlayerCharacter(true);
 
         runWorldForNHours(6);
 
@@ -74,7 +74,7 @@ public class SingleFlightTest {
 
     @Test
     public void test__manual_flight__airplane_should_move_to_destination_coords() {
-        mission.setModePc(true);
+        mission.setModePlayerCharacter(true);
 
         runWorldForNHours(1);
         world.flightMissionControl().startOrCancel(mission);

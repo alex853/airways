@@ -47,7 +47,7 @@ public class City2CityFlowControl {
         final String toCity = world.cities().byId(toCityId).orElseThrow().getName();
 
         if (flow.isEmpty()) {
-            log.warn("update c2c flow success rate [{} -> {}] no flow found", fromCity, toCity);
+            log.warn("c2c #{}/{} [{} -> {}] - update c2c flow success rate - NO FLOW FOUND", fromCityId, toCityId, fromCity, toCity);
             return;
         }
 
@@ -57,7 +57,8 @@ public class City2CityFlowControl {
         final float newSuccessRate = originalSuccessRate + successRateDelta;
         flow.get().setSuccessRate(newSuccessRate);
 
-        log.info("update c2c flow success rate [{} -> {}] success rate update {}% - src {}, delta {}, new {} (stored {})", fromCity, toCity,
+        log.info("c2c #{}/{} [{} -> {}] - update c2c flow success rate - delta {}%, orig s/r {}, delta s/r {}, new s/r {} (stored {})",
+                fromCityId, toCityId, fromCity, toCity,
                 deltaPercents,
                 Formatting.df7z.format(originalSuccessRate),
                 Formatting.df7z.format(successRateDelta),

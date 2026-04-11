@@ -68,7 +68,7 @@ public class FlightDashboardController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
@@ -96,7 +96,7 @@ public class FlightDashboardController {
 
             checkNotNull(transportFlight, "transport flight is required for start-boarding");
 
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
@@ -122,7 +122,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
@@ -147,7 +147,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
@@ -172,7 +172,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
@@ -198,7 +198,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
@@ -225,7 +225,7 @@ public class FlightDashboardController {
 
             checkNotNull(transportFlight, "transport flight is required for start-deboarding");
 
-            checkArgument(flight.isModePc(), "flight should be in the manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in the manual mode");
             checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
@@ -251,7 +251,7 @@ public class FlightDashboardController {
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
-            checkArgument(flight.isModePc(), "flight should be in manual mode");
+            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
             final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
@@ -274,7 +274,7 @@ public class FlightDashboardController {
     }
 
     private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
-        checkArgument(flight.isModePc(), "flight should be in manual mode");
+        checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
         final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);

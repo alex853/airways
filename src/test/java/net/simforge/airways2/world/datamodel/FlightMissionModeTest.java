@@ -37,42 +37,42 @@ public class FlightMissionModeTest {
 
     @Test
     public void test__npc_is_default() {
-        assertFalse(mission.isModePc());
+        assertFalse(mission.isModePlayerCharacter());
     }
 
     @Test
     public void test__pc_then_status() {
-        mission.setModePc(true);
+        mission.setModePlayerCharacter(true);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertTrue(mission.isModePc());
+        assertTrue(mission.isModePlayerCharacter());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__npc_then_status() {
-        mission.setModePc(false);
+        mission.setModePlayerCharacter(false);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertFalse(mission.isModePc());
+        assertFalse(mission.isModePlayerCharacter());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__status_then_pc() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setModePc(true);
+        mission.setModePlayerCharacter(true);
 
-        assertTrue(mission.isModePc());
+        assertTrue(mission.isModePlayerCharacter());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__status_then_npc() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setModePc(false);
+        mission.setModePlayerCharacter(false);
 
-        assertFalse(mission.isModePc());
+        assertFalse(mission.isModePlayerCharacter());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
@@ -119,11 +119,11 @@ public class FlightMissionModeTest {
 
     @Test
     public void test__pc_then_unused_then_status() {
-        mission.setModePc(true);
+        mission.setModePlayerCharacter(true);
         mission.setUnusedMode(true);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertTrue(mission.isModePc());
+        assertTrue(mission.isModePlayerCharacter());
         assertTrue(mission.isUnusedMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }

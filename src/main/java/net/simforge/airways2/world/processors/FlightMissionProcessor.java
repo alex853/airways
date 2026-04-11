@@ -38,7 +38,7 @@ public class FlightMissionProcessor {
 
         switch (mission.getStatus()) {
             case Preflight -> {
-                if (!mission.isModePc()) {
+                if (!mission.isModePlayerCharacter()) {
                     transportFlight.ifPresent(tf -> {
                         if (TransportFlightHelper.calcBoardingStartTime(mission) <= worldTime) {
                             if (TransportFlightHelper.flightStatusAllowsToStartBoarding(tf.getStatus())) {
@@ -48,12 +48,12 @@ public class FlightMissionProcessor {
                     });
                 }
 
-                if (!mission.isModePc() && timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
+                if (!mission.isModePlayerCharacter() && timeline.getBlocksOff().getEstimatedTime().isBefore(now)) {
                     flightControl.blocksOff(mission);
                 }
             }
             case Departure -> {
-                if (!mission.isModePc() && timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
+                if (!mission.isModePlayerCharacter() && timeline.getTakeoff().getEstimatedTime().isBefore(now)) {
                     flightControl.takeoff(mission);
                 }
             }
@@ -61,13 +61,13 @@ public class FlightMissionProcessor {
                 fly(world, worldTime, mission);
             }
             case Arrival -> {
-                if (!mission.isModePc() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
+                if (!mission.isModePlayerCharacter() && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
                     flightControl.blocksOn(mission);
                     transportFlight.ifPresent(tfControl::scheduleAutomaticDeboarding);
                 }
             }
             case Postflight -> {
-                if (!mission.isModePc() && timeline.getFinish().getEstimatedTime().isBefore(now)) {
+                if (!mission.isModePlayerCharacter() && timeline.getFinish().getEstimatedTime().isBefore(now)) {
                     flightControl.finish(mission);
                 }
             }
@@ -117,7 +117,7 @@ public class FlightMissionProcessor {
 
         } else {
 
-            if (!mission.isModePc()) {
+            if (!mission.isModePlayerCharacter()) {
                 world.flightMissionControl().landing(mission, toAirport);
             }
         }
@@ -126,7 +126,7 @@ public class FlightMissionProcessor {
     private static void processPilotOnDutyEvent(World world, EventsToProcess.Event event) {
         final int flightId = event.getObjectId();
         final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-        if (mission.isModePc()) {
+        if (mission.isModePlayerCharacter()) {
             return;
         }
         world.flightMissionControl().startOrCancel(mission);

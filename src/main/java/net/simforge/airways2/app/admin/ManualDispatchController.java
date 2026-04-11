@@ -69,7 +69,7 @@ public class ManualDispatchController {
             final boolean pcMode = "manual".equals(flightMode) || "flight-dashboard".equals(flightMode);
 
             final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
-            mission.setModePc(pcMode);
+            mission.setModePlayerCharacter(pcMode);
 
             world.log(EventLog.EventType.FlightDispatchedManually, EventLog.pilotId(0), mission, aircraft);
             log.info("f/m #{} - flight dispatched via web-page, aircraft {}, flight mode {}", mission.getId(), aircraft.getRegNo(), flightMode);

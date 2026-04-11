@@ -32,7 +32,7 @@ public class FlightMissionController {
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusCode() + " - " + f.getStatus(),
-                        (f.isModePc() ? "P" : "n") + (f.isUnusedMode() ? "+" : "_"),
+                        (f.isModePlayerCharacter() ? "P" : "n") + (f.isUnusedMode() ? "+" : "_"),
                         TimeTools.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),

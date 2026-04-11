@@ -45,11 +45,11 @@ public class TransportFlightController {
 
     @GetMapping("/actual")
     public List<FlightDto> getActual() {
-        return worldBean.read(world -> world.transportFlights()
+        return worldBean.read(world -> world.transportFlights().all()
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                        .orElse(false)).stream()
+                        .orElse(false))
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList());
@@ -57,12 +57,25 @@ public class TransportFlightController {
 
     @GetMapping("/actual-manual")
     public List<FlightDto> getActualManual() {
-        return worldBean.read(world -> world.transportFlights()
+        return worldBean.read(world -> world.transportFlights().all()
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                            && ff.isModePc())
-                        .orElse(false)).stream()
+                                && ff.isModePlayerCharacter())
+                        .orElse(false))
+                .map(f -> from(world, f))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .toList());
+    }
+
+    @GetMapping("/shadow-jet")
+    public List<FlightDto> getShadowJet() {
+        return worldBean.read(world -> world.transportFlights().all()
+                .filter(f -> world.flightMissions()
+                        .byId(f.getFlightMissionId())
+                        .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
+                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == 3) // todo ak1 this constant!!!!   !!!!
+                        .orElse(false))
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList());
@@ -70,16 +83,20 @@ public class TransportFlightController {
 
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
-        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
-        final Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
-        final Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(flight.getScheduledFlightId());
+        Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
+        Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
+        Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(flight.getScheduledFlightId());
+
+        Optional<String> scheduledFlightNumber = scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()));
+        String flightNumber = scheduledFlightNumber.orElse("Op:" + world.aircrafts().byId(mission.orElseThrow().getAircraftId()).orElseThrow().getAircraftOperatorId());
+
         return new FlightDto(
                 flight.getId(),
                 flight.getStatus().name(),
                 TimeTools.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
-                scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId())).orElse(null),
-                mission.map(FlightMissions.Mission::isModePc).orElse(false),
+                flightNumber,
+                mission.map(FlightMissions.Mission::isModePlayerCharacter).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
@@ -92,7 +109,7 @@ public class TransportFlightController {
                 flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() > 0 ? flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() : null,
                 flight.getPaxCheckedIn() > 0 ? flight.getPaxCheckedIn() : null,
                 flight.getPaxOnBoard() > 0 ? flight.getPaxOnBoard() : null
-            );
+        );
     }
 
     @Data

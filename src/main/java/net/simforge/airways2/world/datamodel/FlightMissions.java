@@ -214,11 +214,11 @@ public class FlightMissions {
          * NPC aka Non Player Character, means 'automatic' flight
          * PC  aka     Player Character, means 'manual' flight
          */
-        public boolean isModePc() {
+        public boolean isModePlayerCharacter() {
             return isStatusBitMode(pcModeMask);
         }
 
-        public void setModePc(final boolean enabled) {
+        public void setModePlayerCharacter(final boolean enabled) {
             setStatusBitMode(pcModeMask, enabled);
         }
 

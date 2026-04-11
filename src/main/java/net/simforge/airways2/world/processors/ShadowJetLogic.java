@@ -32,14 +32,14 @@ public class ShadowJetLogic {
 
         if (existingAircraft.isPresent()) {
             if (existingAircraft.get().getLocationAirportId() != locationAirport.getId()) {
-                log.info("moving a/c #{}, {}, reg no {} located at {} to {}",
+                log.info("ShadowJet Fleet - moving a/c #{}, {}, reg no {} located at {} to {}",
                         existingAircraft.get().getId(), aircraftType.getIcao(), existingAircraft.get().getRegNo(),
                         world.airports().byId(existingAircraft.get().getLocationAirportId()).orElseThrow().getIcao(),
                         locationAirport.getIcao());
                 FlightStats.event("shadowJet moving");
                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, existingAircraft.get(), locationAirport);
             } else {
-                log.info("selecting a/c #{}, {}, reg no {} located at {}",
+                log.info("ShadowJet Fleet - selecting a/c #{}, {}, reg no {} located at {}",
                         existingAircraft.get().getId(), aircraftType.getIcao(), existingAircraft.get().getRegNo(),
                         locationAirport.getIcao());
                 FlightStats.event("shadowJet selecting");
@@ -59,13 +59,13 @@ public class ShadowJetLogic {
         }
 
         if (newRegNo == null) {
-            log.error("could not find non-occupied SJ-xxx reg no");
-            throw new IllegalStateException("could not find non-occupied SJ-xxx reg no");
+            log.error("ShadowJet Fleet - could not find non-occupied SJ-xxx reg no");
+            throw new IllegalStateException("ShadowJet Fleet - could not find non-occupied SJ-xxx reg no");
         }
 
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
         newAircraft.setAircraftOperatorId(shadowJet.getId());
-        log.info("creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
+        log.info("ShadowJet Fleet - creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         FlightStats.event("shadowJet creating");
         return newAircraft;
     }
@@ -88,16 +88,22 @@ public class ShadowJetLogic {
         String route = from + "-" + to;
 
         if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) {
-            log.warn("Transport flight pro1visioning - {}", route);
+            log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed", mission.getId(), route);
             return;
         }
 
-        log.warn("Transport flight provisioning - {}", route);
+        log.warn("Transport flight provisioning - f/m #{} - {} - lets create the transport flight", mission.getId(), route);
 
         // todo ak1 cabin layout depending on aircraft type - lets collect few most frequently used aircraft types
         // todo ak1 cabin layout depending on aircraft type - manually put that information into some dictionary
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
-        log.warn("T/f {} created", transportFlight);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - created - {}", mission.getId(), transportFlight.getId(), transportFlight);
+
+        world.transportFlightControl().startBoarding(transportFlight);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - boarding started - {}", mission.getId(), transportFlight.getId(), transportFlight);
+
+        world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - minor c2c flow increase applied", mission.getId(), transportFlight.getId());
 
         int fromCityId = "EDDF-EDDM".equals(route) ? 27 : 7;
         int toCityId = "EDDM-EDDF".equals(route) ? 7 : 27;
@@ -107,7 +113,7 @@ public class ShadowJetLogic {
                         && j.getToCityId() == toCityId
                         && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 also needs changes
                 .toList();
-        log.warn("Found journeys: {}", journeys.stream().map(Journeys.Journey::getId).toList());
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Found journeys: {}", mission.getId(), transportFlight.getId(), journeys.stream().map(Journeys.Journey::getId).toList());
 
         int journeyBooked = 0;
         int paxBooked = 0;
@@ -121,10 +127,10 @@ public class ShadowJetLogic {
             journeyBooked++;
             paxBooked += journey.getGroupSize();
 
-            log.warn("Journey {} booked to the flight and checked-in", journey);
+            log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
         }
 
-        log.warn("Transport flight provisioned, {} journeys books with {} pax", journeyBooked, paxBooked);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys books with {} pax", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
     // todo ak1 copy&paste from JourneyProcessor

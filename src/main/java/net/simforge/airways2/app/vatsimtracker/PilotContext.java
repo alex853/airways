@@ -454,11 +454,11 @@ public class PilotContext {
                     world.airports().byIcao(flightplan.getDeparture()).orElseThrow(elseThrowException(flightplan.getDeparture())),
                     world.airports().byIcao(flightplan.getDestination()).orElseThrow(elseThrowException(flightplan.getDestination())),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
-            mission.setModePc(true);
-
-            ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
+            mission.setModePlayerCharacter(true);
 
             world.flightMissionControl().startOrCancel(mission);
+
+            ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
 
             FlightStats.event("dispatchNewAndStart");
 
@@ -652,7 +652,7 @@ public class PilotContext {
     }
 
     private String missionLogHead(final FlightMissions.Mission mission, final Flightplan flightplan) {
-        return String.format("[%s] f/m %s, a/c %s : %s -> %s",
+        return String.format("[%s] f/m #%s, a/c #%s : %s -> %s",
                 pilotNumber,
                 mission != null ? "#" + mission.getId() : "-",
                 mission != null ? "#" + mission.getAircraftId() : "-",
