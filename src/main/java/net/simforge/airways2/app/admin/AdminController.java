@@ -295,6 +295,25 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/transport-flight/remove-all-broken", produces = "text/plain")
+    public String removeAllBrokenTransportFlight() {
+        return worldBean.modifySync(world -> {
+            final List<String> results = new ArrayList<>();
+
+            final List<TransportFlights.Flight> brokenTfs = world.transportFlights().all()
+                    .filter(tf -> world.flightMissions().byId(tf.getFlightMissionId()).isEmpty())
+                    .toList();
+            results.add("Found " + brokenTfs.size() + " broken transport flights");
+
+//            final int flightId = transportFlight.getFlightMissionId();
+//            final int scheduledFlightId = transportFlight.getScheduledFlightId();
+//            world.transportFlights().deleteById(tfId);
+//            results.add("T/F #" + tfId + " removed");
+
+            return Strings.join(results, '\n');
+        });
+    }
+
     @GetMapping("/aircraft/reset-status")
     public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
         return worldBean.modifySync(world -> {
