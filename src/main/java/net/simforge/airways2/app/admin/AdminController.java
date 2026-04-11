@@ -520,11 +520,11 @@ public class AdminController {
     }
 
     @GetMapping(value = "/flows/c2c", produces = "text/plain")
-    public void printC2CFlowStatus(@RequestParam("from") int from, @RequestParam("to") int to) {
-        worldBean.read(world -> {
-            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(from, to).orElseThrow();
-            return String.format("C2C Flow #%s/%s\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
-                    from, to,
+    public String printC2CFlowStatus(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
+        return worldBean.read(world -> {
+            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId).orElseThrow();
+            return String.format("C2C Flow #%s/%s [%s -> %s]\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
+                    fromCityId, toCityId, world.cities().byId(fromCityId).orElseThrow().getName(), world.cities().byId(toCityId).orElseThrow().getName(),
                     Time.toLdtOrNull(c2c.getHeartbeatTime()),
                     c2c.getNextGroupSize(),
                     c2c.getAccumulatedFlow(),
