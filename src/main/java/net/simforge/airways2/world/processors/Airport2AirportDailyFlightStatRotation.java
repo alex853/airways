@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
-public class Airport2AirportDailyFlightStatsRotation {
-    private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStatsRotation.class);
+public class Airport2AirportDailyFlightStatRotation {
+    private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStatRotation.class);
 
     private static LocalDate lastDate = JavaTime.todayUtc();
 

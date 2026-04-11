@@ -16,8 +16,8 @@ import java.util.List;
 import static com.google.common.base.Preconditions.checkArgument;
 
 // todo ak3 indexed access can improve all the operations
-public class Airport2AirportDailyFlightStats {
-    private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStats.class);
+public class Airport2AirportDailyFlightStat {
+    private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStat.class);
 
     private final Storage<FlightStats> storage = Storage.<FlightStats>builder()
             .name("airport2airport-daily-flight-stats")

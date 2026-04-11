@@ -151,10 +151,10 @@ public class AdminController {
                 .filter(f -> f.getFlightMissionId() == flightId)
                 .findFirst();
         if (pc.isEmpty()) {
-            return "Pilot context for f/m # " + flightId + " NOT FOUND";
+            return "Pilot context for f/m #" + flightId + " NOT FOUND";
         }
         vatsimTracker.removePilot(pc.get().getPilotNumber());
-        return "Pilot context for f/m # " + flightId + " REMOVED";
+        return "Pilot context for f/m #" + flightId + " REMOVED";
     }
 
     @GetMapping("/vatsim/remove-context-by-pilot-number")
@@ -163,10 +163,10 @@ public class AdminController {
                 .filter(f -> f.getPilotNumber() == pilotNumber)
                 .findFirst();
         if (pc.isEmpty()) {
-            return "Pilot context for p/n # " + pilotNumber + " NOT FOUND";
+            return "Pilot context for p/n #" + pilotNumber + " NOT FOUND";
         }
         vatsimTracker.removePilot(pc.get().getPilotNumber());
-        return "Pilot context for p/n # " + pilotNumber + " REMOVED";
+        return "Pilot context for p/n #" + pilotNumber + " REMOVED";
     }
 
     @GetMapping("/flight/cancel")
@@ -175,7 +175,7 @@ public class AdminController {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             mission.setStatus(FlightMissions.Status.Cancelled);
             final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
-            return "F/M # " + flightId + " cancelled, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+            return "F/M #" + flightId + " cancelled, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 
@@ -185,7 +185,7 @@ public class AdminController {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
             world.flightMissions().deleteById(flightId);
-            return "F/M # " + flightId + " removed, A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+            return "F/M #" + flightId + " removed, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 
@@ -256,7 +256,7 @@ public class AdminController {
         return worldBean.modifySync(world -> {
             final TransportFlights.Flight flight = world.transportFlights().byId(tfId).orElseThrow();
             flight.setStatus(TransportFlights.Status.Cancelled);
-            return "T/F # " + tfId + " cancelled";
+            return "T/F #" + tfId + " cancelled";
         });
     }
 
@@ -269,14 +269,14 @@ public class AdminController {
             final int flightId = transportFlight.getFlightMissionId();
             final int scheduledFlightId = transportFlight.getScheduledFlightId();
             world.transportFlights().deleteById(tfId);
-            results.add("T/F # " + tfId + " removed");
+            results.add("T/F #" + tfId + " removed");
 
             if (flightId == 0) {
                 results.add("F/M # is 0");
             } else {
                 final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightId);
                 if (mission.isEmpty()) {
-                    results.add("F/M # " + flightId + " NOT FOUND");
+                    results.add("F/M #" + flightId + " NOT FOUND");
                 }
             }
 
@@ -285,7 +285,7 @@ public class AdminController {
             } else {
                 final Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(scheduledFlightId);
                 if (scheduledFlight.isEmpty()) {
-                    results.add("S/F # " + scheduledFlightId + " NOT FOUND");
+                    results.add("S/F #" + scheduledFlightId + " NOT FOUND");
                 } else {
                     world.scheduledFlights().deleteById(scheduledFlightId);
                 }
@@ -304,7 +304,7 @@ public class AdminController {
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
 
-            return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 
@@ -316,7 +316,7 @@ public class AdminController {
 
             AircraftHelper.moveParkedAircraftToAnotherAirport(world, aircraft, airport);
 
-            return "A/C # " + aircraft.getId() + " is parked in airport # " + aircraft.getLocationAirportId();
+            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 
@@ -342,7 +342,7 @@ public class AdminController {
     public String journeyFlight(@RequestParam(name = "journeyId") final int journeyId) {
         return worldBean.modifySync(world -> {
             world.journeys().deleteById(journeyId);
-            return "JRY # " + journeyId + " removed";
+            return "JRY #" + journeyId + " removed";
         });
     }
 

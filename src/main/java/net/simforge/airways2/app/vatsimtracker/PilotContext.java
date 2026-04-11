@@ -654,8 +654,8 @@ public class PilotContext {
     private String missionLogHead(final FlightMissions.Mission mission, final Flightplan flightplan) {
         return String.format("[%s] f/m #%s, a/c #%s : %s -> %s",
                 pilotNumber,
-                mission != null ? "#" + mission.getId() : "-",
-                mission != null ? "#" + mission.getAircraftId() : "-",
+                mission != null ? mission.getId() : "-",
+                mission != null ? mission.getAircraftId() : "-",
                 flightplan != null ? flightplan.getDeparture() : "????",
                 flightplan != null ? flightplan.getDestination() : "????");
     }

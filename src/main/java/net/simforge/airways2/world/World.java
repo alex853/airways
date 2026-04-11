@@ -37,7 +37,7 @@ public class World {
 
     private final TransportFlights transportFlights = new TransportFlights();
 
-    private final Airport2AirportDailyFlightStats airport2airportDailyFlightStats = new Airport2AirportDailyFlightStats();
+    private final Airport2AirportDailyFlightStat airport2airportDailyFlightStats = new Airport2AirportDailyFlightStat();
 
     private final CityFlows cityFlows = new CityFlows(this);
     private final City2CityFlows city2CityFlows = new City2CityFlows();
@@ -220,7 +220,7 @@ public class World {
         return transportFlightControl;
     }
 
-    public Airport2AirportDailyFlightStats airport2airportDailyFlightStats() {
+    public Airport2AirportDailyFlightStat airport2airportDailyFlightStats() {
         return airport2airportDailyFlightStats;
     }
 
@@ -265,10 +265,10 @@ public class World {
             timing("TransportFlightProcessor", () -> TransportFlightProcessor.process(this));
             timing("JourneyProcessor", () -> JourneyProcessor.process(this));
 
-            timing("RandomFlightMissionGenerator", () -> RandomFlightMissionGenerator.process(this));
+//            timing("RandomFlightMissionGenerator", () -> RandomFlightMissionGenerator.process(this));
             timing("ScheduledFlightMissionGenerator", () -> ScheduledFlightMissionGenerator.process(this));
 
-            timing("Airport2AirportDailyFlightStatsRotation", () -> Airport2AirportDailyFlightStatsRotation.process(this));
+            timing("Airport2AirportDailyFlightStatsRotation", () -> Airport2AirportDailyFlightStatRotation.process(this));
 
             timing("CityFlowsProcessor", () -> CityFlowsProcessor.process(this));
             timing("City2CityFlowsProcessor", () -> City2CityFlowsProcessor.process(this));
