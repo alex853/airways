@@ -519,7 +519,7 @@ public class AdminController {
         });
     }
 
-    @GetMapping(value = "/flows/c2c", produces = "text/plain")
+    @GetMapping(value = "/flows/c2c/print", produces = "text/plain")
     public String printC2CFlowStatus(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
         return worldBean.read(world -> {
             City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId).orElseThrow();
@@ -529,6 +529,15 @@ public class AdminController {
                     c2c.getNextGroupSize(),
                     c2c.getAccumulatedFlow(),
                     Time.toLdtOrNull(c2c.getAccumulatedFlowTime()));
+        });
+    }
+
+    @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")
+    public String updateC2CFlowHeartbeat(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
+        return worldBean.modifySync(world -> {
+            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId).orElseThrow();
+            c2c.setHeartbeatTime(world.getWorldTime());
+            return "Done";
         });
     }
 
