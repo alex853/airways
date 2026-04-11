@@ -74,7 +74,7 @@ public class FlightBoardController {
     @GetMapping("/shadow-jet")
     public List<FlightDto> getShadowJet() {
         return worldBean.read(world -> getFlights(world,
-                        fm -> isPlannedArrivalTimeWithin6hours(world, fm)
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
                                 && isShadowJetFlight(world, fm)
                                 && hasTransportFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
@@ -89,12 +89,8 @@ public class FlightBoardController {
         return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
     }
 
-    private static boolean isPlannedArrivalTimeWithin6hours(World world, FlightMissions.Mission fm) {
-        return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - 6 * Time.ONE_HOUR;
-    }
-
-    private static boolean isPlannedArrivalTimeWithin12hours(World world, FlightMissions.Mission fm) {
-        return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR;
+    private static boolean isPlannedArrivalTimeWithinNHours(World world, FlightMissions.Mission fm, int hours) {
+        return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - hours * Time.ONE_HOUR;
     }
 
 /*    @GetMapping("/busy-birds")
@@ -124,18 +120,29 @@ public class FlightBoardController {
                     fm.getId(),
                     fm.getStatus().name(),
 //                    TimeTools.ts(flight.getHeartbeatTime()),
+
                     tf != null ? tf.getId() : 0,
                     tf != null ? tf.getStatus().name() : null,
                     sf != null ? ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()) : null,
 //                    mission.map(FlightMissions.Mission::isModePlayerCharacter).orElse(false),
+
                     world.airports().getIcao(fm.getDepartureAirportId()).orElse(null),
                     world.airports().getIcao(fm.getDestinationAirportId()).orElse(null),
+
                     fm.getDateOfFlight().toString(),
+
                     TimeTools.hhmmPlusDaysOrNull(fm.getPlannedDepartureWorldTime()),
                     TimeTools.hhmmPlusDaysOrNull(fm.getPlannedArrivalWorldTime()),
+
                     TimeTools.hhmmPlusDaysOrNull(fm.getActualDepartureWorldTime()),
+                    TimeTools.hhmmPlusDaysOrNull(fm.getActualTakeoffWorldTime()),
+                    TimeTools.hhmmPlusDaysOrNull(fm.getActualLandingWorldTime()),
                     TimeTools.hhmmPlusDaysOrNull(fm.getActualArrivalWorldTime()),
+
+                    TimeTools.hhmmPlusDaysOrNull(timeline.getTakeoff().getEstimatedTime()),
+                    TimeTools.hhmmPlusDaysOrNull(timeline.getLanding().getEstimatedTime()),
                     TimeTools.hhmmPlusDaysOrNull(timeline.getBlocksOn().getEstimatedTime()),
+
                     tf != null ? tf.getTotalTickets().toString() : null,
                     tf != null ? (tf.getTotalTickets().getTotal() - tf.getRemainedTickets().getTotal()) : null,
                     tf != null ? (tf.getPaxCheckedIn() > 0 ? tf.getPaxCheckedIn() : null) : null,
@@ -160,7 +167,11 @@ public class FlightBoardController {
         private String pDep;
         private String pArr;
         private String aDep;
+        private String aTkf;
+        private String aLdg;
         private String aArr;
+        private String eTkf;
+        private String eLdg;
         private String eArr;
         private String tTkts;
         private Integer sTkts;
