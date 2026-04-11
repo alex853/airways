@@ -88,10 +88,11 @@ public class ShadowJetLogic {
         String route = from + "-" + to;
 
         if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) {
+            log.warn("Transport flight pro1visioning - {}", route);
             return;
         }
 
-        log.warn("Transport flight provision for ShadowJet has been started for route {}", route);
+        log.warn("Transport flight provisioning - {}", route);
 
         // todo ak1 cabin layout depending on aircraft type - lets collect few most frequently used aircraft types
         // todo ak1 cabin layout depending on aircraft type - manually put that information into some dictionary
