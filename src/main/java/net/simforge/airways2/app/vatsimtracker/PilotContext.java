@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 
 public class PilotContext {
     private static final Logger log = LoggerFactory.getLogger(PilotContext.class);
+    @SuppressWarnings("unused")
     private static final File pilotLogsRoot = new File("./vatsim-tracker/pilot-logs/");
     public static final Set<String> worldIcaos = new TreeSet<>();
 
@@ -86,6 +87,7 @@ public class PilotContext {
         return Geo.coords(positionLatitude, positionLongitude);
     }
 
+    @SuppressWarnings("unused")
     public String getPositionLastSeen() {
         return positionLastSeen;
     }
@@ -550,6 +552,8 @@ public class PilotContext {
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
                 world.flightMissionControl().blocksOn(mission);
                 world.flightMissionControl().finish(mission);
+
+                ShadowJetLogic.deboardTransportFlightIfExists(world, mission);
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }

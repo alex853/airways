@@ -154,4 +154,15 @@ public class ShadowJetLogic {
         transportFlight.setStatus(TransportFlights.Status.Cancelled);
         log.warn("Transport flight cancellation - f/m #{}, t/f #{} - flight cancelled", mission.getId(), transportFlight.getId());
     }
+
+    public static void deboardTransportFlightIfExists(World world, FlightMissions.Mission mission) {
+        Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
+        if (transportFlightO.isEmpty()) {
+            return;
+        }
+
+        TransportFlights.Flight transportFlight = transportFlightO.get();
+        world.transportFlightControl().startDeboarding(transportFlight);
+        log.warn("Transport flight deboarding - f/m #{}, t/f #{} - deboarding started", mission.getId(), transportFlight.getId());
+    }
 }
