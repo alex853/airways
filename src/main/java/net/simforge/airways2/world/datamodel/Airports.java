@@ -72,8 +72,8 @@ public class Airports {
         return storage.all();
     }
 
-    public String getIcao(final int airportId) {
-        return byId(airportId).orElseThrow().getIcao();
+    public Optional<String> getIcao(final int airportId) {
+        return byId(airportId).map(Airport::getIcao);
     }
 
     public class Airport {

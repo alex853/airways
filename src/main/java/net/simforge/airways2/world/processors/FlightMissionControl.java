@@ -95,7 +95,7 @@ public class FlightMissionControl {
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightDepartsFromGate);
 
         world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
-        log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
+        log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow());
     }
 
     public void takeoff(final FlightMissions.Mission mission) {
@@ -115,7 +115,7 @@ public class FlightMissionControl {
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightTakeoffs);
 
         world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
-        log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()));
+        log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow());
     }
 
     public void landing(final FlightMissions.Mission mission, Airports.Airport landingAirport) {
@@ -135,7 +135,7 @@ public class FlightMissionControl {
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightLands);
 
         world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
-        log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()));
+        log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()).orElseThrow());
     }
 
     public void blocksOn(final FlightMissions.Mission mission) {
@@ -156,7 +156,7 @@ public class FlightMissionControl {
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightArrivesToGate);
 
         world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()));
+        log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow());
     }
 
     public void finish(final FlightMissions.Mission mission) {

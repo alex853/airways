@@ -46,7 +46,7 @@ public class GeoController {
                             c.getLatitude(),
                             c.getLongitude(),
                             world.airport2city().allByCityId(c.getId())
-                                    .map(l -> world.airports().getIcao(l.getAirportId()))
+                                    .map(l -> world.airports().getIcao(l.getAirportId()).orElseThrow())
                                     .toList()))
                     .toList());
         }
@@ -82,11 +82,11 @@ public class GeoController {
                         try (final Timing.Timer ignored3 = Timing.label("GeoController - getAirportDetails # part3")) {
                             final Map<String, IcaoToFlights> outboundConnections = world.airport2airportDailyFlightStats()
                                     .allByFromAirportId(airport.getId()).stream()
-                                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getToAirportId()), fs.getTotalCount()))
+                                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getToAirportId()).orElseThrow(), fs.getTotalCount()))
                                     .collect(Collectors.toMap(p -> p.icao, p -> p));
                             final Map<String, IcaoToFlights> inboundConnections = world.airport2airportDailyFlightStats()
                                     .allByToAirportId(airport.getId()).stream()
-                                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getFromAirportId()), fs.getTotalCount()))
+                                    .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getFromAirportId()).orElseThrow(), fs.getTotalCount()))
                                     .collect(Collectors.toMap(p -> p.icao, p -> p));
                             try (final Timing.Timer ignored4 = Timing.label("GeoController - getAirportDetails # part4")) {
                                 final Map<String, IcaoToFlights> totalConnections = Stream.concat(

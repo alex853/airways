@@ -83,8 +83,8 @@ public class ShadowJetLogic {
     }
 
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
-        String from = world.airports().getIcao(mission.getDepartureAirportId());
-        String to = world.airports().getIcao(mission.getDestinationAirportId());
+        String from = world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow();
+        String to = world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow();
         String route = from + "-" + to;
 
         if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) {

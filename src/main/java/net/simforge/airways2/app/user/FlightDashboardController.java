@@ -292,8 +292,8 @@ public class FlightDashboardController {
                 flight.getStatus().name(),
                 getNextPlannedFlightMissionStatus(flight),
                 getFlightMissionShownElements(flight, transportFlight, world),
-                world.airports().getIcao(flight.getDepartureAirportId()),
-                world.airports().getIcao(flight.getDestinationAirportId()),
+                world.airports().getIcao(flight.getDepartureAirportId()).orElseThrow(),
+                world.airports().getIcao(flight.getDestinationAirportId()).orElseThrow(),
                 TimeTools.ymdOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime())

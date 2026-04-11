@@ -64,12 +64,12 @@ public class JourneyController {
                 j.isSpecialProcessing() ? "S" : "n",
                 tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
-                fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
-                fm1.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null),
+                fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId()).orElseThrow()).orElse(null),
+                fm1.map(f -> world.airports().getIcao(f.getDestinationAirportId()).orElseThrow()).orElse(null),
                 tf2.map(TransportFlights.Flight::getId).orElse(null),
                 tf2.map(f -> f.getStatus().name()).orElse(null),
-                fm2.map(f -> world.airports().getIcao(f.getDepartureAirportId())).orElse(null),
-                fm2.map(f -> world.airports().getIcao(f.getDestinationAirportId())).orElse(null)
+                fm2.map(f -> world.airports().getIcao(f.getDepartureAirportId()).orElseThrow()).orElse(null),
+                fm2.map(f -> world.airports().getIcao(f.getDestinationAirportId()).orElseThrow()).orElse(null)
         );
     }
 
