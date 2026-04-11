@@ -49,7 +49,7 @@ public class Journeys {
     private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeRawField);
     private final BitAccessField.Section cabinServiceBitField = typeModeFieldBits.section(0, 2);
     private final BitAccessField.Section attemptCounterBitField = typeModeFieldBits.section(2, 2);
-    private final BitAccessField.Section specialProcessingBitField = typeModeFieldBits.section(4, 1);
+    private final BitAccessField.Section busyBirdsProcessingBitField = typeModeFieldBits.section(4, 1);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
 
@@ -150,12 +150,12 @@ public class Journeys {
             attemptCounterBitField.setInt(id, attemptCounter);
         }
 
-        public boolean isSpecialProcessing() {
-            return specialProcessingBitField.getBoolean(id);
+        public boolean isBusyBirdsProcessing() {
+            return busyBirdsProcessingBitField.getBoolean(id);
         }
 
-        public void setSpecialProcessing(final boolean specialProcessing) {
-            specialProcessingBitField.setBoolean(id, specialProcessing);
+        public void setBusyBirdsProcessing(final boolean busyBirdsProcessing) {
+            busyBirdsProcessingBitField.setBoolean(id, busyBirdsProcessing);
         }
 
         public int getHeartbeatTime() {
@@ -238,12 +238,12 @@ public class Journeys {
                 || statusBitField.getInt(recordId) == status2.code());
     }
 
-    public Storage.Condition<Journey> bySpecialProcessing() {
-        return specialProcessingBitField::getBoolean;
+    public Storage.Condition<Journey> byBusyBirdsProcessing() {
+        return busyBirdsProcessingBitField::getBoolean;
     }
 
-    public Storage.Condition<Journey> byNoSpecialProcessing() {
-        return recordId -> !specialProcessingBitField.getBoolean(recordId);
+    public Storage.Condition<Journey> byNoBusyBirdsProcessing() {
+        return recordId -> !busyBirdsProcessingBitField.getBoolean(recordId);
     }
 
     public enum Status {

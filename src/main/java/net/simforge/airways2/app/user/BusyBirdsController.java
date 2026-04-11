@@ -9,6 +9,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,8 @@ public class BusyBirdsController {
 
             return world.busyBirdsMissionControl().getJourneysToBook().stream()
                     .map(j -> {
-                        final Cities.City fromCity = world.cities().byId(j.getFromCityId()).get();
-                        final Cities.City toCity = world.cities().byId(j.getToCityId()).get();
+                        final Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+                        final Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
                         final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
                         final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
@@ -66,14 +67,14 @@ public class BusyBirdsController {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             return world.aircrafts()
-                    .byAircraftOperatorId(world.busyBirdsMissionControl().getBusyBirdsOperator().getId())
+                    .byAircraftOperatorId(World25.BusyBirdsOperatorId)
                     .filter(Aircrafts::isIdleAndParkedAtAirport)
                     .map(a -> new AircraftDto(
                             a.getId(),
-                            world.aircraftTypes().byId(a.getAircraftTypeId()).get().getIcao(),
+                            world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                             a.getRegNo(),
                             a.getLocationAirportId(),
-                            world.airports().byId(a.getLocationAirportId()).get().getIcao()))
+                            world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao()))
                     .toList();
         });
     }
@@ -85,8 +86,8 @@ public class BusyBirdsController {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
-            final Journeys.Journey journey = world.journeys().byId(missionId).get();
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+            final Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
 
             final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
 
@@ -112,8 +113,8 @@ public class BusyBirdsController {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).get();
-            final Journeys.Journey journey = world.journeys().byId(missionId).get();
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+            final Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
 
             final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
 

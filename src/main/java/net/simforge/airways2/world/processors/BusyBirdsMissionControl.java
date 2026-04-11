@@ -19,11 +19,11 @@ public class BusyBirdsMissionControl {
     }
 
     public AircraftOperators.AircraftOperator getBusyBirdsOperator() {
-        return world.aircraftOperators().byIata(World25.BusyBirdsIata).orElseThrow();
+        return world.aircraftOperators().byId(World25.BusyBirdsOperatorId).orElseThrow();
     }
 
     public List<Journeys.Journey> getJourneysToBook() {
-        return world.journeys().filter(world.journeys().bySpecialProcessing())
+        return world.journeys().filter(world.journeys().byBusyBirdsProcessing())
                 .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                 .toList();
     }

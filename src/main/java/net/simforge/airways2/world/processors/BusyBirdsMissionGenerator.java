@@ -58,7 +58,7 @@ public class BusyBirdsMissionGenerator {
 
         log.info("there are {} journey(s) to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
 
-        List<Journeys.Journey> foundJourneys = world.journeys().filter(world.journeys().byNoSpecialProcessing())
+        List<Journeys.Journey> foundJourneys = world.journeys().filter(world.journeys().byNoBusyBirdsProcessing())
                 .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                 .filter(j -> j.getCabinService() == CabinLayout.Service.F)
                 .toList();
@@ -72,9 +72,9 @@ public class BusyBirdsMissionGenerator {
 
         log.info("journey {} - from {} to {}, pax {} - picked up",
                 journey.toString(),
-                world.cities().byId(journey.getFromCityId()).get().getName(),
-                world.cities().byId(journey.getToCityId()).get().getName(),
+                world.cities().byId(journey.getFromCityId()).orElseThrow().getName(),
+                world.cities().byId(journey.getToCityId()).orElseThrow().getName(),
                 journey.getGroupSize());
-        journey.setSpecialProcessing(true);
+        journey.setBusyBirdsProcessing(true);
     }
 }

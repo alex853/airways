@@ -39,8 +39,8 @@ public class JourneyProcessor {
     }
 
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
-        if (journey.isSpecialProcessing()) {
-            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
+        if (journey.isBusyBirdsProcessing()) {
+            // just stop processing the journey in case of busy birds
             return;
         }
 
@@ -229,7 +229,8 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
-        if (journey.isReturningBack()) {
+        // in case of busy birds - finish the journey, do not switch to return trip
+        if (journey.isReturningBack() || journey.isBusyBirdsProcessing()) {
             world.journeyControl().finish(journey);
         } else {
             world.journeyControl().switchToReturnTrip(journey);

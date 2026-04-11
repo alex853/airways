@@ -447,10 +447,10 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/journey/special-processing")
+    @GetMapping("/journey/set-busy-birds-processing")
     public String turnToSpecialProcessing(@RequestParam("jId") final int jId) {
         return worldBean.modifySync(world -> {
-            world.journeys().byId(jId).orElseThrow().setSpecialProcessing(true);
+            world.journeys().byId(jId).orElseThrow().setBusyBirdsProcessing(true);
             return "DONE";
         });
     }
