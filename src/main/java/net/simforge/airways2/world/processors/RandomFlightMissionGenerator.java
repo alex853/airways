@@ -10,7 +10,6 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -19,9 +18,6 @@ public class RandomFlightMissionGenerator {
     private static long lastExecution;
 
     public static void process(final World world) {
-        if (LocalDateTime.now().getMinute() != 0) {
-            return;
-        }
         if (System.currentTimeMillis() - lastExecution < 3600000) {
             return;
         }
@@ -42,7 +38,7 @@ public class RandomFlightMissionGenerator {
         final int departureTime = world.getWorldTime() + 4 * Time.ONE_HOUR;
 
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
-        world.transportFlightControl().createTransportFlight(mission);
+        world.transportFlightControl().createTransportFlight(mission); // todo ak1 apply fixes from shadowjet code
 
         world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.pilotId(0), mission, aircraft);
         log.info("f/m #{} - flight dispatched randomly, aircraft {}", mission.getId(), aircraft.getRegNo());

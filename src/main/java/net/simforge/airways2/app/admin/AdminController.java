@@ -169,6 +169,11 @@ public class AdminController {
         return "Pilot context for p/n #" + pilotNumber + " REMOVED";
     }
 
+    @GetMapping(value = "/flight/reschedule", produces = "text/plain")
+    public String rescheduleFlight(@RequestParam(name = "id") int fmId) {
+        return null; // todo ak0 00000000 implement!
+    }
+
     @GetMapping(value = "/flight/cancel", produces = "text/plain")
     public String cancelFlight(@RequestParam(name = "id") int fmId) {
         return worldBean.modifySync(world -> {
@@ -178,6 +183,7 @@ public class AdminController {
             fm.setStatus(FlightMissions.Status.Cancelled);
             results.add("F/M #" + fmId + " cancelled");
 
+            // todo ak1 cancelling a flight while the flight is not active or is not flying should not update an aircraft as this will affect another flight if there is any one is in progress
             Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, fm);
             results.add("A/C #" + aircraft.getId() + ", " + aircraft.getRegNo() + " is parked in " + world.airports().getIcao(aircraft.getLocationAirportId()).orElseThrow());
 

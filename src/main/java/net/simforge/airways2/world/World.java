@@ -274,7 +274,7 @@ public class World {
             timing("City2CityFlowsProcessor", () -> City2CityFlowsProcessor.process(this));
 
             timing("MiscCleanups", () -> MiscCleanups.process(this));
-            timing("FlightsCleanup", () -> FlightsCleanup.process(this));
+            timing("FlightsCleanup", () -> FlightCleanup.process(this));
 
             timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
         } catch (final RuntimeException e) {
