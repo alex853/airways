@@ -39,8 +39,9 @@ public class World25_011_busybirds {
 
         world.airportFacilities().createIfAbsent(eglf, busybirds, AirportFacilities.Type.BaseAirport);
 
-        world.airportFacilities().createIfAbsent(world.airports().byIcao("LFPB").get(), AirportFacilities.Type.BusinessAviationTerminal);
-        world.airportFacilities().createIfAbsent(world.airports().byIcao("EDDM").get(), AirportFacilities.Type.BusinessAviationTerminal);
+        world.airportFacilities().createIfAbsent(world.airports().byIcao("LFPB").orElseThrow(), AirportFacilities.Type.BusinessAviationTerminal);
+        world.airportFacilities().createIfAbsent(world.airports().byIcao("EDDM").orElseThrow(), AirportFacilities.Type.BusinessAviationTerminal);
+        world.airportFacilities().createIfAbsent(world.airports().byIcao("LEBL").orElseThrow(), AirportFacilities.Type.BusinessAviationTerminal);
 
         world.save();
     }
