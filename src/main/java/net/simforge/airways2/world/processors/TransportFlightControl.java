@@ -148,10 +148,10 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(TransportFlightHelper.flightStatusAllowsToStartBoarding(transportFlight.getStatus()));
 
-        paxManager().startBoarding(transportFlight);
-
         transportFlight.setStatus(TransportFlights.Status.Boarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
+
+        paxManager().startBoarding(transportFlight);
 
         log.info("t/f #{} - boarding started", transportFlight.getId());
         world.log(EventLog.EventType.TransportFlightBoardingStarted, EventLog.id(transportFlight));

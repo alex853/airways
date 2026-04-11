@@ -31,7 +31,8 @@ public class PaxManager {
 
     public void startBoarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding
+                || transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
         log.info("t/f #{} - boarding - start", transportFlight.getId());
 
@@ -168,7 +169,7 @@ public class PaxManager {
         public int getRemainingToBoard() {
             return remainingToBoard;
         }
-        
+
         public boolean hasCurrToBoard() {
             return currToBoardId != 0;
         }
