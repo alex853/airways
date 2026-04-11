@@ -87,7 +87,7 @@ public class ShadowJetLogic {
         String to = world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow();
         String route = from + "-" + to;
 
-        if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) {
+        if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) { // todo ak0 add support for EGLL-LFPG pair
             log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed", mission.getId(), route);
             return;
         }
@@ -105,7 +105,7 @@ public class ShadowJetLogic {
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - minor c2c flow increase applied", mission.getId(), transportFlight.getId());
 
-        int fromCityId = "EDDF-EDDM".equals(route) ? 27 : 7;
+        int fromCityId = "EDDF-EDDM".equals(route) ? 27 : 7; // todo ak1 support for several cities attached to the airport
         int toCityId = "EDDM-EDDF".equals(route) ? 7 : 27;
 
         List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))

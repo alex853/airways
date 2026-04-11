@@ -165,7 +165,7 @@ public class FlightMissions {
                 int recordId = ids.get(0);
                 int actualHeartbeatTime = readHeartbeatTime(recordId);
                 if (actualHeartbeatTime != minimalHeartbeatTime) {
-                    log.warn("MISMATCH BETWEEN ACTUAL AND INDEXED HEARTBEAT TIMES"); // todo ak1 will deletion fix resolve it?
+                    log.warn("MISMATCH BETWEEN ACTUAL AND INDEXED HEARTBEAT TIMES"); // todo ak0 will deletion fix resolve it?
                     //noinspection EmptyTryBlock
                     try (Timing.Timer ignored2 = Timing.label("FlightMissions.nextForHeartbeat.MISMATCH")) {} // this should highlight this occurence in the timing report
 

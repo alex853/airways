@@ -65,11 +65,11 @@ public class Aircrafts {
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak1 migrate to filter1
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak2 migrate to filter1
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak1 migrate to filter1
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak2 migrate to filter1
     }
 
     public Optional<Aircraft> byId(final int id) {

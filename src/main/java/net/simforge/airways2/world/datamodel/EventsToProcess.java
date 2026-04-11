@@ -68,7 +68,7 @@ public class EventsToProcess {
 
     @Deprecated
     public Collection<Event> filter(final Predicate<EventsToProcess.Event> condition) {
-        return storage.filter(condition); // todo ak1 migrate to filter1
+        return storage.filter(condition); // todo ak2 migrate to filter1
     }
 
     public void deleteById(final int id) {

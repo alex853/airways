@@ -169,13 +169,29 @@ public class AdminController {
         return "Pilot context for p/n #" + pilotNumber + " REMOVED";
     }
 
-    @GetMapping("/flight/cancel")
-    public String cancelFlight(@RequestParam(name = "flightId") final int flightId) {
+    @GetMapping(value = "/flight/cancel", produces = "text/plain")
+    public String cancelFlight(@RequestParam(name = "id") int fmId) {
         return worldBean.modifySync(world -> {
-            final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-            mission.setStatus(FlightMissions.Status.Cancelled);
-            final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
-            return "F/M #" + flightId + " cancelled, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
+            List<String> results = new ArrayList<>();
+
+            FlightMissions.Mission fm = world.flightMissions().byId(fmId).orElseThrow();
+            fm.setStatus(FlightMissions.Status.Cancelled);
+            results.add("F/M #" + fmId + " cancelled");
+
+            Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, fm);
+            results.add("A/C #" + aircraft.getId() + ", " + aircraft.getRegNo() + " is parked in " + world.airports().getIcao(aircraft.getLocationAirportId()).orElseThrow());
+
+            Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fmId);
+            if (tf.isPresent()) {
+                // todo ak0 deboard all the journeys onboard
+
+                tf.get().setStatus(TransportFlights.Status.Cancelled);
+                results.add("T/F #" + tf.get().getId() + " cancelled");
+            } else {
+                results.add("T/F not found");
+            }
+
+            return Strings.join(results, '\n');
         });
     }
 
