@@ -74,9 +74,9 @@ public class FlightBoardController {
     @GetMapping("/shadow-jet")
     public List<FlightDto> getShadowJet() {
         return worldBean.read(world -> getFlights(world,
-                fm -> isPlannedArrivalTimeWithin12hours(world, fm)
-                        && isShadowJetFlight(world, fm)
-                        && hasTransportFlight(world, fm)))
+                        fm -> isPlannedArrivalTimeWithin6hours(world, fm)
+                                && isShadowJetFlight(world, fm)
+                                && hasTransportFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList();
     }
@@ -87,6 +87,10 @@ public class FlightBoardController {
 
     private static boolean isShadowJetFlight(World world, FlightMissions.Mission fm) {
         return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
+    }
+
+    private static boolean isPlannedArrivalTimeWithin6hours(World world, FlightMissions.Mission fm) {
+        return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - 6 * Time.ONE_HOUR;
     }
 
     private static boolean isPlannedArrivalTimeWithin12hours(World world, FlightMissions.Mission fm) {
@@ -121,6 +125,7 @@ public class FlightBoardController {
                     fm.getStatus().name(),
 //                    TimeTools.ts(flight.getHeartbeatTime()),
                     tf != null ? tf.getId() : 0,
+                    tf != null ? tf.getStatus().name() : null,
                     sf != null ? ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()) : null,
 //                    mission.map(FlightMissions.Mission::isModePlayerCharacter).orElse(false),
                     world.airports().getIcao(fm.getDepartureAirportId()).orElse(null),
@@ -146,6 +151,7 @@ public class FlightBoardController {
         private String fmSt;
 //        private String hrtBt;
         private int tfId;
+        private String tfSt;
         private String sfNo;
         //private boolean pcMode;
         private String dep;
