@@ -74,6 +74,19 @@ public class TransportFlightController {
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
+                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == 2) // todo ak1 this constant!!!!   !!!!
+                        .orElse(false))
+                .map(f -> from(world, f))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .toList());
+    }
+
+    @GetMapping("/busy-birds")
+    public List<FlightDto> getBusyBirds() {
+        return worldBean.read(world -> world.transportFlights().all()
+                .filter(f -> world.flightMissions()
+                        .byId(f.getFlightMissionId())
+                        .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
                                 && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == 3) // todo ak1 this constant!!!!   !!!!
                         .orElse(false))
                 .map(f -> from(world, f))
