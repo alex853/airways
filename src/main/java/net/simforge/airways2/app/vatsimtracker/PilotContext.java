@@ -576,11 +576,11 @@ public class PilotContext {
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
                     || mission.get().getStatus() == FlightMissions.Status.Departure) {
                 world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
+
+                ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
-
-            // todo ak1 shadowjet - cancel t/f if exists and restore journeys
 
             FlightStats.event("cancelBeforeTakeoffIfExists");
 
@@ -605,11 +605,11 @@ public class PilotContext {
 
             if (mission.get().getStatus() == FlightMissions.Status.Flying) {
                 world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
+
+                ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
-
-            // todo ak1 shadowjet - cancel t/f if exists and restore journeys
 
             FlightStats.event("cancelFromFlying");
 

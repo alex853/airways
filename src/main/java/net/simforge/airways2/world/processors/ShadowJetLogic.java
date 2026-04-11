@@ -138,4 +138,8 @@ public class ShadowJetLogic {
         journey.setTransportFlight1Id(flight.getId());
         world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
     }
+
+    public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
+        // todo ak0 implement it!!!
+    }
 }
