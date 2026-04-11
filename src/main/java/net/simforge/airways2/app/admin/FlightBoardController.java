@@ -95,7 +95,7 @@ public class FlightBoardController {
     }
 
     private static boolean isBusyBirdsFlight(World world, FlightMissions.Mission fm) {
-        return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
+        return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.BusyBirdsOperatorId;
     }
 
     private static boolean isShadowJetFlight(World world, FlightMissions.Mission fm) {
