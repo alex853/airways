@@ -130,7 +130,7 @@ public class ShadowJetLogic {
             log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
         }
 
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys books with {} pax", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys booked with {} pax", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
     // todo ak1 copy&paste from JourneyProcessor
