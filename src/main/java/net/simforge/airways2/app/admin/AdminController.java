@@ -305,10 +305,21 @@ public class AdminController {
                     .toList();
             results.add("Found " + brokenTfs.size() + " broken transport flights");
 
-//            final int flightId = transportFlight.getFlightMissionId();
-//            final int scheduledFlightId = transportFlight.getScheduledFlightId();
-//            world.transportFlights().deleteById(tfId);
-//            results.add("T/F #" + tfId + " removed");
+            int count = 0;
+            for (int i = 0; i < Math.min(10, brokenTfs.size()); i++) {
+                TransportFlights.Flight tf = brokenTfs.get(i);
+                final int scheduledFlightId = tf.getScheduledFlightId();
+
+                results.add("T/F #" + tf.getId() + " removed");
+                if (world.scheduledFlights().byId(scheduledFlightId).isPresent()) {
+                    world.scheduledFlights().deleteById(scheduledFlightId);
+                    results.add("S/F #" + tf.getId() + " removed");
+                }
+
+                count++;
+            }
+
+            results.add("Removed " + count + " transport flights");
 
             return Strings.join(results, '\n');
         });
