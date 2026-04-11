@@ -81,8 +81,21 @@ public class FlightBoardController {
                 .toList();
     }
 
+    @GetMapping("/busy-birds")
+    public List<FlightDto> getBusyBirds() {
+        return worldBean.read(world -> getFlights(world,
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
+                                && isBusyBirdsFlight(world, fm)))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .toList();
+    }
+
     private boolean hasTransportFlight(World world, FlightMissions.Mission fm) {
         return world.transportFlights().byFlightMissionId(fm.getId()).isPresent();
+    }
+
+    private static boolean isBusyBirdsFlight(World world, FlightMissions.Mission fm) {
+        return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
     }
 
     private static boolean isShadowJetFlight(World world, FlightMissions.Mission fm) {
@@ -92,19 +105,6 @@ public class FlightBoardController {
     private static boolean isPlannedArrivalTimeWithinNHours(World world, FlightMissions.Mission fm, int hours) {
         return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - hours * Time.ONE_HOUR;
     }
-
-/*    @GetMapping("/busy-birds")
-    public List<FlightDto> getBusyBirds() {
-        return worldBean.read(world -> world.transportFlights().all()
-                .filter(f -> world.flightMissions()
-                        .byId(f.getFlightMissionId())
-                        .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.BusyBirdsOperatorId)
-                        .orElse(false))
-                .map(f -> from(world, f))
-                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
-                .toList());
-    }*/
 
     private static Stream<FlightDto> getFlights(World world,
                                                 Predicate<FlightMissions.Mission> flightMissionCondition) {
