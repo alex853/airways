@@ -519,6 +519,19 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/flows/c2c", produces = "text/plain")
+    public void printC2CFlowStatus(@RequestParam("from") int from, @RequestParam("to") int to) {
+        worldBean.read(world -> {
+            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(from, to).orElseThrow();
+            return String.format("C2C Flow #%s/%s\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
+                    from, to,
+                    Time.toLdtOrNull(c2c.getHeartbeatTime()),
+                    c2c.getNextGroupSize(),
+                    c2c.getAccumulatedFlow(),
+                    Time.toLdtOrNull(c2c.getAccumulatedFlowTime()));
+        });
+    }
+
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
