@@ -77,7 +77,7 @@ public class FlightBoardController {
                         fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
                                 && isShadowJetFlight(world, fm)
                                 && hasTransportFlight(world, fm)))
-                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
                 .toList();
     }
 
