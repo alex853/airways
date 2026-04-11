@@ -7,8 +7,10 @@ import java.io.IOException;
 
 public class World25 {
     public static final String name = "World25";
+    public static final int ShadowJetOperatorId = 2;
     public static final String ShadowJetIata = "SJ";
     public static final String ShadowJetIcao = "SJT";
+    public static final int BusyBirdsOperatorId = 3;
     public static final String BusyBirdsIata = "BB";
     public static final String BusyBirdsIcao = "BBD";
 

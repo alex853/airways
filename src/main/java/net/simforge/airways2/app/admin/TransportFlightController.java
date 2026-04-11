@@ -12,6 +12,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.datamodel.ScheduledFlights;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
+import net.simforge.airways2.worldbuilder.World25;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,7 +75,7 @@ public class TransportFlightController {
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == 2) // todo ak1 this constant!!!!   !!!!
+                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId)
                         .orElse(false))
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
@@ -87,7 +88,7 @@ public class TransportFlightController {
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == 3) // todo ak1 this constant!!!!   !!!!
+                                && world.aircrafts().byId(ff.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.BusyBirdsOperatorId)
                         .orElse(false))
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
