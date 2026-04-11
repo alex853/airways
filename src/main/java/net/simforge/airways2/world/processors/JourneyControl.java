@@ -123,13 +123,16 @@ public class JourneyControl {
 
         // todo ak2 'cancel journey safely' with removal all following tickets etc
 
-        final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        Journeys.Status oldStatus = journey.getStatus();
+        int oldHeartbeatTime = journey.getHeartbeatTime();
+
+        TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);
         
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        log.info("j/y #{} - too late to board, cleanup scheduled", journey.getId());
+        log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, cleanup scheduled", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
     }
 
     public void couldNotFindTickets(final Journeys.Journey journey) {
