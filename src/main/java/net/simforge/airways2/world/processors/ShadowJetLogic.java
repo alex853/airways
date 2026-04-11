@@ -140,6 +140,18 @@ public class ShadowJetLogic {
     }
 
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
-        // todo ak0 implement it!!!
+        Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
+        if (transportFlightO.isEmpty()) {
+            return;
+        }
+
+        TransportFlights.Flight transportFlight = transportFlightO.get();
+        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - starting a cancellation", mission.getId(), transportFlight.getId());
+
+        // todo ak0 deboard all the journeys onboard
+        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - {} PAX SHOULD BE DEBOARDED!!!!", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
+
+        transportFlight.setStatus(TransportFlights.Status.Cancelled);
+        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - flight cancelled", mission.getId(), transportFlight.getId());
     }
 }
