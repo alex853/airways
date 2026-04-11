@@ -74,10 +74,23 @@ public class FlightBoardController {
     @GetMapping("/shadow-jet")
     public List<FlightDto> getShadowJet() {
         return worldBean.read(world -> getFlights(world,
-                fm -> (fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                        && world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId))
+                fm -> isPlannedArrivalTimeWithin12hours(world, fm)
+                        && isShadowJetFlight(world, fm)
+                        && hasTransportFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList();
+    }
+
+    private boolean hasTransportFlight(World world, FlightMissions.Mission fm) {
+        return world.transportFlights().byFlightMissionId(fm.getId()).isPresent();
+    }
+
+    private static boolean isShadowJetFlight(World world, FlightMissions.Mission fm) {
+        return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
+    }
+
+    private static boolean isPlannedArrivalTimeWithin12hours(World world, FlightMissions.Mission fm) {
+        return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR;
     }
 
 /*    @GetMapping("/busy-birds")
@@ -128,7 +141,7 @@ public class FlightBoardController {
 
     @Data
     @AllArgsConstructor
-    private static class FlightDto {
+    public static class FlightDto {
         private int fmId;
         private String fmSt;
 //        private String hrtBt;
