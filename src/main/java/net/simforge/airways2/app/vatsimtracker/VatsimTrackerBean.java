@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.ZoneOffset;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
     private static final File root = new File("./vatsim-tracker/");
     private static final File lastProcessedReportFile = new File(root, "last-processed-report");
     private static final File contextsFile = new File(root, "contexts.csv");
-    private final Map<Integer, PilotContext> trackedPilots = new HashMap<>();
+    private final Map<Integer, PilotContext> trackedPilots = new ConcurrentHashMap<>();
     private String lastProcessedReport = null;
     private Map<Integer, Position> lastProcessedPositions = null;
 
@@ -253,6 +254,17 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
 
     public void removePilot(final int pilotNumber) { // todo ak3 thread safety?
         trackedPilots.remove(pilotNumber);
+    }
+
+    public Optional<PilotContext> getContextByFlightMissionId(int flightMissionId) {
+        try {
+            return trackedPilots.values().stream()
+                    .filter(c -> c.getFlightMissionId() == flightMissionId)
+                    .findFirst();
+        } catch (ConcurrentModificationException e) {
+            log.warn("Concurrency issue", e);
+            return Optional.empty();
+        }
     }
 
     private enum ThreadStatus {

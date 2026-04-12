@@ -3,6 +3,8 @@ package net.simforge.airways2.app.admin;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.vatsimtracker.PilotContext;
+import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -14,6 +16,8 @@ import net.simforge.airways2.world.datamodel.ScheduledFlights;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 import net.simforge.airways2.worldbuilder.World25;
+import net.simforge.commons.misc.JavaTime;
+import net.simforge.networkview.core.report.ReportUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +26,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -37,6 +42,8 @@ public class FlightBoardController {
     @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     private WorldRunnerBean worldBean;
+    @Autowired
+    private VatsimTrackerBean vatsimTrackerBean;
 
 /*    @GetMapping("/all")
     public List<FlightDto> getAll() {
@@ -106,7 +113,7 @@ public class FlightBoardController {
         return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - hours * Time.ONE_HOUR;
     }
 
-    private static Stream<FlightDto> getFlights(World world,
+    private Stream<FlightDto> getFlights(World world,
                                                 Predicate<FlightMissions.Mission> flightMissionCondition) {
         List<FlightMissions.Mission> flightMissions = world.flightMissions().all().filter(flightMissionCondition).toList();
 
@@ -116,10 +123,15 @@ public class FlightBoardController {
             ScheduledFlights.Flight sf = tf != null ? world.scheduledFlights().byId(tf.getScheduledFlightId()).orElse(null) : null;
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(fm.getAircraftId()).orElse(null);
 
+            PilotContext vc = vatsimTrackerBean.getContextByFlightMissionId(fm.getId()).orElse(null);
+
             return new FlightDto(
                     fm.getId(),
                     fm.getStatus().name(),
 //                    TimeTools.ts(flight.getHeartbeatTime()),
+
+                    vc != null ? vc.getFlightStage().name() : null,
+                    vc != null ? Duration.between(ReportUtils.fromTimestampJava(vc.getPositionLastSeen()), JavaTime.nowUtc()).toSeconds() : 0,
 
                     tf != null ? tf.getId() : 0,
                     tf != null ? tf.getStatus().name() : null,
@@ -156,6 +168,8 @@ public class FlightBoardController {
     public static class FlightDto {
         private int fmId;
         private String fmSt;
+        private String vcSt;
+        private long vcLs;
 //        private String hrtBt;
         private int tfId;
         private String tfSt;

@@ -41,6 +41,14 @@ public class TransportFlightProcessor {
             }
             case Boarding -> {
                 if (tfControl.isBoardingFinishTimePassed(transportFlight) || tfControl.areAllPaxBoarded(transportFlight)) {
+                    log.warn("t/f #{} - go to waitForDeparture, time passed {}, all boarded {}, on board {}, sold {}, total {}, remained {}",
+                            transportFlight.getId(),
+                            tfControl.isBoardingFinishTimePassed(transportFlight),
+                            tfControl.areAllPaxBoarded(transportFlight),
+                            transportFlight.getPaxOnBoard(),
+                            transportFlight.getSoldTickets(),
+                            transportFlight.getTotalTickets(),
+                            transportFlight.getRemainedTickets());
                     tfControl.waitForDeparture(transportFlight);
                 } else {
                     tfControl.continueBoarding(transportFlight);

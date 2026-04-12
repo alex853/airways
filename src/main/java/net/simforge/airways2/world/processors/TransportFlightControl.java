@@ -16,7 +16,7 @@ public class TransportFlightControl {
     private static final int BOARDING_TICK = Time.TICK;
     private static final int DEBOARDING_TICK = Time.ONE_MINUTE;
 
-    private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
+    private static final Logger log = LoggerFactory.getLogger(TransportFlightControl.class);
 
     private final World world;
 
