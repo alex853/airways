@@ -74,7 +74,7 @@ public class FlightBoardController {
     @GetMapping("/shadow-jet")
     public List<FlightDto> getShadowJet() {
         return worldBean.read(world -> getFlights(world,
-                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 6)
                                 && isShadowJetFlight(world, fm)
                                 && hasTransportFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
@@ -84,7 +84,7 @@ public class FlightBoardController {
     @GetMapping("/busy-birds")
     public List<FlightDto> getBusyBirds() {
         return worldBean.read(world -> getFlights(world,
-                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 6)
                                 && isBusyBirdsFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList();
