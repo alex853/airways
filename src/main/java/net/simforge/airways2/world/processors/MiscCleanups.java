@@ -23,8 +23,8 @@ public class MiscCleanups {
         final EventLog storage = world.eventLog();
         // todo ak2 'event log cleanup refinement' - increase time to 30 days, because most of events will be removed in flights cleanup code
         final Collection<EventLog.Event> outdated = storage.filter(e -> e.getTime() <= world.getWorldTime() - 7 * Time.ONE_DAY);
-        outdated.forEach(f -> storage.deleteById(f.getId()));
-        if (outdated.size() > 0) {
+        if (outdated.size() > 1000) {
+            outdated.forEach(f -> storage.deleteById(f.getId()));
             log.info("event log cleaned up - {} removed", outdated.size());
             storage.printDeletedRecordInfo();
         }
@@ -33,8 +33,8 @@ public class MiscCleanups {
     private static void cleanupEventsToProcess(final World world) {
         final EventsToProcess storage = world.eventsToProcess();
         final Collection<EventsToProcess.Event> outdated = storage.filter(e -> (e.getTime() <= world.getWorldTime() - 7 * Time.ONE_DAY) && e.getStatus() == Processed);
-        outdated.forEach(f -> storage.deleteById(f.getId()));
-        if (outdated.size() > 0) {
+        if (outdated.size() > 1000) {
+            outdated.forEach(f -> storage.deleteById(f.getId()));
             log.info("events-to-process cleaned up - {} removed", outdated.size());
             storage.printDeletedRecordInfo();
         }
