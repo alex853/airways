@@ -265,7 +265,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
             log.warn("Concurrency issue", e);
             return Optional.empty();
         }
-    }
+    } // todo ak2 thread safety
 
     private enum ThreadStatus {
         Startup,

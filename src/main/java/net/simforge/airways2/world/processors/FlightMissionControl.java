@@ -82,7 +82,7 @@ public class FlightMissionControl {
         world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
-        // todo ak2 t/f actions in case of flight cancellation
+        // todo ak2 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {

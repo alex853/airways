@@ -151,9 +151,9 @@ public class JourneyProcessor {
         return fromAirportIds.contains(tfm.fm.getDepartureAirportId()) && toAirportIds.contains(tfm.fm.getDestinationAirportId());
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForCheckin(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
-        //noinspection StatementWithEmptyBody todo ak2 resolve it
         if (flight.isEmpty()) {
             // todo ak2 'cancel journey safely'
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {

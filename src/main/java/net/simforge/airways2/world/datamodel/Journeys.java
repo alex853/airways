@@ -262,22 +262,22 @@ public class Journeys {
     }
 
     public enum Status {
-        //todo ak2 LookingForPersons(0),
+        // persons LookingForPersons(0),
         LookingForTickets(1),
-        //todo ak2 persons WaitingForFlight(2),
-        //todo ak2 persons TransferToAirport(3),
+        // location WaitingForFlight(2),
+        // locationTransferToAirport(3),
         WaitingForCheckIn(4),
         WaitingForBoarding(5),
         OnBoard(6),
         WaitingForDeboarding(7),
         JustArrived(8),
-        //todo ak2 persons TransferToCity(...),
+        // location TransferToCity(...),
         ItinerariesDone(9),
         Finished(10),
-        //todo ak2 persons CouldNotFindPersons(11),
+        // persons CouldNotFindPersons(11),
         CouldNotFindTickets(12),
         TooLateToBoard(13),
-        //todo ak2 not sure we need it Terminated(14),
+        // not sure we need it Terminated(14),
         ;
 
         private final int code;

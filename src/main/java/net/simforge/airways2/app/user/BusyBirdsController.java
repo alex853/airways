@@ -99,7 +99,7 @@ public class BusyBirdsController {
                     leg.getType().name(),
                     leg.getFromAirport().getIcao(),
                     leg.getToAirport().getIcao(),
-                    leg.getPax() // todo ak1 add dof, planned dep/arr time
+                    leg.getPax() // todo ak0 add dof, planned dep/arr time
             )).toList();
 
             return new BuildPlanResponse("success", legDtos, null);

@@ -32,7 +32,7 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAirportId
             .withDataField(DataField.of(DataType.Float)) // locationLatitude
             .withDataField(DataField.of(DataType.Float)) // locationLongitude
-            .build();
+            .build(); // todo ak2 add flight time, cycles, last moved at, heading, reserve space
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);
     private final DataField regNoIdField = storage.getDataField(1);

@@ -173,7 +173,7 @@ public class JourneyControl {
                         Journeys.Status.WaitingForBoarding)
                 .contains(journey.getStatus()));
 
-        // todo ak2 'cancel journey safely' with removal all following tickets etc
+        // todo ak1 'cancel journey safely' with removal all following tickets etc
 
         Journeys.Status oldStatus = journey.getStatus();
         int oldHeartbeatTime = journey.getHeartbeatTime();
@@ -226,13 +226,10 @@ public class JourneyControl {
 
     // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states
     public void resetJourneyForcefully(Journeys.Journey journey) {
-        Journeys.Status oldStatus = journey.getStatus();
-        int oldHeartbeatTime = journey.getHeartbeatTime();
-
-        log.info("j/y #{} - OLD status before reset {}", journey.getId(), oldStatus); // todo ak0 some bug here
-
         checkNotNull(journey);
         // Any status accepted
+
+        Journeys.Status oldStatus = journey.getStatus();
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
@@ -248,6 +245,6 @@ public class JourneyControl {
             journey.setTransportFlight2Id(0);
         }
 
-        log.info("j/y #{} - has been reset forcefully back to LookingForTickets, was in {} status and heartbeat time {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
+        log.info("j/y #{} - has been reset forcefully back to LookingForTickets, status BEFORE was {}", journey.getId(), oldStatus);
     }
 }
