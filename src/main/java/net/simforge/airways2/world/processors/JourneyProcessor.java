@@ -163,19 +163,10 @@ public class JourneyProcessor {
                     TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak2 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
-            checkin(world, journey);
+            world.journeyControl().checkin(journey);
         } else { // checkin & boarding finished -> journey is too late
             world.journeyControl().tooLateToBoard(journey);
         }
-    }
-
-    private static void checkin(final World world, final Journeys.Journey journey) {
-        journey.setStatus(Journeys.Status.WaitingForBoarding);
-        journey.setHeartbeatTime(world.getWorldTime());
-
-        // todo ak2 move into tfc or rework into pax manager
-        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        flight.setPaxCheckedIn(flight.getPaxCheckedIn() + journey.getGroupSize());
     }
 
     private static void waitingForBoarding(final World world, final Journeys.Journey journey) {

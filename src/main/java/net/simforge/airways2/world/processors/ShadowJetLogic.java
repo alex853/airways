@@ -119,16 +119,16 @@ public class ShadowJetLogic {
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - created - {}", mission.getId(), transportFlight.getId(), transportFlight);
 
-        world.transportFlightControl().startBoarding(transportFlight);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - boarding started - {}", mission.getId(), transportFlight.getId(), transportFlight);
-
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - minor c2c flow increase applied", mission.getId(), transportFlight.getId());
 
         int journeyBooked = 0;
         int paxBooked = 0;
 
-        if (System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000 || lastTFWithJourneysTS == 0) {
+        world.transportFlightControl().startCheckIn(transportFlight);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - boarding started - {}", mission.getId(), transportFlight.getId(), transportFlight);
+
+        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000) || lastTFWithJourneysTS == 0) {
             List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .filter(j -> fromCitiesId.contains(j.getFromCityId())
                             && toCitiesId.contains(j.getToCityId())
@@ -141,13 +141,12 @@ public class ShadowJetLogic {
 
                 world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
                 world.journeyControl().waitForCheckin(journey);
+                world.journeyControl().checkin(journey);
 
                 journeyBooked++;
                 paxBooked += journey.getGroupSize();
 
                 log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
-
-                lastTFWithJourneysTS = System.currentTimeMillis();
             }
 
             if (journeyBooked > 0) {
@@ -158,7 +157,8 @@ public class ShadowJetLogic {
             log.error("Transport flight provisioning - f/m #{}, t/f #{} - journey step intentionally skipped due to lastTFWithJourneysTS", mission.getId(), transportFlight.getId());
         }
 
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys booked with {} PAX", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+        world.transportFlightControl().startBoarding(transportFlight);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, boarding started, DONE", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {

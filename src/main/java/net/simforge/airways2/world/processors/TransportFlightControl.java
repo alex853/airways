@@ -7,8 +7,6 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
@@ -118,6 +116,14 @@ public class TransportFlightControl {
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
 
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
+    }
+
+    public void increasePaxCheckedIn(TransportFlights.Flight transportFlight, int groupSize) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
+        checkArgument(groupSize > 0);
+
+        transportFlight.setPaxCheckedIn(transportFlight.getPaxCheckedIn() + groupSize);
     }
 
     public boolean areAllPaxCheckedIn(final TransportFlights.Flight transportFlight) {

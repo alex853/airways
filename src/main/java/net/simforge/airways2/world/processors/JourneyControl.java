@@ -78,6 +78,19 @@ public class JourneyControl {
         world.c2cFlowControl().updateSuccessRate(journey, 0.005f);
     }
 
+    public void checkin(Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(EnumSet.of(
+                        Journeys.Status.WaitingForCheckIn)
+                .contains(journey.getStatus()));
+
+        journey.setStatus(Journeys.Status.WaitingForBoarding);
+        journey.setHeartbeatTime(world.getWorldTime());
+
+        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        world.transportFlightControl().increasePaxCheckedIn(flight, journey.getGroupSize());
+    }
+
     public void board(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.WaitingForBoarding);
