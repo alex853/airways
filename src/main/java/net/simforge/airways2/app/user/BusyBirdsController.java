@@ -99,7 +99,7 @@ public class BusyBirdsController {
                     leg.getType().name(),
                     leg.getFromAirport().getIcao(),
                     leg.getToAirport().getIcao(),
-                    leg.getPax()
+                    leg.getPax() // todo ak1 add dof, planned dep/arr time
             )).toList();
 
             return new BuildPlanResponse("success", legDtos, null);
@@ -123,7 +123,7 @@ public class BusyBirdsController {
             }
 
             List<String> messages = new ArrayList<>();
-            int departureTime = world.getWorldTime() + Time.ONE_DAY;
+            int departureTime = world.getWorldTime() + Time.ONE_HOUR;
             for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
                 FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), departureTime);
                 flight.setModePlayerCharacter(true);
@@ -138,7 +138,7 @@ public class BusyBirdsController {
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
 
-                departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_DAY;
+                departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_HOUR;
             }
 
             return new BookMissionResponse("success", messages);
