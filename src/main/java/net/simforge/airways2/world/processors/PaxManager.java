@@ -187,6 +187,9 @@ public class PaxManager {
             this.confirmedOnBoard = actualOnBoard;
             this.remainingToBoard = remainingToBoard;
             recalculateEstimatedBoardingFinishTime(worldTime);
+
+            this.counterValue = 0.0;
+            this.counterLastTime = worldTime;
         }
 
         public int getConfirmedOnBoard() {
