@@ -10,10 +10,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.airways2.world.datamodel.ScheduledFlights;
-import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.JavaTime;
@@ -45,43 +42,39 @@ public class FlightBoardController {
     @Autowired
     private VatsimTrackerBean vatsimTrackerBean;
 
-/*    @GetMapping("/all")
+    @GetMapping("/all")
     public List<FlightDto> getAll() {
-        return worldBean.read(world -> world.transportFlights().all()
-                .map(f -> from(world, f))
-                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
-                .toList());
+        return worldBean.read(world -> getFlights(world,
+                        fm -> true))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
+                .toList();
     }
 
     @GetMapping("/actual")
     public List<FlightDto> getActual() {
-        return worldBean.read(world -> world.transportFlights().all()
-                .filter(f -> world.flightMissions()
-                        .byId(f.getFlightMissionId())
-                        .map(ff -> ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                        .orElse(false))
-                .map(f -> from(world, f))
-                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
-                .toList());
+        return worldBean.read(world -> getFlights(world,
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
+                                && isPlannedDepartureTimeWithinNHours(world, fm, 3)
+                                && isShadowJetFlight(world, fm)
+                                && hasTransportFlight(world, fm)))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
+                .toList();
     }
 
     @GetMapping("/actual-manual")
     public List<FlightDto> getActualManual() {
-        return worldBean.read(world -> world.transportFlights().all()
-                .filter(f -> world.flightMissions()
-                        .byId(f.getFlightMissionId())
-                        .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                                && ff.isModePlayerCharacter())
-                        .orElse(false))
-                .map(f -> from(world, f))
-                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
-                .toList());
-    }*/
+        return worldBean.read(world -> getFlights(world,
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
+                                && isPlannedDepartureTimeWithinNHours(world, fm, 3)
+                                && fm.isModePlayerCharacter()))
+                .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
+                .toList();
+    }
 
     @GetMapping("/shadow-jet")
     public List<FlightDto> getShadowJet() {
         return worldBean.read(world -> getFlights(world,
-                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 6)
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
                                 && isShadowJetFlight(world, fm)
                                 && hasTransportFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
@@ -91,7 +84,7 @@ public class FlightBoardController {
     @GetMapping("/busy-birds")
     public List<FlightDto> getBusyBirds() {
         return worldBean.read(world -> getFlights(world,
-                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 6)
+                        fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
                                 && isBusyBirdsFlight(world, fm)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
                 .toList();
@@ -109,6 +102,10 @@ public class FlightBoardController {
         return world.aircrafts().byId(fm.getAircraftId()).orElseThrow().getAircraftOperatorId() == World25.ShadowJetOperatorId;
     }
 
+    private static boolean isPlannedDepartureTimeWithinNHours(World world, FlightMissions.Mission fm, int hours) {
+        return fm.getPlannedDepartureWorldTime() <= world.getWorldTime() + hours * Time.ONE_HOUR;
+    }
+
     private static boolean isPlannedArrivalTimeWithinNHours(World world, FlightMissions.Mission fm, int hours) {
         return fm.getPlannedArrivalWorldTime() >= world.getWorldTime() - hours * Time.ONE_HOUR;
     }
@@ -121,14 +118,17 @@ public class FlightBoardController {
             FlightTimeline timeline = FlightMissionToTimeline.byMission(fm);
             TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(fm.getId()).orElse(null);
             ScheduledFlights.Flight sf = tf != null ? world.scheduledFlights().byId(tf.getScheduledFlightId()).orElse(null) : null;
-            Aircrafts.Aircraft aircraft = world.aircrafts().byId(fm.getAircraftId()).orElse(null);
-
+            Aircrafts.Aircraft ac = world.aircrafts().byId(fm.getAircraftId()).orElse(null);
+            AircraftTypes.AircraftType act = ac != null ? world.aircraftTypes().byId(ac.getAircraftTypeId()).orElse(null) : null;
             PilotContext vc = vatsimTrackerBean.getContextByFlightMissionId(fm.getId()).orElse(null);
 
             return new FlightDto(
                     fm.getId(),
                     fm.getStatus().name(),
-//                    TimeTools.ts(flight.getHeartbeatTime()),
+
+                    ac != null ? ac.getId() : 0,
+                    ac != null ? ac.getRegNo() : null,
+                    act != null ? act.getIcao() : null,
 
                     vc != null ? vc.getFlightStage().name() : null,
                     vc != null ? Duration.between(ReportUtils.fromTimestampJava(vc.getPositionLastSeen()), JavaTime.nowUtc()).toSeconds() : 0,
@@ -136,7 +136,6 @@ public class FlightBoardController {
                     tf != null ? tf.getId() : 0,
                     tf != null ? tf.getStatus().name() : null,
                     sf != null ? ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()) : null,
-//                    mission.map(FlightMissions.Mission::isModePlayerCharacter).orElse(false),
 
                     world.airports().getIcao(fm.getDepartureAirportId()).orElse(null),
                     world.airports().getIcao(fm.getDestinationAirportId()).orElse(null),
@@ -168,13 +167,14 @@ public class FlightBoardController {
     public static class FlightDto {
         private int fmId;
         private String fmSt;
+        private int acId;
+        private String acRg;
+        private String acTp;
         private String vcSt;
         private long vcLs;
-//        private String hrtBt;
         private int tfId;
         private String tfSt;
         private String sfNo;
-        //private boolean pcMode;
         private String dep;
         private String dest;
         private String dof;

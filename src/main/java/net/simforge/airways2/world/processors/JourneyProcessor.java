@@ -169,13 +169,13 @@ public class JourneyProcessor {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForBoarding(final World world, final Journeys.Journey journey) {
         // most of the logic is in pax manager
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
-        //noinspection StatementWithEmptyBody todo ak2 resolve this
         if (flight.isEmpty()) {
             // todo ak2 'cancel journey safely'
-        } else if (!TransportFlightHelper.flightStatusAllowsToStartBoarding(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
+        } else if (!TransportFlightHelper.flightStatusAllowsToBoard(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
             world.journeyControl().tooLateToBoard(journey);
         }
     }

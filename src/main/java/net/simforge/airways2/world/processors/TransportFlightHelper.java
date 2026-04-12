@@ -51,4 +51,10 @@ public class TransportFlightHelper {
                 || status == TransportFlights.Status.CheckIn
                 || status == TransportFlights.Status.WaitingForBoarding;
     }
+
+    public static boolean flightStatusAllowsToBoard(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.CheckIn
+                || status == TransportFlights.Status.WaitingForBoarding
+                || status == TransportFlights.Status.Boarding;
+    }
 }
