@@ -181,7 +181,7 @@ public class AdminController {
          *                            is this order of flights doable in terms of aircraft location?
          * update transport flight heartbeat, update journeys heartbeat
          */
-        return null; // todo ak0 00000000 implement!
+        return null; // todo ak2 00000000 implement!
     }
 
     @GetMapping(value = "/flight/cancel", produces = "text/plain")
