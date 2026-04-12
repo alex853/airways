@@ -130,15 +130,13 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
 
-        final int remainedUnsold = transportFlight.getRemainedTickets().getTotal();
-        if (remainedUnsold != 0) {
+        if (transportFlight.getRemainedTickets().getTotal() > 0) {
             // if some tickets still available then we can't tell that all PAX checked-in even if all PAX with tickets already checked-in
             // this will lead to a case that check-in will continue to be open till the end of check-in window if there are some tickets are still available
             return false;
         }
 
-        final int ticketsSold = transportFlight.getTotalTickets().getTotal() - remainedUnsold;
-        return transportFlight.getPaxCheckedIn() == ticketsSold;
+        return transportFlight.getPaxCheckedIn() >= transportFlight.getSoldTickets();
     }
 
     public boolean isCheckInFinishTimePassed(final TransportFlights.Flight transportFlight) {
@@ -185,7 +183,7 @@ public class TransportFlightControl {
 
     public boolean areAllPaxBoarded(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        return transportFlight.getPaxOnBoard() == transportFlight.getPaxCheckedIn(); // todo ak2 another check against sold tickets?
+        return transportFlight.getPaxOnBoard() >= transportFlight.getSoldTickets();
     }
 
     public boolean isBoardingFinishTimePassed(final TransportFlights.Flight transportFlight) {

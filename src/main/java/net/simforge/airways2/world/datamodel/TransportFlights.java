@@ -145,6 +145,10 @@ public class TransportFlights {
             storage.set(id, remainedTicketsField, remainedTickets.toSigned32bit());
         }
 
+        public int getSoldTickets() {
+            return getTotalTickets().getTotal() - getRemainedTickets().getTotal();
+        }
+
         public int getPaxCheckedIn() {
             return paxCheckedInBitField.getInt(id);
         }

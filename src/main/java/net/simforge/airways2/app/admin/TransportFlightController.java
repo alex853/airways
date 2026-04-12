@@ -120,7 +120,7 @@ public class TransportFlightController {
                 mission.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getActualArrivalWorldTime())).orElse(null),
                 timeline.map(t -> TimeTools.hhmmPlusDaysOrNull(t.getBlocksOn().getEstimatedTime())).orElse(null),
                 flight.getTotalTickets().toString(),
-                flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() > 0 ? flight.getTotalTickets().getTotal() - flight.getRemainedTickets().getTotal() : null,
+                flight.getSoldTickets() > 0 ? flight.getSoldTickets() : null,
                 flight.getPaxCheckedIn() > 0 ? flight.getPaxCheckedIn() : null,
                 flight.getPaxOnBoard() > 0 ? flight.getPaxOnBoard() : null
         );

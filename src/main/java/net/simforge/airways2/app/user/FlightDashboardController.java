@@ -305,7 +305,7 @@ public class FlightDashboardController {
                 getNextPlannedTransportFlightStatus(transportFlight, flight, world),
                 getTransportFlightShownElements(transportFlight, flight),
                 transportFlight.getTotalTickets().getTotal(),
-                transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(),
+                transportFlight.getSoldTickets(),
                 transportFlight.getRemainedTickets().toString(),
                 transportFlight.getPaxCheckedIn(),
                 transportFlight.getPaxOnBoard()
