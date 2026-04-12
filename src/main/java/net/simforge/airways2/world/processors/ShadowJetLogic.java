@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import com.google.common.collect.Sets;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.World;
@@ -9,10 +10,7 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ShadowJetLogic {
@@ -82,13 +80,35 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
+    private static final Set<String> allowedAirports = Set.of("EDDF", "EDDM", "EGLL", "EGKK");
+    private static volatile long lastTFWithJourneysTS;
+
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
         String from = world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow();
         String to = world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow();
         String route = from + "-" + to;
 
-        if (!("EDDF-EDDM".equals(route) || "EDDM-EDDF".equals(route))) { // todo ak0 add support for EGLL-LFPG pair
-            log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed", mission.getId(), route);
+        if (from.equals(to)) {
+            log.warn("Transport flight provisioning - f/m #{} - {} - from equals to, route not allowed, SKIPPING", mission.getId(), route);
+            return;
+        }
+
+        if (!allowedAirports.contains(from) || !allowedAirports.contains(to)) {
+            log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed, SKIPPING", mission.getId(), route);
+            return;
+        }
+
+        Set<Integer> fromCitiesId = world.airport2city().allByAirportId(mission.getDepartureAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
+        Set<Integer> toCitiesId = world.airport2city().allByAirportId(mission.getDestinationAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
+
+        if (fromCitiesId.isEmpty() || toCitiesId.isEmpty()) {
+            log.warn("Transport flight provisioning - f/m #{} - {} - no cities found - {} / {}, SKIPPING", mission.getId(), route, fromCitiesId, toCitiesId);
+            return;
+        }
+
+        Sets.SetView<Integer> intersection = Sets.intersection(fromCitiesId, toCitiesId);
+        if (!intersection.isEmpty()) {
+            log.warn("Transport flight provisioning - f/m #{} - {} - intersection {} detected, SKIPPING", mission.getId(), route, intersection);
             return;
         }
 
@@ -105,31 +125,40 @@ public class ShadowJetLogic {
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - minor c2c flow increase applied", mission.getId(), transportFlight.getId());
 
-        int fromCityId = "EDDF-EDDM".equals(route) ? 27 : 7; // todo ak1 support for several cities attached to the airport
-        int toCityId = "EDDM-EDDF".equals(route) ? 7 : 27;
-
-        List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
-                .filter(j -> j.getFromCityId() == fromCityId
-                        && j.getToCityId() == toCityId
-                        && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 also needs changes
-                .toList();
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Found journeys: {}", mission.getId(), transportFlight.getId(), journeys.stream().map(Journeys.Journey::getId).toList());
-
         int journeyBooked = 0;
         int paxBooked = 0;
-        for (int i = 0; i < Math.min(3, journeys.size()); i++) {
-            Journeys.Journey journey = journeys.get(i);
 
-            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
-            world.journeyControl().waitForCheckin(journey);
+        if (System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000) {
+            List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                    .filter(j -> fromCitiesId.contains(j.getFromCityId())
+                            && toCitiesId.contains(j.getToCityId())
+                            && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 also needs changes
+                    .toList();
+            log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Found journeys: {}", mission.getId(), transportFlight.getId(), journeys.stream().map(Journeys.Journey::getId).toList());
 
-            journeyBooked++;
-            paxBooked += journey.getGroupSize();
+            for (int i = 0; i < Math.min(3, journeys.size()); i++) {
+                Journeys.Journey journey = journeys.get(i);
 
-            log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
+                world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
+                world.journeyControl().waitForCheckin(journey);
+
+                journeyBooked++;
+                paxBooked += journey.getGroupSize();
+
+                log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
+
+                lastTFWithJourneysTS = System.currentTimeMillis();
+            }
+
+            if (journeyBooked > 0) {
+                lastTFWithJourneysTS = System.currentTimeMillis();
+                log.error("Transport flight provisioning - f/m #{}, t/f #{} - lastTFWithJourneysTS updated to {}", mission.getId(), transportFlight.getId(), lastTFWithJourneysTS);
+            }
+        } else {
+            log.error("Transport flight provisioning - f/m #{}, t/f #{} - journey step intentionally skipped due to lastTFWithJourneysTS", mission.getId(), transportFlight.getId());
         }
 
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys booked with {} pax", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys booked with {} PAX", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
