@@ -34,7 +34,7 @@ public class PaxManager {
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding
                 || transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        log.info("t/f #{} - boarding - start", transportFlight.getId());
+        log.info("t/f #{} - boarding - STARTING", transportFlight.getId());
 
         tick(transportFlight);
     }
@@ -43,7 +43,7 @@ public class PaxManager {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        log.info("t/f #{} - boarding - continue", transportFlight.getId());
+        log.info("t/f #{} - boarding - CONTINUE", transportFlight.getId());
 
         tick(transportFlight);
     }
@@ -53,34 +53,33 @@ public class PaxManager {
         if (boarding == null) {
             boarding = restoreBoardingState(transportFlight);
             boardings.put(transportFlight.getId(), boarding);
+        } else {
+            refreshBoardingState(boarding, transportFlight);
         }
 
-        log.info("t/f #{} - boarding - data before tick {}", transportFlight.getId(), boarding);
+        log.info("t/f #{} - boarding - state before: {}", transportFlight.getId(), boarding);
 
-        if (boarding.hasCurrToBoard()) {
-            if (boarding.tickCurrToBoard(world.getWorldTime())) {
-                log.info("t/f #{} - boarding - curr journey to board completed", transportFlight.getId());
-                journeyControl().board(world.journeys().byId(boarding.getCurrToBoardId()).orElseThrow());
-                boarding.finishCurrToBoard();
-            }
-
-            log.info("t/f #{} - boarding - set pax on board {}", transportFlight.getId(), boarding.getOnBoardIncludingCurr());
-            transportFlight.setPaxOnBoard(boarding.getOnBoardIncludingCurr());
+        final Optional<Journeys.Journey> nextToBoard = world.journeys()
+                .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding));
+        if (nextToBoard.isEmpty()) {
+            log.info("t/f #{} - boarding - no journey to board, exiting", transportFlight.getId());
+            return;
         }
 
-        if (!boarding.hasCurrToBoard()) {
-            final Optional<Journeys.Journey> nextToBoard = world.journeys()
-                    .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding));
+        boarding.tickDelta(world.getWorldTime());
 
-            if (nextToBoard.isPresent()) {
-                log.info("t/f #{} - boarding - next journey to board, g/s {}", transportFlight.getId(), nextToBoard.get().getGroupSize());
-                boarding.startCurrToBoard(nextToBoard.get().getId(), nextToBoard.get().getGroupSize(), world.getWorldTime());
-            } else {
-                log.info("t/f #{} - boarding - no next journey to board found", transportFlight.getId());
-            }
+        if (boarding.getCounterValue() >= nextToBoard.get().getGroupSize()) {
+            journeyControl().board(nextToBoard.get());
+            boarding.updateStateWhenSomeoneBoarded(nextToBoard.get().getGroupSize());
         }
 
-        log.info("t/f #{} - boarding - data after tick {}", transportFlight.getId(), boarding);
+        int currentExpectedPax = boarding.getConfirmedOnBoard() + (int) boarding.getCounterValue();
+        if (currentExpectedPax != transportFlight.getPaxOnBoard()) {
+            transportFlight.setPaxOnBoard(currentExpectedPax);
+            log.info("t/f #{} - boarding - set {} PAX", transportFlight.getId(), transportFlight.getPaxOnBoard());
+        }
+
+        log.info("t/f #{} - boarding - state after: {}", transportFlight.getId(), boarding);
     }
 
     public int getEstimatedBoardingFinishTime(final TransportFlights.Flight transportFlight) {
@@ -133,16 +132,44 @@ public class PaxManager {
 
     private Boarding restoreBoardingState(final TransportFlights.Flight transportFlight) {
         final int actualOnBoard = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                .filter(world.journeys().byTransportFlight1IdAndStatus(
+                        transportFlight.getId(),
+                        Journeys.Status.OnBoard))
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
 
-        final int remainingToBoard = transportFlight.getPaxCheckedIn() - actualOnBoard;
+        final int remainingToBoard = world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
+                        Journeys.Status.WaitingForBoarding,
+                        Journeys.Status.WaitingForCheckIn))
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
 
         transportFlight.setPaxOnBoard(actualOnBoard);
-        log.info("t/f #{} - boarding - no data found, creating new, actual on board {}, remaining to board {}", transportFlight.getId(), actualOnBoard, remainingToBoard);
+        log.info("t/f #{} - boarding - no status found, creating new", transportFlight.getId());
 
         return new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
+    }
+
+    private void refreshBoardingState(Boarding boarding, TransportFlights.Flight transportFlight) {
+        final int actualOnBoard = world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(
+                        transportFlight.getId(),
+                        Journeys.Status.OnBoard))
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
+
+        final int remainingToBoard = world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
+                        Journeys.Status.WaitingForBoarding,
+                        Journeys.Status.WaitingForCheckIn))
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
+
+        log.info("t/f #{} - boarding - status refreshed", transportFlight.getId());
+        boarding.confirmedOnBoard = actualOnBoard;
+        boarding.remainingToBoard = remainingToBoard;
+        boarding.recalculateEstimatedBoardingFinishTime(world.getWorldTime());
     }
 
     private static class Boarding {
@@ -153,84 +180,62 @@ public class PaxManager {
         private int remainingToBoard;
         private int estimatedBoardingFinishTime;
 
-        private int currToBoardLastTime;
-        private int currToBoardId;
-        private int currToBoardTotal;
-        private double currToBoardBoarded;
+        private int counterLastTime;
+        private double counterValue;
 
         public Boarding(final int actualOnBoard, final int remainingToBoard, final int worldTime) {
             this.confirmedOnBoard = actualOnBoard;
             this.remainingToBoard = remainingToBoard;
-            this.estimatedBoardingFinishTime = worldTime
-                    + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
-                    + boardingTimeReserve;
+            recalculateEstimatedBoardingFinishTime(worldTime);
+        }
+
+        public int getConfirmedOnBoard() {
+            return confirmedOnBoard;
         }
 
         public int getRemainingToBoard() {
             return remainingToBoard;
         }
 
-        public boolean hasCurrToBoard() {
-            return currToBoardId != 0;
+        public double getCounterValue() {
+            return counterValue;
         }
 
-        public int getCurrToBoardId() {
-            return currToBoardId;
-        }
+        public void tickDelta(final int worldTime) {
+            final int timeElapsed = worldTime - counterLastTime;
+            final double deltaAvailable = timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute);
 
-        public void startCurrToBoard(final int nextToBoardId, final int nextToBoardPax, final int worldTime) {
-            checkArgument(currToBoardId == 0);
+            counterLastTime = worldTime;
 
-            currToBoardLastTime = worldTime;
-            currToBoardId = nextToBoardId;
-            currToBoardTotal = nextToBoardPax;
-            currToBoardBoarded = 0;
-
-            final int currEstimatedBoardingFinishTime = worldTime
-                    + (int) Math.ceil(nextToBoardPax / (double) ratePaxPerMinute * Time.ONE_MINUTE)
-                    + boardingTimeReserve;
-
-            if (currEstimatedBoardingFinishTime >= estimatedBoardingFinishTime) {
-                estimatedBoardingFinishTime = currEstimatedBoardingFinishTime;
+            counterValue += deltaAvailable;
+            if (counterValue > remainingToBoard) {
+                counterValue = remainingToBoard;
             }
         }
 
-        public boolean tickCurrToBoard(final int worldTime) {
-            final int timeElapsed = worldTime - currToBoardLastTime;
-            final double deltaAvailable = timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute);
-
-            currToBoardBoarded = Math.min(currToBoardBoarded + deltaAvailable, currToBoardTotal);
-            currToBoardLastTime = worldTime;
-
-            return currToBoardBoarded >= currToBoardTotal;
-        }
-
-        public void finishCurrToBoard() {
-            currToBoardId = 0;
-            confirmedOnBoard += currToBoardTotal;
-            remainingToBoard -= currToBoardTotal;
-            currToBoardBoarded = 0;
-            currToBoardTotal = 0;
+        public void updateStateWhenSomeoneBoarded(int groupSize) {
+            counterValue -= groupSize;
+            confirmedOnBoard += groupSize;
         }
 
         public int getEstimatedBoardingFinishTime() {
             return estimatedBoardingFinishTime;
         }
 
-        public int getOnBoardIncludingCurr() {
-            return confirmedOnBoard + (hasCurrToBoard() ? (int) currToBoardBoarded : 0);
+        private void recalculateEstimatedBoardingFinishTime(int worldTime) {
+            this.estimatedBoardingFinishTime = worldTime
+                    + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
+                    + boardingTimeReserve;
         }
 
         @Override
         public String toString() {
             return "Boarding{" +
-                    "confirmedOnBoard: " + confirmedOnBoard +
-                    ", remainingToBoard: " + remainingToBoard +
-                    ", estimatedBoardingFinishTime: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
-                    ", currToBoardId: " + currToBoardId +
-                    ", currToBoardTotal: " + currToBoardTotal +
-                    ", currToBoardBoarded: " + currToBoardBoarded +
-                    ", currToBoardLastTime: " + TimeTools.hhmmOrNull(currToBoardLastTime) +
+                    "confirmed: " + confirmedOnBoard +
+                    ", remaining: " + remainingToBoard +
+                    ", estFinishTime: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
+                    ", counter: " + counterValue +
+                    ", time: " + TimeTools.hhmmOrNull(counterLastTime) +
                     '}';
         }
     }

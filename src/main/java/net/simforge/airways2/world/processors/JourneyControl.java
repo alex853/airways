@@ -98,6 +98,8 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.OnBoard);
 
         world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
+
+        log.info("j/y #{} - boarded", journey.getId());
     }
 
     public void justArrived(final Journeys.Journey journey) {
