@@ -213,12 +213,7 @@ public class JourneyControl {
         log.info("j/y #{} - OLD {} status and heartbeat time {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime)); // todo ak0 some bug here
 
         checkNotNull(journey);
-        checkArgument(EnumSet.of(
-                        Journeys.Status.LookingForTickets,
-                        Journeys.Status.WaitingForCheckIn,
-                        Journeys.Status.WaitingForBoarding,
-                        Journeys.Status.OnBoard)
-                .contains(journey.getStatus()));
+        // Any status accepted
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
