@@ -207,6 +207,11 @@ public class JourneyControl {
 
     // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states
     public void resetJourneyForcefully(Journeys.Journey journey) {
+        Journeys.Status oldStatus = journey.getStatus();
+        int oldHeartbeatTime = journey.getHeartbeatTime();
+
+        log.info("j/y #{} - OLD {} status and heartbeat time {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime)); // todo ak0 some bug here
+
         checkNotNull(journey);
         checkArgument(EnumSet.of(
                         Journeys.Status.LookingForTickets,
@@ -214,9 +219,6 @@ public class JourneyControl {
                         Journeys.Status.WaitingForBoarding,
                         Journeys.Status.OnBoard)
                 .contains(journey.getStatus()));
-
-        Journeys.Status oldStatus = journey.getStatus();
-        int oldHeartbeatTime = journey.getHeartbeatTime();
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
