@@ -229,7 +229,7 @@ public class JourneyControl {
         Journeys.Status oldStatus = journey.getStatus();
         int oldHeartbeatTime = journey.getHeartbeatTime();
 
-        log.info("j/y #{} - OLD {} status and heartbeat time {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime)); // todo ak0 some bug here
+        log.info("j/y #{} - OLD status before reset {}", journey.getId(), oldStatus); // todo ak0 some bug here
 
         checkNotNull(journey);
         // Any status accepted

@@ -124,7 +124,7 @@ public class ShadowJetLogic {
 
         world.transportFlightControl().startCheckIn(transportFlight);
 
-        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 60*60*1000) || lastTFWithJourneysTS == 0) {
+        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 10*60*1000) || lastTFWithJourneysTS == 0) {
             List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .filter(j -> fromCitiesId.contains(j.getFromCityId())
                             && toCitiesId.contains(j.getToCityId())

@@ -54,9 +54,7 @@ public class FlightBoardController {
     public List<FlightDto> getActual() {
         return worldBean.read(world -> getFlights(world,
                         fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
-                                && isPlannedDepartureTimeWithinNHours(world, fm, 3)
-                                && isShadowJetFlight(world, fm)
-                                && hasTransportFlight(world, fm)))
+                                && isPlannedDepartureTimeWithinNHours(world, fm, 3)))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep).reversed())
                 .toList();
     }

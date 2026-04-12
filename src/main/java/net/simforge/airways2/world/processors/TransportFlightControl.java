@@ -282,6 +282,9 @@ public class TransportFlightControl {
         world.journeys()
                 .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
                 .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
-        log.warn("t/f #{} - unloaded forcefully", transportFlight.getId());
+
+        transportFlight.setPaxOnBoard(0);
+
+        log.warn("t/f #{} - unloaded forcefully, set PAX on board to 0", transportFlight.getId());
     }
 }

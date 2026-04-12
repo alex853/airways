@@ -59,12 +59,10 @@ public class PaxManager {
             refreshBoardingState(boarding, transportFlight);
         }
 
-        log.info("t/f #{} - boarding - state before: {}", transportFlight.getId(), boarding);
-
         final Optional<Journeys.Journey> nextToBoard = world.journeys()
                 .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding));
         if (nextToBoard.isEmpty()) {
-            log.info("t/f #{} - boarding - no journey to board, exiting", transportFlight.getId());
+            log.info("t/f #{} - boarding - no journey to board, exiting, state {}", transportFlight.getId(), boarding);
             return;
         }
 
@@ -78,10 +76,9 @@ public class PaxManager {
         int currentExpectedPax = boarding.getConfirmedOnBoard() + (int) boarding.getCounterValue();
         if (currentExpectedPax != transportFlight.getPaxOnBoard()) {
             transportFlight.setPaxOnBoard(currentExpectedPax);
-            log.info("t/f #{} - boarding - set {} PAX", transportFlight.getId(), transportFlight.getPaxOnBoard());
         }
 
-        log.info("t/f #{} - boarding - state after: {}", transportFlight.getId(), boarding);
+        log.info("t/f #{} - boarding - PAX on board {}, state {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), boarding);
     }
 
     public int getEstimatedBoardingFinishTime(final TransportFlights.Flight transportFlight) {
