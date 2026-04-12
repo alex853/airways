@@ -80,7 +80,7 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
-    private static final Set<String> allowedAirports = Set.of("EDDF", "EDDM", "EGLL", "EGKK");
+    private static final Set<String> allowedAirports = Set.of("EDDF", "EDDM", "EGLL", "EGKK", "LFPG", "LFPO", "LFPB");
     private static volatile long lastTFWithJourneysTS;
 
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
@@ -112,23 +112,19 @@ public class ShadowJetLogic {
             return;
         }
 
-        log.warn("Transport flight provisioning - f/m #{} - {} - lets create the transport flight", mission.getId(), route);
-
         // todo ak1 cabin layout depending on aircraft type - lets collect few most frequently used aircraft types
         // todo ak1 cabin layout depending on aircraft type - manually put that information into some dictionary
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - created - {}", mission.getId(), transportFlight.getId(), transportFlight);
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - transport flight CREATED", mission.getId(), transportFlight.getId());
 
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - minor c2c flow increase applied", mission.getId(), transportFlight.getId());
 
         int journeyBooked = 0;
         int paxBooked = 0;
 
         world.transportFlightControl().startCheckIn(transportFlight);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - boarding started - {}", mission.getId(), transportFlight.getId(), transportFlight);
 
-        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000) || lastTFWithJourneysTS == 0) {
+        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 60*60*1000) || lastTFWithJourneysTS == 0) {
             List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .filter(j -> fromCitiesId.contains(j.getFromCityId())
                             && toCitiesId.contains(j.getToCityId())

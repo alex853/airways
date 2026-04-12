@@ -180,26 +180,16 @@ public class JourneyProcessor {
         }
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
-        //noinspection StatementWithEmptyBody todo ak2 resolve this
         if (flight.isEmpty()) {
             // todo ak2 'cancel journey safely'
-        } else //noinspection StatementWithEmptyBody todo ak2 resolve this
-            if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
-            deboarding(world, journey);
+        } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
+            world.journeyControl().deboard(journey);
         } else {
             // todo ak2 ???
         }
-    }
-
-    private static void deboarding(final World world, final Journeys.Journey journey) {
-        journey.setStatus(Journeys.Status.JustArrived);
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
-
-        // todo ak2 move into tfc or rework into pax manager
-        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        flight.setPaxOnBoard(flight.getPaxOnBoard() - journey.getGroupSize());
     }
 
     private static void justArrived(final World world, final Journeys.Journey journey) {

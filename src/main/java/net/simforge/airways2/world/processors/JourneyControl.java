@@ -89,6 +89,8 @@ public class JourneyControl {
 
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.transportFlightControl().increasePaxCheckedIn(flight, journey.getGroupSize());
+
+        log.info("j/y #{} - checked-in to t/f #{}", journey.getId(), journey.getTransportFlight1Id());
     }
 
     public void board(final Journeys.Journey journey) {
@@ -99,7 +101,20 @@ public class JourneyControl {
 
         world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
 
-        log.info("j/y #{} - boarded", journey.getId());
+        log.info("j/y #{} - boarded to t/f #{}", journey.getId(), journey.getTransportFlight1Id());
+    }
+
+    public void deboard(Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.WaitingForDeboarding);
+
+        journey.setStatus(Journeys.Status.JustArrived);
+        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+
+        final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        world.transportFlightControl().decreasePaxOnBoard(flight, journey.getGroupSize());
+
+        log.info("j/y #{} - deboarded from t/f #{}, g/s {}, new PAX on board {}", journey.getId(), journey.getTransportFlight1Id(), journey.getGroupSize(), flight.getPaxOnBoard());
     }
 
     public void justArrived(final Journeys.Journey journey) {
@@ -205,6 +220,8 @@ public class JourneyControl {
     private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
+
+        log.info("j/y #{} - deboarding from t/f #{} scheduled at {}", journey.getId(), journey.getTransportFlight1Id(), Time.toLdt(journey.getHeartbeatTime()));
     }
 
     // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states

@@ -56,7 +56,6 @@ public class TransportFlightControl {
         final int checkinStartsAt = TransportFlightHelper.calcCheckinStartTime(flightMission);
         transportFlight.setHeartbeatTime(checkinStartsAt);
 
-        world.log(EventLog.EventType.TransportFlightCreated, EventLog.id(transportFlight), flightMission, scheduledFlight != null ? EventLog.id(scheduledFlight) : null);
         log.info("t/f #{} - created t/f for f/m #{}, s/f #{}", transportFlight.getId(), flightMission.getId(), scheduledFlight != null ? scheduledFlight.getId() : "///");
 
         return transportFlight;
@@ -108,7 +107,6 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(world.getWorldTime() + CHECKIN_TICK);
 
         log.info("t/f #{} - check-in started", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightCheckInStarted, EventLog.id(transportFlight));
     }
 
     public void continueCheckIn(final TransportFlights.Flight transportFlight) {
@@ -156,7 +154,6 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
 
         log.info("t/f #{} - check-in ended, waiting for boarding", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightCheckInEnded, EventLog.id(transportFlight));
     }
 
     public void startBoarding(final TransportFlights.Flight transportFlight) {
@@ -169,7 +166,6 @@ public class TransportFlightControl {
         paxManager().startBoarding(transportFlight);
 
         log.info("t/f #{} - boarding started", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightBoardingStarted, EventLog.id(transportFlight));
     }
 
     public void continueBoarding(final TransportFlights.Flight transportFlight) {
@@ -203,14 +199,12 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
 
         log.info("t/f #{} - boarding ended, waiting for departure", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightBoardingEnded, EventLog.id(transportFlight));
     }
 
     public void whenFlightDepartsFromGate(final TransportFlights.Flight transportFlight) {
         transportFlight.setStatus(TransportFlights.Status.Departure);
 
         log.info("t/f #{} - departed", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightDeparted, EventLog.id(transportFlight));
     }
 
     public void whenFlightTakeoffs(final TransportFlights.Flight transportFlight) {
@@ -229,7 +223,6 @@ public class TransportFlightControl {
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeboarding);
 
         log.info("t/f #{} - arrived, waiting for deboarding", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightArrived, EventLog.id(transportFlight));
     }
 
     public void scheduleAutomaticDeboarding(final TransportFlights.Flight transportFlight) {
@@ -244,18 +237,27 @@ public class TransportFlightControl {
     public void startDeboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding);
+
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
 
-        log.info("t/f #{} - deboarding started", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightDeboardingStarted, EventLog.id(transportFlight));
-
         world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
+
+        log.info("t/f #{} - deboarding started, PAX on board {}", transportFlight.getId(), transportFlight.getPaxOnBoard());
+    }
+
+    public void decreasePaxOnBoard(TransportFlights.Flight transportFlight, int groupSize) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+        checkArgument(groupSize > 0);
+
+        transportFlight.setPaxOnBoard(Math.max(0, transportFlight.getPaxOnBoard() - groupSize));
     }
 
     public void continueDeboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
     }
 
@@ -273,7 +275,6 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
 
         log.info("t/f #{} - finished", transportFlight.getId());
-        world.log(EventLog.EventType.TransportFlightFinished, EventLog.id(transportFlight));
     }
 
     // Active flight is expectedly transportFlight1Id for all the journeys
