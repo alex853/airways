@@ -107,6 +107,16 @@ public class CabinLayout {
                 first - (service == Service.F ? seats : 0));
     }
 
+    public CabinLayout releaseSeats(final int seats, final Service service) {
+        checkArgument(seats >= 0);
+        checkNotNull(service);
+        return new CabinLayout(
+                economy + (service == Service.Y ? seats : 0),
+                premiumEconomy + (service == Service.W ? seats : 0),
+                business + (service == Service.J ? seats : 0),
+                first + (service == Service.F ? seats : 0));
+    }
+
     public int toSigned32bit() {
         return (economy << ECONOMY_OFFSET)
                 + (premiumEconomy << PREMIUM_ECONOMY_OFFSET)

@@ -120,8 +120,7 @@ public class ShadowJetLogic {
         for (int i = 0; i < Math.min(3, journeys.size()); i++) {
             Journeys.Journey journey = journeys.get(i);
 
-            // todo ak1 copy&paste from JourneyProcessor
-            bookDirectFlightJourney(world, journey, transportFlight);
+            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
             world.journeyControl().waitForCheckin(journey);
 
             journeyBooked++;
@@ -133,12 +132,6 @@ public class ShadowJetLogic {
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - DONE, {} journeys booked with {} pax", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
-    // todo ak1 copy&paste from JourneyProcessor
-    private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
-        journey.setTransportFlight1Id(flight.getId());
-        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
-    }
-
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
         Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
         if (transportFlightO.isEmpty()) {
@@ -146,13 +139,10 @@ public class ShadowJetLogic {
         }
 
         TransportFlights.Flight transportFlight = transportFlightO.get();
-        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - starting a cancellation", mission.getId(), transportFlight.getId());
-
-        // todo ak0 deboard all the journeys onboard
-        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - {} PAX SHOULD BE DEBOARDED!!!!", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
-
+        world.transportFlightControl().unloadJourneysForcefullyFromActiveFlight(transportFlight);
         transportFlight.setStatus(TransportFlights.Status.Cancelled);
-        log.warn("Transport flight cancellation - f/m #{}, t/f #{} - flight cancelled", mission.getId(), transportFlight.getId());
+
+        log.warn("Transport flight cancellation - f/m #{}, t/f #{}, PAX {} - flight cancelled, all PAX unloaded", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
     }
 
     public static void deboardTransportFlightIfExists(World world, FlightMissions.Mission mission) {

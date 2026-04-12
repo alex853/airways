@@ -56,7 +56,7 @@ public class JourneyProcessor {
         final Collection<TransportFlights.Flight> foundDirectFlights = findDirectFlights(world, journey, fromAirportIds, toAirportIds);
         if (!foundDirectFlights.isEmpty()) {
             final TransportFlights.Flight directFlight = foundDirectFlights.iterator().next();
-            bookDirectFlightJourney(world, journey, directFlight);
+            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, directFlight);
             world.journeyControl().waitForCheckin(journey);
             return;
         }
@@ -67,7 +67,7 @@ public class JourneyProcessor {
             if (stopoverRoute.size() == 2) {
                 final TransportFlights.Flight flight1 = stopoverRoute.get(0);
                 final TransportFlights.Flight flight2 = stopoverRoute.get(1);
-                bookStopoverFlightsJourney(world, journey, flight1, flight2);
+                world.journeyControl().bookStopoverFlightsJourneyNoChecks(journey, flight1, flight2);
                 world.journeyControl().waitForCheckin(journey);
                 return;
             }
@@ -145,19 +145,6 @@ public class JourneyProcessor {
 
     private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
         return tf.getRemainedTickets().get(journey.getCabinService()) >= journey.getGroupSize();
-    }
-
-    private static void bookDirectFlightJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight) {
-        journey.setTransportFlight1Id(flight.getId());
-        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
-    }
-
-    private static void bookStopoverFlightsJourney(final World world, final Journeys.Journey journey, final TransportFlights.Flight flight1, final TransportFlights.Flight flight2) {
-        journey.setTransportFlight1Id(flight1.getId());
-        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getCabinService());
-
-        journey.setTransportFlight2Id(flight2.getId());
-        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), journey.getCabinService());
     }
 
     private static boolean isThereDirectRouteAvailable(TFM tfm, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {

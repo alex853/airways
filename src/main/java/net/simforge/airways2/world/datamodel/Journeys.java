@@ -109,6 +109,7 @@ public class Journeys {
         storage.deleteRecord(id);
     }
 
+    @SuppressWarnings("LombokGetterMayBeUsed")
     public class Journey {
         private final int id;
 
@@ -125,7 +126,7 @@ public class Journeys {
         }
 
         public int getStatusCode() {
-            return statusBitField.getInt(id);
+            return readStatusCode(id);
         }
 
         public void setStatus(final Status status) {
@@ -193,7 +194,7 @@ public class Journeys {
         }
 
         public int getTransportFlight1Id() {
-            return storage.getAsInt(id, transportFlight1IdField);
+            return readTransportFlight1Id(id);
         }
 
         public void setTransportFlight1Id(final int transportFlight1Id) {
@@ -217,15 +218,21 @@ public class Journeys {
     public Storage.Condition<Journey> byStatus(final Status status) {
         checkNotNull(status);
 
-        return recordId -> statusBitField.getInt(recordId) == status.code();
+        return recordId -> readStatusCode(recordId) == status.code();
+    }
+
+    public Storage.Condition<Journey> byTransportFlight1Id(final int transportFlightId) {
+        checkArgument(transportFlightId > 0);
+
+        return recordId -> readTransportFlight1Id(recordId) == transportFlightId;
     }
 
     public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status) {
         checkArgument(transportFlightId > 0);
         checkNotNull(status);
 
-        return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
-                && statusBitField.getInt(recordId) == status.code();
+        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
+                && readStatusCode(recordId) == status.code();
     }
 
     public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status1, final Status status2) {
@@ -233,9 +240,9 @@ public class Journeys {
         checkNotNull(status1);
         checkNotNull(status2);
 
-        return recordId -> storage.getAsInt(recordId, transportFlight1IdField) == transportFlightId
-                && (statusBitField.getInt(recordId) == status1.code()
-                || statusBitField.getInt(recordId) == status2.code());
+        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
+                && (readStatusCode(recordId) == status1.code()
+                || readStatusCode(recordId) == status2.code());
     }
 
     public Storage.Condition<Journey> byBusyBirdsProcessing() {
@@ -244,6 +251,14 @@ public class Journeys {
 
     public Storage.Condition<Journey> byNoBusyBirdsProcessing() {
         return recordId -> !busyBirdsProcessingBitField.getBoolean(recordId);
+    }
+
+    private int readStatusCode(int recordId) {
+        return statusBitField.getInt(recordId);
+    }
+
+    private int readTransportFlight1Id(int recordId) {
+        return storage.getAsInt(recordId, transportFlight1IdField);
     }
 
     public enum Status {

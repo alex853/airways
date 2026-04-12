@@ -169,6 +169,7 @@ public class AdminController {
         return "Pilot context for p/n #" + pilotNumber + " REMOVED";
     }
 
+    @SuppressWarnings("unused")
     @GetMapping(value = "/flight/reschedule", produces = "text/plain")
     public String rescheduleFlight(@RequestParam(name = "id") int fmId,
                                    @RequestParam(name = "dof") String newDOF,
@@ -199,8 +200,7 @@ public class AdminController {
 
             Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fmId);
             if (tf.isPresent()) {
-                // todo ak0 deboard all the journeys onboard
-
+                world.transportFlightControl().unloadJourneysForcefullyFromActiveFlight(tf.get());
                 tf.get().setStatus(TransportFlights.Status.Cancelled);
                 results.add("T/F #" + tf.get().getId() + " cancelled");
             } else {
@@ -407,7 +407,7 @@ public class AdminController {
     public String journeyFlight(@RequestParam(name = "journeyId") final int journeyId) {
         return worldBean.modifySync(world -> {
             world.journeys().deleteById(journeyId);
-            return "JRY #" + journeyId + " removed";
+            return "J/Y #" + journeyId + " removed";
         });
     }
 

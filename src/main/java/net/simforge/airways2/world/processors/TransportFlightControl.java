@@ -7,6 +7,8 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
@@ -80,6 +82,15 @@ public class TransportFlightControl {
 
         final CabinLayout remainedTickets = flight.getRemainedTickets();
         flight.setRemainedTickets(remainedTickets.occupySeats(tickets, service));
+    }
+
+    public void releaseFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
+        checkNotNull(flight);
+        checkArgument(tickets >= 0);
+        checkNotNull(service);
+
+        final CabinLayout remainedTickets = flight.getRemainedTickets();
+        flight.setRemainedTickets(remainedTickets.releaseSeats(tickets, service));
     }
 
     public boolean ifCheckInTimeComes(final TransportFlights.Flight transportFlight) {
@@ -259,5 +270,13 @@ public class TransportFlightControl {
 
         log.info("t/f #{} - finished", transportFlight.getId());
         world.log(EventLog.EventType.TransportFlightFinished, EventLog.id(transportFlight));
+    }
+
+    // Active flight is expectedly transportFlight1Id for all the journeys
+    public void unloadJourneysForcefullyFromActiveFlight(TransportFlights.Flight transportFlight) {
+        world.journeys()
+                .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
+                .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
+        log.warn("t/f #{} - unloaded forcefully", transportFlight.getId());
     }
 }

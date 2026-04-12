@@ -75,7 +75,7 @@ public class JourneyController {
 
     @Data
     @AllArgsConstructor
-    private static class JourneyDto {
+    public static class JourneyDto {
         private int id;
         private String st;
         private String hrtBt;

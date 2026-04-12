@@ -43,6 +43,28 @@ public class JourneyControl {
         return journey;
     }
 
+    // 'No checks' means that the method does not check if the operation is valid with all those parameters
+    public void bookDirectFlightJourneyNoChecks(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        checkNotNull(journey);
+        checkNotNull(flight);
+
+        journey.setTransportFlight1Id(flight.getId());
+        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
+    }
+
+    // 'No checks' means that the method does not check if the operation is valid with all those parameters
+    public void bookStopoverFlightsJourneyNoChecks(final Journeys.Journey journey, final TransportFlights.Flight flight1, final TransportFlights.Flight flight2) {
+        checkNotNull(journey);
+        checkNotNull(flight1);
+        checkNotNull(flight2);
+
+        journey.setTransportFlight1Id(flight1.getId());
+        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getCabinService());
+
+        journey.setTransportFlight2Id(flight2.getId());
+        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), journey.getCabinService());
+    }
+
     public void waitForCheckin(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(EnumSet.of(
@@ -168,5 +190,35 @@ public class JourneyControl {
     private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
+    }
+
+    // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states
+    public void resetJourneyForcefully(Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(EnumSet.of(
+                        Journeys.Status.LookingForTickets,
+                        Journeys.Status.WaitingForCheckIn,
+                        Journeys.Status.WaitingForBoarding,
+                        Journeys.Status.OnBoard)
+                .contains(journey.getStatus()));
+
+        Journeys.Status oldStatus = journey.getStatus();
+        int oldHeartbeatTime = journey.getHeartbeatTime();
+
+        journey.setStatus(Journeys.Status.LookingForTickets);
+        journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
+
+        // No need to release tickets, they are not used anymore on that the flight
+        journey.setTransportFlight1Id(0);
+
+        if (journey.getTransportFlight2Id() != 0) {
+            world.transportFlightControl().releaseFlightTickets(
+                    world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
+                    journey.getGroupSize(),
+                    journey.getCabinService());
+            journey.setTransportFlight2Id(0);
+        }
+
+        log.info("j/y #{} - has been reset forcefully back to LookingForTickets, was in {} status and heartbeat time {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
     }
 }
