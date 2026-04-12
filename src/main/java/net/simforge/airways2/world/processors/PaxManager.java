@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -44,8 +43,6 @@ public class PaxManager {
     public void continueBoarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        log.info("t/f #{} - boarding - CONTINUE", transportFlight.getId());
 
         tick(transportFlight);
     }

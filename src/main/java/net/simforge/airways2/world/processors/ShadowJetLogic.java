@@ -80,7 +80,12 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
-    private static final Set<String> allowedAirports = Set.of("EDDF", "EDDM", "EGLL", "EGKK", "LFPG", "LFPO", "LFPB");
+    private static final Set<String> allowedAirports = Set.of(
+            "EDDF", "EDDM", "EDDH", "EDDB",
+            "EGLL", "EGKK", "EGCC", "EGPH", "EGBB",
+            "LFPG", "LFPO", "LFPB",
+            "LKPR",
+            "LOWW");
     private static volatile long lastTFWithJourneysTS;
 
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
