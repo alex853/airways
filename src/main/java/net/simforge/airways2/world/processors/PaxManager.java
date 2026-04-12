@@ -9,6 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -131,45 +133,50 @@ public class PaxManager {
     }
 
     private Boarding restoreBoardingState(final TransportFlights.Flight transportFlight) {
-        final int actualOnBoard = world.journeys()
+        int actualOnBoard = world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(
                         transportFlight.getId(),
                         Journeys.Status.OnBoard))
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
 
-        final int remainingToBoard = world.journeys()
+        List<Journeys.Journey> remainedToBoardJourneys = world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
                         Journeys.Status.WaitingForBoarding,
                         Journeys.Status.WaitingForCheckIn))
+                .toList();
+        int remainingToBoard = remainedToBoardJourneys.stream()
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
 
         transportFlight.setPaxOnBoard(actualOnBoard);
-        log.info("t/f #{} - boarding - no status found, creating new", transportFlight.getId());
+        log.info("t/f #{} - boarding - no status found, creating new, remained to board j/y ids {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(Journeys.Journey::getId).collect(Collectors.toSet()));
 
         return new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
     }
 
     private void refreshBoardingState(Boarding boarding, TransportFlights.Flight transportFlight) {
-        final int actualOnBoard = world.journeys()
+        int actualOnBoard = world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(
                         transportFlight.getId(),
                         Journeys.Status.OnBoard))
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
 
-        final int remainingToBoard = world.journeys()
+        List<Journeys.Journey> remainedToBoardJourneys = world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
                         Journeys.Status.WaitingForBoarding,
                         Journeys.Status.WaitingForCheckIn))
+                .toList();
+        int remainingToBoard = remainedToBoardJourneys.stream()
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
 
-        log.info("t/f #{} - boarding - status refreshed", transportFlight.getId());
         boarding.confirmedOnBoard = actualOnBoard;
         boarding.remainingToBoard = remainingToBoard;
         boarding.recalculateEstimatedBoardingFinishTime(world.getWorldTime());
+
+        log.info("t/f #{} - boarding - status refreshed, remained to board j/y ids {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(Journeys.Journey::getId).collect(Collectors.toSet()));
     }
 
     private static class Boarding {
@@ -219,6 +226,7 @@ public class PaxManager {
         public void updateStateWhenSomeoneBoarded(int groupSize) {
             counterValue -= groupSize;
             confirmedOnBoard += groupSize;
+            remainingToBoard -= groupSize;
         }
 
         public int getEstimatedBoardingFinishTime() {
