@@ -61,7 +61,7 @@ public class BusyBirdsMissionControl {
             messages.add("unable to find suitable 'from' airport");
         }
 
-        final Optional<Airports.Airport> baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport.get());
+        final Optional<Airports.Airport> baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport.get()); // todo ak1 this can be npe
         if (baseAirport.isEmpty()) {
             messages.add("unable to find suitable 'base' airport");
         }
@@ -72,7 +72,7 @@ public class BusyBirdsMissionControl {
 
         final List<Leg> legs = new ArrayList<>();
 
-        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).get();
+        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).get(); // todo ak1 this can be npe
         final boolean needFerryFlightToDepartureAirport = locationAirport.getId() != fromAirport.get().getId();
 
         if (needFerryFlightToDepartureAirport) {
