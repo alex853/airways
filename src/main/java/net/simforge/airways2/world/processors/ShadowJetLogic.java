@@ -128,7 +128,7 @@ public class ShadowJetLogic {
         int journeyBooked = 0;
         int paxBooked = 0;
 
-        if (System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000) {
+        if (System.currentTimeMillis() - lastTFWithJourneysTS < 3 * 60*60*1000 || lastTFWithJourneysTS == 0) {
             List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .filter(j -> fromCitiesId.contains(j.getFromCityId())
                             && toCitiesId.contains(j.getToCityId())
