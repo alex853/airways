@@ -24,10 +24,7 @@ public class ImportMajorAirportsInVicinityOfCities {
         final Airports airports = world.airports();
         final Airport2City airport2city = world.airport2city();
 
-        final String content = IOHelper.readInputStream(
-                Objects.requireNonNull(
-                        ImportCities.class.getResourceAsStream("/icaodata.csv")));
-        final Csv airportsCsv = Csv.fromContent(content);
+        final Csv airportsCsv = loadAirportCsv();
         for (int i = 0; i < airportsCsv.rowCount(); i++) {
             String icao = airportsCsv.value(i, 0);
             String latStr = airportsCsv.value(i, 1);
@@ -73,5 +70,12 @@ public class ImportMajorAirportsInVicinityOfCities {
         }
 
         world.save();
+    }
+
+    public static Csv loadAirportCsv() throws IOException {
+        final String content = IOHelper.readInputStream(
+                Objects.requireNonNull(
+                        ImportCities.class.getResourceAsStream("/icaodata.csv")));
+        return Csv.fromContent(content);
     }
 }

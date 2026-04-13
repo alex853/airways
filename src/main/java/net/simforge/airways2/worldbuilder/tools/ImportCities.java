@@ -23,10 +23,7 @@ public class ImportCities {
         final Countries countries = world.countries();
         final Cities cities = world.cities();
 
-        final String content = IOHelper.readInputStream(
-                Objects.requireNonNull(
-                        ImportCities.class.getResourceAsStream("/city-population.csv")));
-        final Csv csv = Csv.fromContent(content);
+        final Csv csv = loadCityPopulationCsv();
 
         final List<Filter> filters = toFilters(args);
 
@@ -63,6 +60,13 @@ public class ImportCities {
         }
 
         world.save();
+    }
+
+    public static Csv loadCityPopulationCsv() throws IOException {
+        final String content = IOHelper.readInputStream(
+                Objects.requireNonNull(
+                        ImportCities.class.getResourceAsStream("/city-population.csv")));
+        return Csv.fromContent(content);
     }
 
     private static List<Filter> toFilters(final String[] args) {
