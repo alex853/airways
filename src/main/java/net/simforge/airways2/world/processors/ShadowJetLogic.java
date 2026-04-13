@@ -98,10 +98,10 @@ public class ShadowJetLogic {
             return;
         }
 
-        if (!allowedAirports.contains(from) || !allowedAirports.contains(to)) { // todo ak1 test what will happen in case of removal of this limitation
-            log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed, SKIPPING", mission.getId(), route);
-            return;
-        }
+//        if (!allowedAirports.contains(from) || !allowedAirports.contains(to)) { // todo ak0 test what will happen in case of removal of this limitation
+//            log.warn("Transport flight provisioning - f/m #{} - {} - route not allowed, SKIPPING", mission.getId(), route);
+//            return;
+//        }
 
         Set<Integer> fromCitiesId = world.airport2city().allByAirportId(mission.getDepartureAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
         Set<Integer> toCitiesId = world.airport2city().allByAirportId(mission.getDestinationAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
@@ -121,8 +121,6 @@ public class ShadowJetLogic {
         AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
         FlightStats.event("shadowJet aircraftType " + aircraftType.getIcao());
 
-        // todo ak1 cabin layout depending on aircraft type - manually put that information into some dictionary
-
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - transport flight CREATED", mission.getId(), transportFlight.getId());
 
@@ -133,15 +131,15 @@ public class ShadowJetLogic {
 
         world.transportFlightControl().startCheckIn(transportFlight);
 
-        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 5*60*1000) || lastTFWithJourneysTS == 0) { // todo ak1 gradually remove that limitation
+        if ((System.currentTimeMillis() - lastTFWithJourneysTS < 5*60*1000) || lastTFWithJourneysTS == 0) { // todo ak0 gradually remove that limitation
             List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .filter(j -> fromCitiesId.contains(j.getFromCityId())
                             && toCitiesId.contains(j.getToCityId())
-                            && j.getCabinService() == CabinLayout.Service.Y) // todo ak0 remove this limitation, match into the cabin layout from above
+                            && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 remove this limitation, match into the cabin layout from above
                     .toList();
             log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Found journeys: {}", mission.getId(), transportFlight.getId(), journeys.stream().map(Journeys.Journey::getId).toList());
 
-            for (int i = 0; i < Math.min(5, journeys.size()); i++) { // todo ak0 (total tickets / 5) * 0.25 = but no more than 10 groups to book immediately, plus same number (same?) to ping via looking for tickets randomly distributed in next 5 minutes. but take into account cabin service!
+            for (int i = 0; i < Math.min(5, journeys.size()); i++) { // todo ak1 (total tickets / 5) * 0.25 = but no more than 10 groups to book immediately, plus same number (same?) to ping via looking for tickets randomly distributed in next 5 minutes. but take into account cabin service!
                 Journeys.Journey journey = journeys.get(i);
 
                 world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
