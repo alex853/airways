@@ -6,55 +6,56 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public class FlightCleanup {
     private static final Logger log = LoggerFactory.getLogger(FlightCleanup.class);
     private static long lastExecution;
 
     public static void process(final World world) {
-        if (System.currentTimeMillis() - lastExecution < 3600000) {
+        if (System.currentTimeMillis() - lastExecution < 60000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
-        final int worldTime = world.getWorldTime();
+        long cancelledOnPreflight = findFlightMissions(world, FlightMissions.Status.Cancelled, 15 * Time.ONE_MINUTE)
+                .filter(f -> world.flightMissionControl().checkAndRemoveIfScheduledForQuickRemoval(f))
+                .peek(f -> deleteFlightMission(world, f))
+                .count();
 
-        FlightMissions flightMissions = world.flightMissions();
-        final Collection<FlightMissions.Mission> cancelled = flightMissions
-                .filter(flightMissions.anyStatus(FlightMissions.Status.Cancelled))
-                .filter(f -> f.getPlannedDepartureWorldTime() <= worldTime - Time.ONE_DAY) // todo ak3 this can be improved by putting it into new filters
-                .toList();
-        cancelled.forEach(f -> {
-            // todo ak2 'event log cleanup refinement' - remove event-logs
-            flightMissions.deleteById(f.getId());
-            deleteTransportFlights(world, f);
-        });
+        long cancelled = findFlightMissions(world, FlightMissions.Status.Cancelled, Time.ONE_DAY)
+                .peek(f -> deleteFlightMission(world, f))
+                .count();
 
-        final Collection<FlightMissions.Mission> finished = flightMissions
-                .filter(flightMissions.anyStatus(FlightMissions.Status.Finished))
-                .filter(f -> f.getActualArrivalWorldTime() <= worldTime - 10 * Time.ONE_DAY) // todo ak3 this can be improved by putting it into new filters
-                .toList();
-        finished.forEach(f -> {
-            // todo ak2 'event log cleanup refinement' - remove event-logs
-            flightMissions.deleteById(f.getId());
-            deleteTransportFlights(world, f);
-        });
+        long finished = findFlightMissions(world, FlightMissions.Status.Finished, 10 * Time.ONE_DAY)
+                .peek(f -> deleteFlightMission(world, f))
+                .count();
 
-        if (cancelled.size() > 0 || finished.size() > 0) {
-            log.info("flight missions cleaned up - {} cancelled, {} finished", cancelled.size(), finished.size());
+        if (cancelledOnPreflight + cancelled + finished > 0) {
+            log.info("flight cleanup - {} cancelled on preflight, {} cancelled, {} finished", cancelledOnPreflight, cancelled, finished);
         }
 
-        List<TransportFlights.Flight> brokenTransportFlights = world.transportFlights().all()
-                .filter(tf -> flightMissions.byId(tf.getFlightMissionId()).isEmpty())
-                .toList();
-        brokenTransportFlights.forEach(tf -> deleteTransportFlight(world, tf));
+        long brokenTransportFlights = world.transportFlights().all()
+                .filter(tf -> world.flightMissions().byId(tf.getFlightMissionId()).isEmpty())
+                .peek(tf -> deleteTransportFlight(world, tf))
+                .count();
 
-        if (brokenTransportFlights.size() > 0) {
-            log.warn("FOUND AND REMOVED {} BROKEN TRANSPORT FLIGHTS", brokenTransportFlights.size());
+        if (brokenTransportFlights > 0) {
+            log.warn("FOUND AND REMOVED {} BROKEN TRANSPORT FLIGHTS", brokenTransportFlights);
         }
+    }
+
+    private static Stream<FlightMissions.Mission> findFlightMissions(World world, FlightMissions.Status status, int time) {
+        return world.flightMissions()
+                .filter(world.flightMissions().anyStatus(status))
+                .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time); // todo ak1 this can be improved by putting it into new filters
+    }
+
+    private static void deleteFlightMission(World world, FlightMissions.Mission f) {
+        // todo ak2 'event log cleanup refinement' - remove event-logs
+        deleteTransportFlights(world, f);
+        world.flightMissions().deleteById(f.getId());
     }
 
     private static void deleteTransportFlights(final World world, final FlightMissions.Mission f) {

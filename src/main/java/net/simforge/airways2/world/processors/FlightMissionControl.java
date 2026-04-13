@@ -6,6 +6,9 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Set;
+import java.util.TreeSet;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 // todo ak2 add precondition checks for all the statuses
@@ -13,6 +16,7 @@ public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
     private final World world;
+    private final Set<Integer> cancelledIdsScheduledForQuickRemoval = new TreeSet<>();
 
     public FlightMissionControl(final World world) {
         this.world = world;
@@ -83,6 +87,14 @@ public class FlightMissionControl {
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
         // todo ak2 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
+    }
+
+    public void scheduleQuickRemoval(final FlightMissions.Mission mission) {
+        cancelledIdsScheduledForQuickRemoval.add(mission.getId());
+    }
+
+    public boolean checkAndRemoveIfScheduledForQuickRemoval(final FlightMissions.Mission mission) {
+        return cancelledIdsScheduledForQuickRemoval.remove(mission.getId());
     }
 
     public void blocksOff(final FlightMissions.Mission mission) {

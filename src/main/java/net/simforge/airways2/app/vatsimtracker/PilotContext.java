@@ -580,6 +580,7 @@ public class PilotContext {
             if (mission.get().getStatus() == FlightMissions.Status.Preflight
                     || mission.get().getStatus() == FlightMissions.Status.Departure) {
                 world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
+                world.flightMissionControl().scheduleQuickRemoval(mission.get());
 
                 ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
             } else {
