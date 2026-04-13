@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -62,14 +63,21 @@ public class TransportFlightControl {
     }
 
     private CabinLayout chooseDefaultCabinLayout(FlightMissions.Mission flightMission) {
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
-        final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
+        String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
 
-        return switch (aircraftType) {
+        CabinLayout cabinLayout = switch (aircraftType) {
             case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
             case "A320" -> CabinLayout.JY(8, 138);
-            default -> CabinLayout.Y(99);
+            default -> null;
         };
+
+        if (cabinLayout == null) {
+            FlightStats.event("missingCabinLayout " + aircraftType);
+            return CabinLayout.Y(99);
+        }
+
+        return cabinLayout;
     }
 
     public void obtainFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {

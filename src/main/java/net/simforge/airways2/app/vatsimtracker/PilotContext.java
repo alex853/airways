@@ -326,7 +326,7 @@ public class PilotContext {
             log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
             pilotLog("Event 'landing' at planned destination airport");
             FlightStats.event("landing - planned airport");
-            FlightStats.event("route " + flightplanToRoute(flightplan));
+            // this stat data is not needed so far FlightStats.event("route " + flightplanToRoute(flightplan));
         } else if (worldIcaos.contains(landingAirportIcao)) {
             flightStage = FlightStage.Arriving;
 

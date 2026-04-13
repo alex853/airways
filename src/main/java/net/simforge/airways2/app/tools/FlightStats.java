@@ -26,7 +26,7 @@ public class FlightStats {
         load();
     }
 
-    public static void event(final String event) {
+    public static synchronized void event(final String event) {
         validateDateAndData();
         data.compute(event, (key, value) -> value != null ? value + 1 : 1);
 
