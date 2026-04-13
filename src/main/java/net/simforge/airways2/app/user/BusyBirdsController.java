@@ -6,11 +6,14 @@ import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.computations.AircraftPerformanceData;
+import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
+import net.simforge.commons.misc.JavaTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,13 +98,16 @@ public class BusyBirdsController {
                 return new BuildPlanResponse("failure", null, plan.getMessages());
             }
 
+            final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+            final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
+
             final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
                     leg.getType().name(),
                     leg.getFromAirport().getIcao(),
                     leg.getToAirport().getIcao(),
                     leg.getPax(),
-                    (int) Geo.distance(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords())
-                    // todo ak0 flight time
+                    (int) Geo.distance(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords()),
+                    JavaTime.toHhmm(SimpleFlight.forRoute(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords(), performanceData).getTotalTime())
                     // todo ak0 add dof
                     // todo ak0 planned dep/arr time
             )).toList();
@@ -192,6 +198,7 @@ public class BusyBirdsController {
         private String toAirportIcao;
         private int pax;
         private int distance;
+        private String duration;
     }
 
     @Data
