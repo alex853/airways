@@ -99,7 +99,11 @@ public class BusyBirdsController {
                     leg.getType().name(),
                     leg.getFromAirport().getIcao(),
                     leg.getToAirport().getIcao(),
-                    leg.getPax() // todo ak0 add dof, planned dep/arr time
+                    leg.getPax(),
+                    (int) Geo.distance(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords())
+                    // todo ak0 flight time
+                    // todo ak0 add dof
+                    // todo ak0 planned dep/arr time
             )).toList();
 
             return new BuildPlanResponse("success", legDtos, null);
@@ -187,6 +191,7 @@ public class BusyBirdsController {
         private String fromAirportIcao;
         private String toAirportIcao;
         private int pax;
+        private int distance;
     }
 
     @Data

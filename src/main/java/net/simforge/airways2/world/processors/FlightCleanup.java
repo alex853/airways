@@ -68,8 +68,9 @@ public class FlightCleanup {
     }
 
     private static void deleteTransportFlight(World world, TransportFlights.Flight tf1) {
-        world.transportFlights().deleteById(tf1.getId()); // todo ak1 t/f deletion means that tickets/passengers have to be processed somehow
         world.scheduledFlights().byId(tf1.getScheduledFlightId())
                 .ifPresent(sf -> world.scheduledFlights().deleteById(sf.getId()));
+        // todo ak1 t/f deletion means that tickets/passengers have to be processed somehow
+        world.transportFlights().deleteById(tf1.getId());
     }
 }
