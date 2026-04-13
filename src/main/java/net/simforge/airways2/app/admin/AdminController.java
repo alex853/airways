@@ -536,7 +536,7 @@ public class AdminController {
 
             final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
-            journey.setStatus(Journeys.Status.LookingForTickets);
+            journey.setCabinServiceF();
 
             return null;
         });

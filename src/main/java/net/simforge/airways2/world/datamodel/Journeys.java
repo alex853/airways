@@ -193,6 +193,10 @@ public class Journeys {
             return CabinLayout.Service.values()[cabinServiceBitField.getInt(id)];
         }
 
+        public void setCabinServiceF() {
+            cabinServiceBitField.setInt(id, CabinLayout.Service.F.ordinal());
+        }
+
         public int getTransportFlight1Id() {
             return readTransportFlight1Id(id);
         }

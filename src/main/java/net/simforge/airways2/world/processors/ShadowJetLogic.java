@@ -126,7 +126,7 @@ public class ShadowJetLogic {
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - transport flight CREATED", mission.getId(), transportFlight.getId());
 
-        world.c2cFlowControl().updateSuccessRate(transportFlight, 0.001f);
+        world.c2cFlowControl().updateSuccessRate(transportFlight, 0.01f);
 
         int journeyBooked = 0;
         int paxBooked = 0;

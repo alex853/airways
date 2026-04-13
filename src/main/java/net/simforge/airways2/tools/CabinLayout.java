@@ -36,10 +36,10 @@ public class CabinLayout {
     private final int first;
 
     private CabinLayout(final int economy, final int premiumEconomy, final int business, final int first) {
-        checkArgument(economy >= 0 && economy <= ECONOMY_MAX);
-        checkArgument(premiumEconomy >= 0 && premiumEconomy <= PREMIUM_ECONOMY_MAX);
-        checkArgument(business >= 0 && business <= BUSINESS_MAX);
-        checkArgument(first >= 0 && first <= FIRST_MAX);
+        checkArgument(economy >= 0 && economy <= ECONOMY_MAX, "economy class seats " + economy + " is out of range ");
+        checkArgument(premiumEconomy >= 0 && premiumEconomy <= PREMIUM_ECONOMY_MAX, "premium economy class seats " + premiumEconomy + " is out of range ");
+        checkArgument(business >= 0 && business <= BUSINESS_MAX, "business class seats " + business + " is out of range ");
+        checkArgument(first >= 0 && first <= FIRST_MAX, "first class seats " + first + " is out of range ");
 
         this.economy = economy;
         this.premiumEconomy = premiumEconomy;
