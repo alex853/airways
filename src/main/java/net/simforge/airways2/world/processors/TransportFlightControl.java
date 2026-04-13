@@ -8,6 +8,12 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAutomaticDeboarding;
@@ -21,8 +27,12 @@ public class TransportFlightControl {
 
     private final World world;
 
+    private Map<String, CabinLayout> cabinLayouts = new TreeMap<>();
+
     public TransportFlightControl(final World world) {
         this.world = world;
+
+        loadCabinLayouts();
     }
 
     private PaxManager paxManager() {
@@ -66,11 +76,7 @@ public class TransportFlightControl {
         Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
         String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
 
-        CabinLayout cabinLayout = switch (aircraftType) {
-            case "B773" -> CabinLayout.FJWY(8, 49, 40, 138);
-            case "A320" -> CabinLayout.JY(8, 138);
-            default -> null;
-        };
+        CabinLayout cabinLayout = cabinLayouts.get(aircraftType);
 
         if (cabinLayout == null) {
             FlightStats.event("missingCabinLayout " + aircraftType);
@@ -294,5 +300,32 @@ public class TransportFlightControl {
         transportFlight.setPaxOnBoard(0);
 
         log.warn("t/f #{} - unloaded forcefully, set PAX on board to 0", transportFlight.getId());
+    }
+
+    private void loadCabinLayouts() {
+        Properties properties = new Properties();
+
+        try {
+            InputStream stream = TransportFlightControl.class.getResourceAsStream("/cabin-layouts.properties");
+            properties.load(stream);
+        } catch (IOException e) {
+            log.error("Cabin layouts - unable to load the file", e);
+            return;
+        }
+
+        log.info("Cabin layouts - the file loaded, keeping {} entries", properties.keySet().size());
+
+        properties.forEach((key, value) -> {
+            String type = (String) key;
+            String layoutStr = (String) value;
+
+            try {
+                CabinLayout cabinLayout = CabinLayout.parseString(layoutStr);
+                cabinLayouts.put(type, cabinLayout);
+                log.info("Cabin layouts - {} = {} - parsed and added {}", type, layoutStr, cabinLayout.toString());
+            } catch (RuntimeException ignored) {
+                log.error("Cabin layouts - {} = {} - UNABLE TO PARSE", type, layoutStr);
+            }
+        });
     }
 }

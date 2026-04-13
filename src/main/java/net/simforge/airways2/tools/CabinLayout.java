@@ -68,6 +68,40 @@ public class CabinLayout {
         return new CabinLayout(economy, premiumEconomy, business, first);
     }
 
+    public static CabinLayout parseString(String s) {
+        if (Strings.isBlank(s)) {
+            return NOBODY;
+        }
+
+        int economy = 0;
+        int premiumEconomy = 0;
+        int business = 0;
+        int first = 0;
+
+        String[] parts = s.split("/");
+
+        for (String part : parts) {
+            checkArgument(part.length() >= 2, "Invalid cabin part: " + part);
+
+            char type = part.charAt(0);
+            String numberStr = part.substring(1);
+
+            checkArgument(numberStr.chars().allMatch(Character::isDigit), "Invalid number in cabin part: " + part);
+
+            int value = Integer.parseInt(numberStr);
+
+            switch (type) {
+                case 'Y' -> economy = value;
+                case 'W' -> premiumEconomy = value;
+                case 'J' -> business = value;
+                case 'F' -> first = value;
+                default -> throw new IllegalArgumentException("Unknown cabin type: " + type);
+            }
+        }
+
+        return new CabinLayout(economy, premiumEconomy, business, first);
+    }
+
     public int getEconomy() {
         return economy;
     }
