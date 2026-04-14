@@ -34,6 +34,7 @@ public class JourneyProcessor {
             case WaitingForDeboarding -> waitingForDeboarding(world, journey);
             case JustArrived -> justArrived(world, journey);
             case ItinerariesDone -> itinerariesDone(world, journey);
+            case SpendingTheirTime -> switchToReturnTrip(world, journey);
             case Finished, CouldNotFindTickets, TooLateToBoard -> cleanup(world, journey);
         }
     }
@@ -206,8 +207,12 @@ public class JourneyProcessor {
         if (journey.isReturningBack() || journey.isBusyBirdsProcessing()) {
             world.journeyControl().finish(journey);
         } else {
-            world.journeyControl().switchToReturnTrip(journey);
+            world.journeyControl().startSpendingTheirTime(journey);
         }
+    }
+
+    private static void switchToReturnTrip(final World world, final Journeys.Journey journey) {
+        world.journeyControl().switchToReturnTrip(journey);
     }
 
     private static void cleanup(final World world, final Journeys.Journey journey) {

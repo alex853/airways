@@ -134,9 +134,21 @@ public class JourneyControl {
         }
     }
 
-    public void switchToReturnTrip(final Journeys.Journey journey) {
+    public void startSpendingTheirTime(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
+
+        journey.setStatus(Journeys.Status.SpendingTheirTime);
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
+
+        world.c2cFlowControl().updateSuccessRate(journey, 0.04f);
+
+        log.info("j/y #{} - start spending their time", journey.getId());
+    }
+
+    public void switchToReturnTrip(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.SpendingTheirTime);
 
         journey.setReturningBack(true);
 
@@ -148,8 +160,6 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setAttemptCounter(0);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
-
-        world.c2cFlowControl().updateSuccessRate(journey, 0.04f);
 
         log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
     }

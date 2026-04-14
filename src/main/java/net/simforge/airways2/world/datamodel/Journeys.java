@@ -282,6 +282,7 @@ public class Journeys {
         CouldNotFindTickets(12),
         TooLateToBoard(13),
         // not sure we need it Terminated(14),
+        SpendingTheirTime(15)
         ;
 
         private final int code;
