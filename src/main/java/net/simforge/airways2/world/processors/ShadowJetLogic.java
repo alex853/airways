@@ -106,7 +106,7 @@ public class ShadowJetLogic {
         Set<Integer> fromCitiesId = world.airport2city().allByAirportId(mission.getDepartureAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
         Set<Integer> toCitiesId = world.airport2city().allByAirportId(mission.getDestinationAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
 
-//        if (fromCitiesId.isEmpty() || toCitiesId.isEmpty()) { // todo ak0 test with happens if this condition is removed? this will turn every vatsim flight into transport flight
+//        if (fromCitiesId.isEmpty() || toCitiesId.isEmpty()) { // todo ak0 test what will happen if this condition is removed? this will turn every vatsim flight into transport flight
 //            log.warn("Transport flight provisioning - f/m #{} - {} - no cities found - {} / {}, SKIPPING", mission.getId(), route, fromCitiesId, toCitiesId);
 //            return;
 //        }

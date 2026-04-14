@@ -13,7 +13,7 @@ import java.util.List;
 
 public class FindCitiesNearToAirport {
     public static void main(String[] args) throws IOException {
-        String icao = "EDDS";
+        String icao = "EDDN";
         int maxDistance = 65;
 
         Geo.Coords airportCoords = null;

@@ -19,6 +19,7 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:DE", "city-name:Leipzig"});
         ImportCities.main(new String[]{"country-code:DE", "city-name:Dresden"});
         ImportCities.main(new String[]{"country-code:DE", "city-name:Stuttgart"});
+        ImportCities.main(new String[]{"country-code:DE", "city-name:Nurnberg"});
 
         ImportCities.main(new String[]{"country-code:GB", "city-name:Liverpool"});
         ImportCities.main(new String[]{"country-code:GB", "city-name:Edinburgh"});
