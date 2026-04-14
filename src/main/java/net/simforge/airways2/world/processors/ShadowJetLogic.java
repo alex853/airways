@@ -117,8 +117,8 @@ public class ShadowJetLogic {
             return;
         }
 
-        Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-        AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+//        Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+//        AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
 //        FlightStats.event("shadowJet aircraftType " + aircraftType.getIcao());
 
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
