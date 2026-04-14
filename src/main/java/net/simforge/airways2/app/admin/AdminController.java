@@ -603,7 +603,7 @@ public class AdminController {
                         }
                     });
 
-            return  Strings.join(results, '\n');;
+            return  Strings.join(results, '\n');
         });
     }
 }
