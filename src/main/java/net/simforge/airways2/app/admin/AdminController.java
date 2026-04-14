@@ -13,6 +13,7 @@ import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.commons.io.IOHelper;
+import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;
 import net.simforge.commons.misc.Str;
 import org.apache.logging.log4j.util.Strings;
@@ -487,22 +488,6 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/link-eglf")
-    public String fix682() {
-        return worldBean.modifySync(world -> {
-            final Airports.Airport eglf = world.airports().byIcao("EGLF").orElseThrow();
-            final Cities.City london = world.cities().byId(1).orElseThrow();
-            final Optional<Airport2City.Link> link = world.airport2city().byAirportIdAndCityId(eglf.getId(), london.getId());
-
-            if (link.isPresent()) {
-                return "link exists";
-            }
-
-            world.airport2city().create(eglf.getId(), london.getId());
-            return "link created";
-        });
-    }
-
     @GetMapping("/fix-129")
     public void fix129() {
         worldBean.modifySync(world -> {
@@ -590,6 +575,35 @@ public class AdminController {
             world.aircrafts().byRegNo("F-AUWZ").orElseThrow().setAircraftOperatorId(0);
 
             return null;
+        });
+    }
+
+    @GetMapping(value = "/airport/create-links", produces = "text/plain")
+    public String createAirport2CityLinks(@RequestParam("icao") String icao,
+                                          @RequestParam(name = "maxDistance", defaultValue = "50") int maxDistance,
+                                          @RequestParam(name = "dryRun", defaultValue = "false") boolean dryRun) {
+        return worldBean.modifySync(world -> {
+            List<String> results = new ArrayList<>();
+
+            final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
+            world.cities().all()
+                    .filter(c -> Geo.distance(c.getCoords(), airport.getCoords()) < maxDistance)
+                    .forEach(c -> {
+                        Optional<Airport2City.Link> link = world.airport2city().byAirportIdAndCityId(airport.getId(), c.getId());
+                        if (link.isPresent()) {
+                            results.add(Str.al(c.getName(), 20) + " exists");
+                            return;
+                        }
+
+                        if (!dryRun) {
+                            world.airport2city().create(airport.getId(), c.getId());
+                            results.add(Str.al(c.getName(), 20) + " created");
+                        } else {
+                            results.add(Str.al(c.getName(), 20) + " should be created");
+                        }
+                    });
+
+            return  Strings.join(results, '\n');;
         });
     }
 }

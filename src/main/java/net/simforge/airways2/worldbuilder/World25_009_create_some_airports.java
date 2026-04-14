@@ -10,7 +10,7 @@ public class World25_009_create_some_airports {
                 "BIKF",
                 "CYYZ",
                 "EBBR",
-                "EDDF", "EDDK", "EDDL", "EDDP", "EDDS", "EDDV",
+                "EDDF", "EDDK", "EDDL", "EDDP", "EDDS", "EDDV", "EDDN",
                 "EFHK", "EFKS",
                 "EGBB", "EGCC", "EGJJ", "EGLF", "EGPK", "EGSS",
                 "EHAM",
