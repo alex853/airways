@@ -80,12 +80,12 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
-    private static final Set<String> allowedAirports = Set.of(
-            "EDDF", "EDDM", "EDDH", "EDDB",
-            "EGLL", "EGKK", "EGCC", "EGPH", "EGBB",
-            "LFPG", "LFPO", "LFPB",
-            "LKPR",
-            "LOWW");
+//    private static final Set<String> allowedAirports = Set.of(
+//            "EDDF", "EDDM", "EDDH", "EDDB",
+//            "EGLL", "EGKK", "EGCC", "EGPH", "EGBB",
+//            "LFPG", "LFPO", "LFPB",
+//            "LKPR",
+//            "LOWW");
     private static volatile long lastTFWithJourneysTS;
 
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
@@ -106,10 +106,10 @@ public class ShadowJetLogic {
         Set<Integer> fromCitiesId = world.airport2city().allByAirportId(mission.getDepartureAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
         Set<Integer> toCitiesId = world.airport2city().allByAirportId(mission.getDestinationAirportId()).map(Airport2City.Link::getCityId).collect(Collectors.toSet());
 
-        if (fromCitiesId.isEmpty() || toCitiesId.isEmpty()) { // todo ak0 test with happens if this condition is removed? this will turn every vatsim flight into transport flight
-            log.warn("Transport flight provisioning - f/m #{} - {} - no cities found - {} / {}, SKIPPING", mission.getId(), route, fromCitiesId, toCitiesId);
-            return;
-        }
+//        if (fromCitiesId.isEmpty() || toCitiesId.isEmpty()) { // todo ak0 test with happens if this condition is removed? this will turn every vatsim flight into transport flight
+//            log.warn("Transport flight provisioning - f/m #{} - {} - no cities found - {} / {}, SKIPPING", mission.getId(), route, fromCitiesId, toCitiesId);
+//            return;
+//        }
 
         Sets.SetView<Integer> intersection = Sets.intersection(fromCitiesId, toCitiesId);
         if (!intersection.isEmpty()) {
@@ -119,7 +119,7 @@ public class ShadowJetLogic {
 
         Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
-        FlightStats.event("shadowJet aircraftType " + aircraftType.getIcao());
+//        FlightStats.event("shadowJet aircraftType " + aircraftType.getIcao());
 
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - transport flight CREATED", mission.getId(), transportFlight.getId());
