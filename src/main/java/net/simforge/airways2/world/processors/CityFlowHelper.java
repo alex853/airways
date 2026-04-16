@@ -25,7 +25,7 @@ public class CityFlowHelper {
     public static final float DEFAULT_MOBILITY_FACTOR = 1.0f;
 
     private static final float MIN_SUCCESS_RATE = 0.00001f;
-    public static final float STARTING_SUCCESS_RATE = 0.10f;
+    public static final float STARTING_SUCCESS_RATE = 0.03f;
     private static final float MAX_SUCCESS_RATE = 1.0f;
 
     public static float getFlowUnits(final World world, final CityFlows.Flow fromCityFlow, final CityFlows.Flow toCityFlow) {
