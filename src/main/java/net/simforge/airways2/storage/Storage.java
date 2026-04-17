@@ -555,6 +555,10 @@ public class Storage<T> {
 
     public interface Condition<T> {
         boolean test(int recordId);
+
+        static <T> Condition<T> and(Condition<T> condition1, Condition<T> condition2) {
+            return recordId -> condition1.test(recordId) && condition2.test(recordId);
+        }
     }
 
     public Condition<T> nextForHeartbeatCondition(final DataField heartbeatTimeField, final int worldTime) {

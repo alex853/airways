@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static net.simforge.airways2.storage.Storage.Condition.and;
+
 public class BusyBirdsMissionControl {
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionControl.class);
 
@@ -23,8 +25,9 @@ public class BusyBirdsMissionControl {
     }
 
     public List<Journeys.Journey> getJourneysToBook() {
-        return world.journeys().filter(world.journeys().byBusyBirdsProcessing())
-                .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+        return world.journeys().filter(and(
+                        world.journeys().byBusyBirdsProcessing(),
+                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
                 .toList();
     }
 
