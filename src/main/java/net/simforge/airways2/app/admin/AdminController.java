@@ -462,6 +462,7 @@ public class AdminController {
 
 
             List<Journeys.Journey> lookingForTicketsWithoutHeartbeat = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> !j.isBusyBirdsProcessing())
                     .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                     .toList();
             result = result + "LookingForTickets without heartbeat:\n";
