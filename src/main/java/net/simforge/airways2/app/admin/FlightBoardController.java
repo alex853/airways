@@ -153,7 +153,8 @@ public class FlightBoardController {
                     TimeTools.hhmmPlusDaysOrNull(timeline.getBlocksOn().getEstimatedTime()),
 
                     tf != null ? tf.getTotalTickets().toString() : null,
-                    tf != null ? (tf.getSoldTickets() > 0 ? tf.getSoldTickets() : null) : null,
+                    tf != null ? tf.getRemainedTickets().toString() : null,
+                    tf != null ? tf.getTotalTickets().minus(tf.getRemainedTickets()).toString() : null,
                     tf != null ? (tf.getPaxCheckedIn() > 0 ? tf.getPaxCheckedIn() : null) : null,
                     tf != null ? (tf.getPaxOnBoard() > 0 ? tf.getPaxOnBoard() : null) :null
             );
@@ -186,7 +187,8 @@ public class FlightBoardController {
         private String eLdg;
         private String eArr;
         private String tTkts;
-        private Integer sTkts;
+        private String rTkts;
+        private String sTkts;
         private Integer ckdIn;
         private Integer pOnBrd;
     }

@@ -151,6 +151,15 @@ public class CabinLayout {
                 first + (service == Service.F ? seats : 0));
     }
 
+    public CabinLayout minus(CabinLayout layout) {
+        checkNotNull(layout);
+        return new CabinLayout(
+                economy - layout.economy,
+                premiumEconomy - layout.premiumEconomy,
+                business - layout.business,
+                first - layout.first);
+    }
+
     public int toSigned32bit() {
         return (economy << ECONOMY_OFFSET)
                 + (premiumEconomy << PREMIUM_ECONOMY_OFFSET)
