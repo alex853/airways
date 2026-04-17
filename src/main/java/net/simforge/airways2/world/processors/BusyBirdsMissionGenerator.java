@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static net.simforge.airways2.storage.Storage.Condition.and;
+
 // constantly running process which finds some, few, not too many W or J journeys in looking for tickets status
 // and pick them up - mark them as 'special processing'
 // save info into dedicated storage and sets expiration date - lets start from 24 hours
@@ -58,8 +60,9 @@ public class BusyBirdsMissionGenerator {
 
         log.info("there are {} journey(s) to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
 
-        List<Journeys.Journey> foundJourneys = world.journeys().filter(world.journeys().byNoBusyBirdsProcessing())
-                .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
+        List<Journeys.Journey> foundJourneys = world.journeys().filter(and(
+                        world.journeys().byNoBusyBirdsProcessing(),
+                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
                 .filter(j -> j.getCabinService() == CabinLayout.Service.F)
                 .toList();
         if (foundJourneys.isEmpty()) {

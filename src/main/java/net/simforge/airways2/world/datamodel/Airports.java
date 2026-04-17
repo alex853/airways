@@ -114,7 +114,9 @@ public class Airports {
         public boolean isExcluded() { // todo ak3 extend airports storage and add some field to support 'exclusion';
             String icao = getIcao();
             return "LFPY".equals(icao)
-                    || "EDDT".equals(icao);
+                    || "EDDT".equals(icao)
+                    || "LGAT".equals(icao)
+                    || "CGAS".equals(icao);
         }
 
         @Override

@@ -3,6 +3,7 @@ package net.simforge.airways2.world.processors;
 import com.google.common.collect.Sets;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -12,6 +13,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static net.simforge.airways2.storage.Storage.Condition.and;
 
 public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
@@ -109,16 +113,39 @@ public class ShadowJetLogic {
 
         world.transportFlightControl().startCheckIn(transportFlight);
 
-        List<Journeys.Journey> journeys = world.journeys().filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+        double loadFactor = Tools.random(40, 60) / 100.0;
+        int consideredAvgPaxPerJourney = 5;
+        int maxCount = (int) ((transportFlight.getTotalTickets().getTotal() * loadFactor) / consideredAvgPaxPerJourney);
+
+        List<Journeys.Journey> collected = new ArrayList<>();
+
+        CabinLayout remained = transportFlight.getRemainedTickets();
+
+        Stream<Journeys.Journey> journeyStream = world.journeys().filter(and(
+                        world.journeys().byNoBusyBirdsProcessing(),
+                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
                 .filter(j -> fromCitiesId.contains(j.getFromCityId())
-                        && toCitiesId.contains(j.getToCityId())
-                        && j.getCabinService() == CabinLayout.Service.Y) // todo ak1 remove this limitation, match into the cabin layout from above
-                .toList();
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Found journeys: {}", mission.getId(), transportFlight.getId(), journeys.stream().map(Journeys.Journey::getId).toList());
+                        && toCitiesId.contains(j.getToCityId()));
+        Iterator<Journeys.Journey> it = journeyStream.iterator();
+        while (it.hasNext()
+                && (remained.getTotal() > 0)
+                && (collected.size() < maxCount)) {
+            Journeys.Journey journey = it.next();
+            CabinLayout newRemained;
+            try {
+                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getCabinService());
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
 
-        for (int i = 0; i < Math.min(5, journeys.size()); i++) { // todo ak1 (total tickets / 5) * 0.25 = but no more than 10 groups to book immediately, plus same number (same?) to ping via looking for tickets randomly distributed in next 5 minutes. but take into account cabin service!
-            Journeys.Journey journey = journeys.get(i);
+            collected.add(journey);
+            remained = newRemained;
+        }
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Selected load factor {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, collected.stream().map(Journeys.Journey::getId).toList());
 
+        // todo ak2 some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes?
+
+        for (Journeys.Journey journey : collected) {
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
             world.journeyControl().waitForCheckin(journey);
             world.journeyControl().checkin(journey);

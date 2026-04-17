@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-public class FindCitiesNearToAirport {
+public class FindCitiesNearAirport {
     public static void main(String[] args) throws IOException {
         String icao = "EDDN";
         int maxDistance = 65;
