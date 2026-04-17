@@ -444,6 +444,32 @@ public class AdminController {
 
 
 
+            List<Journeys.Journey> waitingForBoardingWithTransportFlightsInInappropriateStatus = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
+                    .filter(j -> {
+                        Optional<TransportFlights.Flight> flight = world.transportFlights().byId(j.getTransportFlight1Id());
+                        boolean present = flight.isPresent();
+                        if (!present) {
+                            return false;
+                        }
+                        return flight.get().getStatus() != TransportFlights.Status.CheckIn
+                                && flight.get().getStatus() != TransportFlights.Status.Boarding
+                                && flight.get().getStatus() != TransportFlights.Status.WaitingForDeparture;
+                    })
+                    .toList();
+            result = result + "WaitingForBoarding with transport flights in inappropriate status:\n";
+            result = result + "  found . . . . . . " + waitingForBoardingWithTransportFlightsInInappropriateStatus.size() + "\n";
+
+            toProcess = Math.min(waitingForBoardingWithTransportFlightsInInappropriateStatus.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                world.journeys().deleteById(waitingForBoardingWithTransportFlightsInInappropriateStatus.get(i).getId());
+            }
+
+            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + "\n";
+
+
+
             List<Journeys.Journey> waitingForCheckinWithBrokenTransportFlights = world.journeys().allWithZeroHeartbeat()
                     .filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn)
                     .filter(j -> world.transportFlights().byId(j.getTransportFlight1Id()).isEmpty())
