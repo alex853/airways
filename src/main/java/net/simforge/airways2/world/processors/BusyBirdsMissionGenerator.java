@@ -112,7 +112,7 @@ public class BusyBirdsMissionGenerator {
         saveMissionsFile(properties);
     }
 
-    private static Properties loadMissionsFile() {
+    public static Properties loadMissionsFile() {
         Properties properties = new Properties();
         File file = new File("./busy-birds-missions.properties");
         if (file.exists()) {
@@ -136,7 +136,7 @@ public class BusyBirdsMissionGenerator {
         }
     }
 
-    private static List<MissionInfo> getMissionInfos(Properties properties) {
+    public static List<MissionInfo> getMissionInfos(Properties properties) {
         List<Integer> ids = properties.keySet().stream()
                 .filter(k -> {
                     String s = (String) k;
@@ -153,7 +153,7 @@ public class BusyBirdsMissionGenerator {
         return ids.stream().map(id -> MissionInfo.load(properties, id)).toList();
     }
 
-    private static class MissionInfo {
+    public static class MissionInfo {
         private static final long ONE_HOUR = 60 * 60 * 1000;
         private static final long ONE_DAY = 24 * ONE_HOUR;
 
@@ -185,10 +185,12 @@ public class BusyBirdsMissionGenerator {
             return new MissionInfo(properties, journeyId, Long.parseLong(validTillStr), "true".equals(deletedStr));
         }
 
-        public void delete() {
-            deleted = true;
+        public long getValidTill() {
+            return validTill;
+        }
 
-            properties.setProperty("mission." + journeyId + ".deleted", "true");
+        public boolean isValid() {
+            return !isExpired() && !isDeleted();
         }
 
         public boolean isDeleted() {
@@ -201,6 +203,12 @@ public class BusyBirdsMissionGenerator {
 
         public boolean isExpired() {
             return validTill < System.currentTimeMillis();
+        }
+
+        public void delete() {
+            deleted = true;
+
+            properties.setProperty("mission." + journeyId + ".deleted", "true");
         }
 
         public boolean needsCleanup() {

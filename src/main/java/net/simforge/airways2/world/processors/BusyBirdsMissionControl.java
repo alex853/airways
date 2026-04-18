@@ -1,5 +1,9 @@
 package net.simforge.airways2.world.processors;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import net.simforge.airways2.tools.Tools;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -7,6 +11,7 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 import static net.simforge.airways2.storage.Storage.Condition.and;
@@ -24,11 +29,30 @@ public class BusyBirdsMissionControl {
         return world.aircraftOperators().byId(World25.BusyBirdsOperatorId).orElseThrow();
     }
 
-    public List<Journeys.Journey> getJourneysToBook() {
-        return world.journeys().filter(and(
-                        world.journeys().byBusyBirdsProcessing(),
-                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
-                .toList();
+    public List<Mission> getMissionsToBook() {
+        Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
+        List<BusyBirdsMissionGenerator.MissionInfo> missionInfos = BusyBirdsMissionGenerator.getMissionInfos(properties);
+        List<BusyBirdsMissionGenerator.MissionInfo> validMissions = missionInfos.stream().filter(BusyBirdsMissionGenerator.MissionInfo::isValid).toList();
+
+        return validMissions.stream().map(m -> {
+            Journeys.Journey j = world.journeys().byId(m.getJourneyId()).orElseThrow();
+
+            Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+            Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
+
+            int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
+            int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
+                    * (1 + Tools.lastDigit(fromCity.getId())*0.01)
+                    * (1 + Tools.lastDigit(toCity.getId())*0.01)
+                    * (1 + Tools.lastDigit(j.getId())*0.01));
+
+            return new Mission(
+                    j,
+                    Time.toLdt((int) (m.getValidTill() / 1000)),
+                    distance,
+                    pay);
+
+        }).toList();
     }
 
     public BusyBirdsMissionControl.MissionPlan buildPlan(final Journeys.Journey journey, final Aircrafts.Aircraft aircraft) {
@@ -142,6 +166,14 @@ public class BusyBirdsMissionControl {
                 .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class Mission {
+        private final Journeys.Journey journey;
+        private final LocalDateTime validTill;
+        private final int distance;
+        private final int pay;
+    }
 
     public static class MissionPlan {
         private final Status status;

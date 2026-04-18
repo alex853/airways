@@ -39,28 +39,22 @@ public class BusyBirdsController {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            return world.busyBirdsMissionControl().getJourneysToBook().stream()
-                    .map(j -> {
-                        final Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
-                        final Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
+            return world.busyBirdsMissionControl().getMissionsToBook().stream()
+                    .map(m -> {
+                        Journeys.Journey j = m.getJourney();
 
-                        final int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-                        final int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
-                                * (1 + lastDigit(fromCity.getId())*0.01)
-                                * (1 + lastDigit(toCity.getId())*0.01)
-                                * (1 + lastDigit(j.getId())*0.01));
+                        Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+                        Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
                         return new MissionDto(
                                 j.getId(),
-                                j.getFromCityId(),
                                 fromCity.getName(),
-                                j.getToCityId(),
                                 toCity.getName(),
                                 j.getGroupSize(),
-                                distance,
-                                pay);
-                    })
-                    .toList();
+                                m.getDistance(),
+                                m.getPay(),
+                                m.getValidTill().toString());
+                    }).toList();
         });
     }
 
@@ -155,21 +149,16 @@ public class BusyBirdsController {
         });
     }
 
-    private static int lastDigit(int v) {
-        return v % 10;
-    }
-
     @Data
     @AllArgsConstructor
     public static class MissionDto {
         private int id;
-        private int fromCityId;
         private String fromCityName;
-        private int toCityId;
         private String toCityName;
         private int pax;
         private int distance;
         private int pay;
+        private String validTill;
     }
 
     @Data

@@ -16,4 +16,8 @@ public class Tools {
         }
         return Optional.of(list.get(random(0, list.size()-1)));
     }
+
+    public static int lastDigit(int v) {
+        return v % 10;
+    }
 }
