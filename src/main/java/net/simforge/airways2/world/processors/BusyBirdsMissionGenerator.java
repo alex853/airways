@@ -144,7 +144,7 @@ public class BusyBirdsMissionGenerator {
                 })
                 .map(k -> {
                     String s = (String) k;
-                    String[] parts = s.split("/.");
+                    String[] parts = s.split("\\.");
                     return parts[1];
                 })
                 .map(Integer::parseInt)
