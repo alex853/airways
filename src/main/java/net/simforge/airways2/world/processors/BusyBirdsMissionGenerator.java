@@ -170,7 +170,7 @@ public class BusyBirdsMissionGenerator {
         }
 
         public static MissionInfo createNew(Properties properties, Journeys.Journey journey) {
-            long validTill = System.currentTimeMillis() + 12 * ONE_HOUR;
+            long validTill = System.currentTimeMillis() + 36 * ONE_HOUR;
 
             properties.setProperty("mission." + journey.getId() + ".journey.id", "ok");
             properties.setProperty("mission." + journey.getId() + ".valid.till", String.valueOf(validTill));
