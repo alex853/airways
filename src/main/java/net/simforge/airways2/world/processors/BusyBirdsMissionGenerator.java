@@ -7,7 +7,12 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.*;
 import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import static net.simforge.airways2.storage.Storage.Condition.and;
 
@@ -44,40 +49,168 @@ public class BusyBirdsMissionGenerator {
 
     private static long lastExecution;
 
+    // todo ak2 later the same logic can be converted into some dedicated storage file
     public static void process(final World world) {
         if (System.currentTimeMillis() - lastExecution < 60 * 60 * 1000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
-        List<Journeys.Journey> journeysToBook = world.busyBirdsMissionControl().getJourneysToBook();
-        int journeysToPickUp = maxJourneyCount - journeysToBook.size();
+        Properties properties = loadMissionsFile();
 
-        if (journeysToPickUp <= 0) {
-            log.info("there are {} journey(s) to book available, limit is set to {} journeys, no need to pick up more", journeysToBook.size(), maxJourneyCount);
+        List<MissionInfo> allMissions = getMissionInfos(properties);
+        for (MissionInfo missionInfo : allMissions) {
+            if (!missionInfo.isDeleted() && missionInfo.isExpired()) {
+                Journeys.Journey journey = world.journeys().byId(missionInfo.getJourneyId()).orElseThrow();
+                journey.setBusyBirdsProcessing(false);
+                journey.setHeartbeatTime(world.getWorldTime());
+
+                missionInfo.delete();
+            }
+
+            if (missionInfo.needsCleanup()) {
+                missionInfo.cleanup();
+            }
+        }
+        saveMissionsFile(properties);
+
+        List<MissionInfo> validMissions = allMissions.stream().filter(m -> !m.isDeleted()).toList();
+        Set<Integer> allMissionIds = allMissions.stream().map(MissionInfo::getJourneyId).collect(Collectors.toSet());
+
+        if (validMissions.size() >= maxJourneyCount) {
+            log.info("there are {} missions to book available, limit is set to {} missions, no need to pick up more", validMissions.size(), maxJourneyCount);
             return;
         }
 
-        log.info("there are {} journey(s) to book available, limit is set to {} journeys, let's pick up one more", journeysToBook.size(), maxJourneyCount);
+        log.info("there are {} mission(s) to book available, limit is set to {} missions, let's pick up one more", validMissions.size(), maxJourneyCount);
 
-        List<Journeys.Journey> foundJourneys = world.journeys().filter(and(
+        List<Journeys.Journey> allJourneys = world.journeys().filter(and(
                         world.journeys().byNoBusyBirdsProcessing(),
                         world.journeys().byStatus(Journeys.Status.LookingForTickets)))
                 .filter(j -> j.getCabinService() == CabinLayout.Service.F)
+                .filter(j -> !allMissionIds.contains(j.getId()))
                 .toList();
-        if (foundJourneys.isEmpty()) {
-            log.info("no first class journey looking for tickets found, nothing to pick up so far");
+        Optional<Journeys.Journey> journey = Tools.random(allJourneys);
+
+        if (journey.isEmpty()) {
+            log.info("available F-journeys not found");
             return;
         }
 
-        int index = Tools.random(0, foundJourneys.size()-1);
-        Journeys.Journey journey = foundJourneys.get(index);
+        log.info("found {} available F-journeys, selected F-journey: {} - from {} to {}, pax {} - picked up",
+                allJourneys.size(),
+                journey.get(),
+                world.cities().byId(journey.get().getFromCityId()).orElseThrow().getName(),
+                world.cities().byId(journey.get().getToCityId()).orElseThrow().getName(),
+                journey.get().getGroupSize());
 
-        log.info("journey {} - from {} to {}, pax {} - picked up",
-                journey.toString(),
-                world.cities().byId(journey.getFromCityId()).orElseThrow().getName(),
-                world.cities().byId(journey.getToCityId()).orElseThrow().getName(),
-                journey.getGroupSize());
-        journey.setBusyBirdsProcessing(true);
+        MissionInfo newMission = MissionInfo.createNew(properties, journey.get());
+        log.info("new mission {}", newMission);
+
+        journey.get().setBusyBirdsProcessing(true);
+
+        saveMissionsFile(properties);
+    }
+
+    private static Properties loadMissionsFile() {
+        Properties properties = new Properties();
+        File file = new File("./busy-birds-missions.properties");
+        if (file.exists()) {
+            try (InputStream is = new FileInputStream(file)) {
+                properties.load(is);
+            } catch (IOException e) {
+                log.error("Unable to load missions file", e);
+                throw new RuntimeException(e);
+            }
+        }
+        return properties;
+    }
+
+    private static void saveMissionsFile(Properties properties) {
+        File file = new File("./busy-birds-missions.properties");
+        try (OutputStream os = new FileOutputStream(file, false)) {
+            properties.store(os, null);
+        } catch (IOException e) {
+            log.error("Unable to save missions file", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static List<MissionInfo> getMissionInfos(Properties properties) {
+        List<Integer> ids = properties.keySet().stream()
+                .filter(k -> {
+                    String s = (String) k;
+                    return s.startsWith("mission.") && s.endsWith(".journey.id");
+                })
+                .map(k -> {
+                    String s = (String) k;
+                    String[] parts = s.split("/.");
+                    return parts[1];
+                })
+                .map(Integer::parseInt)
+                .toList();
+
+        return ids.stream().map(id -> MissionInfo.load(properties, id)).toList();
+    }
+
+    private static class MissionInfo {
+        private static final long ONE_HOUR = 60 * 60 * 1000;
+        private static final long ONE_DAY = 24 * ONE_HOUR;
+
+        private Properties properties;
+        private int journeyId;
+        private long validTill;
+        private boolean deleted;
+
+        private MissionInfo(Properties properties, int journeyId, long validTill, boolean deleted) {
+            this.properties = properties;
+            this.journeyId = journeyId;
+            this.validTill = validTill;
+            this.deleted = deleted;
+        }
+
+        public static MissionInfo createNew(Properties properties, Journeys.Journey journey) {
+            long validTill = System.currentTimeMillis() + 12 * ONE_HOUR;
+
+            properties.setProperty("mission." + journey.getId() + ".journey.id", "ok");
+            properties.setProperty("mission." + journey.getId() + ".valid.till", String.valueOf(validTill));
+
+            return new MissionInfo(properties, journey.getId(), validTill, false);
+        }
+
+        public static MissionInfo load(Properties properties, int journeyId) {
+            String deletedStr = properties.getProperty("mission." + journeyId + ".deleted");
+            String validTillStr = properties.getProperty("mission." + journeyId + ".valid.till");
+
+            return new MissionInfo(properties, journeyId, Long.parseLong(validTillStr), "true".equals(deletedStr));
+        }
+
+        public void delete() {
+            deleted = true;
+
+            properties.setProperty("mission." + journeyId + ".deleted", "true");
+        }
+
+        public boolean isDeleted() {
+            return deleted;
+        }
+
+        public int getJourneyId() {
+            return journeyId;
+        }
+
+        public boolean isExpired() {
+            return validTill < System.currentTimeMillis();
+        }
+
+        public boolean needsCleanup() {
+            return validTill + 7 * ONE_DAY < System.currentTimeMillis();
+        }
+
+        public void cleanup() {
+            properties.remove("mission." + journeyId + ".journey.id");
+            properties.remove("mission." + journeyId + ".valid.till");
+            properties.remove("mission." + journeyId + ".deleted");
+        }
     }
 }
