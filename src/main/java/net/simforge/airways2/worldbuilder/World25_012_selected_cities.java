@@ -29,11 +29,14 @@ public class World25_012_selected_cities {
 
         ImportCities.main(new String[]{"country-code:GR", "city-name:Athens"});
 
+        ImportCities.main(new String[]{"country-code:IT", "city-name:Venice"});
+
         ImportCities.main(new String[]{"country-code:US", "city-name:Boston"});
         ImportCities.main(new String[]{"country-code:US", "city-name:New York"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Austin"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Los Angeles"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Chicago"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Las Vegas"});
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
     }
