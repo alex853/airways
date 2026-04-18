@@ -503,6 +503,8 @@ public class AdminController {
             result = result + "\n";
 
 
+            // todo ak1 check terminal states without heartbeat
+
             return result;
         });
     }
@@ -511,6 +513,14 @@ public class AdminController {
     public String turnToSpecialProcessing(@RequestParam("jId") final int jId) {
         return worldBean.modifySync(world -> {
             world.journeys().byId(jId).orElseThrow().setBusyBirdsProcessing(true);
+            return "DONE";
+        });
+    }
+
+    @GetMapping("/journey/reset-busy-birds-processing")
+    public String turnToSpecialProcessing() {
+        return worldBean.modifySync(world -> {
+            world.journeys().filter(world.journeys().byBusyBirdsProcessing()).forEach(j -> j.setBusyBirdsProcessing(false));
             return "DONE";
         });
     }
