@@ -45,13 +45,13 @@ import static net.simforge.airways2.storage.Storage.Condition.and;
 // mission cancellation.....
 public class BusyBirdsMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionGenerator.class);
-    private static final int maxJourneyCount = 10;
+    private static final int maxJourneyCount = 50;
 
     private static long lastExecution;
 
     // todo ak2 later the same logic can be converted into some dedicated storage file
     public static void process(final World world) {
-        if (System.currentTimeMillis() - lastExecution < 60 * 60 * 1000) {
+        if (System.currentTimeMillis() - lastExecution < 10 * 60 * 1000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
