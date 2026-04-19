@@ -643,4 +643,22 @@ public class AdminController {
             return  Strings.join(results, '\n');
         });
     }
+
+    @GetMapping(value = "/airport/create-business-aviation-terminal", produces = "text/plain")
+    public String createAirportBusinessAviationTerminal(@RequestParam("icao") String icao) {
+        return worldBean.modifySync(world -> {
+            List<String> results = new ArrayList<>();
+
+            final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
+            boolean exists = world.airportFacilities().hasFacility(airport, AirportFacilities.Type.BusinessAviationTerminal);
+            if (!exists) {
+                world.airportFacilities().createIfAbsent(airport, AirportFacilities.Type.BusinessAviationTerminal);
+                results.add("Created");
+            } else {
+                results.add("Exists");
+            }
+
+            return  Strings.join(results, '\n');
+        });
+    }
 }
