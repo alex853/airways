@@ -10,6 +10,7 @@ import net.simforge.airways2.world.computations.AircraftPerformanceData;
 import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
+import net.simforge.airways2.world.processors.BusyBirdsMissionGenerator;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 @RestController
 @RequestMapping("/busy-birds")
@@ -144,6 +146,12 @@ public class BusyBirdsController {
 
                 departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_HOUR;
             }
+
+            Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
+            BusyBirdsMissionGenerator.MissionInfo missionInfo = BusyBirdsMissionGenerator.getMissionInfoById(properties, missionId).orElseThrow();
+            missionInfo.delete();
+            BusyBirdsMissionGenerator.saveMissionsFile(properties);
+            messages.add("BusyBirds mission removed from available");
 
             return new BookMissionResponse("success", messages);
         });

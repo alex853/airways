@@ -203,8 +203,12 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
-        // in case of busy birds - finish the journey, do not switch to return trip
-        if (journey.isReturningBack() || journey.isBusyBirdsProcessing()) { // todo ak0 rework busy-birds processing
+        // in case of busy birds - remove busy-birds-processing flag and continue as usual
+        if (journey.isBusyBirdsProcessing()) {
+            journey.setBusyBirdsProcessing(false);
+        }
+
+        if (journey.isReturningBack()) {
             world.journeyControl().finish(journey);
         } else {
             world.journeyControl().startSpendingTheirTime(journey);

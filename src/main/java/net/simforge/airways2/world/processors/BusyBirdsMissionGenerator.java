@@ -126,7 +126,7 @@ public class BusyBirdsMissionGenerator {
         return properties;
     }
 
-    private static void saveMissionsFile(Properties properties) {
+    public static void saveMissionsFile(Properties properties) {
         File file = new File("./busy-birds-missions.properties");
         try (OutputStream os = new FileOutputStream(file, false)) {
             properties.store(os, null);
@@ -151,6 +151,12 @@ public class BusyBirdsMissionGenerator {
                 .toList();
 
         return ids.stream().map(id -> MissionInfo.load(properties, id)).toList();
+    }
+
+    public static Optional<MissionInfo> getMissionInfoById(Properties properties, int missionId) {
+        return getMissionInfos(properties).stream()
+                .filter(m -> m.getJourneyId() == missionId)
+                .findFirst();
     }
 
     public static class MissionInfo {
@@ -212,7 +218,7 @@ public class BusyBirdsMissionGenerator {
         }
 
         public boolean needsCleanup() {
-            return validTill + 7 * ONE_DAY < System.currentTimeMillis();
+            return validTill + 4 * ONE_DAY < System.currentTimeMillis();
         }
 
         public void cleanup() {
