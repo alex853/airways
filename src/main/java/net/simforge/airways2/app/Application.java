@@ -31,7 +31,7 @@ public class Application {
 //        World25_003_autonomia_airways.main(args);
         World25_009_create_some_airports.main(args);
 //        World25_011_busybirds.main(args);
-//        World25_012_selected_cities.main(args);
+        World25_012_selected_cities.main(args);
 //        World25_099_f1_tour.main(args);
 
         SpringApplication.run(Application.class, args);
