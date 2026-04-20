@@ -58,8 +58,8 @@ public class ScheduledFlightMissionGenerator {
             new ScheduledFlight(172, "AW172", "F-AUWE", "LIMC", "LFPG", "08:00"),
             new ScheduledFlight(173, "AW173", "F-AUWE", "LFPG", "LEMD", "11:30"),
             new ScheduledFlight(174, "AW174", "F-AUWE", "LEMD", "LFPG", "15:30"),
-            new ScheduledFlight(107, "AW107", "F-AUWE", "LFPG", "EGLL", "19:30"),
-            new ScheduledFlight(108, "AW108", "F-AUWE", "EGLL", "LFPG", "22:30"),
+//            new ScheduledFlight(107, "AW107", "F-AUWE", "LFPG", "EGLL", "19:30"),
+//            new ScheduledFlight(108, "AW108", "F-AUWE", "EGLL", "LFPG", "22:30"),
     };
 
     private static List<ScheduledFlight> finalSchedule;
