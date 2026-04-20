@@ -6,8 +6,6 @@ import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.computations.AircraftPerformanceData;
-import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.BusyBirdsMissionGenerator;
@@ -94,18 +92,16 @@ public class BusyBirdsController {
                 return new BuildPlanResponse("failure", null, plan.getMessages());
             }
 
-            final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
-            final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
-
             final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
                     leg.getType().name(),
                     leg.getFromAirport().getIcao(),
                     leg.getToAirport().getIcao(),
                     leg.getPax(),
                     (int) Geo.distance(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords()),
-                    JavaTime.toHhmm(SimpleFlight.forRoute(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords(), performanceData).getTotalTime())
-                    // todo ak0 add dof
-                    // todo ak0 planned dep/arr time
+                    Time.toLdt(leg.getPlannedDepTime()).toLocalDate().toString(),
+                    JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
+                    JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
+                    JavaTime.toHhmm(leg.getPlannedDuration())
             )).toList();
 
             return new BuildPlanResponse("success", legDtos, null);
@@ -129,22 +125,21 @@ public class BusyBirdsController {
             }
 
             List<String> messages = new ArrayList<>();
-            int departureTime = world.getWorldTime() + Time.ONE_HOUR;
             for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
-                FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), departureTime);
+                FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
                 flight.setModePlayerCharacter(true);
                 flight.setUserId(userId);
                 messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
 
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
-                    final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(10, 0, 0, 0)); // todo ak1 provide layouts for those several types
+                    // todo ak0 provide layouts for those several types
+                    // todo ak0 F&J refactoring
+                    final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(10, 0, 0, 0));
                     journey.setTransportFlight1Id(transportFlight.getId());
                     world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getCabinService());
                     world.journeyControl().waitForCheckin(journey);
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
-
-                departureTime = flight.getPlannedArrivalWorldTime() + Time.ONE_HOUR;
             }
 
             Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
@@ -195,6 +190,9 @@ public class BusyBirdsController {
         private String toAirportIcao;
         private int pax;
         private int distance;
+        private String dof;
+        private String depTime;
+        private String arrTime;
         private String duration;
     }
 

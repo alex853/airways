@@ -58,4 +58,18 @@ public class Time {
         }
         return fromLdt(date.atTime(time));
     }
+
+    public static int alignTo5mins(int time) {
+        int secsRemainder = time % Time.ONE_MINUTE;
+        if (secsRemainder > 0) {
+            time -= secsRemainder;
+        }
+
+        int minsRemainder = (time / Time.ONE_MINUTE) % 5;
+        if (minsRemainder == 0) {
+            return time;
+        }
+
+        return time + (5 - minsRemainder) * Time.ONE_MINUTE;
+    }
 }

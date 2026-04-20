@@ -5,18 +5,20 @@ import lombok.Data;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.AircraftPerformanceData;
+import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static net.simforge.airways2.storage.Storage.Condition.and;
-
 public class BusyBirdsMissionControl {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionControl.class);
 
     private final World world;
@@ -85,10 +87,10 @@ public class BusyBirdsMissionControl {
         }
 
         if (toAirport.isEmpty()) {
-            messages.add("unable to find suitable 'from' airport");
+            messages.add("unable to find suitable 'to' airport");
         }
 
-        final Optional<Airports.Airport> baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport.get()); // todo ak1 this can be npe
+        final Optional<Airports.Airport> baseAirport = toAirport.flatMap(airport -> findNearestBaseAirport(world, busyBirdsOperator, airport));
         if (baseAirport.isEmpty()) {
             messages.add("unable to find suitable 'base' airport");
         }
@@ -97,23 +99,42 @@ public class BusyBirdsMissionControl {
             return new MissionPlan(MissionPlan.Status.Failure, null, messages);
         }
 
-        final List<Leg> legs = new ArrayList<>();
+        Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
+        boolean needFerryFlightToDepartureAirport = locationAirport.getId() != fromAirport.get().getId();
+        boolean needFerryFlightToBaseAirport = toAirport.get().getId() != baseAirport.get().getId();
 
-        final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).get(); // todo ak1 this can be npe
-        final boolean needFerryFlightToDepartureAirport = locationAirport.getId() != fromAirport.get().getId();
+        AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
+
+        int plannedTime = world.getWorldTime();
+
+        List<Leg> legs = new ArrayList<>();
 
         if (needFerryFlightToDepartureAirport) {
-            legs.add(new Leg(Leg.Type.Reposition, locationAirport, fromAirport.get()));
+            plannedTime = addLeg(plannedTime, legs, locationAirport, fromAirport.get(), 0, performanceData);
         }
 
-        legs.add(new Leg(Leg.Type.Revenue, fromAirport.get(), toAirport.get(), journey.getGroupSize()));
+        plannedTime = addLeg(plannedTime, legs, fromAirport.get(), toAirport.get(), journey.getGroupSize(), performanceData);
 
-        final boolean needFerryFlightToBaseAirport = toAirport.get().getId() != baseAirport.get().getId();
         if (needFerryFlightToBaseAirport) {
-            legs.add(new Leg(Leg.Type.Reposition, toAirport.get(), baseAirport.get()));
+            addLeg(plannedTime, legs, toAirport.get(), baseAirport.get(), 0, performanceData);
         }
 
         return new MissionPlan(MissionPlan.Status.Success, legs, null);
+    }
+
+    private int addLeg(int plannedTime, List<Leg> legs,
+                       Airports.Airport fromAirport, Airports.Airport toAirport,
+                       int pax,
+                       AircraftPerformanceData performanceData) {
+        SimpleFlight simpleFlight = SimpleFlight.forRoute(fromAirport.getCoords(), toAirport.getCoords(), performanceData);
+
+        int plannedDepTime = Time.alignTo5mins(plannedTime + Time.ONE_HOUR);
+        int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
+
+        legs.add(new Leg(Leg.Type.Revenue, fromAirport, toAirport, pax, plannedDepTime, plannedArrTime));
+
+        return plannedArrTime;
     }
 
     private Optional<Airports.Airport> chooseAirport(final AircraftOperators.AircraftOperator aircraftOperator, final List<Airports.Airport> airports) {
@@ -209,19 +230,16 @@ public class BusyBirdsMissionControl {
         private final Airports.Airport fromAirport;
         private final Airports.Airport toAirport;
         private final int pax;
+        private final int plannedDepTime;
+        private final int plannedArrTime;
 
-        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport) {
-            this.type = type;
-            this.fromAirport = fromAirport;
-            this.toAirport = toAirport;
-            this.pax = 0;
-        }
-
-        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, final int pax) {
+        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, final int pax, int plannedDepTime, int plannedArrTime) {
             this.type = type;
             this.fromAirport = fromAirport;
             this.toAirport = toAirport;
             this.pax = pax;
+            this.plannedDepTime = plannedDepTime;
+            this.plannedArrTime = plannedArrTime;
         }
 
         public Type getType() {
@@ -238,6 +256,18 @@ public class BusyBirdsMissionControl {
 
         public int getPax() {
             return pax;
+        }
+
+        public int getPlannedDepTime() {
+            return plannedDepTime;
+        }
+
+        public int getPlannedArrTime() {
+            return plannedArrTime;
+        }
+
+        public Duration getPlannedDuration() {
+            return Duration.ofSeconds(plannedArrTime - plannedDepTime);
         }
 
         public enum Type {
