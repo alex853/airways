@@ -26,19 +26,19 @@ public class ScheduledFlightMissionGenerator {
     private static final int schedulingDepthDays = 3;
 
     private static final ScheduledFlight[] schedule = {
-            new ScheduledFlight(101, "AW101", "F-AUWA", "LFPG", "EGLL", "05:00"),
-            new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
+//            new ScheduledFlight(101, "AW101", "F-AUWA", "LFPG", "EGLL", "05:00"),
+//            new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
             new ScheduledFlight(121, "AW121", "F-AUWA", "LFPG", "LIRF", "11:00"),
             new ScheduledFlight(122, "AW122", "F-AUWA", "LIRF", "LFPG", "15:00"),
-            new ScheduledFlight(103, "AW103", "F-AUWA", "LFPG", "EGLL", "19:00"),
-            new ScheduledFlight(104, "AW104", "F-AUWA", "EGLL", "LFPG", "22:00"),
+//            new ScheduledFlight(103, "AW103", "F-AUWA", "LFPG", "EGLL", "19:00"),
+//            new ScheduledFlight(104, "AW104", "F-AUWA", "EGLL", "LFPG", "22:00"),
         
             new ScheduledFlight(131, "AW131", "F-AUWB", "LFPG", "EDDM", "06:00"),
             new ScheduledFlight(132, "AW132", "F-AUWB", "EDDM", "LFPG", "10:00"),
             new ScheduledFlight(141, "AW141", "F-AUWB", "LFPG", "LEBL", "14:00"),
             new ScheduledFlight(142, "AW142", "F-AUWB", "LEBL", "LFPG", "18:00"),
-            new ScheduledFlight(105, "AW105", "F-AUWB", "LFPG", "EGLL", "22:00"),
-            new ScheduledFlight(106, "AW106", "F-AUWB", "EGLL", "LFPG", "02:00"),
+//            new ScheduledFlight(105, "AW105", "F-AUWB", "LFPG", "EGLL", "22:00"),
+//            new ScheduledFlight(106, "AW106", "F-AUWB", "EGLL", "LFPG", "02:00"),
         
             new ScheduledFlight(151, "AW151", "F-AUWC", "LFPG", "EDDH", "04:00"),
             new ScheduledFlight(152, "AW152", "F-AUWC", "EDDH", "LFPG", "07:00"),
