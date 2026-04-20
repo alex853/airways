@@ -11,6 +11,7 @@ import net.simforge.commons.io.Csv;
 import net.simforge.commons.misc.Geo;
 import net.simforge.networkview.core.Position;
 import net.simforge.networkview.core.report.ReportUtils;
+import net.simforge.refdata.aircrafts.apd.AircraftPerformanceDatabase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -443,6 +444,11 @@ public class PilotContext {
             if (requestedAircraftType.isEmpty()) {
                 FlightStats.event("missingAircraftType " + flightplan.getAircraftType());
             }
+
+            if (AircraftPerformanceDatabase.getPerformance(flightplan.getAircraftType()).isEmpty()) {
+                FlightStats.event("missingAircraftPerformance " + flightplan.getAircraftType());
+            }
+
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
             final Airports.Airport positionAirport = world.airports().byIcao(flightplan.getFiledAt()).orElseThrow(elseThrowException(flightplan.getFiledAt()));
 
