@@ -106,24 +106,28 @@ public class BusyBirdsMissionControl {
         AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
         AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
 
-        int plannedTime = world.getWorldTime();
+        int nextDepTime = world.getWorldTime() + Time.ONE_HOUR;
 
         List<Leg> legs = new ArrayList<>();
+        Leg leg;
 
         if (needFerryFlightToDepartureAirport) {
-            plannedTime = addLeg(plannedTime, legs, locationAirport, fromAirport.get(), 0, performanceData);
+            leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport.get(), 0, performanceData);
+            nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
         }
 
-        plannedTime = addLeg(plannedTime, legs, fromAirport.get(), toAirport.get(), journey.getGroupSize(), performanceData);
+        leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport.get(), toAirport.get(), journey.getGroupSize(), performanceData);
+        nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
 
         if (needFerryFlightToBaseAirport) {
-            addLeg(plannedTime, legs, toAirport.get(), baseAirport.get(), 0, performanceData);
+            addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport.get(), baseAirport.get(), 0, performanceData);
         }
 
         return new MissionPlan(MissionPlan.Status.Success, legs, null);
     }
 
-    private int addLeg(int plannedTime, List<Leg> legs,
+    private Leg addLeg(int plannedTime, List<Leg> legs,
+                       Leg.Type type,
                        Airports.Airport fromAirport, Airports.Airport toAirport,
                        int pax,
                        AircraftPerformanceData performanceData) {
@@ -132,9 +136,10 @@ public class BusyBirdsMissionControl {
         int plannedDepTime = Time.alignTo5mins(plannedTime + Time.ONE_HOUR);
         int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
 
-        legs.add(new Leg(Leg.Type.Revenue, fromAirport, toAirport, pax, plannedDepTime, plannedArrTime));
+        Leg leg = new Leg(type, fromAirport, toAirport, pax, plannedDepTime, plannedArrTime);
+        legs.add(leg);
 
-        return plannedArrTime;
+        return leg;
     }
 
     private Optional<Airports.Airport> chooseAirport(final AircraftOperators.AircraftOperator aircraftOperator, final List<Airports.Airport> airports) {
