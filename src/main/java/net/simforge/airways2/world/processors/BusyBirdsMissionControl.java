@@ -133,7 +133,7 @@ public class BusyBirdsMissionControl {
                        AircraftPerformanceData performanceData) {
         SimpleFlight simpleFlight = SimpleFlight.forRoute(fromAirport.getCoords(), toAirport.getCoords(), performanceData);
 
-        int plannedDepTime = Time.alignTo5mins(plannedTime + Time.ONE_HOUR);
+        int plannedDepTime = Time.alignTo5mins(plannedTime);
         int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
 
         Leg leg = new Leg(type, fromAirport, toAirport, pax, plannedDepTime, plannedArrTime);
