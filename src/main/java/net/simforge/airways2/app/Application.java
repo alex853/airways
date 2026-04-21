@@ -12,10 +12,10 @@ import java.lang.reflect.Method;
 
 // todo ak2 othh missing
 // todo ak2 check null airport cases
-// todo ak1 aircraft types with errors
+// todo ak0 aircraft types with errors
 //          A32N -> A20N mapping
 //          B777 -> B773 mapping
-// todo ak0 C700 - no aircraft data!
+//          A220 -> ???
 // todo ak1 AT76 - no aircraft data!
 // todo ak3 minimize time between downloading a report and its processing
 @SpringBootApplication
@@ -32,7 +32,7 @@ public class Application {
         World25_008_create_aircraft_types.main(args);
 //        World25_009_create_some_airports.main(args);
 //        World25_011_busybirds.main(args);
-//        World25_012_selected_cities.main(args);
+        World25_012_selected_cities.main(args);
 //        World25_099_f1_tour.main(args);
 
         SpringApplication.run(Application.class, args);
