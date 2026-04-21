@@ -65,6 +65,8 @@ public class World25_008_create_aircraft_types {
         aircraftTypes.byIcao("T154").orElseGet(() -> aircraftTypes.create("T154", "TU5"));
         aircraftTypes.byIcao("T204").orElseGet(() -> aircraftTypes.create("T204", "T20"));
 
+        aircraftTypes.byIcao("SF50").orElseGet(() -> aircraftTypes.create("SF50", null));
+
         aircraftTypes.byIcao("SU95").orElseGet(() -> aircraftTypes.create("SU95", "SU9"));
 
         world.save();
