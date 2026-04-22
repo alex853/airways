@@ -11,13 +11,14 @@ public class World25_005_create_aircraft_types {
 
         final AircraftTypes aircraftTypes = world.aircraftTypes();
 
+        aircraftTypes.byIcao("A318").orElseGet(() -> aircraftTypes.create("A318", "318"));
+        aircraftTypes.byIcao("A319").orElseGet(() -> aircraftTypes.create("A319", "319"));
         aircraftTypes.byIcao("A320").orElseGet(() -> aircraftTypes.create("A320", "320"));
         aircraftTypes.byIcao("A321").orElseGet(() -> aircraftTypes.create("A321", "321"));
-        aircraftTypes.byIcao("A319").orElseGet(() -> aircraftTypes.create("A319", "319"));
 
+        aircraftTypes.byIcao("A19N").orElseGet(() -> aircraftTypes.create("A19N", "31N"));
         aircraftTypes.byIcao("A20N").orElseGet(() -> aircraftTypes.create("A20N", "32N"));
         aircraftTypes.byIcao("A21N").orElseGet(() -> aircraftTypes.create("A21N", "32Q"));
-        aircraftTypes.byIcao("A19N").orElseGet(() -> aircraftTypes.create("A19N", "31N"));
 
         aircraftTypes.byIcao("A359").orElseGet(() -> aircraftTypes.create("A359", "359"));
         aircraftTypes.byIcao("A35K").orElseGet(() -> aircraftTypes.create("A35K", "351"));
