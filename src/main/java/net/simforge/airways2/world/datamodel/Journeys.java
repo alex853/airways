@@ -35,7 +35,7 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
-            .build();
+            .build(); // todo ak1 location field, 'booked service class' field
 
     private final DataField statusRawField = storage.getDataField(0);
     private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
