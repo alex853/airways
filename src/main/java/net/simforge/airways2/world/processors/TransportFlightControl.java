@@ -27,7 +27,7 @@ public class TransportFlightControl {
 
     private final World world;
 
-    private Map<String, CabinLayout> cabinLayouts = new TreeMap<>();
+    private final Map<String, CabinLayout> cabinLayouts = new TreeMap<>();
 
     public TransportFlightControl(final World world) {
         this.world = world;
@@ -313,7 +313,7 @@ public class TransportFlightControl {
             return;
         }
 
-        log.info("Cabin layouts - the file loaded, keeping {} entries", properties.keySet().size());
+        log.info("Cabin layouts - the file loaded, keeping {} entries", properties.size());
 
         properties.forEach((key, value) -> {
             String type = (String) key;
@@ -322,7 +322,7 @@ public class TransportFlightControl {
             try {
                 CabinLayout cabinLayout = CabinLayout.parseString(layoutStr);
                 cabinLayouts.put(type, cabinLayout);
-                log.info("Cabin layouts - {} = {} - parsed and added {}", type, layoutStr, cabinLayout.toString());
+//                log.info("Cabin layouts - {} = {} - parsed and added {}", type, layoutStr, cabinLayout.toString());
             } catch (RuntimeException ignored) {
                 log.error("Cabin layouts - {} = {} - UNABLE TO PARSE", type, layoutStr);
             }
