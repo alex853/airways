@@ -3,6 +3,7 @@ package net.simforge.airways2.app.vatsimtracker;
 import net.simforge.airways2.app.WorldAccess;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.world.AircraftTypeRemapping;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
@@ -440,13 +441,19 @@ public class PilotContext {
 
     private FlightMissions.Mission mission_dispatchNewAndStart() {
         return worldAccess.modifySync(world -> {
-            final Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(flightplan.getAircraftType());
-            if (requestedAircraftType.isEmpty()) {
-                FlightStats.event("missingAircraftType " + flightplan.getAircraftType());
+            String filedAircraftTypeCode = flightplan.getAircraftType();
+            String requestedAircraftTypeCode = AircraftTypeRemapping.remap(filedAircraftTypeCode);
+            if (!requestedAircraftTypeCode.equals(filedAircraftTypeCode)) {
+                FlightStats.event("aircraft type remapped " + filedAircraftTypeCode);
             }
 
-            if (AircraftPerformanceDatabase.getPerformance(flightplan.getAircraftType()).isEmpty()) {
-                FlightStats.event("missingAircraftPerformance " + flightplan.getAircraftType());
+            Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(requestedAircraftTypeCode);
+            if (requestedAircraftType.isEmpty()) {
+                FlightStats.event("aircraft type missing " + requestedAircraftTypeCode);
+            }
+
+            if (AircraftPerformanceDatabase.getPerformance(requestedAircraftTypeCode).isEmpty()) {
+                FlightStats.event("aircraft type performance missing " + requestedAircraftTypeCode);
             }
 
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());

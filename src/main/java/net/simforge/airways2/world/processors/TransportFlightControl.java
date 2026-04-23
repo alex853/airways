@@ -79,7 +79,7 @@ public class TransportFlightControl {
         CabinLayout cabinLayout = cabinLayouts.get(aircraftType);
 
         if (cabinLayout == null) {
-            FlightStats.event("missingCabinLayout " + aircraftType);
+            FlightStats.event("aircraft cabin layout missing " + aircraftType);
             return CabinLayout.Y(99);
         }
 

@@ -132,7 +132,6 @@ public class BusyBirdsController {
                 messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
 
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
-                    // todo ak0 provide layouts for those several types
                     // todo ak0 F&J refactoring
                     final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(10, 0, 0, 0));
                     journey.setTransportFlight1Id(transportFlight.getId());

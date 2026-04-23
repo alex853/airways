@@ -12,11 +12,6 @@ import java.lang.reflect.Method;
 
 // todo ak2 othh missing
 // todo ak2 check null airport cases
-// todo ak0 aircraft types with errors
-//          A32N -> A20N mapping
-//          B777 -> B773 mapping
-//          A220 -> ???
-// todo ak1 AT76 - no aircraft data!
 // todo ak3 minimize time between downloading a report and its processing
 @SpringBootApplication
 public class Application {
