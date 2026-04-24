@@ -13,6 +13,9 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:CH", "city-name:Zurich"});
         ImportCities.main(new String[]{"country-code:CH", "city-name:Geneve"});
 
+        ImportCities.main(new String[]{"country-code:CL", "city-name:Santiago de Chile"});
+        ImportCities.main(new String[]{"country-code:CL", "city-name:Puente Alto"});
+
         ImportCities.main(new String[]{"country-code:CN", "city-name:Kowloon"});
         ImportCities.main(new String[]{"country-code:CN", "city-name:Hong Kong Island"});
 
