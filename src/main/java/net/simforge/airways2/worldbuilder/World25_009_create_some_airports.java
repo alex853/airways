@@ -21,7 +21,7 @@ public class World25_009_create_some_airports {
                 "ESSA",
                 "EVRA",
                 "GCTS",
-                "KAUS", "KBOS", "KJFK", "KLAX", "KSFO", "KLGA",
+                "KAUS", "KBOS", "KJFK", "KLAX", "KSFO", "KLGA", "KSAN",
                 "LCLK", "LCPH",
                 "LDDU", "LDSP",
                 "LEAL", "LEIB", "LEMG", "LEPA",
