@@ -18,6 +18,10 @@ public class World25_008_create_aircraft_types {
         aircraftTypes.byIcao("AT72").orElseGet(() -> aircraftTypes.create("AT72", "AT7"));
         aircraftTypes.byIcao("AT75").orElseGet(() -> aircraftTypes.create("AT75", "ATR"));
 
+        aircraftTypes.byIcao("C152").orElseGet(() -> aircraftTypes.create("C152", null));
+        aircraftTypes.byIcao("C172").orElseGet(() -> aircraftTypes.create("C172", null));
+        aircraftTypes.byIcao("C182").orElseGet(() -> aircraftTypes.create("C182", null));
+
         aircraftTypes.byIcao("C25A").orElseGet(() -> aircraftTypes.create("C25A", "CNJ"));
         aircraftTypes.byIcao("C25B").orElseGet(() -> aircraftTypes.create("C25B", "CNJ"));
         aircraftTypes.byIcao("C25C").orElseGet(() -> aircraftTypes.create("C25C", "CNJ"));
