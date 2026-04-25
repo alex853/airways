@@ -35,6 +35,8 @@ public class World25_012_selected_cities {
 
         ImportCities.main(new String[]{"country-code:DK", "city-name:Copenhagen"});
 
+        ImportCities.main(new String[]{"country-code:FR", "city-name:Nice"});
+
         ImportCities.main(new String[]{"country-code:GB", "city-name:Liverpool"});
         ImportCities.main(new String[]{"country-code:GB", "city-name:Edinburgh"});
         ImportCities.main(new String[]{"country-code:GB", "city-name:Manchester"});
@@ -60,6 +62,7 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:US", "city-name:Dallas"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Fort Worth"});
         ImportCities.main(new String[]{"country-code:US", "city-name:San Diego"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Orlando"});
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
     }

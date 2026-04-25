@@ -26,6 +26,11 @@ public class World25_005_create_aircraft_types {
         aircraftTypes.byIcao("B738").orElseGet(() -> aircraftTypes.create("B738", "738"));
         aircraftTypes.byIcao("B739").orElseGet(() -> aircraftTypes.create("B739", "739"));
 
+        aircraftTypes.byIcao("B742").orElseGet(() -> aircraftTypes.create("B742", "742"));
+        aircraftTypes.byIcao("B743").orElseGet(() -> aircraftTypes.create("B743", "743"));
+        aircraftTypes.byIcao("B744").orElseGet(() -> aircraftTypes.create("B744", "744"));
+        aircraftTypes.byIcao("B748").orElseGet(() -> aircraftTypes.create("B748", "74H"));
+
         aircraftTypes.byIcao("B752").orElseGet(() -> aircraftTypes.create("B752", "752"));
         aircraftTypes.byIcao("B753").orElseGet(() -> aircraftTypes.create("B753", "753"));
 
@@ -37,6 +42,8 @@ public class World25_005_create_aircraft_types {
         aircraftTypes.byIcao("B788").orElseGet(() -> aircraftTypes.create("B788", "788"));
         aircraftTypes.byIcao("B789").orElseGet(() -> aircraftTypes.create("B789", "789"));
         aircraftTypes.byIcao("B78X").orElseGet(() -> aircraftTypes.create("B78X", "781"));
+
+        aircraftTypes.byIcao("CONC").orElseGet(() -> aircraftTypes.create("CONC", null));
 
         world.save();
     }
