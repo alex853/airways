@@ -67,6 +67,8 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:US", "city-name:Fort Worth"});
         ImportCities.main(new String[]{"country-code:US", "city-name:San Diego"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Orlando"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Washington"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Baltimore"});
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
     }
