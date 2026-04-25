@@ -43,6 +43,10 @@ public class World25_012_selected_cities {
 
         ImportCities.main(new String[]{"country-code:GR", "city-name:Athens"});
 
+        ImportCities.main(new String[]{"country-code:JP", "city-name:Tokyo"});
+        ImportCities.main(new String[]{"country-code:JP", "city-name:Yokohama"});
+        ImportCities.main(new String[]{"country-code:JP", "city-name:Kawasaki"});
+
         ImportCities.main(new String[]{"country-code:IT", "city-name:Venice"});
 
         ImportCities.main(new String[]{"country-code:MX", "city-name:Tijuana"});
