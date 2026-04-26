@@ -74,6 +74,8 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:US", "city-name:Orlando"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Washington"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Baltimore"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Seattle"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Tacoma"});
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
     }
