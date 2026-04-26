@@ -18,7 +18,7 @@ public class World25_009_create_some_airports {
                 "ELLX",
                 "ENBR", "ENGM",
                 "EPKK", "EPWA",
-                "ESSA",
+                "ESSA", "ESGG",
                 "EVRA",
                 "GCTS",
                 "KAUS", "KBOS", "KJFK", "KLAX", "KSFO", "KLGA", "KSAN",
