@@ -59,6 +59,7 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:RU", "city-name:Moscow"});
 
         ImportCities.main(new String[]{"country-code:SE", "city-name:Stockholm"});
+        ImportCities.main(new String[]{"country-code:SE", "city-name:Gothenburg"});
 
         ImportCities.main(new String[]{"country-code:US", "city-name:Boston"});
         ImportCities.main(new String[]{"country-code:US", "city-name:New York"});
