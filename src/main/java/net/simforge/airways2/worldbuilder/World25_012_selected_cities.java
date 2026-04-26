@@ -7,6 +7,9 @@ import java.io.IOException;
 
 public class World25_012_selected_cities {
     public static void main(String[] args) throws IOException {
+        ImportCities.main(new String[]{"country-code:AE", "city-name:Dubai"});
+        ImportCities.main(new String[]{"country-code:AE", "city-name:Abu Dhabi"});
+
         ImportCities.main(new String[]{"country-code:CA", "city-name:Toronto"});
         ImportCities.main(new String[]{"country-code:CA", "city-name:Montreal"});
 
@@ -52,6 +55,8 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:MX", "city-name:Tijuana"});
 
         ImportCities.main(new String[]{"country-code:PT", "city-name:Lisbon"});
+
+        ImportCities.main(new String[]{"country-code:RU", "city-name:Moscow"});
 
         ImportCities.main(new String[]{"country-code:SE", "city-name:Stockholm"});
 

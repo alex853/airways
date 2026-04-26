@@ -56,6 +56,8 @@ public class World25_008_create_aircraft_types {
         aircraftTypes.byIcao("GA7C").orElseGet(() -> aircraftTypes.create("GA7C", "GL7"));
         aircraftTypes.byIcao("GA8C").orElseGet(() -> aircraftTypes.create("GA8C", "GL8"));
 
+        aircraftTypes.byIcao("L101").orElseGet(() -> aircraftTypes.create("L101", "L10"));
+
         aircraftTypes.byIcao("MD11").orElseGet(() -> aircraftTypes.create("MD11", "M11"));
 
         aircraftTypes.byIcao("MD81").orElseGet(() -> aircraftTypes.create("MD81", "M81"));
