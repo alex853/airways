@@ -7,6 +7,7 @@ public class AircraftTypeRemapping {
             case "A330" -> "A333";
             case "A350" -> "A35K";
             case "B777" -> "B773";
+            case "E175" -> "E75S";
             default -> aircraftType;
         };
     }
