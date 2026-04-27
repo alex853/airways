@@ -1,7 +1,10 @@
 package net.simforge.airways2.world.computations;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.refdata.aircrafts.apd.AircraftPerformance;
 import net.simforge.refdata.aircrafts.apd.AircraftPerformanceDatabase;
+
+import java.util.function.Supplier;
 
 public interface AircraftPerformanceData {
 
@@ -22,32 +25,40 @@ public interface AircraftPerformanceData {
         return new AircraftPerformanceData() {
             @Override
             public Integer getTypicalCruiseAltitude() {
-                return ap.getCruiseCeiling();
+                return getOrDefault(ap.getCruiseCeiling(), 35000, "typicalCruiseAltitude");
             }
 
             @Override
             public Integer getTypicalCruiseSpeed() {
-                return ap.getCruiseTas();
+                return getOrDefault(ap.getCruiseTas(), 450, "typicalCruiseSpeed");
             }
 
             @Override
             public Integer getClimbVerticalSpeed() {
-                return ap.getClimbToFL240Rate();
+                return getOrDefault(ap.getClimbToFL240Rate(), 2000, "climbVerticalSpeed");
             }
 
             @Override
             public Integer getDescentVerticalSpeed() {
-                return ap.getDescentToFL100Rate();
+                return getOrDefault(ap.getDescentToFL100Rate(), 1500, "descentVerticalSpeed");
             }
 
             @Override
             public Integer getTakeoffSpeed() {
-                return ap.getTakeoffV2Ias();
+                return getOrDefault(ap.getTakeoffV2Ias(), 140, "takeoffSpeed");
             }
 
             @Override
             public Integer getLandingSpeed() {
-                return ap.getLandingVatIas();
+                return getOrDefault(ap.getLandingVatIas(), 130, "landingSpeed");
+            }
+
+            private Integer getOrDefault(Integer value, Integer defaultValue, String dataItem) {
+                if (value == null) {
+                    FlightStats.event("aircraft type performance data missing " + icaoCode + " -> " + dataItem);
+                    return defaultValue;
+                }
+                return value;
             }
         };
     }
