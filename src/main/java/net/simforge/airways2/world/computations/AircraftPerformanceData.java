@@ -55,7 +55,7 @@ public interface AircraftPerformanceData {
 
             private Integer getOrDefault(Integer value, Integer defaultValue, String dataItem) {
                 if (value == null) {
-                    FlightStats.event("aircraft type performance data missing " + icaoCode + " -> " + dataItem);
+                    FlightStats.event("aircraft type performance data missing " + icaoCode + "." + dataItem);
                     return defaultValue;
                 }
                 return value;
