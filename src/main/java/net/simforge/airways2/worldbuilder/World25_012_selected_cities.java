@@ -48,6 +48,8 @@ public class World25_012_selected_cities {
 
         ImportCities.main(new String[]{"country-code:GR", "city-name:Athens"});
 
+        ImportCities.main(new String[]{"country-code:HU", "city-name:Budapest"});
+
         ImportCities.main(new String[]{"country-code:JP", "city-name:Tokyo"});
         ImportCities.main(new String[]{"country-code:JP", "city-name:Yokohama"});
         ImportCities.main(new String[]{"country-code:JP", "city-name:Kawasaki"});
@@ -81,6 +83,7 @@ public class World25_012_selected_cities {
         ImportCities.main(new String[]{"country-code:US", "city-name:Tacoma"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Denver"});
         ImportCities.main(new String[]{"country-code:US", "city-name:Aurora"});
+        ImportCities.main(new String[]{"country-code:US", "city-name:Memphis"});
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
     }
