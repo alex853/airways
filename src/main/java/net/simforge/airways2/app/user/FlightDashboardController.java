@@ -279,7 +279,7 @@ public class FlightDashboardController {
                                 @RequestParam(name = "hdg") int hdg) throws IOException {
         File file = new File("./posrep.csv");
         String content = file.exists() ? IOHelper.loadFile(file) : "";
-        content += onGround + "," + lat + "," + lng + "," + gs + "," + hdg + "\n";
+        content += System.currentTimeMillis() + "," + onGround + "," + lat + "," + lng + "," + gs + "," + hdg + "\n";
         IOHelper.saveFile(file, content);
     }
 
