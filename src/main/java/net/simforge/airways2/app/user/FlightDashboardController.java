@@ -11,11 +11,14 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.commons.io.IOHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -265,6 +268,19 @@ public class FlightDashboardController {
 
             return toStatusDto(world, flight);
         });
+    }
+
+    @PostMapping("/flight-bag/posrep")
+    public void flightBagPosrep(@RequestAttribute("userId") int userId,
+                                @RequestParam(name = "gnd") int onGround,
+                                @RequestParam(name = "lat") float lat,
+                                @RequestParam(name = "lng") float lng,
+                                @RequestParam(name = "gs") float gs,
+                                @RequestParam(name = "hdg") int hdg) throws IOException {
+        File file = new File("./posrep.csv");
+        String content = file.exists() ? IOHelper.loadFile(file) : "";
+        content += onGround + "," + lat + "," + lng + "," + gs + "," + hdg + "\n";
+        IOHelper.saveFile(file, content);
     }
 
     private void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
