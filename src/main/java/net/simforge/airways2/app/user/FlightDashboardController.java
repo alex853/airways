@@ -278,7 +278,7 @@ public class FlightDashboardController {
 
     @PostMapping("/efb/status")
     public EfbStatusDto doEfbStatusExchange(@RequestAttribute("userId") int userId,
-                                            @RequestParam(name = "posrep") String posrep) {
+                                            @RequestParam(name = "posrep", required = false) String posrep) {
         return worldBean.read(world -> {
             if (posrep != null) {
                 log.info("Processing posrep {}", posrep);
