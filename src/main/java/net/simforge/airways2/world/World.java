@@ -107,6 +107,7 @@ public class World {
     }
 
     public void save() throws IOException {
+        log.error("Logging world save stacktrace", new RuntimeException("Stacktrace for world save"));
         worldStorageStrategy.save(rootPath -> {
             //noinspection DuplicatedCode
             strings.save(rootPath);
