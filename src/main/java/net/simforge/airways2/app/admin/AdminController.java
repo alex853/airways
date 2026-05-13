@@ -558,6 +558,7 @@ public class AdminController {
 
             final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
+            journey.setFromCityId(41);
             journey.setToCityId(17);
 
             return "Done";
