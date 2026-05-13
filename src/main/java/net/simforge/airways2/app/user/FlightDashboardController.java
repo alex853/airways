@@ -307,11 +307,11 @@ public class FlightDashboardController {
     private void processPosrep(World world, String posrep) {
         String[] strs = posrep.split(",");
 
-        String onGroundStr = strs[0];
-        String latStr = strs[1];
-        String lngStr = strs[2];
-        String gsStr = strs[3];
-        String hdgStr = strs[4];
+        String onGroundStr = strs[1];
+        String latStr = strs[2];
+        String lngStr = strs[3];
+        String gsStr = strs[4];
+        String hdgStr = strs[5];
 
         boolean onGround = Integer.parseInt(onGroundStr) == 1;
         double lat = Double.parseDouble(latStr);
