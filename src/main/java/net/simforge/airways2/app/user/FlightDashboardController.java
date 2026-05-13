@@ -281,6 +281,7 @@ public class FlightDashboardController {
                                             @RequestParam(name = "posrep") String posrep) {
         return worldBean.read(world -> {
             if (posrep != null) {
+                log.info("Processing posrep {}", posrep);
                 processPosrep(world, posrep);
             }
 
