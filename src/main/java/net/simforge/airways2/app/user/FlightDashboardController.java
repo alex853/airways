@@ -12,6 +12,7 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.commons.io.IOHelper;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,10 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static net.simforge.airways2.world.datamodel.FlightMissions.Status.*;
+import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Cancelled;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.*;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Arrival;
 import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Departure;
@@ -283,6 +286,73 @@ public class FlightDashboardController {
         IOHelper.saveFile(file, content);
     }
 
+    private String efbTrackingStatus = null;
+    private String efbTrackingLocationIcao = null;
+
+    @PostMapping("/efb/status")
+    public EfbStatusDto doEfbStatusExchange(@RequestAttribute("userId") int userId,
+                                            @RequestParam(name = "posrep") String posrep) {
+        return worldBean.read(world -> {
+            processPosrep(world, posrep);
+
+            List<FlightMissions.Mission> userFlights = world.flightMissions()
+                    .allByUserId(userId)
+                    .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
+                    .toList();
+
+            Optional<FlightMissions.Mission> firstActive = userFlights.stream()
+                    .filter(f -> !(f.getStatus() == FlightMissions.Status.Finished || f.getStatus() == Cancelled))
+                    .findFirst();
+
+            Optional<FlightMissions.Mission> current = firstActive.isPresent()
+                    ? firstActive
+                    : (userFlights.isEmpty() ? Optional.empty() : Optional.of(userFlights.get(userFlights.size()-1)));
+
+            return new EfbStatusDto(
+                    current.map(f -> toStatusDto(world, f)).orElse(null),
+                    new EfbTrackingDebugDto(efbTrackingStatus, efbTrackingLocationIcao, 0));
+        });
+    }
+
+    private void processPosrep(World world, String posrep) {
+        String[] strs = posrep.split(",");
+
+        String onGroundStr = strs[0];
+        String latStr = strs[1];
+        String lngStr = strs[2];
+        String gsStr = strs[3];
+        String hdgStr = strs[4];
+
+        boolean onGround = Integer.parseInt(onGroundStr) == 1;
+        double lat = Double.parseDouble(latStr);
+        double lng = Double.parseDouble(lngStr);
+        double gs = Double.parseDouble(gsStr);
+        int hdg = Integer.parseInt(hdgStr);
+
+        if (onGround) {
+            Optional<Airports.Airport> airport = world.airports().all().filter(a -> Geo.distance(a.getCoords(), Geo.coords(lat, lng)) < 2.5).findFirst();
+            if (airport.isPresent()) {
+                efbTrackingStatus = "At airport";
+                efbTrackingLocationIcao = airport.get().getIcao();
+            } else {
+                efbTrackingStatus = "On ground out of any airport";
+                efbTrackingLocationIcao = null;
+            }
+        } else {
+            efbTrackingStatus = "Flying";
+            efbTrackingLocationIcao = null;
+        }
+
+        try {
+            File file = new File("./posrep.csv");
+            String content = file.exists() ? IOHelper.loadFile(file) : "";
+            content += posrep + "\n";
+            IOHelper.saveFile(file, content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
         if (flight.getUserId() != userId) {
             throw new IllegalArgumentException("flight does not relate to the user");
@@ -434,5 +504,20 @@ public class FlightDashboardController {
         private String remainedTickets;
         private int checkedIn;
         private int onBoard;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class EfbStatusDto {
+        private StatusDto flight;
+        private EfbTrackingDebugDto tracking;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class EfbTrackingDebugDto {
+        private String status;
+        private String location;
+        private int gs;
     }
 }
