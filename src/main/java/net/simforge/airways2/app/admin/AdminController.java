@@ -551,10 +551,10 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/fix-8168")
-    public String fix8168() {
+    @GetMapping("/fix-2715")
+    public String fix2715() {
         return worldBean.modifySync(world -> {
-            final int journeyId = 8168;
+            final int journeyId = 2715;
 
             final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
