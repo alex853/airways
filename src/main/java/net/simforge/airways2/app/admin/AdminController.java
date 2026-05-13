@@ -565,6 +565,18 @@ public class AdminController {
         });
     }
 
+    @GetMapping("/fix-17783")
+    public String fix17783() {
+        return worldBean.modifySync(world -> {
+            final int fmId = 17783;
+
+            FlightMissions.Mission fm = world.flightMissions().byId(fmId).orElseThrow();
+            fm.setDestinationAirportId(world.airports().byIcao("KLGA").orElseThrow().getId());
+
+            return "Done";
+        });
+    }
+
     @GetMapping("/flows/reset-city-redistribution")
     public void resetCityRedistribution() {
         worldBean.modifySync(world -> {

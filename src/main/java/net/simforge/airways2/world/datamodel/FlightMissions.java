@@ -263,6 +263,10 @@ public class FlightMissions {
             return storage.getAsInt(id, destinationAirportIdField);
         }
 
+        public void setDestinationAirportId(int destinationAirportId) {
+            storage.set(id, destinationAirportIdField, destinationAirportId);
+        }
+
         public int getActualLandingAirportId() {
             return storage.getAsInt(id, actualLandingAirportIdField);
         }
