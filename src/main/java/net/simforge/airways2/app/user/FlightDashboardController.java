@@ -293,7 +293,9 @@ public class FlightDashboardController {
     public EfbStatusDto doEfbStatusExchange(@RequestAttribute("userId") int userId,
                                             @RequestParam(name = "posrep") String posrep) {
         return worldBean.read(world -> {
-            processPosrep(world, posrep);
+            if (posrep != null) {
+                processPosrep(world, posrep);
+            }
 
             List<FlightMissions.Mission> userFlights = world.flightMissions()
                     .allByUserId(userId)
