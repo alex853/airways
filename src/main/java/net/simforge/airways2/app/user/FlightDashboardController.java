@@ -273,19 +273,6 @@ public class FlightDashboardController {
         });
     }
 
-    @PostMapping("/flight-bag/posrep")
-    public void flightBagPosrep(@RequestAttribute("userId") int userId,
-                                @RequestParam(name = "gnd") int onGround,
-                                @RequestParam(name = "lat") float lat,
-                                @RequestParam(name = "lng") float lng,
-                                @RequestParam(name = "gs") float gs,
-                                @RequestParam(name = "hdg") int hdg) throws IOException {
-        File file = new File("./posrep.csv");
-        String content = file.exists() ? IOHelper.loadFile(file) : "";
-        content += System.currentTimeMillis() + "," + onGround + "," + lat + "," + lng + "," + gs + "," + hdg + "\n";
-        IOHelper.saveFile(file, content);
-    }
-
     private String efbTrackingStatus = null;
     private String efbTrackingLocationIcao = null;
 
