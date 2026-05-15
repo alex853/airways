@@ -3,6 +3,7 @@ package net.simforge.airways2.app.vatsimtracker;
 import net.simforge.airways2.app.WorldAccess;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.world.AircraftTypeRemapping;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;

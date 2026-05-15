@@ -2,6 +2,7 @@ package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.pilottracker.EfbTracker;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.world.World;
@@ -11,15 +12,14 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
-import net.simforge.commons.io.IOHelper;
-import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class FlightDashboardController {
                     .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                     .toList();
 
-            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f)).toList());
+            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f, isEfbFlight(userId, f.getId()))).toList());
         });
     }
 
@@ -63,13 +63,14 @@ public class FlightDashboardController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
     @PostMapping("/start-flight")
     public StatusDto startFlight(@RequestAttribute("userId") int userId,
-                                 @RequestParam(name = "flightId") final int flightId) {
+                                 @RequestParam(name = "flightId") int flightId,
+                                 @RequestParam(name = "efb", required = false, defaultValue = "true") boolean efb) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
@@ -87,7 +88,11 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - start-flight", flightId);
             world.flightMissionControl().startOrCancel(flight);
 
-            return toStatusDto(world, flight);
+            if (efb && flight.getStatus() == Preflight) {
+                EfbTracker.get().notifyMissionStarted(userId, flightId);
+            }
+
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
@@ -115,7 +120,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
             world.transportFlightControl().startBoarding(transportFlight);
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
@@ -140,7 +145,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
             world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
@@ -150,6 +155,11 @@ public class FlightDashboardController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
+
+            boolean efbFlight = isEfbFlight(userId, flightId);
+            if (efbFlight) {
+                throw new IllegalStateException("takeoff is not permitted for EFB flight");
+            }
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
@@ -165,7 +175,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - takeoff", flightId);
             world.flightMissionControl().takeoff(flight); // t/f update is inside
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, false);
         });
     }
 
@@ -175,6 +185,11 @@ public class FlightDashboardController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
+
+            boolean efbFlight = isEfbFlight(userId, flightId);
+            if (efbFlight) {
+                throw new IllegalStateException("landing is not permitted for EFB flight");
+            }
 
             final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
 
@@ -191,7 +206,7 @@ public class FlightDashboardController {
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, false);
         });
     }
 
@@ -216,7 +231,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
             world.flightMissionControl().blocksOn(flight); // t/f update is inside
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
@@ -244,7 +259,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
             world.transportFlightControl().startDeboarding(transportFlight);
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
 
@@ -269,78 +284,48 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);
 
-            return toStatusDto(world, flight);
+            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
     }
-
-    private String efbTrackingStatus = null;
-    private String efbTrackingLocationIcao = null;
 
     @PostMapping("/efb/status")
     public EfbStatusDto doEfbStatusExchange(@RequestAttribute("userId") int userId,
                                             @RequestParam(name = "posrep", required = false) String posrep) {
+        if (posrep != null) {
+            EfbTracker.get().processPosrep(worldBean, userId, posrep);
+        }
+
         return worldBean.read(world -> {
-            if (posrep != null) {
-                log.info("Processing posrep {}", posrep);
-                processPosrep(world, posrep);
+            Optional<EfbTracker.UserStatus> userStatus = EfbTracker.get().getUserStatus(userId);
+            int flightMissionId = userStatus.map(EfbTracker.UserStatus::getFlightMissionId).orElse(0);
+
+            Optional<FlightMissions.Mission> current;
+            if (flightMissionId > 0) {
+                current = world.flightMissions().byId(flightMissionId);
+            } else {
+                List<FlightMissions.Mission> userFlights = world.flightMissions()
+                        .allByUserId(userId)
+                        .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
+                        .toList();
+
+                Optional<FlightMissions.Mission> firstActive = userFlights.stream()
+                        .filter(f -> !(f.getStatus() == FlightMissions.Status.Finished || f.getStatus() == Cancelled))
+                        .findFirst();
+
+                current = firstActive.isPresent()
+                        ? firstActive
+                        : (userFlights.isEmpty() ? Optional.empty() : Optional.of(userFlights.get(userFlights.size() - 1)));
             }
 
-            List<FlightMissions.Mission> userFlights = world.flightMissions()
-                    .allByUserId(userId)
-                    .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
-                    .toList();
-
-            Optional<FlightMissions.Mission> firstActive = userFlights.stream()
-                    .filter(f -> !(f.getStatus() == FlightMissions.Status.Finished || f.getStatus() == Cancelled))
-                    .findFirst();
-
-            Optional<FlightMissions.Mission> current = firstActive.isPresent()
-                    ? firstActive
-                    : (userFlights.isEmpty() ? Optional.empty() : Optional.of(userFlights.get(userFlights.size()-1)));
-
             return new EfbStatusDto(
-                    current.map(f -> toStatusDto(world, f)).orElse(null),
-                    new EfbTrackingDebugDto(efbTrackingStatus, efbTrackingLocationIcao, 0));
+                    current.map(f -> toStatusDto(world, f, true)).orElse(null),
+                    userStatus.map(EfbTrackingDebugDto::from).orElse(null));
         });
     }
 
-    private void processPosrep(World world, String posrep) {
-        String[] strs = posrep.split(",");
-
-        String onGroundStr = strs[1];
-        String latStr = strs[2];
-        String lngStr = strs[3];
-        String gsStr = strs[4];
-        String hdgStr = strs[5];
-
-        boolean onGround = Integer.parseInt(onGroundStr) == 1;
-        double lat = Double.parseDouble(latStr);
-        double lng = Double.parseDouble(lngStr);
-        double gs = Double.parseDouble(gsStr);
-        int hdg = Integer.parseInt(hdgStr);
-
-        if (onGround) {
-            Optional<Airports.Airport> airport = world.airports().all().filter(a -> Geo.distance(a.getCoords(), Geo.coords(lat, lng)) < 2.5).findFirst();
-            if (airport.isPresent()) {
-                efbTrackingStatus = "At airport";
-                efbTrackingLocationIcao = airport.get().getIcao();
-            } else {
-                efbTrackingStatus = "On ground out of any airport";
-                efbTrackingLocationIcao = null;
-            }
-        } else {
-            efbTrackingStatus = "Flying";
-            efbTrackingLocationIcao = null;
-        }
-
-        try {
-            File file = new File("./posrep.csv");
-            String content = file.exists() ? IOHelper.loadFile(file) : "";
-            content += posrep + "\n";
-            IOHelper.saveFile(file, content);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    private boolean isEfbFlight(int userId, int flightMissionId) {
+        Optional<EfbTracker.UserStatus> userStatus = EfbTracker.get().getUserStatus(userId);
+        return userStatus.map(EfbTracker.UserStatus::getFlightMissionId).orElse(0) == flightMissionId;
     }
 
     private void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
@@ -349,7 +334,7 @@ public class FlightDashboardController {
         }
     }
 
-    private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
+    private StatusDto toStatusDto(World world, FlightMissions.Mission flight, boolean isEfbFlight) {
         checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -367,7 +352,9 @@ public class FlightDashboardController {
                 flight.getId(),
                 flight.getStatus().name(),
                 getNextPlannedFlightMissionStatus(flight),
-                getFlightMissionShownElements(flight, transportFlight, world),
+                isEfbFlight
+                        ? getFlightMissionShownElementsEfb(flight, transportFlight, world)
+                        : getFlightMissionShownElements(flight, transportFlight, world),
                 world.airports().getIcao(flight.getDepartureAirportId()).orElseThrow(),
                 world.airports().getIcao(flight.getDestinationAirportId()).orElseThrow(),
                 TimeTools.ymdOrNull(flight.getPlannedDepartureWorldTime()),
@@ -408,6 +395,18 @@ public class FlightDashboardController {
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : "landing-disabled";
+            case Arrival -> "blocks-on";
+            case Postflight -> (transportFlight == null || transportFlight.getStatus() == Finished) ? "finish" : "finish-disabled";
+            default -> null;
+        };
+    }
+
+    private String getFlightMissionShownElementsEfb(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
+        return switch (flight.getStatus()) {
+            case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
+            case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
+            case Departure -> "takeoff-efb";
+            case Flying -> "landing-efb";
             case Arrival -> "blocks-on";
             case Postflight -> (transportFlight == null || transportFlight.getStatus() == Finished) ? "finish" : "finish-disabled";
             default -> null;
@@ -506,8 +505,17 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class EfbTrackingDebugDto {
+        private String lastSeen;
         private String status;
-        private String location;
-        private int gs;
+        private String airportIcao;
+
+        public static EfbTrackingDebugDto from(EfbTracker.UserStatus userStatus) {
+            return new EfbTrackingDebugDto(
+                    LocalDateTime.ofEpochSecond(userStatus.getLastSeen()/1000, 0, ZoneOffset.UTC)
+                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
+                    userStatus.getStatus(),
+                    userStatus.getAirportIcao()
+            );
+        }
     }
 }

@@ -144,7 +144,7 @@ public class JourneyProcessor {
                 .orElseThrow(() -> new NoSuchElementException("Unable to find F/M # " + tf.getFlightMissionId() + " for T/F " + tf)));
     }
 
-    // todo ak0 upgrade/downgrade service class
+    // todo ak1 upgrade/downgrade service class
     //   another cabin service field is required, kind of 'booked cabin service'
     //   existing 'cabin service' should be renamed to 'preferred cabin service'
     //   if there are no seats available for 'preferred', journey may upgrade by one class (Y -> W, or J -> F, but not Y -> J, or Y -> F)

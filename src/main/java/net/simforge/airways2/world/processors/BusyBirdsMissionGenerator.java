@@ -87,7 +87,7 @@ public class BusyBirdsMissionGenerator {
         List<Journeys.Journey> allJourneys = world.journeys().filter(and(
                         world.journeys().byNoBusyBirdsProcessing(),
                         world.journeys().byStatus(Journeys.Status.LookingForTickets)))
-                .filter(j -> j.getCabinService() == CabinLayout.Service.F) // todo ak0 F&J refactoring
+                .filter(j -> j.getCabinService() == CabinLayout.Service.F) // todo ak1 F&J refactoring
                 .filter(j -> !allMissionIds.contains(j.getId()))
                 .toList();
         Optional<Journeys.Journey> journey = Tools.random(allJourneys);

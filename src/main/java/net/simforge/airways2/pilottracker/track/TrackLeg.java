@@ -1,4 +1,4 @@
-package net.simforge.airways2.app.vatsimtracker;
+package net.simforge.airways2.pilottracker.track;
 
 import java.util.LinkedList;
 import java.util.Queue;

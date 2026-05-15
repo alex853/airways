@@ -1,5 +1,6 @@
 package net.simforge.airways2.app.vatsimtracker;
 
+import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.world.Time;
 import net.simforge.commons.misc.Geo;
 import net.simforge.networkview.core.Position;
