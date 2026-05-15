@@ -16,7 +16,7 @@ import java.util.TreeMap;
 
 public class FlightStats {
     private static final Logger log = LoggerFactory.getLogger(FlightStats.class);
-    public static final File statsRoot = new File("./vatsim-tracker/stats/");
+    public static final File statsRoot = new File("./flight-stats/");
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();;
     private static LocalDate date;

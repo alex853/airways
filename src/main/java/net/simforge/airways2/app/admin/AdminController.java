@@ -97,20 +97,20 @@ public class AdminController {
         return Timing.printStatusToString();
     }
 
-    @GetMapping("/vatsim/flight-stats")
-    public Map<String, Integer> getVatsimFlightStats() {
+    @GetMapping("/flight-stats")
+    public Map<String, Integer> getFlightStats() {
         return FlightStats.getStats();
     }
 
-    @GetMapping("/vatsim/flight-stats/date/{date}")
-    public Map<String, Integer> getVatsimFlightStats(@PathVariable final String date) {
+    @GetMapping("/flight-stats/date/{date}")
+    public Map<String, Integer> getFlightStats(@PathVariable final String date) {
         checkArgument(date.length() == 10);
         checkNotNull(LocalDate.parse(date));
 
         return loadFlightStats(date);
     }
 
-    @GetMapping(value = "/vatsim/flight-stats/top-missing-airports", produces = "text/plain")
+    @GetMapping(value = "/flight-stats/top-missing-airports", produces = "text/plain")
     public String getTopMissingAirports() {
         LocalDate date = JavaTime.todayUtc();
         final Map<String, Integer> allMissingAirports = new TreeMap<>();
