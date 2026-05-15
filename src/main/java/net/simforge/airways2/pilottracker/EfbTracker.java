@@ -89,6 +89,15 @@ public class EfbTracker {
                 .computeIfAbsent(userId, id -> Context.empty())
                 .notifyMissionStarted(flightMissionId);
         userContexts.put(userId, context);
+        FlightStats.event("efb - notify-mission-started");
+    }
+
+    public void notifyMissionFinished(int userId) {
+        Context context = userContexts
+                .computeIfAbsent(userId, id -> Context.empty())
+                .notifyMissionFinished();
+        userContexts.put(userId, context);
+        FlightStats.event("efb - notify-mission-finished");
     }
 
     private static class Context {
@@ -122,6 +131,10 @@ public class EfbTracker {
 
         public Context notifyMissionStarted(int flightMissionId) {
             return new Context(currentPosition, flightMissionId);
+        }
+
+        public Context notifyMissionFinished() {
+            return new Context(currentPosition, 0);
         }
     }
 

@@ -284,7 +284,12 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            boolean efbFlight = isEfbFlight(userId, flightId);
+            if (efbFlight) {
+                EfbTracker.get().notifyMissionFinished(userId);
+            }
+
+            return toStatusDto(world, flight, efbFlight);
         });
     }
 
