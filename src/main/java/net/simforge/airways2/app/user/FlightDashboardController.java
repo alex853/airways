@@ -70,7 +70,7 @@ public class FlightDashboardController {
     @PostMapping("/start-flight")
     public StatusDto startFlight(@RequestAttribute("userId") int userId,
                                  @RequestParam(name = "flightId") int flightId,
-                                 @RequestParam(name = "efb", required = false, defaultValue = "true") boolean efb) {
+                                 @RequestParam(name = "efb", required = false, defaultValue = "false") boolean efb) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
