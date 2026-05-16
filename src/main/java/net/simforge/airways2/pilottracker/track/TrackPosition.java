@@ -7,7 +7,7 @@ import net.simforge.commons.misc.Geo;
 @AllArgsConstructor
 @Data
 public class TrackPosition {
-    private final long lastSeen;
+    private final long time;
     private final boolean onGround;
     private final Geo.Coords coords;
     private final String airportIcao;

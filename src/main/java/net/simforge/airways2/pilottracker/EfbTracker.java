@@ -66,7 +66,7 @@ public class EfbTracker {
         String status = null;
         String airportIcao = null;
         if (context.currentPosition != null) {
-            lastSeen = context.currentPosition.getLastSeen();
+            lastSeen = context.currentPosition.getTime();
             airportIcao = context.currentPosition.getAirportIcao();
             if (context.currentPosition.isOnGround()) {
                 status = airportIcao != null ? "At airport" : "On ground out of any airport";
