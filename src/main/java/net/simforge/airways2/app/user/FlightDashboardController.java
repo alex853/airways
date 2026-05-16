@@ -108,8 +108,8 @@ public class FlightDashboardController {
         private final String status; // none, up-to-date, outdated
         private final String locationStatus; // At airport, On ground out of airport, In flight
         private final String airportIcao;
-        private final boolean parkingBrake;
-        private final boolean engineRunning;
+        private final String parkingBrake;
+        private final String engineRunning;
         private final String measuredGs;
 
         public static SimStatusDto from(SimTracker.UserStatus simStatus) {
@@ -117,8 +117,8 @@ public class FlightDashboardController {
                     simStatus.getStatus(),
                     simStatus.getLocationStatus(),
                     simStatus.getAirportIcao(),
-                    false, // todo ak0
-                    false, // todo ak0
+                    simStatus.getParkingBrake() != null ? simStatus.getParkingBrake().toString() : null,
+                    simStatus.getEngineRunning() != null ? simStatus.getEngineRunning().toString() : null,
                     null // todo ak0
             );
         }

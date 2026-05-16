@@ -29,7 +29,6 @@ public class SimTracker {
         checkNotNull(posrep);
 
         E0Posrep parsed = E0Posrep.parse(posrep);
-        TrackPosition position = toTrackPosition(parsed);
         // todo ak0 save posrep
 
         Context newContext = userContexts.get(userId);
@@ -40,7 +39,7 @@ public class SimTracker {
 
         // todo ak0 check current flight and if it is not active - find current flight if exists
 
-        newContext = newContext.processPosition(position);
+        newContext = newContext.processPosition(parsed);
         userContexts.put(userId, newContext);
     }
 
@@ -60,7 +59,12 @@ public class SimTracker {
     public synchronized UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
         if (context == null) {
-            return new UserStatus("none", null, null);
+            return new UserStatus(
+                    "None",
+                    null,
+                    null,
+                    null,
+                    null);
         }
 
         long lastSeen = 0;
@@ -77,9 +81,11 @@ public class SimTracker {
         }
 
         return new UserStatus(
-                "established",
+                "Connected",
                 locationStatus,
-                airportIcao);
+                airportIcao,
+                context.position != null ? context.parkingBrake : null,
+                context.position != null ? context.numberOfEnginesRunning > 0 : null);
     }
 
     public synchronized void setWorldAccess(WorldAccess worldAccess) {
@@ -90,9 +96,11 @@ public class SimTracker {
     @AllArgsConstructor
     @Data
     @Builder(toBuilder = true)
-    public static class Context {
+    public class Context {
         private final int userId;
         private final TrackPosition position;
+        private final boolean parkingBrake;
+        private final int numberOfEnginesRunning;
 
         public static Context forUser(int userId) {
             return Context.builder()
@@ -100,10 +108,14 @@ public class SimTracker {
                     .build();
         }
 
-        public Context processPosition(TrackPosition position) {
+        public Context processPosition(E0Posrep posrep) {
+            TrackPosition position = toTrackPosition(posrep);
             // todo ak0 !!!!!!!!!!!!!!!
+
             return this.toBuilder()
                     .position(position)
+                    .parkingBrake(posrep.isParkingBrake())
+                    .numberOfEnginesRunning(posrep.getNumberOfEnginesRunning())
                     .build();
         }
     }
@@ -112,9 +124,11 @@ public class SimTracker {
     @Data
     public static class UserStatus {
         private final String status;
-        private final int flightMissionId = 0;
+        private final Integer flightMissionId = 0;
         private final String locationStatus;
         private final String airportIcao;
+        private final Boolean parkingBrake;
+        private final Boolean engineRunning;
     }
 
     @AllArgsConstructor
