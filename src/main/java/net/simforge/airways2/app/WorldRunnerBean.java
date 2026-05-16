@@ -29,7 +29,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
     private volatile ThreadStatus status = ThreadStatus.Startup;
     private Thread thread;
-    private World world;
+    private volatile World world;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
     private long flightStatsLastSaved = 0;
@@ -123,6 +123,11 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
         thread.join();
 
         log.info("world thread stopped");
+    }
+
+    @Override
+    public boolean isReady() {
+        return world != null;
     }
 
     @Override

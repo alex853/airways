@@ -51,6 +51,11 @@ public class VatsimTrackerTest {
         world = World.create(new InMemoryStorageStrategy(), startTime);
         worldAccess = new WorldAccess() {
             @Override
+            public boolean isReady() {
+                return true;
+            }
+
+            @Override
             public <T> T read(Action<T> action) {
                 return action.invoke(world);
             }

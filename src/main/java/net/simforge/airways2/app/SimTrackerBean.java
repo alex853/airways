@@ -29,6 +29,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     public void run(final ApplicationArguments args) {
         log.info("run called");
 
+        waitForWorldReady();
         simTracker.setWorldAccess(worldBean);
 
         thread = new Thread(() -> {
@@ -50,6 +51,12 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
         });
         thread.setName("sim-tracker-bean-thread");
         thread.start();
+    }
+
+    private void waitForWorldReady() {
+        while (!worldBean.isReady() || threadStatus != ThreadStatus.HaveToStopNow) {
+            Misc.sleep(100);
+        }
     }
 
     @Override
