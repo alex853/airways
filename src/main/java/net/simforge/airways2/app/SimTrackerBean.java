@@ -29,11 +29,11 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     public void run(final ApplicationArguments args) {
         log.info("run called");
 
-        waitForWorldReady();
-        simTracker.setWorldAccess(worldBean);
-
         thread = new Thread(() -> {
             log.info("thread started");
+
+            waitForWorldReady();
+            simTracker.setWorldAccess(worldBean);
 
             threadStatus = ThreadStatus.Running;
 
@@ -54,7 +54,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     }
 
     private void waitForWorldReady() {
-        while (!worldBean.isReady() || threadStatus != ThreadStatus.HaveToStopNow) {
+        while (!worldBean.isReady()) { // todo ak1 it can go wrong, but now it will cycle indefinitely
             Misc.sleep(100);
         }
     }
