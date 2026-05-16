@@ -56,6 +56,11 @@ public class VatsimTrackerTest {
             }
 
             @Override
+            public int getWorldTime() {
+                return world.getWorldTime();
+            }
+
+            @Override
             public <T> T read(Action<T> action) {
                 return action.invoke(world);
             }

@@ -28,6 +28,8 @@ public class SimTracker {
         checkArgument(userId > 0);
         checkNotNull(posrep);
 
+        int worldTime = worldAccess.getWorldTime();
+
         E0Posrep parsed = E0Posrep.parse(posrep);
         TrackPosition position = toTrackPosition(parsed);
         // todo ak0 save posrep
@@ -40,7 +42,10 @@ public class SimTracker {
 
         // todo ak0 check current flight and if it is not active - find current flight if exists
 
-        newContext = newContext.processPosrep(parsed, position);
+        newContext = newContext.processPosrep(worldTime, parsed, position);
+
+        // todo ak0 check events and apply them to the world
+
         userContexts.put(userId, newContext);
     }
 
@@ -51,7 +56,7 @@ public class SimTracker {
                 : Optional.empty();
 
         return new TrackPosition(
-                System.currentTimeMillis(), // todo ak1 khm
+                System.currentTimeMillis(), // todo ak1 read it from posrep
                 posrep.isOnGround(),
                 coords,
                 airport.map(AirportInfo::getIcao).orElse(null));
@@ -60,33 +65,10 @@ public class SimTracker {
     public synchronized UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
         if (context == null) {
-            return new UserStatus(
-                    "None",
-                    null,
-                    null,
-                    null,
-                    null);
+            return UserStatus.none();
+        } else {
+            return UserStatus.from(context);
         }
-
-        long lastSeen = 0;
-        String locationStatus = null;
-        String airportIcao = null;
-        if (context.position != null) {
-            lastSeen = context.position.getTime();
-            airportIcao = context.position.getAirportIcao();
-            if (context.position.isOnGround()) {
-                locationStatus = airportIcao != null ? "At airport" : "On ground out of any airport";
-            } else {
-                locationStatus = "In flight";
-            }
-        }
-
-        return new UserStatus(
-                "Connected",
-                locationStatus,
-                airportIcao,
-                context.position != null ? context.parkingBrake : null,
-                context.position != null ? context.numberOfEnginesRunning > 0 : null);
     }
 
     public synchronized void setWorldAccess(WorldAccess worldAccess) {
@@ -109,7 +91,7 @@ public class SimTracker {
                     .build();
         }
 
-        public Context processPosrep(E0Posrep posrep, TrackPosition position) {
+        public Context processPosrep(int worldTime, E0Posrep posrep, TrackPosition position) {
             // todo ak0 !!!!!!!!!!!!!!!
 
             return this.toBuilder()
@@ -129,6 +111,39 @@ public class SimTracker {
         private final String airportIcao;
         private final Boolean parkingBrake;
         private final Boolean engineRunning;
+
+        public static UserStatus none() {
+            return new UserStatus(
+                    "None",
+                    null,
+                    null,
+                    null,
+                    null);
+        }
+
+        public static UserStatus from(Context context) {
+            checkNotNull(context);
+
+            long lastSeen = 0;
+            String locationStatus = null;
+            String airportIcao = null;
+            if (context.position != null) {
+                lastSeen = context.position.getTime();
+                airportIcao = context.position.getAirportIcao();
+                if (context.position.isOnGround()) {
+                    locationStatus = airportIcao != null ? "At airport" : "On ground out of any airport";
+                } else {
+                    locationStatus = "In flight";
+                }
+            }
+
+            return new UserStatus(
+                    "Connected",
+                    locationStatus,
+                    airportIcao,
+                    context.position != null ? context.parkingBrake : null,
+                    context.position != null ? context.numberOfEnginesRunning > 0 : null);
+        }
     }
 
     @AllArgsConstructor

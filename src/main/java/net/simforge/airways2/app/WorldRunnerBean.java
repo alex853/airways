@@ -30,6 +30,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
     private volatile ThreadStatus status = ThreadStatus.Startup;
     private Thread thread;
     private volatile World world;
+    private volatile int worldTime;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
     private long flightStatsLastSaved = 0;
@@ -55,6 +56,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     try {
                         try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 03 - world.process")) {
                             needToCatchTime = world.process(now);
+                            worldTime = world.getWorldTime();
                         }
 
                         try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 04 - action.perform")) {
@@ -131,6 +133,11 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
     }
 
     @Override
+    public int getWorldTime() {
+        return worldTime;
+    }
+
+    @Override
     public <T> T read(final Action<T> action) {
         try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - read # lock")) {
             lock.readLock().lock();
@@ -152,6 +159,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
     private void loadWorld() {
         try {
             world = World25.load();
+            worldTime = world.getWorldTime();
             log.info("world loaded, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
         } catch (IOException e) {
             log.error("unable to load the world", e);
