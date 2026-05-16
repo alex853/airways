@@ -127,6 +127,7 @@ public class FlightDashboardController {
     @AllArgsConstructor
     @Data
     private static class VatsimStatusDto {
+        private final String status = "unknown";
     }
 
     @PostMapping("/start-flight")
