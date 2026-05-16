@@ -1,5 +1,6 @@
 package net.simforge.airways2.app;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -31,6 +32,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
     private World world;
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
+    private long flightStatsLastSaved = 0;
 
     @Override
     public void run(final ApplicationArguments args) {
@@ -82,6 +84,11 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     }
                 }
 
+                if (flightStatsLastSaved == 0 || flightStatsLastSaved + 60000 < System.currentTimeMillis()) {
+                    flightStatsLastSaved = System.currentTimeMillis();
+                    FlightStats.save();
+                }
+
                 try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 9 - sleep")) {
                     if (needToCatchTime) {
                         Misc.sleep(1);
@@ -101,6 +108,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     lock.writeLock().unlock();
                 }
                 status = ThreadStatus.Stopped;
+                FlightStats.save();
             }
         });
         thread.setName("world-runner-bean-thread");

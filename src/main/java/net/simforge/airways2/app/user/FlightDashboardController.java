@@ -2,7 +2,10 @@ package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.SimTrackerBean;
+import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.EfbTracker;
+import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.WorldRunnerBean;
 import net.simforge.airways2.world.World;
@@ -43,6 +46,10 @@ public class FlightDashboardController {
 
     @Autowired
     private WorldRunnerBean worldBean;
+    @Autowired
+    private SimTrackerBean simTrackerBean;
+    @Autowired
+    private VatsimTrackerBean vatsimTrackerBean;
 
     @GetMapping("/my-flights")
     public MyFlightsResponse getMyFlights(@RequestAttribute("userId") int userId) {
@@ -65,6 +72,61 @@ public class FlightDashboardController {
 
             return toStatusDto(world, flight, isEfbFlight(userId, flightId));
         });
+    }
+
+    @GetMapping("/status2")
+    public Status2Dto getStatus(@RequestAttribute("userId") int userId) {
+        return worldBean.read(world -> {
+            SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+
+//            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+//            checkIfFlightRelatesToUser(flight, userId);
+
+//            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return new Status2Dto(
+                    SimStatusDto.from(simStatus),
+                    new VatsimStatusDto(),
+                    null, // todo ak0
+                    null, // todo ak0
+                    null); // todo ak0
+        });
+    }
+
+    @AllArgsConstructor
+    @Data
+    private static class Status2Dto {
+        private final SimStatusDto sim;
+        private final VatsimStatusDto vatsim;
+        private final FlightDto flight;
+        private final TransportFlightDto transportFlight;
+        private final AircraftDto aircraft;
+    }
+
+    @AllArgsConstructor
+    @Data
+    private static class SimStatusDto {
+        private final String status; // none, up-to-date, outdated
+        private final String locationStatus; // At airport, On ground out of airport, In flight
+        private final String icao;
+        private final boolean parkingBrake;
+        private final boolean engineRunning;
+        private final String measuredGs;
+
+        public static SimStatusDto from(SimTracker.UserStatus simStatus) {
+            return new SimStatusDto(
+                    simStatus.getStatus(),
+                    null, // todo ak0
+                    null, // todo ak0
+                    false, // todo ak0
+                    false, // todo ak0
+                    null // todo ak0
+            );
+        }
+    }
+
+    @AllArgsConstructor
+    @Data
+    private static class VatsimStatusDto {
     }
 
     @PostMapping("/start-flight")

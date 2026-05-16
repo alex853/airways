@@ -1,7 +1,7 @@
 package net.simforge.airways2.app.vatsimtracker;
 
 import net.simforge.airways2.app.WorldRunnerBean;
-import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.app.tools.ThreadStatus;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.commons.io.Csv;
@@ -182,7 +182,6 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                     } catch (final Exception e) {
                         log.error("unable to save status", e);
                     }
-                    FlightStats.save();
 
                     //log.info("report {} - all done", nextReport);
                 } catch (final Exception e) {
@@ -266,14 +265,6 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
             return Optional.empty();
         }
     } // todo ak2 thread safety
-
-    private enum ThreadStatus {
-        Startup,
-        Running,
-        HaveToStopNow,
-        Stopped,
-        TerminatedDueToError
-    }
 
     public static Position injectReportIntoCompactifiedPosition(final Position p, final String report) {
         try {

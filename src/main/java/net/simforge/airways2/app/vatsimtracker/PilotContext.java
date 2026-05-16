@@ -106,10 +106,10 @@ public class PilotContext {
 
             log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
             pilotLog("Event 'dispatched' == via new flight in airport");
-            FlightStats.event("new context - dispatched");
+            FlightStats.event("vatsim - new context - dispatched");
         } else {
             pilotLog("new pilot context in non-valid state");
-            FlightStats.event("new context - flightplan invalid");
+            FlightStats.event("vatsim - new context - flightplan invalid");
             countDestinationIfMissing(flightplan);
         }
 
@@ -146,15 +146,15 @@ public class PilotContext {
                     final FlightMissions.Mission mission = mission_takeoff();
                     log.info("{} - Event 'takeoff'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'takeoff'");
-                    FlightStats.event("preflight - takeoff with valid flightplan");
+                    FlightStats.event("vatsim - preflight - takeoff with valid flightplan");
                 } else {
                     if (flightMissionId != 0) {
                         log.info("{} - Event 'takeoff' with invalid flightplan, cancelling and removal", missionLogHead(mission_read(), flightplan));
                         pilotLog("Event 'takeoff' with invalid flightplan, cancelling and removal");
                         mission_cancelBeforeTakeoffIfExists();
-                        FlightStats.event("preflight - takeoff with invalid flightplan - fm cancelled");
+                        FlightStats.event("vatsim - preflight - takeoff with invalid flightplan - fm cancelled");
                     } else {
-                        FlightStats.event("preflight - takeoff with invalid flightplan - no fm found!");
+                        FlightStats.event("vatsim - preflight - takeoff with invalid flightplan - no fm found!");
                     }
 
                     resetFlightInfo();
@@ -166,9 +166,9 @@ public class PilotContext {
                         log.info("{} - Event 'cancelled', new {} differs from existing {}", missionLogHead(mission_read(), flightplan), newFlightplan, flightplan);
                         pilotLog("Event 'cancelled' as new flightplan differs");
                         mission_cancelBeforeTakeoffIfExists();
-                        FlightStats.event("preflight - flightplan changed - fm cancelled");
+                        FlightStats.event("vatsim - preflight - flightplan changed - fm cancelled");
                     } else {
-                        FlightStats.event("preflight - flightplan changed - no fm found!");
+                        FlightStats.event("vatsim - preflight - flightplan changed - no fm found!");
                     }
 
                     resetFlightInfo();
@@ -181,7 +181,7 @@ public class PilotContext {
 
                     log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'dispatched' == via some correction");
-                    FlightStats.event("preflight - dispatched - new valid flightplan");
+                    FlightStats.event("vatsim - preflight - dispatched - new valid flightplan");
                 } else {
                     flightplan = newFlightplan;
                     countDestinationIfMissing(flightplan);
@@ -196,7 +196,7 @@ public class PilotContext {
 
                     log.info("{} - Event 'blocks-off'", missionLogHead(mission, flightplan));
                     pilotLog("Event 'blocks-off'");
-                    FlightStats.event("preflight - blocks-off with valid flightplan");
+                    FlightStats.event("vatsim - preflight - blocks-off with valid flightplan");
                 }
             }
         } else if (flightStage == FlightStage.Flying) {
@@ -208,7 +208,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'JUMP IN THE AIR', {}, {}, {}, cancelling and removing", missionLogHead(oldMission, oldFlightplan), trackTailContinued, ellipseCriterion, hugeJump);
                 pilotLog("Event 'JUMP IN THE AIR', cancelling and removing");
-                FlightStats.event("flying - discontinuity-or-jump - fm cancelled");
+                FlightStats.event("vatsim - flying - discontinuity-or-jump - fm cancelled");
 
                 shouldBeRemoved = true;
             } else if (landing) {
@@ -221,11 +221,11 @@ public class PilotContext {
 
                 log.info("{} - Event 'back to flying online'! {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying online'");
-                FlightStats.event("flying-offline - back online successfully");
+                FlightStats.event("vatsim - flying-offline - back online successfully");
 
                 final long minutesOffline = getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / Time.ONE_MINUTE;
                 final long range = ((minutesOffline / 10) + 1) * 10;
-                FlightStats.event("flying-offline - duration " + range);
+                FlightStats.event("vatsim - flying-offline - duration " + range);
             } else if (!landing) { // still flying and track discontinued
                 final Flightplan flightplanCopy = flightplan;
                 mission_cancelFromFlying();
@@ -233,7 +233,7 @@ public class PilotContext {
 
                 log.warn("{} - Event 'back to flying' HOWEVER track discontinued, {}, {}, cancelling and removing", missionLogHead(mission, flightplanCopy), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying' HOWEVER track discontinued, cancelling and removing");
-                FlightStats.event("flying-offline - track discontinued, fm cancelled");
+                FlightStats.event("vatsim - flying-offline - track discontinued, fm cancelled");
 
                 shouldBeRemoved = true;
             } else { // landing
@@ -241,7 +241,7 @@ public class PilotContext {
 
                 log.warn("{} - Event 'back to flying AND LANDING at the same time', {}, {}", missionLogHead(mission, flightplan), trackTailContinued, ellipseCriterion);
                 pilotLog("Event 'back to flying AND LANDING at the same time'");
-                FlightStats.event("flying-offline - online and land successfully");
+                FlightStats.event("vatsim - flying-offline - online and land successfully");
 
                 landingFromFlyingStage(newPosition);
             }
@@ -254,7 +254,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'blocks-on'", missionLogHead(mission, flightplan));
                 pilotLog("Event 'blocks-on'");
-                FlightStats.event("arriving - blocks-on and finish");
+                FlightStats.event("vatsim - arriving - blocks-on and finish");
 
                 removalCounter = 5; // it will stay Arrived for some time
             }
@@ -269,7 +269,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'dispatched' == via end of Arriving flight", missionLogHead(mission, flightplan));
                 pilotLog("Event 'dispatched' == via end of Arriving flight");
-                FlightStats.event("arriving - dispatched");
+                FlightStats.event("vatsim - arriving - dispatched");
             }
         } else if (flightStage == FlightStage.Arrived) {
             final boolean newFlightMissionDueToNewFlightplan = newFlightplan.isValid() && !newFlightplan.isSame(flightplan);
@@ -284,7 +284,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'completed' for Arrived flight, switching to Preflight for next flight", missionLogHead(oldMission, oldFlightplan));
                 pilotLog("Event 'completed' for Arrived flight, switching to Preflight for next flight");
-                FlightStats.event("arrived - completed");
+                FlightStats.event("vatsim - arrived - completed");
             } else {
                 removalCounter--;
             }
@@ -299,7 +299,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'dispatched' == via end of Arrived flight", missionLogHead(mission, flightplan));
                 pilotLog("Event 'dispatched' == via end of Arrived flight");
-                FlightStats.event("arrived - dispatched");
+                FlightStats.event("vatsim - arrived - dispatched");
             }
         } else {
             throw new IllegalStateException();
@@ -318,7 +318,7 @@ public class PilotContext {
 
             log.warn("{} - Event 'landing' on NULL airport, cancelling and removing", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'landing' on NULL airport, cancelling and removing");
-            FlightStats.event("landing - null airport");
+            FlightStats.event("vatsim - landing - null airport");
 
             shouldBeRemoved = true;
         } else if (flightplan.isValidDestinationLocation(landingAirportIcao)) {
@@ -328,8 +328,8 @@ public class PilotContext {
 
             log.info("{} - Event 'landing' at planned destination airport", missionLogHead(mission, flightplan));
             pilotLog("Event 'landing' at planned destination airport");
-            FlightStats.event("landing - planned airport");
-            // this stat data is not needed so far FlightStats.event("route " + flightplanToRoute(flightplan));
+            FlightStats.event("vatsim - landing - planned airport");
+            // this stat data is not needed so far FlightStats.event("vatsim - route " + flightplanToRoute(flightplan));
         } else if (worldIcaos.contains(landingAirportIcao)) {
             flightStage = FlightStage.Arriving;
 
@@ -337,7 +337,7 @@ public class PilotContext {
 
             log.warn("{} - Event 'landing' on WRONG airport {}", missionLogHead(mission, flightplan), landingAirportIcao);
             pilotLog("Event 'landing' on WRONG airport " + landingAirportIcao);
-            FlightStats.event("landing - wrong airport");
+            FlightStats.event("vatsim - landing - wrong airport");
         } else { // landing on airport out of the world
             final FlightMissions.Mission oldMission = mission_read();
             final Flightplan oldFlightplan = flightplan;
@@ -346,7 +346,7 @@ public class PilotContext {
 
             log.warn("{} - Event 'landing' on airport {} out of the world, cancelling and removing", missionLogHead(oldMission, oldFlightplan), landingAirportIcao);
             pilotLog("Event 'landing' on airport " + landingAirportIcao + " out of the world, cancelling and removing");
-            FlightStats.event("landing - out of the world");
+            FlightStats.event("vatsim - landing - out of the world");
 
             shouldBeRemoved = true;
         }
@@ -358,9 +358,9 @@ public class PilotContext {
                 log.info("{} - Event 'OFFLINE' on {} stage, cancelling and removing", missionLogHead(mission_read(), flightplan), flightStage);
                 pilotLog("Event 'offline' on " + flightStage + " stage, cancelling and removing");
                 mission_cancelBeforeTakeoffIfExists();
-                FlightStats.event("preflight - offline - fm cancelled");
+                FlightStats.event("vatsim - preflight - offline - fm cancelled");
             } else {
-                FlightStats.event("preflight - offline - no fm found!");
+                FlightStats.event("vatsim - preflight - offline - no fm found!");
             }
             resetFlightInfo();
             shouldBeRemoved = true;
@@ -368,7 +368,7 @@ public class PilotContext {
             log.info("{} - Event 'OFFLINE' on Flying stage, grace period started", missionLogHead(mission_read(), flightplan));
             pilotLog("Event 'offline' on Flying stage, grace period started");
             flightStage = FlightStage.FlyingOffline;
-            FlightStats.event("flying - pilot went offline while flying");
+            FlightStats.event("vatsim - flying - pilot went offline while flying");
         } else if (flightStage == FlightStage.FlyingOffline) {
             final long minutesOffline = getElapsedSecondsSinceLastSeen(report) / Time.ONE_MINUTE;
             if (minutesOffline > MAX_ALLOWED_OFFLINE_TIME_MINUTES) {
@@ -379,7 +379,7 @@ public class PilotContext {
 
                 log.info("{} - Event 'CANCEL' on FlyingOffline stage, offline for {} mins, cancelling and removing", missionLogHead(oldMission, oldFlightplan), minutesOffline);
                 pilotLog("Event 'cancel' on FlyingOffline stage, offline for " + minutesOffline + " mins, cancelling and removing");
-                FlightStats.event("flying-offline - allowed offline period exceeded - fm cancelled");
+                FlightStats.event("vatsim - flying-offline - allowed offline period exceeded - fm cancelled");
                 shouldBeRemoved = true;
             } else {
                 final FlightMissions.Mission mission = mission_read();
@@ -394,7 +394,7 @@ public class PilotContext {
 
             log.info("{} - Event 'blocks-on' due to pilot went offline", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'blocks-on' due to pilot went offline, finishing and removing");
-            FlightStats.event("arriving - blocks-on and finish as pilot went offline");
+            FlightStats.event("vatsim - arriving - blocks-on and finish as pilot went offline");
             shouldBeRemoved = true;
         } else if (flightStage == FlightStage.Arrived) {
             final FlightMissions.Mission oldMission = mission_read();
@@ -403,7 +403,7 @@ public class PilotContext {
 
             log.info("{} - Event 'OFFLINE' for Arrived flight", missionLogHead(oldMission, oldFlightplan));
             pilotLog("Event 'offline' for Arrived flight, removing");
-            FlightStats.event("arrived - completed as pilot went offline");
+            FlightStats.event("vatsim - arrived - completed as pilot went offline");
             shouldBeRemoved = true;
         } else {
             throw new IllegalStateException();
@@ -427,7 +427,7 @@ public class PilotContext {
         if (worldIcaos.contains(flightplan.getDestination())) {
             return;
         }
-        FlightStats.event("missingAirport " + flightplan.getDestination());
+        FlightStats.event("vatsim - missingAirport " + flightplan.getDestination());
     }
 
     public long getElapsedSecondsSinceLastSeen(String report) {
@@ -445,16 +445,16 @@ public class PilotContext {
             String filedAircraftTypeCode = flightplan.getAircraftType();
             String requestedAircraftTypeCode = AircraftTypeRemapping.remap(filedAircraftTypeCode);
             if (!requestedAircraftTypeCode.equals(filedAircraftTypeCode)) {
-                FlightStats.event("aircraft type remapped " + filedAircraftTypeCode);
+                FlightStats.event("vatsim - aircraft type remapped " + filedAircraftTypeCode);
             }
 
             Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(requestedAircraftTypeCode);
             if (requestedAircraftType.isEmpty()) {
-                FlightStats.event("aircraft type missing " + requestedAircraftTypeCode);
+                FlightStats.event("vatsim - aircraft type missing " + requestedAircraftTypeCode);
             }
 
             if (AircraftPerformanceDatabase.getPerformance(requestedAircraftTypeCode).isEmpty()) {
-                FlightStats.event("aircraft type performance missing " + requestedAircraftTypeCode);
+                FlightStats.event("vatsim - aircraft type performance missing " + requestedAircraftTypeCode);
             }
 
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());
@@ -476,7 +476,7 @@ public class PilotContext {
 
             ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
 
-            FlightStats.event("dispatchNewAndStart");
+            FlightStats.event("vatsim - dispatchNewAndStart");
 
             return mission;
         });
@@ -487,7 +487,7 @@ public class PilotContext {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_blocksOff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_blocksOff - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_blocksOff - fm not found");
                 return null;
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -498,7 +498,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            FlightStats.event("blocksOff");
+            FlightStats.event("vatsim - blocksOff");
 
             return mission;
         });
@@ -509,7 +509,7 @@ public class PilotContext {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_takeoff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_takeoff - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_takeoff - fm not found");
                 return null;
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -523,7 +523,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            FlightStats.event("takeoff");
+            FlightStats.event("vatsim - takeoff");
 
             return mission;
         });
@@ -534,7 +534,7 @@ public class PilotContext {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_landing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_landing - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_landing - fm not found");
                 return null;
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -547,7 +547,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            FlightStats.event("landing");
+            FlightStats.event("vatsim - landing");
 
             return mission;
         });
@@ -558,7 +558,7 @@ public class PilotContext {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_blocksOnAndFinish <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_blocksOnAndFinish - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_blocksOnAndFinish - fm not found");
                 return null;
             }
             final FlightMissions.Mission mission = mission1.get();
@@ -572,7 +572,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
 
-            FlightStats.event("blocksOnAndFinish");
+            FlightStats.event("vatsim - blocksOnAndFinish");
 
             return mission;
         });
@@ -587,7 +587,7 @@ public class PilotContext {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_cancelBeforeTakeoffIfExists - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_cancelBeforeTakeoffIfExists - fm not found");
                 return null;
             }
 
@@ -601,7 +601,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
-            FlightStats.event("cancelBeforeTakeoffIfExists");
+            FlightStats.event("vatsim - cancelBeforeTakeoffIfExists");
 
             return null;
         });
@@ -611,14 +611,14 @@ public class PilotContext {
         worldAccess.modifySync(world -> {
             if (flightMissionId == 0) {
                 log.error("erroneous case, f/m == 0, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_cancelFromFlying - fm is 0");
+                FlightStats.event("vatsim - erroneous case - mission_cancelFromFlying - fm is 0");
                 return null;
             }
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
                 log.error("erroneous case, f/m not found, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("erroneous case - mission_cancelFromFlying - fm not found");
+                FlightStats.event("vatsim - erroneous case - mission_cancelFromFlying - fm not found");
                 return null;
             }
 
@@ -630,7 +630,7 @@ public class PilotContext {
                 throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
             }
 
-            FlightStats.event("cancelFromFlying");
+            FlightStats.event("vatsim - cancelFromFlying");
 
             return null;
         });

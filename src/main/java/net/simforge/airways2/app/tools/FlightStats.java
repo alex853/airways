@@ -50,7 +50,7 @@ public class FlightStats {
         }
     }
 
-    public static Map<String, Integer> getStats() {
+    public static synchronized Map<String, Integer> getStats() {
         return new TreeMap<>(data);
     }
 
@@ -92,7 +92,7 @@ public class FlightStats {
         data.putAll(loadedData);
     }
 
-    public static void save() {
+    public static synchronized void save() {
         if (date == null) {
             return;
         }
