@@ -59,9 +59,12 @@ public class FlightMissionHelper {
     }
 
     public static boolean isFinishedOrCancelledOrEmpty(final Optional<FlightMissions.Mission> mission) {
-        return mission.isEmpty()
-                || mission.get().getStatus() == FlightMissions.Status.Finished
-                || mission.get().getStatus() == FlightMissions.Status.Cancelled;
+        return mission.isEmpty() || isFinishedOrCancelled(mission.get());
+    }
+
+    public static boolean isFinishedOrCancelled(FlightMissions.Mission mission) {
+        return mission.getStatus() == FlightMissions.Status.Finished
+                || mission.getStatus() == FlightMissions.Status.Cancelled;
     }
 
     public static String formatRoute(final World world, final int flightMissionId) {
