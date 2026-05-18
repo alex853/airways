@@ -213,7 +213,7 @@ public class SimTracker {
     @Data
     public static class UserStatus {
         private final String status;
-        private final Integer flightMissionId = 0;
+        private final Integer flightMissionId;
         private final String locationStatus;
         private final String airportIcao;
         private final Boolean parkingBrake;
@@ -224,6 +224,7 @@ public class SimTracker {
         public static UserStatus none() {
             return new UserStatus(
                     "None",
+                    null,
                     null,
                     null,
                     null,
@@ -249,6 +250,7 @@ public class SimTracker {
 
             return new UserStatus(
                     "Connected",
+                    context.flightMissionId,
                     locationStatus,
                     airportIcao,
                     context.position != null ? context.parkingBrake : null,
