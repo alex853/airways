@@ -3,6 +3,7 @@ package net.simforge.airways2.app.user;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.SimTrackerBean;
+import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.EfbTracker;
 import net.simforge.airways2.pilottracker.SimTracker;
@@ -86,9 +87,8 @@ public class FlightDashboardController {
             return new Status2Dto(
                     SimStatusDto.from(simStatus),
                     new VatsimStatusDto(),
-                    null, // todo ak0
-                    null, // todo ak0
-                    null); // todo ak0
+                    null // todo ak0
+                    );
         });
     }
 
@@ -97,9 +97,7 @@ public class FlightDashboardController {
     private static class Status2Dto {
         private final SimStatusDto sim;
         private final VatsimStatusDto vatsim;
-        private final FlightDto flight; // todo ak0 replace it by FlightBoardController.FlightDto
-        private final TransportFlightDto transportFlight;
-        private final AircraftDto aircraft;
+        private final FlightUltraDto flight;
     }
 
     @AllArgsConstructor

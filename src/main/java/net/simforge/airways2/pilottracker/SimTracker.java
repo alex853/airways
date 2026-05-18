@@ -32,12 +32,12 @@ public class SimTracker {
 
         E0Posrep parsed = E0Posrep.parse(posrep);
         TrackPosition position = toTrackPosition(parsed);
-        // todo ak0 save posrep
+        // todo ak1 save posrep
 
         Context newContext = userContexts.get(userId);
         if (!userContexts.containsKey(userId)) {
             newContext = Context.forUser(userId);
-            // todo ak0 restore context from previous posreps if exist
+            // todo ak1 restore context from previous posreps if exist
         }
 
         // todo ak0 check current flight and if it is not active - find current flight if exists
