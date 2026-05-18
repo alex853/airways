@@ -76,7 +76,7 @@ public class FlightDashboardController {
     }
 
     @GetMapping("/status2")
-    public Status2Dto getStatus(@RequestAttribute("userId") int userId) {
+    public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
 
@@ -130,6 +130,32 @@ public class FlightDashboardController {
             }
 
             return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+        });
+    }
+
+    @PostMapping("/start-flight2")
+    public Status2Dto startFlight2(@RequestAttribute("userId") int userId) {
+        return worldBean.modifySync(world -> {
+            // todo ak1 this is based of flight selection inside sim-tracker
+            //          probably this should be changed into 'current flight' concept
+            SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            Integer flightId = simStatus.getFlightMissionId();
+
+            checkNotNull(flightId, "flight should exists");
+
+            FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
+
+            boolean canStartFlight = simStatus.getActions().stream().filter(a -> a.getName().equals("start-flight")).findFirst().map(SimTracker.UserAction::isAllowed).orElse(false);
+            checkArgument(canStartFlight, "start flight action should be allowed");
+
+            log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
+            world.flightMissionControl().startOrCancel(flight);
+
+            return getStatus2(userId);
         });
     }
 
