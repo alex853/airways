@@ -85,7 +85,7 @@ public class FlightDashboardController {
 
 //            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
             return new Status2Dto(
-                    SimStatusDto.from(simStatus),
+                    simStatus,
                     new VatsimStatusDto(),
                     null // todo ak0
                     );
@@ -95,31 +95,9 @@ public class FlightDashboardController {
     @AllArgsConstructor
     @Data
     private static class Status2Dto {
-        private final SimStatusDto sim;
+        private final SimTracker.UserStatus sim;
         private final VatsimStatusDto vatsim;
         private final FlightUltraDto flight;
-    }
-
-    @AllArgsConstructor
-    @Data
-    private static class SimStatusDto {
-        private final String status; // none, up-to-date, outdated
-        private final String locationStatus; // At airport, On ground out of airport, In flight
-        private final String airportIcao;
-        private final Boolean parkingBrake;
-        private final Boolean engineRunning;
-        private final String measuredGs;
-
-        public static SimStatusDto from(SimTracker.UserStatus simStatus) {
-            return new SimStatusDto(
-                    simStatus.getStatus(),
-                    simStatus.getLocationStatus(),
-                    simStatus.getAirportIcao(),
-                    simStatus.getParkingBrake(),
-                    simStatus.getEngineRunning(),
-                    null // todo ak0
-            );
-        }
     }
 
     @AllArgsConstructor

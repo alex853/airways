@@ -13,10 +13,7 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -57,20 +54,22 @@ public class SimTracker {
                 .numberOfEnginesRunning(parsed.getNumberOfEnginesRunning())
                 .build();
 
-        doChecks(newContext);
+        newContext = doChecks(newContext);
 
         // todo ak0 check events and apply them to the world
 
         userContexts.put(userId, newContext);
     }
 
-    private void doChecks(Context context) {
+    private Context doChecks(Context context) {
         if (context.getFlightMissionId() == null) {
-            return;
+            return context;
         }
 
-        worldAccess.read(world -> {
+        return worldAccess.read(world -> {
             FlightMissions.Mission fm = world.flightMissions().byId(context.getFlightMissionId()).orElseThrow();
+
+            List<UserAction> actions = new ArrayList<>();
 
             switch (fm.getStatus()) {
                 case Dispatched -> {
@@ -85,6 +84,12 @@ public class SimTracker {
                     for (Check check : checks) {
                         log.warn("check {}, result {}", check.name(), check.doCheck());
                     }
+
+                    UserAction startFlight = new UserAction(
+                            "start-flight",
+                            canStartFlight,
+                            Arrays.stream(checks).map(CheckResult::from).toList());
+                    actions.add(startFlight);
                 }
                 case Preflight -> {
                     // Before Boarding
@@ -113,7 +118,7 @@ public class SimTracker {
                 default -> log.warn("DO NOT KNOW FLIGHT CHECKS FOR A FLIGHT IN " + fm.getStatus() + " STATUS");
             }
 
-            return null;
+            return context.toBuilder().actions(actions).build();
         });
     }
 
@@ -180,7 +185,9 @@ public class SimTracker {
         private final TrackPosition position;
         private final boolean parkingBrake;
         private final int numberOfEnginesRunning;
+        // todo ak1 measured-gs
         private final Integer flightMissionId;
+        private final List<UserAction> actions;
 
         public static Context forUser(int userId) {
             return Context.builder()
@@ -211,10 +218,13 @@ public class SimTracker {
         private final String airportIcao;
         private final Boolean parkingBrake;
         private final Boolean engineRunning;
+        // todo ak1 measured-gs
+        private final List<UserAction> actions;
 
         public static UserStatus none() {
             return new UserStatus(
                     "None",
+                    null,
                     null,
                     null,
                     null,
@@ -242,8 +252,17 @@ public class SimTracker {
                     locationStatus,
                     airportIcao,
                     context.position != null ? context.parkingBrake : null,
-                    context.position != null ? context.numberOfEnginesRunning > 0 : null);
+                    context.position != null ? context.numberOfEnginesRunning > 0 : null,
+                    context.actions);
         }
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class UserAction {
+        private final String name;
+        private final boolean allowed;
+        private List<CheckResult> checks;
     }
 
     @AllArgsConstructor
@@ -314,6 +333,10 @@ public class SimTracker {
     public static class CheckResult {
         private final String name;
         private final boolean result;
+
+        public static CheckResult from(Check check) {
+            return new CheckResult(check.name(), check.doCheck());
+        }
     }
 
     private static boolean checkAll(Check... checks) {
