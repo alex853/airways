@@ -37,94 +37,47 @@ public class FlightMissionModeTest {
 
     @Test
     public void test__npc_is_default() {
-        assertFalse(mission.isModePlayerCharacter());
+        assertEquals(FlightMissions.CharacterMode.NPC, mission.getCharacterMode());
     }
 
     @Test
     public void test__pc_then_status() {
-        mission.setModePlayerCharacter(true);
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertTrue(mission.isModePlayerCharacter());
+        assertEquals(FlightMissions.CharacterMode.PC, mission.getCharacterMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__npc_then_status() {
-        mission.setModePlayerCharacter(false);
+        mission.setCharacterMode(FlightMissions.CharacterMode.NPC);
         mission.setStatus(FlightMissions.Status.Flying);
 
-        assertFalse(mission.isModePlayerCharacter());
+        assertEquals(FlightMissions.CharacterMode.NPC, mission.getCharacterMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__status_then_pc() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setModePlayerCharacter(true);
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
 
-        assertTrue(mission.isModePlayerCharacter());
+        assertEquals(FlightMissions.CharacterMode.PC, mission.getCharacterMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
     public void test__status_then_npc() {
         mission.setStatus(FlightMissions.Status.Flying);
-        mission.setModePlayerCharacter(false);
+        mission.setCharacterMode(FlightMissions.CharacterMode.NPC);
 
-        assertFalse(mission.isModePlayerCharacter());
+        assertEquals(FlightMissions.CharacterMode.NPC, mission.getCharacterMode());
         assertEquals(FlightMissions.Status.Flying, mission.getStatus());
     }
 
     @Test
-    public void test__unused_off_by_default() {
-        assertFalse(mission.isUnusedMode());
-    }
-
-    @Test
-    public void test__unused_then_status() {
-        mission.setUnusedMode(true);
-        mission.setStatus(FlightMissions.Status.Flying);
-
-        assertTrue(mission.isUnusedMode());
-        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
-    }
-
-    @Test
-    public void test__no_unused_then_status() {
-        mission.setUnusedMode(false);
-        mission.setStatus(FlightMissions.Status.Flying);
-
-        assertFalse(mission.isUnusedMode());
-        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
-    }
-
-    @Test
-    public void test__status_then_unused() {
-        mission.setStatus(FlightMissions.Status.Flying);
-        mission.setUnusedMode(true);
-
-        assertTrue(mission.isUnusedMode());
-        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
-    }
-
-    @Test
-    public void test__status_then_no_unused() {
-        mission.setStatus(FlightMissions.Status.Flying);
-        mission.setUnusedMode(false);
-
-        assertFalse(mission.isUnusedMode());
-        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
-    }
-
-    @Test
-    public void test__pc_then_unused_then_status() {
-        mission.setModePlayerCharacter(true);
-        mission.setUnusedMode(true);
-        mission.setStatus(FlightMissions.Status.Flying);
-
-        assertTrue(mission.isModePlayerCharacter());
-        assertTrue(mission.isUnusedMode());
-        assertEquals(FlightMissions.Status.Flying, mission.getStatus());
+    public void test__automatic_coords_is_default() {
+        assertEquals(FlightMissions.CoordinatesSource.AutomaticSimpleFlight, mission.getCoordinatesSource());
     }
 }

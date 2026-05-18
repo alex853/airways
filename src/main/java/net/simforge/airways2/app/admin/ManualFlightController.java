@@ -24,7 +24,7 @@ public class ManualFlightController {
     public FlightMinDto getStatus(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.read(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             return FlightMinDto.from(world, flight);
         });
     }
@@ -33,7 +33,7 @@ public class ManualFlightController {
     public FlightMinDto start(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
             world.flightMissionControl().startOrCancel(flight);
             return FlightMinDto.from(world, flight);
@@ -44,7 +44,7 @@ public class ManualFlightController {
     public FlightMinDto depart(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             world.flightMissionControl().blocksOff(flight);
             return FlightMinDto.from(world, flight);
@@ -55,7 +55,7 @@ public class ManualFlightController {
     public FlightMinDto takeoff(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
             world.flightMissionControl().takeoff(flight);
             return FlightMinDto.from(world, flight);
@@ -66,7 +66,7 @@ public class ManualFlightController {
     public FlightMinDto landing(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport);
@@ -78,7 +78,7 @@ public class ManualFlightController {
     public FlightMinDto arrive(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
             world.flightMissionControl().blocksOn(flight);
             return FlightMinDto.from(world, flight);
@@ -89,7 +89,7 @@ public class ManualFlightController {
     public FlightMinDto finish(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkArgument(flight.isModePlayerCharacter(), "flight should be in manual mode");
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             world.flightMissionControl().finish(flight);
             return FlightMinDto.from(world, flight);

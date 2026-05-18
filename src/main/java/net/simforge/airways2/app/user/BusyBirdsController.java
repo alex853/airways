@@ -127,7 +127,7 @@ public class BusyBirdsController {
             List<String> messages = new ArrayList<>();
             for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
                 FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
-                flight.setModePlayerCharacter(true);
+                flight.setCharacterMode(FlightMissions.CharacterMode.PC);
                 flight.setUserId(userId);
                 messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
 

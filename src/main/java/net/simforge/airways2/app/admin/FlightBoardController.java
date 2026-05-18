@@ -56,7 +56,7 @@ public class FlightBoardController {
         return worldBean.read(world -> getFlights(world,
                         fm -> isPlannedArrivalTimeWithinNHours(world, fm, 3)
                                 && isPlannedDepartureTimeWithinNHours(world, fm, 3)
-                                && fm.isModePlayerCharacter()))
+                                && fm.getCharacterMode() == FlightMissions.CharacterMode.PC))
                 .sorted(Comparator.comparing(FlightUltraDto::getDof).thenComparing(FlightUltraDto::getPDep).reversed())
                 .toList();
     }

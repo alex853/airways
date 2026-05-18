@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.datamodel;
 
 import net.simforge.airways2.app.tools.Timing;
+import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -47,12 +48,13 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // userId
             .build();
 
-    private static final int pcModeMask = 0b10000000;
-    private static final int unusedModeMask = 0b01000000;
-    private static final int allModesMask = pcModeMask | unusedModeMask;
-
     private final DataField aircraftIdField = storage.getDataField(0);
-    private final DataField statusField = storage.getDataField(1);
+    private final DataField statusRawField = storage.getDataField(1);
+    private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
+    private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
+    //private final BitAccessField.Section unusedBitField = statusFieldBits.section(4, 2);
+    private final BitAccessField.Section coordinatesSourceBitField = statusFieldBits.section(6, 1);
+    private final BitAccessField.Section characterModeBitField = statusFieldBits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(2);
     private final DataField departureAirportIdField = storage.getDataField(3);
     private final DataField destinationAirportIdField = storage.getDataField(4);
@@ -201,45 +203,28 @@ public class FlightMissions {
             return readStatusCode(id);
         }
 
-        public void setStatus(final Status status) { // todo ak0 BitAccessField.Section
+        public void setStatus(final Status status) {
             checkNotNull(status, "status is mandatory");
             checkArgument(status.code() <= 15, "status code should be in [0..15] range");
-            final int statusCode = status.code();
-            final int statusRaw = storage.getAsInt(id, statusField);
-            final int modeBits = statusRaw & allModesMask;
-            storage.set(id, statusField, statusCode | modeBits);
+            statusBitField.setInt(id, status.code());
         }
 
-        /**
-         * NPC aka Non Player Character, means 'automatic' flight
-         * PC  aka     Player Character, means 'manual' flight
-         */ // todo ak0 CharacterMode enum
-        public boolean isModePlayerCharacter() { // todo ak0 BitAccessField.Section
-            return isStatusBitMode(pcModeMask);
+        public CharacterMode getCharacterMode() {
+            return CharacterMode.byCode(characterModeBitField.getInt(id));
         }
 
-        public void setModePlayerCharacter(final boolean enabled) {
-            setStatusBitMode(pcModeMask, enabled);
+        public void setCharacterMode(CharacterMode characterMode) {
+            checkNotNull(characterMode);
+            characterModeBitField.setInt(id, characterMode.ordinal());
         }
 
-        public boolean isUnusedMode() { // todo ak0 CoordinatesSource enum
-            return isStatusBitMode(unusedModeMask); // todo ak0 use it as "coords come from tracker" flag?
-        } // todo ak0 BitAccessField.Section
-
-        public void setUnusedMode(final boolean enabled) {
-            setStatusBitMode(unusedModeMask, enabled);
+        public CoordinatesSource getCoordinatesSource() {
+            return CoordinatesSource.byCode(coordinatesSourceBitField.getInt(id));
         }
 
-        private boolean isStatusBitMode(final int bitModeMask) {
-            final int statusRaw = storage.getAsInt(id, statusField);
-            return (statusRaw & bitModeMask) != 0;
-        }
-
-        private void setStatusBitMode(final int bitModeMask, final boolean enabled) {
-            final int statusRaw = storage.getAsInt(id, statusField);
-            final int statusRawMinusMask = (statusRaw & ~bitModeMask);
-            final int newStatusRaw = statusRawMinusMask | (enabled ? bitModeMask : 0);
-            storage.set(id, statusField, newStatusRaw);
+        public void setCoordinatesSource(CoordinatesSource coordinatesSource) {
+            checkNotNull(coordinatesSource);
+            coordinatesSourceBitField.setInt(id, coordinatesSource.ordinal());
         }
 
         public int getHeartbeatTime() {
@@ -405,8 +390,7 @@ public class FlightMissions {
     }
 
     private int readStatusCode(int recordId) {
-        final int statusRaw = storage.getAsInt(recordId, statusField);
-        return statusRaw & ~allModesMask;
+        return statusBitField.getInt(recordId);
     }
 
     private void heartbeatTimeIndex_rebuild() {
@@ -492,11 +476,27 @@ public class FlightMissions {
     }
 
     public enum CharacterMode {
-        PC, NPC
+        NPC, PC;
+
+        public static CharacterMode byCode(int code) {
+            return switch (code) {
+                case 0 -> NPC;
+                case 1 -> PC;
+                default -> throw new IllegalArgumentException("Invalid character mode code: " + code);
+            };
+        }
     }
 
     public enum CoordinatesSource {
-        AutomaticSimpleFlight, TrackedViaTracker
+        AutomaticSimpleFlight, TrackedViaTracker;
+
+        public static CoordinatesSource byCode(int code) {
+            return switch (code) {
+                case 0 -> AutomaticSimpleFlight;
+                case 1 -> TrackedViaTracker;
+                default -> throw new IllegalArgumentException("Invalid coordinates source code: " + code);
+            };
+        }
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureWorldTime() - m1.getPlannedDepartureWorldTime();

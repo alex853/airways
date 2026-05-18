@@ -470,7 +470,7 @@ public class PilotContext {
                     world.airports().byIcao(flightplan.getDeparture()).orElseThrow(elseThrowException(flightplan.getDeparture())),
                     world.airports().byIcao(flightplan.getDestination()).orElseThrow(elseThrowException(flightplan.getDestination())),
                     world.getWorldTime() + Time.HALF_AN_HOUR);
-            mission.setModePlayerCharacter(true);
+            mission.setCharacterMode(FlightMissions.CharacterMode.PC);
 
             world.flightMissionControl().startOrCancel(mission);
 

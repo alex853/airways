@@ -32,7 +32,7 @@ public class FlightMissionController {
                         f.getId(),
                         f.getAircraftId(),
                         f.getStatusCode() + " - " + f.getStatus(),
-                        (f.isModePlayerCharacter() ? "P" : "n") + (f.isUnusedMode() ? "+" : "_"),
+                        (f.getCharacterMode() == FlightMissions.CharacterMode.PC ? "P" : "n") + (f.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight ? "a" : "t"),
                         TimeTools.ts(f.getHeartbeatTime()),
                         world.airports().byId(f.getDepartureAirportId()).orElseThrow().getIcao(),
                         world.airports().byId(f.getDestinationAirportId()).orElseThrow().getIcao(),

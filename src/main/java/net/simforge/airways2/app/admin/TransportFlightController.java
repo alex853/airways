@@ -62,7 +62,7 @@ public class TransportFlightController {
                 .filter(f -> world.flightMissions()
                         .byId(f.getFlightMissionId())
                         .map(ff -> (ff.getPlannedArrivalWorldTime() >= world.getWorldTime() - 12 * Time.ONE_HOUR)
-                                && ff.isModePlayerCharacter())
+                                && ff.getCharacterMode() == FlightMissions.CharacterMode.PC)
                         .orElse(false))
                 .map(f -> from(world, f))
                 .sorted(Comparator.comparing(FlightDto::getDof).thenComparing(FlightDto::getPDep))
@@ -110,7 +110,7 @@ public class TransportFlightController {
                 TimeTools.ts(flight.getHeartbeatTime()),
                 flight.getFlightMissionId(),
                 flightNumber,
-                mission.map(FlightMissions.Mission::isModePlayerCharacter).orElse(false),
+                mission.map(m -> m.getCharacterMode() == FlightMissions.CharacterMode.PC).orElse(false),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> m.getDateOfFlight().toString()).orElse("n/a"),
