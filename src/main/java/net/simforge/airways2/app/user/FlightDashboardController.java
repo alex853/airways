@@ -80,15 +80,13 @@ public class FlightDashboardController {
         return worldBean.read(world -> {
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
 
-//            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-//            checkIfFlightRelatesToUser(flight, userId);
+            Integer flightMissionId = simStatus.getFlightMissionId();
+            Optional<FlightMissions.Mission> flight = flightMissionId != null ? world.flightMissions().byId(flightMissionId) : Optional.empty();
 
-//            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
             return new Status2Dto(
                     simStatus,
-                    new VatsimStatusDto(),
-                    null // todo ak0
-                    );
+                    new VatsimStatusDto(), // todo ak1 vatsim tracking & dashboard integration rework
+                    flight.map(fm -> FlightUltraDto.from(world, fm)).orElse(null));
         });
     }
 
