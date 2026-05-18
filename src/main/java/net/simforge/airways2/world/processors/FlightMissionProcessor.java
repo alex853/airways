@@ -104,7 +104,7 @@ public class FlightMissionProcessor {
 
         final SimpleFlight.Position aircraftPosition = simpleFlight.getAircraftPosition(actualTimeSinceTakeoff);
 
-        if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) {
+        if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) { // todo ak0 do not update coords if "coords come from tracker" flag is set
 
             // todo ak3 Pilot pilot = session.load(Pilot.class, ctx.getPilot().getId());
 

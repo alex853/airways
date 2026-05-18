@@ -97,7 +97,7 @@ public class FlightDashboardController {
     private static class Status2Dto {
         private final SimStatusDto sim;
         private final VatsimStatusDto vatsim;
-        private final FlightDto flight;
+        private final FlightDto flight; // todo ak0 replace it by FlightBoardController.FlightDto
         private final TransportFlightDto transportFlight;
         private final AircraftDto aircraft;
     }

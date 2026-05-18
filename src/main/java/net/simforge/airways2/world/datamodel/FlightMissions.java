@@ -201,7 +201,7 @@ public class FlightMissions {
             return readStatusCode(id);
         }
 
-        public void setStatus(final Status status) {
+        public void setStatus(final Status status) { // todo ak0 BitAccessField.Section
             checkNotNull(status, "status is mandatory");
             checkArgument(status.code() <= 15, "status code should be in [0..15] range");
             final int statusCode = status.code();
@@ -213,8 +213,8 @@ public class FlightMissions {
         /**
          * NPC aka Non Player Character, means 'automatic' flight
          * PC  aka     Player Character, means 'manual' flight
-         */
-        public boolean isModePlayerCharacter() {
+         */ // todo ak0 CharacterMode enum
+        public boolean isModePlayerCharacter() { // todo ak0 BitAccessField.Section
             return isStatusBitMode(pcModeMask);
         }
 
@@ -222,9 +222,9 @@ public class FlightMissions {
             setStatusBitMode(pcModeMask, enabled);
         }
 
-        public boolean isUnusedMode() {
-            return isStatusBitMode(unusedModeMask);
-        }
+        public boolean isUnusedMode() { // todo ak0 CoordinatesSource enum
+            return isStatusBitMode(unusedModeMask); // todo ak0 use it as "coords come from tracker" flag?
+        } // todo ak0 BitAccessField.Section
 
         public void setUnusedMode(final boolean enabled) {
             setStatusBitMode(unusedModeMask, enabled);
@@ -489,6 +489,14 @@ public class FlightMissions {
                     .findFirst()
                     .orElse(null);
         }
+    }
+
+    public enum CharacterMode {
+        PC, NPC
+    }
+
+    public enum CoordinatesSource {
+        AutomaticSimpleFlight, TrackedViaTracker
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureWorldTime() - m1.getPlannedDepartureWorldTime();

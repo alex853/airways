@@ -3,7 +3,7 @@ package net.simforge.airways2.app.admin;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.WorldRunnerBean;
-import net.simforge.airways2.app.tools.EnhancedFlightMissionDto;
+import net.simforge.airways2.app.dto.FlightMinDto;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -48,7 +48,7 @@ public class FlightMissionController {
     }
 
     @GetMapping("/current-flights")
-    public List<EnhancedFlightMissionDto> getCurrentFlights() {
+    public List<FlightMinDto> getCurrentFlights() {
         return worldBean.read(world -> {
             final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
             final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
@@ -61,14 +61,14 @@ public class FlightMissionController {
                         case Finished -> condition.test(f.getActualArrivalWorldTime());
                     })
                     .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureWorldTime))
-                    .map(f -> EnhancedFlightMissionDto.fromMission(world, f))
+                    .map(f -> FlightMinDto.from(world, f))
                     .toList();
         });
     }
 
     @Data
     @AllArgsConstructor
-    private static class FlightMissionDto {
+    private static class FlightMissionDto { // todo ak1 replace it with dto.FlightMissionDto
         private int id;
         private int aircraftId;
         private String status;
