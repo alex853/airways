@@ -59,16 +59,18 @@ public class SimTracker {
                 .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
 
-        // todo ak0 blocks off - engine started, parking brake off, started moving
-        // todo ak0 blocks on - engine shutdown, parking brake set, stopped moving
+        boolean takeoffEvent = oldContext.position != null && !oldContext.position.isOnGround() && position.isOnGround();
+        boolean landingEvent = oldContext.position != null && oldContext.position.isOnGround() && !position.isOnGround();
 
-        boolean newTakeoff = oldContext.position != null && !oldContext.position.isOnGround() && position.isOnGround();
-        boolean newLanding = oldContext.position != null && oldContext.position.isOnGround() && !position.isOnGround();
+        boolean newRunningAndMoving = newContext.measuredGs > 0 && !newContext.parkingBrake && newContext.numberOfEnginesRunning > 0;
+        boolean newStoppedAndShutdown = newContext.measuredGs == 0 && newContext.parkingBrake && newContext.numberOfEnginesRunning == 0;
 
-
-        newContext = doChecks(newContext);
+        log.warn("SIM TRACKER EVENTS: takeoffEvent={}, landingEvent={}, newRunningAndMoving={}, newStoppedAndShutdown={}",
+                takeoffEvent, landingEvent, newRunningAndMoving, newStoppedAndShutdown);
 
         // todo ak0 check events and apply them to the world
+
+        newContext = doChecks(newContext);
 
         userContexts.put(userId, newContext);
     }

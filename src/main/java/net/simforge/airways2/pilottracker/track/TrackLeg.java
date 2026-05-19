@@ -49,7 +49,7 @@ public class TrackLeg {
         }
 
         if (newTrackTrail != null) {
-            while (time(newTrackTrail) > 1.0) {
+            while (time(newTrackTrail) > 60) {
                 if (newTrackTrail.size() < 3) {
                     break;
                 }
