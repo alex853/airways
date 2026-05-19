@@ -5,7 +5,6 @@ import lombok.Data;
 import net.simforge.airways2.app.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
-import net.simforge.airways2.pilottracker.EfbTracker;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.WorldRunnerBean;
@@ -21,9 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -58,6 +54,7 @@ public class FlightDashboardController {
     }
 
     @GetMapping("/status")
+    @Deprecated
     public StatusDto getStatus(@RequestAttribute("userId") int userId,
                                @RequestParam(name = "flightId") int flightId) {
         return worldBean.read(world -> {
@@ -71,6 +68,10 @@ public class FlightDashboardController {
     @GetMapping("/status2")
     public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
 
             Integer flightMissionId = simStatus.getFlightMissionId();
@@ -474,29 +475,5 @@ public class FlightDashboardController {
         private String remainedTickets;
         private int checkedIn;
         private int onBoard;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class EfbStatusDto {
-        private StatusDto flight;
-        private EfbTrackingDebugDto tracking;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class EfbTrackingDebugDto {
-        private String lastSeen;
-        private String status;
-        private String airportIcao;
-
-        public static EfbTrackingDebugDto from(EfbTracker.UserStatus userStatus) {
-            return new EfbTrackingDebugDto(
-                    LocalDateTime.ofEpochSecond(userStatus.getLastSeen()/1000, 0, ZoneOffset.UTC)
-                            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-                    userStatus.getStatus(),
-                    userStatus.getAirportIcao()
-            );
-        }
     }
 }

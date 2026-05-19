@@ -62,6 +62,19 @@ public class SimTracker {
         userContexts.put(userId, newContext);
     }
 
+    public synchronized void refreshContext(int userId) {
+        checkArgument(userId > 0);
+
+        Context newContext = userContexts.get(userId);
+        if (!userContexts.containsKey(userId)) {
+            return;
+        }
+
+        newContext = doChecks(newContext);
+
+        userContexts.put(userId, newContext);
+    }
+
     private Context doChecks(Context context) {
         if (context.getFlightMissionId() == null) {
             return context;

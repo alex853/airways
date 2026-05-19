@@ -80,4 +80,8 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     public boolean isUserConnected(int userId) {
         return simTracker.getUserStatus(userId) != null; // todo ak1 add support for recent connections, recently lost connections, etc
     }
+
+    public void refreshContext(int userId) {
+        simTracker.refreshContext(userId);
+    }
 }
