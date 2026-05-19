@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import net.simforge.airways2.app.WorldAccess;
+import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.pilottracker.track.TrackPosition;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -14,6 +15,7 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SimTracker {
     private static final Logger log = LoggerFactory.getLogger(SimTracker.class);
+    private static final DecimalFormat df1 = new DecimalFormat("#.#");
 
     private WorldAccess worldAccess;
     private List<AirportInfo> airportInfos;
@@ -38,22 +41,30 @@ public class SimTracker {
         TrackPosition position = toTrackPosition(parsed);
         // todo ak1 save posrep
 
-        Context newContext = userContexts.get(userId);
+        Context oldContext = userContexts.get(userId);
         if (!userContexts.containsKey(userId)) {
-            newContext = Context.forUser(userId);
+            oldContext = Context.forUser(userId);
             // todo ak1 restore context from previous posreps if exist
         }
 
-        newContext = validateOrFindCurrentFlightMission(newContext);
+        Context newContext = validateOrFindCurrentFlightMission(oldContext);
 
-        boolean newTakeoff = newContext.position != null && !newContext.position.isOnGround() && position.isOnGround();
-        boolean newLanding = newContext.position != null && newContext.position.isOnGround() && !position.isOnGround();
+        List<TrackLeg> newTrackTrail = TrackLeg.buildNewTrackTrail(newContext.trackTrail, newContext.position, position);
 
         newContext = newContext.toBuilder()
                 .position(position)
                 .parkingBrake(parsed.isParkingBrake())
                 .numberOfEnginesRunning(parsed.getNumberOfEnginesRunning())
+                .trackTrail(newTrackTrail)
+                .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
+
+        // todo ak0 blocks off - engine started, parking brake off, started moving
+        // todo ak0 blocks on - engine shutdown, parking brake set, stopped moving
+
+        boolean newTakeoff = oldContext.position != null && !oldContext.position.isOnGround() && position.isOnGround();
+        boolean newLanding = oldContext.position != null && oldContext.position.isOnGround() && !position.isOnGround();
+
 
         newContext = doChecks(newContext);
 
@@ -65,12 +76,12 @@ public class SimTracker {
     public synchronized void refreshContext(int userId) {
         checkArgument(userId > 0);
 
-        Context newContext = userContexts.get(userId);
+        Context oldContext = userContexts.get(userId);
         if (!userContexts.containsKey(userId)) {
             return;
         }
 
-        newContext = doChecks(newContext);
+        Context newContext = doChecks(oldContext);
 
         userContexts.put(userId, newContext);
     }
@@ -197,7 +208,8 @@ public class SimTracker {
         private final TrackPosition position;
         private final boolean parkingBrake;
         private final int numberOfEnginesRunning;
-        // todo ak1 measured-gs
+        private final List<TrackLeg> trackTrail;
+        private final float measuredGs;
         private final Integer flightMissionId;
         private final List<UserAction> actions;
 
@@ -230,12 +242,13 @@ public class SimTracker {
         private final String airportIcao;
         private final Boolean parkingBrake;
         private final Boolean engineRunning;
-        // todo ak1 measured-gs
+        private final String measuredGs;
         private final List<UserAction> actions;
 
         public static UserStatus none() {
             return new UserStatus(
                     "None",
+                    null,
                     null,
                     null,
                     null,
@@ -267,6 +280,7 @@ public class SimTracker {
                     airportIcao,
                     context.position != null ? context.parkingBrake : null,
                     context.position != null ? context.numberOfEnginesRunning > 0 : null,
+                    df1.format(context.measuredGs),
                     context.actions);
         }
     }
