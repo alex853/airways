@@ -35,8 +35,6 @@ public class SimTracker {
         checkArgument(userId > 0);
         checkNotNull(posrep);
 
-        int worldTime = worldAccess.getWorldTime();
-
         E0Posrep parsed = E0Posrep.parse(posrep);
         TrackPosition position = toTrackPosition(parsed);
         // todo ak1 save posrep
