@@ -286,13 +286,13 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
-                throw new IllegalStateException("manual finish-flight is prohibited");
-            }
-
-            if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
-            }
+//            if (simTrackerBean.isUserConnected(userId)) {
+//                throw new IllegalStateException("manual finish-flight is prohibited");
+//            }
+//
+//            if (vatsimTrackerBean.isUserConnected(userId)) {
+                 // todo ak1 vatsim support
+//            }
 
             log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);

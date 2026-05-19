@@ -4,7 +4,6 @@ import net.simforge.airways2.app.WorldAccess;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
-import net.simforge.airways2.world.processors.ShadowJetLogic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +93,7 @@ class FlightMissionActions {
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
                 world.flightMissionControl().blocksOn(mission);
 
-                ShadowJetLogic.deboardTransportFlightIfExists(world, mission);
+                // todo ak1 no!!! ShadowJetLogic.deboardTransportFlightIfExists(world, mission);
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }
