@@ -59,8 +59,16 @@ public class SimTracker {
                 .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
 
-        boolean takeoffEvent = oldContext.position != null && !oldContext.position.isOnGround() && position.isOnGround();
-        boolean landingEvent = oldContext.position != null && oldContext.position.isOnGround() && !position.isOnGround();
+        processEvents(oldContext, newContext);
+
+        newContext = doChecks(newContext);
+
+        userContexts.put(userId, newContext);
+    }
+
+    private void processEvents(Context oldContext, Context newContext) {
+        boolean takeoffEvent = oldContext.position != null && !oldContext.position.isOnGround() && newContext.position.isOnGround();
+        boolean landingEvent = oldContext.position != null && oldContext.position.isOnGround() && !newContext.position.isOnGround();
 
         boolean newRunningAndMoving = newContext.measuredGs > 0 && !newContext.parkingBrake && newContext.numberOfEnginesRunning > 0;
         boolean newStoppedAndShutdown = newContext.measuredGs == 0 && newContext.parkingBrake && newContext.numberOfEnginesRunning == 0;
@@ -68,11 +76,25 @@ public class SimTracker {
         log.warn("SIM TRACKER EVENTS: takeoffEvent={}, landingEvent={}, newRunningAndMoving={}, newStoppedAndShutdown={}",
                 takeoffEvent, landingEvent, newRunningAndMoving, newStoppedAndShutdown);
 
-        // todo ak0 check events and apply them to the world
+        FlightMissions.Status fmStatus = worldAccess.read(world -> world.flightMissions().byId(newContext.getFlightMissionId()).orElseThrow().getStatus());
 
-        newContext = doChecks(newContext);
-
-        userContexts.put(userId, newContext);
+        if (fmStatus == FlightMissions.Status.Preflight) {
+            if (newRunningAndMoving) {
+                log.info("SIM TRACKER: BLOCKS OFF detected");
+            }
+        } else if (fmStatus == FlightMissions.Status.Departure) {
+            if (takeoffEvent) {
+                log.info("SIM TRACKER: TAKEOFF detected");
+            }
+        } else if (fmStatus == FlightMissions.Status.Flying) {
+            if (landingEvent) {
+                log.info("SIM TRACKER: LANDING detected");
+            }
+        } else if (fmStatus == FlightMissions.Status.Arrival) {
+            if (newStoppedAndShutdown) {
+                log.info("SIM TRACKER: BLOCKS ON detected");
+            }
+        }
     }
 
     public synchronized void refreshContext(int userId) {
