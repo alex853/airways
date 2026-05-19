@@ -81,18 +81,22 @@ public class SimTracker {
         if (fmStatus == FlightMissions.Status.Preflight) {
             if (newRunningAndMoving) {
                 log.info("SIM TRACKER: BLOCKS OFF detected");
+                FlightMissionActions.mission_blocksOff(worldAccess, "sim", newContext.getFlightMissionId());
             }
         } else if (fmStatus == FlightMissions.Status.Departure) {
             if (takeoffEvent) {
                 log.info("SIM TRACKER: TAKEOFF detected");
+                FlightMissionActions.mission_takeoff(worldAccess, "sim", newContext.getFlightMissionId());
             }
         } else if (fmStatus == FlightMissions.Status.Flying) {
             if (landingEvent) {
                 log.info("SIM TRACKER: LANDING detected");
+                FlightMissionActions.mission_landing(worldAccess, "sim", newContext.getFlightMissionId(), newContext.position.getAirportIcao());
             }
         } else if (fmStatus == FlightMissions.Status.Arrival) {
             if (newStoppedAndShutdown) {
                 log.info("SIM TRACKER: BLOCKS ON detected");
+                FlightMissionActions.mission_blocksOn(worldAccess, "sim", newContext.getFlightMissionId());
             }
         }
     }

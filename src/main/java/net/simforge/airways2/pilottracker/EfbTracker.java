@@ -43,11 +43,11 @@ public class EfbTracker {
         // todo ak1 isValid?
 
         if (context.isTakeoff()) {
-            final FlightMissions.Mission mission = mission_takeoff(worldAccess, context);
+            final FlightMissions.Mission mission = null;//mission_takeoff(worldAccess, context);
             log.info("{} - Event 'takeoff'", missionLogHead(userId, mission));
             FlightStats.event("efb - takeoff");
         } else if (context.isLanding()) {
-            final FlightMissions.Mission mission = mission_landing(worldAccess, context);
+            final FlightMissions.Mission mission = null;//mission_landing(worldAccess, context);
 
             log.info("{} - Event 'landing'", missionLogHead(userId, mission));
             FlightStats.event("efb - landing");
@@ -146,55 +146,6 @@ public class EfbTracker {
         private String status;
         private String airportIcao;
         private int trackTailGs;
-    }
-
-    private FlightMissions.Mission mission_takeoff(WorldAccess worldAccess, Context context) {
-        return worldAccess.modifySync(world -> {
-            int flightMissionId = context.getFlightMissionId();
-            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
-            if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_takeoff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("efb - erroneous case - mission_takeoff - fm not found");
-                return null;
-            }
-            final FlightMissions.Mission mission = mission1.get();
-
-            if (mission.getStatus() == FlightMissions.Status.Departure) {
-                world.flightMissionControl().takeoff(mission);
-            } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
-            }
-
-            FlightStats.event("efb - takeoff");
-
-            return mission;
-        });
-    }
-
-    private FlightMissions.Mission mission_landing(WorldAccess worldAccess, Context context) {
-        return worldAccess.modifySync(world -> {
-            int flightMissionId = context.getFlightMissionId();
-            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
-            if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_landing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-                FlightStats.event("efb - erroneous case - mission_landing - fm not found");
-                return null;
-            }
-            final FlightMissions.Mission mission = mission1.get();
-
-            String landingAirportIcao = context.currentPosition.getAirportIcao();
-            final Airports.Airport landingAirport = world.airports().byIcao(landingAirportIcao).orElseThrow();
-
-            if (mission.getStatus() == FlightMissions.Status.Flying) {
-                world.flightMissionControl().landing(mission, landingAirport);
-            } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
-            }
-
-            FlightStats.event("efb - landing");
-
-            return mission;
-        });
     }
 
     private static TrackPosition parse(World world, String posrep) {
