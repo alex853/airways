@@ -40,7 +40,9 @@ public class TrackLeg {
         TrackLeg trackLeg = oldPosition != null ? between(oldPosition, newPosition) : null;
         List<TrackLeg> newTrackTrail = null;
         if (trackLeg != null) {
-            if (oldTrackTrail == null) {
+            if (oldTrackTrail != null) {
+                newTrackTrail = new ArrayList<>(oldTrackTrail);
+            } else {
                 newTrackTrail = new ArrayList<>();
             }
             newTrackTrail.add(trackLeg);

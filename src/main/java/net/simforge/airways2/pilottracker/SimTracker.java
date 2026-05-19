@@ -49,7 +49,7 @@ public class SimTracker {
 
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
 
-        List<TrackLeg> newTrackTrail = TrackLeg.buildNewTrackTrail(newContext.trackTrail, newContext.position, position);
+        List<TrackLeg> newTrackTrail = TrackLeg.buildNewTrackTrail(oldContext.trackTrail, oldContext.position, position);
 
         newContext = newContext.toBuilder()
                 .position(position)
@@ -432,7 +432,7 @@ public class SimTracker {
 
             @Override
             public boolean doCheck() {
-                return true; // todo ak1 measured-gs
+                return context.getMeasuredGs() == 0;
             }
         };
     }
