@@ -8,6 +8,7 @@ import net.simforge.airways2.pilottracker.track.TrackPosition;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
@@ -68,52 +69,50 @@ public class SimTracker {
 
         return worldAccess.read(world -> {
             FlightMissions.Mission fm = world.flightMissions().byId(context.getFlightMissionId()).orElseThrow();
+            Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fm.getId());
 
             List<UserAction> actions = new ArrayList<>();
 
             switch (fm.getStatus()) {
                 case Dispatched -> {
-                    Check[] checks = {
+                    actions.add(UserAction.build("start-flight", new Check[]{
                             departureLocationCheck(context, world, fm),
                             parkingBrakeSetCheck(context),
                             enginesShutdownCheck(context),
-                            aircraftStationaryCheck(context) };
-
-                    boolean canStartFlight = checkAll(checks);
-                    log.warn("canStartFlight {}", canStartFlight);
-                    for (Check check : checks) {
-                        log.warn("check {}, result {}", check.name(), check.doCheck());
-                    }
-
-                    UserAction startFlight = new UserAction(
-                            "start-flight",
-                            canStartFlight,
-                            Arrays.stream(checks).map(CheckResult::from).toList());
-                    actions.add(startFlight);
+                            aircraftStationaryCheck(context)}));
                 }
                 case Preflight -> {
-                    // Before Boarding
-                    // the correct location
-                    // parking brake set
-                    // engines shutdown
-                    // aircraft stationary
-
-                    // During Boarding
-                    // the correct location
-                    // parking brake set
-                    // engines shutdown
-                    // aircraft stationary
-
-                    // Before Blocks Off
-                    // the correct location
-                    // parking brake set
-                    // engines shutdown
-                    // aircraft stationary
-                    // boarding completed if t/f is present
+                    if (tf.isPresent()) {
+                        if (tf.get().getStatus() == TransportFlights.Status.WaitingForBoarding) {
+                            actions.add(UserAction.build("start-boarding", new Check[]{
+                                    departureLocationCheck(context, world, fm),
+                                    parkingBrakeSetCheck(context),
+                                    enginesShutdownCheck(context),
+                                    aircraftStationaryCheck(context)}));
+                        } else if (tf.get().getStatus() == TransportFlights.Status.WaitingForDeparture) {
+                            actions.add(UserAction.build("blocks-off", new Check[]{}));
+                        }
+                    } else {
+                        actions.add(UserAction.build("blocks-off", new Check[]{}));
+                    }
                 }
                 case Departure -> {
                     // the correct location
                     // aircraft is on ground
+                    // takeoff
+                }
+                case Flying -> {
+                    // manual landing
+                }
+                case Arrival -> {
+                    // blocks on
+                }
+                case Postflight -> {
+                    // start deboarding
+                    // finish
+                }
+                case Finished -> {
+                    // noop
                 }
                 default -> log.warn("DO NOT KNOW FLIGHT CHECKS FOR A FLIGHT IN " + fm.getStatus() + " STATUS");
             }
@@ -265,6 +264,12 @@ public class SimTracker {
         private final String name;
         private final boolean allowed;
         private List<CheckResult> checks;
+
+        public static UserAction build(String name, Check[] checks) {
+            List<CheckResult> results = Arrays.stream(checks).map(CheckResult::from).toList();
+            boolean result = results.stream().allMatch(CheckResult::isResult);
+            return new UserAction(name, result, results);
+        }
     }
 
     @AllArgsConstructor
@@ -339,15 +344,6 @@ public class SimTracker {
         public static CheckResult from(Check check) {
             return new CheckResult(check.name(), check.doCheck());
         }
-    }
-
-    private static boolean checkAll(Check... checks) {
-        for (Check check : checks) {
-            if (!check.doCheck()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static Check departureLocationCheck(Context context, World world, FlightMissions.Mission fm) {

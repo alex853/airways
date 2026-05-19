@@ -24,19 +24,12 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static net.simforge.airways2.world.datamodel.FlightMissions.Status.*;
-import static net.simforge.airways2.world.datamodel.FlightMissions.Status.Cancelled;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.*;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Arrival;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Departure;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Finished;
-import static net.simforge.airways2.world.datamodel.TransportFlights.Status.Flying;
 
 @RestController
 @RequestMapping("/flight-dashboard")
@@ -60,7 +53,7 @@ public class FlightDashboardController {
                     .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                     .toList();
 
-            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f, isEfbFlight(userId, f.getId()))).toList());
+            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f)).toList());
         });
     }
 
@@ -71,7 +64,7 @@ public class FlightDashboardController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return toStatusDto(world, flight);
         });
     }
 
@@ -90,67 +83,25 @@ public class FlightDashboardController {
         });
     }
 
-    @AllArgsConstructor
-    @Data
-    private static class Status2Dto {
-        private final SimTracker.UserStatus sim;
-        private final VatsimStatusDto vatsim;
-        private final FlightUltraDto flight;
-    }
-
-    @AllArgsConstructor
-    @Data
-    private static class VatsimStatusDto {
-        private final String status = "unknown";
-    }
-
     @PostMapping("/start-flight")
-    public StatusDto startFlight(@RequestAttribute("userId") int userId,
-                                 @RequestParam(name = "flightId") int flightId,
-                                 @RequestParam(name = "efb", required = false, defaultValue = "false") boolean efb) {
+    public Status2Dto startFlight(@RequestAttribute("userId") int userId,
+                                  @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
-            checkIfFlightRelatesToUser(flight, userId);
-
-            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
-            checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
-
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("start")) {
-                throw new IllegalStateException("start is not permitted");
-            }
-
-            log.info("f/m #{} - flight-dashboard - start-flight", flightId);
-            world.flightMissionControl().startOrCancel(flight);
-
-            if (efb && flight.getStatus() == Preflight) {
-                EfbTracker.get().notifyMissionStarted(userId, flightId);
-            }
-
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
-        });
-    }
-
-    @PostMapping("/start-flight2")
-    public Status2Dto startFlight2(@RequestAttribute("userId") int userId) {
-        return worldBean.modifySync(world -> {
-            // todo ak1 this is based of flight selection inside sim-tracker
-            //          probably this should be changed into 'current flight' concept
-            SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
-            Integer flightId = simStatus.getFlightMissionId();
-
-            checkNotNull(flightId, "flight should exists");
-
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
-            boolean canStartFlight = simStatus.getActions().stream().filter(a -> a.getName().equals("start-flight")).findFirst().map(SimTracker.UserAction::isAllowed).orElse(false);
-            checkArgument(canStartFlight, "start flight action should be allowed");
+            if (simTrackerBean.isUserConnected(userId)) {
+                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkActionAllowed(simStatus, "start-flight");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
+            }
 
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
             world.flightMissionControl().startOrCancel(flight);
@@ -160,8 +111,8 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-boarding")
-    public StatusDto startBoarding(@RequestAttribute("userId") int userId,
-                                   @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto startBoarding(@RequestAttribute("userId") int userId,
+                                    @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
@@ -174,133 +125,127 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
-            final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("start-boarding")) {
-                throw new IllegalStateException("start-boarding is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkActionAllowed(simStatus, "start-boarding");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
             world.transportFlightControl().startBoarding(transportFlight);
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/blocks-off")
-    public StatusDto blocksOff(@RequestAttribute("userId") int userId,
-                               @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto blocksOff(@RequestAttribute("userId") int userId,
+                                @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
-            checkArgument(flight.getStatus() == Preflight, "flight status is not as expected");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
 
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("blocks-off")) {
-                throw new IllegalStateException("blocks-off is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                throw new IllegalStateException("manual blocks-off is prohibited");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
             world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/takeoff")
-    public StatusDto takeoff(@RequestAttribute("userId") int userId,
-                             @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto takeoff(@RequestAttribute("userId") int userId,
+                              @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            boolean efbFlight = isEfbFlight(userId, flightId);
-            if (efbFlight) {
-                throw new IllegalStateException("takeoff is not permitted for EFB flight");
-            }
-
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("takeoff")) {
-                throw new IllegalStateException("takeoff is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                throw new IllegalStateException("manual takeoff is prohibited");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - takeoff", flightId);
             world.flightMissionControl().takeoff(flight); // t/f update is inside
 
-            return toStatusDto(world, flight, false);
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/landing")
-    public StatusDto landing(@RequestAttribute("userId") int userId,
-                             @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto landing(@RequestAttribute("userId") int userId,
+                              @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            boolean efbFlight = isEfbFlight(userId, flightId);
-            if (efbFlight) {
-                throw new IllegalStateException("landing is not permitted for EFB flight");
-            }
-
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
 
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("landing")) {
-                throw new IllegalStateException("landing is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                throw new IllegalStateException("manual landing is prohibited");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - landing", flightId);
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
-            return toStatusDto(world, flight, false);
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/blocks-on")
-    public StatusDto blocksOn(@RequestAttribute("userId") int userId,
-                              @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto blocksOn(@RequestAttribute("userId") int userId,
+                               @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
 
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("blocks-on")) {
-                throw new IllegalStateException("blocks-on is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                throw new IllegalStateException("manual blocks-on is prohibited");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
             world.flightMissionControl().blocksOn(flight); // t/f update is inside
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/start-deboarding")
-    public StatusDto startDeboarding(@RequestAttribute("userId") int userId,
-                                     @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto startDeboarding(@RequestAttribute("userId") int userId,
+                                      @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
@@ -310,99 +255,62 @@ public class FlightDashboardController {
             checkNotNull(transportFlight, "transport flight is required for start-deboarding");
 
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
-            checkArgument(flight.getStatus() == Postflight, "flight status is not as expected");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
-            final String permitted = getTransportFlightShownElements(transportFlight, flight);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("start-deboarding")) {
-                throw new IllegalStateException("start-deboarding is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkActionAllowed(simStatus, "start-deboarding");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
             world.transportFlightControl().startDeboarding(transportFlight);
 
-            return toStatusDto(world, flight, isEfbFlight(userId, flightId));
+            return getStatus2(userId);
         });
     }
 
     @PostMapping("/finish-flight")
-    public StatusDto finish(@RequestAttribute("userId") int userId,
-                            @RequestParam(name = "flightId") final int flightId) {
+    public Status2Dto finish(@RequestAttribute("userId") int userId,
+                             @RequestParam(name = "flightId") int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
-
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
-            final String permitted = getFlightMissionShownElements(flight, transportFlight, world);
-            checkNotNull(permitted);
-            if (!Arrays.asList(permitted.split(",")).contains("finish")) {
-                throw new IllegalStateException("finish is not permitted");
+            if (simTrackerBean.isUserConnected(userId)) {
+                throw new IllegalStateException("manual finish-flight is prohibited");
+            }
+
+            if (vatsimTrackerBean.isUserConnected(userId)) {
+                // todo ak1 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);
 
-            boolean efbFlight = isEfbFlight(userId, flightId);
-            if (efbFlight) {
-                EfbTracker.get().notifyMissionFinished(userId);
-            }
-
-            return toStatusDto(world, flight, efbFlight);
+            return getStatus2(userId);
         });
     }
 
-    @PostMapping("/efb/status")
-    public EfbStatusDto doEfbStatusExchange(@RequestAttribute("userId") int userId,
-                                            @RequestParam(name = "posrep", required = false) String posrep) {
-        if (posrep != null) {
-            EfbTracker.get().processPosrep(worldBean, userId, posrep);
-        }
-
-        return worldBean.read(world -> {
-            Optional<EfbTracker.UserStatus> userStatus = EfbTracker.get().getUserStatus(userId);
-            int flightMissionId = userStatus.map(EfbTracker.UserStatus::getFlightMissionId).orElse(0);
-
-            Optional<FlightMissions.Mission> current;
-            if (flightMissionId > 0) {
-                current = world.flightMissions().byId(flightMissionId);
-            } else {
-                List<FlightMissions.Mission> userFlights = world.flightMissions()
-                        .allByUserId(userId)
-                        .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
-                        .toList();
-
-                Optional<FlightMissions.Mission> firstActive = userFlights.stream()
-                        .filter(f -> !(f.getStatus() == FlightMissions.Status.Finished || f.getStatus() == Cancelled))
-                        .findFirst();
-
-                current = firstActive.isPresent()
-                        ? firstActive
-                        : (userFlights.isEmpty() ? Optional.empty() : Optional.of(userFlights.get(userFlights.size() - 1)));
-            }
-
-            return new EfbStatusDto(
-                    current.map(f -> toStatusDto(world, f, true)).orElse(null),
-                    userStatus.map(EfbTrackingDebugDto::from).orElse(null));
-        });
+    private static void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
+        checkArgument(flight.getUserId() == userId, "flight does not relate to the user");
     }
 
-    private boolean isEfbFlight(int userId, int flightMissionId) {
-        Optional<EfbTracker.UserStatus> userStatus = EfbTracker.get().getUserStatus(userId);
-        return userStatus.map(EfbTracker.UserStatus::getFlightMissionId).orElse(0) == flightMissionId;
+    private static void checkActionAllowed(SimTracker.UserStatus simStatus, String actionName) {
+        boolean actionAllowed = simStatus.getActions().stream().filter(a -> a.getName().equals(actionName)).findFirst().map(SimTracker.UserAction::isAllowed).orElse(false);
+        checkArgument(actionAllowed, "'" + actionName + "' should be allowed");
     }
 
-    private void checkIfFlightRelatesToUser(FlightMissions.Mission flight, int userId) {
-        if (flight.getUserId() != userId) {
-            throw new IllegalArgumentException("flight does not relate to the user");
-        }
-    }
-
-    private StatusDto toStatusDto(World world, FlightMissions.Mission flight, boolean isEfbFlight) {
+    @Deprecated
+    private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -420,9 +328,7 @@ public class FlightDashboardController {
                 flight.getId(),
                 flight.getStatus().name(),
                 getNextPlannedFlightMissionStatus(flight),
-                isEfbFlight
-                        ? getFlightMissionShownElementsEfb(flight, transportFlight, world)
-                        : getFlightMissionShownElements(flight, transportFlight, world),
+                getFlightMissionShownElements(flight, transportFlight, world),
                 world.airports().getIcao(flight.getDepartureAirportId()).orElseThrow(),
                 world.airports().getIcao(flight.getDestinationAirportId()).orElseThrow(),
                 TimeTools.ymdOrNull(flight.getPlannedDepartureWorldTime()),
@@ -445,63 +351,55 @@ public class FlightDashboardController {
         return new StatusDto(aircraftDto, flightDto, transportFlightDto);
     }
 
+    @Deprecated
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
         return switch (flight.getStatus()) {
-            case Dispatched -> Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
-            case Preflight -> Departure.name() + " when Captain decides";
-            case Departure -> Flying.name() + " when Captain decides";
-            case Flying -> Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
-            case Arrival -> Postflight.name() + " just after Blocks On";
-            case Postflight -> Finished.name() + " after Deboarding";
+            case Dispatched -> FlightMissions.Status.Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
+            case Preflight -> FlightMissions.Status.Departure.name() + " when Captain decides";
+            case Departure -> FlightMissions.Status.Flying.name() + " when Captain decides";
+            case Flying -> FlightMissions.Status.Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
+            case Arrival -> FlightMissions.Status.Postflight.name() + " just after Blocks On";
+            case Postflight -> FlightMissions.Status.Finished.name() + " after Deboarding";
             default -> null;
         };
     }
 
+    @Deprecated
     private String getFlightMissionShownElements(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
             case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
-            case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
+            case Preflight -> (transportFlight == null || transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : "landing-disabled";
             case Arrival -> "blocks-on";
-            case Postflight -> (transportFlight == null || transportFlight.getStatus() == Finished) ? "finish" : "finish-disabled";
+            case Postflight -> (transportFlight == null || transportFlight.getStatus() == TransportFlights.Status.Finished) ? "finish" : "finish-disabled";
             default -> null;
         };
     }
 
-    private String getFlightMissionShownElementsEfb(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
-        return switch (flight.getStatus()) {
-            case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
-            case Preflight -> (transportFlight == null || transportFlight.getStatus() == WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
-            case Departure -> "takeoff-efb";
-            case Flying -> "landing-efb";
-            case Arrival -> "blocks-on";
-            case Postflight -> (transportFlight == null || transportFlight.getStatus() == Finished) ? "finish" : "finish-disabled";
-            default -> null;
-        };
-    }
-
+    @Deprecated
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight, World world) {
         return switch (transportFlight.getStatus()) {
-            case Scheduled -> CheckIn.name() + " at " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
-            case CheckIn -> WaitingForBoarding.name() + " since " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
-            case WaitingForBoarding -> Boarding.name() + " when Captain clears";
-            case Boarding -> WaitingForDeparture.name() + " at ~" + TimeTools.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
-            case WaitingForDeparture -> Departure.name();
-            case Departure -> Flying.name();
-            case Flying -> Arrival.name();
-            case Arrival -> WaitingForDeboarding.name() + " since Blocks On";
-            case WaitingForDeboarding -> Deboarding.name() + " when Captain clears";
-            case Deboarding -> Finished.name();
+            case Scheduled -> TransportFlights.Status.CheckIn.name() + " at " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
+            case CheckIn -> TransportFlights.Status.WaitingForBoarding.name() + " since " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
+            case WaitingForBoarding -> TransportFlights.Status.Boarding.name() + " when Captain clears";
+            case Boarding -> TransportFlights.Status.WaitingForDeparture.name() + " at ~" + TimeTools.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
+            case WaitingForDeparture -> TransportFlights.Status.Departure.name();
+            case Departure -> TransportFlights.Status.Flying.name();
+            case Flying -> TransportFlights.Status.Arrival.name();
+            case Arrival -> TransportFlights.Status.WaitingForDeboarding.name() + " since Blocks On";
+            case WaitingForDeboarding -> TransportFlights.Status.Deboarding.name() + " when Captain clears";
+            case Deboarding -> TransportFlights.Status.Finished.name();
             default -> null;
         };
     }
 
+    @Deprecated
     private String getTransportFlightShownElements(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> "sold";
             case CheckIn -> "sold,check-in,start-boarding-disabled";
-            case WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == Preflight ? "start-boarding" : "start-boarding-disabled");
+            case WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == FlightMissions.Status.Preflight ? "start-boarding" : "start-boarding-disabled");
             case Boarding -> "sold,check-in,on-board";
             case WaitingForDeparture, Departure, Flying -> "on-board";
             case Arrival -> "on-board,start-deboarding-disabled";
@@ -519,10 +417,25 @@ public class FlightDashboardController {
 
     @Data
     @AllArgsConstructor
+    @Deprecated
     public static class StatusDto {
         private AircraftDto aircraft;
         private FlightDto flight;
         private TransportFlightDto transportFlight;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class Status2Dto {
+        private final SimTracker.UserStatus sim;
+        private final VatsimStatusDto vatsim;
+        private final FlightUltraDto flight;
+    }
+
+    @AllArgsConstructor
+    @Data
+    private static class VatsimStatusDto {
+        private final String status = "unknown";
     }
 
     @Data
