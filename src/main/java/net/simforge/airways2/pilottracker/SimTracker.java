@@ -67,8 +67,8 @@ public class SimTracker {
     }
 
     private void processEvents(Context oldContext, Context newContext) {
-        boolean takeoffEvent = oldContext.position != null && !oldContext.position.isOnGround() && newContext.position.isOnGround();
-        boolean landingEvent = oldContext.position != null && oldContext.position.isOnGround() && !newContext.position.isOnGround();
+        boolean takeoffEvent = oldContext.position != null && oldContext.position.isOnGround() && !newContext.position.isOnGround();
+        boolean landingEvent = oldContext.position != null && !oldContext.position.isOnGround() && newContext.position.isOnGround();
 
         boolean newRunningAndMoving = newContext.measuredGs > 0 && !newContext.parkingBrake && newContext.numberOfEnginesRunning > 0;
         boolean newStoppedAndShutdown = newContext.measuredGs == 0 && newContext.parkingBrake && newContext.numberOfEnginesRunning == 0;
