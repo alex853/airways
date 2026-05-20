@@ -111,7 +111,8 @@ public class SimTracker {
             return;
         }
 
-        Context newContext = doChecks(oldContext);
+        Context newContext = validateOrFindCurrentFlightMission(oldContext);
+        newContext = doChecks(newContext);
 
         userContexts.put(userId, newContext);
     }
