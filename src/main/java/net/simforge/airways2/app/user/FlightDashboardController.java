@@ -286,6 +286,7 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
+            // todo ak1 checks?
 //            if (simTrackerBean.isUserConnected(userId)) {
 //                throw new IllegalStateException("manual finish-flight is prohibited");
 //            }

@@ -170,8 +170,19 @@ public class SimTracker {
                     // blocks on
                 }
                 case Postflight -> {
-                    // start deboarding
-                    // finish
+                    if (tf.isPresent()) {
+                        if (tf.get().getStatus() == TransportFlights.Status.WaitingForDeboarding) {
+                            actions.add(UserAction.build("start-deboarding", new Check[]{
+                                    destinationLocationCheck(context, world, fm.get()),
+                                    parkingBrakeSetCheck(context),
+                                    enginesShutdownCheck(context),
+                                    aircraftStationaryCheck(context)}));
+                        } else if (tf.get().getStatus() == TransportFlights.Status.Finished) {
+                            actions.add(UserAction.build("finish-flight", new Check[]{}));
+                        }
+                    } else {
+                        actions.add(UserAction.build("finish-flight", new Check[]{}));
+                    }
                 }
                 case Finished -> {
                     // noop
@@ -432,6 +443,28 @@ public class SimTracker {
                 String departureIcao = world.airports().byId(fm.getDepartureAirportId()).orElseThrow().getIcao();
                 String actualIcao = context.getPosition().getAirportIcao();
                 return departureIcao.equals(actualIcao);
+            }
+        };
+    }
+
+    private static Check destinationLocationCheck(Context context, World world, FlightMissions.Mission fm) {
+        return new Check() {
+            @Override
+            public String name() {
+                return "destination-location-check";
+            }
+
+            @Override
+            public boolean doCheck() {
+                if (context.getPosition() == null
+                        || !context.getPosition().isOnGround()
+                        || context.getPosition().getAirportIcao() == null) {
+                    return false;
+                }
+
+                String destinationIcao = world.airports().byId(fm.getDestinationAirportId()).orElseThrow().getIcao();
+                String actualIcao = context.getPosition().getAirportIcao();
+                return destinationIcao.equals(actualIcao);
             }
         };
     }
