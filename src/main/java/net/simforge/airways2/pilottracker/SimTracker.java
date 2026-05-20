@@ -65,6 +65,10 @@ public class SimTracker {
     }
 
     private void processEvents(Context oldContext, Context newContext) {
+        if (newContext.getFlightMissionId() == null) {
+            return;
+        }
+
         boolean takeoffEvent = oldContext.position != null && oldContext.position.isOnGround() && !newContext.position.isOnGround();
         boolean landingEvent = oldContext.position != null && !oldContext.position.isOnGround() && newContext.position.isOnGround();
 
