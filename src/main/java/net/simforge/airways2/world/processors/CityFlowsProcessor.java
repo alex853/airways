@@ -33,7 +33,7 @@ public class CityFlowsProcessor {
                 .map(f -> CityFlowHelper.getFlowUnits(world, f, thisCity.get()))
                 .reduce(0.0f, Float::sum);
         final Map<Integer, City2CityFlows.Flow> existingC2CFlows = world.city2cityFlows()
-                .allFromCityId(thisCity.get().getId()).stream()
+                .allFromCityId(thisCity.get().getId())
                 .collect(Collectors.toMap(City2CityFlows.Flow::getToCityId, f -> f));
         final Set<Integer> c2cFlowsToBeDeactivated = new TreeSet<>(existingC2CFlows.keySet());
         log.info("city flow #{}, '{}' - there are {} reachable cities, total flow units {}, there are {} existing c2cflows", thisCity.get().getId(), city.getName(), reachableCities.size(), totalFlowUnits, existingC2CFlows.size());

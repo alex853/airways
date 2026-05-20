@@ -9,8 +9,8 @@ import net.simforge.airways2.world.processors.CityFlowHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -51,21 +51,19 @@ public class City2CityFlows {
         storage.save(rootPath);
     }
 
-    public Collection<Flow> allFromCityId(final int fromCityId) {
-        try (final Timing.Timer ignored = Timing.label("City2CityFlows - allFromCityId")) {
-            return storage.filter(f -> f.getFromCityId() == fromCityId); // todo ak2 migrate to filter1
-        }
+    public Stream<Flow> allFromCityId(final int fromCityId) {
+        return storage.filter1(id -> readFromCityId(id) == fromCityId);
     }
 
     public Optional<Flow> getFromCityIdToCityId(final int fromCityId, final int toCityId) {
         checkArgument(fromCityId >= 1);
         checkArgument(toCityId >= 1);
 
-        return storage.findFirst1(id -> storage.getAsInt(id, fromCityIdField) == fromCityId && storage.getAsInt(id, toCityIdField) == toCityId);
+        return storage.findFirst1(id -> readFromCityId(id) == fromCityId && readToCityId(id) == toCityId);
     }
 
     public Flow createInactive(final int fromCityId, final int toCityId) {
-        checkArgument(allFromCityId(fromCityId).stream().filter(f -> f.getToCityId() == toCityId).findFirst().isEmpty());
+        checkArgument(getFromCityIdToCityId(fromCityId, toCityId).isEmpty());
 
         final int id = storage.addRecord();
         final Flow flow = new Flow(id);
@@ -91,11 +89,11 @@ public class City2CityFlows {
         }
 
         public int getFromCityId() {
-            return storage.getAsInt(id, fromCityIdField);
+            return readFromCityId(id);
         }
 
         public int getToCityId() {
-            return storage.getAsInt(id, toCityIdField);
+            return readToCityId(id);
         }
 
         public boolean isActive() {
@@ -153,5 +151,13 @@ public class City2CityFlows {
         public void setAccumulatedFlowTime(final int accumulatedFlowTime) {
             storage.set(id, accumulatedFlowTimeField, accumulatedFlowTime);
         }
+    }
+
+    private int readFromCityId(int id) {
+        return storage.getAsInt(id, fromCityIdField);
+    }
+
+    private int readToCityId(int id) {
+        return storage.getAsInt(id, toCityIdField);
     }
 }
