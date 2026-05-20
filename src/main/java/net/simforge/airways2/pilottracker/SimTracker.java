@@ -118,15 +118,22 @@ public class SimTracker {
         }
 
         return worldAccess.read(world -> {
-            FlightMissions.Mission fm = world.flightMissions().byId(context.getFlightMissionId()).orElseThrow();
-            Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fm.getId());
+            Optional<FlightMissions.Mission> fm = world.flightMissions().byId(context.getFlightMissionId());
+
+            if (fm.isEmpty()) {
+                log.warn("Flight mission {} not found!!!", context.getFlightMissionId());
+                return context;
+            }
+
+            Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fm.get().getId());
 
             List<UserAction> actions = new ArrayList<>();
 
-            switch (fm.getStatus()) {
+            FlightMissions.Status fmStatus = fm.map(FlightMissions.Mission::getStatus).orElseThrow();
+            switch (fmStatus) {
                 case Dispatched -> {
                     actions.add(UserAction.build("start-flight", new Check[]{
-                            departureLocationCheck(context, world, fm),
+                            departureLocationCheck(context, world, fm.get()),
                             parkingBrakeSetCheck(context),
                             enginesShutdownCheck(context),
                             aircraftStationaryCheck(context)}));
@@ -135,7 +142,7 @@ public class SimTracker {
                     if (tf.isPresent()) {
                         if (tf.get().getStatus() == TransportFlights.Status.WaitingForBoarding) {
                             actions.add(UserAction.build("start-boarding", new Check[]{
-                                    departureLocationCheck(context, world, fm),
+                                    departureLocationCheck(context, world, fm.get()),
                                     parkingBrakeSetCheck(context),
                                     enginesShutdownCheck(context),
                                     aircraftStationaryCheck(context)}));
@@ -164,7 +171,7 @@ public class SimTracker {
                 case Finished -> {
                     // noop
                 }
-                default -> log.warn("DO NOT KNOW FLIGHT CHECKS FOR A FLIGHT IN " + fm.getStatus() + " STATUS");
+                default -> log.warn("DO NOT KNOW FLIGHT CHECKS FOR A FLIGHT IN {} STATUS", fmStatus);
             }
 
             return context.toBuilder().actions(actions).build();
