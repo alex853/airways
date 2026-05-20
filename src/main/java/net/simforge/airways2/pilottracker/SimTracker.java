@@ -187,6 +187,9 @@ public class SimTracker {
                 if (FlightMissionHelper.isFinishedOrCancelled(fm)) {
                     result = result.resetFlightMissionId();
                     log.info("flight mission reset due to inactive status");
+                } else if (fm.getUserId() != result.getUserId()) {
+                    result = result.resetFlightMissionId();
+                    log.info("flight mission reset due to user mismatch");
                 }
             }
 
