@@ -80,36 +80,12 @@ public class Aircrafts {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-
-        DataField aircraftTypeIdField0 = storage0.getDataField(0);
-        DataField regNoIdField0 = storage0.getDataField(1);
-        DataField aircraftOperatorIdField0 = storage0.getDataField(2);
-        DataField flightMissionIdField0 = storage0.getDataField(3);
-        DataField operationalStatusField0 = storage0.getDataField(4);
-        DataField locationStatusField0 = storage0.getDataField(5);
-        DataField locationAirportIdField0 = storage0.getDataField(6);
-        DataField locationLatitudeField0 = storage0.getDataField(7);
-        DataField locationLongitudeField0 = storage0.getDataField(8);
-
-        for (int i = 1; i <= this.storage.getCount(); i++) {
-            int newId = storage0.addRecord();
-            checkArgument(newId == i);
-            storage0.set(i, aircraftTypeIdField0, storage.getAsInt(i, aircraftTypeIdField));
-            storage0.set(i, regNoIdField0, storage.getAsInt(i, regNoIdField));
-            storage0.set(i, aircraftOperatorIdField0, storage.getAsInt(i, aircraftOperatorIdField));
-            storage0.set(i, flightMissionIdField0, storage.getAsInt(i, flightMissionIdField));
-            storage0.set(i, operationalStatusField0, storage.getAsInt(i, operationalStatusField));
-            storage0.set(i, locationStatusField0, storage.getAsInt(i, locationStatusField));
-            storage0.set(i, locationAirportIdField0, storage.getAsInt(i, locationAirportIdField));
-            storage0.set(i, locationLatitudeField0, storage.getAsFloat(i, locationLatitudeField));
-            storage0.set(i, locationLongitudeField0, storage.getAsFloat(i, locationLongitudeField));
-        }
-
-        this.storage0.save(rootPath);
     }
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
+
+        buildStorage0andSave(rootPath);
     }
 
     public Stream<Aircraft> all() {
@@ -324,5 +300,33 @@ public class Aircrafts {
                 && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
                 && aircraft.getLocationAirportId() != 0
                 && aircraft.getAircraftOperatorId() == 0;
+    }
+
+    private void buildStorage0andSave(Path rootPath) throws IOException {
+        DataField aircraftTypeIdField0 = storage0.getDataField(0);
+        DataField regNoIdField0 = storage0.getDataField(1);
+        DataField aircraftOperatorIdField0 = storage0.getDataField(2);
+        DataField flightMissionIdField0 = storage0.getDataField(3);
+        DataField operationalStatusField0 = storage0.getDataField(4);
+        DataField locationStatusField0 = storage0.getDataField(5);
+        DataField locationAirportIdField0 = storage0.getDataField(6);
+        DataField locationLatitudeField0 = storage0.getDataField(7);
+        DataField locationLongitudeField0 = storage0.getDataField(8);
+
+        for (int i = 1; i <= this.storage.getCount(); i++) {
+            int newId = storage0.addRecord();
+            checkArgument(newId == i);
+            storage0.set(i, aircraftTypeIdField0, storage.getAsInt(i, aircraftTypeIdField));
+            storage0.set(i, regNoIdField0, storage.getAsInt(i, regNoIdField));
+            storage0.set(i, aircraftOperatorIdField0, storage.getAsInt(i, aircraftOperatorIdField));
+            storage0.set(i, flightMissionIdField0, storage.getAsInt(i, flightMissionIdField));
+            storage0.set(i, operationalStatusField0, storage.getAsInt(i, operationalStatusField));
+            storage0.set(i, locationStatusField0, storage.getAsInt(i, locationStatusField));
+            storage0.set(i, locationAirportIdField0, storage.getAsInt(i, locationAirportIdField));
+            storage0.set(i, locationLatitudeField0, storage.getAsFloat(i, locationLatitudeField));
+            storage0.set(i, locationLongitudeField0, storage.getAsFloat(i, locationLongitudeField));
+        }
+
+        this.storage0.save(rootPath);
     }
 }
