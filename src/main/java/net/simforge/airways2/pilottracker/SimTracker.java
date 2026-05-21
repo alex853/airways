@@ -11,10 +11,13 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -37,12 +40,13 @@ public class SimTracker {
 
         E0Posrep parsed = E0Posrep.parse(posrep);
         TrackPosition position = toTrackPosition(parsed);
-        // todo ak1 save posrep
+        // todo ak0 save posrep
 
         Context oldContext = userContexts.get(userId);
         if (!userContexts.containsKey(userId)) {
             oldContext = Context.forUser(userId);
-            // todo ak1 restore context from previous posreps if exist
+            // todo ak0 restore context from previous posreps if exist
+            // todo ak0 save contexts in that scheduled processing code
         }
 
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
@@ -509,5 +513,18 @@ public class SimTracker {
                 return context.getMeasuredGs() == 0;
             }
         };
+    }
+
+    // todo ak0 add saving
+    private void savePosrep(int userId, String posrep) {
+        try {
+            File file = new File("./efb-tracker/user-posreps/user-" + userId + ".csv");
+            file.getParentFile().mkdirs();
+            String content = file.exists() ? IOHelper.loadFile(file) : "";
+            content += posrep + "\n";
+            IOHelper.saveFile(file, content);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

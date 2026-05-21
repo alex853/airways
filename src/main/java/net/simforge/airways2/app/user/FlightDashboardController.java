@@ -68,6 +68,10 @@ public class FlightDashboardController {
     @GetMapping("/status2")
     public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
+            // todo ak0 this should reworked
+            //          - do it only when some action is executed
+            //          - add scheduled processing which refreshes it in a batch
+            //          - just getting a status should not force context refresh
             if (simTrackerBean.isUserConnected(userId)) {
                 simTrackerBean.refreshContext(userId);
             }
@@ -105,7 +109,7 @@ public class FlightDashboardController {
             }
 
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
-            world.flightMissionControl().startOrCancel(flight);
+            world.flightMissionControl().startOrCancel(flight); // todo ak1 why there is 'OR CANCEL' ????
 
             return getStatus2(userId);
         });

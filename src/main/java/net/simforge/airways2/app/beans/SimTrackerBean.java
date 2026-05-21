@@ -1,4 +1,4 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.beans;
 
 import net.simforge.airways2.app.tools.ThreadStatus;
 import net.simforge.airways2.pilottracker.SimTracker;
@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component
 public class SimTrackerBean implements ApplicationRunner, DisposableBean {
@@ -78,7 +76,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     }
 
     public boolean isUserConnected(int userId) {
-        return simTracker.getUserStatus(userId) != null; // todo ak1 add support for recent connections, recently lost connections, etc
+        return simTracker.getUserStatus(userId) != null; // todo ak0 add support for recent connections, recently lost connections, etc
     }
 
     public void refreshContext(int userId) {
