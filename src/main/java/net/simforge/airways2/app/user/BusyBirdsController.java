@@ -93,15 +93,17 @@ public class BusyBirdsController {
 
     @GetMapping("/mission/build-plans")
     public BuildPlansResponse buildPlans(@RequestAttribute("userId") int userId,
-                                         @RequestParam(name = "missionId") int missionId, // todo ak0 time step param
-                                         @RequestParam(name = "aircraftId") int aircraftId) { // todo ak0 no ferry flight to base
+                                         @RequestParam(name = "missionId") int missionId,
+                                         @RequestParam(name = "aircraftId") int aircraftId,
+                                         @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
+                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "false") boolean ferryBackToBase) {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
             Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
             return new BuildPlansResponse(plans.stream().map(BusyBirdsController::planToDto).toList());
         });

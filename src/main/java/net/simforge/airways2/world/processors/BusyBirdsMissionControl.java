@@ -127,7 +127,7 @@ public class BusyBirdsMissionControl {
         return new MissionPlan(MissionPlan.Status.Success, legs, null, null, 0);
     }
 
-    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft) {
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -154,7 +154,7 @@ public class BusyBirdsMissionControl {
 
         for (Airports.Airport fromAirport : fromAirports) {
             for (Airports.Airport toAirport : toAirports) {
-                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages));
+                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, turnaroundTimeHours, ferryBackToBase));
             }
         }
 
@@ -163,7 +163,7 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages) {
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, int turnaroundTimeHours, boolean ferryBackToBase) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -173,7 +173,7 @@ public class BusyBirdsMissionControl {
         AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
         AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
 
-        int nextDepTime = world.getWorldTime() + Time.ONE_HOUR;
+        int nextDepTime = world.getWorldTime() + turnaroundTimeHours * Time.ONE_HOUR;
 
         List<Leg> legs = new ArrayList<>();
         Leg leg;
@@ -186,13 +186,13 @@ public class BusyBirdsMissionControl {
         leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData);
         nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
 
-        if (needFerryFlightToBaseAirport) {
+        if (needFerryFlightToBaseAirport && ferryBackToBase) {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData);
         }
 
         int totalDistance = legs.stream().reduce(0, (total, l) -> total + l.distance, Integer::sum);
 
-        return new MissionPlan(MissionPlan.Status.Success, legs, null, "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + totalDistance + " nm", totalDistance);
+        return new MissionPlan(MissionPlan.Status.Success, legs, null, "From " + fromAirport.getIcao() + " to " + toAirport.getIcao(), totalDistance);
     }
 
     private Leg addLeg(int plannedTime, List<Leg> legs,
