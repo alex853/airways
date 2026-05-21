@@ -2,6 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.AircraftPerformanceData;
@@ -161,14 +162,14 @@ public class ScheduledFlightMissionGenerator {
                     regNo,
                     baseIcao,
                     destinationIcao,
-                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToBlocksOffMinutes)));
+                    TimeTools.minutesToHhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToBlocksOffMinutes)));
             final ScheduledFlight flight2 = new ScheduledFlight(
                     currentFlightNumber + 1,
                     iataCode + (currentFlightNumber + 1),
                     regNo,
                     destinationIcao,
                     baseIcao,
-                    hhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToFinishMinutes + prevFinishToNextStartMinimalTime + startToBlocksOffMinutes)));
+                    TimeTools.minutesToHhmm(align5min(currentTime + prevFinishToNextStartMinimalTime / 2 + startToFinishMinutes + prevFinishToNextStartMinimalTime + startToBlocksOffMinutes)));
 
             result.add(flight1);
             result.add(flight2);
@@ -181,12 +182,6 @@ public class ScheduledFlightMissionGenerator {
         }
 
         return result;
-    }
-
-    private static String hhmm(final int mins) {
-        final int h = mins / 60;
-        final int m = mins % 60;
-        return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
     }
 
     private static int align5min(final int mins) {

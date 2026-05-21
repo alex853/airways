@@ -24,7 +24,8 @@ public class ManualDispatchController {
 
     @GetMapping("/available-aircraft")
     public List<AircraftDto> getAvailableAircraft() {
-        return worldBean.read(world -> world.aircrafts().allIdleAndParkedAtAirportAndNoOperatorAssigned().stream()
+        return worldBean.read(world -> world.aircrafts()
+                .byAircraftOperatorIdAndIdleAndParkedAtAirport(Aircrafts.NO_AIRCRAFT_OPERATOR_ID)
                 .filter(a -> FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(a)))
                 .map(a -> new AircraftDto(
                         a.getId(),
@@ -43,9 +44,6 @@ public class ManualDispatchController {
             @RequestParam(name = "tfMode") final String tfMode) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            if (!Aircrafts.isIdleAndParkedAtAirportAndNoOperatorAssigned(aircraft)) {
-                throw new IllegalArgumentException();
-            }
             if (!FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft))) {
                 throw new IllegalArgumentException();
             }

@@ -9,7 +9,6 @@ import net.simforge.commons.misc.Geo;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,6 +16,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Aircrafts {
+    public static final int NO_AIRCRAFT_OPERATOR_ID = 0;
+
     private final Strings strings;
 
     private final Storage<Aircraft> storage = Storage.<Aircraft>builder()
@@ -65,8 +66,6 @@ public class Aircrafts {
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
-
-//        buildStorage0andSave(rootPath);
     }
 
     public Stream<Aircraft> all() {
@@ -75,14 +74,6 @@ public class Aircrafts {
 
     public Stream<Aircraft> filter(final Storage.Condition<Aircraft> condition) {
         return storage.filter1(condition);
-    }
-
-    public Collection<Aircraft> allIdleAndParkedAtAirport() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak0 migrate to filter1
-    }
-
-    public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak0 migrate to filter1
     }
 
     public Optional<Aircraft> byId(final int id) {
@@ -116,19 +107,32 @@ public class Aircrafts {
     public Storage.Condition<Aircraft> byLocationStatus(final LocationStatus locationStatus) {
         checkNotNull(locationStatus);
 
-        return recordId -> storage.getAsInt(recordId, locationStatusField) == locationStatus.code();
+        return recordId -> readLocationStatus(recordId) == locationStatus.code();
     }
 
     public Storage.Condition<Aircraft> byLocationAirportId(final int locationAirportId) {
         checkArgument(locationAirportId > 0);
 
-        return recordId -> storage.getAsInt(recordId, locationAirportIdField) == locationAirportId;
+        return recordId -> readLocationAirportId(recordId) == locationAirportId;
     }
 
-    public Stream<Aircraft> byAircraftOperatorId(final int aircraftOperatorId) {
-        checkArgument(aircraftOperatorId > 0);
+    @SuppressWarnings("unused")
+    public Stream<Aircraft> byAircraftOperatorId(int aircraftOperatorId) {
+        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId);
+    }
 
-        return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftOperatorIdField) == aircraftOperatorId);
+    @SuppressWarnings("unused")
+    public Stream<Aircraft> idleAndParkedAtAirport() {
+        return storage.filter1(recordId -> readOperationalStatus(recordId) == OperationalStatus.Idle.code()
+                && readLocationStatus(recordId) == LocationStatus.ParkedAtAirport.code()
+                && readLocationAirportId(recordId) > 0);
+    }
+
+    public Stream<Aircraft> byAircraftOperatorIdAndIdleAndParkedAtAirport(int aircraftOperatorId) {
+        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId
+                && readOperationalStatus(recordId) == OperationalStatus.Idle.code()
+                && readLocationStatus(recordId) == LocationStatus.ParkedAtAirport.code()
+                && readLocationAirportId(recordId) > 0);
     }
 
     @SuppressWarnings("LombokGetterMayBeUsed")
@@ -152,7 +156,7 @@ public class Aircrafts {
         }
 
         public int getAircraftOperatorId() {
-            return storage.getAsInt(id, aircraftOperatorIdField);
+            return readAircraftOperatorId(id);
         }
 
         public void setAircraftOperatorId(final int aircraftOperatorId) {
@@ -172,7 +176,7 @@ public class Aircrafts {
         }
 
         public int getOperationalStatusRaw() {
-            return storage.getAsInt(id, operationalStatusField);
+            return readOperationalStatus(id);
         }
 
         public void setOperationalStatus(final OperationalStatus operationalStatus) {
@@ -185,7 +189,7 @@ public class Aircrafts {
         }
 
         public int getLocationStatusRaw() {
-            return storage.getAsInt(id, locationStatusField);
+            return readLocationStatus(id);
         }
 
         public void setLocationStatus(final LocationStatus locationStatus) {
@@ -194,7 +198,7 @@ public class Aircrafts {
         }
 
         public int getLocationAirportId() {
-            return storage.getAsInt(id, locationAirportIdField);
+            return readLocationAirportId(id);
         }
 
         public void setLocationAirportId(final int locationAirportId) {
@@ -307,16 +311,19 @@ public class Aircrafts {
         }
     }
 
-    public static boolean isIdleAndParkedAtAirport(final Aircraft aircraft) {
-        return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                && aircraft.getLocationAirportId() != 0;
+    private int readAircraftOperatorId(int recordId) {
+        return storage.getAsInt(recordId, aircraftOperatorIdField);
     }
 
-    public static boolean isIdleAndParkedAtAirportAndNoOperatorAssigned(final Aircraft aircraft) {
-        return aircraft.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
-                && aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                && aircraft.getLocationAirportId() != 0
-                && aircraft.getAircraftOperatorId() == 0;
+    private int readOperationalStatus(int recordId) {
+        return storage.getAsInt(recordId, operationalStatusField);
+    }
+
+    private int readLocationStatus(int recordId) {
+        return storage.getAsInt(recordId, locationStatusField);
+    }
+
+    private int readLocationAirportId(int recordId) {
+        return storage.getAsInt(recordId, locationAirportIdField);
     }
 }

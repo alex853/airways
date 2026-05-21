@@ -63,4 +63,16 @@ public class TimeTools {
             return hhmm + (daysDiff > 0 ? "+" : "") + daysDiff;
         }
     }
+
+    public static String minutesToHmm(final int minutes) {
+        final int h = minutes / 60;
+        final int m = minutes % 60;
+        return h + ":" + (m < 10 ? "0" + m : m);
+    }
+
+    public static String minutesToHhmm(final int minutes) {
+        final int h = minutes / 60;
+        final int m = minutes % 60;
+        return (h < 10 ? "0" + h : h) + ":" + (m < 10 ? "0" + m : m);
+    }
 }

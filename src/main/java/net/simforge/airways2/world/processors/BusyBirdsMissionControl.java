@@ -187,8 +187,7 @@ public class BusyBirdsMissionControl {
 
     private static Optional<Aircrafts.Aircraft> findNearestSuitableAircraft(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
         return world.aircrafts()
-                .byAircraftOperatorId(aircraftOperator.getId())
-                .filter(Aircrafts::isIdleAndParkedAtAirport)
+                .byAircraftOperatorIdAndIdleAndParkedAtAirport(aircraftOperator.getId())
                 .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
     }
 

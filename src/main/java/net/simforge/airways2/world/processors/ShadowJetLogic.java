@@ -25,10 +25,8 @@ public class ShadowJetLogic {
             final World world,
             final AircraftTypes.AircraftType aircraftType,
             final Airports.Airport locationAirport) {
-        final AircraftOperators.AircraftOperator shadowJet = getShadowJet(world);
-
-        final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts().allIdleAndParkedAtAirport().stream()
-                .filter(a -> a.getAircraftOperatorId() == shadowJet.getId())
+        final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts()
+                .byAircraftOperatorIdAndIdleAndParkedAtAirport(World25.ShadowJetOperatorId)
                 .filter(a -> a.getAircraftTypeId() == aircraftType.getId())
                 .min(Comparator.comparing(a -> Geo.distance(locationAirport.getCoords(), a.getLocationCoords())));
 
@@ -66,14 +64,10 @@ public class ShadowJetLogic {
         }
 
         final Aircrafts.Aircraft newAircraft = world.aircrafts().create(aircraftType, newRegNo, locationAirport);
-        newAircraft.setAircraftOperatorId(shadowJet.getId());
+        newAircraft.setAircraftOperatorId(World25.ShadowJetOperatorId);
         log.info("ShadowJet Fleet - creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         FlightStats.event("shadowJet creating");
         return newAircraft;
-    }
-
-    public static AircraftOperators.AircraftOperator getShadowJet(World world) {
-        return world.aircraftOperators().byIata(World25.ShadowJetIata).orElseThrow();
     }
 
     private static String generateRandomSJxxxRegNo() {

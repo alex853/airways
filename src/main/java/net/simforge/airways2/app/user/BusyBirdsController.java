@@ -64,8 +64,7 @@ public class BusyBirdsController {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             return world.aircrafts()
-                    .byAircraftOperatorId(World25.BusyBirdsOperatorId)
-                    .filter(Aircrafts::isIdleAndParkedAtAirport)
+                    .byAircraftOperatorIdAndIdleAndParkedAtAirport(World25.BusyBirdsOperatorId)
                     .map(a -> new AircraftDto(
                             a.getId(),
                             world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),

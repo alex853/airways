@@ -79,10 +79,9 @@ public class VatsimTrackerTest {
         worldIcaos = world.airports().all().map(Airports.Airport::getIcao).collect(Collectors.toSet());
 
         final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().create("A320", "320");
-        final AircraftOperators.AircraftOperator shadowJet = world.aircraftOperators().create(World25.ShadowJetIata, World25.ShadowJetIcao, "ShadowJet");
 
         aircraft = world.aircrafts().create(aircraftType, "G-ABCD", egll);
-        aircraft.setAircraftOperatorId(shadowJet.getId());
+        aircraft.setAircraftOperatorId(World25.ShadowJetOperatorId);
 
         nextReport = ReportUtils.toTimestamp(Time.toLdt(startTime));
 
