@@ -7,6 +7,7 @@ import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.pilottracker.track.TrackPosition;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
@@ -49,6 +50,7 @@ public class SimTracker {
             // todo ak0 save contexts in that scheduled processing code
         }
 
+        // todo ak1 rework all those staff into one single modifySync processing splitted somehow
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
 
         List<TrackLeg> newTrackTrail = TrackLeg.buildNewTrackTrail(oldContext.trackTrail, oldContext.position, position);
@@ -61,11 +63,37 @@ public class SimTracker {
                 .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
 
+        updateAircraftLocation(newContext);
+
         processEvents(oldContext, newContext);
 
         newContext = doChecks(newContext);
 
         userContexts.put(userId, newContext);
+    }
+
+    private void updateAircraftLocation(Context context) {
+        if (context.getFlightMissionId() == null) {
+            return;
+        }
+
+        worldAccess.modifySync(world -> {
+            Optional<FlightMissions.Mission> mission = world.flightMissions().byId(context.getFlightMissionId());
+            if (mission.isEmpty()) {
+                log.warn("no mission found!!!");
+                return null;
+            }
+            Optional<Aircrafts.Aircraft> aircraft = world.aircrafts().byId(mission.get().getAircraftId());
+            if (aircraft.isEmpty()) {
+                log.warn("no aircraft found!!!");
+                return null;
+            }
+            aircraft.get().setLocationLatitude((float) context.position.getCoords().getLat());
+            aircraft.get().setLocationLongitude((float) context.position.getCoords().getLon());
+            aircraft.get().setLocationHeading(context.position.getHeading());
+            aircraft.get().setLocationAltitude(context.position.getAltitude());
+            return null;
+        });
     }
 
     private void processEvents(Context oldContext, Context newContext) {
@@ -239,7 +267,9 @@ public class SimTracker {
                 System.currentTimeMillis(), // todo ak1 read it from posrep
                 posrep.isOnGround(),
                 coords,
-                airport.map(AirportInfo::getIcao).orElse(null));
+                airport.map(AirportInfo::getIcao).orElse(null),
+                posrep.getHeading(),
+                posrep.getAltitude());
     }
 
     public synchronized UserStatus getUserStatus(int userId) {

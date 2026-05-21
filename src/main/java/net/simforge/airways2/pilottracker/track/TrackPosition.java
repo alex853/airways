@@ -11,4 +11,6 @@ public class TrackPosition {
     private final boolean onGround;
     private final Geo.Coords coords;
     private final String airportIcao;
+    private final int heading;
+    private final int altitude;
 }
