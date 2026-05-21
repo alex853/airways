@@ -158,6 +158,8 @@ public class BusyBirdsMissionControl {
             }
         }
 
+        plans.sort((p1, p2) -> p2.legs.size() - p1.legs.size()); // todo ak0 total duration desc
+
         return plans;
     }
 

@@ -109,7 +109,7 @@ public class BusyBirdsController {
 
     private static BuildPlanResponse planToDto(BusyBirdsMissionControl.MissionPlan plan) {
         if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-            return new BuildPlanResponse("failure", null, plan.getMessages());
+            return new BuildPlanResponse("failure", null, plan.getMessages(), null);
         }
 
         final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
@@ -124,7 +124,7 @@ public class BusyBirdsController {
                 JavaTime.toHhmm(leg.getPlannedDuration())
         )).toList();
 
-        return new BuildPlanResponse("success", legDtos, null);
+        return new BuildPlanResponse("success", legDtos, null, plan.getDescription());
     }
 
     @PutMapping("/mission/book")
@@ -198,6 +198,7 @@ public class BusyBirdsController {
         private String status;
         private List<LegDto> legs;
         private List<String> messages;
+        private String description;
     }
 
     @Data
