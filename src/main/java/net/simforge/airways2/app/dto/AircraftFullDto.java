@@ -42,7 +42,7 @@ public class AircraftFullDto {
                 a.getRegNo(),
                 world.aircraftOperators().byId(a.getAircraftOperatorId()).map(AircraftOperators.AircraftOperator::getName).orElse(null),
                 a.getLocationStatus().name(),
-                world.airports().byId(a.getLocationAirportId()).map(Airports.Airport::getName).orElse(null),
+                world.airports().byId(a.getLocationAirportId()).map(Airports.Airport::getIcao).orElse(null),
                 a.getOperationalStatus().name(),
                 a.getLocationLatitude(),
                 a.getLocationLongitude(),
