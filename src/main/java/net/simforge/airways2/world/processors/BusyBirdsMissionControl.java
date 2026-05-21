@@ -173,18 +173,18 @@ public class BusyBirdsMissionControl {
         AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
         AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
 
-        int nextDepTime = world.getWorldTime() + turnaroundTimeHours * Time.ONE_HOUR;
+        int nextDepTime = world.getWorldTime() + Time.ONE_HOUR;
 
         List<Leg> legs = new ArrayList<>();
         Leg leg;
 
         if (needFerryFlightToDepartureAirport) {
             leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData);
-            nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
+            nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
         }
 
         leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData);
-        nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
+        nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
 
         if (needFerryFlightToBaseAirport && ferryBackToBase) {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData);
