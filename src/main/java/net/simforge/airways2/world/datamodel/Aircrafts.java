@@ -32,37 +32,14 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAirportId
             .withDataField(DataField.of(DataType.Float)) // locationLatitude
             .withDataField(DataField.of(DataType.Float)) // locationLongitude
-            // locationHeading 0-359, 9bits
-            // locationAltitude 0-1023, 10bits
-            // flightTime, minutes, 24bits
-            // flownCycles, count, 16bits
-            // lastMoved, seconds since epoch, 32bits, optional....
-            // total = 12 bytes
-            // to add 16 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved1
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved2
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // locationHeading, 0-255 scaled to 0-359 degrees
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAltitude, 0-65535 feet
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // flight time, minutes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // flown cycles, times
+            // todo ak3 lastMoved, seconds since epoch, 32bits, optional....
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
-            .build(); // todo ak0 add flight time, cycles, last moved at, heading, reserve space
-
-/*    private final Storage<Aircraft> storage0 = Storage.<Aircraft>builder()
-            .name("aircrafts0")
-            .withInstantiator(Aircraft::new)
-            .withIdOf(DataType.Unsigned24bit)
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // aircraftTypeId
-            .withDataField(DataField.of(DataType.Signed32bit)) // regNoId
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // aircraftOperatorId
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // flightMissionId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // operationalStatus
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // locationStatus
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAirportId
-            .withDataField(DataField.of(DataType.Float)) // locationLatitude
-            .withDataField(DataField.of(DataType.Float)) // locationLongitude
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved1
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved2
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
-            .build();*/
+            .build();
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);
     private final DataField regNoIdField = storage.getDataField(1);
@@ -73,6 +50,10 @@ public class Aircrafts {
     private final DataField locationAirportIdField = storage.getDataField(6);
     private final DataField locationLatitudeField = storage.getDataField(7);
     private final DataField locationLongitudeField = storage.getDataField(8);
+    private final DataField locationHeadingField = storage.getDataField(9);
+    private final DataField locationAltitudeField = storage.getDataField(10);
+    private final DataField flightTimeField = storage.getDataField(11);
+    private final DataField flownCyclesField = storage.getDataField(12);
 
     public Aircrafts(final Strings strings) {
         this.strings = strings;
@@ -239,6 +220,43 @@ public class Aircrafts {
         public Geo.Coords getLocationCoords() {
             return Geo.coords(getLocationLatitude(), getLocationLongitude());
         }
+
+        public int getLocationHeading() {
+            return (int) Math.round(storage.getAsInt(id, locationHeadingField) * 359.0/255.0);
+        }
+
+        public void setLocationHeading(int heading) {
+            while (heading < 0) heading += 360;
+            while (heading >= 360) heading -= 360;
+            int scaled255 = (int) Math.round(heading * 255.0/359.0);
+            storage.set(id, locationHeadingField, scaled255);
+        }
+
+        public int getLocationAltitude() {
+            return storage.getAsInt(id, locationAltitudeField);
+        }
+
+        public void setLocationAltitude(int altitude) {
+            if (altitude < 0) altitude = 0;
+            if (altitude > 65535) altitude = 65535;
+            storage.set(id, locationAltitudeField, altitude);
+        }
+
+        public int getFlightTime() {
+            return storage.getAsInt(id, flightTimeField);
+        }
+
+        public void setFlightTime(int flightTime) {
+            storage.set(id, flightTimeField, flightTime);
+        }
+
+        public int getFlownCycles() {
+            return storage.getAsInt(id, flownCyclesField);
+        }
+
+        public void setFlownCycles(int flownCycles) {
+            storage.set(id, flownCyclesField, flownCycles);
+        }
     }
 
     public enum OperationalStatus {
@@ -301,34 +319,4 @@ public class Aircrafts {
                 && aircraft.getLocationAirportId() != 0
                 && aircraft.getAircraftOperatorId() == 0;
     }
-
-/*    private void buildStorage0andSave(Path rootPath) throws IOException {
-        DataField aircraftTypeIdField0 = storage0.getDataField(0);
-        DataField regNoIdField0 = storage0.getDataField(1);
-        DataField aircraftOperatorIdField0 = storage0.getDataField(2);
-        DataField flightMissionIdField0 = storage0.getDataField(3);
-        DataField operationalStatusField0 = storage0.getDataField(4);
-        DataField locationStatusField0 = storage0.getDataField(5);
-        DataField locationAirportIdField0 = storage0.getDataField(6);
-        DataField locationLatitudeField0 = storage0.getDataField(7);
-        DataField locationLongitudeField0 = storage0.getDataField(8);
-
-        for (int i = 1; i <= this.storage.getCount(); i++) {
-            int newId = storage0.addRecord();
-            checkArgument(newId == i);
-            storage0.set(i, aircraftTypeIdField0, storage.getAsInt(i, aircraftTypeIdField));
-            storage0.set(i, regNoIdField0, storage.getAsInt(i, regNoIdField));
-            storage0.set(i, aircraftOperatorIdField0, storage.getAsInt(i, aircraftOperatorIdField));
-            storage0.set(i, flightMissionIdField0, storage.getAsInt(i, flightMissionIdField));
-            storage0.set(i, operationalStatusField0, storage.getAsInt(i, operationalStatusField));
-            storage0.set(i, locationStatusField0, storage.getAsInt(i, locationStatusField));
-            storage0.set(i, locationAirportIdField0, storage.getAsInt(i, locationAirportIdField));
-            storage0.set(i, locationLatitudeField0, storage.getAsFloat(i, locationLatitudeField));
-            storage0.set(i, locationLongitudeField0, storage.getAsFloat(i, locationLongitudeField));
-        }
-
-        this.storage0.save(rootPath);
-
-        LoggerFactory.getLogger(Aircrafts.class).warn("aircrafts0 saved");
-    }*/
 }

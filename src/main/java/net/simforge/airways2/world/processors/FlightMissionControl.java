@@ -178,6 +178,10 @@ public class FlightMissionControl {
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
 
+        int flightDurationSeconds = mission.getActualArrivalWorldTime() - mission.getActualDepartureWorldTime();
+        aircraft.setFlightTime(aircraft.getFlightTime() + flightDurationSeconds/60);
+        aircraft.setFlownCycles(aircraft.getFlownCycles() + 1);
+
         // todo ak3 pilot/pilots/cabin crew - set status, location
         // todo ak3 pilot assignements / aircraft assignments?
 
