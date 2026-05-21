@@ -1,6 +1,6 @@
 package net.simforge.airways2.pilottracker;
 
-import net.simforge.airways2.app.WorldAccess;
+import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;

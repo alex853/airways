@@ -1,6 +1,6 @@
 package net.simforge.airways2.app.vatsimtracker;
 
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.ThreadStatus;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Airports;

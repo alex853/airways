@@ -1,6 +1,6 @@
 package net.simforge.airways2.vatsimtracker;
 
-import net.simforge.airways2.app.WorldAccess;
+import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;

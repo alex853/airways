@@ -1,9 +1,10 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.beans;
 
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;

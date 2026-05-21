@@ -1,4 +1,4 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.filters;
 
 import net.simforge.airways2.app.tools.Timing;
 import org.springframework.stereotype.Component;

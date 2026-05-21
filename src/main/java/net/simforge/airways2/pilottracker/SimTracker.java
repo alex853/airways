@@ -3,7 +3,7 @@ package net.simforge.airways2.pilottracker;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import net.simforge.airways2.app.WorldAccess;
+import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.pilottracker.track.TrackPosition;
 import net.simforge.airways2.world.World;

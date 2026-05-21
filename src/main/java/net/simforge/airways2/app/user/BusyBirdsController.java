@@ -2,7 +2,7 @@ package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;

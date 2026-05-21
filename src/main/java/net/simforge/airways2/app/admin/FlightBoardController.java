@@ -1,6 +1,6 @@
 package net.simforge.airways2.app.admin;
 
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;

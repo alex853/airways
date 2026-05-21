@@ -2,12 +2,12 @@ package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.app.SimTrackerBean;
+import net.simforge.airways2.app.beans.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;

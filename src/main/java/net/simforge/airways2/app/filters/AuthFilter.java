@@ -1,5 +1,6 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.filters;
 
+import net.simforge.airways2.app.beans.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;

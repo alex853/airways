@@ -2,7 +2,7 @@ package net.simforge.airways2.app.vatsimtracker;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.legacy.misc.Settings;

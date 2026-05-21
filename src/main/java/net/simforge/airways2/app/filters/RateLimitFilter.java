@@ -1,4 +1,4 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.filters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

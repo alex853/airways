@@ -1,6 +1,6 @@
 package net.simforge.airways2.app.user;
 
-import net.simforge.airways2.app.SimTrackerBean;
+import net.simforge.airways2.app.beans.SimTrackerBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

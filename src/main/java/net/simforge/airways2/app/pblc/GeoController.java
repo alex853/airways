@@ -1,8 +1,8 @@
-package net.simforge.airways2.app.admin;
+package net.simforge.airways2.app.pblc;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import net.simforge.airways2.app.WorldRunnerBean;
+import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.*;
 import org.springframework.beans.factory.annotation.Autowired;

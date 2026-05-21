@@ -1,4 +1,4 @@
-package net.simforge.airways2.app;
+package net.simforge.airways2.app.beans;
 
 import org.springframework.stereotype.Component;
 
