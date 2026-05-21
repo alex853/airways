@@ -23,7 +23,7 @@ public class MapController {
         try (final Timing.Timer ignored = Timing.label("MapController - getFlyingAircraft")) {
             return worldBean.read(world -> world.aircrafts()
                     .filter(world.aircrafts().byLocationStatus(Aircrafts.LocationStatus.Flying))
-                    .map(a -> AircraftMapDto.from(world, a))
+                    .map(AircraftMapDto::from)
                     .toList());
         }
     }

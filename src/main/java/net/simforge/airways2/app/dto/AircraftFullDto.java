@@ -46,7 +46,7 @@ public class AircraftFullDto {
                 a.getOperationalStatus().name(),
                 a.getLocationLatitude(),
                 a.getLocationLongitude(),
-                mission.map(m -> (int) FlightMissionHelper.calculateHeading(world, a.getFlightMissionId())).orElse(0), // todo ak0 heading
+                a.getLocationHeading(),
                 a.getLocationAltitude(),
                 a.getFlightMissionId(),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),

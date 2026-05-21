@@ -58,7 +58,9 @@ public class FlightMissionProcessor {
                 }
             }
             case Flying -> {
-                fly(world, worldTime, mission);
+                if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
+                    fly(world, worldTime, mission);
+                }
             }
             case Arrival -> {
                 if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC  && timeline.getBlocksOn().getEstimatedTime().isBefore(now)) {
@@ -104,20 +106,22 @@ public class FlightMissionProcessor {
 
         final SimpleFlight.Position aircraftPosition = simpleFlight.getAircraftPosition(actualTimeSinceTakeoff);
 
-        if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) { // todo ak0 do not update coords if "coords come from tracker" flag is set
+        if (aircraftPosition.getStage() != SimpleFlight.Position.Stage.AfterLanding) {
 
             // todo ak3 Pilot pilot = session.load(Pilot.class, ctx.getPilot().getId());
 
             final Geo.Coords coords = aircraftPosition.getCoords();
 
+
             aircraft.setLocationLatitude((float) coords.getLat());
             aircraft.setLocationLongitude((float) coords.getLon());
+            aircraft.setLocationHeading((int) Geo.bearing(coords, toAirport.getCoords()));
 
             // todo ak3 not implemented in #old                       pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
         } else {
 
-            if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC ) {
+            if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC) {
                 world.flightMissionControl().landing(mission, toAirport);
             }
         }
