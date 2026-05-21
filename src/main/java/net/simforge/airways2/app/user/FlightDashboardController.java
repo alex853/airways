@@ -111,6 +111,10 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
             world.flightMissionControl().startOrCancel(flight); // todo ak1 why there is 'OR CANCEL' ????
 
+            if (simTrackerBean.isUserConnected(userId)) {
+                world.flightMissionControl().switchToExternalCoordinatesMode(flight);
+            }
+
             return getStatus2(userId);
         });
     }

@@ -26,6 +26,11 @@ public class FlightMissionControl {
         return world.transportFlightControl();
     }
 
+    public void switchToExternalCoordinatesMode(FlightMissions.Mission mission) {
+        mission.setCoordinatesSource(FlightMissions.CoordinatesSource.TrackedViaTracker);
+        log.info("f/m #{} - flight switched to external coordinates mode", mission.getId());
+    }
+
     public void startOrCancel(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
