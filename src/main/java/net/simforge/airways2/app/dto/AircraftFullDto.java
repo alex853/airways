@@ -33,6 +33,8 @@ public class AircraftFullDto {
     private String pArr;
     private String aTkf;
     private String eLdg;
+    private int fsTime;
+    private int fsCycles;
 
     public static AircraftFullDto from(World world, Aircrafts.Aircraft a) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
@@ -54,6 +56,8 @@ public class AircraftFullDto {
                 mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
                 mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
                 mission.map(m -> TimeTools.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
-                null);
+                null,
+                a.getFlightTime(),
+                a.getFlownCycles());
     }
 }
