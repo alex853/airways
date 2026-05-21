@@ -5,6 +5,7 @@ import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 import net.simforge.commons.misc.Geo;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -328,5 +329,7 @@ public class Aircrafts {
         }
 
         this.storage0.save(rootPath);
+
+        LoggerFactory.getLogger(Aircrafts.class).warn("aircrafts0 saved");
     }
 }
