@@ -81,15 +81,15 @@ public class Aircrafts {
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
 
-        DataField aircraftTypeIdField0 = storage.getDataField(0);
-        DataField regNoIdField0 = storage.getDataField(1);
-        DataField aircraftOperatorIdField0 = storage.getDataField(2);
-        DataField flightMissionIdField0 = storage.getDataField(3);
-        DataField operationalStatusField0 = storage.getDataField(4);
-        DataField locationStatusField0 = storage.getDataField(5);
-        DataField locationAirportIdField0 = storage.getDataField(6);
-        DataField locationLatitudeField0 = storage.getDataField(7);
-        DataField locationLongitudeField0 = storage.getDataField(8);
+        DataField aircraftTypeIdField0 = storage0.getDataField(0);
+        DataField regNoIdField0 = storage0.getDataField(1);
+        DataField aircraftOperatorIdField0 = storage0.getDataField(2);
+        DataField flightMissionIdField0 = storage0.getDataField(3);
+        DataField operationalStatusField0 = storage0.getDataField(4);
+        DataField locationStatusField0 = storage0.getDataField(5);
+        DataField locationAirportIdField0 = storage0.getDataField(6);
+        DataField locationLatitudeField0 = storage0.getDataField(7);
+        DataField locationLongitudeField0 = storage0.getDataField(8);
 
         for (int i = 1; i <= this.storage.getCount(); i++) {
             int newId = storage0.addRecord();
