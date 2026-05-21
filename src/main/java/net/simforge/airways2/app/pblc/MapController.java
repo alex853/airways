@@ -1,8 +1,8 @@
 package net.simforge.airways2.app.pblc;
 
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.dto.AircraftFullDto;
 import net.simforge.airways2.app.dto.AircraftMapDto;
-import net.simforge.airways2.app.dto.AircraftWithFmDto;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +29,8 @@ public class MapController {
     }
 
     @GetMapping("/aircraft/details")
-    public AircraftWithFmDto getAircraftDetails(@RequestParam("id") int aircraftId) {
-        return worldBean.read(world -> AircraftWithFmDto.from(world,
+    public AircraftFullDto getAircraftDetails(@RequestParam("id") int aircraftId) {
+        return worldBean.read(world -> AircraftFullDto.from(world,
                 world.aircrafts()
                         .byId(aircraftId)
                         .orElseThrow()));
