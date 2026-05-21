@@ -5,7 +5,6 @@ import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
 import net.simforge.commons.misc.Geo;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -40,13 +39,13 @@ public class Aircrafts {
             // lastMoved, seconds since epoch, 32bits, optional....
             // total = 12 bytes
             // to add 16 bytes
-            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved1
-            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved2
-            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved3
-            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved4
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved1
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved2
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
             .build(); // todo ak0 add flight time, cycles, last moved at, heading, reserve space
 
-    private final Storage<Aircraft> storage0 = Storage.<Aircraft>builder()
+/*    private final Storage<Aircraft> storage0 = Storage.<Aircraft>builder()
             .name("aircrafts0")
             .withInstantiator(Aircraft::new)
             .withIdOf(DataType.Unsigned24bit)
@@ -63,7 +62,7 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved2
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
-            .build();
+            .build();*/
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);
     private final DataField regNoIdField = storage.getDataField(1);
@@ -86,7 +85,7 @@ public class Aircrafts {
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
 
-        buildStorage0andSave(rootPath);
+//        buildStorage0andSave(rootPath);
     }
 
     public Stream<Aircraft> all() {
@@ -303,7 +302,7 @@ public class Aircrafts {
                 && aircraft.getAircraftOperatorId() == 0;
     }
 
-    private void buildStorage0andSave(Path rootPath) throws IOException {
+/*    private void buildStorage0andSave(Path rootPath) throws IOException {
         DataField aircraftTypeIdField0 = storage0.getDataField(0);
         DataField regNoIdField0 = storage0.getDataField(1);
         DataField aircraftOperatorIdField0 = storage0.getDataField(2);
@@ -331,5 +330,5 @@ public class Aircrafts {
         this.storage0.save(rootPath);
 
         LoggerFactory.getLogger(Aircrafts.class).warn("aircrafts0 saved");
-    }
+    }*/
 }
