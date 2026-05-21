@@ -44,6 +44,7 @@ public class AircraftController {
         }
     }
 
+    // todo ak0 deprecate it
     @GetMapping("/flying")
     public List<FlyingAircraftDto> getFlying() {
         try (final Timing.Timer ignored = Timing.label("AircraftController - getFlying")) {
@@ -69,6 +70,7 @@ public class AircraftController {
         }
     }
 
+    // todo ak0 deprecate it and replace by another dto
     @Data
     @AllArgsConstructor
     private static class FullAircraftDto {
