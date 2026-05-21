@@ -32,7 +32,37 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAirportId
             .withDataField(DataField.of(DataType.Float)) // locationLatitude
             .withDataField(DataField.of(DataType.Float)) // locationLongitude
-            .build(); // todo ak2 add flight time, cycles, last moved at, heading, reserve space
+            // locationHeading 0-359, 9bits
+            // locationAltitude 0-1023, 10bits
+            // flightTime, minutes, 24bits
+            // flownCycles, count, 16bits
+            // lastMoved, seconds since epoch, 32bits, optional....
+            // total = 12 bytes
+            // to add 16 bytes
+            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved1
+            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved2
+            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved3
+            //.withDataField(DataField.of(DataType.Signed32bit)) // reserved4
+            .build(); // todo ak0 add flight time, cycles, last moved at, heading, reserve space
+
+    private final Storage<Aircraft> storage0 = Storage.<Aircraft>builder()
+            .name("aircrafts0")
+            .withInstantiator(Aircraft::new)
+            .withIdOf(DataType.Unsigned24bit)
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // aircraftTypeId
+            .withDataField(DataField.of(DataType.Signed32bit)) // regNoId
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // aircraftOperatorId
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // flightMissionId
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // operationalStatus
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // locationStatus
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAirportId
+            .withDataField(DataField.of(DataType.Float)) // locationLatitude
+            .withDataField(DataField.of(DataType.Float)) // locationLongitude
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved1
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved2
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
+            .build();
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);
     private final DataField regNoIdField = storage.getDataField(1);
@@ -50,6 +80,32 @@ public class Aircrafts {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+
+        DataField aircraftTypeIdField0 = storage.getDataField(0);
+        DataField regNoIdField0 = storage.getDataField(1);
+        DataField aircraftOperatorIdField0 = storage.getDataField(2);
+        DataField flightMissionIdField0 = storage.getDataField(3);
+        DataField operationalStatusField0 = storage.getDataField(4);
+        DataField locationStatusField0 = storage.getDataField(5);
+        DataField locationAirportIdField0 = storage.getDataField(6);
+        DataField locationLatitudeField0 = storage.getDataField(7);
+        DataField locationLongitudeField0 = storage.getDataField(8);
+
+        for (int i = 1; i <= this.storage.getCount(); i++) {
+            int newId = storage0.addRecord();
+            checkArgument(newId == i);
+            storage0.set(i, aircraftTypeIdField0, storage.getAsInt(i, aircraftTypeIdField));
+            storage0.set(i, regNoIdField0, storage.getAsInt(i, regNoIdField));
+            storage0.set(i, aircraftOperatorIdField0, storage.getAsInt(i, aircraftOperatorIdField));
+            storage0.set(i, flightMissionIdField0, storage.getAsInt(i, flightMissionIdField));
+            storage0.set(i, operationalStatusField0, storage.getAsInt(i, operationalStatusField));
+            storage0.set(i, locationStatusField0, storage.getAsInt(i, locationStatusField));
+            storage0.set(i, locationAirportIdField0, storage.getAsInt(i, locationAirportIdField));
+            storage0.set(i, locationLatitudeField0, storage.getAsFloat(i, locationLatitudeField));
+            storage0.set(i, locationLongitudeField0, storage.getAsFloat(i, locationLongitudeField));
+        }
+
+        this.storage0.save(rootPath);
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -65,11 +121,11 @@ public class Aircrafts {
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirport() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak2 migrate to filter1
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirport); // todo ak0 migrate to filter1
     }
 
     public Collection<Aircraft> allIdleAndParkedAtAirportAndNoOperatorAssigned() {
-        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak2 migrate to filter1
+        return storage.filter(Aircrafts::isIdleAndParkedAtAirportAndNoOperatorAssigned); // todo ak0 migrate to filter1
     }
 
     public Optional<Aircraft> byId(final int id) {
