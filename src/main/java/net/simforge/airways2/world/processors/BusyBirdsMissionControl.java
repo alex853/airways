@@ -97,7 +97,7 @@ public class BusyBirdsMissionControl {
         }
 
         if (!messages.isEmpty()) {
-            return new MissionPlan(MissionPlan.Status.Failure, null, messages, null);
+            return new MissionPlan(MissionPlan.Status.Failure, null, messages, null, 0);
         }
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -124,7 +124,7 @@ public class BusyBirdsMissionControl {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport.get(), baseAirport.get(), 0, performanceData);
         }
 
-        return new MissionPlan(MissionPlan.Status.Success, legs, null, null);
+        return new MissionPlan(MissionPlan.Status.Success, legs, null, null, 0);
     }
 
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft) {
@@ -158,7 +158,7 @@ public class BusyBirdsMissionControl {
             }
         }
 
-        plans.sort((p1, p2) -> p2.legs.size() - p1.legs.size()); // todo ak0 total duration desc
+        plans.sort(Comparator.comparingInt(p -> p.totalDistance));
 
         return plans;
     }
@@ -190,7 +190,9 @@ public class BusyBirdsMissionControl {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData);
         }
 
-        return new MissionPlan(MissionPlan.Status.Success, legs, null, fromAirport.getIcao() + "-" + toAirport.getIcao());
+        int totalDistance = legs.stream().reduce(0, (total, l) -> total + l.distance, Integer::sum);
+
+        return new MissionPlan(MissionPlan.Status.Success, legs, null, "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + totalDistance + " nm", totalDistance);
     }
 
     private Leg addLeg(int plannedTime, List<Leg> legs,
@@ -203,7 +205,7 @@ public class BusyBirdsMissionControl {
         int plannedDepTime = Time.alignTo5mins(plannedTime);
         int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
 
-        Leg leg = new Leg(type, fromAirport, toAirport, pax, plannedDepTime, plannedArrTime);
+        Leg leg = new Leg(type, fromAirport, toAirport, (int) Geo.distance(fromAirport.getCoords(), toAirport.getCoords()), pax, plannedDepTime, plannedArrTime);
         legs.add(leg);
 
         return leg;
@@ -307,12 +309,14 @@ public class BusyBirdsMissionControl {
         private final List<Leg> legs;
         private final List<String> messages;
         private final String description;
+        private final int totalDistance;
 
-        public MissionPlan(final Status status, final List<Leg> legs, final List<String> messages, String description) {
+        public MissionPlan(final Status status, final List<Leg> legs, final List<String> messages, String description, int totalDistance) {
             this.status = status;
             this.legs = legs != null ? Collections.unmodifiableList(legs) : null;
             this.messages = messages != null ? Collections.unmodifiableList(messages) : null;
             this.description = description;
+            this.totalDistance = totalDistance;
         }
 
         public enum Status {
@@ -322,24 +326,23 @@ public class BusyBirdsMissionControl {
     }
 
     public static class Leg {
+        @Getter
         private final Type type;
         private final Airports.Airport fromAirport;
         private final Airports.Airport toAirport;
+        private final int distance;
         private final int pax;
         private final int plannedDepTime;
         private final int plannedArrTime;
 
-        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, final int pax, int plannedDepTime, int plannedArrTime) {
+        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, int distance, final int pax, int plannedDepTime, int plannedArrTime) {
             this.type = type;
             this.fromAirport = fromAirport;
             this.toAirport = toAirport;
+            this.distance = distance;
             this.pax = pax;
             this.plannedDepTime = plannedDepTime;
             this.plannedArrTime = plannedArrTime;
-        }
-
-        public Type getType() {
-            return type;
         }
 
         public Airports.Airport getFromAirport() {
