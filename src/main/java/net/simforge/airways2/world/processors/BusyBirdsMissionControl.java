@@ -97,7 +97,7 @@ public class BusyBirdsMissionControl {
         }
 
         if (!messages.isEmpty()) {
-            return new MissionPlan(MissionPlan.Status.Failure, null, messages, null, 0);
+            return new MissionPlan(MissionPlan.Status.Failure, null, null, null, messages);
         }
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -124,7 +124,7 @@ public class BusyBirdsMissionControl {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport.get(), baseAirport.get(), 0, performanceData);
         }
 
-        return new MissionPlan(MissionPlan.Status.Success, legs, null, null, 0);
+        return new MissionPlan(MissionPlan.Status.Success, null, null, legs, null);
     }
 
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {
@@ -192,7 +192,12 @@ public class BusyBirdsMissionControl {
 
         int totalDistance = legs.stream().reduce(0, (total, l) -> total + l.distance, Integer::sum);
 
-        return new MissionPlan(MissionPlan.Status.Success, legs, null, "From " + fromAirport.getIcao() + " to " + toAirport.getIcao(), totalDistance);
+        return new MissionPlan(
+                MissionPlan.Status.Success,
+                fromAirport.getIcao() + "-" + toAirport.getIcao(),
+                "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + legs.size() + " legs, " + totalDistance + " nm",
+                legs,
+                null);
     }
 
     private Leg addLeg(int plannedTime, List<Leg> legs,
@@ -306,17 +311,19 @@ public class BusyBirdsMissionControl {
     @Getter
     public static class MissionPlan {
         private final Status status;
-        private final List<Leg> legs;
-        private final List<String> messages;
+        private final String id;
         private final String description;
+        private final List<Leg> legs;
         private final int totalDistance;
+        private final List<String> messages;
 
-        public MissionPlan(final Status status, final List<Leg> legs, final List<String> messages, String description, int totalDistance) {
+        public MissionPlan(final Status status, String id, String description, final List<Leg> legs, final List<String> messages) {
             this.status = status;
-            this.legs = legs != null ? Collections.unmodifiableList(legs) : null;
-            this.messages = messages != null ? Collections.unmodifiableList(messages) : null;
+            this.id = id;
             this.description = description;
-            this.totalDistance = totalDistance;
+            this.legs = legs != null ? Collections.unmodifiableList(legs) : null;
+            this.totalDistance = legs != null ? legs.stream().mapToInt(Leg::getDistance).sum() : 0;
+            this.messages = messages != null ? Collections.unmodifiableList(messages) : null;
         }
 
         public enum Status {
@@ -325,8 +332,8 @@ public class BusyBirdsMissionControl {
         }
     }
 
+    @Data
     public static class Leg {
-        @Getter
         private final Type type;
         private final Airports.Airport fromAirport;
         private final Airports.Airport toAirport;
@@ -343,26 +350,6 @@ public class BusyBirdsMissionControl {
             this.pax = pax;
             this.plannedDepTime = plannedDepTime;
             this.plannedArrTime = plannedArrTime;
-        }
-
-        public Airports.Airport getFromAirport() {
-            return fromAirport;
-        }
-
-        public Airports.Airport getToAirport() {
-            return toAirport;
-        }
-
-        public int getPax() {
-            return pax;
-        }
-
-        public int getPlannedDepTime() {
-            return plannedDepTime;
-        }
-
-        public int getPlannedArrTime() {
-            return plannedArrTime;
         }
 
         public Duration getPlannedDuration() {

@@ -111,7 +111,7 @@ public class BusyBirdsController {
 
     private static BuildPlanResponse planToDto(BusyBirdsMissionControl.MissionPlan plan) {
         if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-            return new BuildPlanResponse("failure", null, plan.getMessages(), null);
+            return new BuildPlanResponse("failure", null, null, null, plan.getMessages());
         }
 
         final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
@@ -119,14 +119,14 @@ public class BusyBirdsController {
                 leg.getFromAirport().getIcao(),
                 leg.getToAirport().getIcao(),
                 leg.getPax(),
-                (int) Geo.distance(leg.getFromAirport().getCoords(), leg.getToAirport().getCoords()),
+                leg.getDistance(),
                 Time.toLdt(leg.getPlannedDepTime()).toLocalDate().toString(),
                 JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
                 JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
                 JavaTime.toHhmm(leg.getPlannedDuration())
         )).toList();
 
-        return new BuildPlanResponse("success", legDtos, null, plan.getDescription());
+        return new BuildPlanResponse("success", plan.getId(), plan.getDescription(), legDtos, null);
     }
 
     @PutMapping("/mission/book")
@@ -198,9 +198,10 @@ public class BusyBirdsController {
     @AllArgsConstructor
     public static class BuildPlanResponse {
         private String status;
+        private String id;
+        private String description;
         private List<LegDto> legs;
         private List<String> messages;
-        private String description;
     }
 
     @Data
@@ -212,15 +213,15 @@ public class BusyBirdsController {
     @Data
     @AllArgsConstructor
     private static class LegDto {
-        private String type; // reposition, revenue
-        private String fromAirportIcao;
-        private String toAirportIcao;
-        private int pax;
-        private int distance;
-        private String dof;
-        private String depTime;
-        private String arrTime;
-        private String duration;
+        private final String type; // reposition, revenue
+        private final String fromAirportIcao;
+        private final String toAirportIcao;
+        private final int pax;
+        private final int distance;
+        private final String dof;
+        private final String depTime;
+        private final String arrTime;
+        private final String duration;
     }
 
     @Data
