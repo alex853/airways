@@ -11,16 +11,13 @@ import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.BusyBirdsMissionGenerator;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.worldbuilder.World25;
-import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @RestController
 @RequestMapping("/busy-birds")
@@ -75,22 +72,6 @@ public class BusyBirdsController {
         });
     }
 
-    @GetMapping("/mission/build-plan")
-    public BuildPlanResponse buildPlan(@RequestAttribute("userId") int userId,
-                                       @RequestParam(name = "missionId") final int missionId,
-                                       @RequestParam(name = "aircraftId") final int aircraftId) {
-        return worldBean.read(world -> {
-            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
-
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            final Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
-
-            final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
-
-            return planToDto(plan);
-        });
-    }
-
     @GetMapping("/mission/build-plans")
     public BuildPlansResponse buildPlans(@RequestAttribute("userId") int userId,
                                          @RequestParam(name = "missionId") int missionId,
@@ -105,48 +86,36 @@ public class BusyBirdsController {
 
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
-            return new BuildPlansResponse(plans.stream().map(BusyBirdsController::planToDto).toList());
+            return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList());
         });
-    }
-
-    private static BuildPlanResponse planToDto(BusyBirdsMissionControl.MissionPlan plan) {
-        if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-            return new BuildPlanResponse("failure", null, null, null, plan.getMessages());
-        }
-
-        final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
-                leg.getType().name(),
-                leg.getFromAirport().getIcao(),
-                leg.getToAirport().getIcao(),
-                leg.getPax(),
-                leg.getDistance(),
-                Time.toLdt(leg.getPlannedDepTime()).toLocalDate().toString(),
-                JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
-                JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
-                JavaTime.toHhmm(leg.getPlannedDuration())
-        )).toList();
-
-        return new BuildPlanResponse("success", plan.getId(), plan.getDescription(), legDtos, null);
     }
 
     @PutMapping("/mission/book")
     public BookMissionResponse bookMission(@RequestAttribute("userId") int userId,
-                                           @RequestParam(name = "missionId") final int missionId,
-                                           @RequestParam(name = "aircraftId") final int aircraftId) {
+                                           @RequestParam(name = "missionId") int missionId,
+                                           @RequestParam(name = "aircraftId") int aircraftId,
+                                           @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
+                                           @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
+                                           @RequestParam(name = "planId") String planId) {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            final Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
+            Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+            Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
 
-            final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlan(journey, aircraft);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
-            if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                return new BookMissionResponse("failure", plan.getMessages());
+            Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
+            if (plan.isEmpty()) {
+                return new BookMissionResponse("failure", Collections.singletonList("unable to find plan by planId"));
+            }
+
+            if (plan.get().getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
+                return new BookMissionResponse("failure", plan.get().getMessages());
             }
 
             List<String> messages = new ArrayList<>();
-            for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
+            for (final BusyBirdsMissionControl.Leg leg : plan.get().getLegs()) {
                 FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
                 flight.setCharacterMode(FlightMissions.CharacterMode.PC);
                 flight.setUserId(userId);
@@ -196,18 +165,38 @@ public class BusyBirdsController {
 
     @Data
     @AllArgsConstructor
-    public static class BuildPlanResponse {
+    public static class BuildPlansResponse {
+        private List<PlanDto> plans;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class PlanDto {
         private String status;
         private String id;
         private String description;
         private List<LegDto> legs;
         private List<String> messages;
-    }
 
-    @Data
-    @AllArgsConstructor
-    public static class BuildPlansResponse {
-        private List<BuildPlanResponse> plans;
+        public static PlanDto from(BusyBirdsMissionControl.MissionPlan plan) {
+            if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
+                return new PlanDto("failure", null, null, null, plan.getMessages());
+            }
+
+            final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
+                    leg.getType().name(),
+                    leg.getFromAirport().getIcao(),
+                    leg.getToAirport().getIcao(),
+                    leg.getPax(),
+                    leg.getDistance(),
+                    Time.toLdt(leg.getPlannedDepTime()).toLocalDate().toString(),
+                    JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
+                    JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
+                    JavaTime.toHhmm(leg.getPlannedDuration())
+            )).toList();
+
+            return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, null);
+        }
     }
 
     @Data
