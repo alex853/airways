@@ -2,6 +2,7 @@ package net.simforge.airways2.app.beans;
 
 import net.simforge.airways2.app.tools.ThreadStatus;
 import net.simforge.airways2.pilottracker.SimTracker;
+import net.simforge.airways2.pilottracker.SimTrackerTools;
 import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,9 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 @Component
 public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SimTrackerBean.class);
@@ -19,6 +23,8 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
 
     private volatile ThreadStatus threadStatus = ThreadStatus.Startup;
     private Thread thread;
+
+    private final Queue<PosrepInfo> posrepSavingQueue = new ConcurrentLinkedQueue<>();
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -37,18 +43,29 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
 
             while (threadStatus == ThreadStatus.Running) {
                 try {
-                    // noop so far
+                    savePosreps();
+
+                    // todo ak0 save contexts in that scheduled processing code
                 } catch (final Exception e) {
                     log.error("undetermined exception in sim tracker", e);
                     Misc.sleep(10000);
                 }
-                Misc.sleep(1000);
+                Misc.sleep(100);
             }
 
             log.info("cycle stopped, status is {}", threadStatus);
         });
         thread.setName("sim-tracker-bean-thread");
         thread.start();
+    }
+
+    private void savePosreps() {
+        while (!posrepSavingQueue.isEmpty()) {
+            PosrepInfo posrepInfo = posrepSavingQueue.poll();
+            if (posrepInfo == null)
+                break;
+            SimTrackerTools.savePosrep(posrepInfo.userId, posrepInfo.posrep);
+        }
     }
 
     private void waitForWorldReady() {
@@ -69,6 +86,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
 
     public void processPosrep(int userId, String posrep) {
         simTracker.processPosrep(userId, posrep);
+        posrepSavingQueue.add(new PosrepInfo(userId, posrep));
     }
 
     public SimTracker.UserStatus getSimStatus(int userId) {
@@ -82,4 +100,6 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     public void refreshContext(int userId) {
         simTracker.refreshContext(userId);
     }
+
+    private record PosrepInfo(int userId, String posrep) { }
 }
