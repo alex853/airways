@@ -110,16 +110,16 @@ public class AdminController {
         return loadFlightStats(date);
     }
 
-    @GetMapping(value = "/flight-stats/top-missing-airports", produces = "text/plain")
+    @GetMapping(value = "/flight-stats/vatsim-top-missing-airports", produces = "text/plain")
     public String getTopMissingAirports() {
         LocalDate date = JavaTime.todayUtc();
         final Map<String, Integer> allMissingAirports = new TreeMap<>();
         for (int i = 0; i <= 7; i++) {
             final Map<String, Integer> dateData = loadFlightStats(date.toString());
             dateData.entrySet().stream()
-                    .filter(e -> e.getKey().startsWith("missingAirport"))
+                    .filter(e -> e.getKey().startsWith("vatsim - missingAirport"))
                     .collect(Collectors.toMap(
-                            entry -> entry.getKey().substring("missingAirport ".length()),
+                            entry -> entry.getKey().substring("vatsim - missingAirport ".length()),
                             Map.Entry::getValue))
                     .forEach((key, value) -> allMissingAirports.merge(key, value, Integer::sum));
 
