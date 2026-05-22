@@ -96,7 +96,7 @@ public class BusyBirdsController {
                                          @RequestParam(name = "missionId") int missionId,
                                          @RequestParam(name = "aircraftId") int aircraftId,
                                          @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
-                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "false") boolean ferryBackToBase) {
+                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
