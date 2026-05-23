@@ -22,6 +22,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 @Component
 public class WorldRunnerBean implements WorldAccess, ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(WorldRunnerBean.class);
@@ -140,6 +142,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
     @Override
     public <T> T read(final Action<T> action) {
+        checkArgument(isReady());
+
         try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - read # lock")) {
             lock.readLock().lock();
         }
@@ -152,6 +156,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
     @Override
     public <T> T modifySync(final Action<T> action) {
+        checkArgument(isReady());
+
         final ActionContext<T> actionContext = new ActionContext<>(action);
         actionQueue.add(actionContext);
         return actionContext.getResult();
