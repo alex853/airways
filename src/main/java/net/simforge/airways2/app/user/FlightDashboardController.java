@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
@@ -31,7 +32,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @RequestMapping("/flight-dashboard")
 @CrossOrigin
 public class FlightDashboardController {
-    // todo ak0 migrate ids to sqids
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired
@@ -56,9 +56,9 @@ public class FlightDashboardController {
     @GetMapping("/status")
     @Deprecated
     public StatusDto getStatus(@RequestAttribute("userId") int userId,
-                               @RequestParam(name = "flightId") int flightId) {
+                               @RequestParam(name = "flightId") String flightId) {
         return worldBean.read(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightId)).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
             return toStatusDto(world, flight);
@@ -90,8 +90,10 @@ public class FlightDashboardController {
 
     @PostMapping("/start-flight")
     public Status2Dto startFlight(@RequestAttribute("userId") int userId,
-                                  @RequestParam(name = "flightId") int flightId) {
+                                  @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -104,6 +106,7 @@ public class FlightDashboardController {
                 checkActionAllowed(simStatus, "start-flight");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -121,8 +124,10 @@ public class FlightDashboardController {
 
     @PostMapping("/start-boarding")
     public Status2Dto startBoarding(@RequestAttribute("userId") int userId,
-                                    @RequestParam(name = "flightId") int flightId) {
+                                    @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -140,6 +145,7 @@ public class FlightDashboardController {
                 checkActionAllowed(simStatus, "start-boarding");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -153,8 +159,10 @@ public class FlightDashboardController {
 
     @PostMapping("/blocks-off")
     public Status2Dto blocksOff(@RequestAttribute("userId") int userId,
-                                @RequestParam(name = "flightId") int flightId) {
+                                @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -165,6 +173,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("manual blocks-off is prohibited");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -178,8 +187,10 @@ public class FlightDashboardController {
 
     @PostMapping("/takeoff")
     public Status2Dto takeoff(@RequestAttribute("userId") int userId,
-                              @RequestParam(name = "flightId") int flightId) {
+                              @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -190,6 +201,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("manual takeoff is prohibited");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -203,8 +215,10 @@ public class FlightDashboardController {
 
     @PostMapping("/landing")
     public Status2Dto landing(@RequestAttribute("userId") int userId,
-                              @RequestParam(name = "flightId") int flightId) {
+                              @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -215,6 +229,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("manual landing is prohibited");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -229,8 +244,10 @@ public class FlightDashboardController {
 
     @PostMapping("/blocks-on")
     public Status2Dto blocksOn(@RequestAttribute("userId") int userId,
-                               @RequestParam(name = "flightId") int flightId) {
+                               @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -241,6 +258,7 @@ public class FlightDashboardController {
                 throw new IllegalStateException("manual blocks-on is prohibited");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -254,8 +272,10 @@ public class FlightDashboardController {
 
     @PostMapping("/start-deboarding")
     public Status2Dto startDeboarding(@RequestAttribute("userId") int userId,
-                                      @RequestParam(name = "flightId") int flightId) {
+                                      @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -273,6 +293,7 @@ public class FlightDashboardController {
                 checkActionAllowed(simStatus, "start-deboarding");
             }
 
+            //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
                 // todo ak1 vatsim support
             }
@@ -286,8 +307,10 @@ public class FlightDashboardController {
 
     @PostMapping("/finish-flight")
     public Status2Dto finish(@RequestAttribute("userId") int userId,
-                             @RequestParam(name = "flightId") int flightId) {
+                             @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -327,7 +350,7 @@ public class FlightDashboardController {
         final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
 
         final AircraftDto aircraftDto = new AircraftDto(
-                aircraft.getId(),
+                Id.encode(aircraft.getId()),
                 world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao(),
                 aircraft.getRegNo(),
                 aircraft.getLocationStatus().name(),
@@ -335,7 +358,7 @@ public class FlightDashboardController {
         );
 
         final FlightDto flightDto = new FlightDto(
-                flight.getId(),
+                Id.encode(flight.getId()),
                 flight.getStatus().name(),
                 getNextPlannedFlightMissionStatus(flight),
                 getFlightMissionShownElements(flight, transportFlight, world),
@@ -347,7 +370,7 @@ public class FlightDashboardController {
         );
 
         final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
-                transportFlight.getId(),
+                Id.encode(transportFlight.getId()),
                 transportFlight.getStatus().name(),
                 getNextPlannedTransportFlightStatus(transportFlight, flight, world),
                 getTransportFlightShownElements(transportFlight, flight),
@@ -451,7 +474,7 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class AircraftDto {
-        private int id;
+        private String id;
         private String type;
         private String regNo;
         private String locationStatus;
@@ -461,7 +484,7 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class FlightDto {
-        private int id;
+        private String id;
         private String status;
         private String nextPlannedStatus;
         private String shownElements;
@@ -475,7 +498,7 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class TransportFlightDto {
-        private int id;
+        private String id;
         private String status;
         private String nextPlannedStatus;
         private String shownElements;

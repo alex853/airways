@@ -2,6 +2,7 @@ package net.simforge.airways2.app.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -11,8 +12,8 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 @Data
 @AllArgsConstructor
 public class FlightMinDto {
-    private final int fmId;
-    private final int acId;
+    private final String fmId;
+    private final String acId;
     private final String acRg;
     private final String acTp;
     private final String st;
@@ -32,8 +33,8 @@ public class FlightMinDto {
             final FlightMissions.Mission fm) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(fm.getAircraftId()).orElseThrow();
         return new FlightMinDto(
-                fm.getId(),
-                fm.getAircraftId(),
+                Id.encode(fm.getId()),
+                Id.encode(fm.getAircraftId()),
                 aircraft.getRegNo(),
                 world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao(),
                 fm.getStatus().name(),

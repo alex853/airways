@@ -13,7 +13,7 @@ public class SimTrackerController {
 
     @PostMapping("/posrep")
     public void processPosrep(@RequestAttribute("userId") int userId,
-                                    @RequestParam(name = "posrep", required = false) String posrep) {
+                              @RequestParam(name = "posrep", required = false) String posrep) {
         simTrackerBean.processPosrep(userId, posrep);
     }
 }

@@ -3,7 +3,7 @@ package net.simforge.airways2.app.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import net.simforge.airways2.app.admin.FlightBoardController;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
@@ -20,14 +20,14 @@ import java.time.Duration;
 @AllArgsConstructor
 @Builder(toBuilder = true)
 public class FlightUltraDto {
-    private final int fmId;
+    private final String fmId;
     private final String fmSt;
-    private final int acId;
+    private final String acId;
     private final String acRg;
     private final String acTp;
     private final String vcSt;
     private final long vcLs;
-    private final int tfId;
+    private final String tfId;
     private final String tfSt;
     private final String sfNo;
     private final String dep;
@@ -58,17 +58,17 @@ public class FlightUltraDto {
         AircraftTypes.AircraftType act = ac != null ? world.aircraftTypes().byId(ac.getAircraftTypeId()).orElse(null) : null;
 
         return new FlightUltraDto(
-                fm.getId(),
+                Id.encode(fm.getId()),
                 fm.getStatus().name(),
 
-                ac != null ? ac.getId() : 0,
+                ac != null ? Id.encode(ac.getId()) : null,
                 ac != null ? ac.getRegNo() : null,
                 act != null ? act.getIcao() : null,
 
                 null,
                 0,
 
-                tf != null ? tf.getId() : 0,
+                tf != null ? Id.encode(tf.getId()) : null,
                 tf != null ? tf.getStatus().name() : null,
                 sf != null ? ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()) : null,
 

@@ -3,6 +3,7 @@ package net.simforge.airways2.app.user;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
@@ -23,8 +24,6 @@ import java.util.*;
 @RequestMapping("/busy-birds")
 @CrossOrigin
 public class BusyBirdsController {
-    // todo ak0 migrate ids to sqids
-
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsController.class);
 
@@ -44,7 +43,7 @@ public class BusyBirdsController {
                         Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
                         return new MissionDto(
-                                j.getId(),
+                                Id.encode(j.getId()),
                                 fromCity.getName(),
                                 toCity.getName(),
                                 j.getGroupSize(),
@@ -63,7 +62,7 @@ public class BusyBirdsController {
             return world.aircrafts()
                     .byAircraftOperatorIdAndIdleAndParkedAtAirport(World25.BusyBirdsOperatorId)
                     .map(a -> new AircraftDto(
-                            a.getId(),
+                            Id.encode(a.getId()),
                             world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                             a.getRegNo(),
                             a.getLocationAirportId(),
@@ -74,15 +73,15 @@ public class BusyBirdsController {
 
     @GetMapping("/mission/build-plans")
     public BuildPlansResponse buildPlans(@RequestAttribute("userId") int userId,
-                                         @RequestParam(name = "missionId") int missionId,
-                                         @RequestParam(name = "aircraftId") int aircraftId,
+                                         @RequestParam(name = "missionId") String missionId,
+                                         @RequestParam(name = "aircraftId") String aircraftId,
                                          @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
                                          @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
+            Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
+            Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
@@ -92,16 +91,16 @@ public class BusyBirdsController {
 
     @PutMapping("/mission/book")
     public BookMissionResponse bookMission(@RequestAttribute("userId") int userId,
-                                           @RequestParam(name = "missionId") int missionId,
-                                           @RequestParam(name = "aircraftId") int aircraftId,
+                                           @RequestParam(name = "missionId") String missionId,
+                                           @RequestParam(name = "aircraftId") String aircraftId,
                                            @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
                                            @RequestParam(name = "planId") String planId) {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            Journeys.Journey journey = world.journeys().byId(missionId).orElseThrow();
+            Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
+            Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
@@ -132,7 +131,7 @@ public class BusyBirdsController {
             }
 
             Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
-            BusyBirdsMissionGenerator.MissionInfo missionInfo = BusyBirdsMissionGenerator.getMissionInfoById(properties, missionId).orElseThrow();
+            BusyBirdsMissionGenerator.MissionInfo missionInfo = BusyBirdsMissionGenerator.getMissionInfoById(properties, Id.decode(missionId)).orElseThrow();
             missionInfo.delete();
             BusyBirdsMissionGenerator.saveMissionsFile(properties);
             messages.add("BusyBirds mission removed from available");
@@ -144,7 +143,7 @@ public class BusyBirdsController {
     @Data
     @AllArgsConstructor
     public static class MissionDto {
-        private int id;
+        private String id;
         private String fromCityName;
         private String toCityName;
         private int pax;
@@ -156,7 +155,7 @@ public class BusyBirdsController {
     @Data
     @AllArgsConstructor
     public static class AircraftDto {
-        private int id;
+        private String id;
         private String typeCode;
         private String regNo;
         private int locationAirportId;
