@@ -3,6 +3,7 @@ package net.simforge.airways2.pilottracker;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.pilottracker.track.TrackPosition;
@@ -319,7 +320,7 @@ public class SimTracker {
     @Data
     public static class UserStatus {
         private final String status;
-        private final Integer flightMissionId;
+        private final String flightMissionId;
         private final String locationStatus;
         private final String airportIcao;
         private final Boolean parkingBrake;
@@ -357,7 +358,7 @@ public class SimTracker {
 
             return new UserStatus(
                     "Connected",
-                    context.flightMissionId,
+                    context.flightMissionId != null ? Id.encode(context.flightMissionId) : null,
                     locationStatus,
                     airportIcao,
                     context.position != null ? context.parkingBrake : null,
