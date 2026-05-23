@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.TimeTools;
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Journeys;
@@ -207,7 +208,7 @@ public class PaxManager {
 
         public void tickDelta(final int worldTime) {
             final int timeElapsed = worldTime - counterLastTime;
-            final double deltaAvailable = timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute);
+            final double deltaAvailable = timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute) * (Tools.random(85, 125) / 100.0);
 
             counterLastTime = worldTime;
 
