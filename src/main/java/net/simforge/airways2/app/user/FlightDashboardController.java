@@ -31,7 +31,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @RequestMapping("/flight-dashboard")
 @CrossOrigin
 public class FlightDashboardController {
-    // todo ak2 migrate ids to sqids
+    // todo ak0 migrate ids to sqids
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
 
     @Autowired

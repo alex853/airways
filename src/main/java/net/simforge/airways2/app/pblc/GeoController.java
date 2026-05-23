@@ -3,6 +3,7 @@ package net.simforge.airways2.app.pblc;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.tools.IDs;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCountries")) {
             return worldBean.read(world -> world.countries().all()
                     .map(c -> new CountryDto(
-                            c.getId(),
+                            IDs.to(c.getId()),
                             c.getCode(),
                             c.getName()))
                     .toList());
@@ -39,7 +40,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCities")) {
             return worldBean.read(world -> world.cities().all()
                     .map(c -> new CityDto(
-                            c.getId(),
+                            IDs.to(c.getId()),
                             c.getCountryId(),
                             c.getName(),
                             c.getPopulation(),
@@ -57,7 +58,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getAirports")) {
             return worldBean.read(world -> world.airports().all()
                     .map(a -> new AirportDto(
-                            a.getId(),
+                            IDs.to(a.getId()),
                             a.getLatitude(),
                             a.getLongitude(),
                             a.getIata(),
@@ -128,7 +129,7 @@ public class GeoController {
 
                                         List<AirportFacilityDto> airportFacilityDtos = world.airportFacilities().by(airport)
                                                 .map(f -> new AirportFacilityDto(
-                                                        f.getAircraftOperatorId(),
+                                                        IDs.to(f.getAircraftOperatorId()),
                                                         f.getType()
                                                 )).toList();
 
@@ -154,7 +155,7 @@ public class GeoController {
     @Data
     @AllArgsConstructor
     private static class CountryDto {
-        private int id;
+        private String id;
         private String code;
         private String name;
     }
@@ -162,7 +163,7 @@ public class GeoController {
     @Data
     @AllArgsConstructor
     private static class CityDto {
-        private int id;
+        private String id;
         private int countryId;
         private String name;
         private int population;
@@ -174,7 +175,7 @@ public class GeoController {
     @Data
     @AllArgsConstructor
     private static class AirportDto {
-        private int id;
+        private String id;
         private float latitude;
         private float longitude;
         private String iata;
@@ -197,7 +198,7 @@ public class GeoController {
     @Data
     @AllArgsConstructor
     private static class AirportFacilityDto {
-        private int operatorId;
+        private String operatorId;
         private AirportFacilities.Type type;
     }
 

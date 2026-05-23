@@ -23,7 +23,7 @@ import java.util.*;
 @RequestMapping("/busy-birds")
 @CrossOrigin
 public class BusyBirdsController {
-    // todo ak2 migrate ids to sqids
+    // todo ak0 migrate ids to sqids
 
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsController.class);

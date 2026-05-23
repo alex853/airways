@@ -14,6 +14,8 @@ import java.util.List;
 @RequestMapping("/map")
 @CrossOrigin
 public class MapController {
+    // todo ak0 migrate ids to sqids
+
     @Autowired
     private WorldRunnerBean worldBean;
 
