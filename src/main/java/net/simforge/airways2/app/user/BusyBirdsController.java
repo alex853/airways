@@ -65,7 +65,6 @@ public class BusyBirdsController {
                             Id.encode(a.getId()),
                             world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                             a.getRegNo(),
-                            a.getLocationAirportId(),
                             world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao()))
                     .toList();
         });
@@ -158,7 +157,6 @@ public class BusyBirdsController {
         private String id;
         private String typeCode;
         private String regNo;
-        private int locationAirportId;
         private String locationAirportIcao;
     }
 
