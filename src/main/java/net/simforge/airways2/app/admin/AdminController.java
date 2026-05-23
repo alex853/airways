@@ -628,6 +628,25 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/airport/missing-cities", produces = "text/plain")
+    public String printAirportsWithMissingCities() {
+        return worldBean.read(world -> {
+            List<String> results = new ArrayList<>();
+
+            world.airports().all().forEach(airport -> {
+                List<Airport2City.Link> links = world.airport2city().allByAirportId(airport.getId()).toList();
+                if (links.isEmpty()) {
+                    results.add(Str.al(airport.getIcao(), 10) + "No any city linked");
+                }
+
+                // todo ak1 extend it by looking at csv and finding 1m cities
+                // todo ak1 extend it by checking 0.5m cities within 10nm
+            });
+
+            return Strings.join(results, '\n');
+        });
+    }
+
     @GetMapping(value = "/airport/create-links", produces = "text/plain")
     public String createAirport2CityLinks(@RequestParam("icao") String icao,
                                           @RequestParam(name = "maxDistance", defaultValue = "50") int maxDistance,
@@ -653,7 +672,7 @@ public class AdminController {
                         }
                     });
 
-            return  Strings.join(results, '\n');
+            return Strings.join(results, '\n');
         });
     }
 
@@ -671,7 +690,7 @@ public class AdminController {
                 results.add("Exists");
             }
 
-            return  Strings.join(results, '\n');
+            return Strings.join(results, '\n');
         });
     }
 }
