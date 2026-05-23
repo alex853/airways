@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -30,9 +31,9 @@ public class SimTracker {
     private WorldAccess worldAccess;
     private List<AirportInfo> airportInfos;
 
-    private Map<Integer, Context> userContexts = new HashMap<>();
+    private final Map<Integer, Context> userContexts = new ConcurrentHashMap<>();
 
-    public synchronized void processPosrep(int userId, String posrep) {
+    public void processPosrep(int userId, String posrep) {
         checkArgument(userId > 0);
         checkNotNull(posrep);
 
@@ -130,7 +131,7 @@ public class SimTracker {
         }
     }
 
-    public synchronized void refreshContext(int userId) {
+    public void refreshContext(int userId) {
         checkArgument(userId > 0);
 
         Context oldContext = userContexts.get(userId);
@@ -267,7 +268,7 @@ public class SimTracker {
                 posrep.getAltitude());
     }
 
-    public synchronized UserStatus getUserStatus(int userId) {
+    public UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
         if (context == null) {
             return UserStatus.none();
@@ -276,7 +277,7 @@ public class SimTracker {
         }
     }
 
-    public synchronized void setWorldAccess(WorldAccess worldAccess) {
+    public void setWorldAccess(WorldAccess worldAccess) {
         this.worldAccess = worldAccess;
         this.airportInfos = worldAccess.read(world -> world.airports().all().map(SimTracker.AirportInfo::from).collect(Collectors.toList()));
     }
