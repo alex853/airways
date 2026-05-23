@@ -3,7 +3,7 @@ package net.simforge.airways2.app.pblc;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
-import net.simforge.airways2.app.tools.IDs;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCountries")) {
             return worldBean.read(world -> world.countries().all()
                     .map(c -> new CountryDto(
-                            IDs.to(c.getId()),
+                            Id.encode(c.getId()),
                             c.getCode(),
                             c.getName()))
                     .toList());
@@ -40,7 +40,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCities")) {
             return worldBean.read(world -> world.cities().all()
                     .map(c -> new CityDto(
-                            IDs.to(c.getId()),
+                            Id.encode(c.getId()),
                             c.getCountryId(),
                             c.getName(),
                             c.getPopulation(),
@@ -58,7 +58,7 @@ public class GeoController {
         try (final Timing.Timer ignored = Timing.label("GeoController - getAirports")) {
             return worldBean.read(world -> world.airports().all()
                     .map(a -> new AirportDto(
-                            IDs.to(a.getId()),
+                            Id.encode(a.getId()),
                             a.getLatitude(),
                             a.getLongitude(),
                             a.getIata(),
@@ -129,7 +129,7 @@ public class GeoController {
 
                                         List<AirportFacilityDto> airportFacilityDtos = world.airportFacilities().by(airport)
                                                 .map(f -> new AirportFacilityDto(
-                                                        IDs.to(f.getAircraftOperatorId()),
+                                                        Id.encode(f.getAircraftOperatorId()),
                                                         f.getType()
                                                 )).toList();
 

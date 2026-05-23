@@ -3,6 +3,7 @@ package net.simforge.airways2.app.pblc;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.dto.AircraftFullDto;
 import net.simforge.airways2.app.dto.AircraftMapDto;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,8 +15,6 @@ import java.util.List;
 @RequestMapping("/map")
 @CrossOrigin
 public class MapController {
-    // todo ak0 migrate ids to sqids
-
     @Autowired
     private WorldRunnerBean worldBean;
 
@@ -31,10 +30,10 @@ public class MapController {
     }
 
     @GetMapping("/aircraft/details")
-    public AircraftFullDto getAircraftDetails(@RequestParam("id") int aircraftId) {
+    public AircraftFullDto getAircraftDetails(@RequestParam("id") String aircraftId) {
         return worldBean.read(world -> AircraftFullDto.from(world,
                 world.aircrafts()
-                        .byId(aircraftId)
+                        .byId(Id.decode(aircraftId))
                         .orElseThrow()));
     }
 }

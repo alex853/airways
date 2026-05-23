@@ -6,17 +6,17 @@ import org.sqids.Sqids;
 
 import java.util.List;
 
-public class IDs {
+public class Id {
     private static final Sqids sqids = Sqids.builder()
                 .alphabet(Settings.get("sqids.alphabet"))
                 .minLength(5)
                 .build();
 
-    public static String to(int id) {
+    public static String encode(int id) {
         return sqids.encode(List.of((long) id));
     }
 
-    public static int from(String str) {
+    public static int decode(String str) {
         return sqids.decode(str).get(0).intValue();
     }
 

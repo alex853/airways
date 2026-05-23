@@ -3,7 +3,7 @@ package net.simforge.airways2.app.admin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.simforge.airways2.app.tools.IDs;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
@@ -708,6 +708,6 @@ public class AdminController {
 
     @GetMapping("/generate-alphabet")
     public String generateAlphabet() {
-        return IDs.generateRandomAlphabet();
+        return Id.generateRandomAlphabet();
     }
 }
