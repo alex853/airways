@@ -68,14 +68,6 @@ public class FlightDashboardController {
     @GetMapping("/status2")
     public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
-            // todo ak0 this should be reworked
-            //          - do it only when some action is executed
-            //          - add scheduled processing which refreshes it in a batch, see SimTrackerBean
-            //          - just getting a status should not force context refresh
-            if (simTrackerBean.isUserConnected(userId)) {
-                simTrackerBean.refreshContext(userId);
-            }
-
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
 
             Integer flightMissionId = simStatus.getFlightMissionId() != null ? Id.decode(simStatus.getFlightMissionId()) : null;
@@ -100,9 +92,11 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
+            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
+            if (simTrackerConnected) {
                 SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
-                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-flight");
             }
 
@@ -114,8 +108,9 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
             world.flightMissionControl().startOrCancel(flight); // todo ak1 why there is 'OR CANCEL' ????
 
-            if (simTrackerBean.isUserConnected(userId)) {
+            if (simTrackerConnected) {
                 world.flightMissionControl().switchToExternalCoordinatesMode(flight);
+                simTrackerBean.refreshContext(userId);
             }
 
             return getStatus2(userId);
@@ -139,9 +134,11 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
+            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
+            if (simTrackerConnected) {
                 SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
-                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-boarding");
             }
 
@@ -152,6 +149,10 @@ public class FlightDashboardController {
 
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
             world.transportFlightControl().startBoarding(transportFlight);
+
+            if (simTrackerConnected) {
+                simTrackerBean.refreshContext(userId);
+            }
 
             return getStatus2(userId);
         });
@@ -287,9 +288,11 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
+            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
+            if (simTrackerConnected) {
                 SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
-                checkArgument(Objects.equals(flightId, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-deboarding");
             }
 
@@ -300,6 +303,10 @@ public class FlightDashboardController {
 
             log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
             world.transportFlightControl().startDeboarding(transportFlight);
+
+            if (simTrackerConnected) {
+                simTrackerBean.refreshContext(userId);
+            }
 
             return getStatus2(userId);
         });
@@ -317,6 +324,8 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
 
+            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
             // todo ak1 checks?
 //            if (simTrackerBean.isUserConnected(userId)) {
 //                throw new IllegalStateException("manual finish-flight is prohibited");
@@ -328,6 +337,10 @@ public class FlightDashboardController {
 
             log.info("f/m #{} - flight-dashboard - finish", flightId);
             world.flightMissionControl().finish(flight);
+
+            if (simTrackerConnected) {
+                simTrackerBean.refreshContext(userId);
+            }
 
             return getStatus2(userId);
         });

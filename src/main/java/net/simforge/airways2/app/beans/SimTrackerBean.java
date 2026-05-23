@@ -39,13 +39,28 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
             waitForWorldReady();
             simTracker.setWorldAccess(worldBean);
 
+            simTracker.restoreContexts();
+
             threadStatus = ThreadStatus.Running;
 
+            long lastContextProcessing = System.currentTimeMillis();
+            long lastContextSaving = System.currentTimeMillis();
+
             while (threadStatus == ThreadStatus.Running) {
+                long now = System.currentTimeMillis();
+
                 try {
                     savePosreps();
 
-                    // todo ak0 save contexts in that scheduled processing code
+                    if (lastContextProcessing + 5000 < now) {
+                        simTracker.processContexts();
+                        lastContextProcessing = now;
+                    }
+
+                    if (lastContextSaving + 60000 < now) {
+                        simTracker.saveContexts();
+                        lastContextSaving = now;
+                    }
                 } catch (final Exception e) {
                     log.error("undetermined exception in sim tracker", e);
                     Misc.sleep(10000);
@@ -94,7 +109,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     }
 
     public boolean isUserConnected(int userId) {
-        return simTracker.getUserStatus(userId) != null; // todo ak0 add support for recent connections, recently lost connections, etc
+        return simTracker.getUserStatus(userId) != null; // todo ak0 this is stupidly stupid move!!! getUserStatus always returns non-null
     }
 
     public void refreshContext(int userId) {

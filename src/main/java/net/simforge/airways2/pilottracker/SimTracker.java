@@ -44,7 +44,6 @@ public class SimTracker {
         Context oldContext = userContexts.get(userId);
         if (!userContexts.containsKey(userId)) {
             oldContext = Context.forUser(userId);
-            // todo ak0 restore context from previous posreps if exist
         }
 
         // todo ak1 rework all those staff into one single modifySync processing splitted somehow
@@ -272,7 +271,7 @@ public class SimTracker {
     public UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
         if (context == null) {
-            return UserStatus.none();
+            return UserStatus.none(); // todo ak0 this is stupidly stupid move!!!
         } else {
             return UserStatus.from(context);
         }
@@ -281,6 +280,18 @@ public class SimTracker {
     public void setWorldAccess(WorldAccess worldAccess) {
         this.worldAccess = worldAccess;
         this.airportInfos = worldAccess.read(world -> world.airports().all().map(SimTracker.AirportInfo::from).collect(Collectors.toList()));
+    }
+
+    public void processContexts() {
+        // todo ak0
+    }
+
+    public void saveContexts() {
+        // todo ak0
+    }
+
+    public void restoreContexts() {
+        // todo ak0
     }
 
     @AllArgsConstructor
