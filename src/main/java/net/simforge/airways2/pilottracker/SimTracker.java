@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 public class SimTracker {
     private static final Logger log = LoggerFactory.getLogger(SimTracker.class);
-    private static final DecimalFormat df1 = new DecimalFormat("#.#");
+    private static final DecimalFormat df1 = new DecimalFormat("0.0");
 
     private WorldAccess worldAccess;
     private List<AirportInfo> airportInfos;
@@ -362,7 +362,7 @@ public class SimTracker {
                     airportIcao,
                     context.position != null ? context.parkingBrake : null,
                     context.position != null ? context.numberOfEnginesRunning > 0 : null,
-                    df1.format(context.measuredGs),
+                    context.measuredGs < 10 ? df1.format(context.measuredGs) : String.valueOf(Math.round(context.measuredGs)),
                     context.actions);
         }
     }
