@@ -553,15 +553,15 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/fix-2715")
+    @GetMapping("/fix-1489")
     public String fix2715() {
         return worldBean.modifySync(world -> {
-            final int journeyId = 2715;
+            final int journeyId = 1489;
 
             final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
 
-            journey.setFromCityId(17);
-            journey.setToCityId(42);
+//            journey.setFromCityId(17);
+            journey.setToCityId(49);
 
             return "Done";
         });
