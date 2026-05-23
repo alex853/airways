@@ -10,53 +10,58 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class ImportCities {
     private static final Logger log = LoggerFactory.getLogger(ImportCities.class);
 
     public static void main(final String[] args) throws IOException {
+        importCities(Collections.singletonList(args));
+    }
+
+    public static void importCities(List<String[]> filterDefinitions) throws IOException {
         final World world = World25.load();
         final Countries countries = world.countries();
         final Cities cities = world.cities();
 
         final Csv csv = loadCityPopulationCsv();
 
-        final List<Filter> filters = toFilters(args);
+        for (String[] each : filterDefinitions) {
 
-        for (int row = 0; row < csv.rowCount(); row++) {
-            if (!check(filters, csv, row)) {
-                continue;
+            final List<Filter> filters = toFilters(each);
+
+            for (int row = 0; row < csv.rowCount(); row++) {
+                if (!check(filters, csv, row)) {
+                    continue;
+                }
+
+                final String countryName = csv.value(row, "CountryName");
+                final String countryCode = csv.value(row, "CountryCode");
+
+                final String cityName = csv.value(row, "CityName");
+                final int cityPopulation = Integer.parseInt(csv.value(row, "CityPopulation"));
+                final double cityLatitude = Double.parseDouble(csv.value(row, "CityLatitude"));
+                final double cityLongitude = Double.parseDouble(csv.value(row, "CityLongitude"));
+
+                log.info("Processing '{}', '{}' -> '{}', '{}'", countryName, countryCode, cityName, cityPopulation);
+
+                final Optional<Countries.Country> existingCountry = countries.byCode(countryCode);
+                final int countryId = existingCountry.map(Countries.Country::getId)
+                        .orElseGet(() -> countries.create(countryCode, countryName).getId());
+
+                final Optional<Cities.City> existingCity = cities.byCountryIdAndName(countryId, cityName);
+                if (existingCity.isPresent()) {
+                    continue;
+                }
+
+                cities.create(countryId,
+                        cityName,
+                        cityLatitude,
+                        cityLongitude,
+                        cityPopulation);
+                log.info("\tCity '{}' created", cityName);
             }
 
-            final String countryName = csv.value(row, "CountryName");
-            final String countryCode = csv.value(row, "CountryCode");
-
-            final String cityName = csv.value(row, "CityName");
-            final int cityPopulation = Integer.parseInt(csv.value(row, "CityPopulation"));
-            final double cityLatitude = Double.parseDouble(csv.value(row, "CityLatitude"));
-            final double cityLongitude = Double.parseDouble(csv.value(row, "CityLongitude"));
-
-            log.info("Processing '{}', '{}' -> '{}', '{}'", countryName, countryCode, cityName, cityPopulation);
-
-            final Optional<Countries.Country> existingCountry = countries.byCode(countryCode);
-            final int countryId = existingCountry.map(Countries.Country::getId)
-                    .orElseGet(() -> countries.create(countryCode, countryName).getId());
-
-            final Optional<Cities.City> existingCity = cities.byCountryIdAndName(countryId, cityName);
-            if (existingCity.isPresent()) {
-                continue;
-            }
-
-            cities.create(countryId,
-                    cityName,
-                    cityLatitude,
-                    cityLongitude,
-                    cityPopulation);
-            log.info("\tCity '{}' created", cityName);
         }
 
         world.save();
