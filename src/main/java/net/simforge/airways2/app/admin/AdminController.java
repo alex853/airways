@@ -611,6 +611,17 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/flows/monte-carlo-fix", produces = "text/plain")
+    public String monteCarloFix() {
+        return worldBean.modifySync(world -> {
+            Cities.City city = world.cities().all().filter(c -> c.getName().equals("Monte Carlo")).findFirst().orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            flow.setAttractionFactor(10);
+            flow.setLastRedistributionTime(0);
+            return "Done";
+        });
+    }
+
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {

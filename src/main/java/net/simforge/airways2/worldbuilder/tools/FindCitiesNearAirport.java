@@ -1,19 +1,16 @@
 package net.simforge.airways2.worldbuilder.tools;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.Str;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 public class FindCitiesNearAirport {
     public static void main(String[] args) throws IOException {
-        String icao = "EDDN";
+        String icao = "KSLC";
         int maxDistance = 65;
 
         Geo.Coords airportCoords = null;

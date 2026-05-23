@@ -58,6 +58,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:IT", "city-name:Venice"},
 
+                new String[]{"country-code:MC", "city-name:Monte Carlo"},
+
                 new String[]{"country-code:MX", "city-name:Tijuana"},
 
                 new String[]{"country-code:PT", "city-name:Lisbon"},
