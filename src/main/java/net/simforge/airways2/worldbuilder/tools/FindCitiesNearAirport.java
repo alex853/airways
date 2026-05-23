@@ -37,33 +37,9 @@ public class FindCitiesNearAirport {
 
         Csv citiesCsv = ImportCities.loadCityPopulationCsv();
 
-        List<CityInfo> found = new ArrayList<>();
-        for (int row = 0; row < citiesCsv.rowCount(); row++) {
-            final String countryName = citiesCsv.value(row, "CountryName");
-            final String countryCode = citiesCsv.value(row, "CountryCode");
+        List<ImportCities.CityInfo> found = ImportCities.getCitiesNearAirport(citiesCsv, airportCoords, 50);
 
-            final String cityName = citiesCsv.value(row, "CityName");
-            final int cityPopulation = Integer.parseInt(citiesCsv.value(row, "CityPopulation"));
-            final double cityLatitude = Double.parseDouble(citiesCsv.value(row, "CityLatitude"));
-            final double cityLongitude = Double.parseDouble(citiesCsv.value(row, "CityLongitude"));
-
-            Geo.Coords cityCoords = Geo.coords(cityLatitude, cityLongitude);
-
-            double distance = Geo.distance(airportCoords, cityCoords);
-            if (distance < maxDistance) {
-                found.add(new CityInfo(cityName, cityPopulation, (int) distance));
-            }
-        }
-
-        found.sort(Comparator.comparing(CityInfo::getPopulation).reversed());
+        found.sort(Comparator.comparing(ImportCities.CityInfo::getPopulation).reversed());
         found.forEach(c -> System.out.println(Str.al(c.name, 30) + Str.ar(String.valueOf(c.population), 10) + Str.ar(String.valueOf(c.distance), 5)));
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class CityInfo {
-        String name;
-        int population;
-        int distance;
     }
 }

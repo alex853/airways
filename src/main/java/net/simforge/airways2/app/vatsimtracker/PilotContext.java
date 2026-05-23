@@ -445,16 +445,16 @@ public class PilotContext {
             String filedAircraftTypeCode = flightplan.getAircraftType();
             String requestedAircraftTypeCode = AircraftTypeRemapping.remap(filedAircraftTypeCode);
             if (!requestedAircraftTypeCode.equals(filedAircraftTypeCode)) {
-                FlightStats.event("vatsim - aircraft type remapped " + filedAircraftTypeCode);
+                FlightStats.event("aircraft type remapped " + filedAircraftTypeCode);
             }
 
             Optional<AircraftTypes.AircraftType> requestedAircraftType = world.aircraftTypes().byIcao(requestedAircraftTypeCode);
             if (requestedAircraftType.isEmpty()) {
-                FlightStats.event("vatsim - aircraft type missing " + requestedAircraftTypeCode);
+                FlightStats.event("aircraft type missing " + requestedAircraftTypeCode);
             }
 
             if (AircraftPerformanceDatabase.getPerformance(requestedAircraftTypeCode).isEmpty()) {
-                FlightStats.event("vatsim - aircraft type performance missing " + requestedAircraftTypeCode);
+                FlightStats.event("aircraft type performance missing " + requestedAircraftTypeCode);
             }
 
             final AircraftTypes.AircraftType aircraftType = requestedAircraftType.orElseGet(() -> world.aircraftTypes().byIcao("A320").orElseThrow());

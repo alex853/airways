@@ -12,6 +12,8 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
+import net.simforge.airways2.worldbuilder.tools.ImportCities;
+import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
 import net.simforge.commons.misc.Geo;
 import net.simforge.commons.misc.JavaTime;
@@ -629,7 +631,9 @@ public class AdminController {
     }
 
     @GetMapping(value = "/airport/missing-cities", produces = "text/plain")
-    public String printAirportsWithMissingCities() {
+    public String printAirportsWithMissingCities() throws IOException {
+        Csv citiesCsv = ImportCities.loadCityPopulationCsv();
+
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
 
@@ -639,8 +643,15 @@ public class AdminController {
                     results.add(Str.al(airport.getIcao(), 10) + "No any city linked");
                 }
 
-                // todo ak1 extend it by looking at csv and finding 1m cities
-                // todo ak1 extend it by checking 0.5m cities within 10nm
+                List<ImportCities.CityInfo> cities = ImportCities.getCitiesNearAirport(citiesCsv, airport.getCoords(), 50);
+                List<ImportCities.CityInfo> bigCities = cities.stream().filter(c -> c.getPopulation() >= 1000000).toList();
+
+                bigCities.forEach(bigCity -> {
+                    Optional<Cities.City> found = world.cities().all().filter(c -> c.getName().equals(bigCity.getName())).findFirst();
+                    if (found.isEmpty()) {
+                        results.add(Str.al(airport.getIcao(), 10) + "MISSING BIG CITY     " + bigCity.getName() + " (population " + bigCity.getPopulation() + ")");
+                    }
+                });
             });
 
             return Strings.join(results, '\n');

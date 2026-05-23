@@ -1,11 +1,14 @@
 package net.simforge.airways2.worldbuilder.tools;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +77,27 @@ public class ImportCities {
         return Csv.fromContent(content);
     }
 
+    public static List<CityInfo> getCitiesNearAirport(Csv citiesCsv, Geo.Coords airportCoords, int maxDistance) {
+        List<CityInfo> found = new ArrayList<>();
+        for (int row = 0; row < citiesCsv.rowCount(); row++) {
+            final String countryName = citiesCsv.value(row, "CountryName");
+            final String countryCode = citiesCsv.value(row, "CountryCode");
+
+            final String cityName = citiesCsv.value(row, "CityName");
+            final int cityPopulation = Integer.parseInt(citiesCsv.value(row, "CityPopulation"));
+            final double cityLatitude = Double.parseDouble(citiesCsv.value(row, "CityLatitude"));
+            final double cityLongitude = Double.parseDouble(citiesCsv.value(row, "CityLongitude"));
+
+            Geo.Coords cityCoords = Geo.coords(cityLatitude, cityLongitude);
+
+            double distance = Geo.distance(airportCoords, cityCoords);
+            if (distance < maxDistance) {
+                found.add(new CityInfo(cityName, cityPopulation, (int) distance));
+            }
+        }
+        return found;
+    }
+
     private static List<Filter> toFilters(final String[] args) {
         final List<Filter> filters = new ArrayList<>();
 
@@ -140,5 +164,13 @@ public class ImportCities {
         public boolean check(final Csv csv, final int row) {
             return cityName.equalsIgnoreCase(csv.value(row, "CityName"));
         }
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class CityInfo {
+        final String name;
+        final int population;
+        final int distance;
     }
 }
