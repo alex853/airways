@@ -78,7 +78,7 @@ public class FlightDashboardController {
 
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
 
-            Integer flightMissionId = simStatus.getFlightMissionId();
+            Integer flightMissionId = simStatus.getFlightMissionId() != null ? Id.decode(simStatus.getFlightMissionId()) : null;
             Optional<FlightMissions.Mission> flight = flightMissionId != null ? world.flightMissions().byId(flightMissionId) : Optional.empty();
 
             return new Status2Dto(
