@@ -32,6 +32,7 @@ public class FlightUltraDto {
     private final String sfNo;
     private final String dep;
     private final String dest;
+    private final String aLdgA; // actual landing airport
     private final String dof;
     private final String pDep;
     private final String pArr;
@@ -74,6 +75,8 @@ public class FlightUltraDto {
 
                 world.airports().getIcao(fm.getDepartureAirportId()).orElse(null),
                 world.airports().getIcao(fm.getDestinationAirportId()).orElse(null),
+
+                world.airports().byId(fm.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null),
 
                 fm.getDateOfFlight().toString(),
 

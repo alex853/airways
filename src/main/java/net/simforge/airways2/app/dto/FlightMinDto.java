@@ -26,7 +26,6 @@ public class FlightMinDto {
     private final String aTkf;
     private final String aLdg;
     private final String aArr;
-    private final String aLdgA;
 
     public static FlightMinDto from(
             final World world,
@@ -46,7 +45,6 @@ public class FlightMinDto {
                 TimeTools.hhmmOrNull(fm.getActualDepartureWorldTime()),
                 TimeTools.hhmmOrNull(fm.getActualTakeoffWorldTime()),
                 TimeTools.hhmmOrNull(fm.getActualLandingWorldTime()),
-                TimeTools.hhmmOrNull(fm.getActualArrivalWorldTime()),
-                world.airports().byId(fm.getActualLandingAirportId()).map(Airports.Airport::getIcao).orElse(null));
+                TimeTools.hhmmOrNull(fm.getActualArrivalWorldTime()));
     }
 }
