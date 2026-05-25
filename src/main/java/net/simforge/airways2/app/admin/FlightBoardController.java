@@ -80,6 +80,25 @@ public class FlightBoardController {
                 .toList();
     }
 
+// todo ak1 extract 'last active depending on status' logic and put it to methods above
+//    public List<FlightMinDto> getCurrentFlights() {
+//        return worldBean.read(world -> {
+//            final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;
+//            final int toTime = world.getWorldTime() + 21 * Time.ONE_HOUR;
+//            final Predicate<Integer> condition = time -> fromTime <= time && time <= toTime;
+//            return world.flightMissions().all()
+//                    .filter(f -> switch (f.getStatus()) {
+//                        case PlannedManually, PlannedViaSchedule, Cancelled -> condition.test(f.getPlannedDepartureWorldTime());
+//                        case Dispatched -> f.getPlannedDepartureWorldTime() <= toTime;
+//                        case Preflight, Departure, Flying, Arrival, Postflight -> true;
+//                        case Finished -> condition.test(f.getActualArrivalWorldTime());
+//                    })
+//                    .sorted(Comparator.comparing(FlightMissions.Mission::getPlannedDepartureWorldTime))
+//                    .map(f -> FlightMinDto.from(world, f))
+//                    .toList();
+//        });
+//    }
+
     private boolean hasTransportFlight(World world, FlightMissions.Mission fm) {
         return world.transportFlights().byFlightMissionId(fm.getId()).isPresent();
     }
