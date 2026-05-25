@@ -81,6 +81,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:TR", "city-name:Istanbul"},
                 new String[]{"country-code:TR", "city-name:Izmir"},
+                new String[]{"country-code:TR", "city-name:Bursa"},
 
                 new String[]{"country-code:US", "city-name:Boston"},
                 new String[]{"country-code:US", "city-name:New York"},
