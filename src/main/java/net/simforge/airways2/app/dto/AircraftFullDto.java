@@ -50,7 +50,7 @@ public class AircraftFullDto {
                 a.getLocationLongitude(),
                 a.getLocationHeading(),
                 a.getLocationAltitude(),
-                Id.encode(a.getFlightMissionId()),
+                Id.encodeOrNull(a.getFlightMissionId()),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),

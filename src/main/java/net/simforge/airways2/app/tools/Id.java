@@ -16,6 +16,10 @@ public class Id {
         return sqids.encode(List.of((long) id));
     }
 
+    public static String encodeOrNull(int id) {
+        return id > 0 ? sqids.encode(List.of((long) id)) : null;
+    }
+
     public static int decode(String str) {
         return sqids.decode(str).get(0).intValue();
     }
