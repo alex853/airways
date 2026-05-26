@@ -109,7 +109,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     }
 
     public boolean isUserConnected(int userId) {
-        return simTracker.getUserStatus(userId) != null; // todo ak0 this is stupidly stupid move!!! getUserStatus always returns non-null
+        return simTracker.getUserStatus(userId) != null;
     }
 
     public void refreshContext(int userId) {

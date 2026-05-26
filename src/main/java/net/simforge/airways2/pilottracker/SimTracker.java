@@ -270,10 +270,10 @@ public class SimTracker {
 
     public UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
-        if (context == null) {
-            return UserStatus.none(); // todo ak0 this is stupidly stupid move!!!
-        } else {
+        if (context != null) {
             return UserStatus.from(context);
+        } else {
+            return null;
         }
     }
 
@@ -283,7 +283,7 @@ public class SimTracker {
     }
 
     public void processContexts() {
-        // todo ak0
+        userContexts.keySet().forEach(this::refreshContext);
     }
 
     public void saveContexts() {
