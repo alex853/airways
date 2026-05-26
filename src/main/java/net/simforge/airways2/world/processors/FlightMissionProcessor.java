@@ -77,7 +77,7 @@ public class FlightMissionProcessor {
                 // noop
             }
             default -> {
-                world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.pilotId(0), mission);
+                world.log(EventLog.EventType.FlightIsInUnexpectedStatus, EventLog.userId(mission.getUserId()), mission);
                 log.warn("f/m #{} - flight is in unexpected status - {}", mission.getId(), mission.getStatus());
             }
         }

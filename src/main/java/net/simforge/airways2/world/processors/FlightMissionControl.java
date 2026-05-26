@@ -38,7 +38,7 @@ public class FlightMissionControl {
         if (actualStatus != FlightMissions.Status.Dispatched) {
             mission.setStatus(FlightMissions.Status.Cancelled);
 
-            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+            world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
             log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
             // todo ak2 t/f actions in case of flight cancellation
 
@@ -50,7 +50,7 @@ public class FlightMissionControl {
                 || aircraft.getLocationAirportId() != mission.getDepartureAirportId()) {
             mission.setStatus(FlightMissions.Status.Cancelled);
 
-            world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+            world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
             log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
                     mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
             // todo ak2 t/f actions in case of flight cancellation
@@ -64,7 +64,7 @@ public class FlightMissionControl {
         aircraft.setFlightMissionId(mission.getId());
         // todo ak3 pilot/pilots/cabin crew - set status
 
-        world.log(EventLog.EventType.FlightStarted, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        world.log(EventLog.EventType.FlightStarted, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - flight started and in Preflight status, aircraft {} is activated", mission.getId(), aircraft.getRegNo());
     }
 
@@ -88,7 +88,7 @@ public class FlightMissionControl {
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
 
-        world.log(EventLog.EventType.FlightCancelled, EventLog.pilotId(0), mission, aircraft);
+        world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
         // todo ak2 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
@@ -111,7 +111,7 @@ public class FlightMissionControl {
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightDepartsFromGate);
 
-        world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        world.log(EventLog.EventType.AircraftDepartedFromGate, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow());
     }
 
@@ -131,7 +131,7 @@ public class FlightMissionControl {
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightTakeoffs);
 
-        world.log(EventLog.EventType.AircraftTakeoff, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
+        world.log(EventLog.EventType.AircraftTakeoff, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - aircraft {} took off at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow());
     }
 
@@ -151,7 +151,7 @@ public class FlightMissionControl {
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightLands);
 
-        world.log(EventLog.EventType.AircraftLanding, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
+        world.log(EventLog.EventType.AircraftLanding, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getActualLandingAirportId()));
         log.info("f/m #{} - aircraft {} landed at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getActualLandingAirportId()).orElseThrow());
     }
 
@@ -172,7 +172,7 @@ public class FlightMissionControl {
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightArrivesToGate);
 
-        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow());
     }
 
@@ -190,7 +190,7 @@ public class FlightMissionControl {
         // todo ak3 pilot/pilots/cabin crew - set status, location
         // todo ak3 pilot assignements / aircraft assignments?
 
-        world.log(EventLog.EventType.FlightFinished, EventLog.pilotId(0), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.FlightFinished, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
         log.info("f/m #{} - flight finished", mission.getId());
 
         world.airport2airportDailyFlightStats().incrementTodayCount(mission.getDepartureAirportId(), mission.getActualLandingAirportId());

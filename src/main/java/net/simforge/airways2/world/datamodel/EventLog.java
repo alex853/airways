@@ -216,7 +216,7 @@ public class EventLog {
     }
 
     public enum ObjectType {
-        Pilot(1),
+        User(1),
         FlightMission(2),
         Aircraft(3),
         Airport(4),
@@ -268,8 +268,8 @@ public class EventLog {
         return new EventLogId(ObjectType.ScheduledFlight, flight.getId());
     }
 
-    public static EventLogId pilotId(int pilotId) { // todo ak3 review all the usages when pilot will be introduced
-        return new EventLogId(ObjectType.Pilot, pilotId);
+    public static EventLogId userId(int userId) {
+        return new EventLogId(ObjectType.User, userId);
     }
 
     public static EventLogId airportId(final int airportId) {

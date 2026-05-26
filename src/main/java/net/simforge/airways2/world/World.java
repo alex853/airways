@@ -150,18 +150,30 @@ public class World {
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final EventLog.EventLogId object4) {
+        if (mission.getUserId() == 0) {
+            return;
+        }
         eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), EventLog.id(aircraft), object4);
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft) {
+        if (mission.getUserId() == 0) {
+            return;
+        }
         eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), EventLog.id(aircraft), null);
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission, final EventLog.EventLogId object3) {
+        if (mission.getUserId() == 0) {
+            return;
+        }
         eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), object3, null);
     }
 
     public void log(final EventLog.EventType eventType, final EventLog.EventLogId object1, final FlightMissions.Mission mission) {
+        if (mission.getUserId() == 0) {
+            return;
+        }
         eventLog.log(getWorldTime(), eventType, object1, EventLog.id(mission), null, null);
     }
 

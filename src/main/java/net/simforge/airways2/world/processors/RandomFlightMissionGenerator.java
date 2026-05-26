@@ -42,7 +42,7 @@ public class RandomFlightMissionGenerator {
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
         world.transportFlightControl().createTransportFlight(mission); // todo ak1 apply fixes from shadowjet code
 
-        world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.pilotId(0), mission, aircraft);
+        world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight dispatched randomly, aircraft {}", mission.getId(), aircraft.getRegNo());
     }
 

@@ -121,7 +121,7 @@ public class ScheduledFlightMissionGenerator {
 
             final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(newFlightMission, scheduledFlight);
 
-            world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.pilotId(0), newFlightMission, aircraft.get());
+            world.log(EventLog.EventType.FlightScheduledAndDispatched, EventLog.userId(newFlightMission.getUserId()), newFlightMission, aircraft.get());
             log.info("f/m #{} - flight scheduled and dispatched, flight no {}, date of flight {}, aircraft {}",
                     newFlightMission.getId(), schedule.flightNo, flightDate, aircraft.get().getRegNo());
             log.info("t/f #{} - created", transportFlight.getId());

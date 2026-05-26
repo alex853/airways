@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-// todo ak2 othh missing
 // todo ak2 check null airport cases
 // todo ak3 minimize time between downloading a report and its processing
 @SpringBootApplication
