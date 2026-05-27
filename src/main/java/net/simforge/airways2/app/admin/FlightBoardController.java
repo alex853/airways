@@ -80,7 +80,7 @@ public class FlightBoardController {
                 .toList();
     }
 
-// todo ak1 extract 'last active depending on status' logic and put it to methods above
+// todo ak0 extract 'last active depending on status' logic and put it to methods above
 //    public List<FlightMinDto> getCurrentFlights() {
 //        return worldBean.read(world -> {
 //            final int fromTime = world.getWorldTime() - 3 * Time.ONE_HOUR;

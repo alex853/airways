@@ -37,9 +37,9 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAltitude, 0-65535 feet
             .withDataField(DataField.of(DataType.Unsigned24bit)) // flight time, minutes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // flown cycles, times
-            // todo ak3 lastMoved, seconds since epoch, 32bits, optional....
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
+            // todo ak3 lastMoved, seconds since epoch, 32bits, optional....
             .build();
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);

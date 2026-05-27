@@ -137,7 +137,7 @@ public class ShadowJetLogic {
         }
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Selected load factor {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, collected.stream().map(Journeys.Journey::getId).toList());
 
-        // todo ak2 some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes?
+        // todo ak1 some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes?
 
         for (Journeys.Journey journey : collected) {
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);

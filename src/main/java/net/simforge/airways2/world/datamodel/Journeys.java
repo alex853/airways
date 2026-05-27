@@ -29,13 +29,14 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Unsigned8bit)) // type/mode                1 byte
             .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight1Id      3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight2Id      3 bytes
-            // ----------------------------------------------------- sum                   18 bytes
-            // -------------------------------------------- reserved 14 bytes to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationCityId          2 bytes
+            // ----------------------------------------------------- sum                   20 bytes
+            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
-            .build(); // todo ak1 location field, 'booked service class' field
+            .build();
 
     private final DataField statusRawField = storage.getDataField(0);
     private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
@@ -50,8 +51,10 @@ public class Journeys {
     private final BitAccessField.Section cabinServiceBitField = typeModeFieldBits.section(0, 2);
     private final BitAccessField.Section attemptCounterBitField = typeModeFieldBits.section(2, 2);
     private final BitAccessField.Section busyBirdsProcessingBitField = typeModeFieldBits.section(4, 1);
+    // todo ak0 private final BitAccessField.Section bookedCabinServiceBitField = typeModeFieldBits.section(5, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
+    // todo ak0 private final DataField locationCityIdField = storage.getDataField(8);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);

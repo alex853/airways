@@ -49,12 +49,12 @@ public class FlightCleanup {
     private static Stream<FlightMissions.Mission> findFlightMissions(World world, FlightMissions.Status status, int time) {
         return world.flightMissions()
                 .filter(world.flightMissions().anyStatus(status))
-                .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time); // todo ak1 this can be improved by putting it into new filters
-        // todo ak1 also if actual dep time is known, use actual dep time instead of planned dep time
+                .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time); // todo ak0 this can be improved by putting it into new filters
+        // todo ak0 also if actual dep time is known, use actual dep time instead of planned dep time
     }
 
     private static void deleteFlightMission(World world, FlightMissions.Mission f) {
-        // todo ak2 'event log cleanup refinement' - remove event-logs
+        // todo ak0 'event log cleanup refinement' - remove event-logs
         deleteTransportFlights(world, f);
         world.flightMissions().deleteById(f.getId());
     }

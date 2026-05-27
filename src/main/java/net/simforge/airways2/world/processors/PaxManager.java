@@ -15,8 +15,7 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// todo ak2 the same can be done for deboarding
-// todo ak2 the same can be done for check-in
+// todo ak0 the same can be done for deboarding
 public class PaxManager {
     private static final Logger log = LoggerFactory.getLogger(PaxManager.class);
 

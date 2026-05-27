@@ -22,7 +22,6 @@ public class CityFlowsProcessor {
         }
 
         final Cities.City city = world.cities().byId(thisCity.get().getId()).orElseThrow();
-        // todo ak3 city flow status?
         log.info("city flow #{}, '{}' - lets redistribute", thisCity.get().getId(), city.getName());
 
         final Collection<CityFlows.Flow> reachableCities = world.cityFlows().all()
