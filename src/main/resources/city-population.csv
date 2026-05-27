@@ -6048,7 +6048,8 @@ Greece,GR,Thermi,11600,40.55,23.02
 Greece,GR,Triandria,11500,40.62,22.97
 Greece,GR,Imittos,11400,37.93,23.78
 Greece,GR,Tirnavos,11400,39.74,22.29
-Greece,GR,Zakinthos,11400,37.79,20.9
+Greece,GR,Zakynthos,41000,37.79,20.9
+Greece,GR,del Zakinthos,11400,37.79,20.9
 Greece,GR,Mandra,11200,38.07,23.5
 Greece,GR,Vari,11200,37.83,23.8
 Greece,GR,Neon psikhikon,11100,38.01,23.79
@@ -10965,9 +10966,9 @@ Nepal,NP,Jumla,9400,29.27,82.16
 Nepal,NP,Sindhulimadhi,9200,27.27,85.94
 Nepal,NP,Salyan,9000,28.38,82.16
 Nepal,NP,Wahadurganj,5900,27.53,82.83
-Netherlands,NL,Amsterdam,740400,52.37,4.89
-Netherlands,NL,Rotterdam,601600,51.93,4.48
-Netherlands,NL,'s-gravenhage,469000,52.08,4.28
+Netherlands,NL,Amsterdam,2500000,52.37,4.89
+Netherlands,NL,Rotterdam,1400000,51.93,4.48
+Netherlands,NL,The Hague,1100000,52.08,4.28
 Netherlands,NL,Utrecht,264700,52.1,5.11
 Netherlands,NL,Eindhoven,207800,51.44,5.47
 Netherlands,NL,Tilburg,201800,51.57,5.07
