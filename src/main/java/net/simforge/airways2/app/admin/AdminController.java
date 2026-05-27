@@ -623,7 +623,7 @@ public class AdminController {
             results.add("City\t\t" + city.getName());
             results.add("Attraction\t" + flow.getAttractionFactor());
             results.add("Mobility\t" + flow.getMobilityFactor());
-            results.add("Redist time\t" + Time.toLdt(flow.getLastRedistributionTime()));
+            results.add("Redist time\t" + Time.toLdtOrNull(flow.getLastRedistributionTime()));
 
             return Strings.join(results, '\n');
         });
@@ -643,7 +643,7 @@ public class AdminController {
     }
 
     @GetMapping(value = "/flows/set-mobility", produces = "text/plain")
-    public String setFlowMobility(@RequestParam("id") String idStr, @RequestParam("attraction") float mobility) {
+    public String setFlowMobility(@RequestParam("id") String idStr, @RequestParam("mobility") float mobility) {
         worldBean.modifySync(world -> {
             int cityId = Id.decode(idStr);
             Cities.City city = world.cities().byId(cityId).orElseThrow();
