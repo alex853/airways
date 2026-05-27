@@ -611,15 +611,48 @@ public class AdminController {
         });
     }
 
-    @GetMapping(value = "/flows/monte-carlo-fix", produces = "text/plain")
-    public String monteCarloFix() {
-        return worldBean.modifySync(world -> {
-            Cities.City city = world.cities().all().filter(c -> c.getName().equals("Monte Carlo")).findFirst().orElseThrow();
+    @GetMapping(value = "/flows/details", produces = "text/plain")
+    public String getFlowInfo(@RequestParam("id") String idStr) {
+        return worldBean.read(world -> {
+            List<String> results = new ArrayList<>();
+
+            int cityId = Id.decode(idStr);
+            Cities.City city = world.cities().byId(cityId).orElseThrow();
             CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
-            flow.setAttractionFactor(10);
+
+            results.add("City\t\t" + city.getName());
+            results.add("Attraction\t" + flow.getAttractionFactor());
+            results.add("Mobility\t" + flow.getMobilityFactor());
+            results.add("Redist time\t" + Time.toLdt(flow.getLastRedistributionTime()));
+
+            return Strings.join(results, '\n');
+        });
+    }
+
+    @GetMapping(value = "/flows/set-attraction", produces = "text/plain")
+    public String setFlowAttraction(@RequestParam("id") String idStr, @RequestParam("attraction") float attraction) {
+        worldBean.modifySync(world -> {
+            int cityId = Id.decode(idStr);
+            Cities.City city = world.cities().byId(cityId).orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            flow.setAttractionFactor(attraction);
             flow.setLastRedistributionTime(0);
             return "Done";
         });
+        return getFlowInfo(idStr);
+    }
+
+    @GetMapping(value = "/flows/set-mobility", produces = "text/plain")
+    public String setFlowMobility(@RequestParam("id") String idStr, @RequestParam("attraction") float mobility) {
+        worldBean.modifySync(world -> {
+            int cityId = Id.decode(idStr);
+            Cities.City city = world.cities().byId(cityId).orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            flow.setMobilityFactor(mobility);
+            flow.setLastRedistributionTime(0);
+            return "Done";
+        });
+        return getFlowInfo(idStr);
     }
 
     @GetMapping("/f1-tour-fixes")

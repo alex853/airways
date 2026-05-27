@@ -121,5 +121,9 @@ public class CityFlows {
         public float getMobilityFactor() {
             return DataTypeUtils.floatFromU16When1to1000(storage.getAsInt(id, mobilityFactorField));
         }
+
+        public void setMobilityFactor(float mobilityFactor) {
+            storage.set(id, mobilityFactorField, DataTypeUtils.floatToU16When1to1000(mobilityFactor));
+        }
     }
 }
