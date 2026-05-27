@@ -45,7 +45,7 @@ import static net.simforge.airways2.storage.Storage.Condition.and;
 // mission cancellation.....
 public class BusyBirdsMissionGenerator {
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionGenerator.class);
-    private static final int maxJourneyCount = 50;
+    private static final int maxJourneyCount = 100;
 
     private static long lastExecution;
 
@@ -176,7 +176,7 @@ public class BusyBirdsMissionGenerator {
         }
 
         public static MissionInfo createNew(Properties properties, Journeys.Journey journey) {
-            long validTill = System.currentTimeMillis() + 36 * ONE_HOUR;
+            long validTill = System.currentTimeMillis() + 7 * ONE_DAY;
 
             properties.setProperty("mission." + journey.getId() + ".journey.id", "ok");
             properties.setProperty("mission." + journey.getId() + ".valid.till", String.valueOf(validTill));
