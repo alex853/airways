@@ -150,7 +150,7 @@ public class JourneyProcessor {
     //   if there are no seats available for 'preferred', journey may upgrade by one class (Y -> W, or J -> F, but not Y -> J, or Y -> F)
     //   or downgrade by one class, and store actual cabin service to 'booked cabin service'
     private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
-        return tf.getRemainedTickets().get(journey.getCabinService()) >= journey.getGroupSize();
+        return tf.getRemainedTickets().get(journey.getPreferredCabinService()) >= journey.getGroupSize();
     }
 
     private static boolean isThereDirectRouteAvailable(TFM tfm, Set<Integer> fromAirportIds, Set<Integer> toAirportIds) {

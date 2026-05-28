@@ -48,10 +48,10 @@ public class Journeys {
     private final DataField groupSizeField = storage.getDataField(4);
     private final DataField typeModeRawField = storage.getDataField(5);
     private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeRawField);
-    private final BitAccessField.Section cabinServiceBitField = typeModeFieldBits.section(0, 2);
+    private final BitAccessField.Section preferredCabinServiceBitField = typeModeFieldBits.section(0, 2);
     private final BitAccessField.Section attemptCounterBitField = typeModeFieldBits.section(2, 2);
     private final BitAccessField.Section busyBirdsProcessingBitField = typeModeFieldBits.section(4, 1);
-    // todo ak0 private final BitAccessField.Section bookedCabinServiceBitField = typeModeFieldBits.section(5, 2);
+    private final BitAccessField.Section bookedCabinServiceBitField = typeModeFieldBits.section(5, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
     // todo ak0 private final DataField locationCityIdField = storage.getDataField(8);
@@ -101,7 +101,8 @@ public class Journeys {
         storage.set(id, fromCityIdField, fromCityId);
         storage.set(id, toCityIdField, toCityId);
         storage.set(id, groupSizeField, groupSize);
-        cabinServiceBitField.setInt(id, service.ordinal());
+        preferredCabinServiceBitField.setInt(id, service.ordinal());
+        bookedCabinServiceBitField.setInt(id, service.ordinal());
         returningBackBitField.setBoolean(id, false);
         attemptCounterBitField.setInt(id, 0);
 
@@ -192,8 +193,18 @@ public class Journeys {
             return storage.getAsInt(id, groupSizeField);
         }
 
-        public CabinLayout.Service getCabinService() {
-            return CabinLayout.Service.values()[cabinServiceBitField.getInt(id)];
+        public CabinLayout.Service getPreferredCabinService() {
+            return CabinLayout.Service.values()[preferredCabinServiceBitField.getInt(id)];
+        }
+
+        // todo ak0 booked - single time update booked = preferred
+        public CabinLayout.Service getBookedCabinService() {
+            return CabinLayout.Service.values()[bookedCabinServiceBitField.getInt(id)];
+        }
+
+        public void setBookedCabinService(CabinLayout.Service bookedCabinService) {
+            checkNotNull(bookedCabinService);
+            bookedCabinServiceBitField.setInt(id, bookedCabinService.ordinal());
         }
 
         public int getTransportFlight1Id() {

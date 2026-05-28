@@ -49,7 +49,9 @@ public class JourneyControl {
         checkNotNull(flight);
 
         journey.setTransportFlight1Id(flight.getId());
-        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getCabinService());
+        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getPreferredCabinService());
+
+        journey.setBookedCabinService(journey.getPreferredCabinService());
     }
 
     // 'No checks' means that the method does not check if the operation is valid with all those parameters
@@ -59,10 +61,12 @@ public class JourneyControl {
         checkNotNull(flight2);
 
         journey.setTransportFlight1Id(flight1.getId());
-        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getCabinService());
+        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getPreferredCabinService());
 
         journey.setTransportFlight2Id(flight2.getId());
-        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), journey.getCabinService());
+        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), journey.getPreferredCabinService());
+
+        journey.setBookedCabinService(journey.getPreferredCabinService());
     }
 
     public void waitForCheckin(final Journeys.Journey journey) {
@@ -251,7 +255,7 @@ public class JourneyControl {
             world.transportFlightControl().releaseFlightTickets(
                     world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
                     journey.getGroupSize(),
-                    journey.getCabinService());
+                    journey.getPreferredCabinService()); // todo ak0 booked - switch to booked after booked = preferred
             journey.setTransportFlight2Id(0);
         }
 

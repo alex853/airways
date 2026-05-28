@@ -127,7 +127,7 @@ public class ShadowJetLogic {
             Journeys.Journey journey = it.next();
             CabinLayout newRemained;
             try {
-                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getCabinService());
+                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak0 F&J refactoring
             } catch (IllegalArgumentException e) {
                 continue;
             }

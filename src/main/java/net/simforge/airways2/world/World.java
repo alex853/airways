@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class World {
     private static final Logger log = LoggerFactory.getLogger(World.class);
@@ -290,6 +291,15 @@ public class World {
             timing("FlightsCleanup", () -> FlightCleanup.process(this));
 
             timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
+
+            AtomicInteger updated = new AtomicInteger(0);
+            journeys().all().forEach(j -> {
+                if (j.getBookedCabinService() != j.getPreferredCabinService()) {
+                    updated.incrementAndGet();
+                    j.setBookedCabinService(j.getPreferredCabinService());
+                }
+            });
+            log.warn("BOOKED vs PREFERRED - {} updated", updated.get());
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

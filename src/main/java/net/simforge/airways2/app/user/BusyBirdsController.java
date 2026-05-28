@@ -123,7 +123,7 @@ public class BusyBirdsController {
                     // todo ak0 F&J refactoring
                     final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(10, 0, 0, 0));
                     journey.setTransportFlight1Id(transportFlight.getId());
-                    world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getCabinService());
+                    world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak0 F&J refactoring
                     world.journeyControl().waitForCheckin(journey);
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
