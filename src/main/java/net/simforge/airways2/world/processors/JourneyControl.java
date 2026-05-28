@@ -255,7 +255,7 @@ public class JourneyControl {
             world.transportFlightControl().releaseFlightTickets(
                     world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
                     journey.getGroupSize(),
-                    journey.getPreferredCabinService()); // todo ak0 booked - switch to booked after booked = preferred
+                    journey.getBookedCabinService());
             journey.setTransportFlight2Id(0);
         }
 

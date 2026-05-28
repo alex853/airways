@@ -58,7 +58,8 @@ public class JourneyController {
                 j.getToCityId(),
                 world.cities().byId(j.getToCityId()).orElseThrow().getName(),
                 j.getGroupSize(),
-                j.getPreferredCabinService().name(), // todo ak0 booked - add booked service
+                j.getPreferredCabinService().name(),
+                j.getBookedCabinService().name(),
                 j.isReturningBack() ? 1 : 0,
                 j.getAttemptCounter(),
                 j.isBusyBirdsProcessing() ? "B" : "n",
@@ -84,7 +85,8 @@ public class JourneyController {
         private int tCId;
         private String tCN;
         private int gs;
-        private String cs;
+        private String pCs;
+        private String bCs;
         private int dir;
         private int atCnt;
         private String sp;

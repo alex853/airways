@@ -197,7 +197,6 @@ public class Journeys {
             return CabinLayout.Service.values()[preferredCabinServiceBitField.getInt(id)];
         }
 
-        // todo ak0 booked - single time update booked = preferred
         public CabinLayout.Service getBookedCabinService() {
             return CabinLayout.Service.values()[bookedCabinServiceBitField.getInt(id)];
         }
