@@ -82,11 +82,11 @@ public class GeoController {
                                 .toList();
                         try (final Timing.Timer ignored3 = Timing.label("GeoController - getAirportDetails # part3")) {
                             final Map<String, IcaoToFlights> outboundConnections = world.airport2airportDailyFlightStats()
-                                    .allByFromAirportId(airport.getId()).stream()
+                                    .allByFromAirportId(airport.getId())
                                     .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getToAirportId()).orElseThrow(), fs.getTotalCount()))
                                     .collect(Collectors.toMap(p -> p.icao, p -> p));
                             final Map<String, IcaoToFlights> inboundConnections = world.airport2airportDailyFlightStats()
-                                    .allByToAirportId(airport.getId()).stream()
+                                    .allByToAirportId(airport.getId())
                                     .map(fs -> new IcaoToFlights(world.airports().getIcao(fs.getFromAirportId()).orElseThrow(), fs.getTotalCount()))
                                     .collect(Collectors.toMap(p -> p.icao, p -> p));
                             try (final Timing.Timer ignored4 = Timing.label("GeoController - getAirportDetails # part4")) {

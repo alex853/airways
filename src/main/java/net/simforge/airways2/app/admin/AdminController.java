@@ -555,7 +555,7 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/fix-t")
+    @GetMapping("/fix-it")
     public String fixIt() {
         return worldBean.modifySync(world -> {
             int journeyId = 4399;

@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -97,20 +97,14 @@ public class Airport2AirportDailyFlightStat {
         log.info("midnight count rotation - DONE, processed {} records, removed {} records", recordCount, toBeRemoved.size());
     }
 
-    public Collection<FlightStats> allByFromAirportId(final int fromAirportId) {
+    public Stream<FlightStats> allByFromAirportId(final int fromAirportId) {
         checkArgument(fromAirportId > 0);
-
-        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByFromAirportId")) {
-            return storage.filter(fs -> fs.getFromAirportId() == fromAirportId); // todo ak0 migrate to filter1
-        }
+        return storage.filter1(recordId -> readFromAirportId(recordId) == fromAirportId);
     }
 
-    public Collection<FlightStats> allByToAirportId(final int toAirportId) {
+    public Stream<FlightStats> allByToAirportId(final int toAirportId) {
         checkArgument(toAirportId > 0);
-
-        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - allByToAirportId")) {
-            return storage.filter(fs -> fs.getToAirportId() == toAirportId); // todo ak0 migrate to filter1
-        }
+        return storage.filter1(recordId -> readToAirportId(recordId) == toAirportId);
     }
 
     public class FlightStats {
@@ -121,11 +115,11 @@ public class Airport2AirportDailyFlightStat {
         }
 
         public int getFromAirportId() {
-            return storage.getAsInt(id, fromAirportIdField);
+            return readFromAirportId(id);
         }
 
         public int getToAirportId() {
-            return storage.getAsInt(id, toAirportIdField);
+            return readToAirportId(id);
         }
 
         public void incrementTodayCount() {
@@ -156,5 +150,13 @@ public class Airport2AirportDailyFlightStat {
             storage.set(id, todayM1CountField, storage.getAsInt(id, todayCountField));
             storage.set(id, todayCountField, 0);
         }
+    }
+
+    private int readFromAirportId(int recordId) {
+        return storage.getAsInt(recordId, fromAirportIdField);
+    }
+
+    private int readToAirportId(int recordId) {
+        return storage.getAsInt(recordId, toAirportIdField);
     }
 }
