@@ -292,6 +292,7 @@ public class World {
 
             timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
 
+            // todo ak0 remove it a bit later, when booked vs preferred will be tested
             AtomicInteger updated = new AtomicInteger(0);
             journeys().all().forEach(j -> {
                 if (j.getBookedCabinService() != j.getPreferredCabinService()) {

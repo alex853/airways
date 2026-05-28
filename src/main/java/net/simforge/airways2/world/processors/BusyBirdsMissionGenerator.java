@@ -87,21 +87,23 @@ public class BusyBirdsMissionGenerator {
         List<Journeys.Journey> allJourneys = world.journeys().filter(and(
                         world.journeys().byNoBusyBirdsProcessing(),
                         world.journeys().byStatus(Journeys.Status.LookingForTickets)))
-                .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F) // todo ak0 F&J refactoring
+                .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F
+                        || j.getPreferredCabinService() == CabinLayout.Service.J)
                 .filter(j -> !allMissionIds.contains(j.getId()))
                 .toList();
         Optional<Journeys.Journey> journey = Tools.random(allJourneys);
 
         if (journey.isEmpty()) {
-            log.info("available F-journeys not found");
+            log.info("no journeys found");
             return;
         }
 
-        log.info("found {} available F-journeys, selected F-journey: {} - from {} to {}, pax {} - picked up",
+        log.info("found {} journeys, selected journey: {} - from {} to {}, pax {}{} - picked up",
                 allJourneys.size(),
                 journey.get(),
                 world.cities().byId(journey.get().getFromCityId()).orElseThrow().getName(),
                 world.cities().byId(journey.get().getToCityId()).orElseThrow().getName(),
+                journey.get().getPreferredCabinService(),
                 journey.get().getGroupSize());
 
         MissionInfo newMission = MissionInfo.createNew(properties, journey.get());

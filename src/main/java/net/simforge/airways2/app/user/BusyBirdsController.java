@@ -46,6 +46,7 @@ public class BusyBirdsController {
                                 Id.encode(j.getId()),
                                 fromCity.getName(),
                                 toCity.getName(),
+                                j.getPreferredCabinService().name(),
                                 j.getGroupSize(),
                                 m.getDistance(),
                                 m.getPay(),
@@ -119,11 +120,12 @@ public class BusyBirdsController {
                 flight.setUserId(userId);
                 messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
 
+                // all busyBirds aircraft are expected to have J-layout only
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
-                    // todo ak0 F&J refactoring
-                    final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.FJWY(10, 0, 0, 0));
+                    TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight);
                     journey.setTransportFlight1Id(transportFlight.getId());
-                    world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak0 F&J refactoring
+                    world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), CabinLayout.Service.J);
+                    journey.setBookedCabinService(CabinLayout.Service.J);
                     world.journeyControl().waitForCheckin(journey);
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
@@ -145,6 +147,7 @@ public class BusyBirdsController {
         private String id;
         private String fromCityName;
         private String toCityName;
+        private String pCs;
         private int pax;
         private int distance;
         private int pay;
