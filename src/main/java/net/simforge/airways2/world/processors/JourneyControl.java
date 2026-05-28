@@ -1,16 +1,16 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.City2CityFlows;
-import net.simforge.airways2.world.datamodel.Journeys;
-import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -40,6 +40,7 @@ public class JourneyControl {
                 c2cFlow.getNextGroupSize(),
                 service);
         journey.setHeartbeatTime(world.getWorldTime());
+        journey.setLocationCityId(c2cFlow.getFromCityId());
         return journey;
     }
 
@@ -131,6 +132,8 @@ public class JourneyControl {
 
         shiftToNextTransportFlight(journey);
 
+        moveToCityNextToLanding(journey, transportFlight1);
+
         if (noMoreTransportFlights(journey)) {
             journey.setStatus(Journeys.Status.ItinerariesDone);
             journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
@@ -188,7 +191,7 @@ public class JourneyControl {
                         Journeys.Status.WaitingForBoarding)
                 .contains(journey.getStatus()));
 
-        // todo ak1 'cancel journey safely' with removal all following tickets etc
+        releaseTransportFlight2Tickets(journey);
 
         Journeys.Status oldStatus = journey.getStatus();
         int oldHeartbeatTime = journey.getHeartbeatTime();
@@ -198,7 +201,8 @@ public class JourneyControl {
         
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
-        // todo ak0 set location city to origin or to any linked city
+
+        moveBackToFromCity(journey, transportFlight1);
 
         log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, cleanup scheduled", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
     }
@@ -250,17 +254,49 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
+        moveBackToFromCity(journey, world.transportFlights().byId(journey.getId()).orElseThrow());
+
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);
 
-        if (journey.getTransportFlight2Id() != 0) {
-            world.transportFlightControl().releaseFlightTickets(
-                    world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
-                    journey.getGroupSize(),
-                    journey.getBookedCabinService());
-            journey.setTransportFlight2Id(0);
-        }
+        releaseTransportFlight2Tickets(journey);
 
         log.info("j/y #{} - has been reset forcefully back to LookingForTickets, status BEFORE was {}", journey.getId(), oldStatus);
+    }
+
+    private void releaseTransportFlight2Tickets(Journeys.Journey journey) {
+        if (journey.getTransportFlight2Id() == 0) {
+            return;
+        }
+
+        world.transportFlightControl().releaseFlightTickets(
+                world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
+                journey.getGroupSize(),
+                journey.getBookedCabinService());
+        journey.setTransportFlight2Id(0);
+    }
+
+    private void moveBackToFromCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
+        FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
+        updateLocationCity(journey, journey.getFromCityId(), flightMission.getDepartureAirportId());
+    }
+
+    private void moveToCityNextToLanding(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
+        FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
+        updateLocationCity(journey, journey.getToCityId(), flightMission.getActualLandingAirportId());
+    }
+
+    private void updateLocationCity(Journeys.Journey journey, int targetCityId, int targetAirportId) {
+        List<Integer> cities = world.airport2city().allByAirportId(targetAirportId).map(Airport2City.Link::getCityId).toList();
+        if (!cities.isEmpty()) {
+            if (cities.contains(targetCityId)) {
+                journey.setLocationCityId(targetCityId);
+            } else {
+                journey.setLocationCityId(Tools.random(cities).get());
+            }
+        } else {
+            log.warn("j/y #{} - no city found for a/p #{}", journey.getId(), targetAirportId);
+            FlightStats.event("journey - no city for airport " + targetAirportId);
+        }
     }
 }

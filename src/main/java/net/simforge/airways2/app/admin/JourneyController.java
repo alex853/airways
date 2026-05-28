@@ -53,6 +53,8 @@ public class JourneyController {
                 j.getId(),
                 j.getStatus().name(),
                 TimeTools.ts(j.getHeartbeatTime()),
+                j.getLocationCityId(),
+                world.cities().byId(j.getLocationCityId()).orElseThrow().getName(),
                 j.getFromCityId(),
                 world.cities().byId(j.getFromCityId()).orElseThrow().getName(),
                 j.getToCityId(),
@@ -80,6 +82,8 @@ public class JourneyController {
         private int id;
         private String st;
         private String hrtBt;
+        private int lCId;
+        private String lCN;
         private int fCId;
         private String fCN;
         private int tCId;
