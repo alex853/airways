@@ -54,7 +54,7 @@ public class JourneyController {
                 j.getStatus().name(),
                 TimeTools.ts(j.getHeartbeatTime()),
                 j.getLocationCityId(),
-                world.cities().byId(j.getLocationCityId()).orElseThrow().getName(),
+                j.getLocationCityId() > 0 ? world.cities().byId(j.getLocationCityId()).orElseThrow().getName() : null,
                 j.getFromCityId(),
                 world.cities().byId(j.getFromCityId()).orElseThrow().getName(),
                 j.getToCityId(),
