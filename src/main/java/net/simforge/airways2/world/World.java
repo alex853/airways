@@ -291,16 +291,6 @@ public class World {
             timing("FlightsCleanup", () -> FlightCleanup.process(this));
 
             timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
-
-            // todo ak0 remove it a bit later, when booked vs preferred will be tested
-            AtomicInteger updated = new AtomicInteger(0);
-            journeys().all().forEach(j -> {
-                if (j.getBookedCabinService() != j.getPreferredCabinService()) {
-                    updated.incrementAndGet();
-                    j.setBookedCabinService(j.getPreferredCabinService());
-                }
-            });
-            log.warn("BOOKED vs PREFERRED - {} updated", updated.get());
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

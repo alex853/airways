@@ -9,6 +9,7 @@ import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
@@ -554,15 +555,13 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/fix-1489")
-    public String fix2715() {
+    @GetMapping("/fix-t")
+    public String fixIt() {
         return worldBean.modifySync(world -> {
-            final int journeyId = 1489;
+            int journeyId = 4399;
 
-            final Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
-
-//            journey.setFromCityId(17);
-            journey.setToCityId(49);
+            Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
+            journey.setBookedCabinService(CabinLayout.Service.J);
 
             return "Done";
         });
@@ -750,8 +749,20 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/generate-alphabet")
-    public String generateAlphabet() {
+    @GetMapping("/sqids/generate-alphabet")
+    public String generateSqidsAlphabet() {
         return Id.generateRandomAlphabet();
+    }
+
+    @GetMapping("/sqids/decode")
+    public String decodeSqidsId(@RequestParam("is") String id) {
+        return worldBean.modifySync(world -> {
+            List<String> results = new ArrayList<>();
+
+            int intId = Id.decode(id);
+            results.add(id + "\t = " + intId);
+
+            return Strings.join(results, '\n');
+        });
     }
 }
