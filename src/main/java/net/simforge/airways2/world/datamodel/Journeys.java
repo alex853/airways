@@ -54,7 +54,7 @@ public class Journeys {
     private final BitAccessField.Section bookedCabinServiceBitField = typeModeFieldBits.section(5, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
-    // todo ak0 private final DataField locationCityIdField = storage.getDataField(8);
+    private final DataField locationCityIdField = storage.getDataField(8);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -222,6 +222,14 @@ public class Journeys {
             storage.set(id, transportFlight2IdField, transportFlight2Id);
         }
 
+        public int getLocationCityId() {
+            return readLocationCityId(id);
+        }
+
+        public void setLocationCityId(int locationCityId) {
+            storage.set(id, locationCityIdField, locationCityId);
+        }
+
         @Override
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
@@ -272,6 +280,10 @@ public class Journeys {
 
     private int readTransportFlight1Id(int recordId) {
         return storage.getAsInt(recordId, transportFlight1IdField);
+    }
+
+    private int readLocationCityId(int recordId) {
+        return storage.getAsInt(recordId, locationCityIdField);
     }
 
     public enum Status {

@@ -90,6 +90,7 @@ public class JourneyControl {
 
         journey.setStatus(Journeys.Status.WaitingForBoarding);
         journey.setHeartbeatTime(world.getWorldTime());
+        journey.setLocationCityId(0);
 
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.transportFlightControl().increasePaxCheckedIn(flight, journey.getGroupSize());
@@ -197,6 +198,7 @@ public class JourneyControl {
         
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+        // todo ak0 set location city to origin or to any linked city
 
         log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, cleanup scheduled", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
     }

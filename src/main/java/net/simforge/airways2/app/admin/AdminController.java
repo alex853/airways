@@ -191,8 +191,10 @@ public class AdminController {
     }
 
     @GetMapping(value = "/flight/cancel", produces = "text/plain")
-    public String cancelFlight(@RequestParam(name = "id") int fmId) {
+    public String cancelFlight(@RequestParam(name = "id") String fmIdStr) {
         return worldBean.modifySync(world -> {
+            int fmId = Id.decode(fmIdStr);
+
             List<String> results = new ArrayList<>();
 
             FlightMissions.Mission fm = world.flightMissions().byId(fmId).orElseThrow();
