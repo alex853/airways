@@ -49,12 +49,10 @@ public class FlightCleanup {
     private static Stream<FlightMissions.Mission> findFlightMissions(World world, FlightMissions.Status status, int time) {
         return world.flightMissions()
                 .filter(world.flightMissions().anyStatus(status))
-                .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time); // todo ak0 this can be improved by putting it into new filters
-        // todo ak0 also if actual dep time is known, use actual dep time instead of planned dep time
+                .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time);
     }
 
     private static void deleteFlightMission(World world, FlightMissions.Mission f) {
-        // todo ak0 'event log cleanup refinement' - remove event-logs
         deleteTransportFlights(world, f);
         world.flightMissions().deleteById(f.getId());
     }
@@ -72,7 +70,6 @@ public class FlightCleanup {
     private static void deleteTransportFlight(World world, TransportFlights.Flight tf1) {
         world.scheduledFlights().byId(tf1.getScheduledFlightId())
                 .ifPresent(sf -> world.scheduledFlights().deleteById(sf.getId()));
-        // todo ak1 t/f deletion means that tickets/passengers have to be processed somehow
         world.transportFlights().deleteById(tf1.getId());
     }
 }

@@ -13,30 +13,31 @@ import static net.simforge.airways2.world.datamodel.EventsToProcess.Status.Proce
 
 public class MiscCleanups {
     private static final Logger log = LoggerFactory.getLogger(MiscCleanups.class);
+    private static long lastExecution;
 
     public static void process(final World world) {
+        if (System.currentTimeMillis() - lastExecution < 3600000) {
+            return;
+        }
+        lastExecution = System.currentTimeMillis();
+
         cleanupEventLog(world);
         cleanupEventsToProcess(world);
     }
 
     private static void cleanupEventLog(final World world) {
         final EventLog storage = world.eventLog();
-        // todo ak0 'event log cleanup refinement' - increase time to 30 days, because most of events will be removed in flights cleanup code
         final Collection<EventLog.Event> outdated = storage.filter(e -> e.getTime() <= world.getWorldTime() - 7 * Time.ONE_DAY);
-        if (outdated.size() > 1000) {
-            outdated.forEach(f -> storage.deleteById(f.getId()));
-            log.info("event log cleaned up - {} removed", outdated.size());
-            storage.printDeletedRecordInfo();
-        }
+        outdated.forEach(f -> storage.deleteById(f.getId()));
+        log.info("event log cleaned up - {} removed", outdated.size());
+        storage.printDeletedRecordInfo();
     }
 
     private static void cleanupEventsToProcess(final World world) {
         final EventsToProcess storage = world.eventsToProcess();
         final Collection<EventsToProcess.Event> outdated = storage.filter(e -> (e.getTime() <= world.getWorldTime() - 7 * Time.ONE_DAY) && e.getStatus() == Processed);
-        if (outdated.size() > 1000) {
-            outdated.forEach(f -> storage.deleteById(f.getId()));
-            log.info("events-to-process cleaned up - {} removed", outdated.size());
-            storage.printDeletedRecordInfo();
-        }
+        outdated.forEach(f -> storage.deleteById(f.getId()));
+        log.info("events-to-process cleaned up - {} removed", outdated.size());
+        storage.printDeletedRecordInfo();
     }
 }
