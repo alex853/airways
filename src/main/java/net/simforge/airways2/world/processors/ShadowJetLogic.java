@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -127,7 +128,7 @@ public class ShadowJetLogic {
             Journeys.Journey journey = it.next();
             CabinLayout newRemained;
             try {
-                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak1 upgrade/downgrade service class
+                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak0 upgrade/downgrade service class
             } catch (IllegalArgumentException e) {
                 continue;
             }
@@ -137,7 +138,18 @@ public class ShadowJetLogic {
         }
         log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Selected load factor {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, collected.stream().map(Journeys.Journey::getId).toList());
 
-        // todo ak1 some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes?
+        // some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes
+        int someToAwake = Tools.random(10, 20);
+        int awaken = 0;
+        for (int i = 0; i < someToAwake; i++) {
+            if (!it.hasNext()) {
+                break;
+            }
+            Journeys.Journey journey = it.next();
+            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(0, 5 * Time.ONE_MINUTE));
+            awaken++;
+        }
+        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Awaken {} journeys", mission.getId(), transportFlight.getId(), awaken);
 
         for (Journeys.Journey journey : collected) {
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);

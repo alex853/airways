@@ -26,13 +26,15 @@ public class City2CityFlowControl {
         final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
 
         final int fromAirportId = mission.getDepartureAirportId();
-        final int toAirportId = mission.getDestinationAirportId(); // todo ak1 actual landing airport?
+        final int toAirportId = mission.getActualLandingAirportId();
 
         final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).map(Airport2City.Link::getCityId).toList();
         final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).map(Airport2City.Link::getCityId).toList();
         // todo ak2 check for intersection? what to do in case of intersection?
 
-        fromCityIds.forEach(fromCityId -> toCityIds.forEach(toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
+        fromCityIds.forEach(
+                fromCityId -> toCityIds.forEach(
+                        toCityId -> updateCity2CityFlowSuccessRateBothDirections(fromCityId, toCityId, deltaPercents)));
     }
 
     private void updateCity2CityFlowSuccessRateBothDirections(final int fromCityId, final int toCityId, final float deltaPercents) {
