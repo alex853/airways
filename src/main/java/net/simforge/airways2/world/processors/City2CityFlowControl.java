@@ -26,7 +26,7 @@ public class City2CityFlowControl {
         final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
 
         final int fromAirportId = mission.getDepartureAirportId();
-        final int toAirportId = mission.getActualLandingAirportId();
+        final int toAirportId = mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId();
 
         final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).map(Airport2City.Link::getCityId).toList();
         final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).map(Airport2City.Link::getCityId).toList();
