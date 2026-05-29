@@ -51,7 +51,7 @@ public class ShadowJetLogic {
 
         String newRegNo = null;
         for (int i = 0; i < 100; i++) {
-            final String regNo = generateRandomSJxxxRegNo();
+            final String regNo = generateRandomShadowJetRegNo();
             final Optional<Aircrafts.Aircraft> aircraftByRegNo = world.aircrafts().byRegNo(regNo);
             if (aircraftByRegNo.isEmpty()) {
                 newRegNo = regNo;
@@ -71,7 +71,7 @@ public class ShadowJetLogic {
         return newAircraft;
     }
 
-    private static String generateRandomSJxxxRegNo() {
+    private static String generateRandomShadowJetRegNo() {
         final String suffix = random.ints(3, 'A', 'Z' + 1)
                 .mapToObj(c -> String.valueOf((char) c))
                 .collect(Collectors.joining());
@@ -85,7 +85,7 @@ public class ShadowJetLogic {
         String route = from + "-" + to;
 
         if (from.equals(to)) {
-            log.warn("Transport flight provisioning - f/m #{} - {} - from equals to, route not allowed, SKIPPING", mission.getId(), route);
+            log.warn("T/f provisioning - f/m #{} - {} - from equals to, route not allowed, SKIPPING", mission.getId(), route);
             return;
         }
 
@@ -94,19 +94,17 @@ public class ShadowJetLogic {
 
         Sets.SetView<Integer> intersection = Sets.intersection(fromCitiesId, toCitiesId);
         if (!intersection.isEmpty()) {
-            log.warn("Transport flight provisioning - f/m #{} - {} - intersection {} detected, SKIPPING", mission.getId(), route, intersection);
+            log.warn("T/f provisioning - f/m #{} - {} - intersection {} detected, SKIPPING", mission.getId(), route, intersection);
             return;
         }
 
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - transport flight CREATED", mission.getId(), transportFlight.getId());
-
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.01f);
+
+        world.transportFlightControl().startCheckIn(transportFlight);
 
         int journeyBooked = 0;
         int paxBooked = 0;
-
-        world.transportFlightControl().startCheckIn(transportFlight);
 
         double loadFactor = Tools.random(40, 60) / 100.0;
         int consideredAvgPaxPerJourney = 5;
@@ -126,19 +124,28 @@ public class ShadowJetLogic {
                 && (remained.getTotal() > 0)
                 && (collected.size() < maxCount)) {
             Journeys.Journey journey = it.next();
-            CabinLayout newRemained;
-            try {
-                newRemained = remained.occupySeats(journey.getGroupSize(), journey.getPreferredCabinService()); // todo ak0 upgrade/downgrade service class
-            } catch (IllegalArgumentException e) {
+
+            CabinLayout newRemained = null;
+            CabinLayout.Service cabinService = journey.getPreferredCabinService();
+            int groupSize = journey.getGroupSize();
+            if (remained.hasEnoughSeats(groupSize, cabinService)) {
+                newRemained = remained.occupySeats(groupSize, cabinService);
+            } else if (cabinService.upgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.upgradedService())) {
+                newRemained = remained.occupySeats(groupSize, cabinService.upgradedService());
+            } else if (cabinService.downgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.downgradedService())) {
+                newRemained = remained.occupySeats(groupSize, cabinService.downgradedService());
+            }
+
+            if (newRemained == null) {
                 continue;
             }
 
             collected.add(journey);
             remained = newRemained;
         }
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Selected load factor {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, collected.stream().map(Journeys.Journey::getId).toList());
+        log.info("T/f provisioning - f/m #{}, t/f #{} - Selected load factor {}, Remained seats {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, remained, collected.stream().map(Journeys.Journey::getId).toList());
 
-        // some number of journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes
+        // some journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes
         int someToAwake = Tools.random(10, 20);
         int awaken = 0;
         for (int i = 0; i < someToAwake; i++) {
@@ -149,7 +156,7 @@ public class ShadowJetLogic {
             journey.setHeartbeatTime(world.getWorldTime() + Tools.random(0, 5 * Time.ONE_MINUTE));
             awaken++;
         }
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Awaken {} journeys", mission.getId(), transportFlight.getId(), awaken);
+        log.info("T/f provisioning - f/m #{}, t/f #{} - Awaken {} journeys", mission.getId(), transportFlight.getId(), awaken);
 
         for (Journeys.Journey journey : collected) {
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
@@ -159,11 +166,11 @@ public class ShadowJetLogic {
             journeyBooked++;
             paxBooked += journey.getGroupSize();
 
-            log.warn("Transport flight provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
+            log.info("T/f provisioning - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
         }
 
         world.transportFlightControl().startBoarding(transportFlight);
-        log.warn("Transport flight provisioning - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, boarding started, DONE", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+        log.info("T/f provisioning - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, boarding started, DONE", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
     }
 
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {

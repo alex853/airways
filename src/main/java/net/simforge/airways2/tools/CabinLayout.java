@@ -1,5 +1,6 @@
 package net.simforge.airways2.tools;
 
+import lombok.Getter;
 import org.apache.logging.log4j.util.Strings;
 
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Objects;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+@Getter
 public class CabinLayout {
     private static final int ECONOMY_LENGTH = 10;
     private static final int PREMIUM_ECONOMY_LENGTH = 8;
@@ -54,6 +56,7 @@ public class CabinLayout {
         return new CabinLayout(economy, 0, 0, 0);
     }
 
+    @SuppressWarnings("unused")
     public static CabinLayout JY(final int business, final int economy) {
         checkArgument(0 <= business && business <= BUSINESS_MAX);
         checkArgument(0 <= economy && economy <= ECONOMY_MAX);
@@ -102,22 +105,6 @@ public class CabinLayout {
         return new CabinLayout(economy, premiumEconomy, business, first);
     }
 
-    public int getEconomy() {
-        return economy;
-    }
-
-    public int getPremiumEconomy() {
-        return premiumEconomy;
-    }
-
-    public int getBusiness() {
-        return business;
-    }
-
-    public int getFirst() {
-        return first;
-    }
-
     public int getTotal() {
         return economy + premiumEconomy + business + first;
     }
@@ -139,6 +126,15 @@ public class CabinLayout {
                 premiumEconomy - (service == Service.W ? seats : 0),
                 business - (service == Service.J ? seats : 0),
                 first - (service == Service.F ? seats : 0));
+    }
+
+    public boolean hasEnoughSeats(int seats, final Service service) {
+        return switch (service) {
+            case Y -> economy >= seats;
+            case W -> premiumEconomy >= seats;
+            case J -> business >= seats;
+            case F -> first >= seats;
+        };
     }
 
     public CabinLayout releaseSeats(final int seats, final Service service) {
@@ -203,9 +199,35 @@ public class CabinLayout {
     }
 
     public enum Service {
-        Y, // economy
-        W, // premium economy
-        J, // business
-        F  // first
+        Y("W", null), // economy
+        W("J", "Y"), // premium economy
+        J("F", "W"), // business
+        F(null, "J");  // first
+
+        private final String upgrade;
+        private final String downgrade;
+
+        Service(String upgrade, String downgrade) {
+            this.upgrade = upgrade;
+            this.downgrade = downgrade;
+        }
+
+        public boolean upgradeAvailable() {
+            return upgrade != null;
+        }
+
+        public Service upgradedService() {
+            checkArgument(upgradeAvailable());
+            return Service.valueOf(upgrade);
+        }
+
+        public boolean downgradeAvailable() {
+            return downgrade != null;
+        }
+
+        public Service downgradedService() {
+            checkArgument(downgradeAvailable());
+            return Service.valueOf(downgrade);
+        }
     }
 }
