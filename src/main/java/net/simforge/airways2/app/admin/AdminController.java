@@ -395,7 +395,7 @@ public class AdminController {
 
     @GetMapping("/aircraft/frozen-lsit")
     public String resetAircraftStatus() {
-        return worldBean.modifySync(world -> {
+        return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
 
             List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
