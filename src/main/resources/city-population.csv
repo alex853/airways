@@ -3627,19 +3627,19 @@ Cuba,CU,Zulueta,5200,22.36,-79.66
 Cuba,CU,Maximo gomez,5100,22.9,-81.03
 Cuba,CU,Alacranes,5000,22.77,-81.57
 Cuba,CU,Cabanas,5000,22.98,-82.91
-Cyprus,CY,Lefkosia,200700,35.16,33.38
-Cyprus,CY,Lemesos,151400,34.68,33.05
-Cyprus,CY,Larnaka,48900,34.92,33.63
-Cyprus,CY,Lefkosa,46600,35.18,33.37
-Cyprus,CY,Gazimagusa,36400,35.11,33.94
-Cyprus,CY,Pafos,33300,34.77,32.41
-Cyprus,CY,Girne,19300,35.33,33.33
-Cyprus,CY,Guzelyurt,14800,35.2,32.98
-Cyprus,CY,Aradippou,12000,34.95,33.58
-Cyprus,CY,Paralimni,11600,35.05,33.98
-Cyprus,CY,Lefka,6800,35.11,32.85
-Cyprus,CY,Geri,6700,35.1,33.42
-Cyprus,CY,Ypsonas,6700,34.69,32.97
+Cyprus,CY,Nicosia,500000,35.16,33.38
+Cyprus,CY,Limassol,280000,34.68,33.05
+Cyprus,CY,Larnaca,160000,34.92,33.63
+Cyprus,CY,del Lefkosa,46600,35.18,33.37
+Cyprus,CY,del Gazimagusa,36400,35.11,33.94
+Cyprus,CY,Paphos,100000,34.77,32.41
+Cyprus,CY,Kyrenia,120000,35.33,33.33
+Cyprus,CY,del Guzelyurt,14800,35.2,32.98
+Cyprus,CY,del Aradippou,12000,34.95,33.58
+Cyprus,CY,Ayia Napa,140000,35.05,33.98
+Cyprus,CY,del Lefka,6800,35.11,32.85
+Cyprus,CY,del Geri,6700,35.1,33.42
+Cyprus,CY,del Ypsonas,6700,34.69,32.97
 Czech republic,CZ,Praha,1157800,50.08,14.43
 Czech republic,CZ,Brno,376200,49.2,16.61
 Czech republic,CZ,Ostrava,316700,49.83,18.27
@@ -4365,10 +4365,10 @@ Ecuador,EC,Gualaceo,13200,-2.9,-78.78
 Ecuador,EC,Canar,12500,-2.56,-78.94
 Ecuador,EC,La mana,11900,-0.93,-79.22
 Ecuador,EC,Banos,11700,-1.39,-78.43
-Egypt,EG,Al-qahirah,7609700,30.06,31.25
+Egypt,EG,Cairo,10400000,30.06,31.25
 Egypt,EG,Al-iskandariyah,3745800,31.22,29.95
-Egypt,EG,Al-jizah,2566100,30.01,31.21
-Egypt,EG,Subra al-h#aymah,1000100,30.11,31.25
+Egypt,EG,Giza,4800000,30.01,31.21
+Egypt,EG,Shubra El Kheima,1300000,30.11,31.25
 Egypt,EG,Bur sa#id,528300,31.26,32.29
 Egypt,EG,As-suways,477200,29.98,32.54
 Egypt,EG,Al-mah#allah al-kubra,447000,30.97,31.17

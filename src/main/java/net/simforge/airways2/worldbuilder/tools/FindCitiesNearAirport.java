@@ -37,6 +37,7 @@ public class FindCitiesNearAirport {
         List<ImportCities.CityInfo> found = ImportCities.getCitiesNearAirport(citiesCsv, airportCoords, 50);
 
         found.sort(Comparator.comparing(ImportCities.CityInfo::getPopulation).reversed());
+        System.out.println("Cities close to " + icao);
         found.forEach(c -> System.out.println(Str.al(c.name, 30) + Str.ar(String.valueOf(c.population), 10) + Str.ar(String.valueOf(c.distance), 5)));
     }
 }
