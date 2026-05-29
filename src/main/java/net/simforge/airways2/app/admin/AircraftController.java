@@ -7,6 +7,7 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
+import net.simforge.airways2.worldbuilder.World25;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -43,6 +44,33 @@ public class AircraftController {
                             && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
                             && a.getLocationAirportId() > 0)
                     .toList();
+
+            aircrafts.forEach(a -> {
+                results.add(a.getId() + "\t" +
+                        a.getRegNo() + "\t" +
+                        a.getFlownCycles() + "\t" +
+                        a.getFlightMissionId() + "\t" +
+                        (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
+            });
+
+            return Strings.join(results, '\n');
+        });
+    }
+
+    @GetMapping(value = "/suspicious-list", produces = "text/plain")
+    public String getSuspiciousList() {
+        return worldBean.read(world -> {
+            List<String> results = new ArrayList<>();
+
+            List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
+                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying
+                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
+                            && a.getLocationAirportId() == 0
+                            && a.getAircraftOperatorId() == World25.ShadowJetOperatorId
+                            && a.getLastUpdated() == 0)
+                    .toList();
+
+            results.add("Found " + aircrafts.size());
 
             aircrafts.forEach(a -> {
                 results.add(a.getId() + "\t" +
