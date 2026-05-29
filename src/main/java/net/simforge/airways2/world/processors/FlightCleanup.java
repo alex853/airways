@@ -32,7 +32,7 @@ public class FlightCleanup {
                 .peek(f -> deleteFlightMission(world, f))
                 .count();
 
-        long outdated = findFlightMissions(world, 3 * Time.ONE_DAY,
+        long outdated = findFlightMissions(world, 36 * Time.ONE_HOUR,
                 FlightMissions.Status.Dispatched, FlightMissions.Status.Preflight, FlightMissions.Status.Departure,
                 FlightMissions.Status.Flying, FlightMissions.Status.Arrival, FlightMissions.Status.Postflight)
                 .peek(f -> deleteFlightMission(world, f))
