@@ -63,7 +63,7 @@ public class AircraftController {
 
     @GetMapping(value = "/suspicious-list", produces = "text/plain")
     public String getSuspiciousList(@RequestParam(name = "dry-run", required = false, defaultValue = "true") boolean dryRun) {
-        return worldBean.read(world -> {
+        return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
 
             AtomicInteger updated = new AtomicInteger(0);
