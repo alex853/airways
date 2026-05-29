@@ -95,11 +95,9 @@ public class AircraftController {
             List<FlightMissions.Mission> fms = world.flightMissions().all()
                     .filter(fm -> fm.getAircraftId() > 3000 && world.aircrafts().byId(fm.getAircraftId()).isEmpty())
                     .toList();
-
             results.add("Found " + fms.size());
 
             fms.forEach(fm -> world.flightMissions().deleteById(fm.getId()));
-
             results.add("Deleted " + fms.size());
 
             return Strings.join(results, '\n');
