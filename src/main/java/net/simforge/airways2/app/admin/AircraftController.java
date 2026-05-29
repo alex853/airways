@@ -85,7 +85,7 @@ public class AircraftController {
                                 a.getFlightMissionId() + "\t" +
                                 (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()) + "\t" +
                                 (a.getFlightMissionId() > 0 ? fm.map(f -> "exist").orElse("absent") : "f/m 0") + "\t" +
-                                fm.map(f -> f.getAircraftId() == a.getId() ? "a/c ok" : "a/c fail").orElse("n/f") + "\t" +
+                                fm.map(f -> f.getAircraftId() == a.getId() ? "a/c OK" : "a/c F/L").orElse("f/m N/F") + "\t" +
                                 fm.map(f -> f.getStatus().name()).orElse("n/a"));
 
                         if (!dryRun && updated.get() < 10) {
@@ -93,28 +93,15 @@ public class AircraftController {
                                 updated.incrementAndGet();
                                 AircraftHelper.releaseAndParkAircraft(world, fm.get());
                                 results.add("A/C #" + a.getId() + ", " + a.getRegNo() + " is parked in " + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
+                            } else if (a.getLocationAirportId() > 0) {
+                                updated.incrementAndGet();
+                                AircraftHelper.moveParkedAircraftToAnotherAirport(world, a, world.airports().byId(a.getLocationAirportId()).orElseThrow());
+                                results.add("A/C #" + a.getId() + " is parked in airport #" + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else {
-                                results.add("CAN'T FIND FLIGHT MISSION");
+                                results.add("DONT KNOW WHAT TO DO HERE");
                             }
                         }
                     });
-
-            return Strings.join(results, '\n');
-        });
-    }
-
-    @GetMapping(value = "/remove-missions-with-missing-aircraft", produces = "text/plain")
-    public String resetAircraftStatus2() {
-        return worldBean.modifySync(world -> {
-            List<String> results = new ArrayList<>();
-
-            List<FlightMissions.Mission> fms = world.flightMissions().all()
-                    .filter(fm -> fm.getAircraftId() > 3000 && world.aircrafts().byId(fm.getAircraftId()).isEmpty())
-                    .toList();
-            results.add("Found " + fms.size());
-
-            fms.forEach(fm -> world.flightMissions().deleteById(fm.getId()));
-            results.add("Deleted " + fms.size());
 
             return Strings.join(results, '\n');
         });
