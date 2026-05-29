@@ -93,7 +93,7 @@ public class AircraftController {
             List<String> results = new ArrayList<>();
 
             List<FlightMissions.Mission> fms = world.flightMissions().all()
-                    .filter(fm -> world.aircrafts().byId(fm.getAircraftId()).isEmpty())
+                    .filter(fm -> fm.getAircraftId() > 3000 && world.aircrafts().byId(fm.getAircraftId()).isEmpty())
                     .toList();
 
             results.add("Found " + fms.size());
