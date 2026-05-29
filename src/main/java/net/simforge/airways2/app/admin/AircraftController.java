@@ -5,6 +5,7 @@ import net.simforge.airways2.app.dto.AircraftFullDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ public class AircraftController {
     }
 
     @GetMapping(value = "/frozen-list", produces = "text/plain")
-    public String resetAircraftStatus() {
+    public String getFrozenList() {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
 
@@ -56,8 +57,8 @@ public class AircraftController {
     }
 
     @GetMapping(value = "/remove-broken", produces = "text/plain")
-    public String resetAircraftStatus2() {
-        return worldBean.read(world -> {
+    public String removeBroken() {
+        return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
 
             List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
@@ -86,8 +87,27 @@ public class AircraftController {
         });
     }
 
+    @GetMapping(value = "/remove-missions-with-missing-aircraft", produces = "text/plain")
+    public String resetAircraftStatus2() {
+        return worldBean.modifySync(world -> {
+            List<String> results = new ArrayList<>();
+
+            List<FlightMissions.Mission> fms = world.flightMissions().all()
+                    .filter(fm -> world.aircrafts().byId(fm.getAircraftId()).isEmpty())
+                    .toList();
+
+            results.add("Found " + fms.size());
+
+            fms.forEach(fm -> world.flightMissions().deleteById(fm.getId()));
+
+            results.add("Deleted " + fms.size());
+
+            return Strings.join(results, '\n');
+        });
+    }
+
     @GetMapping("/reset-status")
-    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
+    public String getFrozenList(@RequestParam(name = "aircraftId") final int aircraftId) {
         return worldBean.modifySync(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
 
