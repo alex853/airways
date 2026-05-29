@@ -120,6 +120,7 @@ public class ShadowJetLogic {
                 .filter(j -> fromCitiesId.contains(j.getFromCityId())
                         && toCitiesId.contains(j.getToCityId()));
         Iterator<Journeys.Journey> it = journeyStream.iterator();
+        Map<Integer, CabinLayout.Service> actualCabinServices = new HashMap<>();
         while (it.hasNext()
                 && (remained.getTotal() > 0)
                 && (collected.size() < maxCount)) {
@@ -130,10 +131,13 @@ public class ShadowJetLogic {
             int groupSize = journey.getGroupSize();
             if (remained.hasEnoughSeats(groupSize, cabinService)) {
                 newRemained = remained.occupySeats(groupSize, cabinService);
+                actualCabinServices.put(journey.getId(), cabinService);
             } else if (cabinService.upgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.upgradedService())) {
                 newRemained = remained.occupySeats(groupSize, cabinService.upgradedService());
+                actualCabinServices.put(journey.getId(), cabinService.upgradedService());
             } else if (cabinService.downgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.downgradedService())) {
                 newRemained = remained.occupySeats(groupSize, cabinService.downgradedService());
+                actualCabinServices.put(journey.getId(), cabinService.downgradedService());
             }
 
             if (newRemained == null) {
@@ -159,7 +163,7 @@ public class ShadowJetLogic {
         log.info("T/f provisioning - f/m #{}, t/f #{} - Awaken {} journeys", mission.getId(), transportFlight.getId(), awaken);
 
         for (Journeys.Journey journey : collected) {
-            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, transportFlight);
+            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
             world.journeyControl().waitForCheckin(journey);
             world.journeyControl().checkin(journey);
 

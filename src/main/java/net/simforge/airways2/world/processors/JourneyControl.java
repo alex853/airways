@@ -45,14 +45,25 @@ public class JourneyControl {
     }
 
     // 'No checks' means that the method does not check if the operation is valid with all those parameters
-    public void bookDirectFlightJourneyNoChecks(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+    public void bookDirectFlightJourneyNoChecks(Journeys.Journey journey, TransportFlights.Flight flight) {
         checkNotNull(journey);
         checkNotNull(flight);
 
-        journey.setTransportFlight1Id(flight.getId());
-        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getPreferredCabinService());
+        bookDirectFlightJourneyNoChecks(journey, journey.getPreferredCabinService(), flight);
+    }
 
-        journey.setBookedCabinService(journey.getPreferredCabinService());
+    // 'No checks' means that the method does not check if the operation is valid with all those parameters
+    public void bookDirectFlightJourneyNoChecks(Journeys.Journey journey, CabinLayout.Service cabinService, TransportFlights.Flight flight) {
+        checkNotNull(journey);
+        checkNotNull(cabinService);
+        checkNotNull(flight);
+
+        journey.setTransportFlight1Id(flight.getId());
+        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), cabinService);
+
+        journey.setTransportFlight2Id(0);
+
+        journey.setBookedCabinService(cabinService);
     }
 
     // 'No checks' means that the method does not check if the operation is valid with all those parameters
