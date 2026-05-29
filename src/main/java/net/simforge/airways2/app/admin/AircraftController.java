@@ -65,7 +65,7 @@ public class AircraftController {
                             && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
                             && a.getLocationAirportId() > 0
                             && a.getFlightMissionId() > 0
-                            && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()
+                            && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isEmpty()
                             && a.getFlownCycles() == 0)
                     .toList();
 
