@@ -77,6 +77,7 @@ public class AircraftController {
                     .forEach(a -> {
                         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
                         results.add(a.getId() + "\t" +
+                                a.getLastUpdated() + "\t" +
                                 a.getRegNo() + "\t" +
                                 a.getOperationalStatus().name() + "\t" +
                                 a.getLocationStatus().name() + "\t" +

@@ -19,21 +19,27 @@ public class FlightCleanup {
         }
         lastExecution = System.currentTimeMillis();
 
-        long cancelledOnPreflight = findFlightMissions(world, FlightMissions.Status.Cancelled, 15 * Time.ONE_MINUTE)
+        long cancelledOnPreflight = findFlightMissions(world, 15 * Time.ONE_MINUTE, FlightMissions.Status.Cancelled)
                 .filter(f -> world.flightMissionControl().checkAndRemoveIfScheduledForQuickRemoval(f))
                 .peek(f -> deleteFlightMission(world, f))
                 .count();
 
-        long cancelled = findFlightMissions(world, FlightMissions.Status.Cancelled, Time.ONE_DAY)
+        long cancelled = findFlightMissions(world, Time.ONE_DAY, FlightMissions.Status.Cancelled)
                 .peek(f -> deleteFlightMission(world, f))
                 .count();
 
-        long finished = findFlightMissions(world, FlightMissions.Status.Finished, 10 * Time.ONE_DAY)
+        long finished = findFlightMissions(world, 10 * Time.ONE_DAY, FlightMissions.Status.Finished)
                 .peek(f -> deleteFlightMission(world, f))
                 .count();
 
-        if (cancelledOnPreflight + cancelled + finished > 0) {
-            log.info("flight cleanup - {} cancelled on preflight, {} cancelled, {} finished", cancelledOnPreflight, cancelled, finished);
+        long outdated = findFlightMissions(world, 3 * Time.ONE_DAY,
+                FlightMissions.Status.Dispatched, FlightMissions.Status.Preflight, FlightMissions.Status.Departure,
+                FlightMissions.Status.Flying, FlightMissions.Status.Arrival, FlightMissions.Status.Postflight)
+                .peek(f -> deleteFlightMission(world, f))
+                .count();
+
+        if (cancelledOnPreflight + cancelled + finished + outdated > 0) {
+            log.info("flight cleanup - {} cancelled on preflight, {} cancelled, {} finished, {} outdated", cancelledOnPreflight, cancelled, finished, outdated);
         }
 
         long brokenTransportFlights = world.transportFlights().all()
@@ -46,9 +52,9 @@ public class FlightCleanup {
         }
     }
 
-    private static Stream<FlightMissions.Mission> findFlightMissions(World world, FlightMissions.Status status, int time) {
+    private static Stream<FlightMissions.Mission> findFlightMissions(World world, int time, FlightMissions.Status... statuses) {
         return world.flightMissions()
-                .filter(world.flightMissions().anyStatus(status))
+                .filter(world.flightMissions().anyStatus(statuses))
                 .filter(f -> f.getPlannedDepartureWorldTime() <= world.getWorldTime() - time);
     }
 
