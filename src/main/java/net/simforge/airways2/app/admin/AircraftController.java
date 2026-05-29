@@ -3,6 +3,7 @@ package net.simforge.airways2.app.admin;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.dto.AircraftFullDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -64,11 +65,12 @@ public class AircraftController {
             List<String> results = new ArrayList<>();
 
             world.aircrafts().all()
-                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying
-                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
-                            && a.getLocationAirportId() == 0
-                            && a.getAircraftOperatorId() == World25.ShadowJetOperatorId
-                            && a.getLastUpdated() == 0)
+                    .filter(a -> // a.getLocationStatus() == Aircrafts.LocationStatus.Flying
+                            //&& a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
+                            //&& a.getLocationAirportId() == 0
+                            //&&
+                            a.getAircraftOperatorId() == World25.ShadowJetOperatorId
+                            && a.getLastUpdated() + Time.ONE_DAY < world.getWorldTime())
                     .forEach(a -> {
                         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
                         results.add(a.getId() + "\t" +
