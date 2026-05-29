@@ -10,12 +10,14 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import org.apache.logging.log4j.util.Strings;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RestController
 @RequestMapping("/admin/aircraft")
@@ -64,6 +66,7 @@ public class AircraftController {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
 
+            AtomicInteger updated = new AtomicInteger(0);
             world.aircrafts().all()
                     .filter(a -> // a.getLocationStatus() == Aircrafts.LocationStatus.Flying
                             //&& a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
@@ -84,8 +87,9 @@ public class AircraftController {
                                 fm.map(f -> f.getAircraftId() == a.getId() ? "a/c ok" : "a/c fail").orElse("n/f") + "\t" +
                                 fm.map(f -> f.getStatus().name()).orElse("n/a"));
 
-                        if (!dryRun) {
+                        if (!dryRun && updated.get() < 10) {
                             if (fm.isPresent()) {
+                                updated.incrementAndGet();
                                 AircraftHelper.releaseAndParkAircraft(world, fm.get());
                                 results.add("A/C #" + a.getId() + ", " + a.getRegNo() + " is parked in " + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else {
