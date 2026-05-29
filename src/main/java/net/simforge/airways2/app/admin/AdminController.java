@@ -13,7 +13,6 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
-import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -364,31 +363,6 @@ public class AdminController {
             results.add("Removed " + tfCount + " transport flights including " + sfCount + " scheduled flights");
 
             return Strings.join(results, '\n');
-        });
-    }
-
-    @GetMapping("/aircraft/reset-status")
-    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
-        return worldBean.modifySync(world -> {
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-
-            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-            aircraft.setFlightMissionId(0);
-
-            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
-        });
-    }
-
-    @GetMapping("/aircraft/move-to-airport")
-    public String moveAircraftToAirport(@RequestParam(name = "aircraftId") final int aircraftId, @RequestParam(name = "airportId") final int airportId) {
-        return worldBean.modifySync(world -> {
-            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
-            final Airports.Airport airport = world.airports().byId(airportId).orElseThrow();
-
-            AircraftHelper.moveParkedAircraftToAnotherAirport(world, aircraft, airport);
-
-            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 

@@ -4,6 +4,8 @@ import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.dto.AircraftFullDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.processors.AircraftHelper;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -50,6 +52,57 @@ public class AircraftController {
             });
 
             return Strings.join(results, '\n');
+        });
+    }
+
+    @GetMapping(value = "/remove-broken", produces = "text/plain")
+    public String resetAircraftStatus2() {
+        return worldBean.read(world -> {
+            List<String> results = new ArrayList<>();
+
+            List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
+                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
+                            && a.getLocationAirportId() > 0
+                            && a.getFlightMissionId() > 0
+                            && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()
+                            && a.getFlownCycles() == 0)
+                    .toList();
+
+            aircrafts.forEach(a -> {
+                results.add(a.getId() + "\t" +
+                        a.getRegNo() + "\t" +
+                        a.getFlownCycles() + "\t" +
+                        a.getFlightMissionId() + "\t" +
+                        (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
+            });
+
+            return Strings.join(results, '\n');
+        });
+    }
+
+    @GetMapping("/reset-status")
+    public String resetAircraftStatus(@RequestParam(name = "aircraftId") final int aircraftId) {
+        return worldBean.modifySync(world -> {
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+            aircraft.setFlightMissionId(0);
+
+            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
+        });
+    }
+
+    @GetMapping("/move-to-airport")
+    public String moveAircraftToAirport(@RequestParam(name = "aircraftId") final int aircraftId, @RequestParam(name = "airportId") final int airportId) {
+        return worldBean.modifySync(world -> {
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(aircraftId).orElseThrow();
+            final Airports.Airport airport = world.airports().byId(airportId).orElseThrow();
+
+            AircraftHelper.moveParkedAircraftToAnotherAirport(world, aircraft, airport);
+
+            return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }
 }
