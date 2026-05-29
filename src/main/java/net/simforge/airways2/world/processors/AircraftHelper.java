@@ -22,8 +22,8 @@ public class AircraftHelper {
         aircraft.setLastUpdated(world.getWorldTime());
     }
 
-    public static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+    public static Aircrafts.Aircraft releaseAndParkAircraft(World world, Aircrafts.Aircraft aircraft) {
+        FlightMissions.Mission mission = world.flightMissions().byId(aircraft.getFlightMissionId()).orElseThrow();
         if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
             aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
 
@@ -32,7 +32,7 @@ public class AircraftHelper {
 
             aircraft.setLastUpdated(world.getWorldTime());
         } else {
-            final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+            Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
 
             aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
             aircraft.setLocationAirportId(mission.getDepartureAirportId());

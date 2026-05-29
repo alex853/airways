@@ -201,7 +201,7 @@ public class AdminController {
             results.add("F/M #" + fmId + " cancelled");
 
             // todo ak1 cancelling a flight while the flight is not active or is not flying should not update an aircraft as this will affect another flight if there is any one is in progress
-            Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, fm);
+            Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, world.aircrafts().byId(fm.getAircraftId()).orElseThrow());
             results.add("A/C #" + aircraft.getId() + ", " + aircraft.getRegNo() + " is parked in " + world.airports().getIcao(aircraft.getLocationAirportId()).orElseThrow());
 
             Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fmId);
@@ -221,7 +221,7 @@ public class AdminController {
     public String removeFlight(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-            final Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, mission);
+            final Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, world.aircrafts().byId(mission.getAircraftId()).orElseThrow());
             world.flightMissions().deleteById(flightId);
             return "F/M #" + flightId + " removed, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });

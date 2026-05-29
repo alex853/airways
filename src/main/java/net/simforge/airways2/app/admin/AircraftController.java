@@ -91,7 +91,7 @@ public class AircraftController {
                         if (!dryRun && updated.get() < 10) {
                             if (fm.isPresent()) {
                                 updated.incrementAndGet();
-                                AircraftHelper.releaseAndParkAircraft(world, fm.get());
+                                AircraftHelper.releaseAndParkAircraft(world, a);
                                 results.add("A/C #" + a.getId() + ", " + a.getRegNo() + " is parked in " + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else if (a.getLocationAirportId() > 0) {
                                 updated.incrementAndGet();
