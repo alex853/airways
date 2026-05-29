@@ -79,7 +79,8 @@ public class AircraftController {
                                 a.getFlightMissionId() + "\t" +
                                 (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()) + "\t" +
                                 (a.getFlightMissionId() > 0 ? fm.map(f -> "exist").orElse("absent") : "f/m 0") + "\t" +
-                                fm.map(f -> f.getAircraftId() == a.getId() ? "a/c ok" : "a/c fail").orElse("n/f"));
+                                fm.map(f -> f.getAircraftId() == a.getId() ? "a/c ok" : "a/c fail").orElse("n/f") + "\t" +
+                                fm.map(f -> f.getStatus().name()).orElse("n/a"));
 
                         if (!dryRun) {
                             if (fm.isPresent()) {
