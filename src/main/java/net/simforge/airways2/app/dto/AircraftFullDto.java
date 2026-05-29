@@ -36,10 +36,10 @@ public class AircraftFullDto {
     private String fsTime;
     private int fsCycles;
 
-    public static AircraftFullDto from(World world, Aircrafts.Aircraft a) {
+    public static AircraftFullDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
         return new AircraftFullDto(
-                Id.encode(a.getId()),
+                encodeIds ? Id.encode(a.getId()) : String.valueOf(a.getId()),
                 world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                 a.getRegNo(),
                 world.aircraftOperators().byId(a.getAircraftOperatorId()).map(AircraftOperators.AircraftOperator::getName).orElse(null),
@@ -50,7 +50,7 @@ public class AircraftFullDto {
                 a.getLocationLongitude(),
                 a.getLocationHeading(),
                 a.getLocationAltitude(),
-                Id.encodeOrNull(a.getFlightMissionId()),
+                encodeIds ? Id.encodeOrNull(a.getFlightMissionId()) : String.valueOf(a.getFlightMissionId()),
                 mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
                 mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),

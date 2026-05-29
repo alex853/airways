@@ -34,6 +34,7 @@ public class MapController {
         return worldBean.read(world -> AircraftFullDto.from(world,
                 world.aircrafts()
                         .byId(Id.decode(aircraftId))
-                        .orElseThrow()));
+                        .orElseThrow(),
+                true));
     }
 }

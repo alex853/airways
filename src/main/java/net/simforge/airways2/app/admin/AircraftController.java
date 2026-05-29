@@ -20,7 +20,7 @@ public class AircraftController {
         return worldBean.read(world -> world.aircrafts().all()
                 .skip(offset != null ? offset : 0)
                 .limit(limit != null ? limit : Long.MAX_VALUE)
-                .map(a -> AircraftFullDto.from(world, a))
+                .map(a -> AircraftFullDto.from(world, a, false))
                 .toList());
     }
 }
