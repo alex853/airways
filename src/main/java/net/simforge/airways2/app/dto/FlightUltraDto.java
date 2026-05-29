@@ -50,8 +50,9 @@ public class FlightUltraDto {
     private final Integer pOnBrd;
 
     public static FlightUltraDto from(
-            final World world,
-            final FlightMissions.Mission fm) {
+            World world,
+            FlightMissions.Mission fm,
+            boolean encodeIds) {
         FlightTimeline timeline = FlightMissionToTimeline.byMission(fm);
         TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(fm.getId()).orElse(null);
         ScheduledFlights.Flight sf = tf != null ? world.scheduledFlights().byId(tf.getScheduledFlightId()).orElse(null) : null;
@@ -59,17 +60,17 @@ public class FlightUltraDto {
         AircraftTypes.AircraftType act = ac != null ? world.aircraftTypes().byId(ac.getAircraftTypeId()).orElse(null) : null;
 
         return new FlightUltraDto(
-                Id.encode(fm.getId()),
+                Id.encode(fm.getId(), encodeIds),
                 fm.getStatus().name(),
 
-                ac != null ? Id.encode(ac.getId()) : null,
+                ac != null ? Id.encode(ac.getId(), encodeIds) : null,
                 ac != null ? ac.getRegNo() : null,
                 act != null ? act.getIcao() : null,
 
                 null,
                 0,
 
-                tf != null ? Id.encode(tf.getId()) : null,
+                tf != null ? Id.encode(tf.getId(), encodeIds) : null,
                 tf != null ? tf.getStatus().name() : null,
                 sf != null ? ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()) : null,
 

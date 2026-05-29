@@ -124,7 +124,7 @@ public class FlightBoardController {
         return world.flightMissions().all()
                 .filter(flightMissionCondition)
                 .map(fm -> {
-                    FlightUltraDto dto = FlightUltraDto.from(world, fm);
+                    FlightUltraDto dto = FlightUltraDto.from(world, fm, false);
                     PilotContext vc = vatsimTrackerBean.getContextByFlightMissionId(fm.getId()).orElse(null);
                     return dto.applyVatsimContext(vc);
                 });

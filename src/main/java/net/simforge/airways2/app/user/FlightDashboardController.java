@@ -79,7 +79,7 @@ public class FlightDashboardController {
             return new Status2Dto(
                     simStatus,
                     new VatsimStatusDto(), // todo ak1 vatsim tracking & dashboard integration rework
-                    flight.map(fm -> FlightUltraDto.from(world, fm)).orElse(null));
+                    flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null));
         });
     }
 

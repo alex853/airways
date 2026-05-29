@@ -20,6 +20,14 @@ public class Id {
         return id > 0 ? sqids.encode(List.of((long) id)) : null;
     }
 
+    public static String encode(int id, boolean encode) {
+        return encode ? encode(id) : String.valueOf(id);
+    }
+
+    public static String encodeOrNull(int id, boolean encode) {
+        return encode ? encodeOrNull(id) : String.valueOf(id);
+    }
+
     public static int decode(String str) {
         return sqids.decode(str).get(0).intValue();
     }
