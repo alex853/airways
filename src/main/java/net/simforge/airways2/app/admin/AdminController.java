@@ -393,7 +393,7 @@ public class AdminController {
         });
     }
 
-    @GetMapping("/aircraft/frozen-lsit")
+    @GetMapping(name = "/aircraft/frozen-list", produces = "text/plain")
     public String resetAircraftStatus() {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
@@ -407,6 +407,7 @@ public class AdminController {
             aircrafts.forEach(a -> {
                 results.add(a.getId() + "\t" +
                         a.getRegNo() + "\t" +
+                        a.getFlownCycles() + "\t" +
                         a.getFlightMissionId() + "\t" +
                         (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
             });
