@@ -88,6 +88,8 @@ public class FlightMissionControl {
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
 
+        aircraft.setLastUpdated(world.getWorldTime());
+
         world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
@@ -108,6 +110,7 @@ public class FlightMissionControl {
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
+        aircraft.setLastUpdated(world.getWorldTime());
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightDepartsFromGate);
 
@@ -128,6 +131,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(0);
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
+        aircraft.setLastUpdated(world.getWorldTime());
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightTakeoffs);
 
@@ -148,6 +152,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(landingAirport.getId());
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
+        aircraft.setLastUpdated(world.getWorldTime());
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightLands);
 
@@ -167,6 +172,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(locationAirport.getId());
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
+        aircraft.setLastUpdated(world.getWorldTime());
 
         // todo ak3 pilot/pilots/cabin crew - set status, location
 
@@ -186,6 +192,8 @@ public class FlightMissionControl {
         int flightDurationSeconds = mission.getActualArrivalWorldTime() - mission.getActualDepartureWorldTime();
         aircraft.setFlightTime(aircraft.getFlightTime() + flightDurationSeconds/60);
         aircraft.setFlownCycles(aircraft.getFlownCycles() + 1);
+
+        aircraft.setLastUpdated(world.getWorldTime());
 
         // todo ak3 pilot/pilots/cabin crew - set status, location
         // todo ak3 pilot assignements / aircraft assignments?

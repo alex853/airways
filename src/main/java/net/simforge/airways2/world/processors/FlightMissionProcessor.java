@@ -117,6 +117,8 @@ public class FlightMissionProcessor {
             aircraft.setLocationLongitude((float) coords.getLon());
             aircraft.setLocationHeading((int) Geo.bearing(coords, toAirport.getCoords()));
 
+            aircraft.setLastUpdated(worldTime);
+
             // todo ak3 not implemented in #old                       pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
         } else {

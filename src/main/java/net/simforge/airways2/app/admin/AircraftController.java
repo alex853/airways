@@ -95,6 +95,8 @@ public class AircraftController {
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
 
+            aircraft.setLastUpdated(world.getWorldTime());
+
             return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
     }

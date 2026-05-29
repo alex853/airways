@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.tools.TimeTools;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -35,6 +36,7 @@ public class AircraftFullDto {
     private String eLdg;
     private String fsTime;
     private int fsCycles;
+    private String lU;
 
     public static AircraftFullDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
@@ -58,6 +60,7 @@ public class AircraftFullDto {
                 mission.map(m -> TimeTools.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
                 null,
                 TimeTools.minutesToHmm(a.getFlightTime()),
-                a.getFlownCycles());
+                a.getFlownCycles(),
+                a.getLastUpdated() > 0 ? Time.toLdt(a.getLastUpdated()).toString() : null);
     }
 }

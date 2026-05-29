@@ -265,6 +265,14 @@ public class Aircrafts {
         public void setFlownCycles(int flownCycles) {
             storage.set(id, flownCyclesField, flownCycles);
         }
+
+        public int getLastUpdated() {
+            return readLastUpdated(id);
+        }
+
+        public void setLastUpdated(int lastUpdated) {
+            storage.set(id, lastUpdatedField, lastUpdated);
+        }
     }
 
     public enum OperationalStatus {
@@ -329,5 +337,9 @@ public class Aircrafts {
 
     private int readLocationAirportId(int recordId) {
         return storage.getAsInt(recordId, locationAirportIdField);
+    }
+
+    private int readLastUpdated(int recordId) {
+        return storage.getAsInt(recordId, lastUpdatedField);
     }
 }

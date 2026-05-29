@@ -274,6 +274,8 @@ public class AdminController {
 
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
+
+            aircraft.setLastUpdated(world.getWorldTime());
         } else {
             //noinspection DuplicatedCode
             final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
@@ -285,6 +287,8 @@ public class AdminController {
 
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);
+
+            aircraft.setLastUpdated(world.getWorldTime());
         }
         return aircraft;
     }

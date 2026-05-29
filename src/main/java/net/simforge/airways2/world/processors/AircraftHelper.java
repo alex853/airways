@@ -12,9 +12,12 @@ public class AircraftHelper {
             final Aircrafts.Aircraft aircraft,
             final Airports.Airport targetAirport) {
         checkArgument(aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport);
+
         aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
         aircraft.setLocationAirportId(targetAirport.getId());
         aircraft.setLocationLatitude(targetAirport.getLatitude());
         aircraft.setLocationLongitude(targetAirport.getLongitude());
+
+        aircraft.setLastUpdated(world.getWorldTime());
     }
 }

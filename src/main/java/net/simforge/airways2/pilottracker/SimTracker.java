@@ -88,6 +88,9 @@ public class SimTracker {
             aircraft.get().setLocationLongitude((float) context.position.getCoords().getLon());
             aircraft.get().setLocationHeading(context.position.getHeading());
             aircraft.get().setLocationAltitude(context.position.getAltitude());
+
+            aircraft.get().setLastUpdated(world.getWorldTime());
+
             return null;
         });
     }
