@@ -35,7 +35,6 @@ import java.lang.reflect.Type;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -390,29 +389,6 @@ public class AdminController {
             AircraftHelper.moveParkedAircraftToAnotherAirport(world, aircraft, airport);
 
             return "A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
-        });
-    }
-
-    @GetMapping(name = "/aircraft/1", produces = "text/plain")
-    public String resetAircraftStatus() {
-        return worldBean.read(world -> {
-            List<String> results = new ArrayList<>();
-
-            List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
-                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
-                            && a.getLocationAirportId() > 0)
-                    .toList();
-
-            aircrafts.forEach(a -> {
-                results.add(a.getId() + "\t" +
-                        a.getRegNo() + "\t" +
-                        a.getFlownCycles() + "\t" +
-                        a.getFlightMissionId() + "\t" +
-                        (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
-            });
-
-            return Strings.join(results, '\n');
         });
     }
 
