@@ -393,7 +393,7 @@ public class AdminController {
         });
     }
 
-    @GetMapping(name = "/aircraft/frozen-list", produces = "text/plain")
+    @GetMapping(name = "/aircraft/1", produces = "text/plain")
     public String resetAircraftStatus() {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
