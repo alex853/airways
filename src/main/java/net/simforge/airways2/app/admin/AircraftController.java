@@ -88,7 +88,7 @@ public class AircraftController {
                                 fm.map(f -> f.getAircraftId() == a.getId() ? "a/c OK" : "a/c F/L").orElse("f/m N/F") + "\t" +
                                 fm.map(f -> f.getStatus().name()).orElse("n/a"));
 
-                        if (!dryRun && updated.get() < 10) {
+                        if (!dryRun && updated.get() < 100) {
                             if (fm.isPresent()) {
                                 updated.incrementAndGet();
                                 AircraftHelper.releaseAndParkAircraft(world, a);
@@ -96,6 +96,7 @@ public class AircraftController {
                             } else if (a.getLocationAirportId() > 0) {
                                 updated.incrementAndGet();
                                 a.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+                                a.setFlightMissionId(0);
                                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, a, world.airports().byId(a.getLocationAirportId()).orElseThrow());
                                 results.add("A/C #" + a.getId() + " is parked in airport #" + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else {
