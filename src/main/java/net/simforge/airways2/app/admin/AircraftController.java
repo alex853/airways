@@ -68,12 +68,9 @@ public class AircraftController {
 
             AtomicInteger updated = new AtomicInteger(0);
             world.aircrafts().all()
-                    .filter(a -> // a.getLocationStatus() == Aircrafts.LocationStatus.Flying
-                            //&& a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
-                            //&& a.getLocationAirportId() == 0
-                            //&&
-                            a.getAircraftOperatorId() == World25.ShadowJetOperatorId
-                            && a.getLastUpdated() + Time.ONE_DAY < world.getWorldTime())
+                    .filter(a -> a.getAircraftOperatorId() == World25.ShadowJetOperatorId
+                            && a.getLastUpdated() + Time.ONE_DAY < world.getWorldTime()
+                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
                     .forEach(a -> {
                         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
                         results.add(a.getId() + "\t" +
@@ -96,6 +93,7 @@ public class AircraftController {
                             } else if (a.getLocationAirportId() > 0) {
                                 updated.incrementAndGet();
                                 a.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+                                a.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
                                 a.setFlightMissionId(0);
                                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, a, world.airports().byId(a.getLocationAirportId()).orElseThrow());
                                 results.add("A/C #" + a.getId() + " is parked in airport #" + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
