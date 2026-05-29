@@ -37,9 +37,8 @@ public class Aircrafts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationAltitude, 0-65535 feet
             .withDataField(DataField.of(DataType.Unsigned24bit)) // flight time, minutes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // flown cycles, times
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserved3
+            .withDataField(DataField.of(DataType.Signed32bit)) // lastUpdated
             .withDataField(DataField.of(DataType.Signed32bit)) // reserved4
-            // todo ak3 lastMoved, seconds since epoch, 32bits, optional....
             .build();
 
     private final DataField aircraftTypeIdField = storage.getDataField(0);
@@ -55,6 +54,7 @@ public class Aircrafts {
     private final DataField locationAltitudeField = storage.getDataField(10);
     private final DataField flightTimeField = storage.getDataField(11);
     private final DataField flownCyclesField = storage.getDataField(12);
+    private final DataField lastUpdatedField = storage.getDataField(13);
 
     public Aircrafts(final Strings strings) {
         this.strings = strings;
@@ -66,6 +66,10 @@ public class Aircrafts {
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
+    }
+
+    public void deleteById(final int id) {
+        storage.deleteRecord(id);
     }
 
     public Stream<Aircraft> all() {

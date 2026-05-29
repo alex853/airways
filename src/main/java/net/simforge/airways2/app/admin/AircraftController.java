@@ -66,7 +66,8 @@ public class AircraftController {
                             && a.getLocationAirportId() > 0
                             && a.getFlightMissionId() > 0
                             && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isEmpty()
-                            && a.getFlownCycles() == 0)
+                            && a.getFlownCycles() == 0
+                            && a.getId() > 3000)
                     .toList();
 
             aircrafts.forEach(a -> {
@@ -75,6 +76,10 @@ public class AircraftController {
                         a.getFlownCycles() + "\t" +
                         a.getFlightMissionId() + "\t" +
                         (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
+            });
+
+            aircrafts.forEach(a -> {
+                world.aircrafts().deleteById(a.getId());
             });
 
             return Strings.join(results, '\n');
