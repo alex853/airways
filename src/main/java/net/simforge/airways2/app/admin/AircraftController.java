@@ -95,6 +95,7 @@ public class AircraftController {
                                 results.add("A/C #" + a.getId() + ", " + a.getRegNo() + " is parked in " + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else if (a.getLocationAirportId() > 0) {
                                 updated.incrementAndGet();
+                                a.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
                                 AircraftHelper.moveParkedAircraftToAnotherAirport(world, a, world.airports().byId(a.getLocationAirportId()).orElseThrow());
                                 results.add("A/C #" + a.getId() + " is parked in airport #" + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
                             } else {
