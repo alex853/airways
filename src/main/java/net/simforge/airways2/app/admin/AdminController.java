@@ -11,8 +11,8 @@ import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
-import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -201,7 +201,7 @@ public class AdminController {
             results.add("F/M #" + fmId + " cancelled");
 
             // todo ak1 cancelling a flight while the flight is not active or is not flying should not update an aircraft as this will affect another flight if there is any one is in progress
-            Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, fm);
+            Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, fm);
             results.add("A/C #" + aircraft.getId() + ", " + aircraft.getRegNo() + " is parked in " + world.airports().getIcao(aircraft.getLocationAirportId()).orElseThrow());
 
             Optional<TransportFlights.Flight> tf = world.transportFlights().byFlightMissionId(fmId);
@@ -221,7 +221,7 @@ public class AdminController {
     public String removeFlight(@RequestParam(name = "flightId") final int flightId) {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
-            final Aircrafts.Aircraft aircraft = releaseAndParkAircraft(world, mission);
+            final Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, mission);
             world.flightMissions().deleteById(flightId);
             return "F/M #" + flightId + " removed, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });
@@ -264,33 +264,6 @@ public class AdminController {
             return null;
         });
         return "Done";
-    }
-
-    private static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-        //noinspection IfStatementWithIdenticalBranches
-        if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
-            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-
-            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-            aircraft.setFlightMissionId(0);
-
-            aircraft.setLastUpdated(world.getWorldTime());
-        } else {
-            //noinspection DuplicatedCode
-            final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-
-            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
-            aircraft.setLocationAirportId(mission.getDepartureAirportId());
-            aircraft.setLocationLatitude(departureAirport.getLatitude());
-            aircraft.setLocationLongitude(departureAirport.getLongitude());
-
-            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
-            aircraft.setFlightMissionId(0);
-
-            aircraft.setLastUpdated(world.getWorldTime());
-        }
-        return aircraft;
     }
 
     @GetMapping("/transport-flight/cancel")

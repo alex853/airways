@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/admin/aircraft")
@@ -58,58 +59,37 @@ public class AircraftController {
     }
 
     @GetMapping(value = "/suspicious-list", produces = "text/plain")
-    public String getSuspiciousList() {
+    public String getSuspiciousList(@RequestParam(name = "dry-run", required = false, defaultValue = "true") boolean dryRun) {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
 
-            List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
+            world.aircrafts().all()
                     .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.Flying
                             && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
                             && a.getLocationAirportId() == 0
                             && a.getAircraftOperatorId() == World25.ShadowJetOperatorId
                             && a.getLastUpdated() == 0)
-                    .toList();
+                    .forEach(a -> {
+                        Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
+                        results.add(a.getId() + "\t" +
+                                a.getRegNo() + "\t" +
+                                a.getOperationalStatus().name() + "\t" +
+                                a.getLocationStatus().name() + "\t" +
+                                a.getFlownCycles() + "\t" +
+                                a.getFlightMissionId() + "\t" +
+                                (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()) + "\t" +
+                                (a.getFlightMissionId() > 0 ? fm.map(f -> "exist").orElse("absent") : "f/m 0") + "\t" +
+                                fm.map(f -> f.getAircraftId() == a.getId() ? "a/c ok" : "a/c fail").orElse("n/f"));
 
-            results.add("Found " + aircrafts.size());
-
-            aircrafts.forEach(a -> {
-                results.add(a.getId() + "\t" +
-                        a.getRegNo() + "\t" +
-                        a.getFlownCycles() + "\t" +
-                        a.getFlightMissionId() + "\t" +
-                        (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
-            });
-
-            return Strings.join(results, '\n');
-        });
-    }
-
-    @GetMapping(value = "/remove-broken", produces = "text/plain")
-    public String removeBroken() {
-        return worldBean.modifySync(world -> {
-            List<String> results = new ArrayList<>();
-
-            List<Aircrafts.Aircraft> aircrafts = world.aircrafts().all()
-                    .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                            && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active
-                            && a.getLocationAirportId() > 0
-                            && a.getFlightMissionId() > 0
-                            && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isEmpty()
-                            && a.getFlownCycles() == 0
-                            && a.getId() > 3000)
-                    .toList();
-
-            aircrafts.forEach(a -> {
-                results.add(a.getId() + "\t" +
-                        a.getRegNo() + "\t" +
-                        a.getFlownCycles() + "\t" +
-                        a.getFlightMissionId() + "\t" +
-                        (a.getFlightMissionId() > 0 && vatsimTracker.getContextByFlightMissionId(a.getFlightMissionId()).isPresent()));
-            });
-
-            aircrafts.forEach(a -> {
-                world.aircrafts().deleteById(a.getId());
-            });
+                        if (!dryRun) {
+                            if (fm.isPresent()) {
+                                AircraftHelper.releaseAndParkAircraft(world, fm.get());
+                                results.add("A/C #" + a.getId() + ", " + a.getRegNo() + " is parked in " + world.airports().getIcao(a.getLocationAirportId()).orElseThrow());
+                            } else {
+                                results.add("CAN'T FIND FLIGHT MISSION");
+                            }
+                        }
+                    });
 
             return Strings.join(results, '\n');
         });

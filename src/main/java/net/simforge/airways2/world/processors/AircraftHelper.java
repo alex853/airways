@@ -3,6 +3,7 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -19,5 +20,30 @@ public class AircraftHelper {
         aircraft.setLocationLongitude(targetAirport.getLongitude());
 
         aircraft.setLastUpdated(world.getWorldTime());
+    }
+
+    public static Aircrafts.Aircraft releaseAndParkAircraft(final World world, final FlightMissions.Mission mission) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+
+            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+            aircraft.setFlightMissionId(0);
+
+            aircraft.setLastUpdated(world.getWorldTime());
+        } else {
+            final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+
+            aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
+            aircraft.setLocationAirportId(mission.getDepartureAirportId());
+            aircraft.setLocationLatitude(departureAirport.getLatitude());
+            aircraft.setLocationLongitude(departureAirport.getLongitude());
+
+            aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
+            aircraft.setFlightMissionId(0);
+
+            aircraft.setLastUpdated(world.getWorldTime());
+        }
+        return aircraft;
     }
 }
