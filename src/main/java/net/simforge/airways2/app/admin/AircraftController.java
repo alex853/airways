@@ -30,7 +30,7 @@ public class AircraftController {
                 .toList());
     }
 
-    @GetMapping(name = "/frozen-list", produces = "text/plain")
+    @GetMapping(value = "/frozen-list", produces = "text/plain")
     public String resetAircraftStatus() {
         return worldBean.read(world -> {
             List<String> results = new ArrayList<>();
