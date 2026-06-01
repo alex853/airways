@@ -99,7 +99,7 @@ public class ShadowJetLogic {
         }
 
         TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
-        world.c2cFlowControl().updateSuccessRate(transportFlight, 0.01f);
+        world.c2cFlowControl().updateSuccessRate(transportFlight, 0.1f);
 
         world.transportFlightControl().startCheckIn(transportFlight);
 

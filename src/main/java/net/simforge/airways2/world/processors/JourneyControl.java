@@ -91,7 +91,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.WaitingForCheckIn);
         journey.setHeartbeatTime(world.getWorldTime());
 
-        world.c2cFlowControl().updateSuccessRate(journey, 0.005f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.01f);
     }
 
     public void checkin(Journeys.Journey journey) {
@@ -116,7 +116,7 @@ public class JourneyControl {
 
         journey.setStatus(Journeys.Status.OnBoard);
 
-        world.c2cFlowControl().updateSuccessRate(journey, 0.001f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.025f);
 
         log.info("j/y #{} - boarded to t/f #{}", journey.getId(), journey.getTransportFlight1Id());
     }
@@ -139,7 +139,7 @@ public class JourneyControl {
         checkArgument(journey.getStatus() == Journeys.Status.JustArrived);
 
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.005f);
+        world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.01f);
 
         shiftToNextTransportFlight(journey);
 
@@ -162,7 +162,7 @@ public class JourneyControl {
 
         journey.setBookedCabinService(journey.getPreferredCabinService());
 
-        world.c2cFlowControl().updateSuccessRate(journey, 0.04f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.05f);
 
         log.info("j/y #{} - start spending their time", journey.getId());
     }
@@ -192,7 +192,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        world.c2cFlowControl().updateSuccessRate(journey, 0.06f);
+        world.c2cFlowControl().updateSuccessRate(journey, 0.1f);
 
         log.info("j/y #{} - finished, cleanup scheduled", journey.getId());
     }
@@ -210,7 +210,7 @@ public class JourneyControl {
         int oldHeartbeatTime = journey.getHeartbeatTime();
 
         TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.02f);
+        world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
         
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
@@ -227,7 +227,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
-        world.c2cFlowControl().updateSuccessRate(journey, -1.0f);
+        world.c2cFlowControl().updateSuccessRate(journey, -0.5f);
 
         log.info("j/y #{} - could not find tickets, cleanup scheduled", journey.getId());
     }
