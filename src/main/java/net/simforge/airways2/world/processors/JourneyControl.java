@@ -160,6 +160,8 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.SpendingTheirTime);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
 
+        journey.setBookedCabinService(journey.getPreferredCabinService());
+
         world.c2cFlowControl().updateSuccessRate(journey, 0.04f);
 
         log.info("j/y #{} - start spending their time", journey.getId());

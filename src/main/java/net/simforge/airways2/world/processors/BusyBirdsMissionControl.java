@@ -195,7 +195,7 @@ public class BusyBirdsMissionControl {
         return new MissionPlan(
                 MissionPlan.Status.Success,
                 fromAirport.getIcao() + "-" + toAirport.getIcao(),
-                "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + legs.size() + " legs, " + totalDistance + " nm",
+                "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + legs.size() + " leg" + (legs.size() > 1 ? "s" : "") + ", " + totalDistance + " nm",
                 legs,
                 null);
     }
