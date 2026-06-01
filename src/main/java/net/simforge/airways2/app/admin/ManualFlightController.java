@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import static com.google.common.base.Preconditions.checkArgument;
 
 @RestController
-@RequestMapping("/manual-flight")
+@RequestMapping("/admin/manual-flight")
 @CrossOrigin
 public class ManualFlightController {
     private static final Logger log = LoggerFactory.getLogger(ManualFlightController.class);

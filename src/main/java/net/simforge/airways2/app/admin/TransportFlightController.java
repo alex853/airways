@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/transport-flight")
+@RequestMapping("/admin/transport-flight")
 @CrossOrigin
 public class TransportFlightController {
     @SuppressWarnings("unused")

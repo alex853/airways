@@ -10,7 +10,6 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import org.apache.logging.log4j.util.Strings;
-import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

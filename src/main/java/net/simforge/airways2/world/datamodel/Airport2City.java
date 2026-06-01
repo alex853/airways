@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -39,33 +38,19 @@ public class Airport2City {
         checkArgument(airportId > 0);
         checkArgument(cityId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City.byAirportIdAndCityId")) {
-            return storage.findFirst1(recordId -> readAirportId(recordId) == airportId && readCityId(recordId) == cityId);
-        }
+        return storage.findFirst1(recordId -> readAirportId(recordId) == airportId && readCityId(recordId) == cityId);
     }
 
     public Stream<Link> allByAirportId(final int airportId) {
         checkArgument(airportId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City.allByAirportId")) {
-            return storage.filter1(recordId -> readAirportId(recordId) == airportId);
-        }
+        return storage.filter1(recordId -> readAirportId(recordId) == airportId);
     }
 
     public Stream<Link> allByCityId(final int cityId) {
         checkArgument(cityId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2City.allByCityId")) {
-            return storage.filter1(recordId -> readCityId(recordId) == cityId);
-        }
-    }
-
-    public Stream<Link> linksByCityId(final int cityId) {
-        checkArgument(cityId > 0);
-
-        try (final Timing.Timer ignored = Timing.label("Airport2City.linksByCityId")) {
-            return storage.filter1(recordId -> readCityId(recordId) == cityId);
-        }
+        return storage.filter1(recordId -> readCityId(recordId) == cityId);
     }
 
     public Link create(final int airportId, final int cityId) {

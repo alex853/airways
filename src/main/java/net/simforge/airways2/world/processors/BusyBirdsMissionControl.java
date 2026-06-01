@@ -72,13 +72,13 @@ public class BusyBirdsMissionControl {
 
         final Optional<Airports.Airport> fromAirport = chooseAirport(
                 busyBirdsOperator,
-                world.airport2city().linksByCityId(journey.getFromCityId())
+                world.airport2city().allByCityId(journey.getFromCityId())
                         .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
                         .filter(a -> !a.isExcluded())
                         .toList());
         final Optional<Airports.Airport> toAirport = chooseAirport(
                 busyBirdsOperator,
-                world.airport2city().linksByCityId(journey.getToCityId())
+                world.airport2city().allByCityId(journey.getToCityId())
                         .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
                         .filter(a -> !a.isExcluded())
                         .toList());
@@ -246,7 +246,7 @@ public class BusyBirdsMissionControl {
     }
 
     private List<Airports.Airport> listAirports(AircraftOperators.AircraftOperator aircraftOperator, int cityId) {
-        List<Airports.Airport> airports = world.airport2city().linksByCityId(cityId)
+        List<Airports.Airport> airports = world.airport2city().allByCityId(cityId)
                 .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
                 .filter(a -> !a.isExcluded())
                 .toList();

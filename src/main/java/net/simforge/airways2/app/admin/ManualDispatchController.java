@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/manual-dispatch")
+@RequestMapping("/admin/manual-dispatch")
 @CrossOrigin
 public class ManualDispatchController {
     private static final Logger log = LoggerFactory.getLogger(ManualDispatchController.class);

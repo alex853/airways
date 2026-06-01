@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/events-to-process")
+@RequestMapping("/admin/events-to-process")
 @CrossOrigin
 public class EventsToProcessController {
     @Autowired

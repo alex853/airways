@@ -22,7 +22,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 @RestController
-@RequestMapping("/flight-board")
+@RequestMapping("/admin/flight-board")
 @CrossOrigin
 public class FlightBoardController {
     @SuppressWarnings("unused")

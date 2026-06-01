@@ -511,10 +511,10 @@ public class AdminController {
     @GetMapping("/fix-it")
     public String fixIt() {
         return worldBean.modifySync(world -> {
-            int journeyId = 4399;
+            int journeyId = 9179;
 
             Journeys.Journey journey = world.journeys().byId(journeyId).orElseThrow();
-            journey.setBookedCabinService(CabinLayout.Service.J);
+            journey.setFromCityId(49);
 
             return "Done";
         });
@@ -704,11 +704,13 @@ public class AdminController {
 
     @GetMapping("/sqids/generate-alphabet")
     public String generateSqidsAlphabet() {
-        return Id.generateRandomAlphabet();
+        String alphabet = Id.generateRandomAlphabet();
+        log.info("generated alphabet = {}", alphabet);
+        return alphabet;
     }
 
     @GetMapping("/sqids/decode")
-    public String decodeSqidsId(@RequestParam("is") String id) {
+    public String decodeSqidsId(@RequestParam("id") String id) {
         return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
 
