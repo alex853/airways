@@ -8,10 +8,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
-import net.simforge.airways2.world.datamodel.AircraftOperators;
-import net.simforge.airways2.world.datamodel.Aircrafts;
-import net.simforge.airways2.world.datamodel.Airports;
-import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.*;
 
 import java.util.Optional;
 
@@ -39,10 +36,12 @@ public class AircraftFullDto {
     private String fsT;
     private int fsC;
     private String lU;
+    private int pax;
 
     public static AircraftFullDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
         Optional<FlightTimeline> timeline = fm.map(FlightMissionToTimeline::byMission);
+        Optional< TransportFlights.Flight> tf = fm.flatMap(f -> world.transportFlights().byFlightMissionId(f.getId()));
 
         return new AircraftFullDto(
                 Id.encode(a.getId(), encodeIds),
@@ -65,6 +64,7 @@ public class AircraftFullDto {
                 timeline.map(t -> TimeTools.hhmmPlusDaysOrNull(t.getLanding().getEstimatedTime())).orElse(null),
                 TimeTools.minutesToHmm(a.getFlightTime()),
                 a.getFlownCycles(),
-                a.getLastUpdated() > 0 ? Time.toLdt(a.getLastUpdated()).toString() : null);
+                a.getLastUpdated() > 0 ? Time.toLdt(a.getLastUpdated()).toString() : null,
+                tf.map(TransportFlights.Flight::getPaxOnBoard).orElse(0));
     }
 }
