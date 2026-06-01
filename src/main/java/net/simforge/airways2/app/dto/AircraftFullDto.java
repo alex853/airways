@@ -6,6 +6,8 @@ import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.FlightMissionToTimeline;
+import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -34,12 +36,14 @@ public class AircraftFullDto {
     private String pArr;
     private String aTkf;
     private String eLdg;
-    private String fsTime;
-    private int fsCycles;
+    private String fsT;
+    private int fsC;
     private String lU;
 
     public static AircraftFullDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
-        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(a.getFlightMissionId());
+        Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
+        Optional<FlightTimeline> timeline = fm.map(FlightMissionToTimeline::byMission);
+
         return new AircraftFullDto(
                 Id.encode(a.getId(), encodeIds),
                 world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
@@ -53,12 +57,12 @@ public class AircraftFullDto {
                 a.getLocationHeading(),
                 a.getLocationAltitude(),
                 Id.encodeOrNull(a.getFlightMissionId(), encodeIds),
-                mission.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse("n/a"),
-                mission.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse("n/a"),
-                mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedDepartureWorldTime())).orElse("n/a"),
-                mission.map(m -> TimeTools.hhmmOrNull(m.getPlannedArrivalWorldTime())).orElse("n/a"),
-                mission.map(m -> TimeTools.hhmmOrNull(m.getActualTakeoffWorldTime())).orElse("n/a"),
-                null,
+                fm.map(m -> world.airports().byId(m.getDepartureAirportId()).orElseThrow().getIcao()).orElse(null),
+                fm.map(m -> world.airports().byId(m.getDestinationAirportId()).orElseThrow().getIcao()).orElse(null),
+                fm.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getPlannedDepartureWorldTime())).orElse(null),
+                fm.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getPlannedArrivalWorldTime())).orElse(null),
+                fm.map(m -> TimeTools.hhmmPlusDaysOrNull(m.getActualTakeoffWorldTime())).orElse(null),
+                timeline.map(t -> TimeTools.hhmmPlusDaysOrNull(t.getLanding().getEstimatedTime())).orElse(null),
                 TimeTools.minutesToHmm(a.getFlightTime()),
                 a.getFlownCycles(),
                 a.getLastUpdated() > 0 ? Time.toLdt(a.getLastUpdated()).toString() : null);
