@@ -7003,40 +7003,40 @@ Hungary,HU,Szirmabesenyo,4700,48.16,20.79
 Hungary,HU,Toszeg,4700,47.1,20.16
 Hungary,HU,Vasvar,4700,47.05,16.8
 Hungary,HU,Cibakhaza,4600,46.97,20.2
-Iceland,IS,Reykjavik,113400,64.14,-21.92
-Iceland,IS,Kopavogur,25700,64.12,-21.92
-Iceland,IS,Hafnarfjordur,21600,64.06,-21.95
+Iceland,IS,Reykjavik,270000,64.14,-21.92
+Iceland,IS,del Kopavogur,25700,64.12,-21.92
+Iceland,IS,del Hafnarfjordur,21600,64.06,-21.95
 Iceland,IS,Akureyri,16300,65.69,-18.12
-Iceland,IS,Gardabaer,9000,64.09,-21.99
-Iceland,IS,Keflavik,8000,64.01,-22.56
-Iceland,IS,Mosfellsbaer,6700,64.15,-21.65
-Iceland,IS,Akranes,5600,64.33,-22.09
-Iceland,IS,Selfoss,5200,63.94,-21.01
-Iceland,IS,Seltjarnarnes,4600,64.13,-21.93
+Iceland,IS,del Gardabaer,9000,64.09,-21.99
+Iceland,IS,del Keflavik,8000,64.01,-22.56
+Iceland,IS,del Mosfellsbaer,6700,64.15,-21.65
+Iceland,IS,del Akranes,5600,64.33,-22.09
+Iceland,IS,del Selfoss,5200,63.94,-21.01
+Iceland,IS,del Seltjarnarnes,4600,64.13,-21.93
 Iceland,IS,Vestmannaeyjar,4300,63.44,-20.27
-Iceland,IS,Njardvik,2800,63.97,-22.55
+Iceland,IS,del Njardvik,2800,63.97,-22.55
 Iceland,IS,Isafjordur,2600,66.08,-23.14
 Iceland,IS,Saudarkrokur,2600,65.74,-19.66
-Iceland,IS,Grindavik,2500,63.85,-22.45
+Iceland,IS,del Grindavik,2500,63.85,-22.45
 Iceland,IS,Husavik,2400,66.05,-17.35
-Iceland,IS,Alftanes,2000,64.11,-22.03
-Iceland,IS,Hveragerdi,1900,64.01,-21.21
-Iceland,IS,Borgarnes,1800,64.54,-21.95
+Iceland,IS,del Alftanes,2000,64.11,-22.03
+Iceland,IS,del Hveragerdi,1900,64.01,-21.21
+Iceland,IS,del Borgarnes,1800,64.54,-21.95
 Iceland,IS,Egilsstadir,1800,65.26,-14.4
 Iceland,IS,Hofn,1700,64.26,-15.21
 Iceland,IS,Dalvik,1400,65.98,-18.58
 Iceland,IS,Neskaupstadur,1400,65.15,-13.7
-Iceland,IS,Sandgerdi,1400,64.05,-22.71
+Iceland,IS,del Sandgerdi,1400,64.05,-22.71
 Iceland,IS,Siglufjordur,1400,66.16,-18.93
-Iceland,IS,Gardur,1300,64.07,-22.65
-Iceland,IS,#orlakshofn,1300,63.86,-21.4
+Iceland,IS,del Gardur,1300,64.07,-22.65
+Iceland,IS,del #orlakshofn,1300,63.86,-21.4
 Iceland,IS,Stykkisholmur,1100,65.07,-22.74
 Iceland,IS,Olafsvik,1000,64.89,-23.74
 Iceland,IS,Eskifjordur,980,65.07,-14.0
 Iceland,IS,Olafsfjordur,972,66.07,-18.65
 Iceland,IS,Bolungarvik,933,66.15,-23.27
 Iceland,IS,Blonduos,902,65.66,-20.31
-Iceland,IS,Vogar,867,63.97,-22.37
+Iceland,IS,del Vogar,867,63.97,-22.37
 Iceland,IS,Grundarfjordur,828,64.92,-23.27
 Iceland,IS,Hvolsvollur,726,63.75,-20.23
 Iceland,IS,Seydisfjordur,722,65.25,-14.02
@@ -7044,12 +7044,12 @@ Iceland,IS,Reydarfjordur,698,65.03,-14.22
 Iceland,IS,Patreksfjordur,690,65.58,-24.0
 Iceland,IS,Hella,642,63.83,-20.4
 Iceland,IS,Faskrudsfjordur,619,64.93,-14.02
-Iceland,IS,Eyrarbakki,585,63.87,-21.15
+Iceland,IS,del Eyrarbakki,585,63.87,-21.15
 Iceland,IS,Hvammstangi,579,65.4,-20.95
 Iceland,IS,Skagastrond,571,65.83,-20.32
 Iceland,IS,Vopnafjordur,560,65.75,-14.83
-Iceland,IS,Grundarhverfi,525,64.25,-21.85
-Iceland,IS,Stokkseyri,464,63.83,-21.07
+Iceland,IS,del Grundarhverfi,525,64.25,-21.85
+Iceland,IS,del Stokkseyri,464,63.83,-21.07
 Iceland,IS,Hnifsdalur,414,66.11,-23.15
 Iceland,IS,Hellissandur,410,64.92,-23.9
 Iceland,IS,Holmavik,405,65.72,-21.68
@@ -7070,7 +7070,7 @@ Iceland,IS,Bildudalur,226,65.67,-23.62
 Iceland,IS,Bifrost,209,64.75,-21.5
 Iceland,IS,Reykjahlid,207,65.65,-16.92
 Iceland,IS,Svalbardseyri,204,65.75,-18.1
-Iceland,IS,Hvanneyri,200,64.57,-21.77
+Iceland,IS,del Hvanneyri,200,64.57,-21.77
 Iceland,IS,Sudavik,192,66.03,-23.0
 Iceland,IS,Laugarvatn,181,64.22,-20.73
 Iceland,IS,Hofsos,177,65.9,-19.43
@@ -17037,7 +17037,7 @@ United States,US,Memphis,1335000,35.11,-90.01
 United States,US,Baltimore,624600,39.3,-76.61
 United States,US,Fort Worth,599800,32.75,-97.34
 United States,US,El paso,591600,31.85,-106.44
-United States,US,Charlotte,589400,35.2,-80.83
+United States,US,Charlotte,2912000,35.2,-80.83
 United States,US,Milwaukee,585600,43.06,-87.97
 United States,US,Boston,577100,42.34,-71.02
 United States,US,Seattle,2546200,47.62,-122.35

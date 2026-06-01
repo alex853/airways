@@ -10,8 +10,7 @@ import java.util.List;
 
 public class FindCitiesNearAirport {
     public static void main(String[] args) throws IOException {
-        String icao = "KSLC";
-        int maxDistance = 65;
+        String icao = "KCLT";
 
         Geo.Coords airportCoords = null;
 
@@ -34,7 +33,7 @@ public class FindCitiesNearAirport {
 
         Csv citiesCsv = ImportCities.loadCityPopulationCsv();
 
-        List<ImportCities.CityInfo> found = ImportCities.getCitiesNearAirport(citiesCsv, airportCoords, 50);
+        List<ImportCities.CityInfo> found = ImportCities.getCitiesNearAirport(citiesCsv, airportCoords, 70);
 
         found.sort(Comparator.comparing(ImportCities.CityInfo::getPopulation).reversed());
         System.out.println("Cities close to " + icao);
