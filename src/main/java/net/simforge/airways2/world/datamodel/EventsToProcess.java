@@ -7,9 +7,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -41,7 +39,7 @@ public class EventsToProcess {
         storage.save(rootPath);
     }
 
-    public Event sendEvent(final Type type,
+    public void sendEvent(final Type type,
                            final int objectId,
                            final int time) {
         checkNotNull(type, "type is mandatory");
@@ -51,24 +49,23 @@ public class EventsToProcess {
         storage.set(recordId, typeField, type.code());
         storage.set(recordId, timeField, time);
         storage.set(recordId, objectIdField, objectId);
-        return new Event(recordId);
     }
 
-    public Optional<Event> findFirstActiveEvent(final Type type, int worldTime) {
+    public Optional<Event> findFirstActiveEvent(Type type, int time) {
         checkNotNull(type, "type is mandatory");
 
-        return storage.findFirst(event -> event.getStatus() == Status.Active
-                && event.getType() == type
-                && event.getTime() <= worldTime);
+        return storage.findFirst1(recordId -> readStatusRaw(recordId) == Status.Active.ordinal()
+                && readTypeRaw(recordId) == type.code()
+                && readTime(recordId) <= time);
     }
 
     public Stream<Event> all() {
         return storage.all();
     }
 
-    @Deprecated
-    public Collection<Event> filter(final Predicate<EventsToProcess.Event> condition) {
-        return storage.filter(condition); // todo ak2 migrate to filter1
+    public Stream<Event> processedOlderThan(int time) {
+        return storage.filter1(recordId -> readTime(recordId) <= time
+                && readStatusRaw(recordId) == Status.Processed.ordinal());
     }
 
     public void deleteById(final int id) {
@@ -103,7 +100,7 @@ public class EventsToProcess {
         }
 
         public int getStatusRaw() {
-            return storage.getAsInt(id, statusField);
+            return readStatusRaw(id);
         }
 
         public Type getType() {
@@ -111,16 +108,28 @@ public class EventsToProcess {
         }
 
         public int getTypeRaw() {
-            return storage.getAsInt(id, typeField);
+            return readTypeRaw(id);
         }
 
         public int getTime() {
-            return storage.getAsInt(id, timeField);
+            return readTime(id);
         }
 
         public int getObjectId() {
             return storage.getAsInt(id, objectIdField);
         }
+    }
+
+    private int readStatusRaw(int recordId) {
+        return storage.getAsInt(recordId, statusField);
+    }
+
+    private int readTypeRaw(int recordId) {
+        return storage.getAsInt(recordId, typeField);
+    }
+
+    private int readTime(int recordId) {
+        return storage.getAsInt(recordId, timeField);
     }
 
     public enum Status {

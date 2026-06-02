@@ -61,7 +61,7 @@ public class EventLog {
 
     @Deprecated
     public Collection<EventLog.Event> filter(final Predicate<EventLog.Event> condition) {
-        return storage.filter(condition); // todo ak2 migrate to filter1
+        return storage.filter(condition); // todo ak0 migrate to filter1
     }
 
     public void deleteById(final int id) {

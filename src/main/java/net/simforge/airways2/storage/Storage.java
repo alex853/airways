@@ -121,6 +121,7 @@ public class Storage<T> {
         return Optional.of(instantiator.create(recordId));
     }
 
+    // todo ak0 remove it when all usages will be replaced
     @Deprecated
     public Collection<T> filter(final Predicate<T> condition) {
         final List<T> result = new ArrayList<>();
@@ -160,7 +161,7 @@ public class Storage<T> {
                 .mapToObj(instantiator::create);
     }
 
-    // todo ak3 rename when all .filter() usages will be wiped out
+    // todo ak0 rename when all .filter() usages will be wiped out
     public Stream<T> filter1(final Condition<T> condition) {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
