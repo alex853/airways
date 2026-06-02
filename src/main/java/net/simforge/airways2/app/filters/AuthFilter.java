@@ -34,7 +34,7 @@ public class AuthFilter extends OncePerRequestFilter {
             || uri.startsWith("/flight-dashboard")
             || uri.startsWith("/sim")) {
             processUserToken(request, response, filterChain);
-        } if (uri.startsWith("/admin")) {
+        } else if (uri.startsWith("/admin")) {
             processAdminToken(request, response, filterChain);
         } else {
             filterChain.doFilter(request, response);
