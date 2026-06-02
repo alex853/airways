@@ -84,7 +84,7 @@ public class AircraftController {
                                 fm.map(f -> f.getAircraftId() == a.getId() ? "a/c OK" : "a/c F/L").orElse("f/m N/F") + "\t" +
                                 fm.map(f -> f.getStatus().name()).orElse("n/a"));
 
-                        if (!dryRun && updated.get() < 100) {
+                        if (!dryRun && updated.get() < 10) {
                             if (fm.isPresent()) {
                                 updated.incrementAndGet();
                                 AircraftHelper.releaseAndParkAircraft(world, a);
