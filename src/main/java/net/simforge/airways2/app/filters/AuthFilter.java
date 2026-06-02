@@ -33,15 +33,17 @@ public class AuthFilter extends OncePerRequestFilter {
         if (uri.startsWith("/busy-birds")
             || uri.startsWith("/flight-dashboard")
             || uri.startsWith("/sim")) {
-            processToken(request, response, filterChain);
+            processUserToken(request, response, filterChain);
+        } if (uri.startsWith("/admin")) {
+            processAdminToken(request, response, filterChain);
         } else {
             filterChain.doFilter(request, response);
         }
     }
 
-    private void processToken(HttpServletRequest request,
-                                     HttpServletResponse response,
-                                     FilterChain filterChain) throws IOException, ServletException {
+    private void processUserToken(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) throws IOException, ServletException {
         String header = request.getHeader("Authorization");
 
         if (header == null || !header.startsWith("Bearer ")) {
@@ -58,6 +60,27 @@ public class AuthFilter extends OncePerRequestFilter {
         }
 
         request.setAttribute("userId", userId.get());
+        filterChain.doFilter(request, response);
+    }
+
+    private void processAdminToken(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) throws IOException, ServletException {
+        String header = request.getHeader("Authorization");
+
+        if (header == null || !header.startsWith("Bearer ")) {
+            send401Response(response);
+            return;
+        }
+
+        String token = header.substring(7);
+
+        boolean correctToken = userService.isCorrectAdminToken(token);
+        if (correctToken) {
+            send401Response(response);
+            return;
+        }
+
         filterChain.doFilter(request, response);
     }
 
