@@ -138,7 +138,7 @@ public class FlightMissionProcessor {
 
         double timeHrs = Duration.between(Time.toLdt(aircraft.getLastUpdated()), Time.toLdt(worldTime)).getSeconds() / 3600.0;
 
-        double seaLevelTas = performanceData.getTakeoffSpeed() * 1.3;
+        double seaLevelTas = performanceData.getTakeoffSpeed();
         double cruiseLevelTas = performanceData.getTypicalCruiseSpeed();
 
         double altitudeFactor = (double) aircraft.getLocationAltitude() / (double) performanceData.getTypicalCruiseAltitude();
