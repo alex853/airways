@@ -22,7 +22,7 @@ public class CityFlowsProcessor {
         }
 
         final Cities.City city = world.cities().byId(thisCity.get().getId()).orElseThrow();
-        log.info("city flow #{}, '{}' - lets redistribute", thisCity.get().getId(), city.getName());
+        log.info("c/f #{} [{}] - lets redistribute", thisCity.get().getId(), city.getName());
 
         final Collection<CityFlows.Flow> reachableCities = world.cityFlows().all()
                 .filter(f -> f.getId() != thisCity.get().getId())
@@ -35,7 +35,7 @@ public class CityFlowsProcessor {
                 .allFromCityId(thisCity.get().getId())
                 .collect(Collectors.toMap(City2CityFlows.Flow::getToCityId, f -> f));
         final Set<Integer> c2cFlowsToBeDeactivated = new TreeSet<>(existingC2CFlows.keySet());
-        log.info("city flow #{}, '{}' - there are {} reachable cities, total flow units {}, there are {} existing c2cflows", thisCity.get().getId(), city.getName(), reachableCities.size(), totalFlowUnits, existingC2CFlows.size());
+        log.info("c/f #{} [{}] - there are {} reachable cities, total flow units {}, there are {} existing c2cflows", thisCity.get().getId(), city.getName(), reachableCities.size(), totalFlowUnits, existingC2CFlows.size());
 
         reachableCities.forEach(toCity -> {
             c2cFlowsToBeDeactivated.remove(toCity.getId());
@@ -56,8 +56,8 @@ public class CityFlowsProcessor {
             c2cFlow.setFlowFraction(flowFraction);
             c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
             final String toCityName = world.cities().byId(toCity.getId()).orElseThrow().getName();
-            log.info("city flow #{}, '{}' - flow to city #{}, '{}' is active, flow units {}, percentage {}, next group size {}, acc flow {}",
-                    thisCity.get().getId(), city.getName(), toCity.getId(), toCityName, flowUnits, df3.format(flowFraction*100), c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());
+            log.info("c2c #{}/{} [{} -> {}] - active, flow units {}, percentage {}, next group size {}, acc flow {}",
+                    thisCity.get().getId(), toCity.getId(), city.getName(), toCityName, flowUnits, df3.format(flowFraction*100), c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());
         });
 
         c2cFlowsToBeDeactivated.forEach(toCityId -> {
@@ -65,10 +65,10 @@ public class CityFlowsProcessor {
             c2cFlow.setActive(false);
             c2cFlow.setHeartbeatTime(0);
             final String toCityName = world.cities().byId(toCityId).orElseThrow().getName();
-            log.info("city flow #{}, '{}' - flow to city #{}, '{}' is inactive", thisCity.get().getId(), city.getName(), toCityId, toCityName);
+            log.info("c2c #{}/{} [{} -> {}] - inactive", thisCity.get().getId(), toCityId, city.getName(), toCityName);
         });
 
         thisCity.get().setLastRedistributionTime(world.getWorldTime());
-        log.info("city flow #{}, '{}' - completed", thisCity.get().getId(), city.getName());
+        log.info("c/f #{} [{}] - completed", thisCity.get().getId(), city.getName());
     }
 }
