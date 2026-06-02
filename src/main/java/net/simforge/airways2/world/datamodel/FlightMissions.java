@@ -30,7 +30,7 @@ public class FlightMissions {
             .withInstantiator(Mission::new)
             .withIdOf(DataType.Unsigned24bit)
             .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // status 0..15, modes 76xxxxxx, bits xx54xxxx are non-used
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // status 0..15, modes 765xxxxx, bits xxx4xxxx are non-used
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
@@ -52,8 +52,8 @@ public class FlightMissions {
     private final DataField statusRawField = storage.getDataField(1);
     private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
     private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
-    //private final BitAccessField.Section unusedBitField = statusFieldBits.section(4, 2);
-    private final BitAccessField.Section coordinatesSourceBitField = statusFieldBits.section(6, 1);
+    //private final BitAccessField.Section unusedBitField = statusFieldBits.section(4, 1);
+    private final BitAccessField.Section coordinatesSourceBitField = statusFieldBits.section(5, 2);
     private final BitAccessField.Section characterModeBitField = statusFieldBits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(2);
     private final DataField departureAirportIdField = storage.getDataField(3);
@@ -488,12 +488,14 @@ public class FlightMissions {
     }
 
     public enum CoordinatesSource {
-        AutomaticSimpleFlight, TrackedViaTracker;
+        AutomaticSimpleFlight, TrackedViaTracker, FlyHeadingMode;
 
         public static CoordinatesSource byCode(int code) {
             return switch (code) {
                 case 0 -> AutomaticSimpleFlight;
                 case 1 -> TrackedViaTracker;
+                case 2 -> FlyHeadingMode;
+                case 3 -> TrackedViaTracker; // todo ak0 remove it as obsolete
                 default -> throw new IllegalArgumentException("Invalid coordinates source code: " + code);
             };
         }

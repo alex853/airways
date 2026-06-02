@@ -563,10 +563,16 @@ public class PilotContext {
                 return null;
             }
 
+            if (mission.getCoordinatesSource() != FlightMissions.CoordinatesSource.FlyHeadingMode) {
+                log.warn("f/m #{} - switching to fly-heading mode", mission.getId());
+                mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyHeadingMode);
+            }
+
             aircraft.setLocationLatitude((float) position.getCoords().getLat());
             aircraft.setLocationLongitude((float) position.getCoords().getLon());
             aircraft.setLocationHeading(position.getHeading());
             aircraft.setLocationAltitude(position.getActualAltitude());
+            aircraft.setLastUpdated(world.getWorldTime());
 
             return mission;
         });

@@ -59,7 +59,9 @@ public class FlightMissionProcessor {
             }
             case Flying -> {
                 if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
-                    fly(world, worldTime, mission);
+                    flySimpleFlight(world, worldTime, mission);
+                } else if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.FlyHeadingMode) {
+                    flyHeadingMode(world, worldTime, mission);
                 }
             }
             case Arrival -> {
@@ -90,7 +92,7 @@ public class FlightMissionProcessor {
         }
     }
 
-    private static void fly(final World world, final int worldTime, final FlightMissions.Mission mission) {
+    private static void flySimpleFlight(final World world, final int worldTime, final FlightMissions.Mission mission) {
         final Airports.Airport fromAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport toAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
@@ -127,6 +129,29 @@ public class FlightMissionProcessor {
                 world.flightMissionControl().landing(mission, toAirport);
             }
         }
+    }
+
+    private static void flyHeadingMode(final World world, final int worldTime, final FlightMissions.Mission mission) {
+        Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
+
+        double timeHrs = Duration.between(Time.toLdt(aircraft.getLastUpdated()), Time.toLdt(worldTime)).getSeconds() / 3600.0;
+
+        double seaLevelTas = performanceData.getTakeoffSpeed() * 1.3;
+        double cruiseLevelTas = performanceData.getTypicalCruiseSpeed();
+
+        double altitudeFactor = (double) aircraft.getLocationAltitude() / (double) performanceData.getTypicalCruiseAltitude();
+
+        double currentTasKts = seaLevelTas + altitudeFactor * (cruiseLevelTas - seaLevelTas);
+
+        double distanceNm = currentTasKts * timeHrs;
+
+        Geo.Coords currentPosition = Geo.destination(aircraft.getLocationCoords(), aircraft.getLocationHeading(), distanceNm);
+
+        aircraft.setLocationLatitude((float) currentPosition.getLat());
+        aircraft.setLocationLongitude((float) currentPosition.getLon());
+        aircraft.setLastUpdated(worldTime);
     }
 
     private static void processPilotOnDutyEvent(World world, EventsToProcess.Event event) {
