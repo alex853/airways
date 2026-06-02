@@ -84,6 +84,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(mission.getDepartureAirportId());
         aircraft.setLocationLatitude(departureAirport.getLatitude());
         aircraft.setLocationLongitude(departureAirport.getLongitude());
+        aircraft.setLocationAltitude(0);
 
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
         aircraft.setFlightMissionId(0);
@@ -131,6 +132,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(0);
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
+        aircraft.setLocationAltitude(0);
         aircraft.setLastUpdated(world.getWorldTime());
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightTakeoffs);
@@ -152,6 +154,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(landingAirport.getId());
         aircraft.setLocationLatitude(landingAirport.getLatitude());
         aircraft.setLocationLongitude(landingAirport.getLongitude());
+        aircraft.setLocationAltitude(0);
         aircraft.setLastUpdated(world.getWorldTime());
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightLands);
@@ -172,6 +175,7 @@ public class FlightMissionControl {
         aircraft.setLocationAirportId(locationAirport.getId());
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
+        aircraft.setLocationAltitude(0);
         aircraft.setLastUpdated(world.getWorldTime());
 
         // todo ak3 pilot/pilots/cabin crew - set status, location

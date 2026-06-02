@@ -18,6 +18,7 @@ public class AircraftHelper {
         aircraft.setLocationAirportId(targetAirport.getId());
         aircraft.setLocationLatitude(targetAirport.getLatitude());
         aircraft.setLocationLongitude(targetAirport.getLongitude());
+        aircraft.setLocationAltitude(0);
 
         aircraft.setLastUpdated(world.getWorldTime());
     }
@@ -38,6 +39,7 @@ public class AircraftHelper {
             aircraft.setLocationAirportId(mission.getDepartureAirportId());
             aircraft.setLocationLatitude(departureAirport.getLatitude());
             aircraft.setLocationLongitude(departureAirport.getLongitude());
+            aircraft.setLocationAltitude(0);
 
             aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);
             aircraft.setFlightMissionId(0);

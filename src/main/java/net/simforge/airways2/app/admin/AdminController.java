@@ -9,7 +9,6 @@ import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
-import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;

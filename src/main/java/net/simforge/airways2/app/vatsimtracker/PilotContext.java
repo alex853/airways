@@ -213,6 +213,8 @@ public class PilotContext {
                 shouldBeRemoved = true;
             } else if (landing) {
                 landingFromFlyingStage(newPosition);
+            } else {
+                mission_updateAircraftCoords(newPosition);
             }
         } else if (flightStage == FlightStage.FlyingOffline) {
             final FlightMissions.Mission mission = mission_read();
@@ -226,6 +228,8 @@ public class PilotContext {
                 final long minutesOffline = getElapsedSecondsSinceLastSeen(newPosition.getReportInfo().getReport()) / Time.ONE_MINUTE;
                 final long range = ((minutesOffline / 10) + 1) * 10;
                 FlightStats.event("vatsim - flying-offline - duration " + range);
+
+                mission_updateAircraftCoords(newPosition);
             } else if (!landing) { // still flying and track discontinued
                 final Flightplan flightplanCopy = flightplan;
                 mission_cancelFromFlying();
@@ -524,6 +528,45 @@ public class PilotContext {
             }
 
             FlightStats.event("vatsim - takeoff");
+
+            return mission;
+        });
+    }
+
+    private void mission_updateAircraftCoords(Position position) {
+        worldAccess.modifySync(world -> {
+            final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
+            if (mission1.isEmpty()) {
+                log.error("erroneous case, f/m not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - fm not found");
+                return null;
+            }
+            FlightMissions.Mission mission = mission1.get();
+
+            if (mission.getStatus() != FlightMissions.Status.Flying) {
+                log.error("erroneous case, f/m not in Flying state, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - fm not in Flying state");
+                return null;
+            }
+
+            Optional<Aircrafts.Aircraft> aircraft1 = world.aircrafts().byId(mission.getAircraftId());
+            if (aircraft1.isEmpty()) {
+                log.error("erroneous case, aircraft not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - aircraft not found");
+                return null;
+            }
+
+            Aircrafts.Aircraft aircraft = aircraft1.get();
+            if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
+                log.error("erroneous case, aircraft not in Flying state, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - aircraft not in Flying state");
+                return null;
+            }
+
+            aircraft.setLocationLatitude((float) position.getCoords().getLat());
+            aircraft.setLocationLongitude((float) position.getCoords().getLon());
+            aircraft.setLocationHeading(position.getHeading());
+            aircraft.setLocationAltitude(position.getActualAltitude());
 
             return mission;
         });
