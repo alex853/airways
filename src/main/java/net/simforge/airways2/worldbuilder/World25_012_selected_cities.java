@@ -53,6 +53,10 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:EG", "city-name:Giza"},
                 new String[]{"country-code:EG", "city-name:Shubra El Kheima"},
 
+                new String[]{"country-code:ES", "city-name:Mallorca"},
+                new String[]{"country-code:ES", "city-name:Menorca"},
+                new String[]{"country-code:ES", "city-name:Ibiza"},
+
                 new String[]{"country-code:FI", "city-name:Helsinki"},
 
                 new String[]{"country-code:FR", "city-name:Nice"},
@@ -69,6 +73,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:JP", "city-name:Tokyo"},
                 new String[]{"country-code:JP", "city-name:Yokohama"},
                 new String[]{"country-code:JP", "city-name:Kawasaki"},
+
+                new String[]{"country-code:IN", "city-name:Mumbai"},
 
                 new String[]{"country-code:IT", "city-name:Venice"},
 

@@ -7076,7 +7076,7 @@ Iceland,IS,Laugarvatn,181,64.22,-20.73
 Iceland,IS,Hofsos,177,65.9,-19.43
 Iceland,IS,Hrisey,177,66.0,-18.38
 Iceland,IS,Breiddalsvik,175,64.8,-14.0
-India,IN,Mumbai,12622500,18.96,72.82
+India,IN,Mumbai,13922500,18.96,72.82
 India,IN,Dilli,10400900,28.67,77.21
 India,IN,Kolkata,4852800,22.57,88.36
 India,IN,Bengaluru,4547300,12.97,77.56
@@ -14871,7 +14871,8 @@ Spain,ES,Zaragoza,641500,41.65,-0.89
 Spain,ES,Malaga,525900,36.72,-4.42
 Spain,ES,Murcia,408700,37.98,-1.13
 Spain,ES,Las palmas,356200,28.1,-15.43
-Spain,ES,Palma,345700,39.57,2.65
+Spain,ES,Mallorca,970000,39.57,2.65
+Spain,ES,del Palma,345700,39.57,2.65
 Spain,ES,Bilbao,343100,43.25,-2.93
 Spain,ES,Valladolid,313900,41.65,-4.74
 Spain,ES,Alacant,312000,38.35,-0.48
@@ -15018,8 +15019,9 @@ Spain,ES,Colmenar viejo,40700,40.67,-3.76
 Spain,ES,Rivas-vaciamadrid,40700,40.33,-3.52
 Spain,ES,Benalmadena,39900,36.6,-4.57
 Spain,ES,Mairena del aljarafe,39800,37.34,-6.07
-Spain,ES,Calvia,39700,39.57,2.51
-Spain,ES,Eivissa,39400,38.91,1.42
+Spain,ES,del Calvia,39700,39.57,2.51
+Spain,ES,Ibiza,179400,38.91,1.42
+Spain,ES,del Eivissa,39400,38.91,1.42
 Spain,ES,Denia,39100,38.85,0.11
 Spain,ES,Alzira,38800,39.16,-0.44
 Spain,ES,Arganda del rey,38800,40.3,-3.44
@@ -15053,7 +15055,7 @@ Spain,ES,Ubeda,33900,38.02,-3.38
 Spain,ES,Los palacios y villafranca,33800,37.26,-6.0
 Spain,ES,Tomelloso,33600,39.16,-3.02
 Spain,ES,Los realejos,33100,28.39,-16.57
-Spain,ES,Manacor,33100,39.57,3.2
+Spain,ES,del Manacor,33100,39.57,3.2
 Spain,ES,Vilagarcia de arousa,33100,42.61,-8.77
 Spain,ES,Teruel,32800,40.34,-1.11
 Spain,ES,Figueres,32700,42.27,2.95
@@ -15089,7 +15091,7 @@ Spain,ES,Carballo,28000,43.22,-8.69
 Spain,ES,Arcos de la frontera,27900,36.76,-5.81
 Spain,ES,Torre-pacheco,27900,37.74,-0.96
 Spain,ES,Novelda,27800,38.39,-0.78
-Spain,ES,Marratxi,27500,39.65,2.8
+Spain,ES,del Marratxi,27500,39.65,2.8
 Spain,ES,Almendralejo,27400,38.68,-6.41
 Spain,ES,Moron de la frontera,27400,37.13,-5.46
 Spain,ES,Premia de mar,27300,41.5,2.38
@@ -15100,7 +15102,7 @@ Spain,ES,El vendrell,26900,41.23,1.52
 Spain,ES,Xativa,26700,39.0,-0.53
 Spain,ES,Barbera del valles,26500,41.52,2.12
 Spain,ES,Martorell,26400,41.47,1.93
-Spain,ES,Llucmajor,26300,39.49,2.88
+Spain,ES,del Llucmajor,26300,39.49,2.88
 Spain,ES,Valdepenas,26200,38.76,-3.39
 Spain,ES,Carmona,26100,37.48,-5.63
 Spain,ES,Villaviciosa de odon,26100,40.36,-3.89
@@ -15116,7 +15118,7 @@ Spain,ES,Durango,25500,43.18,-2.63
 Spain,ES,Ribeira,25500,42.8,-8.95
 Spain,ES,Sant andreu de la barca,25300,41.45,1.97
 Spain,ES,Cangas,25200,42.28,-8.78
-Spain,ES,Inca,25200,39.72,2.91
+Spain,ES,del Inca,25200,39.72,2.91
 Spain,ES,Caravaca de la cruz,25100,38.11,-1.87
 Spain,ES,Culleredo,25100,43.29,-8.39
 Spain,ES,Jumilla,25100,38.48,-1.34
@@ -15128,9 +15130,10 @@ Spain,ES,La vila joiosa,24500,38.51,-0.24
 Spain,ES,Rota,24500,36.63,-6.36
 Spain,ES,Villanueva de la serena,24500,38.98,-5.8
 Spain,ES,Coria del rio,24400,37.3,-6.06
-Spain,ES,Mahon,24400,39.89,4.25
+Spain,ES,Menorca,104400,39.89,4.25
+Spain,ES,del Mahon,24400,39.89,4.25
 Spain,ES,Marin,24400,42.4,-8.7
-Spain,ES,Ciutadella de menorca,24300,40.0,3.83
+Spain,ES,del Ciutadella de menorca,24300,40.0,3.83
 Spain,ES,Mazarron,24300,37.6,-1.32
 Spain,ES,Algemesi,24200,39.2,-0.44
 Spain,ES,Lebrija,24200,36.93,-6.08
