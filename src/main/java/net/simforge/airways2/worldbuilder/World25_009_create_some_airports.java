@@ -24,7 +24,7 @@ public class World25_009_create_some_airports {
                 "KAUS", "KBOS", "KJFK", "KLAX", "KSFO", "KLGA", "KSAN",
                 "LCLK", "LCPH",
                 "LDDU", "LDSP",
-                "LEAL", "LEIB", "LEMG", "LEPA",
+                "LEAL", "LEIB", "LEMG", "LEPA", "LEMH",
                 "LFKF", "LFMN",
                 "LGAV", "LGIR", "LGKO", "LGKR", "LGRP", "LGSK", "LGSM", "LGZA",
                 "LHBP",
