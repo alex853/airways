@@ -4,6 +4,7 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.storage.Strings;
+import net.simforge.airways2.world.World;
 import net.simforge.commons.misc.Geo;
 
 import java.io.IOException;
@@ -56,8 +57,11 @@ public class Aircrafts {
     private final DataField flownCyclesField = storage.getDataField(12);
     private final DataField lastUpdatedField = storage.getDataField(13);
 
-    public Aircrafts(final Strings strings) {
+    private final World world;
+
+    public Aircrafts(Strings strings, World world) {
         this.strings = strings;
+        this.world = world;
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {
@@ -100,6 +104,7 @@ public class Aircrafts {
         storage.set(recordId, locationAirportIdField, locationAirport.getId());
         storage.set(recordId, locationLatitudeField, locationAirport.getLatitude());
         storage.set(recordId, locationLongitudeField, locationAirport.getLongitude());
+        storage.set(recordId, lastUpdatedField, world.getWorldTime());
         return new Aircraft(recordId);
     }
 

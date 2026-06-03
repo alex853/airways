@@ -11,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class World {
     private static final Logger log = LoggerFactory.getLogger(World.class);
@@ -30,7 +29,7 @@ public class World {
     private final AirportFacilities airportFacilities = new AirportFacilities();
 
     private final AircraftTypes aircraftTypes = new AircraftTypes();
-    private final Aircrafts aircrafts = new Aircrafts(this.strings);
+    private final Aircrafts aircrafts = new Aircrafts(this.strings, this);
     private final AircraftOperators aircraftOperators = new AircraftOperators();
     private final FlightMissions flightMissions = new FlightMissions();
 
