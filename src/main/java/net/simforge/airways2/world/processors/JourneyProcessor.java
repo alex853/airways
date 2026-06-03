@@ -86,8 +86,7 @@ public class JourneyProcessor {
         final int TIME_RESERVE = 4 * Time.ONE_HOUR;
 
         return world.transportFlights()
-                .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
-                                && isThereEnoughTickets(journey, tf)).stream()
+                .allSuitableForRouteFinding(journey)
                 .map(tf -> toTfm(world, tf))
                 .filter(tfm -> flightDepartsLaterThan(tfm, world.getWorldTime() + TIME_RESERVE)
                         && isThereDirectRouteAvailable(tfm, fromAirportIds, toAirportIds))
@@ -101,8 +100,7 @@ public class JourneyProcessor {
         final int TIME_RESERVE = 4 * Time.ONE_HOUR;
 
         final Collection<TFM> allFlight1s = world.transportFlights()
-                .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
-                        && isThereEnoughTickets(journey, tf)).stream()
+                .allSuitableForRouteFinding(journey)
                 .map(tf -> toTfm(world, tf))
                 .filter(tfm -> flightDepartsFrom(tfm, fromAirportIds)
                         && flightDepartsLaterThan(tfm, world.getWorldTime() + TIME_RESERVE)
@@ -110,8 +108,7 @@ public class JourneyProcessor {
 
         for (final TFM flight1 : allFlight1s) {
             final Collection<TFM> allFlight2s = world.transportFlights()
-                    .filter(tf -> TransportFlightHelper.flightStatusAllowsToPurchaseTicket(tf.getStatus())
-                            && isThereEnoughTickets(journey, tf)).stream()
+                    .allSuitableForRouteFinding(journey)
                     .map(tf -> toTfm(world, tf))
                     .filter(tfm -> flightDepartsFrom(tfm, Collections.singleton(flight1.fm.getDestinationAirportId()))
                             && flightArrivesTo(tfm, toAirportIds)

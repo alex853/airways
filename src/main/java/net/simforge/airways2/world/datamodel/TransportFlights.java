@@ -8,13 +8,13 @@ import net.simforge.airways2.tools.CabinLayout;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static net.simforge.airways2.storage.Storage.Condition.and;
+import static net.simforge.airways2.world.processors.TransportFlightHelper.VALID_STATUS_CODES_FOR_TICKET_PURCHASE;
 
 public class TransportFlights {
     private final Storage<Flight> storage = Storage.<Flight>builder()
@@ -74,14 +74,9 @@ public class TransportFlights {
         return storage.all();
     }
 
-    @Deprecated
-    public Collection<Flight> filter(final Predicate<Flight> condition) {
-        return storage.filter(condition); // todo ak0 migrate to filter1
-    }
-
     public Optional<Flight> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(tf -> tf.getHeartbeatTime() <= worldTime
-                && tf.getHeartbeatTime() != 0);
+        return storage.findFirst1(recordId -> readHeartbeatTime(recordId) <= worldTime
+                && readHeartbeatTime(recordId) != 0);
     }
 
     public Optional<Flight> byId(final int id) {
@@ -89,7 +84,21 @@ public class TransportFlights {
     }
 
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {
-        return storage.findFirst(f -> f.getFlightMissionId() == flightMissionId);
+        return storage.findFirst1(recordId -> readFlightMissionId(recordId) == flightMissionId);
+    }
+
+    public Stream<Flight> allSuitableForRouteFinding(Journeys.Journey journey) {
+        return storage.filter1(and(
+                statusAllowsTicketPurchase(),
+                enoughSeatsAvailable(journey)));
+    }
+
+    private Storage.Condition<Flight> statusAllowsTicketPurchase() {
+        return recordId -> VALID_STATUS_CODES_FOR_TICKET_PURCHASE.contains(readStatusCode(recordId));
+    }
+
+    private Storage.Condition<Flight> enoughSeatsAvailable(Journeys.Journey journey) {
+        return recordId -> readRemainedTickets(recordId).get(journey.getPreferredCabinService()) >= journey.getGroupSize();
     }
 
     @SuppressWarnings("LombokGetterMayBeUsed")
@@ -109,7 +118,7 @@ public class TransportFlights {
         }
 
         public int getStatusCode() {
-            return storage.getAsInt(id, statusField);
+            return readStatusCode(id);
         }
 
         public void setStatus(final Status status) {
@@ -117,7 +126,7 @@ public class TransportFlights {
         }
 
         public int getHeartbeatTime() {
-            return storage.getAsInt(id, heartbeatTimeField);
+            return readHeartbeatTime(id);
         }
 
         public void setHeartbeatTime(final int heartbeatTime) {
@@ -125,7 +134,7 @@ public class TransportFlights {
         }
 
         public int getFlightMissionId() {
-            return storage.getAsInt(id, flightMissionIdField);
+            return readFlightMissionId(id);
         }
 
         public int getScheduledFlightId() {
@@ -137,7 +146,7 @@ public class TransportFlights {
         }
 
         public CabinLayout getRemainedTickets() {
-            return CabinLayout.fromSigned32bit(storage.getAsInt(id, remainedTicketsField));
+            return readRemainedTickets(id);
         }
 
         public void setRemainedTickets(final CabinLayout remainedTickets) {
@@ -171,6 +180,22 @@ public class TransportFlights {
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
         }
+    }
+
+    private int readStatusCode(int recordId) {
+        return storage.getAsInt(recordId, statusField);
+    }
+
+    private int readHeartbeatTime(int recordId) {
+        return storage.getAsInt(recordId, heartbeatTimeField);
+    }
+
+    private int readFlightMissionId(int recordId) {
+        return storage.getAsInt(recordId, flightMissionIdField);
+    }
+
+    private CabinLayout readRemainedTickets(int recordId) {
+        return CabinLayout.fromSigned32bit(storage.getAsInt(recordId, remainedTicketsField));
     }
 
     public enum Status {
