@@ -3,6 +3,7 @@ package net.simforge.airways2.world.processors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static net.simforge.airways2.storage.Storage.Condition.and;
 
 public class BusyBirdsMissionControl {
     @SuppressWarnings("unused")
@@ -33,6 +36,39 @@ public class BusyBirdsMissionControl {
     }
 
     public List<Mission> getMissionsToBook() {
+        List<Journeys.Journey> allJourneys = world.journeys().filter(and(
+                        world.journeys().byNoBusyBirdsProcessing(),
+                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
+                .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F
+                        || j.getPreferredCabinService() == CabinLayout.Service.J)
+                .toList();
+
+        List<BusyBirdsMissionGenerator.MissionInfo> validMissions = allJourneys.stream()
+                .map(BusyBirdsMissionGenerator.MissionInfo::create)
+                .toList();
+
+        return validMissions.stream().map(m -> {
+            Journeys.Journey j = world.journeys().byId(m.getJourneyId()).orElseThrow();
+
+            Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+            Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
+
+            int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
+            int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
+                    * (1 + Tools.lastDigit(fromCity.getId())*0.01)
+                    * (1 + Tools.lastDigit(toCity.getId())*0.01)
+                    * (1 + Tools.lastDigit(j.getId())*0.01));
+
+            return new Mission(
+                    j,
+                    Time.toLdt((int) (m.getValidTill() / 1000)),
+                    distance,
+                    pay);
+
+        }).toList();
+    }
+
+    public List<Mission> getMissionsToBook1() {
         Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
         List<BusyBirdsMissionGenerator.MissionInfo> missionInfos = BusyBirdsMissionGenerator.getMissionInfos(properties);
         List<BusyBirdsMissionGenerator.MissionInfo> validMissions = missionInfos.stream().filter(BusyBirdsMissionGenerator.MissionInfo::isValid).toList();
@@ -56,75 +92,6 @@ public class BusyBirdsMissionControl {
                     pay);
 
         }).toList();
-    }
-
-    public BusyBirdsMissionControl.MissionPlan buildPlan(final Journeys.Journey journey, final Aircrafts.Aircraft aircraft) {
-        final List<String> messages = new ArrayList<>();
-
-        final AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
-
-        if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
-            messages.add("aircraft is not parked at airport");
-        }
-        if (aircraft.getOperationalStatus() != Aircrafts.OperationalStatus.Idle) {
-            messages.add("aircraft is not idle");
-        }
-
-        final Optional<Airports.Airport> fromAirport = chooseAirport(
-                busyBirdsOperator,
-                world.airport2city().allByCityId(journey.getFromCityId())
-                        .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
-                        .filter(a -> !a.isExcluded())
-                        .toList());
-        final Optional<Airports.Airport> toAirport = chooseAirport(
-                busyBirdsOperator,
-                world.airport2city().allByCityId(journey.getToCityId())
-                        .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
-                        .filter(a -> !a.isExcluded())
-                        .toList());
-
-        if (fromAirport.isEmpty()) {
-            messages.add("unable to find suitable 'from' airport");
-        }
-
-        if (toAirport.isEmpty()) {
-            messages.add("unable to find suitable 'to' airport");
-        }
-
-        final Optional<Airports.Airport> baseAirport = toAirport.flatMap(airport -> findNearestBaseAirport(world, busyBirdsOperator, airport));
-        if (baseAirport.isEmpty()) {
-            messages.add("unable to find suitable 'base' airport");
-        }
-
-        if (!messages.isEmpty()) {
-            return new MissionPlan(MissionPlan.Status.Failure, null, null, null, messages);
-        }
-
-        Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
-        boolean needFerryFlightToDepartureAirport = locationAirport.getId() != fromAirport.get().getId();
-        boolean needFerryFlightToBaseAirport = toAirport.get().getId() != baseAirport.get().getId();
-
-        AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
-        AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
-
-        int nextDepTime = world.getWorldTime() + Time.ONE_HOUR;
-
-        List<Leg> legs = new ArrayList<>();
-        Leg leg;
-
-        if (needFerryFlightToDepartureAirport) {
-            leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport.get(), 0, performanceData);
-            nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
-        }
-
-        leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport.get(), toAirport.get(), journey.getGroupSize(), performanceData);
-        nextDepTime = leg.getPlannedArrTime() + Time.ONE_HOUR;
-
-        if (needFerryFlightToBaseAirport) {
-            addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport.get(), baseAirport.get(), 0, performanceData);
-        }
-
-        return new MissionPlan(MissionPlan.Status.Success, null, null, legs, null);
     }
 
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {

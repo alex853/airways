@@ -177,6 +177,12 @@ public class BusyBirdsMissionGenerator {
             this.deleted = deleted;
         }
 
+        public static MissionInfo create(Journeys.Journey journey) {
+            long validTill = System.currentTimeMillis() + 7 * ONE_DAY;
+
+            return new MissionInfo(null, journey.getId(), validTill, false);
+        }
+
         public static MissionInfo createNew(Properties properties, Journeys.Journey journey) {
             long validTill = System.currentTimeMillis() + 7 * ONE_DAY;
 
