@@ -9,6 +9,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.worldbuilder.World25;
+import net.simforge.commons.misc.Str;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -72,8 +73,8 @@ public class AircraftController {
                             && a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
                     .forEach(a -> {
                         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
-                        results.add(a.getId() + "\t" +
-                                Time.toLdtOrNull(a.getLastUpdated()) + "\t" +
+                        results.add(Str.al(String.valueOf(a.getId()), 5) + "\t" +
+                                Str.al(String.valueOf(Time.toLdtOrNull(a.getLastUpdated())), 19) + "\t" +
                                 a.getRegNo() + "\t" +
                                 a.getOperationalStatus().name() + "\t" +
                                 a.getLocationStatus().name() + "\t" +
