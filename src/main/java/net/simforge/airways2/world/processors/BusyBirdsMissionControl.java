@@ -19,8 +19,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
-import static net.simforge.airways2.storage.Storage.Condition.and;
-
 public class BusyBirdsMissionControl {
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsMissionControl.class);
@@ -42,13 +40,7 @@ public class BusyBirdsMissionControl {
                         || j.getPreferredCabinService() == CabinLayout.Service.J)
                 .toList();
 
-        List<BusyBirdsMissionGenerator.MissionInfo> validMissions = allJourneys.stream()
-                .map(BusyBirdsMissionGenerator.MissionInfo::create)
-                .toList();
-
-        return validMissions.stream().map(m -> {
-            Journeys.Journey j = world.journeys().byId(m.getJourneyId()).orElseThrow();
-
+        return allJourneys.stream().map(j -> {
             Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
             Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
@@ -60,33 +52,7 @@ public class BusyBirdsMissionControl {
 
             return new Mission(
                     j,
-                    Time.toLdt((int) (m.getValidTill() / 1000)),
-                    distance,
-                    pay);
-
-        }).toList();
-    }
-
-    public List<Mission> getMissionsToBook1() {
-        Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
-        List<BusyBirdsMissionGenerator.MissionInfo> missionInfos = BusyBirdsMissionGenerator.getMissionInfos(properties);
-        List<BusyBirdsMissionGenerator.MissionInfo> validMissions = missionInfos.stream().filter(BusyBirdsMissionGenerator.MissionInfo::isValid).toList();
-
-        return validMissions.stream().map(m -> {
-            Journeys.Journey j = world.journeys().byId(m.getJourneyId()).orElseThrow();
-
-            Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
-            Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
-
-            int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-            int pay = (int) (((distance / 400.0) * 7000.0 + 2000.0)
-                    * (1 + Tools.lastDigit(fromCity.getId())*0.01)
-                    * (1 + Tools.lastDigit(toCity.getId())*0.01)
-                    * (1 + Tools.lastDigit(j.getId())*0.01));
-
-            return new Mission(
-                    j,
-                    Time.toLdt((int) (m.getValidTill() / 1000)),
+                    null,
                     distance,
                     pay);
 

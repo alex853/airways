@@ -9,7 +9,6 @@ import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
-import net.simforge.airways2.world.processors.BusyBirdsMissionGenerator;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.JavaTime;
@@ -132,12 +131,6 @@ public class BusyBirdsController {
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");
                 }
             }
-
-            Properties properties = BusyBirdsMissionGenerator.loadMissionsFile();
-            BusyBirdsMissionGenerator.MissionInfo missionInfo = BusyBirdsMissionGenerator.getMissionInfoById(properties, Id.decode(missionId)).orElseThrow();
-            missionInfo.delete();
-            BusyBirdsMissionGenerator.saveMissionsFile(properties);
-            messages.add("BusyBirds mission removed from available");
 
             return new BookMissionResponse("success", messages);
         });

@@ -288,8 +288,6 @@ public class World {
 
             timing("MiscCleanups", () -> MiscCleanups.process(this));
             timing("FlightsCleanup", () -> FlightCleanup.process(this));
-
-            timing("BusyBirdsMissionGenerator", () -> BusyBirdsMissionGenerator.process(this));
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

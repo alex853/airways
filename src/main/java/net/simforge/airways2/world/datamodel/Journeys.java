@@ -50,7 +50,6 @@ public class Journeys {
     private final BitAccessField typeModeFieldBits = BitAccessField.instance(storage, typeModeRawField);
     private final BitAccessField.Section preferredCabinServiceBitField = typeModeFieldBits.section(0, 2);
     private final BitAccessField.Section attemptCounterBitField = typeModeFieldBits.section(2, 2);
-    private final BitAccessField.Section busyBirdsProcessingBitField = typeModeFieldBits.section(4, 1);
     private final BitAccessField.Section bookedCabinServiceBitField = typeModeFieldBits.section(5, 2);
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
@@ -155,14 +154,6 @@ public class Journeys {
             attemptCounterBitField.setInt(id, attemptCounter);
         }
 
-        public boolean isBusyBirdsProcessing() {
-            return busyBirdsProcessingBitField.getBoolean(id);
-        }
-
-        public void setBusyBirdsProcessing(final boolean busyBirdsProcessing) {
-            busyBirdsProcessingBitField.setBoolean(id, busyBirdsProcessing);
-        }
-
         public int getHeartbeatTime() {
             return storage.getAsInt(id, heartbeatTimeField);
         }
@@ -264,14 +255,6 @@ public class Journeys {
         return recordId -> readTransportFlight1Id(recordId) == transportFlightId
                 && (readStatusCode(recordId) == status1.code()
                 || readStatusCode(recordId) == status2.code());
-    }
-
-    public Storage.Condition<Journey> byBusyBirdsProcessing() {
-        return busyBirdsProcessingBitField::getBoolean;
-    }
-
-    public Storage.Condition<Journey> byNoBusyBirdsProcessing() {
-        return recordId -> !busyBirdsProcessingBitField.getBoolean(recordId);
     }
 
     private int readStatusCode(int recordId) {

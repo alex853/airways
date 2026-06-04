@@ -64,7 +64,7 @@ public class JourneyController {
                 j.getBookedCabinService().name(),
                 j.isReturningBack() ? 1 : 0,
                 j.getAttemptCounter(),
-                j.isBusyBirdsProcessing() ? "B" : "n",
+                "n",
                 tf1.map(TransportFlights.Flight::getId).orElse(null),
                 tf1.map(f -> f.getStatus().name()).orElse(null),
                 fm1.map(f -> world.airports().getIcao(f.getDepartureAirportId()).orElseThrow()).orElse(null),

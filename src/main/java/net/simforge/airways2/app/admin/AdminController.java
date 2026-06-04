@@ -444,7 +444,6 @@ public class AdminController {
 
 
             List<Journeys.Journey> lookingForTicketsWithoutHeartbeat = world.journeys().allWithZeroHeartbeat()
-                    .filter(j -> !j.isBusyBirdsProcessing())
                     .filter(j -> j.getStatus() == Journeys.Status.LookingForTickets)
                     .toList();
             result = result + "LookingForTickets without heartbeat:\n";
@@ -462,22 +461,6 @@ public class AdminController {
             // todo ak1 check terminal states without heartbeat
 
             return result;
-        });
-    }
-
-    @GetMapping("/journey/set-busy-birds-processing")
-    public String turnToSpecialProcessing(@RequestParam("jId") final int jId) {
-        return worldBean.modifySync(world -> {
-            world.journeys().byId(jId).orElseThrow().setBusyBirdsProcessing(true);
-            return "DONE";
-        });
-    }
-
-    @GetMapping("/journey/reset-busy-birds-processing")
-    public String turnToSpecialProcessing() {
-        return worldBean.modifySync(world -> {
-            world.journeys().filter(world.journeys().byBusyBirdsProcessing()).forEach(j -> j.setBusyBirdsProcessing(false));
-            return "DONE";
         });
     }
 

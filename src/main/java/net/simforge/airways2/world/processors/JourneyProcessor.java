@@ -40,11 +40,6 @@ public class JourneyProcessor {
     }
 
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
-        if (journey.isBusyBirdsProcessing()) {
-            // just stop processing the journey in case of busy birds
-            return;
-        }
-
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getFromCityId())
                 .map(Airport2City.Link::getAirportId)
@@ -200,11 +195,6 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
-        // in case of busy birds - remove busy-birds-processing flag and continue as usual
-        if (journey.isBusyBirdsProcessing()) {
-            journey.setBusyBirdsProcessing(false);
-        }
-
         if (journey.isReturningBack()) {
             world.journeyControl().finish(journey);
         } else {

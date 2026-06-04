@@ -114,9 +114,8 @@ public class ShadowJetLogic {
 
         CabinLayout remained = transportFlight.getRemainedTickets();
 
-        Stream<Journeys.Journey> journeyStream = world.journeys().filter(and(
-                        world.journeys().byNoBusyBirdsProcessing(),
-                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
+        Stream<Journeys.Journey> journeyStream = world.journeys()
+                .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                 .filter(j -> fromCitiesId.contains(j.getFromCityId())
                         && toCitiesId.contains(j.getToCityId()));
         Iterator<Journeys.Journey> it = journeyStream.iterator();
