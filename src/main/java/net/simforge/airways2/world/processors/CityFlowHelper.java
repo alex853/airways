@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class CityFlowHelper {
+    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(CityFlowHelper.class);
 
     public static final int REDISTRIBUTION_PERIOD = 24 * Time.ONE_HOUR;
@@ -69,15 +70,11 @@ public class CityFlowHelper {
         final float remainingFlow = flow.getNextGroupSize() - flow.getAccumulatedFlow();
         final double requiredFlowToDistribute = remainingFlow / flow.getFlowFraction() / flow.getSuccessRate();
 
-        final int time = (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
-//        log.debug("calcTimeToAccumulateFlow - dailyFlow {}, remainingFlow {}, flow fraction {}, success rate {}, requiredFlowToDistribute {}, time {}",
-//                dailyFlow, remainingFlow, flow.getFlowFraction(), flow.getSuccessRate(), requiredFlowToDistribute, time);
-
-        return time;
+        return (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
     }
 
     public static int getDailyFlow(final World world, City2CityFlows.Flow c2cFlow) {
-        final CityFlows.Flow fromCityFlow = world.cityFlows().fromCityFlow(c2cFlow).orElseThrow();
+        final CityFlows.Flow fromCityFlow = world.cityFlows().byCityFlow(c2cFlow).orElseThrow();
         final Cities.City fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow();
         final float mobilityFactor = fromCityFlow.getMobilityFactor();
         return (int) (fromCity.getPopulation() * BASE_MOBILITY_PERCENT * mobilityFactor);
@@ -87,13 +84,23 @@ public class CityFlowHelper {
         return Math.min(Math.max(successRate, MIN_SUCCESS_RATE), MAX_SUCCESS_RATE);
     }
 
-    public static CabinLayout.Service randomCabinService() {
+    private static final int[] ultraAttractionThresholds = new int[] {20, 50, 70};
+    private static final int[] highAttractionThresholds = new int[] {10, 30, 60};
+    private static final int[] mediumAttractionThresholds = new int[] {5, 15, 30};
+    private static final int[] basicThresholds = new int[] {0, 7, 20};
+
+    public static CabinLayout.Service randomCabinService(float attractionFactor) {
+        int[] thresholds = attractionFactor < 1.5 ? basicThresholds
+                : attractionFactor < 10 ? mediumAttractionThresholds
+                  : attractionFactor < 30 ? highAttractionThresholds
+                    : ultraAttractionThresholds;
+
         final int rnd = (int) (Math.random() * 100);
-        if (rnd == 0) {
+        if (rnd <= thresholds[0]) {
             return CabinLayout.Service.F;
-        } else if (rnd < 7) {
+        } else if (rnd <= thresholds[1]) {
             return CabinLayout.Service.J;
-        } else if (rnd < 20) {
+        } else if (rnd <= thresholds[2]) {
             return CabinLayout.Service.W;
         } else {
             return CabinLayout.Service.Y;

@@ -569,7 +569,7 @@ public class AdminController {
 
             int cityId = Id.decode(idStr);
             Cities.City city = world.cities().byId(cityId).orElseThrow();
-            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
 
             results.add("City\t\t" + city.getName());
             results.add("Attraction\t" + flow.getAttractionFactor());
@@ -585,7 +585,7 @@ public class AdminController {
         worldBean.modifySync(world -> {
             int cityId = Id.decode(idStr);
             Cities.City city = world.cities().byId(cityId).orElseThrow();
-            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
             flow.setAttractionFactor(attraction);
             flow.setLastRedistributionTime(0);
             return "Done";
@@ -598,7 +598,7 @@ public class AdminController {
         worldBean.modifySync(world -> {
             int cityId = Id.decode(idStr);
             Cities.City city = world.cities().byId(cityId).orElseThrow();
-            CityFlows.Flow flow = world.cityFlows().all().filter(f -> f.getId() == city.getId()).findFirst().orElseThrow();
+            CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
             flow.setMobilityFactor(mobility);
             flow.setLastRedistributionTime(0);
             return "Done";

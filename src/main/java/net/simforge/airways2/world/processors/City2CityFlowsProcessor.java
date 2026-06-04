@@ -4,6 +4,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
+import net.simforge.airways2.world.datamodel.CityFlows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,8 +49,17 @@ public class City2CityFlowsProcessor {
             return;
         }
 
-        final CabinLayout.Service service = CityFlowHelper.randomCabinService();
-        final int groupSizeBeingGenerated = c2cFlow.getNextGroupSize();
+        Optional<CityFlows.Flow> fromCityFlowO = world.cityFlows().byCityId(c2cFlow.getFromCityId());
+        if (fromCityFlowO.isEmpty()) {
+            log.error("c2c #{}/{} [{} -> {}] - unable to find flow for 'from city'",
+                    c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity);
+            return;
+        }
+
+        float attractionFactor = fromCityFlowO.get().getAttractionFactor();
+
+        CabinLayout.Service service = CityFlowHelper.randomCabinService(attractionFactor);
+        int groupSizeBeingGenerated = c2cFlow.getNextGroupSize();
         world.journeyControl().create(c2cFlow, service);
 
         c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());

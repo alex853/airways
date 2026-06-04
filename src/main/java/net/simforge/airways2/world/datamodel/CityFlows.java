@@ -1,6 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.app.tools.Timing;
+import lombok.Getter;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.DataTypeUtils;
@@ -56,13 +56,16 @@ public class CityFlows {
     }
 
     public Optional<Flow> nextForRedistribution(final int worldTime) {
-        try (final Timing.Timer ignored = Timing.label("CityFlows - nextForRedistribution")) {
-            return storage.findFirst(f -> f.getLastRedistributionTime() + CityFlowHelper.REDISTRIBUTION_PERIOD <= worldTime); // todo ak3 skip it if status is disabled
-        }
+        // todo ak3 skip it if status is disabled
+        return storage.findFirst1(recordId -> readLastRedistributionTime(recordId) + CityFlowHelper.REDISTRIBUTION_PERIOD <= worldTime);
     }
 
-    public Optional<Flow> fromCityFlow(final City2CityFlows.Flow c2cFlow) {
+    public Optional<Flow> byCityFlow(final City2CityFlows.Flow c2cFlow) {
         return storage.byId(c2cFlow.getFromCityId());
+    }
+
+    public Optional<Flow> byCityId(int cityId) {
+        return storage.byId(cityId);
     }
 
     public void createMissingCityFlows() {
@@ -91,6 +94,7 @@ public class CityFlows {
         storage.set(flowId, mobilityFactorField, DataTypeUtils.floatToU16When1to1000(CityFlowHelper.DEFAULT_MOBILITY_FACTOR));
     }
 
+    @Getter
     public class Flow {
         private final int id;
 
@@ -98,12 +102,8 @@ public class CityFlows {
             this.id = id;
         }
 
-        public int getId() {
-            return id;
-        }
-
         public int getLastRedistributionTime() {
-            return storage.getAsInt(id, lastRedistributionTimeField);
+            return readLastRedistributionTime(id);
         }
 
         public void setLastRedistributionTime(final int lastRedistributionTime) {
@@ -125,5 +125,9 @@ public class CityFlows {
         public void setMobilityFactor(float mobilityFactor) {
             storage.set(id, mobilityFactorField, DataTypeUtils.floatToU16When1to1000(mobilityFactor));
         }
+    }
+
+    private int readLastRedistributionTime(int recordId) {
+        return storage.getAsInt(recordId, lastRedistributionTimeField);
     }
 }
