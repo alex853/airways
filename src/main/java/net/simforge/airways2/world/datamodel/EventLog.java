@@ -9,8 +9,6 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -59,15 +57,22 @@ public class EventLog {
         return storage.all();
     }
 
-    @Deprecated
-    public Collection<EventLog.Event> filter(final Predicate<EventLog.Event> condition) {
-        return storage.filter(condition); // todo ak0 migrate to filter1
+    public Stream<Event> allOlderThan(int time) {
+        return storage.filter(recordId -> readTime(recordId) <= time);
+    }
+    
+    public Stream<Event> byObject(int typeRaw, int id) {
+        return storage.filter(recordId -> (readObject1Id(recordId) == id && readObject1TypeRaw(recordId) == typeRaw)
+            || (readObject2Id(recordId) == id && readObject2TypeRaw(recordId) == typeRaw)
+            || (readObject3Id(recordId) == id && readObject3TypeRaw(recordId) == typeRaw)
+            || (readObject4Id(recordId) == id && readObject4TypeRaw(recordId) == typeRaw));
     }
 
     public void deleteById(final int id) {
         storage.deleteRecord(id);
     }
 
+    @SuppressWarnings("DuplicatedCode")
     public void log(final int time, final EventType eventType, final EventLogId object1, final EventLogId object2, final EventLogId object3, final EventLogId object4) {
         final int recordId = storage.addRecord();
         storage.set(recordId, timeField, time);
@@ -110,7 +115,7 @@ public class EventLog {
         }
 
         public int getTime() {
-            return storage.getAsInt(id, timeField);
+            return readTime(id);
         }
 
         public int getTypeRaw() {
@@ -122,7 +127,7 @@ public class EventLog {
         }
 
         public int getObject1TypeRaw() {
-            return storage.getAsInt(id, object1TypeField);
+            return readObject1TypeRaw(id);
         }
 
         public ObjectType getObject1Type() {
@@ -130,11 +135,11 @@ public class EventLog {
         }
 
         public int getObject1Id() {
-            return storage.getAsInt(id, object1IdField);
+            return readObject1Id(id);
         }
 
         public int getObject2TypeRaw() {
-            return storage.getAsInt(id, object2TypeField);
+            return readObject2TypeRaw(id);
         }
 
         public ObjectType getObject2Type() {
@@ -142,11 +147,11 @@ public class EventLog {
         }
 
         public int getObject2Id() {
-            return storage.getAsInt(id, object2IdField);
+            return readObject2Id(id);
         }
 
         public int getObject3TypeRaw() {
-            return storage.getAsInt(id, object3TypeField);
+            return readObject3TypeRaw(id);
         }
 
         public ObjectType getObject3Type() {
@@ -154,11 +159,11 @@ public class EventLog {
         }
 
         public int getObject3Id() {
-            return storage.getAsInt(id, object3IdField);
+            return readObject3Id(id);
         }
 
         public int getObject4TypeRaw() {
-            return storage.getAsInt(id, object4TypeField);
+            return readObject4TypeRaw(id);
         }
 
         public ObjectType getObject4Type() {
@@ -166,8 +171,44 @@ public class EventLog {
         }
 
         public int getObject4Id() {
-            return storage.getAsInt(id, object4IdField);
+            return readObject4Id(id);
         }
+    }
+
+    private int readTime(int recordId) {
+        return storage.getAsInt(recordId, timeField);
+    }
+
+    private int readObject1TypeRaw(int recordId) {
+        return storage.getAsInt(recordId, object1TypeField);
+    }
+
+    private int readObject1Id(int recordId) {
+        return storage.getAsInt(recordId, object1IdField);
+    }
+
+    private int readObject2TypeRaw(int recordId) {
+        return storage.getAsInt(recordId, object2TypeField);
+    }
+
+    private int readObject2Id(int recordId) {
+        return storage.getAsInt(recordId, object2IdField);
+    }
+
+    private int readObject3TypeRaw(int recordId) {
+        return storage.getAsInt(recordId, object3TypeField);
+    }
+
+    private int readObject3Id(int recordId) {
+        return storage.getAsInt(recordId, object3IdField);
+    }
+
+    private int readObject4TypeRaw(int recordId) {
+        return storage.getAsInt(recordId, object4TypeField);
+    }
+
+    private int readObject4Id(int recordId) {
+        return storage.getAsInt(recordId, object4IdField);
     }
 
     public enum EventType {

@@ -48,7 +48,7 @@ public class ScheduledFlights {
     public Stream<Flight> byScheduleId(final int scheduleId) {
         checkArgument(scheduleId > 0);
 
-        return storage.filter1(recordId -> readScheduleId(recordId) == scheduleId);
+        return storage.filter(recordId -> readScheduleId(recordId) == scheduleId);
     }
 
     public Flight create(final int scheduleId, final int flightMissionId) {

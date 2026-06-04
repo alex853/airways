@@ -69,7 +69,7 @@ public class Journeys {
     }
 
     public Stream<Journey> filter(final Storage.Condition<Journey> condition) {
-        return storage.filter1(condition);
+        return storage.filter(condition);
     }
 
     public Optional<Journey> findFirst(final Storage.Condition<Journey> condition) {
@@ -85,7 +85,7 @@ public class Journeys {
     }
 
     public Stream<Journey> allWithZeroHeartbeat() {
-        return storage.filter1(storage.byZeroHeartbeat(heartbeatTimeField));
+        return storage.filter(storage.byZeroHeartbeat(heartbeatTimeField));
     }
 
     public Journey create(final Status status, final int fromCityId, final int toCityId, final int groupSize, final CabinLayout.Service service) {

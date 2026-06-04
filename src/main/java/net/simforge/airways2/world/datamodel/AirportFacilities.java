@@ -93,7 +93,7 @@ public class AirportFacilities {
     }
 
     private Optional<Facility> findFacility(final Airports.Airport airport, final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
-        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
+        return storage.filter(recordId -> readAirportId(recordId) == airport.getId()
                         && readAircraftOperatorId(recordId) == (aircraftOperator != null ? aircraftOperator.getId() : 0)
                         && readType(recordId) == type)
                 .findFirst();
@@ -102,13 +102,13 @@ public class AirportFacilities {
     public Stream<Facility> by(final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
         checkNotNull(aircraftOperator);
         checkNotNull(type);
-        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperator.getId()
+        return storage.filter(recordId -> readAircraftOperatorId(recordId) == aircraftOperator.getId()
                 && readType(recordId) == type);
     }
 
     public Stream<Facility> by(final Airports.Airport airport) {
         checkNotNull(airport);
-        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId());
+        return storage.filter(recordId -> readAirportId(recordId) == airport.getId());
     }
 
     public class Facility {

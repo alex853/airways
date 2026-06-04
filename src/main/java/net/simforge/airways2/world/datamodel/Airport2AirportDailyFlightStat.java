@@ -99,12 +99,12 @@ public class Airport2AirportDailyFlightStat {
 
     public Stream<FlightStats> allByFromAirportId(final int fromAirportId) {
         checkArgument(fromAirportId > 0);
-        return storage.filter1(recordId -> readFromAirportId(recordId) == fromAirportId);
+        return storage.filter(recordId -> readFromAirportId(recordId) == fromAirportId);
     }
 
     public Stream<FlightStats> allByToAirportId(final int toAirportId) {
         checkArgument(toAirportId > 0);
-        return storage.filter1(recordId -> readToAirportId(recordId) == toAirportId);
+        return storage.filter(recordId -> readToAirportId(recordId) == toAirportId);
     }
 
     public class FlightStats {

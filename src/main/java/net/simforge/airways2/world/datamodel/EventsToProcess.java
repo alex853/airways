@@ -64,7 +64,7 @@ public class EventsToProcess {
     }
 
     public Stream<Event> processedOlderThan(int time) {
-        return storage.filter1(recordId -> readTime(recordId) <= time
+        return storage.filter(recordId -> readTime(recordId) <= time
                 && readStatusRaw(recordId) == Status.Processed.ordinal());
     }
 

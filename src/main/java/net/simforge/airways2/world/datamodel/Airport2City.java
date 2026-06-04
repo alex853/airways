@@ -44,13 +44,13 @@ public class Airport2City {
     public Stream<Link> allByAirportId(final int airportId) {
         checkArgument(airportId > 0);
 
-        return storage.filter1(recordId -> readAirportId(recordId) == airportId);
+        return storage.filter(recordId -> readAirportId(recordId) == airportId);
     }
 
     public Stream<Link> allByCityId(final int cityId) {
         checkArgument(cityId > 0);
 
-        return storage.filter1(recordId -> readCityId(recordId) == cityId);
+        return storage.filter(recordId -> readCityId(recordId) == cityId);
     }
 
     public Link create(final int airportId, final int cityId) {

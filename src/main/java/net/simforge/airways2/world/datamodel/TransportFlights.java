@@ -88,7 +88,7 @@ public class TransportFlights {
     }
 
     public Stream<Flight> allSuitableForRouteFinding(Journeys.Journey journey) {
-        return storage.filter1(and(
+        return storage.filter(and(
                 statusAllowsTicketPurchase(),
                 enoughSeatsAvailable(journey)));
     }

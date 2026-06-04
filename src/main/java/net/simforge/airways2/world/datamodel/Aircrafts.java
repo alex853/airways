@@ -81,7 +81,7 @@ public class Aircrafts {
     }
 
     public Stream<Aircraft> filter(final Storage.Condition<Aircraft> condition) {
-        return storage.filter1(condition);
+        return storage.filter(condition);
     }
 
     public Optional<Aircraft> byId(final int id) {
@@ -127,18 +127,18 @@ public class Aircrafts {
 
     @SuppressWarnings("unused")
     public Stream<Aircraft> byAircraftOperatorId(int aircraftOperatorId) {
-        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId);
+        return storage.filter(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId);
     }
 
     @SuppressWarnings("unused")
     public Stream<Aircraft> idleAndParkedAtAirport() {
-        return storage.filter1(recordId -> readOperationalStatus(recordId) == OperationalStatus.Idle.code()
+        return storage.filter(recordId -> readOperationalStatus(recordId) == OperationalStatus.Idle.code()
                 && readLocationStatus(recordId) == LocationStatus.ParkedAtAirport.code()
                 && readLocationAirportId(recordId) > 0);
     }
 
     public Stream<Aircraft> byAircraftOperatorIdAndIdleAndParkedAtAirport(int aircraftOperatorId) {
-        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId
+        return storage.filter(recordId -> readAircraftOperatorId(recordId) == aircraftOperatorId
                 && readOperationalStatus(recordId) == OperationalStatus.Idle.code()
                 && readLocationStatus(recordId) == LocationStatus.ParkedAtAirport.code()
                 && readLocationAirportId(recordId) > 0);

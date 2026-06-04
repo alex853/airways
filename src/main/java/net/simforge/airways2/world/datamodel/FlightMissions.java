@@ -117,7 +117,7 @@ public class FlightMissions {
     }
 
     public Stream<Mission> filter(final Storage.Condition<Mission> condition) {
-        return storage.filter1(condition);
+        return storage.filter(condition);
     }
 
     public Optional<Mission> byId(final int id) {
@@ -126,12 +126,12 @@ public class FlightMissions {
 
     public Stream<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
         checkNotNull(aircraft, "aircraft is mandatory");
-        return storage.filter1(recordId -> storage.getAsInt(recordId, aircraftIdField) == aircraft.getId());
+        return storage.filter(recordId -> storage.getAsInt(recordId, aircraftIdField) == aircraft.getId());
     }
 
     public Stream<Mission> allByUserId(final int userId) {
         checkArgument(userId > 0, "userId is mandatory");
-        return storage.filter1(recordId -> storage.getAsInt(recordId, userIdField) == userId);
+        return storage.filter(recordId -> storage.getAsInt(recordId, userIdField) == userId);
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {

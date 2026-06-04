@@ -74,7 +74,7 @@ public class BusyBirdsMissions {
     public boolean hasFacility(final Airports.Airport airport, final Type type) {
         checkNotNull(airport);
         checkNotNull(type);
-        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
+        return storage.filter(recordId -> readAirportId(recordId) == airport.getId()
                         && readType(recordId) == type)
                 .findAny()
                 .isPresent();
@@ -84,7 +84,7 @@ public class BusyBirdsMissions {
         checkNotNull(airport);
         checkNotNull(aircraftOperator);
         checkNotNull(type);
-        return storage.filter1(recordId -> readAirportId(recordId) == airport.getId()
+        return storage.filter(recordId -> readAirportId(recordId) == airport.getId()
                         && readAircraftOperatorId(recordId) == aircraftOperator.getId()
                         && readType(recordId) == type)
                 .findAny()
@@ -94,7 +94,7 @@ public class BusyBirdsMissions {
     public Stream<Facility> by(final AircraftOperators.AircraftOperator aircraftOperator, final Type type) {
         checkNotNull(aircraftOperator);
         checkNotNull(type);
-        return storage.filter1(recordId -> readAircraftOperatorId(recordId) == aircraftOperator.getId()
+        return storage.filter(recordId -> readAircraftOperatorId(recordId) == aircraftOperator.getId()
                 && readType(recordId) == type);
     }
 

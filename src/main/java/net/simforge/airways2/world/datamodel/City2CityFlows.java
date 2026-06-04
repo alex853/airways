@@ -52,7 +52,7 @@ public class City2CityFlows {
     }
 
     public Stream<Flow> allFromCityId(final int fromCityId) {
-        return storage.filter1(id -> readFromCityId(id) == fromCityId);
+        return storage.filter(id -> readFromCityId(id) == fromCityId);
     }
 
     public Optional<Flow> getFromCityIdToCityId(final int fromCityId, final int toCityId) {
