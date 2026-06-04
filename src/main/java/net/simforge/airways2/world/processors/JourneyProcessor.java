@@ -75,7 +75,7 @@ public class JourneyProcessor {
         }
 
         if (journey.getAttemptCounter() < 3) {
-            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_HOUR, Time.ONE_DAY));
+            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY));
             journey.setAttemptCounter(journey.getAttemptCounter() + 1);
         } else {
             world.journeyControl().couldNotFindTickets(journey);
