@@ -36,9 +36,8 @@ public class BusyBirdsMissionControl {
     }
 
     public List<Mission> getMissionsToBook() {
-        List<Journeys.Journey> allJourneys = world.journeys().filter(and(
-                        world.journeys().byNoBusyBirdsProcessing(),
-                        world.journeys().byStatus(Journeys.Status.LookingForTickets)))
+        List<Journeys.Journey> allJourneys = world.journeys()
+                .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                 .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F
                         || j.getPreferredCabinService() == CabinLayout.Service.J)
                 .toList();
