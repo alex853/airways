@@ -58,10 +58,12 @@ public class FlightMissionControl {
             return;
         }
 
+        int worldTime = world.getWorldTime();
         mission.setStatus(FlightMissions.Status.Preflight);
-        mission.setHeartbeatTime(world.getWorldTime() + Time.TICK);
+        mission.setHeartbeatTime(worldTime + Time.TICK);
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
         aircraft.setFlightMissionId(mission.getId());
+        aircraft.setLastUpdated(worldTime);
         // todo ak3 pilot/pilots/cabin crew - set status
 
         world.log(EventLog.EventType.FlightStarted, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
