@@ -51,7 +51,9 @@ public class BusyBirdsController {
                                 m.getDistance(),
                                 m.getPay(),
                                 m.getValidTill().toString());
-                    }).toList();
+                    }).sorted(Comparator.comparing(MissionDto::getFromCityName)
+                            .thenComparing(MissionDto::getToCityName))
+                    .toList();
         });
     }
 
