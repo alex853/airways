@@ -623,7 +623,7 @@ public class AdminController {
                 }
 
                 List<ImportCities.CityInfo> cities = ImportCities.getCitiesNearAirport(citiesCsv, airport.getCoords(), 50);
-                List<ImportCities.CityInfo> bigCities = cities.stream().filter(c -> c.getPopulation() >= 1000000).toList();
+                List<ImportCities.CityInfo> bigCities = cities.stream().filter(c -> c.getPopulation() >= 1000000 && !c.getName().startsWith("del ")).toList();
 
                 bigCities.forEach(bigCity -> {
                     Optional<Cities.City> found = world.cities().all().filter(c -> c.getName().equals(bigCity.getName())).findFirst();

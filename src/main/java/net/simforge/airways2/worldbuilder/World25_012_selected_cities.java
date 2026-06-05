@@ -12,6 +12,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AE", "city-name:Dubai"},
                 new String[]{"country-code:AE", "city-name:Abu Dhabi"},
 
+                new String[]{"country-code:AT", "city-name:Innsbruck"},
+
                 new String[]{"country-code:BE", "city-name:Brussels"},
 
                 new String[]{"country-code:CA", "city-name:Toronto"},
@@ -131,7 +133,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:US", "city-name:Tampa"},
                 new String[]{"country-code:US", "city-name:St. Petersburg"},
                 new String[]{"country-code:US", "city-name:San Antonio"},
-                new String[]{"country-code:US", "city-name:Charlotte"}
+                new String[]{"country-code:US", "city-name:Charlotte"},
+                new String[]{"country-code:US", "city-name:Salt Lake City"}
         ));
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);

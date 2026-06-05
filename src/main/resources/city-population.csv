@@ -723,7 +723,7 @@ Austria,AT,Wien,1504100,48.22,16.37
 Austria,AT,Graz,216100,47.08,15.42
 Austria,AT,Linz,184800,48.31,14.29
 Austria,AT,Salzburg,145800,47.81,13.04
-Austria,AT,Innsbruck,116400,47.28,11.41
+Austria,AT,Innsbruck,256400,47.28,11.41
 Austria,AT,Klagenfurt,89700,46.62,14.31
 Austria,AT,Villach,57900,46.62,13.85
 Austria,AT,Wels,56600,48.17,14.03
@@ -801,11 +801,11 @@ Austria,AT,Sieghartskirchen,6900,48.25,16.0
 Austria,AT,Strasswalchen,6900,48.0,13.26
 Austria,AT,Arnoldstein,6800,46.55,13.71
 Austria,AT,Garsten,6800,48.02,14.4
-Austria,AT,Jenbach,6800,47.39,11.75
+Austria,AT,del Jenbach,6800,47.39,11.75
 Austria,AT,Leibnitz,6800,46.78,15.56
 Austria,AT,Bad hofgastein,6700,47.17,13.1
 Austria,AT,Kottingbrunn,6700,47.95,16.21
-Austria,AT,Vols,6700,47.25,11.33
+Austria,AT,del Vols,6700,47.25,11.33
 Austria,AT,Wilhelmsburg,6700,48.1,15.6
 Austria,AT,Gratkorn,6600,47.13,15.35
 Austria,AT,Grodig,6600,47.73,13.03
@@ -817,8 +817,8 @@ Austria,AT,Frohnleiten,6500,47.27,15.32
 Austria,AT,Hartberg,6500,47.28,15.0
 Austria,AT,Horn,6500,48.67,15.65
 Austria,AT,Kremsmunster,6500,48.05,14.12
-Austria,AT,Absam,6400,47.3,11.5
-Austria,AT,Zirl,6400,47.29,11.23
+Austria,AT,del Absam,6400,47.3,11.5
+Austria,AT,del Zirl,6400,47.29,11.23
 Austria,AT,Frastanz,6300,47.21,9.62
 Austria,AT,Horbranz,6300,47.55,9.75
 Austria,AT,Mattersburg,6300,47.73,16.39
@@ -7094,9 +7094,9 @@ India,IN,Bhopal,1519100,23.24,77.4
 India,IN,Ludhiana,1478000,30.91,75.84
 India,IN,Patna,1458800,25.62,85.13
 India,IN,Vadodara,1383700,22.31,73.18
-India,IN,Thana,1336500,19.2,72.97
+India,IN,del Thana,1336500,19.2,72.97
 India,IN,Agra,1334900,27.19,78.01
-India,IN,Kalyan,1264200,19.25,73.16
+India,IN,del Kalyan,1264200,19.25,73.16
 India,IN,Varanasi,1166200,25.32,83.01
 India,IN,Nashik,1141000,20.01,73.78
 India,IN,Mirat,1138100,28.99,77.7
@@ -17139,7 +17139,7 @@ United States,US,Little rock,184400,34.72,-92.35
 United States,US,Oxnard,183500,34.2,-119.21
 United States,US,Newport news,183300,37.08,-76.51
 United States,US,Amarillo,180600,35.2,-101.82
-United States,US,Salt lake city,179900,40.78,-111.93
+United States,US,Salt Lake City,2779900,40.78,-111.93
 United States,US,Jackson,179000,32.32,-90.21
 United States,US,Providence,177000,41.82,-71.42
 United States,US,Irvine,176300,33.66,-117.8
@@ -17234,7 +17234,7 @@ United States,US,Ann arbor,114200,42.28,-83.73
 United States,US,Gainesville,113900,29.67,-82.34
 United States,US,Peoria,113200,40.74,-89.61
 United States,US,Beaumont,112700,30.09,-94.14
-United States,US,West valley city,112500,40.69,-112.01
+United States,US,del West valley city,112500,40.69,-112.01
 United States,US,Bellevue,112400,47.6,-122.16
 United States,US,Lafayette,112000,30.22,-92.03
 United States,US,Independence,111700,39.09,-94.35
@@ -17248,7 +17248,7 @@ United States,US,Clearwater,108900,27.98,-82.77
 United States,US,Waterbury,108500,41.56,-73.04
 United States,US,Norwalk,108300,33.91,-118.08
 United States,US,Olathe,107900,38.89,-94.81
-United States,US,Provo,106100,40.25,-111.64
+United States,US,del Provo,106100,40.25,-111.64
 United States,US,Allentown,106000,40.6,-75.48
 United States,US,Arden-arcade,105600,38.6,-121.38
 United States,US,South bend,105100,41.68,-86.27
@@ -17318,7 +17318,7 @@ United States,US,Columbia,91500,39.2,-76.86
 United States,US,West palm beach,91100,26.75,-80.13
 United States,US,San mateo,91000,37.56,-122.31
 United States,US,Sandy springs,90800,33.94,-84.37
-United States,US,Orem,90500,40.3,-111.7
+United States,US,del Orem,90500,40.3,-111.7
 United States,US,Sunrise,90100,26.15,-80.3
 Uruguay,UY,Montevideo,1346900,-34.87,-56.17
 Uruguay,UY,Salto,103800,-31.4,-57.96
