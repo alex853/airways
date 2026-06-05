@@ -76,7 +76,7 @@ public class AuthFilter extends OncePerRequestFilter {
         String token = header.substring(7);
 
         boolean correctToken = userService.isCorrectAdminToken(token);
-        if (correctToken) {
+        if (!correctToken) {
             send401Response(response);
             return;
         }
