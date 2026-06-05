@@ -48,8 +48,7 @@ public class BusyBirdsController {
                                 j.getPreferredCabinService().name(),
                                 j.getGroupSize(),
                                 m.getDistance(),
-                                m.getPay(),
-                                m.getValidTill().toString());
+                                m.getPay());
                     }).sorted(Comparator.comparing(MissionDto::getFromCityName)
                             .thenComparing(MissionDto::getToCityName))
                     .toList();
@@ -146,7 +145,6 @@ public class BusyBirdsController {
         private int pax;
         private int distance;
         private int pay;
-        private String validTill;
     }
 
     @Data

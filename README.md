@@ -27,6 +27,12 @@ Pilot App is the tool for a player to control pilot-controlled pilot. It works i
 
 
 
+PAX LAYOUT               8F/46J/31W/150Y
+BLOCKED                  1
+
+
+
+
 ###BusyBirds generator logics
 // constantly running process which finds some, few, not too many W or J journeys in looking for tickets status
 // and pick them up - mark them as 'special processing'
