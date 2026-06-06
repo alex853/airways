@@ -47,12 +47,12 @@ public class AircraftOperators {
 
     public Optional<AircraftOperator> byIata(final String iata) {
         checkNotNull(iata, "iata is mandatory");
-        return storage.findFirst(t -> t.getIata().equals(iata));
+        return storage.findFirst(recordId -> iata.equals(readIata(recordId)));
     }
 
     public Optional<AircraftOperator> byIcao(final String icao) {
         checkNotNull(icao, "icao is mandatory");
-        return storage.findFirst(t -> t.getIcao().equals(icao));
+        return storage.findFirst(recordId -> icao.equals(readIcao(recordId)));
     }
 
     public AircraftOperator create(final String iata,
@@ -82,16 +82,29 @@ public class AircraftOperators {
             return id;
         }
 
+        @SuppressWarnings("unused")
         public String getIata() {
-            return storage.getAsString(id, iataField);
+            return readIata(id);
         }
 
         public String getIcao() {
-            return storage.getAsString(id, icaoField);
+            return readIcao(id);
         }
 
         public String getName() {
-            return storage.getAsString(id, nameField);
+            return readName(id);
         }
+    }
+
+    private String readIata(int recordId) {
+        return storage.getAsString(recordId, iataField);
+    }
+
+    private String readIcao(int recordId) {
+        return storage.getAsString(recordId, icaoField);
+    }
+
+    private String readName(int recordId) {
+        return storage.getAsString(recordId, nameField);
     }
 }

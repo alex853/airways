@@ -21,7 +21,7 @@ public class JourneyControl {
     private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
     private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
 
-    private static final int TERMINAL_STATUS_DURATION = 3 * Time.ONE_DAY;
+    private static final int TERMINAL_STATUS_DURATION = Time.ONE_DAY;
 
     private final World world;
 
@@ -305,7 +305,7 @@ public class JourneyControl {
             if (cities.contains(targetCityId)) {
                 journey.setLocationCityId(targetCityId);
             } else {
-                journey.setLocationCityId(Tools.random(cities).get());
+                journey.setLocationCityId(Tools.random(cities).orElseThrow());
             }
         } else {
             log.warn("j/y #{} - no city found for a/p #{}", journey.getId(), targetAirportId);

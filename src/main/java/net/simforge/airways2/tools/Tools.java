@@ -1,7 +1,5 @@
 package net.simforge.airways2.tools;
 
-import net.simforge.airways2.world.datamodel.Journeys;
-
 import java.util.List;
 import java.util.Optional;
 

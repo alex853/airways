@@ -65,7 +65,7 @@ public class Airports {
 
     public Optional<Airport> byIcao(final String icao) {
         checkNotNull(icao, "icao should not be null");
-        return storage.findFirst(a -> icao.equals(a.getIcao()));
+        return storage.findFirst(recordId -> icao.equals(readIcao(recordId)));
     }
 
     public Stream<Airport> all() {
@@ -100,7 +100,7 @@ public class Airports {
         }
 
         public String getIcao() {
-            return storage.getAsString(id, icaoField);
+            return readIcao(id);
         }
 
         public String getName() {
@@ -111,6 +111,7 @@ public class Airports {
             return Geo.coords(getLatitude(), getLongitude());
         }
 
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         public boolean isExcluded() { // todo ak3 extend airports storage and add some field to support 'exclusion', plus reserve space
             String icao = getIcao();
             return "LFPY".equals(icao)
@@ -123,5 +124,9 @@ public class Airports {
         public String toString() {
             return "{ icao: " + getIcao() + " }";
         }
+    }
+
+    private String readIcao(int recordId) {
+        return storage.getAsString(recordId, icaoField);
     }
 }

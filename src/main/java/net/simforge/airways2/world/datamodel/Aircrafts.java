@@ -110,7 +110,7 @@ public class Aircrafts {
 
     public Optional<Aircraft> byRegNo(final String regNo) {
         checkNotNull(regNo, "regNo is mandatory");
-        return storage.findFirst1(recordId -> regNo.equals(strings.byId(storage.getAsInt(recordId, regNoIdField))));
+        return storage.findFirst(recordId -> regNo.equals(readRegNo(recordId)));
     }
 
     public Storage.Condition<Aircraft> byLocationStatus(final LocationStatus locationStatus) {
@@ -161,7 +161,7 @@ public class Aircrafts {
         }
 
         public String getRegNo() {
-            return strings.byId(storage.getAsInt(id, regNoIdField));
+            return readRegNo(id);
         }
 
         public int getAircraftOperatorId() {
@@ -279,7 +279,6 @@ public class Aircrafts {
             storage.set(id, lastUpdatedField, lastUpdated);
         }
     }
-
     public enum OperationalStatus {
         Idle(1),
         Active(2),
@@ -326,6 +325,10 @@ public class Aircrafts {
                     .findFirst()
                     .orElse(null);
         }
+    }
+
+    private String readRegNo(int recordId) {
+        return strings.byId(storage.getAsInt(recordId, regNoIdField));
     }
 
     private int readAircraftOperatorId(int recordId) {

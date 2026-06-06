@@ -57,7 +57,7 @@ public class CityFlows {
 
     public Optional<Flow> nextForRedistribution(final int worldTime) {
         // todo ak3 skip it if status is disabled
-        return storage.findFirst1(recordId -> readLastRedistributionTime(recordId) + CityFlowHelper.REDISTRIBUTION_PERIOD <= worldTime);
+        return storage.findFirst(recordId -> readLastRedistributionTime(recordId) + CityFlowHelper.REDISTRIBUTION_PERIOD <= worldTime);
     }
 
     public Optional<Flow> byCityFlow(final City2CityFlows.Flow c2cFlow) {

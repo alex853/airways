@@ -38,7 +38,7 @@ public class Airport2City {
         checkArgument(airportId > 0);
         checkArgument(cityId > 0);
 
-        return storage.findFirst1(recordId -> readAirportId(recordId) == airportId && readCityId(recordId) == cityId);
+        return storage.findFirst(recordId -> readAirportId(recordId) == airportId && readCityId(recordId) == cityId);
     }
 
     public Stream<Link> allByAirportId(final int airportId) {

@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -58,12 +57,10 @@ public class Airport2AirportDailyFlightStat {
         checkArgument(fromAirportId > 0);
         checkArgument(toAirportId > 0);
 
-        try (final Timing.Timer ignored = Timing.label("Airport2AirportDailyFlightStats - incrementTodayCount")) {
-            final FlightStats flightStats = storage
-                    .findFirst(e -> e.getFromAirportId() == fromAirportId && e.getToAirportId() == toAirportId)
-                    .orElseGet(() -> createFlightStats(fromAirportId, toAirportId));
-            flightStats.incrementTodayCount();
-        }
+        FlightStats flightStats = storage
+                .findFirst(recordId -> readFromAirportId(recordId) == fromAirportId && readToAirportId(recordId) == toAirportId)
+                .orElseGet(() -> createFlightStats(fromAirportId, toAirportId));
+        flightStats.incrementTodayCount();
     }
 
     private FlightStats createFlightStats(final int fromAirportId, final int toAirportId) {

@@ -44,7 +44,7 @@ public class Countries {
 
     public Optional<Country> byCode(final String code) {
         checkNotNull(code, "code should not be null");
-        return storage.findFirst(c -> code.equals(c.getCode()));
+        return storage.findFirst(recordId -> code.equals(readCode(recordId)));
     }
 
     public Stream<Country> all() {
@@ -71,11 +71,15 @@ public class Countries {
         }
 
         public String getCode() {
-            return storage.getAsString(id, codeField);
+            return readCode(id);
         }
 
         public String getName() {
             return strings.byId(storage.getAsInt(id, nameIdField));
         }
+    }
+
+    private String readCode(int recordId) {
+        return storage.getAsString(recordId, codeField);
     }
 }

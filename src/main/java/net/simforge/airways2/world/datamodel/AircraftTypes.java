@@ -52,7 +52,7 @@ public class AircraftTypes {
 
     public Optional<AircraftType> byIcao(final String icao) {
         checkNotNull(icao, "icao is mandatory");
-        return storage.findFirst(t -> t.getIcao().equals(icao));
+        return storage.findFirst(recordId -> icao.equals(readIcao(recordId)));
     }
 
     public class AircraftType {
@@ -67,11 +67,16 @@ public class AircraftTypes {
         }
 
         public String getIcao() {
-            return storage.getAsString(id, icaoField);
+            return readIcao(id);
         }
 
+        @SuppressWarnings("unused")
         public String getIata() {
             return storage.getAsString(id, iataField);
         }
+    }
+
+    private String readIcao(int recordId) {
+        return storage.getAsString(recordId, icaoField);
     }
 }

@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -121,22 +120,6 @@ public class Storage<T> {
         return Optional.of(instantiator.create(recordId));
     }
 
-    // todo ak1 remove all usages
-    @Deprecated
-    public Optional<T> findFirst(final Predicate<T> condition) {
-        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
-            if (isDeleted(recordId)) {
-                continue;
-            }
-
-            final T instance = instantiator.create(recordId);
-            if (condition.test(instance)) {
-                return Optional.of(instance);
-            }
-        }
-        return Optional.empty();
-    }
-
     public Stream<T> all() {
         return IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
@@ -150,8 +133,7 @@ public class Storage<T> {
                 .mapToObj(instantiator::create);
     }
 
-    // todo ak1 rename to .findFirst() when all .findFirst() usages will be wiped out
-    public Optional<T> findFirst1(final Condition<T> condition) {
+    public Optional<T> findFirst(final Condition<T> condition) {
         final OptionalInt first = IntStream.rangeClosed(1, getTotalStoredRecordCount())
                 .filter(recordId -> !isDeleted(recordId))
                 .filter(condition::test)
@@ -535,6 +517,7 @@ public class Storage<T> {
         T create(int recordId);
     }
 
+    @SuppressWarnings("unused")
     public interface Condition<T> {
         boolean test(int recordId);
 

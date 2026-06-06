@@ -72,7 +72,7 @@ public class Journeys {
     }
 
     public Optional<Journey> findFirst(final Storage.Condition<Journey> condition) {
-        return storage.findFirst1(condition);
+        return storage.findFirst(condition);
     }
 
     public Optional<Journey> byId(final int id) {
@@ -80,7 +80,7 @@ public class Journeys {
     }
 
     public Optional<Journey> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
+        return storage.findFirst(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
     }
 
     public Stream<Journey> allWithZeroHeartbeat() {

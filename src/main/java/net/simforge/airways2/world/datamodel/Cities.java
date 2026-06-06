@@ -55,7 +55,7 @@ public class Cities {
 
     public Optional<City> byCountryIdAndName(final int countryId, final String cityName) {
         checkNotNull(cityName, "cityName should not be null");
-        return storage.findFirst(c -> c.getCountryId() == countryId && cityName.equalsIgnoreCase(c.getName()));
+        return storage.findFirst(recordId-> readCountryId(recordId) == countryId && cityName.equalsIgnoreCase(readName(recordId)));
     }
 
     public City create(final int countryId,
@@ -84,7 +84,7 @@ public class Cities {
         }
 
         public int getCountryId() {
-            return storage.getAsInt(id, countryIdField);
+            return readCountryId(id);
         }
 
         public float getLatitude() {
@@ -104,7 +104,7 @@ public class Cities {
         }
 
         public String getName() {
-            return strings.byId(storage.getAsInt(id, nameIdField));
+            return readName(id);
         }
 
         public void setName(final String name) {
@@ -114,5 +114,13 @@ public class Cities {
         public Geo.Coords getCoords() {
             return Geo.coords(getLatitude(), getLongitude());
         }
+    }
+
+    private String readName(int recordId) {
+        return strings.byId(storage.getAsInt(recordId, nameIdField));
+    }
+
+    private int readCountryId(int recordId) {
+        return storage.getAsInt(recordId, countryIdField);
     }
 }

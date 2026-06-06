@@ -75,7 +75,7 @@ public class TransportFlights {
     }
 
     public Optional<Flight> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst1(recordId -> readHeartbeatTime(recordId) <= worldTime
+        return storage.findFirst(recordId -> readHeartbeatTime(recordId) <= worldTime
                 && readHeartbeatTime(recordId) != 0);
     }
 
@@ -84,7 +84,7 @@ public class TransportFlights {
     }
 
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {
-        return storage.findFirst1(recordId -> readFlightMissionId(recordId) == flightMissionId);
+        return storage.findFirst(recordId -> readFlightMissionId(recordId) == flightMissionId);
     }
 
     public Stream<Flight> allSuitableForRouteFinding(Journeys.Journey journey) {

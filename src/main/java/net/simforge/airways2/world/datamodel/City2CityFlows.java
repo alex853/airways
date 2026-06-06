@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.DataTypeUtils;
@@ -59,7 +58,7 @@ public class City2CityFlows {
         checkArgument(fromCityId >= 1);
         checkArgument(toCityId >= 1);
 
-        return storage.findFirst1(id -> readFromCityId(id) == fromCityId && readToCityId(id) == toCityId);
+        return storage.findFirst(id -> readFromCityId(id) == fromCityId && readToCityId(id) == toCityId);
     }
 
     public Flow createInactive(final int fromCityId, final int toCityId) {
@@ -76,9 +75,7 @@ public class City2CityFlows {
     }
 
     public Optional<Flow> nextForHeartbeat(final int worldTime) {
-        try (final Timing.Timer ignored = Timing.label("City2CityFlows - nextForHeartbeat")) {
-            return storage.findFirst1(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
-        }
+        return storage.findFirst(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
     }
 
     public class Flow {

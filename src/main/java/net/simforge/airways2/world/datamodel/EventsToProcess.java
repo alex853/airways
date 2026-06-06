@@ -54,7 +54,7 @@ public class EventsToProcess {
     public Optional<Event> findFirstActiveEvent(Type type, int time) {
         checkNotNull(type, "type is mandatory");
 
-        return storage.findFirst1(recordId -> readStatusRaw(recordId) == Status.Active.ordinal()
+        return storage.findFirst(recordId -> readStatusRaw(recordId) == Status.Active.ordinal()
                 && readTypeRaw(recordId) == type.code()
                 && readTime(recordId) <= time);
     }
