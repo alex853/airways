@@ -46,6 +46,7 @@ public class World25_008_create_aircraft_types {
         aircraftTypes.byIcao("CRJ9").orElseGet(() -> aircraftTypes.create("CRJ9", "CR9"));
         aircraftTypes.byIcao("CRJX").orElseGet(() -> aircraftTypes.create("CRJX", "CRK"));
 
+        aircraftTypes.byIcao("DA40").orElseGet(() -> aircraftTypes.create("DA40", null));
         aircraftTypes.byIcao("DA42").orElseGet(() -> aircraftTypes.create("DA42", null));
         aircraftTypes.byIcao("DA62").orElseGet(() -> aircraftTypes.create("DA62", null));
 

@@ -82,6 +82,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:IS", "city-name:Reykjavik"},
 
+                new String[]{"country-code:KR", "city-name:Seoul"},
+
                 new String[]{"country-code:MC", "city-name:Monte Carlo"},
 
                 new String[]{"country-code:MX", "city-name:Tijuana"},
@@ -91,6 +93,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:NL", "city-name:The Hague"},
 
                 new String[]{"country-code:PL", "city-name:Warsaw"},
+                new String[]{"country-code:PL", "city-name:Gdansk"},
 
                 new String[]{"country-code:PT", "city-name:Lisbon"},
 
