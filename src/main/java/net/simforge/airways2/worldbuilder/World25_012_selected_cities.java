@@ -58,6 +58,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Mallorca"},
                 new String[]{"country-code:ES", "city-name:Menorca"},
                 new String[]{"country-code:ES", "city-name:Ibiza"},
+                new String[]{"country-code:ES", "city-name:Tenerife"},
 
                 new String[]{"country-code:FI", "city-name:Helsinki"},
 
@@ -83,6 +84,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:IS", "city-name:Reykjavik"},
 
                 new String[]{"country-code:KR", "city-name:Seoul"},
+
+                new String[]{"country-code:LU", "city-name:Luxembourg"},
 
                 new String[]{"country-code:MC", "city-name:Monte Carlo"},
 

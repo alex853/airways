@@ -9232,9 +9232,9 @@ Lithuania,LT,Troskunai,508,55.59,24.87
 Lithuania,LT,Tyruliai,402,55.75,23.24
 Lithuania,LT,Panemune,331,55.09,21.91
 Lithuania,LT,Turmantas,300,55.69,26.46
-Luxembourg,LU,Luxembourg,77300,49.62,6.12
-Luxembourg,LU,Esch-alzette,28000,49.5,5.98
-Luxembourg,LU,Dudelange,17800,49.48,6.08
+Luxembourg,LU,Luxembourg,677300,49.62,6.12
+Luxembourg,LU,del Esch-alzette,28000,49.5,5.98
+Luxembourg,LU,del Dudelange,17800,49.48,6.08
 Luxembourg,LU,Schifflange,8100,49.51,6.01
 Luxembourg,LU,Bettembourg,7400,49.52,6.1
 Luxembourg,LU,Petange,7100,49.56,5.86
@@ -14888,7 +14888,7 @@ Spain,ES,Badalona,204800,41.45,2.24
 Spain,ES,Elx,203600,38.27,-0.68
 Spain,ES,Oviedo,202200,43.35,-5.83
 Spain,ES,Mostoles,202100,40.32,-3.88
-Spain,ES,Santa cruz de tenerife,202100,28.47,-16.25
+Spain,ES,Tenerife,972100,28.47,-16.25
 Spain,ES,Alcala de henares,200500,40.48,-3.37
 Spain,ES,Cartagena,199400,37.61,-0.98
 Spain,ES,Pamplona,189300,42.82,-1.65
@@ -14907,7 +14907,7 @@ Spain,ES,Salamanca,152700,40.97,-5.67
 Spain,ES,Albacete,149300,39.0,-1.87
 Spain,ES,Huelva,145900,37.25,-6.94
 Spain,ES,Logrono,144900,42.47,-2.44
-Spain,ES,San cristobal de la laguna,136600,28.48,-16.32
+Spain,ES,del San cristobal de la laguna,136600,28.48,-16.32
 Spain,ES,Badajoz,129400,38.88,-6.97
 Spain,ES,Cadiz,126700,36.53,-6.29
 Spain,ES,Leon,122700,42.59,-5.57
@@ -14997,7 +14997,7 @@ Spain,ES,Arrecife,48600,28.96,-13.55
 Spain,ES,Cuenca,48000,40.08,-2.14
 Spain,ES,Huesca,47900,42.14,-0.41
 Spain,ES,Paterna,46900,39.5,-0.42
-Spain,ES,Arona,46400,28.09,-16.67
+Spain,ES,del Arona,46400,28.09,-16.67
 Spain,ES,Estepona,46200,36.44,-5.16
 Spain,ES,Santurtzi,45900,43.33,-3.04
 Spain,ES,Puertollano,45700,38.68,-4.12
@@ -15027,7 +15027,7 @@ Spain,ES,Alzira,38800,39.16,-0.44
 Spain,ES,Arganda del rey,38800,40.3,-3.44
 Spain,ES,Lucena,38300,37.41,-4.49
 Spain,ES,Valdemoro,38300,40.19,-3.68
-Spain,ES,La orotava,37600,28.39,-16.52
+Spain,ES,del La orotava,37600,28.39,-16.52
 Spain,ES,Plasencia,37600,43.17,-2.42
 Spain,ES,Soria,37400,41.77,-2.46
 Spain,ES,Puerto real,37300,36.53,-6.2
@@ -15054,7 +15054,7 @@ Spain,ES,Tudela,34100,42.07,-1.61
 Spain,ES,Ubeda,33900,38.02,-3.38
 Spain,ES,Los palacios y villafranca,33800,37.26,-6.0
 Spain,ES,Tomelloso,33600,39.16,-3.02
-Spain,ES,Los realejos,33100,28.39,-16.57
+Spain,ES,del Los realejos,33100,28.39,-16.57
 Spain,ES,del Manacor,33100,39.57,3.2
 Spain,ES,Vilagarcia de arousa,33100,42.61,-8.77
 Spain,ES,Teruel,32800,40.34,-1.11
@@ -15071,7 +15071,7 @@ Spain,ES,Sestao,30300,43.3,-2.99
 Spain,ES,Alaquas,29900,39.45,-0.46
 Spain,ES,Galdakao,29900,43.24,-2.85
 Spain,ES,Hellin,29900,38.51,-1.7
-Spain,ES,Puerto de la cruz,29900,28.4,-16.54
+Spain,ES,del Puerto de la cruz,29900,28.4,-16.54
 Spain,ES,Oleiros,29800,43.34,-8.32
 Spain,ES,Montcada i reixac,29600,41.49,2.18
 Spain,ES,Galapagar,29500,40.59,-4.01
@@ -15148,7 +15148,7 @@ Spain,ES,Pineda de mar,23600,41.63,2.69
 Spain,ES,Adra,23500,36.76,-3.02
 Spain,ES,Almansa,23400,38.87,-1.11
 Spain,ES,Santa perpetua de mogoda,23400,41.54,2.18
-Spain,ES,Granadilla de abona,23300,28.11,-16.58
+Spain,ES,del Granadilla de abona,23300,28.11,-16.58
 Spain,ES,Priego de cordoba,23100,37.43,-4.2
 Spain,ES,Molins de rei,22900,41.42,2.01
 Spain,ES,Montilla,22900,37.6,-4.64
@@ -15156,8 +15156,8 @@ Spain,ES,San javier,22900,37.81,-0.84
 Spain,ES,Lloret de mar,22600,41.7,2.85
 Spain,ES,A estrada,22400,42.7,-8.5
 Spain,ES,Benicarlo,22400,40.43,0.41
-Spain,ES,Galdar,22400,28.15,-15.66
-Spain,ES,Icod de los vinos,22400,28.36,-16.7
+Spain,ES,del Galdar,22400,28.15,-15.66
+Spain,ES,del Icod de los vinos,22400,28.36,-16.7
 Spain,ES,Arrasate,22300,43.08,-2.49
 Spain,ES,Castrillon,22300,43.4,-6.8
 Spain,ES,Santa pola,22300,38.19,-0.56
