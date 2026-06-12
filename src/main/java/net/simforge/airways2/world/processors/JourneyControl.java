@@ -308,8 +308,9 @@ public class JourneyControl {
                 journey.setLocationCityId(Tools.random(cities).orElseThrow());
             }
         } else {
-            log.warn("j/y #{} - no city found for a/p #{}", journey.getId(), targetAirportId);
-            FlightStats.event("journey - no city for airport " + targetAirportId);
+            String icao = world.airports().byId(targetAirportId).orElseThrow().getIcao();
+            log.warn("j/y #{} - no city found for {}", journey.getId(), icao);
+            FlightStats.event("journey - no city for airport " + icao);
         }
     }
 }

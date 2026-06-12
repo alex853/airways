@@ -13,11 +13,76 @@ public class World25_008_create_aircraft_types {
 
         aircraftTypes.byIcao("A306").orElseGet(() -> aircraftTypes.create("A306", "AB6"));
 
+        aircraftTypes.byIcao("A310").orElseGet(() -> aircraftTypes.create("A310", "312"));
+
+        aircraftTypes.byIcao("A318").orElseGet(() -> aircraftTypes.create("A318", "318"));
+        aircraftTypes.byIcao("A319").orElseGet(() -> aircraftTypes.create("A319", "319"));
+        aircraftTypes.byIcao("A320").orElseGet(() -> aircraftTypes.create("A320", "320"));
+        aircraftTypes.byIcao("A321").orElseGet(() -> aircraftTypes.create("A321", "321"));
+
+        aircraftTypes.byIcao("A19N").orElseGet(() -> aircraftTypes.create("A19N", "31N"));
+        aircraftTypes.byIcao("A20N").orElseGet(() -> aircraftTypes.create("A20N", "32N"));
+        aircraftTypes.byIcao("A21N").orElseGet(() -> aircraftTypes.create("A21N", "32Q"));
+
+        aircraftTypes.byIcao("A332").orElseGet(() -> aircraftTypes.create("A332", "332"));
+        aircraftTypes.byIcao("A333").orElseGet(() -> aircraftTypes.create("A333", "333"));
+        aircraftTypes.byIcao("A338").orElseGet(() -> aircraftTypes.create("A338", "338"));
+        aircraftTypes.byIcao("A339").orElseGet(() -> aircraftTypes.create("A339", "339"));
+
+        aircraftTypes.byIcao("A342").orElseGet(() -> aircraftTypes.create("A342", "342"));
+        aircraftTypes.byIcao("A343").orElseGet(() -> aircraftTypes.create("A343", "343"));
+        aircraftTypes.byIcao("A345").orElseGet(() -> aircraftTypes.create("A345", "345"));
+        aircraftTypes.byIcao("A346").orElseGet(() -> aircraftTypes.create("A346", "346"));
+
+        aircraftTypes.byIcao("A359").orElseGet(() -> aircraftTypes.create("A359", "359"));
+        aircraftTypes.byIcao("A35K").orElseGet(() -> aircraftTypes.create("A35K", "351"));
+
+        aircraftTypes.byIcao("A388").orElseGet(() -> aircraftTypes.create("A388", "388"));
+
         aircraftTypes.byIcao("AT43").orElseGet(() -> aircraftTypes.create("AT43", "AT4"));
         aircraftTypes.byIcao("AT45").orElseGet(() -> aircraftTypes.create("AT45", "ATR"));
         aircraftTypes.byIcao("AT72").orElseGet(() -> aircraftTypes.create("AT72", "AT7"));
         aircraftTypes.byIcao("AT75").orElseGet(() -> aircraftTypes.create("AT75", "ATR"));
         aircraftTypes.byIcao("AT76").orElseGet(() -> aircraftTypes.create("AT76", "ATR"));
+
+        aircraftTypes.byIcao("B731").orElseGet(() -> aircraftTypes.create("B731", "731"));
+        aircraftTypes.byIcao("B732").orElseGet(() -> aircraftTypes.create("B732", "732"));
+
+        aircraftTypes.byIcao("B733").orElseGet(() -> aircraftTypes.create("B733", "733"));
+        aircraftTypes.byIcao("B734").orElseGet(() -> aircraftTypes.create("B734", "734"));
+        aircraftTypes.byIcao("B735").orElseGet(() -> aircraftTypes.create("B735", "735"));
+
+        aircraftTypes.byIcao("B736").orElseGet(() -> aircraftTypes.create("B736", "736"));
+        aircraftTypes.byIcao("B737").orElseGet(() -> aircraftTypes.create("B737", "73G"));
+        aircraftTypes.byIcao("B738").orElseGet(() -> aircraftTypes.create("B738", "738"));
+        aircraftTypes.byIcao("B739").orElseGet(() -> aircraftTypes.create("B739", "739"));
+
+        aircraftTypes.byIcao("B37M").orElseGet(() -> aircraftTypes.create("B37M", "7M7"));
+        aircraftTypes.byIcao("B38M").orElseGet(() -> aircraftTypes.create("B38M", "7M8"));
+        aircraftTypes.byIcao("B39M").orElseGet(() -> aircraftTypes.create("B39M", "7M9"));
+        aircraftTypes.byIcao("B3XM").orElseGet(() -> aircraftTypes.create("B3XM", "7MJ"));
+
+        aircraftTypes.byIcao("B741").orElseGet(() -> aircraftTypes.create("B741", "741"));
+        aircraftTypes.byIcao("B742").orElseGet(() -> aircraftTypes.create("B742", "742"));
+        aircraftTypes.byIcao("B743").orElseGet(() -> aircraftTypes.create("B743", "743"));
+        aircraftTypes.byIcao("B744").orElseGet(() -> aircraftTypes.create("B744", "744"));
+        aircraftTypes.byIcao("B748").orElseGet(() -> aircraftTypes.create("B748", "74H"));
+
+        aircraftTypes.byIcao("B752").orElseGet(() -> aircraftTypes.create("B752", "752"));
+        aircraftTypes.byIcao("B753").orElseGet(() -> aircraftTypes.create("B753", "753"));
+
+        aircraftTypes.byIcao("B762").orElseGet(() -> aircraftTypes.create("B762", "762"));
+        aircraftTypes.byIcao("B763").orElseGet(() -> aircraftTypes.create("B763", "763"));
+        aircraftTypes.byIcao("B764").orElseGet(() -> aircraftTypes.create("B764", "764"));
+
+        aircraftTypes.byIcao("B772").orElseGet(() -> aircraftTypes.create("B772", "772"));
+        aircraftTypes.byIcao("B773").orElseGet(() -> aircraftTypes.create("B773", "773"));
+        aircraftTypes.byIcao("B77L").orElseGet(() -> aircraftTypes.create("B77L", "77L"));
+        aircraftTypes.byIcao("B77W").orElseGet(() -> aircraftTypes.create("B77W", "77W"));
+
+        aircraftTypes.byIcao("B788").orElseGet(() -> aircraftTypes.create("B788", "788"));
+        aircraftTypes.byIcao("B789").orElseGet(() -> aircraftTypes.create("B789", "789"));
+        aircraftTypes.byIcao("B78X").orElseGet(() -> aircraftTypes.create("B78X", "781"));
 
         aircraftTypes.byIcao("C152").orElseGet(() -> aircraftTypes.create("C152", null));
         aircraftTypes.byIcao("C172").orElseGet(() -> aircraftTypes.create("C172", null));
@@ -40,6 +105,8 @@ public class World25_008_create_aircraft_types {
         aircraftTypes.byIcao("C750").orElseGet(() -> aircraftTypes.create("C750", "CNJ"));
 
         aircraftTypes.byIcao("CL60").orElseGet(() -> aircraftTypes.create("CL60", "CCJ"));
+
+        aircraftTypes.byIcao("CONC").orElseGet(() -> aircraftTypes.create("CONC", null));
 
         aircraftTypes.byIcao("CRJ1").orElseGet(() -> aircraftTypes.create("CRJ1", "CR1"));
         aircraftTypes.byIcao("CRJ2").orElseGet(() -> aircraftTypes.create("CRJ2", "CR2"));
