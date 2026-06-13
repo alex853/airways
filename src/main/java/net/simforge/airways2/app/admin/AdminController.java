@@ -551,7 +551,8 @@ public class AdminController {
             results.add("");
 
             world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
-                results.add(String.format("To city %s [%s]        H/b %s    Next g/s %s    Time to acc %s    Curr acc flow / time %s / %s    S.rate/Frac/Flow %s / %s / %s (max %s)",
+                results.add(String.format("To city %s [%s]        Active %s    H/b %s    Next g/s %s    Time to acc %s    Curr acc flow / time %s / %s    S.rate/Flow %s / %s (max %s)",
+                        c2c.isActive(),
                         c2c.getToCityId(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
                         Time.toLdtOrNull(c2c.getHeartbeatTime()),
                         c2c.getNextGroupSize(),
@@ -559,7 +560,6 @@ public class AdminController {
                         c2c.getAccumulatedFlow(),
                         Time.toLdtOrNull(c2c.getAccumulatedFlowTime()),
                         Formatting.df6.format(c2c.getSuccessRate()),
-                        Formatting.df3.format(c2c.getFlowFraction()),
                         (int)(c2c.getFlowFraction() * c2c.getSuccessRate() * CityFlowHelper.getDailyFlow(world, flow)),
                         (int)(c2c.getFlowFraction() * 1 * CityFlowHelper.getDailyFlow(world, flow))));
             });

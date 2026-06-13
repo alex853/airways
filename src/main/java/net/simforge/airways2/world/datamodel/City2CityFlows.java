@@ -50,6 +50,10 @@ public class City2CityFlows {
         storage.save(rootPath);
     }
 
+    public Stream<Flow> all() {
+        return storage.all();
+    }
+
     public Stream<Flow> allFromCityId(final int fromCityId) {
         return storage.filter(id -> readFromCityId(id) == fromCityId);
     }

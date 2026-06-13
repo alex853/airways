@@ -285,6 +285,7 @@ public class World {
 
             timing("CityFlowsProcessor", () -> CityFlowsProcessor.process(this));
             timing("City2CityFlowsProcessor", () -> City2CityFlowsProcessor.process(this));
+            timing("City2CityFlowHistogramAnalyser", () -> City2CityFlowHistogramAnalyser.process(this));
 
             timing("MiscCleanups", () -> MiscCleanups.process(this));
             timing("FlightsCleanup", () -> FlightCleanup.process(this));
