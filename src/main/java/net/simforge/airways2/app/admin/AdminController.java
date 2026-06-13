@@ -567,8 +567,8 @@ public class AdminController {
 
             world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
                 results.add(String.format("To city %s [%s]        Active %s    H/b %s    Next g/s %s    Time to acc %s    Curr acc flow / time %s / %s    S.rate/Flow %s / %s (max %s)",
-                        c2c.isActive(),
                         c2c.getToCityId(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
+                        c2c.isActive(),
                         Time.toLdtOrNull(c2c.getHeartbeatTime()),
                         c2c.getNextGroupSize(),
                         Time.toLdt(c2c.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2c)),
