@@ -12,6 +12,7 @@ import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
+import net.simforge.airways2.world.processors.CityFlowHelper;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -548,13 +549,15 @@ public class AdminController {
             results.add("");
 
             world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
-                results.add(String.format("City-to-City flow: #%s/%s [%s -> %s]        Heartbeat %s    Next group size %s    Acc flow %s    Acc flow time %s",
+                results.add(String.format("City-to-City flow: #%s/%s [%s -> %s]        Heartbeat %s    Next group size %s    Time to acc %s    Acc flow %s    Acc flow time %s    Daily flow %s",
                         cityId, c2c.getToCityId(),
                         world.cities().byId(cityId).orElseThrow().getName(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
                         Time.toLdtOrNull(c2c.getHeartbeatTime()),
                         c2c.getNextGroupSize(),
+                        Time.toLdt(c2c.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2c)),
                         c2c.getAccumulatedFlow(),
-                        Time.toLdtOrNull(c2c.getAccumulatedFlowTime())));
+                        Time.toLdtOrNull(c2c.getAccumulatedFlowTime()),
+                        CityFlowHelper.getDailyFlow(world, c2c)));
             });
 
             return Strings.join(results, '\n');
