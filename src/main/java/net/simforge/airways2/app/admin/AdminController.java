@@ -523,19 +523,6 @@ public class AdminController {
         });
     }
 
-    @GetMapping(value = "/flows/c2c/print", produces = "text/plain")
-    public String printC2CFlowStatus(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
-        return worldBean.read(world -> {
-            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId).orElseThrow();
-            return String.format("C2C Flow #%s/%s [%s -> %s]\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
-                    fromCityId, toCityId, world.cities().byId(fromCityId).orElseThrow().getName(), world.cities().byId(toCityId).orElseThrow().getName(),
-                    Time.toLdtOrNull(c2c.getHeartbeatTime()),
-                    c2c.getNextGroupSize(),
-                    c2c.getAccumulatedFlow(),
-                    Time.toLdtOrNull(c2c.getAccumulatedFlowTime()));
-        });
-    }
-
     @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")
     public String updateC2CFlowHeartbeat(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
         return worldBean.modifySync(world -> {
@@ -558,6 +545,17 @@ public class AdminController {
             results.add("Attraction\t" + flow.getAttractionFactor());
             results.add("Mobility\t" + flow.getMobilityFactor());
             results.add("Redist time\t" + Time.toLdtOrNull(flow.getLastRedistributionTime()));
+            results.add("");
+
+            world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
+                results.add(String.format("City-to-City flow: #%s/%s [%s -> %s]\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
+                        cityId, c2c.getToCityId(),
+                        world.cities().byId(cityId).orElseThrow().getName(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
+                        Time.toLdtOrNull(c2c.getHeartbeatTime()),
+                        c2c.getNextGroupSize(),
+                        c2c.getAccumulatedFlow(),
+                        Time.toLdtOrNull(c2c.getAccumulatedFlowTime())));
+            });
 
             return Strings.join(results, '\n');
         });
