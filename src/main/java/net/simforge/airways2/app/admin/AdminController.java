@@ -559,7 +559,7 @@ public class AdminController {
                         c2c.getAccumulatedFlow(),
                         Time.toLdtOrNull(c2c.getAccumulatedFlowTime()),
                         Formatting.df6z.format(c2c.getSuccessRate()),
-                        (int)(c2c.getFlowFraction() * city.getPopulation())));
+                        (int)(c2c.getFlowFraction() * CityFlowHelper.getDailyFlow(world, flow))));
             });
 
             return Strings.join(results, '\n');
