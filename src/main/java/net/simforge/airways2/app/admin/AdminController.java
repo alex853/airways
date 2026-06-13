@@ -547,18 +547,19 @@ public class AdminController {
             results.add("Attraction\t" + flow.getAttractionFactor());
             results.add("Mobility\t" + flow.getMobilityFactor());
             results.add("Redist time\t" + Time.toLdtOrNull(flow.getLastRedistributionTime()));
+            results.add("Daily flow\t" + CityFlowHelper.getDailyFlow(world, flow));
             results.add("");
 
             world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
-                results.add(String.format("To city %s [%s]        H/b %s    Next g/s %s    Time to acc %s    Curr acc flow / time %s / %s    Daily flow %s    Succ/rate %s",
+                results.add(String.format("To city %s [%s]        H/b %s    Next g/s %s    Time to acc %s    Curr acc flow / time %s / %s    Rate/flow %s / %s",
                         c2c.getToCityId(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
                         Time.toLdtOrNull(c2c.getHeartbeatTime()),
                         c2c.getNextGroupSize(),
                         Time.toLdt(c2c.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2c)),
                         c2c.getAccumulatedFlow(),
                         Time.toLdtOrNull(c2c.getAccumulatedFlowTime()),
-                        CityFlowHelper.getDailyFlow(world, c2c),
-                        Formatting.df6z.format(c2c.getSuccessRate())));
+                        Formatting.df6z.format(c2c.getSuccessRate()),
+                        (int)(c2c.getFlowFraction() * city.getPopulation())));
             });
 
             return Strings.join(results, '\n');

@@ -66,16 +66,15 @@ public class CityFlowHelper {
             return 0;
         }
 
-        final int dailyFlow = getDailyFlow(world, flow);
+        final int dailyFlow = getDailyFlow(world, world.cityFlows().byCityFlow(flow).orElseThrow());
         final float remainingFlow = flow.getNextGroupSize() - flow.getAccumulatedFlow();
         final double requiredFlowToDistribute = remainingFlow / flow.getFlowFraction() / flow.getSuccessRate();
 
         return (int) (requiredFlowToDistribute * Time.ONE_DAY / dailyFlow);
     }
 
-    public static int getDailyFlow(final World world, City2CityFlows.Flow c2cFlow) {
-        final CityFlows.Flow fromCityFlow = world.cityFlows().byCityFlow(c2cFlow).orElseThrow();
-        final Cities.City fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow();
+    public static int getDailyFlow(final World world, CityFlows.Flow fromCityFlow) {
+        final Cities.City fromCity = world.cities().byId(fromCityFlow.getId()).orElseThrow();
         final float mobilityFactor = fromCityFlow.getMobilityFactor();
         return (int) (fromCity.getPopulation() * BASE_MOBILITY_PERCENT * mobilityFactor);
     }
