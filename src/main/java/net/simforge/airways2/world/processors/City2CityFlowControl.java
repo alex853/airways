@@ -62,9 +62,9 @@ public class City2CityFlowControl {
         log.info("c2c #{}/{} [{} -> {}] - update c2c flow success rate - delta {}%, orig s/r {}, delta s/r {}, new s/r {} (stored {})",
                 fromCityId, toCityId, fromCity, toCity,
                 deltaPercents,
-                Formatting.df7z.format(originalSuccessRate),
-                Formatting.df7z.format(successRateDelta),
-                Formatting.df7z.format(newSuccessRate),
-                Formatting.df7z.format(flow.get().getSuccessRate()));
+                Formatting.df7.format(originalSuccessRate),
+                Formatting.df7.format(successRateDelta),
+                Formatting.df7.format(newSuccessRate),
+                Formatting.df7.format(flow.get().getSuccessRate()));
     }
 }
