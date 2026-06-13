@@ -534,6 +534,21 @@ public class AdminController {
         });
     }
 
+    @GetMapping(value = "/flows/c2c/heartbeat-in-future", produces = "text/plain")
+    public String updateC2CFlowHeartbeat() {
+        return worldBean.modifySync(world -> {
+            int worldTime = world.getWorldTime();
+            int threshold = worldTime + 10 * Time.ONE_DAY;
+
+            world.city2cityFlows().all()
+                    .filter(City2CityFlows.Flow::isActive)
+                    .filter(c2c -> c2c.getHeartbeatTime() > threshold)
+                    .forEach(c2c -> c2c.setHeartbeatTime(worldTime));
+
+            return "Done";
+        });
+    }
+
     @GetMapping(value = "/flows/details", produces = "text/plain")
     public String getFlowInfo(@RequestParam("id") String idStr) {
         return worldBean.read(world -> {
