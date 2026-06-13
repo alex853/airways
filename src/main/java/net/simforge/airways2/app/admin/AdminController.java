@@ -548,7 +548,7 @@ public class AdminController {
             results.add("");
 
             world.city2cityFlows().allFromCityId(cityId).forEach(c2c -> {
-                results.add(String.format("City-to-City flow: #%s/%s [%s -> %s]\n\nHeartbeat %s\nNext group size %s\nAccumulated flow %s\nAccumulated flow time %s",
+                results.add(String.format("City-to-City flow: #%s/%s [%s -> %s]        Heartbeat %s    Next group size %s    Acc flow %s    Acc flow time %s",
                         cityId, c2c.getToCityId(),
                         world.cities().byId(cityId).orElseThrow().getName(), world.cities().byId(c2c.getToCityId()).orElseThrow().getName(),
                         Time.toLdtOrNull(c2c.getHeartbeatTime()),
