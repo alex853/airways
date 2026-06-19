@@ -34,10 +34,12 @@ public class World25_009_create_some_airports {
                 "LSGG", "LSZH",
                 "LTAI", "LTFM",
                 "LXGB",
+                "OBBI",
                 "OMDB", "OMAA",
                 "OTHH",
                 "SCEL",
-                "WSSS"
+                "WSSS",
+                "ZHCC"
         });
     }
 }
