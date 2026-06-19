@@ -10,7 +10,7 @@ import java.util.List;
 
 public class FindCitiesNearAirport {
     public static void main(String[] args) throws IOException {
-        String icao = "LPPR";
+        String icao = "EPKK";
 
         Geo.Coords airportCoords = null;
 
