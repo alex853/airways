@@ -953,7 +953,7 @@ Bahamas,BS,Pirates well,278,22.43,-73.08
 Bahamas,BS,Duncan town,77,22.19,-75.73
 Bahamas,BS,Port nelson,63,23.66,-74.83
 Bahamas,BS,Albert town,38,22.6,-74.35
-Bahrain,BH,Al-manamah,154700,26.21,50.58
+Bahrain,BH,Bahrain,1604700,26.21,50.58
 Bahrain,BH,Al-muh#arraq,98800,26.26,50.62
 Bahrain,BH,Ar-rifa#a,86100,26.12,50.54
 Bahrain,BH,Madinat h#amad,57000,26.11,50.51
@@ -2795,7 +2795,7 @@ China,CN,Harbin,3129300,45.75,126.65
 China,CN,Nanjing,2870200,32.05,118.78
 China,CN,Taiyuan,2690500,37.87,112.55
 China,CN,Changchun,2337000,43.87,125.35
-China,CN,Zhengzhou,2052700,34.75,113.67
+China,CN,Zhengzhou,13052700,34.75,113.67
 China,CN,Kowloon,2040200,22.32,114.17
 China,CN,Jinan,1961500,36.67,117.0
 China,CN,Dalian,1925200,38.92,121.65
@@ -2838,7 +2838,7 @@ China,CN,Xining,782700,36.62,101.77
 China,CN,Hengyang,780700,26.97,112.35
 China,CN,Hohhot,762700,40.82,111.64
 China,CN,Anyang,759900,36.08,114.35
-China,CN,Xinxiang,757800,35.32,113.87
+China,CN,del Xinxiang,757800,35.32,113.87
 China,CN,Shenzhen,752200,22.53,114.13
 China,CN,Liuzhou,748200,24.28,109.25
 China,CN,Zhaotong,742400,27.32,103.72
@@ -2869,7 +2869,7 @@ China,CN,Dandong,604600,40.13,124.4
 China,CN,Luancheng,598500,37.88,114.65
 China,CN,Panjin,582200,41.18,122.05
 China,CN,Guilin,580200,25.28,110.28
-China,CN,Kaifeng,577400,34.85,114.35
+China,CN,del Kaifeng,577400,34.85,114.35
 China,CN,Zhangjiakou,573800,40.83,114.93
 China,CN,Yingkou,571400,40.67,122.28
 China,CN,Haikou,568900,20.05,110.32
@@ -2914,7 +2914,7 @@ China,CN,Dongguan,380700,23.05,113.73
 China,CN,Pingxiang,379900,27.62,113.85
 China,CN,Weifang,376700,36.72,119.1
 China,CN,Putian,371700,25.43,119.02
-China,CN,Xuchang,371200,34.02,113.82
+China,CN,del Xuchang,371200,34.02,113.82
 China,CN,Wuzhou,264200,23.48,111.32
 China,CN,Yingcheng,263600,30.94,113.57
 China,CN,Aksu,263500,41.15,80.25
@@ -13948,7 +13948,7 @@ Saudi arabia,SA,Ar-riyad#,3561500,24.65,46.77
 Saudi arabia,SA,Jeddah,2643200,21.5,39.17
 Saudi arabia,SA,Mecca,1618400,21.43,39.82
 Saudi arabia,SA,Al-madinah,854500,24.48,39.59
-Saudi arabia,SA,Ad-dammam,707300,26.43,50.1
+Saudi arabia,SA,Dammam,2707300,26.43,50.1
 Saudi arabia,SA,At-ta'if,657500,21.26,40.38
 Saudi arabia,SA,Tabuk,374500,28.39,36.57
 Saudi arabia,SA,Buraydah,314000,26.37,43.97
@@ -13957,12 +13957,12 @@ Saudi arabia,SA,Al-mubarraz,286500,25.43,49.57
 Saudi arabia,SA,H#amis musayt,285100,18.31,42.73
 Saudi arabia,SA,H#a'il,229500,27.53,41.7
 Saudi arabia,SA,Al-h#arj,194500,24.18,47.5
-Saudi arabia,SA,Al-h#ubar,187000,26.23,50.2
+Saudi arabia,SA,del Al-h#ubar,187000,26.23,50.2
 Saudi arabia,SA,H#afar-al-batin,181000,28.43,45.96
-Saudi arabia,SA,At##-t##uqbah,164800,26.27,50.2
+Saudi arabia,SA,del At##-t##uqbah,164800,26.27,50.2
 Saudi arabia,SA,Abha,146700,18.23,42.5
 Saudi arabia,SA,Ara#ar,138300,30.99,41.02
-Saudi arabia,SA,Al-qatif,129400,26.52,50.02
+Saudi arabia,SA,del Al-qatif,129400,26.52,50.02
 Saudi arabia,SA,Al-h#awiyah,122800,28.98,38.57
 Saudi arabia,SA,#unayzah,119200,26.09,43.99
 Saudi arabia,SA,Najran,114600,17.5,44.13
@@ -17046,7 +17046,7 @@ United States,US,Boston,577100,42.34,-71.02
 United States,US,Seattle,2546200,47.62,-122.35
 United States,US,Denver,721000,39.77,-104.87
 United States,US,Washington,556500,38.91,-77.02
-United States,US,Nashville,546000,36.17,-86.78
+United States,US,Nashville,2546000,36.17,-86.78
 United States,US,Portland,539900,45.54,-122.66
 United States,US,Las Vegas,527900,36.21,-115.22
 United States,US,Oklahoma City,527100,35.47,-97.51
