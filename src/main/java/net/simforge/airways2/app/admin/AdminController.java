@@ -66,9 +66,9 @@ public class AdminController {
     @GetMapping("/log/date/{date}")
     public ResponseEntity<byte[]> getFullLog(@PathVariable final String date) throws IOException {
         checkArgument(date.length() == 10);
-        checkNotNull(LocalDate.parse(date));
+        final LocalDate parsedDate = checkNotNull(LocalDate.parse(date));
 
-        byte[] bytes = IOHelper.loadFile(new File("./logs/logback." + date + ".log")).getBytes();
+        byte[] bytes = IOHelper.loadFile(new File("./logs/logback." + parsedDate + ".log")).getBytes();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)
@@ -109,9 +109,9 @@ public class AdminController {
     @GetMapping("/flight-stats/date/{date}")
     public Map<String, Integer> getFlightStats(@PathVariable final String date) {
         checkArgument(date.length() == 10);
-        checkNotNull(LocalDate.parse(date));
+        final LocalDate parsedDate = checkNotNull(LocalDate.parse(date));
 
-        return loadFlightStats(date);
+        return loadFlightStats(parsedDate.toString());
     }
 
     @GetMapping(value = "/flight-stats/vatsim-top-missing-airports", produces = "text/plain")
