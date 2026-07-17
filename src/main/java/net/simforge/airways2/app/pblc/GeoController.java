@@ -154,7 +154,7 @@ public class GeoController {
 
     @Data
     @AllArgsConstructor
-    private static class CountryDto {
+    public static class CountryDto {
         private String id;
         private String code;
         private String name;
@@ -162,7 +162,7 @@ public class GeoController {
 
     @Data
     @AllArgsConstructor
-    private static class CityDto {
+    public static class CityDto {
         private String id;
         private int countryId;
         private String name;
@@ -174,7 +174,7 @@ public class GeoController {
 
     @Data
     @AllArgsConstructor
-    private static class AirportDto {
+    public static class AirportDto {
         private String id;
         private float latitude;
         private float longitude;
@@ -185,7 +185,7 @@ public class GeoController {
 
     @Data
     @AllArgsConstructor
-    private static class AirportDetailsDto {
+    public static class AirportDetailsDto {
         private List<String> connectedCities;
         private List<IcaoToFlights> top3connections;
         private int flightsOutbound;

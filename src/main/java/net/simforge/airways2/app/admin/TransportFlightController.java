@@ -128,7 +128,7 @@ public class TransportFlightController {
 
     @Data
     @AllArgsConstructor
-    private static class FlightDto {
+    public static class FlightDto {
         private int id;
         private String st;
         private String hrtBt;
