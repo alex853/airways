@@ -97,6 +97,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:MX", "city-name:Tijuana"},
 
+                new String[]{"country-code:MY", "city-name:Kuala Lumpur"},
+
                 new String[]{"country-code:NL", "city-name:Amsterdam"},
                 new String[]{"country-code:NL", "city-name:Rotterdam"},
                 new String[]{"country-code:NL", "city-name:The Hague"},

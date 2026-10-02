@@ -38,6 +38,7 @@ public class World25_009_create_some_airports {
                 "OMDB", "OMAA",
                 "OTHH",
                 "SCEL",
+                "WMKK",
                 "WSSS",
                 "ZHCC"
         });
