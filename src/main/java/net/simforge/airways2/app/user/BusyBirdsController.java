@@ -135,6 +135,43 @@ public class BusyBirdsController {
         });
     }
 
+    @PutMapping("/ferry/book")
+    public BookMissionResponse bookFerryFlight(@RequestAttribute("userId") int userId,
+                                               @RequestParam(name = "aircraftId") String aircraftId,
+                                               @RequestParam(name = "destinationIcao") String destinationIcao) {
+        return worldBean.modifySync(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+
+            Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
+
+            if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
+                return new BookMissionResponse("failure", Collections.singletonList("aircraft is not parked at airport"));
+            }
+            if (aircraft.getOperationalStatus() != Aircrafts.OperationalStatus.Idle) {
+                return new BookMissionResponse("failure", Collections.singletonList("aircraft is not idle"));
+            }
+
+            Optional<Airports.Airport> destinationAirport = world.airports().byIcao(destinationIcao.trim().toUpperCase());
+            if (destinationAirport.isEmpty()) {
+                return new BookMissionResponse("failure", Collections.singletonList("unable to find destination airport " + destinationIcao));
+            }
+
+            Airports.Airport departureAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
+            if (departureAirport.getId() == destinationAirport.get().getId()) {
+                return new BookMissionResponse("failure", Collections.singletonList("aircraft is already at destination airport"));
+            }
+
+            int departureTime = world.getWorldTime() + 30 * Time.ONE_MINUTE;
+
+            FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, departureAirport, destinationAirport.get(), departureTime);
+            flight.setCharacterMode(FlightMissions.CharacterMode.PC);
+            flight.setUserId(userId);
+
+            return new BookMissionResponse("success", Collections.singletonList(
+                    "Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime())));
+        });
+    }
+
     @Data
     @AllArgsConstructor
     public static class MissionDto {
