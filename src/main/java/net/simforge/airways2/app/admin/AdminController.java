@@ -101,15 +101,33 @@ public class AdminController {
     }
 
     @GetMapping("/log/search")
-    public ResponseEntity<byte[]> searchLog(@RequestParam final String q) throws IOException {
+    public ResponseEntity<byte[]> searchLog(@RequestParam final String q,
+                                            @RequestParam(defaultValue = "false") final boolean all) throws IOException {
         checkArgument(!q.isEmpty(), "Query must not be empty");
 
+        final List<File> files = new ArrayList<>();
+        if (all) {
+            final File[] historical = new File("./logs").listFiles((dir, name) -> name.matches("logback\\.\\d{4}-\\d{2}-\\d{2}\\.log"));
+            if (historical != null) {
+                Arrays.sort(historical, Comparator.comparing(File::getName));
+                files.addAll(Arrays.asList(historical));
+            }
+        }
+        files.add(new File("./logs/logback.log"));
+
         final StringBuilder sb = new StringBuilder();
-        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("./logs/logback.log"), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains(q)) {
-                    sb.append(line).append('\n');
+        for (final File file : files) {
+            boolean headerPrinted = false;
+            try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains(q)) {
+                        if (all && !headerPrinted) {
+                            sb.append("=== ").append(file.getName()).append(" ===\n");
+                            headerPrinted = true;
+                        }
+                        sb.append(line).append('\n');
+                    }
                 }
             }
         }
