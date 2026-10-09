@@ -120,6 +120,37 @@ public class FlightDashboardController {
         });
     }
 
+    @PostMapping("/reschedule")
+    public Status2Dto reschedule(@RequestAttribute("userId") int userId,
+                                 @RequestParam(name = "flightId") String flightIdStr,
+                                 @RequestParam(name = "shiftMinutes") int shiftMinutes) {
+        return worldBean.modifySync(world -> {
+            int flightId = Id.decode(flightIdStr);
+
+            FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+
+            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
+            if (simTrackerConnected) {
+                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkActionAllowed(simStatus, "reschedule");
+            }
+
+            log.info("f/m #{} - flight-dashboard - reschedule by {} min", flightId, shiftMinutes);
+            world.flightMissionControl().reschedule(flight, shiftMinutes);
+
+            if (simTrackerConnected) {
+                simTrackerBean.refreshContext(userId);
+            }
+
+            return getStatus2(userId);
+        });
+    }
+
     @PostMapping("/start-boarding")
     public Status2Dto startBoarding(@RequestAttribute("userId") int userId,
                                     @RequestParam(name = "flightId") String flightIdStr) {

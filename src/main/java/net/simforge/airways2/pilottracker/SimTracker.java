@@ -173,6 +173,7 @@ public class SimTracker {
                             parkingBrakeSetCheck(context),
                             enginesShutdownCheck(context),
                             aircraftStationaryCheck(context)}));
+                    actions.add(rescheduleAction(world, fm.get()));
                 }
                 case Preflight -> {
                     if (tf.isPresent()) {
@@ -188,6 +189,7 @@ public class SimTracker {
                     } else {
                         actions.add(UserAction.build("blocks-off", new Check[]{}));
                     }
+                    actions.add(rescheduleAction(world, fm.get()));
                 }
                 case Departure -> {
                     // the correct location
@@ -468,6 +470,27 @@ public class SimTracker {
         public static CheckResult from(Check check) {
             return new CheckResult(check.name(), check.doCheck());
         }
+    }
+
+    private static UserAction rescheduleAction(World world, FlightMissions.Mission fm) {
+        Check[] checks = world.flightMissionControl().rescheduleChecks(fm).entrySet().stream()
+                .map(e -> simpleCheck(e.getKey(), e.getValue()))
+                .toArray(Check[]::new);
+        return UserAction.build("reschedule", checks);
+    }
+
+    private static Check simpleCheck(String name, boolean result) {
+        return new Check() {
+            @Override
+            public String name() {
+                return name;
+            }
+
+            @Override
+            public boolean doCheck() {
+                return result;
+            }
+        };
     }
 
     private static Check departureLocationCheck(Context context, World world, FlightMissions.Mission fm) {
