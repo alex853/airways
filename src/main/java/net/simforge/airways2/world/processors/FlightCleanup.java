@@ -82,12 +82,19 @@ public class FlightCleanup {
                     log.info("flight cleanup - s/f #{} removed", sf.getId());
                 });
 
-        final List<Integer> journeyIds = world.journeys()
+        final List<Journeys.Journey> journeys = world.journeys()
                 .filter(world.journeys().byAnyTransportFlightId(tf1.getId()))
-                .map(Journeys.Journey::getId)
                 .toList();
-        if (!journeyIds.isEmpty()) {
-            log.warn("flight cleanup - t/f #{} - related journeys will stay orphaned {}", tf1.getId(), journeyIds);
+        if (!journeys.isEmpty()) {
+            final List<String> viaTf1 = journeys.stream()
+                    .filter(j -> j.getTransportFlight1Id() == tf1.getId())
+                    .map(j -> "j/y #" + j.getId())
+                    .toList();
+            final List<String> viaTf2 = journeys.stream()
+                    .filter(j -> j.getTransportFlight2Id() == tf1.getId())
+                    .map(j -> "j/y #" + j.getId())
+                    .toList();
+            log.warn("flight cleanup - t/f #{} - related journeys will stay orphaned, via t/f1 {}, via t/f2 {}", tf1.getId(), viaTf1, viaTf2);
         }
 
         world.transportFlights().deleteById(tf1.getId());
