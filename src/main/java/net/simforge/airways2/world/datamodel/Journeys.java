@@ -206,7 +206,7 @@ public class Journeys {
         }
 
         public int getTransportFlight2Id() {
-            return storage.getAsInt(id, transportFlight2IdField);
+            return readTransportFlight2Id(id);
         }
 
         public void setTransportFlight2Id(final int transportFlight2Id) {
@@ -257,12 +257,23 @@ public class Journeys {
                 || readStatusCode(recordId) == status2.code());
     }
 
+    public Storage.Condition<Journey> byAnyTransportFlightId(final int transportFlightId) {
+        checkArgument(transportFlightId > 0);
+
+        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
+                || readTransportFlight2Id(recordId) == transportFlightId;
+    }
+
     private int readStatusCode(int recordId) {
         return statusBitField.getInt(recordId);
     }
 
     private int readTransportFlight1Id(int recordId) {
         return storage.getAsInt(recordId, transportFlight1IdField);
+    }
+
+    private int readTransportFlight2Id(int recordId) {
+        return storage.getAsInt(recordId, transportFlight2IdField);
     }
 
     private int readLocationCityId(int recordId) {

@@ -6,6 +6,7 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -48,7 +49,7 @@ public class FlightCleanup {
                 .count();
 
         if (brokenTransportFlights > 0) {
-            log.warn("FOUND AND REMOVED {} BROKEN TRANSPORT FLIGHTS", brokenTransportFlights);
+            log.warn("flight cleanup - FOUND AND REMOVED {} ORPHANED TRANSPORT FLIGHTS", brokenTransportFlights);
         }
     }
 
@@ -61,6 +62,7 @@ public class FlightCleanup {
     private static void deleteFlightMission(World world, FlightMissions.Mission f) {
         deleteTransportFlights(world, f);
         world.flightMissions().deleteById(f.getId());
+        log.info("flight cleanup - f/m #{} removed", f.getId());
     }
 
     private static void deleteTransportFlights(final World world, final FlightMissions.Mission f) {
@@ -75,7 +77,20 @@ public class FlightCleanup {
 
     private static void deleteTransportFlight(World world, TransportFlights.Flight tf1) {
         world.scheduledFlights().byId(tf1.getScheduledFlightId())
-                .ifPresent(sf -> world.scheduledFlights().deleteById(sf.getId()));
+                .ifPresent(sf -> {
+                    world.scheduledFlights().deleteById(sf.getId());
+                    log.info("flight cleanup - s/f #{} removed", sf.getId());
+                });
+
+        final List<Integer> journeyIds = world.journeys()
+                .filter(world.journeys().byAnyTransportFlightId(tf1.getId()))
+                .map(Journeys.Journey::getId)
+                .toList();
+        if (!journeyIds.isEmpty()) {
+            log.warn("flight cleanup - t/f #{} - related journeys will stay orphaned {}", tf1.getId(), journeyIds);
+        }
+
         world.transportFlights().deleteById(tf1.getId());
+        log.info("flight cleanup - t/f #{} removed", tf1.getId());
     }
 }
