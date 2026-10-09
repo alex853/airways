@@ -267,7 +267,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
-        moveBackToFromCity(journey, world.transportFlights().byId(journey.getId()).orElseThrow());
+        moveBackToFromCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow());
 
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);
