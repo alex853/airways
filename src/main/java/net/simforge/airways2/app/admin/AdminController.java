@@ -28,10 +28,14 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -94,6 +98,28 @@ public class AdminController {
                     .contentLength(bytes.length)
                     .body(bytes);
         }
+    }
+
+    @GetMapping("/log/search")
+    public ResponseEntity<byte[]> searchLog(@RequestParam final String q) throws IOException {
+        checkArgument(!q.isEmpty(), "Query must not be empty");
+
+        final StringBuilder sb = new StringBuilder();
+        try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream("./logs/logback.log"), StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(q)) {
+                    sb.append(line).append('\n');
+                }
+            }
+        }
+
+        final byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.TEXT_PLAIN)
+                .contentLength(bytes.length)
+                .body(bytes);
     }
 
     @GetMapping(value = "/timing", produces = "text/plain")
