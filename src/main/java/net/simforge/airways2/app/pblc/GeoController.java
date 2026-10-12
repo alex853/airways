@@ -31,6 +31,8 @@ public class GeoController {
                             Id.encode(c.getId()),
                             c.getCode(),
                             c.getName()))
+                    .sorted(Comparator.comparing(CountryDto::getName, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(CountryDto::getCode))
                     .toList());
         }
     }
@@ -49,6 +51,8 @@ public class GeoController {
                             world.airport2city().allByCityId(c.getId())
                                     .map(l -> world.airports().getIcao(l.getAirportId()).orElseThrow())
                                     .toList()))
+                    .sorted(Comparator.comparing(CityDto::getName, String.CASE_INSENSITIVE_ORDER)
+                            .thenComparing(CityDto::getCountryId))
                     .toList());
         }
     }
@@ -64,6 +68,7 @@ public class GeoController {
                             a.getIata(),
                             a.getIcao(),
                             a.getName()))
+                    .sorted(Comparator.comparing(AirportDto::getIcao))
                     .toList());
         }
     }

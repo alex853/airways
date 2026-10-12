@@ -57,38 +57,6 @@
 расстояния в nm; пригороды ≥100 тыс. → `del`, мельче 100 тыс. не трогаем; соседние самостоятельные рынки
 (Campinas, Santos, Toluca, Inland Empire) остаются отдельными.
 
-## Ручные шаги после импортов и применений (TODO, по порядку)
-
-После деплоя и запуска импортов (`World25_009`, `World25_012`) на бэкенде нужно вручную вызвать:
-
-1. `GET /admin/f1-tour-fixes` — выставляет население Austin (2 475 600), Las Vegas (2 327 900) и
-   Los Angeles (12 847 400), Dubai (5 940 600), Abu Dhabi (1 560 400) в мире
-   (города уже существуют, импорт население не обновляет).
-2. `GET /admin/airport/create-links?icao=KHND&dryRun=true`, затем без `dryRun` — привязка KHND к Las Vegas
-   (size 1524 < 5000, автоматически не линкуется).
-   То же для `icao=KBUR` (Burbank, size 3868) и `icao=KSNA` (John Wayne, size 2620) — привязка к Los Angeles
-   (KBUR ~6 nm от центра LA, KSNA ~37 nm — оба укладываются в `maxDistance` по умолчанию 50 nm).
-   Перед этим убедиться через `dryRun=true`, что линкуются нужные города и нет лишних.
-   `icao=OMSJ` (Sharjah Intl, size 4062) — привязка к Dubai (~11 nm от центра).
-   `icao=OMAD` (Bateen, бизнес-авиация, size 4023) — привязка к Abu Dhabi (~6 nm от центра).
-   Также `icao=OTHH` — привязка Hamad к Doha (OTHH отсутствует в `icaodata.csv`, автоматически не линкуется;
-   ~5 nm от центра Doha).
-3. Las Vegas — поднять attraction до 10 и mobility до 3 (по умолчанию 1.0):
-   - `GET /admin/flows/set-attraction?id=<id Las Vegas>&attraction=10`
-   - `GET /admin/flows/set-mobility?id=<id Las Vegas>&mobility=3`
-   - `id` берётся из `/geo/cities` (на d1 был `obJGQ`).
-   Dubai — аналогично, attraction 5 и mobility 3 (`id` на d1 был `aJmsV`):
-   - `GET /admin/flows/set-attraction?id=<id Dubai>&attraction=5`
-   - `GET /admin/flows/set-mobility?id=<id Dubai>&mobility=3`
-   Abu Dhabi — attraction 7 и mobility 3 (`id` на d1 был `kC2LS`):
-   - `GET /admin/flows/set-attraction?id=<id Abu Dhabi>&attraction=7`
-   - `GET /admin/flows/set-mobility?id=<id Abu Dhabi>&mobility=3`
-   Doha — attraction 3 и mobility 2 (город создаётся импортом, `id` взять из `/geo/cities` после него):
-   - `GET /admin/flows/set-attraction?id=<id Doha>&attraction=3`
-   - `GET /admin/flows/set-mobility?id=<id Doha>&mobility=2`
-4. Проверить после всего: `/geo/cities` (Mexico, Sao Paulo, Las Vegas, Austin — население и `airports`),
-   `/admin/airport/missing-cities`, `/admin/flows/details?id=...` для Las Vegas.
-
 ## Выполнено
 
 - **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется через `/admin/f1-tour-fixes`.
