@@ -41,7 +41,7 @@ public class JourneyProcessor {
 
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
         final Set<Integer> fromAirportIds = world.airport2city()
-                .allByCityId(journey.getFromCityId())
+                .allByCityId(journey.getLocationCityId())
                 .map(Airport2City.Link::getAirportId)
                 .collect(Collectors.toSet());
         final Set<Integer> toAirportIds = world.airport2city()

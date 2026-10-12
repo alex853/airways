@@ -36,12 +36,13 @@ public class BusyBirdsMissionControl {
     public List<Mission> getMissionsToBook() {
         List<Journeys.Journey> allJourneys = world.journeys()
                 .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                .filter(j -> j.getLocationCityId() > 0) // journey located nowhere is not able to be booked
                 .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F
                         || j.getPreferredCabinService() == CabinLayout.Service.J)
                 .toList();
 
         return allJourneys.stream().map(j -> {
-            Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+            Cities.City fromCity = world.cities().byId(j.getLocationCityId()).orElseThrow();
             Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
             int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
@@ -71,7 +72,7 @@ public class BusyBirdsMissionControl {
             messages.add("aircraft is not idle");
         }
 
-        List<Airports.Airport> fromAirports = listAirports(busyBirdsOperator, journey.getFromCityId());
+        List<Airports.Airport> fromAirports = listAirports(busyBirdsOperator, journey.getLocationCityId());
         List<Airports.Airport> toAirports = listAirports(busyBirdsOperator, journey.getToCityId());
 
         if (fromAirports.isEmpty()) {

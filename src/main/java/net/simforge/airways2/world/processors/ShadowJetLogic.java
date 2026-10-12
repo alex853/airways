@@ -119,7 +119,7 @@ public class ShadowJetLogic {
 
         Stream<Journeys.Journey> journeyStream = world.journeys()
                 .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
-                .filter(j -> fromCitiesId.contains(j.getFromCityId())
+                .filter(j -> fromCitiesId.contains(j.getLocationCityId())
                         && toCitiesId.contains(j.getToCityId()));
         Iterator<Journeys.Journey> it = journeyStream.iterator();
         Map<Integer, CabinLayout.Service> actualCabinServices = new HashMap<>();

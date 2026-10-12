@@ -38,7 +38,7 @@ public class BusyBirdsController {
                     .map(m -> {
                         Journeys.Journey j = m.getJourney();
 
-                        Cities.City fromCity = world.cities().byId(j.getFromCityId()).orElseThrow();
+                        Cities.City fromCity = world.cities().byId(j.getLocationCityId()).orElseThrow();
                         Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
                         return new MissionDto(
