@@ -29,7 +29,26 @@
 
 `net.simforge.airways2.app.userstorage`: `User` (id, token, lastLocationAirport), `UserStorage`.
 
-## TODO
+## /flight-dashboard/status2: секция user
+
+В ответ добавлена секция `user`: `id`, `lastLocationAirport` и `location` — результат сверки аэропорта, в котором
+пилот загрузился (`sim.airportIcao`), с `last.location.airport`:
+
+| `location.state` | Когда |
+|---|---|
+| `OK` | нет `lastLocationAirport` (новый пользователь), либо идёт рейс (`sim.flightMissionId != null`), либо аэропорты совпали |
+| `WRONG_AIRPORT` | на земле в аэропорту, не совпал с последней посадкой; заполнены `expectedAirport` и `currentAirport` |
+| `UNKNOWN` | трекер не подключён, пилот в воздухе или на земле вне аэропорта |
+
+Вординг сообщения формирует веб-морда по коду состояния; веб-морда блокирует действия при `WRONG_AIRPORT`.
+Позже в `user` будут инициалы, аватар, деньги и т.п.
+
+## TODO (обязательное)
+
+- **Серверная защита:** сейчас при `WRONG_AIRPORT` блокирует только веб-морда. Нужно, чтобы POST-действия
+  `/flight-dashboard/*` (`start-flight`, `start-boarding`, `reschedule`, `blocks-off` и др.) тоже отказывали на
+  бэке при `WRONG_AIRPORT`.
+- Опции переезда/перелёта для пилота, оказавшегося не в том аэропорту.
 
 - Решить, user это или pilot, и перенести в нормальную модель данных.
 - Админский токен (`admin.token`) по-прежнему берётся из настроек.

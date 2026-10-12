@@ -5,6 +5,8 @@ import lombok.Data;
 import net.simforge.airways2.app.beans.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.tools.Id;
+import net.simforge.airways2.app.userstorage.User;
+import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
@@ -79,8 +81,49 @@ public class FlightDashboardController {
             return new Status2Dto(
                     simStatus,
                     new VatsimStatusDto(), // todo ak1 vatsim tracking & dashboard integration rework
-                    flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null));
+                    flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
+                    buildUserDto(userId, simStatus));
         });
+    }
+
+    private static UserDto buildUserDto(final int userId, final SimTracker.UserStatus simStatus) {
+        final Optional<User> userO = UserStorage.getInstance().findById(userId);
+        if (userO.isEmpty()) {
+            return null;
+        }
+
+        final User user = userO.get();
+        final String lastLocationAirport = user.getLastLocationAirport().orElse(null);
+
+        return new UserDto(
+                Id.encode(user.getId()),
+                lastLocationAirport,
+                buildUserLocationDto(lastLocationAirport, simStatus));
+    }
+
+    // Compares the airport where the pilot has been loaded with the airport where the pilot has landed last time
+    private static UserLocationDto buildUserLocationDto(final String lastLocationAirport, final SimTracker.UserStatus simStatus) {
+        // no history yet - no restrictions
+        if (lastLocationAirport == null) {
+            return new UserLocationDto(UserLocationState.OK, null, null);
+        }
+
+        // flight is in progress - the check is not applied
+        if (simStatus.getFlightMissionId() != null) {
+            return new UserLocationDto(UserLocationState.OK, null, null);
+        }
+
+        // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
+        final String currentAirport = simStatus.getAirportIcao();
+        if (currentAirport == null || !"At airport".equals(simStatus.getLocationStatus())) {
+            return new UserLocationDto(UserLocationState.UNKNOWN, null, null);
+        }
+
+        if (lastLocationAirport.equalsIgnoreCase(currentAirport)) {
+            return new UserLocationDto(UserLocationState.OK, null, null);
+        }
+
+        return new UserLocationDto(UserLocationState.WRONG_AIRPORT, lastLocationAirport, currentAirport);
     }
 
     @PostMapping("/start-flight")
@@ -510,6 +553,30 @@ public class FlightDashboardController {
         private final SimTracker.UserStatus sim;
         private final VatsimStatusDto vatsim;
         private final FlightUltraDto flight;
+        private final UserDto user;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class UserDto {
+        private final String id;
+        private final String lastLocationAirport;
+        private final UserLocationDto location;
+        // todo ak2 initials, avatar, money etc. are to be added here
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class UserLocationDto {
+        private final UserLocationState state;
+        private final String expectedAirport;
+        private final String currentAirport;
+    }
+
+    public enum UserLocationState {
+        OK,
+        WRONG_AIRPORT,
+        UNKNOWN
     }
 
     @AllArgsConstructor
