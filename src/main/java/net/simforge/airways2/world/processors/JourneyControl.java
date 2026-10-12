@@ -177,6 +177,8 @@ public class JourneyControl {
         final int toCityId = journey.getToCityId();
         journey.setFromCityId(toCityId);
         journey.setToCityId(fromCityId);
+        // location must match from city, otherwise it could keep a random city of the landing airport (e.g. after diversion)
+        journey.setLocationCityId(toCityId);
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setAttemptCounter(0);
