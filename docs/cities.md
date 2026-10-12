@@ -24,11 +24,30 @@
 3. Всем городам-пригородам, включённым в эту цифру, добавить `del ` в имя.
 4. Города мельче 100 тыс. игнорируем — их не трогаем.
 5. Добавить город в `World25_012_selected_cities`.
-6. Аэропорты и линки подтянутся автоматически после импорта городов.
+6. Аэропорты и линки подтянутся автоматически после импорта городов — но только для гражданских аэропортов с
+   `size >= 5000` в `icaodata.csv` в радиусе 50 км от города (`ImportMajorAirportsInVicinityOfCities`).
+   Мелкие аэропорты, добавленные через `World25_009_create_some_airports` (`ImportSelectedAirports`),
+   создаются **без** airport2city-линков — их надо привязывать вручную:
+   `/admin/airport/create-links?icao=...&dryRun=true`.
 7. Проверить результат (`/geo/cities`, `/admin/airport/missing-cities`, `/admin/airport/create-links?dryRun=true`).
 
 Для города, который **уже есть в мире**, импорт население не обновит — нужно выставить его вручную
 (разовый метод вроде `/admin/f1-tour-fixes` с `city.setPopulation(...)`).
+
+## Ручные шаги после импортов и применений (TODO, по порядку)
+
+После деплоя и запуска импортов (`World25_009`, `World25_012`) на бэкенде нужно вручную вызвать:
+
+1. `GET /admin/f1-tour-fixes` — выставляет население Austin (2 475 600) и Las Vegas (2 327 900) в мире
+   (города уже существуют, импорт население не обновляет).
+2. `GET /admin/airport/create-links?icao=KHND&dryRun=true`, затем без `dryRun` — привязка KHND к Las Vegas
+   (size 1524 < 5000, автоматически не линкуется).
+3. Las Vegas — поднять attraction до 10 и mobility до 3 (по умолчанию 1.0):
+   - `GET /admin/flows/set-attraction?id=<id Las Vegas>&attraction=10`
+   - `GET /admin/flows/set-mobility?id=<id Las Vegas>&mobility=3`
+   - `id` берётся из `/geo/cities` (на d1 был `obJGQ`).
+4. Проверить после всего: `/geo/cities` (Mexico, Sao Paulo, Las Vegas, Austin — население и `airports`),
+   `/admin/airport/missing-cities`, `/admin/flows/details?id=...` для Las Vegas.
 
 ## Выполнено
 
@@ -38,6 +57,11 @@
   (Ecatepec, Nezahualcoyotl, Naucalpan, Tlalnepantla, Chimalhuacan, Lopez mateos, Cuautitlan izcalli, Xico,
   Coacalco, Ixtapaluca, Los reyes, Nicolas romero, Buenavista, San pablo de las salinas, Chalco, Huixquilucan,
   Texcoco). Добавлен в `World25_012_selected_cities`. Toluca (MMTO) остаётся отдельным городом.
+- **Las Vegas (US):** 2 327 900 (агломерация Las Vegas–Henderson–Paradise). Город уже был в мире, население
+  выставляется через `/admin/f1-tour-fixes`. Пригороды `del`: Paradise, Henderson, Sunrise manor, North las vegas,
+  Spring valley. Аэропорт KLAS; KINS (Indian Springs AF Aux) привязан ошибочно — игнорируем. KHND (Henderson Executive,
+  бизнес-авиация, size 1524) добавлен в `World25_009_create_some_airports`; линк к Las Vegas нужно создать вручную
+  через `/admin/airport/create-links?icao=KHND`. KVGT в мир не добавляем (возможно позже).
 - **Sao Paulo (BR):** переименован `Sao paulo` → `Sao Paulo`, население 22 260 100. 20 пригородов ≥100 тыс. в радиусе
   45 км помечены `del` (Guarulhos, Sao bernardo do campo, Osasco, Santo andre, Diadema, Maua, Carapicuiba,
   Moji das cruzes, Itaquaquecetuba, Suzano, Barueri, Embu, Taboao da serra, Itapevi, Cotia, Ferraz de vasconcelos,

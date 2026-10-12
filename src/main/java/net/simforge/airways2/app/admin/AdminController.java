@@ -615,6 +615,9 @@ public class AdminController {
             final Cities.City austin = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Austin")).findFirst().orElseThrow();
             austin.setPopulation(2475600);
 
+            final Cities.City lasVegas = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Las Vegas")).findFirst().orElseThrow();
+            lasVegas.setPopulation(2327900);
+
             return null;
         });
     }
