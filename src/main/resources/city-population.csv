@@ -1599,7 +1599,7 @@ Botswana,BW,Letlhakeng,6500,-24.07,25.03
 Botswana,BW,Maunatlala,3400,-22.57,27.57
 Botswana,BW,Masunga,3300,-20.67,27.42
 Botswana,BW,Mopipi,3300,-21.18,24.88
-Brazil,BR,Sao paulo,10260100,-23.53,-46.63
+Brazil,BR,Sao Paulo,22260100,-23.53,-46.63
 Brazil,BR,Rio de janeiro,6150200,-22.91,-43.2
 Brazil,BR,Salvador,2637000,-12.97,-38.5
 Brazil,BR,Belo horizonte,2375300,-19.92,-43.94
@@ -1611,7 +1611,7 @@ Brazil,BR,Recife,1494700,-8.08,-34.92
 Brazil,BR,Belem,1405700,-1.44,-48.5
 Brazil,BR,Porto alegre,1384000,-30.04,-51.22
 Brazil,BR,Goiania,1175100,-16.72,-49.26
-Brazil,BR,Guarulhos,1139100,-23.46,-46.49
+Brazil,BR,del Guarulhos,1139100,-23.46,-46.49
 Brazil,BR,Campinas,1028700,-22.91,-47.08
 Brazil,BR,Nova iguacu,994600,-22.74,-43.47
 Brazil,BR,Sao goncalo,943600,-22.84,-43.07
@@ -1619,11 +1619,11 @@ Brazil,BR,Sao luis,902900,-2.5,-44.3
 Brazil,BR,Maceio,900600,-9.65,-35.75
 Brazil,BR,Duque de caxias,820500,-22.77,-43.31
 Brazil,BR,Natal,760800,-5.8,-35.22
-Brazil,BR,Sao bernardo do campo,735700,-23.71,-46.54
+Brazil,BR,del Sao bernardo do campo,735700,-23.71,-46.54
 Brazil,BR,Teresina,730700,-5.1,-42.8
 Brazil,BR,Campo grande,713700,-20.45,-54.63
-Brazil,BR,Osasco,683900,-23.53,-46.78
-Brazil,BR,Santo andre,678100,-23.65,-46.53
+Brazil,BR,del Osasco,683900,-23.53,-46.78
+Brazil,BR,del Santo andre,678100,-23.65,-46.53
 Brazil,BR,Jaboatao,654000,-8.11,-35.02
 Brazil,BR,Joao pessoa,633600,-7.12,-34.86
 Brazil,BR,Contagem,598600,-19.91,-44.1
@@ -1644,15 +1644,15 @@ Brazil,BR,Ananindeua,441000,-1.38,-48.38
 Brazil,BR,Santos,427500,-23.95,-46.33
 Brazil,BR,Aparecida de goiania,393600,-16.82,-49.24
 Brazil,BR,Campos,390700,-21.75,-41.34
-Brazil,BR,Diadema,388000,-23.69,-46.61
+Brazil,BR,del Diadema,388000,-23.69,-46.61
 Brazil,BR,Vila velha,386500,-20.32,-40.28
-Brazil,BR,Maua,384800,-23.66,-46.46
+Brazil,BR,del Maua,384800,-23.66,-46.46
 Brazil,BR,Florianopolis,378900,-27.6,-48.54
 Brazil,BR,Olinda,374400,-8.0,-34.85
 Brazil,BR,Sao jose do rio preto,367400,-20.8,-49.39
 Brazil,BR,Caxias do sul,367000,-29.18,-51.17
 Brazil,BR,Serra,366700,-20.13,-40.32
-Brazil,BR,Carapicuiba,361700,-23.52,-46.84
+Brazil,BR,del Carapicuiba,361700,-23.52,-46.84
 Brazil,BR,Campina grande,346600,-7.23,-35.88
 Brazil,BR,Betim,342900,-19.97,-44.19
 Brazil,BR,Piracicaba,341500,-22.71,-47.64
@@ -1661,13 +1661,13 @@ Brazil,BR,Bauru,332900,-22.33,-49.08
 Brazil,BR,Macapa,327100,0.04,-51.05
 Brazil,BR,Canoas,325500,-29.92,-51.18
 Brazil,BR,Sao vicente,325500,-23.96,-46.39
-Brazil,BR,Moji das cruzes,323200,-23.52,-46.21
+Brazil,BR,del Moji das cruzes,323200,-23.52,-46.21
 Brazil,BR,Jundiai,322500,-23.2,-46.88
 Brazil,BR,Montes claros,319800,-16.72,-43.86
 Brazil,BR,Pelotas,318100,-31.76,-52.34
 Brazil,BR,Vitoria,317300,-20.31,-40.31
 Brazil,BR,Anapolis,313400,-16.32,-48.96
-Brazil,BR,Itaquaquecetuba,310500,-23.47,-46.35
+Brazil,BR,del Itaquaquecetuba,310500,-23.47,-46.35
 Brazil,BR,Porto velho,306400,-8.76,-63.91
 Brazil,BR,Maringa,304700,-23.41,-51.93
 Brazil,BR,Franca,302400,-20.53,-47.39
@@ -1679,7 +1679,7 @@ Brazil,BR,Foz do iguacu,281000,-25.55,-54.58
 Brazil,BR,Petropolis,279500,-22.51,-43.2
 Brazil,BR,Blumenau,279000,-26.92,-49.09
 Brazil,BR,Limeira,273200,-22.55,-47.4
-Brazil,BR,Suzano,259200,-23.55,-46.31
+Brazil,BR,del Suzano,259200,-23.55,-46.31
 Brazil,BR,Uberaba,257800,-19.76,-47.94
 Brazil,BR,Caucaia,257700,-3.74,-38.67
 Brazil,BR,Volta redonda,254000,-22.51,-44.12
@@ -1693,18 +1693,18 @@ Brazil,BR,Santa maria,245400,-29.69,-53.83
 Brazil,BR,Vitoria da conquista,243500,-14.85,-40.84
 Brazil,BR,Varzea grande,240800,-15.65,-56.14
 Brazil,BR,Boa vista,237900,2.83,-60.66
-Brazil,BR,Barueri,235100,-23.49,-46.86
+Brazil,BR,del Barueri,235100,-23.49,-46.86
 Brazil,BR,Caruaru,232900,-8.28,-35.98
 Brazil,BR,Gravatai,230900,-29.95,-50.99
 Brazil,BR,Ipatinga,226300,-19.48,-42.52
 Brazil,BR,Praia grande,225000,-24.0,-46.4
 Brazil,BR,Imperatriz,224800,-5.52,-47.49
 Brazil,BR,Juazeiro do norte,222000,-7.21,-39.32
-Brazil,BR,Embu,218900,-23.64,-46.84
+Brazil,BR,del Embu,218900,-23.64,-46.84
 Brazil,BR,Sumare,216800,-22.8,-47.29
 Brazil,BR,Santa luzia,216600,-19.78,-43.87
 Brazil,BR,Mage,213200,-22.65,-43.05
-Brazil,BR,Taboao da serra,212300,-23.6,-46.78
+Brazil,BR,del Taboao da serra,212300,-23.6,-46.78
 Brazil,BR,Sao jose dos pinhais,209600,-25.57,-49.18
 Brazil,BR,Marilia,207200,-22.21,-49.95
 Brazil,BR,Jacarei,205900,-23.3,-45.96
@@ -1722,7 +1722,7 @@ Brazil,BR,Sao jose,192700,-27.59,-48.62
 Brazil,BR,Divinopolis,190300,-20.15,-44.9
 Brazil,BR,Maracanau,188100,-3.89,-38.64
 Brazil,BR,Rio grande,187500,-32.05,-52.11
-Brazil,BR,Itapevi,186900,-23.55,-46.94
+Brazil,BR,del Itapevi,186900,-23.55,-46.94
 Brazil,BR,Araraquara,185900,-21.75,-48.13
 Brazil,BR,Petrolina,185900,-9.38,-40.51
 Brazil,BR,Itaborai,184300,-22.75,-42.87
@@ -1734,17 +1734,17 @@ Brazil,BR,Passo fundo,175800,-28.25,-52.42
 Brazil,BR,Camacari,174000,-12.7,-38.33
 Brazil,BR,Aracatuba,172400,-21.21,-50.45
 Brazil,BR,Barra mansa,169200,-22.56,-44.17
-Brazil,BR,Cotia,166800,-23.6,-46.94
+Brazil,BR,del Cotia,166800,-23.6,-46.94
 Brazil,BR,Indaiatuba,166000,-23.09,-47.21
 Brazil,BR,Lages,165700,-27.81,-50.31
 Brazil,BR,Arapiraca,164800,-9.75,-36.67
 Brazil,BR,Criciuma,163200,-28.68,-49.39
 Brazil,BR,Palmas,161900,-10.27,-48.31
 Brazil,BR,Dourados,159800,-22.23,-54.81
-Brazil,BR,Ferraz de vasconcelos,158700,-23.54,-46.37
+Brazil,BR,del Ferraz de vasconcelos,158700,-23.54,-46.37
 Brazil,BR,Ilheus,158100,-14.78,-39.05
 Brazil,BR,Nova friburgo,157600,-22.26,-42.54
-Brazil,BR,Francisco morato,155300,-23.27,-46.75
+Brazil,BR,del Francisco morato,155300,-23.27,-46.75
 Brazil,BR,Nilopolis,155000,-22.8,-43.42
 Brazil,BR,Luziania,154900,-16.25,-47.92
 Brazil,BR,Itajai,154400,-26.9,-48.68
@@ -1754,9 +1754,9 @@ Brazil,BR,Nossa senhora do socorro,151500,-10.87,-37.12
 Brazil,BR,Sobral,150800,-3.69,-40.35
 Brazil,BR,Guarapuava,150000,-25.38,-51.48
 Brazil,BR,Maraba,145800,-5.34,-49.13
-Brazil,BR,Itapecerica da serra,144300,-23.72,-46.83
+Brazil,BR,del Itapecerica da serra,144300,-23.72,-46.83
 Brazil,BR,Camaragibe,143300,-8.0,-35.04
-Brazil,BR,Sao caetano do sul,143300,-23.58,-46.58
+Brazil,BR,del Sao caetano do sul,143300,-23.58,-46.58
 Brazil,BR,Cabo de santo agostinho,142800,-8.29,-35.03
 Brazil,BR,Pocos de caldas,142800,-21.78,-46.57
 Brazil,BR,Ibirite,140500,-20.03,-44.07
@@ -1798,7 +1798,7 @@ Brazil,BR,Varginha,113300,-21.56,-45.43
 Brazil,BR,Teixeira de freitas,112300,-17.53,-39.71
 Brazil,BR,Botucatu,112100,-22.88,-48.45
 Brazil,BR,Santa rita,112100,-7.13,-34.96
-Brazil,BR,Ribeirao pires,111300,-23.72,-46.41
+Brazil,BR,del Ribeirao pires,111300,-23.72,-46.41
 Brazil,BR,Cabo frio,111000,-22.89,-42.04
 Brazil,BR,Catanduva,110000,-21.14,-48.98
 Brazil,BR,Arapongas,92000,-23.41,-51.43
