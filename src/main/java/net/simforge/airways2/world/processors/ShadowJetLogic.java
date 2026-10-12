@@ -22,6 +22,9 @@ public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
 
+    // todo ak2 hubs are hardcoded for the dry run, later should be calculated from flight stats
+    private static final Set<String> HUB_ICAOS = Set.of("EGLL", "EDDF", "EHAM", "KJFK", "OMDB");
+
     public static Aircrafts.Aircraft findAvailableAircraftOrCreateNew(
             final World world,
             final AircraftTypes.AircraftType aircraftType,
@@ -174,6 +177,57 @@ public class ShadowJetLogic {
 
         world.transportFlightControl().startBoarding(transportFlight);
         log.info("T/f provisioning - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, boarding started, DONE", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+
+        logHubDryRun(world, mission, fromCitiesId);
+    }
+
+    // todo ak2 dry run of 'journeys via hubs' idea - only logging, nothing is changed in world
+    private static void logHubDryRun(final World world, final FlightMissions.Mission mission, final Set<Integer> fromCitiesId) {
+        try {
+            final Airports.Airport destinationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+            final String hubIcao = destinationAirport.getIcao();
+            if (!HUB_ICAOS.contains(hubIcao)) {
+                return;
+            }
+
+            final Geo.Coords hubCoords = destinationAirport.getCoords();
+            final Map<Integer, Geo.Coords> cityCoordsCache = new HashMap<>();
+
+            int closer = 0;
+            int notCloser = 0;
+
+            final Iterator<Journeys.Journey> it = world.journeys()
+                    .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                    .iterator();
+            while (it.hasNext()) {
+                final Journeys.Journey journey = it.next();
+
+                // only journeys which are located at the cities of departure airport are able to take this flight
+                final int locationCityId = journey.getLocationCityId() > 0 ? journey.getLocationCityId() : journey.getFromCityId();
+                if (!fromCitiesId.contains(locationCityId)) {
+                    continue;
+                }
+
+                final Geo.Coords locationCoords = cityCoordsCache.computeIfAbsent(locationCityId,
+                        id -> world.cities().byId(id).orElseThrow().getCoords());
+                final Geo.Coords targetCoords = cityCoordsCache.computeIfAbsent(journey.getToCityId(),
+                        id -> world.cities().byId(id).orElseThrow().getCoords());
+
+                final double distanceNow = Geo.distance(locationCoords, targetCoords);
+                final double distanceFromHub = Geo.distance(hubCoords, targetCoords);
+
+                if (distanceFromHub < distanceNow) {
+                    closer++;
+                } else {
+                    notCloser++;
+                }
+            }
+
+            log.info("hub dry run - f/m #{} - flight towards hub {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}",
+                    mission.getId(), hubIcao, closer, notCloser);
+        } catch (final Exception e) {
+            log.warn("hub dry run - f/m #{} - failed", mission.getId(), e);
+        }
     }
 
     public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
