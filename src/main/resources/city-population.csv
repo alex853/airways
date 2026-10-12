@@ -17021,7 +17021,7 @@ United Kingdom,GB,Eccles,35800,53.49,-2.33
 United Kingdom,GB,Hitchin,35700,51.96,-0.28
 United Kingdom,GB,Pontypool,35700,51.7,-3.04
 United States,US,New York,8091700,40.67,-73.94
-United States,US,Los Angeles,3847400,34.11,-118.41
+United States,US,Los Angeles,12847400,34.11,-118.41
 United States,US,Chicago,2862400,41.84,-87.68
 United States,US,Houston,2020100,29.77,-95.39
 United States,US,Philadelphia,1472500,40.01,-75.13
@@ -17030,10 +17030,10 @@ United States,US,San Diego,1276000,32.81,-117.14
 United States,US,San Antonio,1234900,29.46,-98.51
 United States,US,Dallas,1212600,32.79,-96.77
 United States,US,Detroit,904100,42.38,-83.1
-United States,US,San jose,900200,37.3,-121.85
+United States,US,del San jose,900200,37.3,-121.85
 United States,US,Jacksonville,786100,30.33,-81.66
 United States,US,Indianapolis,778800,39.78,-86.15
-United States,US,San Francisco,746900,37.77,-122.45
+United States,US,San Francisco,7650000,37.77,-122.45
 United States,US,Columbus,730900,39.99,-82.99
 United States,US,Austin,2475600,30.31,-97.75
 United States,US,Memphis,1335000,35.11,-90.01
@@ -17051,7 +17051,7 @@ United States,US,Portland,539900,45.54,-122.66
 United States,US,Las Vegas,2327900,36.21,-115.22
 United States,US,Oklahoma City,527100,35.47,-97.51
 United States,US,Tucson,514500,32.2,-110.89
-United States,US,Long beach,479200,33.79,-118.16
+United States,US,del Long beach,479200,33.79,-118.16
 United States,US,Albuquerque,478900,35.12,-106.62
 United States,US,New orleans,466600,30.07,-89.93
 United States,US,Cleveland,457600,41.48,-81.68
@@ -17062,7 +17062,7 @@ United States,US,Kansas city,443200,39.12,-94.55
 United States,US,Mesa,439400,33.42,-111.74
 United States,US,Atlanta,423900,33.76,-84.42
 United States,US,Omaha,408400,41.26,-96.01
-United States,US,Oakland,397800,37.77,-122.22
+United States,US,del Oakland,397800,37.77,-122.22
 United States,US,Tulsa,385900,36.13,-95.92
 United States,US,Honolulu,382800,21.32,-157.8
 United States,US,Miami,380500,25.78,-80.21
@@ -17071,8 +17071,8 @@ United States,US,del Minneapolis,372600,44.96,-93.27
 United States,US,Colorado springs,371200,38.86,-104.76
 United States,US,Arlington,360300,32.69,-97.13
 United States,US,Wichita,354600,37.69,-97.34
-United States,US,Santa ana,343100,33.74,-117.88
-United States,US,Anaheim,333400,33.84,-117.87
+United States,US,del Santa ana,343100,33.74,-117.88
+United States,US,del Anaheim,333400,33.84,-117.87
 United States,US,Saint louis,329200,38.64,-90.24
 United States,US,Raleigh,324400,35.82,-78.66
 United States,US,Pittsburgh,324000,40.44,-79.98
@@ -17113,10 +17113,10 @@ United States,US,Modesto,209800,37.66,-120.99
 United States,US,Lubbock,209400,33.58,-101.88
 United States,US,del Paradise,209300,36.08,-115.13
 United States,US,Orlando,1533646,28.5,-81.37
-United States,US,Fremont,203800,37.53,-122.0
+United States,US,del Fremont,203800,37.53,-122.0
 United States,US,Chula vista,203200,32.63,-117.04
 United States,US,Laredo,202500,27.53,-99.49
-United States,US,Glendale,201900,34.18,-118.25
+United States,US,del Glendale,201900,34.18,-118.25
 United States,US,Durham,200700,35.98,-78.91
 United States,US,Montgomery,199500,32.35,-86.28
 United States,US,San bernardino,198600,34.14,-117.29
@@ -17126,7 +17126,7 @@ United States,US,Yonkers,197600,40.95,-73.87
 United States,US,Spokane,197500,47.67,-117.41
 United States,US,Tacoma,1097000,47.25,-122.46
 United States,US,Grand rapids,195200,42.96,-85.66
-United States,US,Huntington beach,195200,33.69,-118.01
+United States,US,del Huntington beach,195200,33.69,-118.01
 United States,US,Des moines,195000,41.58,-93.62
 United States,US,Augusta-richmond,194400,33.46,-81.99
 United States,US,Irving,194400,32.86,-96.97
@@ -17149,11 +17149,11 @@ United States,US,del Sunrise manor,175600,36.19,-115.05
 United States,US,Knoxville,173500,35.97,-83.95
 United States,US,Ontario,169600,34.05,-117.61
 United States,US,Oceanside,168500,33.23,-117.31
-United States,US,Garden grove,167400,33.78,-117.96
+United States,US,del Garden grove,167400,33.78,-117.96
 United States,US,Fort Lauderdale,167000,26.14,-80.14
 United States,US,Aurora,165800,41.77,-88.29
 United States,US,Huntsville,165600,34.71,-86.63
-United States,US,Santa clarita,164800,34.41,-118.51
+United States,US,del Santa clarita,164800,34.41,-118.51
 United States,US,Overland park,161800,38.91,-94.68
 United States,US,Moreno valley,161600,33.93,-117.21
 United States,US,Dayton,161200,39.78,-84.2
@@ -17161,7 +17161,7 @@ United States,US,Brownsville,160700,25.93,-97.48
 United States,US,Tempe,159700,33.39,-111.93
 United States,US,Fontana,157300,34.1,-117.46
 United States,US,Rancho cucamonga,156900,34.12,-117.57
-United States,US,Pomona,155100,34.06,-117.76
+United States,US,del Pomona,155100,34.06,-117.76
 United States,US,Chattanooga,155000,35.07,-85.26
 United States,US,Tallahassee,154100,30.46,-84.28
 United States,US,Santa rosa,153900,38.45,-122.7
@@ -17178,48 +17178,48 @@ United States,US,Metairie,147900,30.0,-90.18
 United States,US,Salinas,147800,36.68,-121.64
 United States,US,Corona,145700,33.87,-117.57
 United States,US,Kansas city,145100,39.12,-94.73
-United States,US,East los angeles,144900,34.03,-118.17
+United States,US,del East los angeles,144900,34.03,-118.17
 United States,US,Pasadena,144800,29.66,-95.15
 United States,US,Salem,144700,44.92,-123.02
 United States,US,Hollywood,144400,26.03,-80.16
 United States,US,Eugene,143900,44.05,-123.11
-United States,US,Torrance,143800,33.83,-118.34
+United States,US,del Torrance,143800,33.83,-118.34
 United States,US,Syracuse,143400,43.04,-76.14
-United States,US,Pasadena,142600,34.16,-118.14
+United States,US,del Pasadena,142600,34.16,-118.14
 United States,US,Lakewood,142100,39.7,-105.11
-United States,US,Hayward,141000,37.63,-122.1
+United States,US,del Hayward,141000,37.63,-122.1
 United States,US,Naperville,139800,41.76,-88.15
 United States,US,Bridgeport,139700,41.19,-73.2
 United States,US,Grand prairie,138300,32.69,-97.02
 United States,US,Escondido,136700,33.14,-117.07
 United States,US,Sioux falls,136300,43.54,-96.73
 United States,US,Warren,135100,42.49,-83.03
-United States,US,Fullerton,133300,33.88,-117.93
-United States,US,Orange,133100,33.81,-117.82
+United States,US,del Fullerton,133300,33.88,-117.93
+United States,US,del Orange,133100,33.81,-117.82
 United States,US,del Spring valley,132100,36.11,-115.24
 United States,US,Peoria,131400,33.69,-112.24
 United States,US,Palmdale,130500,34.61,-118.09
 United States,US,Mesquite,130300,32.77,-96.6
 United States,US,Coral Springs,128700,26.27,-80.26
 United States,US,Alexandria,128300,38.82,-77.09
-United States,US,Sunnyvale,128300,37.39,-122.03
+United States,US,del Sunnyvale,128300,37.39,-122.03
 United States,US,Savannah,128100,32.02,-81.13
 United States,US,Lancaster,127200,34.69,-118.18
 United States,US,Joliet,127000,41.53,-88.12
 United States,US,Fort collins,126900,40.56,-105.07
 United States,US,Sterling heights,126300,42.58,-83.03
 United States,US,Thousand oaks,125600,34.19,-118.87
-United States,US,Concord,125300,37.97,-122.0
+United States,US,del Concord,125300,37.97,-122.0
 United States,US,New haven,125000,41.31,-72.92
 United States,US,Fayetteville,124900,35.07,-78.9
 United States,US,Hartford,124600,41.77,-72.68
 United States,US,Elizabeth,123400,40.67,-74.19
-United States,US,El monte,123400,34.07,-118.03
+United States,US,del El monte,123400,34.07,-118.03
 United States,US,Cape coral,123000,26.64,-82.0
 United States,US,Cedar rapids,122700,41.97,-91.67
 United States,US,Topeka,122100,39.04,-95.69
 United States,US,Stamford,120500,41.1,-73.55
-United States,US,Vallejo,120100,38.11,-122.26
+United States,US,del Vallejo,120100,38.11,-122.26
 United States,US,Flint,119500,43.02,-83.69
 United States,US,Macallen,118900,26.22,-98.24
 United States,US,Carrollton,118400,32.99,-96.9
@@ -17228,7 +17228,7 @@ United States,US,Waco,118300,31.57,-97.18
 United States,US,Simi valley,117900,34.26,-118.75
 United States,US,Columbia,117700,34.04,-80.89
 United States,US,Evansville,117400,37.98,-87.54
-United States,US,Inglewood,115800,33.96,-118.34
+United States,US,del Inglewood,115800,33.96,-118.34
 United States,US,Abilene,115300,32.45,-99.74
 United States,US,Springfield,114900,39.78,-89.64
 United States,US,Ann arbor,114200,42.28,-83.73
@@ -17239,15 +17239,15 @@ United States,US,del West valley city,112500,40.69,-112.01
 United States,US,Bellevue,112400,47.6,-122.16
 United States,US,Lafayette,112000,30.22,-92.03
 United States,US,Independence,111700,39.09,-94.35
-United States,US,Downey,111100,33.94,-118.13
+United States,US,del Downey,111100,33.94,-118.13
 United States,US,Port saint lucie,109900,27.28,-80.35
 United States,US,Clarksville,109600,36.56,-87.35
-United States,US,Costa mesa,109600,33.67,-117.91
+United States,US,del Costa mesa,109600,33.67,-117.91
 United States,US,Manchester,109500,42.98,-71.44
-United States,US,West covina,109000,34.05,-117.91
+United States,US,del West covina,109000,34.05,-117.91
 United States,US,Clearwater,108900,27.98,-82.77
 United States,US,Waterbury,108500,41.56,-73.04
-United States,US,Norwalk,108300,33.91,-118.08
+United States,US,del Norwalk,108300,33.91,-118.08
 United States,US,Olathe,107900,38.89,-94.81
 United States,US,del Provo,106100,40.25,-111.64
 United States,US,Allentown,106000,40.6,-75.48
@@ -17255,27 +17255,27 @@ United States,US,Arden-arcade,105600,38.6,-121.38
 United States,US,South bend,105100,41.68,-86.27
 United States,US,San buenaventura,104900,34.27,-119.26
 United States,US,Pueblo,104100,38.27,-104.62
-United States,US,Burbank,104000,34.19,-118.33
+United States,US,del Burbank,104000,34.19,-118.33
 United States,US,Lowell,104000,42.64,-71.32
 United States,US,Fairfield,103700,38.25,-122.04
 United States,US,Westminster,103600,39.88,-105.05
 United States,US,Visalia,103400,36.33,-119.32
 United States,US,Athens-clarke,102900,33.95,-83.39
 United States,US,Charleston,102900,32.79,-79.99
-United States,US,Santa clara,102600,37.37,-121.97
-United States,US,Richmond,102500,37.95,-122.36
+United States,US,del Santa clara,102600,37.37,-121.97
+United States,US,del Richmond,102500,37.95,-122.36
 United States,US,Wichita falls,102500,33.9,-98.52
-United States,US,Antioch,102300,37.99,-121.8
+United States,US,del Antioch,102300,37.99,-121.8
 United States,US,Arvada,102200,39.82,-105.11
 United States,US,Roseville,102200,38.76,-121.29
 United States,US,Richardson,101800,32.97,-96.71
 United States,US,Green bay,101600,44.52,-87.99
 United States,US,Cambridge,101500,42.38,-71.12
-United States,US,Berkeley,101400,37.87,-122.27
+United States,US,del Berkeley,101400,37.87,-122.27
 United States,US,Cary,101400,35.78,-78.8
 United States,US,Erie,101000,42.13,-80.09
 United States,US,Miramar,100600,25.98,-80.33
-United States,US,Daly city,100500,37.69,-122.47
+United States,US,del Daly city,100500,37.69,-122.47
 United States,US,Norman,100300,35.23,-97.34
 United States,US,Portsmouth,99900,36.86,-76.36
 United States,US,Edison,99800,40.53,-74.37
