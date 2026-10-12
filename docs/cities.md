@@ -72,6 +72,77 @@
 расстояния в nm; пригороды ≥100 тыс. → `del`, мельче 100 тыс. не трогаем; соседние самостоятельные рынки
 (Campinas, Santos, Toluca, Inland Empire) остаются отдельными.
 
+## TODO / известные проблемы
+
+### 1. Военные аэродромы с типом `civil` в `icaodata.csv`
+
+Автоимпорт (`ImportMajorAirportsInVicinityOfCities`: `civil`, `size >= 5000`, радиус 50 nm) тащит их в мир и
+привязывает к городам, хотя регулярных рейсов там нет. Определять по названию ненадёжно (EGDM «Boscombe Down» не
+содержит маркеров), чинить точечно.
+
+**Уже в мире и привязаны к городам:**
+
+| ICAO | Название | Привязан к | Комментарий |
+|---|---|---|---|
+| EGDM | Boscombe Down | Bristol | военная база |
+| KINS | Indian Springs AF Aux | Las Vegas | военная авиабаза |
+| KNZJ | El Toro MCAS | Los Angeles | бывшая база, рейсов нет (size 12170) |
+| KNTD | Point Mugu NAS | Los Angeles | военно-морская база |
+| KSLI | Los Alamitos AAF | Los Angeles | армейский аэродром |
+| KPMD | Palmdale AF Plant 42 | Los Angeles | военный завод/испытания |
+| KNKX | Miramar MCAS | San Diego, Tijuana | военная база морской пехоты |
+| KNHK | Patuxent River NAS | Washington | военно-морская испытательная база |
+| KAPG | Phillips AAF | Baltimore | армейский аэродром |
+| KFMH | Otis ANGB | Boston | база нацгвардии |
+| KNUQ | Moffett Federal AFLD | San Francisco | NASA/бизнес-джеты — не обязательно плохой |
+| LIRN | Capodichino Mil | — (без города) | военная часть аэропорта Неаполя |
+| KFTG | Front Range | Aurora, Denver | гражданский GA, ложное срабатывание |
+
+**План:** военные удаляем из мира и при необходимости заменяем на реальные гражданские аэродромы города.
+Перед удалением **проанализировать использование** (самолёты, расположенные там; миссии/рейсы, где аэродром
+вылета/назначения; airport2city-линки; facilities) — убедиться, что удаление не опасно. Отдельного эндпоинта
+удаления аэропорта/линка в админке нет. Одновременно поправить `type` на `military` в `icaodata.csv`.
+
+**Ловушки на будущее** (`civil`, `size >= 5000`, ещё не в мире, импортируются при появлении города рядом):
+KNTU Oceana NAS, KYUM Yuma MCAS/Intl (смешанный), KNKT Cherry Point MCAS, KNJK El Centro NAF, KNFL Fallon NAS,
+KNQI Kingsville NAS, KNBC Beaufort MCAS, KNLC Lemoore NAS, KNQX Key West NAS (смешанный), KNPA Pensacola NAS,
+KNGP Corpus Christi NAS, KNMM Meridian NAS, KNHZ Brunswick NAS, KFHU Sierra Vista (смешанный), KFTK Godman AAF,
+KGTB Wheeler-Sack AAF, PABI Allen AAF, KNFE Fentress NALF, LIBV Gioia Del Colle Mil, LIED Decimomannu Mil,
+NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, FZSA Kamina Base и др.
+
+### 2. Аэропорты в мире без привязки к городу (отдельная категория)
+
+Созданы через `World25_009_create_some_airports`, но ни один город рядом в мир не импортирован, поэтому в симуляции
+пассажиропотока не участвуют: EFKS, EGJJ, ENBR, EVRA, LDDU, LDSP, LEAL, LFKF, LGIR, LGKO, LGKR, LGRP, LGSK, LGSM,
+LICJ, LIRN, LPFR, LPMA, LTAI.
+
+**План:** для каждого проанализировать, какой город/города рядом нужны, и пройти обычную процедуру
+«актуализировать и укрупнить мажорный сити» (импорт города → линк аэропорта). Займёмся отдельно.
+
+**Активность** (по `/geo/airport/{icao}/details`; sum — сумма рейсов/сутки трёх крупнейших направлений, нижняя оценка):
+
+| ICAO | Name | Sum |
+|---|---|---|
+| LPMA | Madeira | 130 |
+| ENBR | Bergen Flesland | 104 |
+| EGJJ | Jersey | 83 |
+| LPFR | Faro | 73 |
+| EVRA | Riga Intl | 70 |
+| LGKR | Ioannis Kapodistrias (Corfu) | 62 |
+| LGIR | Nikos Kazantzakis (Heraklion) | 62 |
+| LTAI | Antalya | 46 |
+| LGSK | Alexandros Papadiamandis (Skiathos) | 44 |
+| LICJ | Punta Raisi (Palermo) | 39 |
+| LIRN | Capodichino Mil (Naples) | 36 |
+| LGRP | Diagoras (Rhodes) | 30 |
+| LDDU | Cilipi (Dubrovnik) | 26 |
+| LDSP | Kastela (Split) | 24 |
+| LEAL | Alicante | 23 |
+| LGKO | Ippokratis (Kos) | 16 |
+| LGSM | Samos | 11 |
+| EFKS | Kuusamo | 9 |
+| LFKF | Figari/Sud Corse | 8 |
+
 ## Выполнено
 
 - **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется через `/admin/f1-tour-fixes`.
