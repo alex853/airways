@@ -10234,18 +10234,18 @@ Mauritius,MU,La gaulette,1800,-20.36,57.65
 Mauritius,MU,Saint aubin,1800,-20.49,57.53
 Mauritius,MU,Bambous virieux,1700,-20.33,57.76
 Mauritius,MU,Congomah,1700,-20.14,57.58
-Mexico,MX,Mexico,8705100,19.43,-99.14
-Mexico,MX,Ecatepec,1769900,19.6,-99.05
+Mexico,MX,Mexico,21705100,19.43,-99.14
+Mexico,MX,del Ecatepec,1769900,19.6,-99.05
 Mexico,MX,Guadalajara,1672000,20.67,-103.35
 Mexico,MX,Puebla,1370800,19.05,-98.22
 Mexico,MX,Juarez,1330800,31.74,-106.49
 Mexico,MX,Tijuana,1313800,32.53,-117.02
-Mexico,MX,Nezahualcoyotl,1259100,19.41,-99.03
+Mexico,MX,del Nezahualcoyotl,1259100,19.41,-99.03
 Mexico,MX,Monterrey,1142900,25.67,-100.32
 Mexico,MX,Leon,1084400,21.12,-101.69
 Mexico,MX,Zapopan,954900,20.72,-103.4
-Mexico,MX,Naucalpan,867900,19.48,-99.23
-Mexico,MX,Tlalnepantla,740700,19.54,-99.19
+Mexico,MX,del Naucalpan,867900,19.48,-99.23
+Mexico,MX,del Tlalnepantla,740700,19.54,-99.19
 Mexico,MX,Guadalupe,710900,25.68,-100.26
 Mexico,MX,Chihuahua,698500,28.63,-106.08
 Mexico,MX,Merida,698400,20.97,-89.62
@@ -10259,21 +10259,21 @@ Mexico,MX,Morelia,574900,19.72,-101.18
 Mexico,MX,Hermosillo,573300,29.07,-110.97
 Mexico,MX,Culiacan,563200,24.8,-107.39
 Mexico,MX,Veracruz,554100,19.19,-96.14
-Mexico,MX,Chimalhuacan,541300,19.44,-98.96
+Mexico,MX,del Chimalhuacan,541300,19.44,-98.96
 Mexico,MX,Torreon,521700,25.55,-103.43
 Mexico,MX,San nicolas de los garza,510500,25.75,-100.3
-Mexico,MX,Lopez mateos,505500,19.57,-99.26
+Mexico,MX,del Lopez mateos,505500,19.57,-99.26
 Mexico,MX,Toluca,489000,19.29,-99.67
 Mexico,MX,Cancun,478400,21.17,-86.83
 Mexico,MX,Tlaquepaque,477100,20.64,-103.32
 Mexico,MX,Tuxtla gutierrez,466500,16.75,-93.12
-Mexico,MX,Cuautitlan izcalli,466100,19.65,-99.25
+Mexico,MX,del Cuautitlan izcalli,466100,19.65,-99.25
 Mexico,MX,Reynosa,461900,26.08,-98.28
 Mexico,MX,Durango,443600,24.03,-104.67
 Mexico,MX,Matamoros,415400,25.88,-97.5
 Mexico,MX,Xalapa,403100,19.53,-96.92
 Mexico,MX,Tonala,357600,20.62,-103.23
-Mexico,MX,Xico,354100,19.27,-98.94
+Mexico,MX,del Xico,354100,19.27,-98.94
 Mexico,MX,Villahermosa,353800,17.98,-92.92
 Mexico,MX,Mazatlan,343800,23.22,-106.42
 Mexico,MX,Cuernavaca,341700,18.92,-99.25
@@ -10283,8 +10283,8 @@ Mexico,MX,Tampico,310800,22.22,-97.85
 Mexico,MX,Apodaca,309800,25.77,-100.18
 Mexico,MX,Celaya,297800,20.52,-100.82
 Mexico,MX,Pachuca,295800,20.12,-98.76
-Mexico,MX,Coacalco,290100,19.63,-99.11
-Mexico,MX,Ixtapaluca,285300,19.32,-98.88
+Mexico,MX,del Coacalco,290100,19.63,-99.11
+Mexico,MX,del Ixtapaluca,285300,19.32,-98.88
 Mexico,MX,Tepic,274100,21.5,-104.89
 Mexico,MX,General escobedo,267400,25.82,-100.33
 Mexico,MX,Victoria,264900,23.73,-99.13
@@ -10292,13 +10292,13 @@ Mexico,MX,Oaxaca,262200,17.07,-96.72
 Mexico,MX,Obregon,256100,27.48,-109.93
 Mexico,MX,Ensenada,252700,31.87,-116.62
 Mexico,MX,Santa catarina,244500,25.67,-100.47
-Mexico,MX,Los reyes,237700,19.36,-98.98
-Mexico,MX,Nicolas romero,236900,19.62,-99.31
+Mexico,MX,del Los reyes,237700,19.36,-98.98
+Mexico,MX,del Nicolas romero,236900,19.62,-99.31
 Mexico,MX,Uruapan,233000,19.42,-102.07
 Mexico,MX,Tehuacan,229200,18.45,-97.38
 Mexico,MX,Coatzacoalcos,228800,18.14,-94.42
 Mexico,MX,Gomez palacio,219900,25.57,-103.5
-Mexico,MX,Buenavista,219800,19.55,-99.05
+Mexico,MX,del Buenavista,219800,19.55,-99.05
 Mexico,MX,Los mochis,208900,25.79,-109.0
 Mexico,MX,Campeche,200700,19.85,-90.53
 Mexico,MX,Monclova,197200,26.91,-101.42
@@ -10310,11 +10310,11 @@ Mexico,MX,Nogales,173000,31.31,-110.95
 Mexico,MX,Poza rica,172600,20.55,-97.47
 Mexico,MX,Puerto vallarta,170800,20.62,-105.23
 Mexico,MX,Metepec,170100,19.27,-99.62
-Mexico,MX,San pablo de las salinas,163100,19.67,-99.1
+Mexico,MX,del San pablo de las salinas,163100,19.67,-99.1
 Mexico,MX,Chilpancingo,155900,17.55,-99.5
 Mexico,MX,Jiutepec,155100,18.87,-99.18
 Mexico,MX,Minatitlan,151100,17.98,-94.52
-Mexico,MX,Chalco,145700,19.26,-98.9
+Mexico,MX,del Chalco,145700,19.26,-98.9
 Mexico,MX,Cuautla,143900,18.82,-98.96
 Mexico,MX,Salamanca,140100,20.57,-101.2
 Mexico,MX,Cordoba,135200,18.89,-96.92
@@ -10328,10 +10328,10 @@ Mexico,MX,Acuna,126200,29.32,-100.94
 Mexico,MX,Zamora,124600,19.98,-102.27
 Mexico,MX,San cristobal de las casas,124100,16.75,-92.63
 Mexico,MX,Orizaba,121200,18.83,-97.1
-Mexico,MX,Huixquilucan,119900,19.36,-99.35
+Mexico,MX,del Huixquilucan,119900,19.36,-99.35
 Mexico,MX,Zacatecas,117400,22.78,-102.58
 Mexico,MX,San juan del rio,112100,20.38,-100.0
-Mexico,MX,Texcoco,112100,19.52,-98.88
+Mexico,MX,del Texcoco,112100,19.52,-98.88
 Mexico,MX,Iguala,109700,18.37,-99.54
 Mexico,MX,Ciudad valles,108700,21.98,-99.02
 Mexico,MX,Manzanillo,105700,19.05,-104.32

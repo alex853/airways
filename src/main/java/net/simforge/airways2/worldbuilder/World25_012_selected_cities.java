@@ -95,6 +95,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:NO", "city-name:Oslo"},
 
+                new String[]{"country-code:MX", "city-name:Mexico"},
                 new String[]{"country-code:MX", "city-name:Tijuana"},
 
                 new String[]{"country-code:MY", "city-name:Kuala Lumpur"},
