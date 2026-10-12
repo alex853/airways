@@ -101,29 +101,29 @@ public class FlightDashboardController {
                 buildUserLocationDto(lastLocationAirport, simStatus));
     }
 
-    // Compares the airport where the pilot has been loaded with the airport where the pilot has landed last time
+    // Compares the airport where the pilot has been loaded with the airport where the pilot has landed last time.
+    // Expected and current airports are filled whenever they are known, state is only the verdict.
     private static UserLocationDto buildUserLocationDto(final String lastLocationAirport, final SimTracker.UserStatus simStatus) {
-        // no history yet - no restrictions
-        if (lastLocationAirport == null) {
-            return new UserLocationDto(UserLocationState.OK, null, null);
+        final String expectedAirport = lastLocationAirport;
+        final String currentAirport = "At airport".equals(simStatus.getLocationStatus()) ? simStatus.getAirportIcao() : null;
+
+        final UserLocationState state;
+        if (expectedAirport == null) {
+            // no history yet - no restrictions
+            state = UserLocationState.OK;
+        } else if (simStatus.getFlightMissionId() != null) {
+            // flight is in progress - the check is not applied
+            state = UserLocationState.OK;
+        } else if (currentAirport == null) {
+            // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
+            state = UserLocationState.UNKNOWN;
+        } else if (expectedAirport.equalsIgnoreCase(currentAirport)) {
+            state = UserLocationState.OK;
+        } else {
+            state = UserLocationState.WRONG_AIRPORT;
         }
 
-        // flight is in progress - the check is not applied
-        if (simStatus.getFlightMissionId() != null) {
-            return new UserLocationDto(UserLocationState.OK, null, null);
-        }
-
-        // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
-        final String currentAirport = simStatus.getAirportIcao();
-        if (currentAirport == null || !"At airport".equals(simStatus.getLocationStatus())) {
-            return new UserLocationDto(UserLocationState.UNKNOWN, null, null);
-        }
-
-        if (lastLocationAirport.equalsIgnoreCase(currentAirport)) {
-            return new UserLocationDto(UserLocationState.OK, null, null);
-        }
-
-        return new UserLocationDto(UserLocationState.WRONG_AIRPORT, lastLocationAirport, currentAirport);
+        return new UserLocationDto(state, expectedAirport, currentAirport);
     }
 
     @PostMapping("/start-flight")
