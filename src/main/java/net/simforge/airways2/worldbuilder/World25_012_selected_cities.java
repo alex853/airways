@@ -114,6 +114,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:PT", "city-name:Porto"},
                 new String[]{"country-code:PT", "city-name:Braga"},
 
+                new String[]{"country-code:QA", "city-name:Doha"},
+
                 new String[]{"country-code:RO", "city-name:Bucharest"},
 
                 new String[]{"country-code:RU", "city-name:Moscow"},

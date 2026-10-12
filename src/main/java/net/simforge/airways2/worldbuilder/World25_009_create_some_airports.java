@@ -35,7 +35,7 @@ public class World25_009_create_some_airports {
                 "LTAI", "LTFM",
                 "LXGB",
                 "OBBI",
-                "OMDB", "OMAA",
+                "OMDB", "OMAA", "OMAD", "OMSJ",
                 "OTHH",
                 "SCEL",
                 "WMKK",
