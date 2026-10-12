@@ -195,12 +195,19 @@ public class ShadowJetLogic {
 
             int closer = 0;
             int notCloser = 0;
+            int totalLooking = 0;
+            int locationDiffersFromFrom = 0;
 
             final Iterator<Journeys.Journey> it = world.journeys()
                     .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
                     .iterator();
             while (it.hasNext()) {
                 final Journeys.Journey journey = it.next();
+
+                totalLooking++;
+                if (journey.getLocationCityId() != journey.getFromCityId()) {
+                    locationDiffersFromFrom++;
+                }
 
                 // only journeys which are located at the cities of departure airport are able to take this flight
                 final int locationCityId = journey.getLocationCityId() > 0 ? journey.getLocationCityId() : journey.getFromCityId();
@@ -223,8 +230,8 @@ public class ShadowJetLogic {
                 }
             }
 
-            log.info("hub dry run - f/m #{} - flight towards hub {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}",
-                    mission.getId(), hubIcao, closer, notCloser);
+            log.info("hub dry run - f/m #{} - flight towards hub {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}, location city differs from from city: {} of {} looking-for-tickets journeys",
+                    mission.getId(), hubIcao, closer, notCloser, locationDiffersFromFrom, totalLooking);
         } catch (final Exception e) {
             log.warn("hub dry run - f/m #{} - failed", mission.getId(), e);
         }
