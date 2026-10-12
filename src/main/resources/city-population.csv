@@ -540,15 +540,15 @@ Armenia,AM,Lernapat,1700,40.82,44.4
 Armenia,AM,Marmashen,1700,40.84,43.77
 Armenia,AM,Mayakovski,1700,40.25,44.64
 Armenia,AM,Mrgavan,1700,39.97,44.53
-Australia,AU,Sydney,4277200,-33.87,151.21
+Australia,AU,Sydney,6077200,-33.87,151.21
 Australia,AU,Melbourne,3666000,-37.81,144.96
 Australia,AU,Brisbane,1598600,-27.46,153.02
 Australia,AU,Perth,1412900,-31.96,115.84
 Australia,AU,Adelaide,1089700,-34.93,138.6
-Australia,AU,Newcastle,502300,-32.92,151.75
+Australia,AU,del Newcastle,502300,-32.92,151.75
 Australia,AU,Gold coast,457900,-28.07,153.44
 Australia,AU,Canberra,323100,-35.31,149.13
-Australia,AU,Wollongong,262500,-34.42,150.87
+Australia,AU,del Wollongong,262500,-34.42,150.87
 Australia,AU,Sunshine coast,254700,-25.88,152.56
 Australia,AU,Hobart,201000,-42.85,147.29
 Australia,AU,Geelong,161500,-38.14,144.32
@@ -16727,7 +16727,7 @@ United Kingdom,GB,Liverpool,473100,53.42,-2.99
 United Kingdom,GB,Edinburgh,452600,55.95,-3.22
 United Kingdom,GB,Sheffield,428300,53.39,-1.48
 United Kingdom,GB,Leeds,427900,53.81,-1.55
-United Kingdom,GB,Bristol,417600,51.46,-2.6
+United Kingdom,GB,Bristol,717600,51.46,-2.6
 United Kingdom,GB,Manchester,400500,53.48,-2.25
 United Kingdom,GB,Leicester,325500,52.64,-1.13
 United Kingdom,GB,Kingston upon hull,314900,53.75,-0.36
