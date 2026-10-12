@@ -612,18 +612,8 @@ public class AdminController {
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
-            final Cities.City singapore = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Singapore")).findFirst().orElseThrow();
-            singapore.setPopulation(6037000);
-
-            final Cities.City sanFrancisco = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("San Francisco")).findFirst().orElseThrow();
-            sanFrancisco.setName("San Francisco");
-            sanFrancisco.setPopulation(7650000);
-
-            world.aircrafts().byRegNo("F-AUWV").orElseThrow().setAircraftOperatorId(0);
-            world.aircrafts().byRegNo("F-AUWW").orElseThrow().setAircraftOperatorId(0);
-            world.aircrafts().byRegNo("F-AUWX").orElseThrow().setAircraftOperatorId(0);
-            world.aircrafts().byRegNo("F-AUWY").orElseThrow().setAircraftOperatorId(0);
-            world.aircrafts().byRegNo("F-AUWZ").orElseThrow().setAircraftOperatorId(0);
+            final Cities.City austin = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Austin")).findFirst().orElseThrow();
+            austin.setPopulation(2475600);
 
             return null;
         });
