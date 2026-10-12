@@ -8,6 +8,7 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 
 @RestController
@@ -23,6 +24,7 @@ public class MapController {
         return worldBean.read(world -> world.aircrafts()
                 .filter(world.aircrafts().byLocationStatus(Aircrafts.LocationStatus.Flying))
                 .map(AircraftMapDto::from)
+                .sorted(Comparator.comparing(AircraftMapDto::getAcReg))
                 .toList());
     }
 
