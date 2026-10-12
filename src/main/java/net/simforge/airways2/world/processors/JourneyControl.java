@@ -180,11 +180,31 @@ public class JourneyControl {
         // location must match from city, otherwise it could keep a random city of the landing airport (e.g. after diversion)
         journey.setLocationCityId(toCityId);
 
-        journey.setStatus(Journeys.Status.LookingForTickets);
-        journey.setAttemptCounter(0);
-        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(MIN_STAY_AT_DESTINATION, MAX_STAY_AT_DESTINATION));
+        scheduleLookingForTickets(journey);
 
         log.info("j/y #{} - switched for return trip, cities swapped, looking for tickets scheduled", journey.getId());
+    }
+
+    public boolean isToCityReached(final Journeys.Journey journey) {
+        checkNotNull(journey);
+
+        return journey.getLocationCityId() == journey.getToCityId();
+    }
+
+    // The journey has finished its itineraries, but landed not in TO city (diversion, unlinked airport etc.), so it should continue
+    public void toCityNotReached(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
+
+        scheduleLookingForTickets(journey);
+
+        log.info("j/y #{} - TO city not reached, looking for tickets scheduled", journey.getId());
+    }
+
+    private void scheduleLookingForTickets(final Journeys.Journey journey) {
+        journey.setStatus(Journeys.Status.LookingForTickets);
+        journey.setAttemptCounter(0);
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY));
     }
 
     public void finish(final Journeys.Journey journey) {

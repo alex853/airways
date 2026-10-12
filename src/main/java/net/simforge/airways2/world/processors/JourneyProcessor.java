@@ -195,6 +195,11 @@ public class JourneyProcessor {
     }
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
+        if (!world.journeyControl().isToCityReached(journey)) {
+            world.journeyControl().toCityNotReached(journey);
+            return;
+        }
+
         if (journey.isReturningBack()) {
             world.journeyControl().finish(journey);
         } else {
