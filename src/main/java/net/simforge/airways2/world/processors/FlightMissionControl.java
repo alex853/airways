@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -220,6 +221,10 @@ public class FlightMissionControl {
         mission.setStatus(FlightMissions.Status.Arrival);
         mission.setActualLandingWorldTime(world.getWorldTime());
         mission.setActualLandingAirportId(landingAirport.getId());
+
+        if (mission.getUserId() > 0) {
+            UserStorage.getInstance().updateLastLocationAirport(mission.getUserId(), landingAirport.getIcao());
+        }
 
         // todo ak3 pilot/pilots/cabin crew - set status, location
 

@@ -1,5 +1,7 @@
 package net.simforge.airways2.app.beans;
 
+import net.simforge.airways2.app.userstorage.User;
+import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.commons.legacy.misc.Settings;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +11,7 @@ import java.util.Optional;
 public class UserService {
 
     public Optional<Integer> findUserIdByToken(String token) {
-        return "123".equals(token) ? Optional.of(1) : Optional.empty();
+        return UserStorage.getInstance().findByToken(token).map(User::getId);
     }
 
     public boolean isCorrectAdminToken(String token) {
