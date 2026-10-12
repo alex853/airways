@@ -190,6 +190,12 @@ public class ShadowJetLogic {
                 return;
             }
 
+            final String departureIcao = world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao();
+            final String aircraftTypeIcao = world.aircrafts().byId(mission.getAircraftId())
+                    .flatMap(a -> world.aircraftTypes().byId(a.getAircraftTypeId()))
+                    .map(AircraftTypes.AircraftType::getIcao)
+                    .orElse("?");
+
             final Geo.Coords hubCoords = destinationAirport.getCoords();
             final Map<Integer, Geo.Coords> cityCoordsCache = new HashMap<>();
 
@@ -230,8 +236,8 @@ public class ShadowJetLogic {
                 }
             }
 
-            log.info("hub dry run - f/m #{} - flight towards hub {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}, location city differs from from city: {} of {} looking-for-tickets journeys",
-                    mission.getId(), hubIcao, closer, notCloser, locationDiffersFromFrom, totalLooking);
+            log.info("hub dry run - f/m #{} - {} -> {}, a/c type {} - flight towards hub {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}, locationCityId != fromCityId: {} out of {}",
+                    mission.getId(), departureIcao, hubIcao, aircraftTypeIcao, hubIcao, closer, notCloser, locationDiffersFromFrom, totalLooking);
         } catch (final Exception e) {
             log.warn("hub dry run - f/m #{} - failed", mission.getId(), e);
         }
