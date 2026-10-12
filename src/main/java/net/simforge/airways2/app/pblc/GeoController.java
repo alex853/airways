@@ -77,7 +77,7 @@ public class GeoController {
                     try (final Timing.Timer ignored2 = Timing.label("GeoController - getAirportDetails # part2")) {
                         final List<String> connectedCities = world.airport2city().allByAirportId(airport.getId())
                                 .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
-                                .sorted(Comparator.comparing(Cities.City::getPopulation))
+                                .sorted(Comparator.comparing(Cities.City::getPopulation).reversed())
                                 .map(Cities.City::getName)
                                 .toList();
                         try (final Timing.Timer ignored3 = Timing.label("GeoController - getAirportDetails # part3")) {

@@ -1,19 +1,24 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
 // todo ak2 add precondition checks for all the statuses
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
+
+    public static final int RESCHEDULE_SHIFT_STEP_MINUTES = 5;
+    public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 12 * 60;
+    // boarding takes 10 mins and ends 10 mins before departure
+    public static final int RESCHEDULE_MIN_DEPARTURE_RESERVE = 20 * Time.ONE_MINUTE;
 
     private final World world;
     private final Set<Integer> cancelledIdsScheduledForQuickRemoval = new TreeSet<>();
@@ -97,6 +102,72 @@ public class FlightMissionControl {
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
         // todo ak2 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
+    }
+
+    // Checks are shared between sim tracker 'reschedule' action and the reschedule itself, order matters for UI
+    public Map<String, Boolean> rescheduleChecks(final FlightMissions.Mission mission) {
+        final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
+
+        final Map<String, Boolean> checks = new LinkedHashMap<>();
+        checks.put("flight-status-check",
+                mission.getStatus() == FlightMissions.Status.Dispatched
+                        || mission.getStatus() == FlightMissions.Status.Preflight);
+        checks.put("transport-flight-status-check", transportFlight
+                .map(tf -> tf.getStatus() == TransportFlights.Status.Scheduled
+                        || tf.getStatus() == TransportFlights.Status.CheckIn)
+                .orElse(true));
+        checks.put("not-scheduled-flight-check", transportFlight
+                .map(tf -> tf.getScheduledFlightId() == 0)
+                .orElse(true));
+        checks.put("no-two-leg-journeys-check", transportFlight
+                .map(tf -> world.journeys()
+                        .filter(world.journeys().byAnyTransportFlightId(tf.getId()))
+                        .noneMatch(j -> j.getTransportFlight2Id() != 0))
+                .orElse(true));
+        return checks;
+    }
+
+    public void reschedule(final FlightMissions.Mission mission, final int shiftMinutes) {
+        rescheduleChecks(mission).forEach((name, result) -> checkArgument(result, "reschedule - " + name + " failed"));
+        checkArgument(shiftMinutes != 0, "reschedule - shift should not be zero");
+        checkArgument(shiftMinutes % RESCHEDULE_SHIFT_STEP_MINUTES == 0, "reschedule - shift should be a multiple of " + RESCHEDULE_SHIFT_STEP_MINUTES + " minutes");
+        checkArgument(Math.abs(shiftMinutes) <= RESCHEDULE_MAX_SHIFT_MINUTES, "reschedule - shift should not exceed " + RESCHEDULE_MAX_SHIFT_MINUTES + " minutes");
+
+        final int worldTime = world.getWorldTime();
+        final int shift = shiftMinutes * Time.ONE_MINUTE;
+        final int oldDeparture = mission.getPlannedDepartureWorldTime();
+        final int oldArrival = mission.getPlannedArrivalWorldTime();
+        final int newDeparture = oldDeparture + shift;
+        final int newArrival = oldArrival + shift;
+        checkArgument(newDeparture >= worldTime + RESCHEDULE_MIN_DEPARTURE_RESERVE, "reschedule - new departure time is too early");
+
+        // departure first - it updates date of flight, and arrival is stored relatively to date of flight
+        mission.setPlannedDepartureWorldTime(newDeparture);
+        mission.setPlannedArrivalWorldTime(newArrival);
+
+        log.info("f/m #{} - rescheduled by {} min, departure {} -> {}, arrival {} -> {}", mission.getId(), shiftMinutes,
+                Time.toLdt(oldDeparture), Time.toLdt(newDeparture), Time.toLdt(oldArrival), Time.toLdt(newArrival));
+
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> {
+            final int checkinStartTime = TransportFlightHelper.calcCheckinStartTime(mission);
+            final int checkinEndTime = TransportFlightHelper.calcCheckinEndTime(mission);
+
+            // Scheduled t/f does not renew its heartbeat until check-in starts, so it has to be re-planned explicitly
+            tf.setHeartbeatTime(tf.getStatus() == TransportFlights.Status.Scheduled
+                    ? Math.max(worldTime, checkinStartTime)
+                    : worldTime);
+
+            final int pingFrom = Math.max(worldTime, checkinStartTime);
+            final int pingTo = Math.max(pingFrom, checkinEndTime);
+            final List<String> pingedJourneyIds = world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(tf.getId(), Journeys.Status.WaitingForCheckIn))
+                    .peek(j -> j.setHeartbeatTime(Tools.random(pingFrom, pingTo)))
+                    .map(j -> "j/y #" + j.getId())
+                    .toList();
+
+            log.info("f/m #{}, t/f #{} - rescheduled, t/f heartbeat {}, pinged j/y {}", mission.getId(), tf.getId(),
+                    Time.toLdt(tf.getHeartbeatTime()), pingedJourneyIds);
+        });
     }
 
     public void scheduleQuickRemoval(final FlightMissions.Mission mission) {

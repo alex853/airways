@@ -490,7 +490,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_blocksOff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_blocksOff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_blocksOff - fm not found");
                 return null;
             }
@@ -499,7 +499,7 @@ public class PilotContext {
             if (mission.getStatus() == FlightMissions.Status.Preflight) {
                 world.flightMissionControl().blocksOff(mission);
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.getStatus());
             }
 
             FlightStats.event("vatsim - blocksOff");
@@ -512,7 +512,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_takeoff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_takeoff <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_takeoff - fm not found");
                 return null;
             }
@@ -524,7 +524,7 @@ public class PilotContext {
             if (mission.getStatus() == FlightMissions.Status.Departure) {
                 world.flightMissionControl().takeoff(mission);
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.getStatus());
             }
 
             FlightStats.event("vatsim - takeoff");
@@ -537,28 +537,28 @@ public class PilotContext {
         worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - fm not found");
                 return null;
             }
             FlightMissions.Mission mission = mission1.get();
 
             if (mission.getStatus() != FlightMissions.Status.Flying) {
-                log.error("erroneous case, f/m not in Flying state, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not in Flying state, status {}, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId, mission.getStatus());
                 FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - fm not in Flying state");
                 return null;
             }
 
             Optional<Aircrafts.Aircraft> aircraft1 = world.aircrafts().byId(mission.getAircraftId());
             if (aircraft1.isEmpty()) {
-                log.error("erroneous case, aircraft not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{}, a/c #{} not found, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId, mission.getAircraftId());
                 FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - aircraft not found");
                 return null;
             }
 
             Aircrafts.Aircraft aircraft = aircraft1.get();
             if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.Flying) {
-                log.error("erroneous case, aircraft not in Flying state, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{}, a/c #{} not in Flying state, location status {}, in mission_updateAircraftCoords <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId, aircraft.getId(), aircraft.getLocationStatus());
                 FlightStats.event("vatsim - erroneous case - mission_updateAircraftCoords - aircraft not in Flying state");
                 return null;
             }
@@ -582,7 +582,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_landing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_landing <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_landing - fm not found");
                 return null;
             }
@@ -593,7 +593,7 @@ public class PilotContext {
             if (mission.getStatus() == FlightMissions.Status.Flying) {
                 world.flightMissionControl().landing(mission, landingAirport);
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.getStatus());
             }
 
             FlightStats.event("vatsim - landing");
@@ -606,7 +606,7 @@ public class PilotContext {
         return worldAccess.modifySync(world -> {
             final Optional<FlightMissions.Mission> mission1 = world.flightMissions().byId(flightMissionId);
             if (mission1.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_blocksOnAndFinish <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_blocksOnAndFinish <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_blocksOnAndFinish - fm not found");
                 return null;
             }
@@ -618,7 +618,7 @@ public class PilotContext {
 
                 ShadowJetLogic.deboardTransportFlightIfExists(world, mission);
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.getStatus());
             }
 
             FlightStats.event("vatsim - blocksOnAndFinish");
@@ -635,7 +635,7 @@ public class PilotContext {
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_cancelBeforeTakeoffIfExists <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_cancelBeforeTakeoffIfExists <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_cancelBeforeTakeoffIfExists - fm not found");
                 return null;
             }
@@ -647,7 +647,7 @@ public class PilotContext {
 
                 ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.get().getStatus());
             }
 
             FlightStats.event("vatsim - cancelBeforeTakeoffIfExists");
@@ -666,7 +666,7 @@ public class PilotContext {
 
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flightMissionId);
             if (mission.isEmpty()) {
-                log.error("erroneous case, f/m not found, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+                log.error("erroneous case, f/m #{} not found, in mission_cancelFromFlying <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<", flightMissionId);
                 FlightStats.event("vatsim - erroneous case - mission_cancelFromFlying - fm not found");
                 return null;
             }
@@ -676,7 +676,7 @@ public class PilotContext {
 
                 ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
             } else {
-                throw new IllegalStateException("unexpected mission status " + mission.get().getStatus());
+                throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.get().getStatus());
             }
 
             FlightStats.event("vatsim - cancelFromFlying");

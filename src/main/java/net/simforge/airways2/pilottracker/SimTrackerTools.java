@@ -20,9 +20,11 @@ public class SimTrackerTools {
                     .replace("{userId}", String.valueOf(userId));
 
             File file = new File(filename);
-            boolean mkdirSuccess = file.getParentFile().mkdirs();
-            if (!mkdirSuccess) {
-                throw new IOException("Unable to create the folder");
+            if (!file.getParentFile().exists()) {
+                boolean mkdirSuccess = file.getParentFile().mkdirs();
+                if (!mkdirSuccess) {
+                    throw new IOException("Unable to create the folder");
+                }
             }
 
             String content = file.exists() ? IOHelper.loadFile(file) : "";
