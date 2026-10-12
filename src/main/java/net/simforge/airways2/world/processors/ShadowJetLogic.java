@@ -220,7 +220,7 @@ public class ShadowJetLogic {
                 }
 
                 // only journeys which are located at the cities of departure airport are able to take this flight
-                final int locationCityId = journey.getLocationCityId() > 0 ? journey.getLocationCityId() : journey.getFromCityId();
+                final int locationCityId = journey.getLocationCityId();
                 if (!fromCitiesId.contains(locationCityId)) {
                     continue;
                 }
