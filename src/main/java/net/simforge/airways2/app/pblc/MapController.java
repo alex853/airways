@@ -9,12 +9,16 @@ import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.datamodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +31,9 @@ public class MapController {
     private static final int RECENT_FLIGHTS_LIMIT = 10;
     private static final int INFO_TOP_CONNECTIONS = 3;
     private static final int FULL_INFO_TOP_CONNECTIONS = 10;
+    private static final int AIRPORT_UPCOMING_WINDOW = 4 * Time.ONE_HOUR;
+    private static final int AIRPORT_RECENT_WINDOW = 12 * Time.ONE_HOUR;
+    private static final int AIRPORT_RECENT_FLIGHTS_LIMIT = 20;
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -101,9 +108,106 @@ public class MapController {
                 return new AirportFullInfoDto(
                         buildAirportInfo(world, airport, FULL_INFO_TOP_CONNECTIONS),
                         parkedAircraft,
+                        buildAirportFlights(world, airport),
                         facilities);
             });
         }
+    }
+
+    private static List<AirportFlightDto> buildAirportFlights(final World world, final Airports.Airport airport) {
+        final int now = world.getWorldTime();
+
+        final List<AirportFlightDto> active = new ArrayList<>();
+        final List<AirportFlightDto> upcoming = new ArrayList<>();
+        final Map<String, List<FlightRow>> recentByDirection = new HashMap<>();
+
+        world.flightMissions().filter(world.flightMissions().anyStatus(
+                        FlightMissions.Status.Dispatched,
+                        FlightMissions.Status.Preflight,
+                        FlightMissions.Status.Departure,
+                        FlightMissions.Status.Flying,
+                        FlightMissions.Status.Arrival,
+                        FlightMissions.Status.Postflight,
+                        FlightMissions.Status.Finished))
+                .forEach(fm -> {
+                    if (fm.getDepartureAirportId() == airport.getId()) {
+                        classifyAirportFlight(world, fm, "out", now, active, upcoming, recentByDirection);
+                    }
+                    if (fm.getDestinationAirportId() == airport.getId()) {
+                        classifyAirportFlight(world, fm, "in", now, active, upcoming, recentByDirection);
+                    }
+                });
+
+        final List<AirportFlightDto> result = new ArrayList<>(active);
+        result.addAll(upcoming);
+        recentByDirection.values().forEach(rows -> rows.stream()
+                .sorted(Comparator.comparingInt(FlightRow::time).reversed())
+                .limit(AIRPORT_RECENT_FLIGHTS_LIMIT)
+                .forEach(r -> result.add(r.dto())));
+        return result;
+    }
+
+    private static void classifyAirportFlight(final World world,
+                                              final FlightMissions.Mission fm,
+                                              final String direction,
+                                              final int now,
+                                              final List<AirportFlightDto> active,
+                                              final List<AirportFlightDto> upcoming,
+                                              final Map<String, List<FlightRow>> recentByDirection) {
+        final boolean outbound = "out".equals(direction);
+        // the time of the flight at the airport we are looking at
+        final int plannedTime = outbound ? fm.getPlannedDepartureWorldTime() : fm.getPlannedArrivalWorldTime();
+        final int actualTime = outbound ? fm.getActualDepartureWorldTime() : fm.getActualArrivalWorldTime();
+
+        switch (fm.getStatus()) {
+            case Departure, Flying, Arrival -> active.add(toAirportFlight(world, fm, direction, "Flying"));
+            case Dispatched, Preflight -> {
+                if (plannedTime <= now + AIRPORT_UPCOMING_WINDOW) {
+                    upcoming.add(toAirportFlight(world, fm, direction, "Scheduled"));
+                }
+            }
+            case Postflight, Finished -> {
+                final int time = actualTime != 0 ? actualTime : plannedTime;
+                if (time >= now - AIRPORT_RECENT_WINDOW) {
+                    recentByDirection
+                            .computeIfAbsent(direction, d -> new ArrayList<>())
+                            .add(new FlightRow(time, toAirportFlight(world, fm, direction, "Arrived")));
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    private static AirportFlightDto toAirportFlight(final World world,
+                                                    final FlightMissions.Mission fm,
+                                                    final String direction,
+                                                    final String status) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(fm.getAircraftId()).orElseThrow();
+        final int otherAirportId = "out".equals(direction) ? fm.getDestinationAirportId() : fm.getDepartureAirportId();
+
+        final LocalDateTime eta = "Flying".equals(status)
+                ? FlightMissionToTimeline.byMission(fm).getBlocksOn().getEstimatedTime()
+                : null;
+
+        return new AirportFlightDto(
+                Id.encode(fm.getId()),
+                direction,
+                status,
+                new AircraftRefDto(
+                        Id.encode(aircraft.getId()),
+                        aircraft.getRegNo(),
+                        world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao()),
+                world.airports().byId(otherAirportId).orElseThrow().getIcao(),
+                ldtOrNull(fm.getPlannedDepartureWorldTime()),
+                ldtOrNull(fm.getActualDepartureWorldTime()),
+                ldtOrNull(fm.getPlannedArrivalWorldTime()),
+                eta != null ? eta.toString() : null,
+                ldtOrNull(fm.getActualArrivalWorldTime()));
+    }
+
+    private static String ldtOrNull(final int worldTime) {
+        return worldTime != 0 ? Time.toLdt(worldTime).toString() : null;
     }
 
     private static AirportInfoDto buildAirportInfo(final World world, final Airports.Airport airport, final int topConnectionsLimit) {
@@ -209,7 +313,37 @@ public class MapController {
     public static class AirportFullInfoDto {
         private final AirportInfoDto info;
         private final List<ParkedAircraftDto> parkedAircraft;
+        private final List<AirportFlightDto> flights;
         private final List<AirportFacilityDto> facilities;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AirportFlightDto {
+        private String id;
+        /** out - departs from the airport, in - arrives to the airport */
+        private String direction;
+        /** Scheduled, Flying, Arrived */
+        private String status;
+        private AircraftRefDto aircraft;
+        /** the other end of the flight - destination for out, origin for in */
+        private String airport;
+        private String std;
+        private String atd;
+        private String sta;
+        private String eta;
+        private String ata;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AircraftRefDto {
+        private String id;
+        private String reg;
+        private String type;
+    }
+
+    private record FlightRow(int time, AirportFlightDto dto) {
     }
 
     @Data
