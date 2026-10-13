@@ -59,7 +59,7 @@ public class PaxManager {
         final Optional<Journeys.Journey> nextToBoard = world.journeys()
                 .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding));
         if (nextToBoard.isEmpty()) {
-            log.info("t/f #{} - boarding - no journey to board, exiting, state {}", transportFlight.getId(), boarding);
+            log.info("t/f #{} - boarding - no j/y to board, {}", transportFlight.getId(), boarding);
             return;
         }
 
@@ -75,7 +75,7 @@ public class PaxManager {
             transportFlight.setPaxOnBoard(currentExpectedPax);
         }
 
-        log.info("t/f #{} - boarding - PAX on board {}, state {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), boarding);
+        log.info("t/f #{} - boarding - PAX {}, {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), boarding);
     }
 
     public int getEstimatedBoardingFinishTime(final TransportFlights.Flight transportFlight) {
@@ -144,7 +144,7 @@ public class PaxManager {
                 .reduce(0, Integer::sum);
 
         transportFlight.setPaxOnBoard(actualOnBoard);
-        log.info("t/f #{} - boarding - no status found, creating new, remained to board j/y ids {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(Journeys.Journey::getId).collect(Collectors.toSet()));
+        log.info("t/f #{} - boarding - restored, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
 
         return new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
     }
@@ -170,7 +170,7 @@ public class PaxManager {
         boarding.remainingToBoard = remainingToBoard;
         boarding.recalculateEstimatedBoardingFinishTime(world.getWorldTime());
 
-        log.info("t/f #{} - boarding - status refreshed, remained to board j/y ids {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(Journeys.Journey::getId).collect(Collectors.toSet()));
+        log.info("t/f #{} - boarding - refreshed, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
     }
 
     private static class Boarding {
@@ -236,11 +236,11 @@ public class PaxManager {
         @Override
         public String toString() {
             return "Boarding{" +
-                    "confirmed: " + confirmedOnBoard +
-                    ", remaining: " + remainingToBoard +
-                    ", estFinishTime: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
-                    ", counter: " + counterValue +
-                    ", time: " + TimeTools.hhmmOrNull(counterLastTime) +
+                    "cnfd: " + confirmedOnBoard +
+                    ", rem: " + remainingToBoard +
+                    ", eFinT: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
+                    ", cnt: " + counterValue +
+                    ", t: " + TimeTools.hhmmOrNull(counterLastTime) +
                     '}';
         }
     }

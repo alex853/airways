@@ -40,7 +40,7 @@ public class FlightCleanup {
                 .count();
 
         if (cancelledOnPreflight + cancelled + finished + outdated > 0) {
-            log.info("flight cleanup - {} cancelled on preflight, {} cancelled, {} finished, {} outdated", cancelledOnPreflight, cancelled, finished, outdated);
+            log.info("{} cancelled on preflight, {} cancelled, {} finished, {} outdated", cancelledOnPreflight, cancelled, finished, outdated);
         }
 
         long brokenTransportFlights = world.transportFlights().all()
@@ -49,7 +49,7 @@ public class FlightCleanup {
                 .count();
 
         if (brokenTransportFlights > 0) {
-            log.warn("flight cleanup - FOUND AND REMOVED {} ORPHANED TRANSPORT FLIGHTS", brokenTransportFlights);
+            log.warn("FOUND AND REMOVED {} ORPHANED TRANSPORT FLIGHTS", brokenTransportFlights);
         }
     }
 
@@ -62,7 +62,7 @@ public class FlightCleanup {
     private static void deleteFlightMission(World world, FlightMissions.Mission f) {
         deleteTransportFlights(world, f);
         world.flightMissions().deleteById(f.getId());
-        log.info("flight cleanup - f/m #{} removed", f.getId());
+        log.info("f/m #{} removed", f.getId());
     }
 
     private static void deleteTransportFlights(final World world, final FlightMissions.Mission f) {
@@ -79,7 +79,7 @@ public class FlightCleanup {
         world.scheduledFlights().byId(tf1.getScheduledFlightId())
                 .ifPresent(sf -> {
                     world.scheduledFlights().deleteById(sf.getId());
-                    log.info("flight cleanup - s/f #{} removed", sf.getId());
+                    log.info("s/f #{} removed", sf.getId());
                 });
 
         final List<Journeys.Journey> journeys = world.journeys()
@@ -97,19 +97,19 @@ public class FlightCleanup {
             if (journey.getTransportFlight1Id() == tf1.getId()) {
                 // the journey is reset while the transport flight and its mission still exist, they are required for that
                 if (missionExists) {
-                    log.warn("flight cleanup - t/f #{} - j/y #{} in {} status is reset to looking for tickets", tf1.getId(), journey.getId(), status);
+                    log.warn("t/f #{} - j/y #{} in {} status is reset to looking for tickets", tf1.getId(), journey.getId(), status);
                     world.journeyControl().resetJourneyForcefully(journey);
                 } else {
-                    log.warn("flight cleanup - t/f #{} - j/y #{} in {} status, mission not found, orphaned", tf1.getId(), journey.getId(), status);
+                    log.warn("t/f #{} - j/y #{} in {} status, mission not found, orphaned", tf1.getId(), journey.getId(), status);
                     world.journeyControl().orphaned(journey);
                 }
             } else {
-                log.warn("flight cleanup - t/f #{} - j/y #{} in {} status, t/f2 reference is cleared", tf1.getId(), journey.getId(), status);
+                log.warn("t/f #{} - j/y #{} in {} status, t/f2 reference is cleared", tf1.getId(), journey.getId(), status);
                 journey.setTransportFlight2Id(0);
             }
         }
 
         world.transportFlights().deleteById(tf1.getId());
-        log.info("flight cleanup - t/f #{} removed", tf1.getId());
+        log.info("t/f #{} removed", tf1.getId());
     }
 }
