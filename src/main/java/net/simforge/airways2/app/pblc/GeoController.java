@@ -5,6 +5,10 @@ import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
+import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -62,10 +66,23 @@ public class GeoController {
                             a.getLongitude(),
                             a.getIata(),
                             a.getIcao(),
-                            a.getName()))
+                            a.getName(),
+                            countryName(world, a)))
                     .sorted(Comparator.comparing(AirportDto::getIcao))
                     .toList());
         }
+    }
+
+    /**
+     * Country of the most populated city the airport is linked to, null if the airport has no city.
+     */
+    private static String countryName(final World world, final Airports.Airport airport) {
+        return world.airport2city().allByAirportId(airport.getId())
+                .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
+                .max(Comparator.comparingInt(Cities.City::getPopulation))
+                .flatMap(c -> world.countries().byId(c.getCountryId()))
+                .map(Countries.Country::getName)
+                .orElse(null);
     }
 
     @Data
@@ -97,5 +114,6 @@ public class GeoController {
         private String iata;
         private String icao;
         private String name;
+        private String country;
     }
 }
