@@ -104,7 +104,7 @@ public class PilotContext {
             final FlightMissions.Mission mission = mission_dispatchNewAndStart();
             flightMissionId = mission.getId();
 
-            log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
+            log.info("{} - Event 'dispatched' == via new flight in airport", missionLogHead(mission, flightplan));
             pilotLog("Event 'dispatched' == via new flight in airport");
             FlightStats.event("vatsim - new context - dispatched");
         } else {
@@ -179,7 +179,7 @@ public class PilotContext {
                     final FlightMissions.Mission mission = mission_dispatchNewAndStart();
                     flightMissionId = mission.getId();
 
-                    log.info("{} - Event 'dispatched'", missionLogHead(mission, flightplan));
+                    log.info("{} - Event 'dispatched' == via some correction", missionLogHead(mission, flightplan));
                     pilotLog("Event 'dispatched' == via some correction");
                     FlightStats.event("vatsim - preflight - dispatched - new valid flightplan");
                 } else {

@@ -27,7 +27,7 @@ public class RandomFlightMissionGenerator {
                 .byAircraftOperatorIdAndIdleAndParkedAtAirport(Aircrafts.NO_AIRCRAFT_OPERATOR_ID)
                 .toList();
         final List<Aircrafts.Aircraft> aircraftWithoutMission = idleAircraft.stream()
-                .filter(aircraft -> FlightMissionHelper.isFinishedOrCancelledOrEmpty(world.flightMissions().theLatestMissionByAircraftId(aircraft)))
+                .filter(aircraft -> world.flightMissions().theLatestMissionByAircraftId(aircraft).map(FlightMissionHelper::isFinishedOrCancelled).orElse(true))
                 .toList();
 
         if (aircraftWithoutMission.isEmpty()) {

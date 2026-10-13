@@ -8,6 +8,7 @@ import java.io.IOException;
 public class World25Runner {
     private static final int saveWorldPeriod = Time.ONE_MINUTE;
 
+    @SuppressWarnings("InfiniteLoopStatement") // the runner works until the process is killed
     public static void main(String[] args) throws IOException {
         final World world = World25.load();
         int lastSaved = world.getWorldTime();

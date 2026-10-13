@@ -58,10 +58,6 @@ public class FlightMissionHelper {
                 departureTime);
     }
 
-    public static boolean isFinishedOrCancelledOrEmpty(final Optional<FlightMissions.Mission> mission) {
-        return mission.isEmpty() || isFinishedOrCancelled(mission.get());
-    }
-
     public static boolean isFinishedOrCancelled(FlightMissions.Mission mission) {
         return mission.getStatus() == FlightMissions.Status.Finished
                 || mission.getStatus() == FlightMissions.Status.Cancelled;

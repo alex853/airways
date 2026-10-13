@@ -26,6 +26,8 @@ public class ScheduledFlightMissionGenerator {
 
     private static final int schedulingDepthDays = 3;
 
+    // all the flights are commented out on purpose, scheduled flights are disabled but the mechanism is kept
+    @SuppressWarnings("MismatchedArrayReadWrite")
     private static final ScheduledFlight[] schedule = {
 //            new ScheduledFlight(101, "AW101", "F-AUWA", "LFPG", "EGLL", "05:00"),
 //            new ScheduledFlight(102, "AW102", "F-AUWA", "EGLL", "LFPG", "08:00"),
