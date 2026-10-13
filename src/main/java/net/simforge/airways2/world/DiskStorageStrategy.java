@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class DiskStorageStrategy implements WorldStorageStrategy {
     private static final String dataRoot = "./world-data/";
@@ -47,7 +48,9 @@ public class DiskStorageStrategy implements WorldStorageStrategy {
         final long now = System.currentTimeMillis();
         final Path backupPath = Paths.get(dataRoot, name + ".backup");
         final List<String> allBackups = new ArrayList<>();
-        Files.list(backupPath).forEach(path -> allBackups.add(path.getFileName().toString()));
+        try (final Stream<Path> backups = Files.list(backupPath)) {
+            backups.forEach(path -> allBackups.add(path.getFileName().toString()));
+        }
         allBackups.sort(String::compareTo);
         final Set<Long> processesDays = new TreeSet<>();
         allBackups.forEach(backup -> {
@@ -61,9 +64,8 @@ public class DiskStorageStrategy implements WorldStorageStrategy {
             } else {
                 // we found 2 or more backups for one of processed days, lets remove it
                 final Path backupForRemoval = backupPath.resolve(backup);
-                try {
-                    Files.walk(backupForRemoval)
-                            .sorted(Comparator.reverseOrder())
+                try (final Stream<Path> walk = Files.walk(backupForRemoval)) {
+                    walk.sorted(Comparator.reverseOrder())
                             .forEach(path -> {
                                 try {
                                     Files.delete(path);

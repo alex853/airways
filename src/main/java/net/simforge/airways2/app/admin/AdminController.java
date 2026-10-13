@@ -72,7 +72,9 @@ public class AdminController {
         checkArgument(date.length() == 10);
         final LocalDate parsedDate = checkNotNull(LocalDate.parse(date));
 
-        byte[] bytes = IOHelper.loadFile(new File("./logs/logback." + parsedDate + ".log")).getBytes();
+        final String fileName = String.format("logback.%04d-%02d-%02d.log",
+                parsedDate.getYear(), parsedDate.getMonthValue(), parsedDate.getDayOfMonth());
+        byte[] bytes = IOHelper.loadFile(new File("./logs/" + fileName)).getBytes();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.TEXT_PLAIN)

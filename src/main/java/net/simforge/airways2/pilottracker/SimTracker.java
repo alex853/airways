@@ -359,11 +359,9 @@ public class SimTracker {
         public static UserStatus from(Context context) {
             checkNotNull(context);
 
-            long lastSeen = 0;
             String locationStatus = null;
             String airportIcao = null;
             if (context.position != null) {
-                lastSeen = context.position.getTime();
                 airportIcao = context.position.getAirportIcao();
                 if (context.position.isOnGround()) {
                     locationStatus = airportIcao != null ? "At airport" : "On ground out of any airport";
