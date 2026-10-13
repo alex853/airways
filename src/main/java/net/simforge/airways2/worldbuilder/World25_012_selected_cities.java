@@ -195,6 +195,9 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:US", "city-name:Minneapolis-Saint Paul"},
                 new String[]{"country-code:US", "city-name:Nashville"},
                 new String[]{"country-code:US", "city-name:Honolulu"},
+
+                new String[]{"country-code:TW", "city-name:Taipei"},
+                new String[]{"country-code:TW", "city-name:Kaohsiung"},
                 new String[]{"country-code:US", "city-name:Anchorage"},
 
                 new String[]{"country-code:VN", "city-name:Ho Chi Minh City"},

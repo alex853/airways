@@ -15687,42 +15687,42 @@ Syria,SY,Jisr-as-su#ur,53000,35.81,36.32
 Syria,SY,Al-bab,51800,36.37,37.53
 Syria,SY,Nawa,49700,32.9,36.04
 Syria,SY,Abu kamal,47800,34.45,40.93
-Taiwan,TW,Taipei,2609300,25.02,121.45
-Taiwan,TW,Kaohsiung,1519800,22.63,120.27
+Taiwan,TW,Taipei,8609300,25.02,121.45
+Taiwan,TW,Kaohsiung,2819800,22.63,120.27
 Taiwan,TW,Taichung,1006300,24.15,120.68
 Taiwan,TW,Tainan,734800,23.0,120.19
-Taiwan,TW,Panchiao,531200,25.02,121.44
+Taiwan,TW,del Panchiao,531200,25.02,121.44
 Taiwan,TW,Hsinchu,402600,24.82,120.98
-Taiwan,TW,Chungho,396400,24.99,121.5
-Taiwan,TW,Keelung,394300,25.13,121.73
-Taiwan,TW,Sanchung,386600,25.07,121.48
-Taiwan,TW,Hsinchuang,366900,25.04,121.44
-Taiwan,TW,Fengshan,323000,22.63,120.35
-Taiwan,TW,Chungli,320600,24.96,121.22
-Taiwan,TW,Taoyuan,311300,25.0,121.31
+Taiwan,TW,del Chungho,396400,24.99,121.5
+Taiwan,TW,del Keelung,394300,25.13,121.73
+Taiwan,TW,del Sanchung,386600,25.07,121.48
+Taiwan,TW,del Hsinchuang,366900,25.04,121.44
+Taiwan,TW,del Fengshan,323000,22.63,120.35
+Taiwan,TW,del Chungli,320600,24.96,121.22
+Taiwan,TW,del Taoyuan,311300,25.0,121.31
 Taiwan,TW,Chiayi,270800,23.48,120.43
-Taiwan,TW,Hsintien,266500,24.96,121.53
-Taiwan,TW,Yungho,232500,25.02,121.51
+Taiwan,TW,del Hsintien,266500,24.96,121.53
+Taiwan,TW,del Yungho,232500,25.02,121.51
 Taiwan,TW,Changhwa,230900,24.08,120.52
-Taiwan,TW,Tucheng,224400,24.98,121.44
-Taiwan,TW,Pingtung,218800,22.68,120.48
+Taiwan,TW,del Tucheng,224400,24.98,121.44
+Taiwan,TW,del Pingtung,218800,22.68,120.48
 Taiwan,TW,Yungkang,193600,22.94,121.12
-Taiwan,TW,Pingchen,187800,24.95,121.21
+Taiwan,TW,del Pingchen,187800,24.95,121.21
 Taiwan,TW,Tali,172800,24.1,120.67
 Taiwan,TW,Fengyuan,163600,23.93,120.3
-Taiwan,TW,Pate,161500,24.92,121.28
-Taiwan,TW,Luchou,159100,25.08,121.47
-Taiwan,TW,Hsichih,150600,25.07,121.65
-Taiwan,TW,Shulin,150200,25.0,121.42
+Taiwan,TW,del Pate,161500,24.92,121.28
+Taiwan,TW,del Luchou,159100,25.08,121.47
+Taiwan,TW,del Hsichih,150600,25.07,121.65
+Taiwan,TW,del Shulin,150200,25.0,121.42
 Taiwan,TW,Yuanlin,129000,23.96,120.55
-Taiwan,TW,Yangmei,125500,24.91,121.13
+Taiwan,TW,del Yangmei,125500,24.91,121.13
 Taiwan,TW,Taitung,113400,22.76,121.14
 Taiwan,TW,Hualian,111100,23.99,121.59
-Taiwan,TW,Tanshui,110800,25.19,121.42
+Taiwan,TW,del Tanshui,110800,25.19,121.42
 Taiwan,TW,Nantou,107000,23.92,120.67
 Taiwan,TW,Touliu,101000,23.71,120.53
 Taiwan,TW,Tsaotun,98900,23.98,120.68
-Taiwan,TW,Kangshan,94100,22.8,120.27
+Taiwan,TW,del Kangshan,94100,22.8,120.27
 Taiwan,TW,Ilan,94000,24.77,121.74
 Taiwan,TW,Miaoli,91900,24.57,120.81
 Taiwan,TW,Puli,90100,23.97,120.96
@@ -15731,11 +15731,11 @@ Taiwan,TW,Chutung,87300,24.73,121.07
 Taiwan,TW,Chupei,87200,24.85,121.0
 Taiwan,TW,Chingshui,86400,24.28,120.57
 Taiwan,TW,Homei,86000,24.11,120.49
-Taiwan,TW,Tachi,84200,24.88,121.28
+Taiwan,TW,del Tachi,84200,24.88,121.28
 Taiwan,TW,Lukang,84100,24.06,120.43
-Taiwan,TW,Sanhsia,80400,24.93,121.36
+Taiwan,TW,del Sanhsia,80400,24.93,121.36
 Taiwan,TW,Tachia,79700,24.35,120.62
-Taiwan,TW,Yingko,78600,24.96,121.35
+Taiwan,TW,del Yingko,78600,24.96,121.35
 Taiwan,TW,Hsinying,77400,23.3,120.31
 Taiwan,TW,Shalu,73200,24.24,120.55
 Taiwan,TW,Lotung,69900,24.69,121.76
@@ -15743,16 +15743,16 @@ Taiwan,TW,Chunan,69600,24.7,120.92
 Taiwan,TW,Huwei,68100,23.72,120.39
 Taiwan,TW,Chushan,63600,23.75,120.66
 Taiwan,TW,Tungshih,60900,24.27,120.82
-Taiwan,TW,Chaochou,59000,22.55,120.53
+Taiwan,TW,del Chaochou,59000,22.55,120.53
 Taiwan,TW,Erhlin,58500,23.9,120.37
 Taiwan,TW,Chiali,58300,23.17,120.17
 Taiwan,TW,Chihu,56300,23.96,120.47
 Taiwan,TW,Makung,53300,23.57,119.56
 Taiwan,TW,Hsilo,51200,23.8,120.45
-Taiwan,TW,Tungkang,50500,22.46,120.44
+Taiwan,TW,del Tungkang,50500,22.46,120.44
 Taiwan,TW,Yuanli,50500,24.45,120.65
 Taiwan,TW,Wuchi,50400,24.27,120.52
-Taiwan,TW,Juifang,50100,25.11,121.81
+Taiwan,TW,del Juifang,50100,25.11,121.81
 Taiwan,TW,Suao,49000,24.6,121.84
 Taiwan,TW,Tounan,48900,23.68,120.47
 Taiwan,TW,Meinung,48700,22.9,120.53
@@ -15760,7 +15760,7 @@ Taiwan,TW,Matou,48400,23.19,120.24
 Taiwan,TW,Peikang,48300,23.57,120.29
 Taiwan,TW,Tienchung,48100,23.86,120.57
 Taiwan,TW,Hsinhua,45900,23.04,120.3
-Taiwan,TW,Chishan,45800,22.89,120.47
+Taiwan,TW,del Chishan,45800,22.89,120.47
 Taiwan,TW,Potzu,45200,23.47,120.24
 Taiwan,TW,Houlung,44200,24.62,120.78
 Taiwan,TW,Tunghsiao,42800,24.49,120.67

@@ -25,7 +25,8 @@ public class World25_013_rename_cities {
                 new String[]{"ZSPD", "Shanghai Pudong"},
                 new String[]{"ZSSS", "Shanghai Hongqiao"},
                 new String[]{"ENZV", "Stavanger Sola"},
-                new String[]{"SAEZ", "Buenos Aires Ezeiza"}
+                new String[]{"SAEZ", "Buenos Aires Ezeiza"},
+                new String[]{"RCTP", "Taipei Taoyuan"}
         ));
     }
 }
