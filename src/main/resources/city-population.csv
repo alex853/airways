@@ -3512,7 +3512,7 @@ Cote d ivoire,CI,Ndiekro,10700,7.44,-4.77
 Cote d ivoire,CI,Bocanda,10100,7.06,-4.5
 Cote d ivoire,CI,Grand-lahou,7500,5.13,-5.03
 Croatia,HR,Zagreb,694100,45.8,15.97
-Croatia,HR,Split,175700,43.51,16.45
+Croatia,HR,Split,275700,43.51,16.45
 Croatia,HR,Rijeka,144300,45.33,14.44
 Croatia,HR,Osijek,90700,45.55,18.68
 Croatia,HR,Zadar,69800,44.12,15.24
@@ -5919,7 +5919,7 @@ Greece,GR,Thessaloniki,372100,40.64,22.94
 Greece,GR,Piraieus,179600,37.96,23.64
 Greece,GR,Patrai,164000,38.24,21.73
 Greece,GR,Peristerion,141000,38.02,23.7
-Greece,GR,Iraklion,133800,35.33,25.13
+Greece,GR,Iraklion,283800,35.33,25.13
 Greece,GR,Larisa,127200,39.64,22.42
 Greece,GR,Kallithea,112100,37.95,23.7
 Greece,GR,Nikaia,95200,37.97,23.65
@@ -5948,7 +5948,7 @@ Greece,GR,Serrai,55500,41.09,23.55
 Greece,GR,Khalkis,54800,38.46,23.6
 Greece,GR,Khania,54600,35.51,24.02
 Greece,GR,Euosmon,53800,40.67,22.91
-Greece,GR,Rodos,53500,36.44,28.22
+Greece,GR,Rodos,125500,36.44,28.22
 Greece,GR,Katerini,51600,40.27,22.5
 Greece,GR,Kalamata,50300,37.04,22.11
 Greece,GR,Alexandroupoli,50000,40.85,25.87
@@ -5978,7 +5978,7 @@ Greece,GR,Ayia varvara,31200,37.99,23.65
 Greece,GR,Neapolis,31000,40.62,22.99
 Greece,GR,Korinthos,30500,37.94,22.93
 Greece,GR,Ptolemais,29300,40.51,21.68
-Greece,GR,Kerkira,28800,39.62,19.92
+Greece,GR,Kerkira,102800,39.62,19.92
 Greece,GR,Rethimnon,28500,35.36,24.47
 Greece,GR,Aspropirgos,28400,38.07,23.58
 Greece,GR,Mitilini,27900,39.11,26.55
@@ -7882,7 +7882,7 @@ Italy,IT,Roma,2618900,41.89,12.5
 Italy,IT,Milano,1212900,45.48,9.19
 Italy,IT,Napoli,995000,40.85,14.27
 Italy,IT,Torino,865700,45.08,7.68
-Italy,IT,Palermo,671100,38.12,13.36
+Italy,IT,Palermo,1171100,38.12,13.36
 Italy,IT,Genova,594900,44.42,8.93
 Italy,IT,Bologna,375800,44.5,11.34
 Italy,IT,Firenze,356100,43.78,11.24
@@ -8941,7 +8941,7 @@ Laos,LA,Muang vangviang,11000,18.91,102.36
 Laos,LA,Ban donkon,9500,20.31,101.65
 Laos,LA,Sekong,4400,15.41,106.7
 Laos,LA,Ban nahin,3300,18.23,104.22
-Latvia,LV,Riga,689300,56.97,24.13
+Latvia,LV,Riga,889300,56.97,24.13
 Latvia,LV,Daugavpils,112700,55.88,26.51
 Latvia,LV,Liepaja,81100,56.51,21.01
 Latvia,LV,Jelgava,56000,56.65,23.71
@@ -16133,7 +16133,7 @@ Turkey,TR,Bursa,1305600,40.2,29.08
 Turkey,TR,Adana,1235700,37.0,35.32
 Turkey,TR,Gaziantep,1018400,37.07,37.39
 Turkey,TR,Konya,811700,37.88,32.48
-Turkey,TR,Antalya,659200,36.89,30.71
+Turkey,TR,Antalya,1259200,36.89,30.71
 Turkey,TR,Diyarbakir,596700,37.92,40.23
 Turkey,TR,Mersin,587800,36.81,34.63
 Turkey,TR,Kayseri,586200,38.74,35.48
