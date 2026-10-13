@@ -11677,7 +11677,7 @@ North korea,KP,Kaes#ng,204700,37.97,126.56
 North korea,KP,S#ngnim,157200,38.74,125.63
 North korea,KP,Najin,59500,42.25,130.3
 Norway,NO,Oslo,1801000,59.91,10.75
-Norway,NO,Bergen,212600,60.38,5.34
+Norway,NO,Bergen,412600,60.38,5.34
 Norway,NO,Stavanger,171300,58.97,5.71
 Norway,NO,Trondheim,145700,63.44,10.4
 Norway,NO,Fredrikstad-sarpsborg,96600,59.24,10.94
@@ -12911,7 +12911,7 @@ Portugal,PT,Amadora,176000,38.75,-9.24
 Portugal,PT,Braga,914800,41.55,-8.43
 Portugal,PT,Setubal,114300,38.53,-8.89
 Portugal,PT,Coimbra,103400,40.22,-8.43
-Portugal,PT,Funchal,103200,32.65,-16.9
+Portugal,PT,Funchal,253200,32.65,-16.9
 Portugal,PT,Queluz,89900,38.75,-9.25
 Portugal,PT,Agualva-cacem,81900,38.77,-9.3
 Portugal,PT,Vila nova de gaia,69600,41.14,-8.63
@@ -17020,6 +17020,7 @@ United Kingdom,GB,Newbury,35900,51.4,-1.33
 United Kingdom,GB,Eccles,35800,53.49,-2.33
 United Kingdom,GB,Hitchin,35700,51.96,-0.28
 United Kingdom,GB,Pontypool,35700,51.7,-3.04
+United Kingdom,GB,Jersey,103300,49.19,-2.11
 United States,US,New York,8091700,40.67,-73.94
 United States,US,Los Angeles,12847400,34.11,-118.41
 United States,US,Chicago,2862400,41.84,-87.68

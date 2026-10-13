@@ -177,6 +177,19 @@ LICJ, LIRN, LPFR, LPMA, LTAI.
   Страны Australia в мире не было — создаётся импортом. Добавлен в `World25_012_selected_cities`; YSSY (size 8938 ≥5000)
   подтянется и залинкуется автоматически через `ImportMajorAirportsInVicinityOfCities`. Аэропорты YWOL (Wollongong)
   и YWLM (Newcastle/Williamtown), а также YSBK (Bankstown) в мир не добавляем.
+- **Jersey (GB, аэропорт EGJJ):** в CSV такого города не было (в наборе только суверенные страны, зависимых
+  территорий нет), добавлена строка `United Kingdom,GB,Jersey,103300,49.19,-2.11` (St Helier и весь остров как
+  один город, страна GB как у аэропорта в `icaodata`). Добавлен в `World25_012_selected_cities`. EGJJ уже был в мире
+  без города (size 1705 < 5000) — линк вручную `create-links?icao=EGJJ` (~9 nm). Guernsey (EGJB), Alderney (EGJA),
+  Isle of Man (EGNS) не трогаем, при необходимости добавлять так же строками.
+- **Bergen (NO, аэропорт ENBR Flesland):** CSV 212 600 → 412 600 (агломерация/регион ~420 тыс.). `del` не нужен
+  (пригороды <100 тыс.). Добавлен в `World25_012_selected_cities`. ENBR уже был в мире без города (size 2983 < 5000,
+  автоматически не линкуется) — линк вручную `create-links?icao=ENBR` (~6 nm от центра).
+- **Funchal (PT, аэропорт LPMA Madeira):** CSV 103 200 → 253 200 (весь остров Мадейра, аэропорт обслуживает его
+  целиком). `del` не нужен (остальное <100 тыс.). Добавлен в `World25_012_selected_cities`. LPMA уже был в мире без
+  города (size 2782 < 5000, автоматически не линкуется) — линк вручную `create-links?icao=LPMA` (~7 nm от центра).
+  LPPS (Porto Santo, другой остров) не трогаем.
+  После импорта вручную: `set-attraction?id=<id Funchal>&attraction=4` (mobility по умолчанию).
 - **Bristol (GB, аэропорт EGGD):** CSV 417 600 → 717 600 (агломерация ~700 тыс.). `del` не нужен (пригороды <100 тыс.).
   Города в мире не было (ближайший Birmingham, 72 nm) — добавлен в `World25_012_selected_cities`. EGGD (size 2000 <5000)
   добавлен в `World25_009_create_some_airports` и привязан к Bristol (~6 nm от центра; автоимпорт при этом
