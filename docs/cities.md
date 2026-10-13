@@ -117,38 +117,27 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
 ### 2. Аэропорты в мире без привязки к городу (отдельная категория)
 
 Созданы через `World25_009_create_some_airports`, но ни один город рядом в мир не импортирован, поэтому в симуляции
-пассажиропотока не участвуют (16 шт.): EFKS, EVRA, LDDU, LDSP, LEAL, LFKF, LGIR, LGKO, LGKR, LGRP, LGSK, LGSM,
-LICJ, LIRN, LPFR, LTAI.
-Закрыты (привязаны к городам): LPMA (Funchal), ENBR (Bergen), EGJJ (Jersey).
+пассажиропотока не участвуют (9 шт.): EFKS, LDDU, LEAL, LFKF, LGKO, LGSK, LGSM, LIRN, LPFR.
 Отложено: LIRN (Napoli) — решение позже; фактически это обычный гражданский Capodichino (NAP), не военная часть,
 из списка военных его можно убирать.
 
 **План:** для каждого проанализировать, какой город/города рядом нужны, и пройти обычную процедуру
-«актуализировать и укрупнить мажорный сити» (импорт города → линк аэропорта). Займёмся отдельно.
+«актуализировать и укрупнить мажорный сити» (импорт города → линк аэропорта). Предложения (2026-10-14):
 
-**Активность** (по `/geo/airport/{icao}/details`; sum — сумма рейсов/сутки трёх крупнейших направлений, нижняя оценка):
+| ICAO | Name | Sum | Предложение |
+|---|---|---|---|
+| LPFR | Faro | 68 | Faro → 300 600 (центральный Алгарве), остальное не трогать |
+| LDDU | Dubrovnik | 28 | Dubrovnik → 70 500 (с окрестностями; Trebinje (BA) рядом) |
+| LEAL | Alicante | 20 | Alacant → 812 000, `del Elx` (Elche); Murcia отдельно |
+| LGKO | Kos | 16 | Kos → 37 300 (весь остров) |
+| LGSM | Samos | 12 | Samos → 32 400 (весь остров) |
+| LGSK | Skiathos | 45 | Skiathos 5 100 или 6 100, потоки — через attraction |
+| LIRN | Napoli (Capodichino) | 33 | отложено; Napoli → ~3 095 000 |
+| LFKF | Figari/Sud Corse | 8 | нет города рядом: линк к Ajaccio (30 nm) либо строка Porto-Vecchio в CSV |
+| EFKS | Kuusamo | 6 | Kuusamo 18 800 как есть |
 
-| ICAO | Name | Sum |
-|---|---|---|
-| EVRA | Riga Intl | 73 |
-| LGKR | Ioannis Kapodistrias (Corfu) | 72 |
-| LPFR | Faro | 68 |
-| LGIR | Nikos Kazantzakis (Heraklion) | 58 |
-| LTAI | Antalya | 48 |
-| LGSK | Alexandros Papadiamandis (Skiathos) | 45 |
-| LICJ | Punta Raisi (Palermo) | 38 |
-| LIRN | Capodichino Mil (Naples) | 33 |
-| LGRP | Diagoras (Rhodes) | 28 |
-| LDDU | Cilipi (Dubrovnik) | 28 |
-| LDSP | Kastela (Split) | 21 |
-| LEAL | Alicante | 20 |
-| LGKO | Ippokratis (Kos) | 16 |
-| LGSM | Samos | 12 |
-| LFKF | Figari/Sud Corse | 8 |
-| EFKS | Kuusamo | 6 |
-
-Цифры обновлены 2026-10-14 (снимок скользящий, колеблется на единицы-десятки). Для справки закрытые аэропорты в
-том же снимке: LPMA 120, ENBR 85, EGJJ 81.
+Цифры `Sum` (скользящая активность по `/geo/airport/{icao}/details`, сумма рейсов/сутки трёх крупнейших направлений,
+нижняя оценка) — снимок 2026-10-14.
 
 ## Выполнено
 
@@ -180,20 +169,35 @@ LICJ, LIRN, LPFR, LTAI.
   Страны Australia в мире не было — создаётся импортом. Добавлен в `World25_012_selected_cities`; YSSY (size 8938 ≥5000)
   подтянется и залинкуется автоматически через `ImportMajorAirportsInVicinityOfCities`. Аэропорты YWOL (Wollongong)
   и YWLM (Newcastle/Williamtown), а также YSBK (Bankstown) в мир не добавляем.
+- **Группа «курорты и острова» (6 аэропортов), добавлены в `World25_012_selected_cities`, линки вручную
+  (все `size < 5000`):**
+
+  | Аэропорт | Город | Было → стало | Примечание |
+  |---|---|---|---|
+  | LPFR Faro | Faro (PT) | 40 600 → 450 600 | весь Алгарве, аэропорт единственный крупный в регионе |
+  | LEAL Alicante | Alicante (ES; в CSV было `Alacant`) | 312 000 → 812 000 | `del Elx` (Elche, 203 600); Murcia отдельный рынок, не трогаем |
+  | LDDU Dubrovnik | Dubrovnik (HR) | 30 500 → 70 500 | с окрестностями, боснийское и черногорское не берём |
+  | LGKO Kos | Kos (GR) | 18 300 → 37 300 | весь остров |
+  | LGSM Samos | Samos (GR) | 6 400 → 32 400 | весь остров; `create-links` с `maxDistance=15`, иначе дефолтные 50 nm привяжут и к Izmir (46 nm) |
+  | LGSK Skiathos | Skiathos (GR) | 5 100 → 6 100 | весь остров, поток через attraction |
+
+  В CSV `Alacant` переименован в `Alicante` (английское имя).
+  Остались отложенными LIRN (Napoli), LFKF (Figari), EFKS (Kuusamo).
 - **Группа «острова и города без города» (7 аэропортов), население в CSV, `del` не нужен (пригородов ≥100 тыс. нет),
   все добавлены в `World25_012_selected_cities`:**
 
   | Аэропорт | Город (CSV) | Было → стало | Линк |
   |---|---|---|---|
-  | LTAI Antalya | Antalya (TR) | 659 200 → 1 259 200 | авто (size 6373) |
-  | LICJ Palermo | Palermo (IT) | 671 100 → 1 171 100 | авто (size 5548) |
-  | LGIR Heraklion | Iraklion (GR, Крит) | 133 800 → 283 800 | авто (size 5238) |
-  | EVRA Riga | Riga (LV) | 689 300 → 889 300 | вручную `create-links?icao=EVRA` |
-  | LDSP Split | Split (HR) | 175 700 → 275 700 | вручную `create-links?icao=LDSP` |
-  | LGKR Corfu | Kerkira (GR) | 28 800 → 102 800 (весь остров) | вручную `create-links?icao=LGKR` |
-  | LGRP Rhodes | Rodos (GR) | 53 500 → 125 500 (весь остров) | вручную `create-links?icao=LGRP` |
+  | LTAI Antalya | Antalya (TR) | 659 200 → 1 259 200 | привязан (авто) |
+  | LICJ Palermo | Palermo (IT) | 671 100 → 1 171 100 | привязан (авто) |
+  | LGIR Heraklion | Iraklion (GR, Крит) | 133 800 → 283 800 | привязан (авто) |
+  | EVRA Riga | Riga (LV) | 689 300 → 889 300 | привязан |
+  | LDSP Split | Split (HR) | 175 700 → 275 700 | привязан |
+  | LGKR Corfu | Kerkira (GR) | 28 800 → 102 800 (весь остров) | привязан |
+  | LGRP Rhodes | Rodos (GR) | 53 500 → 125 500 (весь остров) | привязан |
 
-  Attraction: выставить всем, кроме Riga (значения TBD). В CSV два `Iraklion` в GR (Крит и пригород Афин, 47 000):
+  Attraction выставлен (Antalya 4, Palermo 2, Iraklion 3, Split 2, Kerkira 3, Rodos 3; Riga по умолчанию).
+  В CSV два `Iraklion` в GR (Крит и пригород Афин, 47 000):
   импорт создаёт первый по порядку в файле (Крит), второй пропускает как существующий.
 - **Jersey (GB, аэропорт EGJJ):** в CSV такого города не было (в наборе только суверенные страны, зависимых
   территорий нет), добавлена строка `United Kingdom,GB,Jersey,103300,49.19,-2.11` (St Helier и весь остров как

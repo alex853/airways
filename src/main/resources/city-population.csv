@@ -3525,7 +3525,7 @@ Croatia,HR,Sibenik,37200,43.74,15.89
 Croatia,HR,Sisak,36900,45.48,16.36
 Croatia,HR,Velika gorica,33500,45.74,16.06
 Croatia,HR,Vinkovci,33400,45.29,18.8
-Croatia,HR,Dubrovnik,30500,42.66,18.07
+Croatia,HR,Dubrovnik,70500,42.66,18.07
 Croatia,HR,Vukovar,30200,45.35,18.99
 Croatia,HR,Bjelovar,27900,45.91,16.84
 Croatia,HR,Koprivnica,24900,46.16,16.83
@@ -6011,7 +6011,7 @@ Greece,GR,Melissia,20000,38.05,23.83
 Greece,GR,Arta,19900,39.16,20.99
 Greece,GR,Amalias,18700,37.8,21.35
 Greece,GR,Edessa,18700,40.8,22.05
-Greece,GR,Kos,18300,36.89,27.29
+Greece,GR,Kos,37300,36.89,27.29
 Greece,GR,Artemi,17800,38.31,23.67
 Greece,GR,Kilkis,17800,40.99,22.87
 Greece,GR,Ellinikon,17100,37.88,23.73
@@ -6111,7 +6111,7 @@ Greece,GR,Polikastron,6600,40.99,22.57
 Greece,GR,Vasilikon,6600,38.43,23.67
 Greece,GR,Vouliagmeni,6600,37.82,23.78
 Greece,GR,Souda,6500,35.48,24.07
-Greece,GR,Samos,6400,37.76,26.98
+Greece,GR,Samos,32400,37.76,26.98
 Greece,GR,Nea kallikratia,6300,40.32,23.07
 Greece,GR,Nea penteli,6300,38.06,23.86
 Greece,GR,Sofades,6200,39.33,22.1
@@ -6153,7 +6153,7 @@ Greece,GR,Poliyiros,5200,40.37,23.44
 Greece,GR,Skidra,5200,40.77,22.15
 Greece,GR,Stilis,5200,38.92,22.62
 Greece,GR,Karistos,5100,38.01,24.42
-Greece,GR,Skiathos,5100,39.17,23.48
+Greece,GR,Skiathos,6100,39.17,23.48
 Greece,GR,Timbakion,5100,35.07,24.77
 Greece,GR,Ayios athanasios,5000,40.72,22.73
 Greece,GR,Dionisos,5000,38.1,23.88
@@ -12927,7 +12927,7 @@ Portugal,PT,Rio de mouro,46700,38.77,-9.32
 Portugal,PT,Evora,44900,38.57,-7.91
 Portugal,PT,Sao domingos de rana,43900,38.7,-9.32
 Portugal,PT,Leiria,41300,39.75,-8.8
-Portugal,PT,Faro,40600,37.03,-7.94
+Portugal,PT,Faro,450600,37.03,-7.94
 Portugal,PT,Guimaraes,38500,41.44,-8.3
 Portugal,PT,Ermesinde,38300,41.22,-8.54
 Portugal,PT,Sesimbra,37100,38.43,-9.09
@@ -14875,7 +14875,7 @@ Spain,ES,Mallorca,970000,39.57,2.65
 Spain,ES,del Palma,345700,39.57,2.65
 Spain,ES,Bilbao,343100,43.25,-2.93
 Spain,ES,Valladolid,313900,41.65,-4.74
-Spain,ES,Alacant,312000,38.35,-0.48
+Spain,ES,Alicante,812000,38.35,-0.48
 Spain,ES,Cordoba,309900,37.88,-4.77
 Spain,ES,Vigo,273300,42.22,-8.71
 Spain,ES,Gijon,264200,43.53,-5.67
@@ -14885,7 +14885,7 @@ Spain,ES,A coruna,228900,43.33,-8.42
 Spain,ES,Vitoria,218100,42.85,-2.67
 Spain,ES,Fuenlabrada,205400,40.27,-3.8
 Spain,ES,Badalona,204800,41.45,2.24
-Spain,ES,Elx,203600,38.27,-0.68
+Spain,ES,del Elx,203600,38.27,-0.68
 Spain,ES,Oviedo,202200,43.35,-5.83
 Spain,ES,Mostoles,202100,40.32,-3.88
 Spain,ES,Tenerife,972100,28.47,-16.25
