@@ -113,29 +113,14 @@ KNGP Corpus Christi NAS, KNMM Meridian NAS, KNHZ Brunswick NAS, KFHU Sierra Vist
 KGTB Wheeler-Sack AAF, PABI Allen AAF, KNFE Fentress NALF, LIBV Gioia Del Colle Mil, LIED Decimomannu Mil,
 NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, FZSA Kamina Base и др.
 
-### 2. Аэропорты в мире без привязки к городу (отдельная категория)
+### 2. Аэропорты в мире без привязки к городу — закрыто
 
-Созданы через `World25_009_create_some_airports`, но ни один город рядом в мир не импортирован, поэтому в симуляции
-пассажиропотока не участвуют (9 шт.): EFKS, LDDU, LEAL, LFKF, LGKO, LGSK, LGSM, LIRN, LPFR.
-LIRN (Capodichino, Naples) — обычный гражданский аэропорт, не военная часть; из списка военных убран.
-
-**План:** для каждого проанализировать, какой город/города рядом нужны, и пройти обычную процедуру
-«актуализировать и укрупнить мажорный сити» (импорт города → линк аэропорта). Предложения (2026-10-14):
-
-| ICAO | Name | Sum | Предложение |
-|---|---|---|---|
-| LPFR | Faro | 68 | Faro → 300 600 (центральный Алгарве), остальное не трогать |
-| LDDU | Dubrovnik | 28 | Dubrovnik → 70 500 (с окрестностями; Trebinje (BA) рядом) |
-| LEAL | Alicante | 20 | Alacant → 812 000, `del Elx` (Elche); Murcia отдельно |
-| LGKO | Kos | 16 | Kos → 37 300 (весь остров) |
-| LGSM | Samos | 12 | Samos → 32 400 (весь остров) |
-| LGSK | Skiathos | 45 | Skiathos 5 100 или 6 100, потоки — через attraction |
-| LIRN | Naples (Capodichino) | 33 | Naples → 3 095 000, аэропорт переименован `Capodichino Mil` → `Capodichino` |
-| LFKF | Figari/Sud Corse | 8 | нет города рядом: линк к Ajaccio (30 nm) либо строка Porto-Vecchio в CSV |
-| EFKS | Kuusamo | 6 | Kuusamo 18 800 как есть |
-
-Цифры `Sum` (скользящая активность по `/geo/airport/{icao}/details`, сумма рейсов/сутки трёх крупнейших направлений,
-нижняя оценка) — снимок 2026-10-14.
+Все 19 аэропортов, созданных через `World25_009_create_some_airports` без города, привязаны к городам (2026-10-15):
+LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LDSP, LEAL, LGKO, LGSM, LFKF, EFKS.
+Дополнительно созданы LFKJ и LFKB. Названия аэропортов приведены к читаемым в шаге `World25_013`
+(`RenameAirports`): LIRN `Capodichino`, LFKJ `Ajaccio Napoleon Bonaparte`, LFKB `Bastia Poretta`, LGKR
+`Corfu Ioannis Kapodistrias`, LGIR `Heraklion Nikos Kazantzakis`. Подробности по каждому городу — в разделе «Выполнено». В мире сейчас
+160 городов и 219 аэропортов без бесхозных.
 
 ## Выполнено
 
