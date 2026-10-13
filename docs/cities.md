@@ -164,6 +164,17 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Sochi (RU, аэропорт URSS) — из списка отсутствующих по VATSIM:** CSV `Soci` → `Sochi` (английское имя),
+  313 900 → 513 900 (Большое Сочи). Пригородов в CSV нет (абхазские городки Gagra/Pitsunda под `GE`, не берём).
+  Добавлен в `World25_012_selected_cities`. URSS (size 5057) создаётся и привязывается автоматически импортом,
+  `create-links` не нужен. Attraction не нужен.
+- **Shanghai (CN, аэропорты ZSPD и ZSSS) — из списка отсутствующих по VATSIM:** CSV 13 278 500 → 25 278 500
+  (муниципалитет ~25 млн). В радиусе 45 nm в CSV только Suzhou (1 150 200, 44 nm, другая провинция), он, как и
+  Jiaxing, Wuxi, Ningbo, Hangzhou (58–99 nm), остаётся отдельным городом; `del` ставить некому. Добавлен в
+  `World25_012_selected_cities`. Два аэропорта: ZSPD Pudong (size 4008) и ZSSS Hongqiao (size 3407, второй
+  аэропорт города, как KHND у Las Vegas) добавлены в `World25_009`, оба `size < 5000`, линки вручную
+  (`create-links?icao=ZSPD`, `create-links?icao=ZSSS`, дефолтный радиус). Имена аэропортов:
+  `Shanghai Pudong`, `Shanghai Hongqiao` (шаг `World25_013`). Attraction не нужен.
 - **Honolulu (US, аэропорт PHNL) — из списка отсутствующих по VATSIM:** весь остров Oahu собран в один город
   (остров небольшой, Honolulu County ~1,0 млн), CSV 382 800 → 1 012 800. В CSV других гавайских городов нет, `del`
   не нужен. Добавлен в `World25_012_selected_cities`. PHNL (size 14 708) и PHJR Kalaeloa (size 5 643) создаются и

@@ -34,6 +34,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:CN", "city-name:Kowloon"},
                 new String[]{"country-code:CN", "city-name:Hong Kong Island"},
                 new String[]{"country-code:CN", "city-name:Zhengzhou"},
+                new String[]{"country-code:CN", "city-name:Shanghai"},
 
                 new String[]{"country-code:CY", "city-name:Nicosia"},
                 new String[]{"country-code:CY", "city-name:Limassol"},
@@ -145,6 +146,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:RU", "city-name:Moscow"},
                 new String[]{"country-code:RU", "city-name:Saint Petersburg"},
+                new String[]{"country-code:RU", "city-name:Sochi"},
 
                 new String[]{"country-code:SA", "city-name:Jeddah"},
                 new String[]{"country-code:SA", "city-name:Mecca"},

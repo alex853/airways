@@ -21,7 +21,9 @@ public class World25_013_rename_cities {
                 new String[]{"LFKJ", "Ajaccio Napoleon Bonaparte"},
                 new String[]{"LFKB", "Bastia Poretta"},
                 new String[]{"LGKR", "Corfu Ioannis Kapodistrias"},
-                new String[]{"LGIR", "Heraklion Nikos Kazantzakis"}
+                new String[]{"LGIR", "Heraklion Nikos Kazantzakis"},
+                new String[]{"ZSPD", "Shanghai Pudong"},
+                new String[]{"ZSSS", "Shanghai Hongqiao"}
         ));
     }
 }
