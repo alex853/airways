@@ -1,9 +1,9 @@
 package net.simforge.airways2.app.pblc;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
-import net.simforge.airways2.app.dto.AircraftDetailsDto;
 import net.simforge.airways2.app.dto.AircraftInfoDto;
-import net.simforge.airways2.app.dto.AircraftMapDto;
 import net.simforge.airways2.app.dto.FlightMinDto;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -33,8 +33,8 @@ public class MapController {
                 .toList());
     }
 
-    @GetMapping("/aircraft/info")
-    public AircraftInfoDto getAircraftInfo(@RequestParam("id") String aircraftId) {
+    @GetMapping("/aircraft/brief-info")
+    public AircraftInfoDto getAircraftBriefInfo(@RequestParam("id") String aircraftId) {
         return worldBean.read(world -> AircraftInfoDto.from(world,
                 world.aircrafts()
                         .byId(Id.decode(aircraftId))
@@ -42,8 +42,8 @@ public class MapController {
                 true));
     }
 
-    @GetMapping("/aircraft/details")
-    public AircraftDetailsDto getAircraftDetails(@RequestParam("id") String aircraftId) {
+    @GetMapping("/aircraft/full-info")
+    public AircraftFullInfoDto getAircraftFullInfo(@RequestParam("id") String aircraftId) {
         return worldBean.read(world -> {
             final Aircrafts.Aircraft aircraft = world.aircrafts()
                     .byId(Id.decode(aircraftId))
@@ -54,7 +54,35 @@ public class MapController {
                     .limit(RECENT_FLIGHTS_LIMIT)
                     .map(fm -> FlightMinDto.from(world, fm))
                     .toList();
-            return new AircraftDetailsDto(recentFlights);
+            return new AircraftFullInfoDto(
+                    AircraftInfoDto.from(world, aircraft, true),
+                    recentFlights);
         });
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AircraftMapDto {
+        private String id;
+        private String acReg;
+        private float lat;
+        private float lon;
+        private int hdg;
+
+        public static AircraftMapDto from(final Aircrafts.Aircraft a) {
+            return new AircraftMapDto(
+                    Id.encode(a.getId()),
+                    a.getRegNo(),
+                    a.getLocationLatitude(),
+                    a.getLocationLongitude(),
+                    a.getLocationHeading());
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AircraftFullInfoDto {
+        private final AircraftInfoDto info;
+        private final List<FlightMinDto> recentFlights;
     }
 }
