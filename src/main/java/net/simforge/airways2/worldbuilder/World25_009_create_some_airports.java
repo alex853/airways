@@ -16,7 +16,7 @@ public class World25_009_create_some_airports {
                 "EHAM", "EHRD",
                 "EKCH",
                 "ELLX",
-                "ENBR", "ENGM",
+                "ENBR", "ENGM", "ENZV",
                 "EPKK", "EPWA",
                 "ESSA", "ESGG",
                 "EVRA",

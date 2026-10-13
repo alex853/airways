@@ -164,6 +164,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Stavanger (NO, аэропорт ENZV) — из списка отсутствующих по VATSIM:** CSV 171 300 → 331 300 (регион Nord-Jæren
+  с Sandnes, Sola, Randaberg ~330 тыс.). `del` не нужен (пригороды <10 тыс.), Haugesund (40 300, 35 nm) отдельный.
+  Добавлен в `World25_012_selected_cities`. ENZV (size 4992 < 5000, автоматически не линкуется) добавлен в
+  `World25_009`, линк `create-links?icao=ENZV` с дефолтным радиусом (Stavanger 6 nm; Bergen 91 nm не попадает).
+  Имя аэропорта `Sola` → `Stavanger Sola` (шаг `World25_013`). Attraction не нужен.
 - **Sochi (RU, аэропорт URSS) — из списка отсутствующих по VATSIM:** CSV `Soci` → `Sochi` (английское имя),
   313 900 → 513 900 (Большое Сочи). Пригородов в CSV нет (абхазские городки Gagra/Pitsunda под `GE`, не берём).
   Добавлен в `World25_012_selected_cities`. URSS (size 5057) создаётся и привязывается автоматически импортом,
