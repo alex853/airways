@@ -164,6 +164,13 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Bremen (DE, аэропорт EDDW) — из списка отсутствующих по VATSIM:** город уже был в мире (545 000, линк только к
+  EDDV Hannover по радиусу 50 nm), поэтому нужен только аэропорт: EDDW (size 2736 < 5000, автоматически не
+  линкуется) добавлен в `World25_009`, линк `create-links?icao=EDDW` с дефолтным радиусом (только Bremen, 2 nm;
+  Hamburg 53 nm и Hannover 52 nm в радиус не попадают). Население Bremen 545 000 → 745 000 (город ~570 тыс. +
+  Delmenhorst 76 тыс. и пригороды); Oldenburg (158 600, 22 nm) и Bremerhaven (119 500, 31 nm) — отдельные
+  города, как и остальные города Рура/Нижней Саксонии. Население существующего города выставляется
+  `/admin/f1-tour-fixes`.
 - **Третья группа (особые):** LIRN → Naples (CSV `Napoli` → `Naples`, 995 000 → 3 095 000, агломерация ~3,1 млн;
   пригороды <100 тыс. не трогаем, Salerno 144 300 отдельный рынок); аэропорт LIRN переименован
   `Capodichino Mil` → `Capodichino` (шаг `World25_013`, `RenameAirports`). EFKS → Kuusamo 18 800 как есть
