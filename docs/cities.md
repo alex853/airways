@@ -164,6 +164,20 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Пять городов из списка отсутствующих по VATSIM (SAEZ, WIII, ZBAA, PANC, FACT):**
+
+  | Аэропорт | Город | Было → стало | `del` | Линк |
+  |---|---|---|---|---|
+  | SAEZ | Buenos Aires (в CSV `Buenos aires`; Argentina новая страна) | 11 928 400 → 15 428 400 | нет | авто (size 6404); аэропорт переименован `Buenos Aires Ezeiza` |
+  | WIII | Jakarta (Indonesia новая страна) | 8 987 800 → 33 987 800 | Tangerang, Bekasi, Bogor, Depok, Ciputat, Pondokgede, Cimanggis, Ciomas (Jabodetabek, ≤30 nm) | авто (size 7258) |
+  | ZBAA | Beijing | 7 209 900 → 22 009 900 | нет (Langfang 34 nm и Tianjin 63 nm отдельные) | авто (size 7006) |
+  | PANC | Anchorage | 273 000 → 403 000 | нет (Аляска изолирована, ближайший город мира Seattle 1247 nm) | авто (size 10 058) |
+  | FACT | Cape Town (в CSV `Cape town`; ЮАР новая страна) | 2 984 100 → 4 584 100 | Somerset west, Paarl (≥100k, ≤25 nm) | вручную `create-links?icao=FACT` (size 4908) |
+
+  Второй аэропорт (WIIH Halim, SABE Aeroparque, ZBAD Daxing) не добавляем. Для Jakarta второй `Depok` в CSV
+  (136 700, Центральная Ява) не трогается. Attraction не нужен. Шаг `World25_013` в `Application.main` теперь
+  стоит **после** `World25_012`: переименование аэропортов должно идти после того, как импорт их создал
+  (переименования городов давно выполнены, повторно они пропускаются).
 - **Stavanger (NO, аэропорт ENZV) — из списка отсутствующих по VATSIM:** CSV 171 300 → 331 300 (регион Nord-Jæren
   с Sandnes, Sola, Randaberg ~330 тыс.). `del` не нужен (пригороды <10 тыс.), Haugesund (40 300, 35 nm) отдельный.
   Добавлен в `World25_012_selected_cities`. ENZV (size 4992 < 5000, автоматически не линкуется) добавлен в

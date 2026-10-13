@@ -288,7 +288,7 @@ Antigua and barbuda,AG,Codrington,869,17.64,-61.82
 Antigua and barbuda,AG,Carlisle,831,17.13,-61.8
 Antigua and barbuda,AG,Swetes,727,17.03,-61.81
 Antigua and barbuda,AG,Falmouth,262,17.02,-61.79
-Argentina,AR,Buenos aires,11928400,-34.61,-58.37
+Argentina,AR,Buenos Aires,15428400,-34.61,-58.37
 Argentina,AR,Cordoba,1513200,-31.4,-64.19
 Argentina,AR,Rosario,1295100,-32.94,-60.67
 Argentina,AR,Mendoza,1009100,-32.89,-68.83
@@ -2783,7 +2783,7 @@ Chile,CL,Lautaro,33000,-38.53,-72.44
 Chile,CL,La ligua,32800,-32.46,-71.24
 Chile,CL,Curanilahue,32700,-37.48,-73.34
 China,CN,Shanghai,25278500,31.23,121.47
-China,CN,Beijing,7209900,39.93,116.4
+China,CN,Beijing,22009900,39.93,116.4
 China,CN,Wuhan,4104300,30.58,114.27
 China,CN,Chengdu,4064700,30.67,104.07
 China,CN,Tianjin,3945900,39.13,117.2
@@ -7262,18 +7262,18 @@ India,IN,Adoni,165200,15.63,77.27
 India,IN,Madhyamgram,164700,22.7,88.45
 India,IN,Gadag,164100,15.44,75.63
 India,IN,Sambalpur,163300,21.47,83.97
-Indonesia,ID,Jakarta,8987800,-6.18,106.83
+Indonesia,ID,Jakarta,33987800,-6.18,106.83
 Indonesia,ID,Surabaya,3092400,-7.24,112.74
 Indonesia,ID,Bandung,2781800,-6.91,107.6
 Indonesia,ID,Medan,2243200,3.59,98.67
 Indonesia,ID,Palembang,1507100,-2.99,104.75
-Indonesia,ID,Tangerang,1344400,-6.18,106.63
+Indonesia,ID,del Tangerang,1344400,-6.18,106.63
 Indonesia,ID,Semarang,1289500,-6.97,110.42
 Indonesia,ID,Makasar,1268500,-5.14,119.41
 Indonesia,ID,Malang,841500,-7.98,112.62
-Indonesia,ID,Bekasi,824700,-6.22,106.97
+Indonesia,ID,del Bekasi,824700,-6.22,106.97
 Indonesia,ID,Bandar lampung,703500,-5.44,105.27
-Indonesia,ID,Bogor,697100,-6.58,106.79
+Indonesia,ID,del Bogor,697100,-6.58,106.79
 Indonesia,ID,Padang,640500,-0.95,100.35
 Indonesia,ID,Surakarta,606700,-7.57,110.82
 Indonesia,ID,Banjarmasin,578800,-3.33,114.59
@@ -7282,14 +7282,14 @@ Indonesia,ID,Samarinda,517900,-0.5,117.15
 Indonesia,ID,Pontianak,515300,-0.02,109.34
 Indonesia,ID,Denpasar,511000,-8.65,115.22
 Indonesia,ID,Yogyakarta,492800,-7.78,110.37
-Indonesia,ID,Depok,467500,-6.39,106.83
+Indonesia,ID,del Depok,467500,-6.39,106.83
 Indonesia,ID,Cimahi,441100,-6.83,107.48
 Indonesia,ID,Balikpapan,439000,-1.26,116.83
 Indonesia,ID,Jambi,427700,-1.59,103.61
 Indonesia,ID,Manado,420100,1.5,124.84
 Indonesia,ID,Mataram,360400,-8.58,116.13
-Indonesia,ID,Ciputat,346700,-6.23,106.68
-Indonesia,ID,Pondokgede,336900,-6.28,106.95
+Indonesia,ID,del Ciputat,346700,-6.23,106.68
+Indonesia,ID,del Pondokgede,336900,-6.28,106.95
 Indonesia,ID,Cirebon,308100,-6.71,108.56
 Indonesia,ID,Kediri,306900,-7.81,112.01
 Indonesia,ID,Tegal,288800,-6.86,109.13
@@ -7299,10 +7299,10 @@ Indonesia,ID,Ambon,273500,-3.7,128.16
 Indonesia,ID,Banda aceh,265600,5.55,95.32
 Indonesia,ID,Cilacap,264900,-7.34,109.0
 Indonesia,ID,Bengkulu,264800,-3.8,102.25
-Indonesia,ID,Cimanggis,262600,-6.32,106.73
+Indonesia,ID,del Cimanggis,262600,-6.32,106.73
 Indonesia,ID,Purwokerto,259200,-7.43,109.24
 Indonesia,ID,Pematang siantar,252100,2.96,99.06
-Indonesia,ID,Ciomas,239900,-6.6,106.75
+Indonesia,ID,del Ciomas,239900,-6.6,106.75
 Indonesia,ID,Tasikmalaya,230100,-7.32,108.21
 Indonesia,ID,Madiun,196000,-7.63,111.51
 Indonesia,ID,Karawang,185700,-6.3,107.28
@@ -14588,7 +14588,7 @@ Somalia,SO,Bur gabo,3800,-1.21,41.83
 Somalia,SO,Dujuma,3000,1.26,42.56
 Somalia,SO,Tayeglo,2000,4.02,44.51
 Somalia,SO,Xarardere,1900,4.64,47.85
-South africa,ZA,Cape town,2984100,-33.93,18.46
+South africa,ZA,Cape Town,4584100,-33.93,18.46
 South africa,ZA,Durban,2531300,-29.87,30.99
 South africa,ZA,Johannesburg,1975500,-26.19,28.04
 South africa,ZA,Pretoria,1473800,-25.73,28.22
@@ -14612,13 +14612,13 @@ South africa,ZA,Uitenhage,198800,-33.76,25.39
 South africa,ZA,Witbank,198500,-25.86,29.22
 South africa,ZA,Alberton,197400,-26.33,28.13
 South africa,ZA,Botshabelo,185900,-29.23,26.73
-South africa,ZA,Paarl,173400,-33.7,18.96
+South africa,ZA,del Paarl,173400,-33.7,18.96
 South africa,ZA,Midrand,168700,-26.0,28.13
 South africa,ZA,Kimberley,166100,-28.75,24.77
 South africa,ZA,Klerksdorp,162700,-26.88,26.62
 South africa,ZA,Verwoerdburg,152900,-25.83,28.2
 South africa,ZA,Westonaria,152900,-26.32,27.65
-South africa,ZA,Somerset west,139000,-34.07,18.84
+South africa,ZA,del Somerset west,139000,-34.07,18.84
 South africa,ZA,Bisho,137900,-32.87,27.39
 South africa,ZA,Randfontein,131000,-26.15,27.7
 South africa,ZA,Middelburg,123700,-25.76,29.47
@@ -17089,7 +17089,7 @@ United States,US,Newark,279000,40.72,-74.17
 United States,US,del Saint paul,278900,44.95,-93.1
 United States,US,Bakersfield,278500,35.36,-119.0
 United States,US,Stockton,278100,37.97,-121.31
-United States,US,Anchorage,273000,61.18,-149.19
+United States,US,Anchorage,403000,61.18,-149.19
 United States,US,Lexington-fayette,269500,38.04,-84.46
 United States,US,St. Petersburg,248500,27.76,-82.64
 United States,US,Louisville,247600,38.22,-85.74

@@ -20,6 +20,7 @@ public class World25_009_create_some_airports {
                 "EPKK", "EPWA",
                 "ESSA", "ESGG",
                 "EVRA",
+                "FACT",
                 "GCTS",
                 "KAUS", "KBOS", "KBUR", "KHND", "KJFK", "KLAX", "KSFO", "KLGA", "KSAN", "KSNA",
                 "LCLK", "LCPH",

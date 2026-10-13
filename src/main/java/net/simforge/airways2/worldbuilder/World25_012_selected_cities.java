@@ -25,6 +25,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:CA", "city-name:Toronto"},
                 new String[]{"country-code:CA", "city-name:Montreal"},
 
+                new String[]{"country-code:AR", "city-name:Buenos Aires"},
+
                 new String[]{"country-code:CH", "city-name:Zurich"},
                 new String[]{"country-code:CH", "city-name:Geneve"},
 
@@ -35,6 +37,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:CN", "city-name:Hong Kong Island"},
                 new String[]{"country-code:CN", "city-name:Zhengzhou"},
                 new String[]{"country-code:CN", "city-name:Shanghai"},
+                new String[]{"country-code:CN", "city-name:Beijing"},
 
                 new String[]{"country-code:CY", "city-name:Nicosia"},
                 new String[]{"country-code:CY", "city-name:Limassol"},
@@ -103,6 +106,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:JP", "city-name:Kawasaki"},
 
                 new String[]{"country-code:IN", "city-name:Mumbai"},
+
+                new String[]{"country-code:ID", "city-name:Jakarta"},
 
                 new String[]{"country-code:IT", "city-name:Venice"},
                 new String[]{"country-code:IT", "city-name:Palermo"},
@@ -190,8 +195,11 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:US", "city-name:Minneapolis-Saint Paul"},
                 new String[]{"country-code:US", "city-name:Nashville"},
                 new String[]{"country-code:US", "city-name:Honolulu"},
+                new String[]{"country-code:US", "city-name:Anchorage"},
 
-                new String[]{"country-code:VN", "city-name:Ho Chi Minh City"}
+                new String[]{"country-code:VN", "city-name:Ho Chi Minh City"},
+
+                new String[]{"country-code:ZA", "city-name:Cape Town"}
         ));
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
