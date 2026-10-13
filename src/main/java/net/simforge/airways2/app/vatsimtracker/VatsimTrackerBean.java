@@ -135,7 +135,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                                 offlinePositions.incrementAndGet();
                             }
                         } catch (final Exception e) {
-                            log.error("error on processing position of pilot #" + pilotNumber, e);
+                            log.error("error on processing position of pilot #{}", pilotNumber, e);
                             erroneousPositions.add(pilotNumber);
                         }
                     });
@@ -154,7 +154,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
                                         trackedPilots.put(pilotNumber, pc);
                                         newPilots.incrementAndGet();
                                     } catch (final Exception e) {
-                                        log.error("error on processing position of pilot #" + pilotNumber, e);
+                                        log.error("error on processing position of pilot #{}", pilotNumber, e);
                                         erroneousPositions.add(pilotNumber);
                                     }
                                 }

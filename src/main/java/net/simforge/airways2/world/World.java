@@ -315,7 +315,7 @@ public class World {
         try (Timing.Timer ignored = Timing.label("World.processors - " + name)) {
             call.call();
         } catch (Exception e) {
-            log.error("error during world processor " + name, e);
+            log.error("error during world processor {}", name, e);
         }
     }
 

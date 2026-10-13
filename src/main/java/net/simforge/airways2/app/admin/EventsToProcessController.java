@@ -33,7 +33,7 @@ public class EventsToProcessController {
 
     @Data
     @AllArgsConstructor
-    private static class EventDto {
+    public static class EventDto {
         private int id;
         private String status;
         private String type;

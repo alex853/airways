@@ -81,7 +81,7 @@ public class HealthController {
 
     @Data
     @AllArgsConstructor
-    private static class StatusDto {
+    public static class StatusDto {
         private final String status;
         private final String worldTime;
         private final String lastProcessedVatsimReport;

@@ -454,7 +454,7 @@ public class SimTracker {
         }
     }
 
-    private interface Check {
+    public interface Check {
         String name();
         boolean doCheck();
     }

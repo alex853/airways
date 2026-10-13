@@ -97,7 +97,7 @@ public class VatsimTrackerController {
         try {
             return storage.loadPositions(r);
         } catch (IOException e) {
-            log.error("unable to load positions for report '" + r + "'", e);
+            log.error("unable to load positions for report '{}'", r, e);
             throw new RuntimeException(e);
         }
     }
@@ -129,7 +129,7 @@ public class VatsimTrackerController {
 
     @Data
     @AllArgsConstructor
-    private static class PilotDto {
+    public static class PilotDto {
         private int pilotNumber;
         private String flightStage;
         private String regNo;
@@ -152,7 +152,7 @@ public class VatsimTrackerController {
 
     @Data
     @AllArgsConstructor
-    private static class PositionDto {
+    public static class PositionDto {
         private String dt; // report
         private String st; // status - offline, on ground, in airport, flying
         private float lat;

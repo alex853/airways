@@ -82,7 +82,7 @@ public class ManualDispatchController {
 
     @Data
     @AllArgsConstructor
-    private static class AircraftDto {
+    public static class AircraftDto {
         private int id;
         private String type;
         private String regNo;
@@ -91,7 +91,7 @@ public class ManualDispatchController {
 
     @Data
     @AllArgsConstructor
-    private static class DispatchFlightResponseDto {
+    public static class DispatchFlightResponseDto {
         private int flightId;
     }
 }
