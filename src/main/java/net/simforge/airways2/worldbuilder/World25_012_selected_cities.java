@@ -73,6 +73,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Malaga"},
                 new String[]{"country-code:ES", "city-name:Alicante"},
 
+                new String[]{"country-code:ET", "city-name:Addis Ababa"},
+
                 new String[]{"country-code:FI", "city-name:Helsinki"},
                 new String[]{"country-code:FI", "city-name:Kuusamo"},
 
