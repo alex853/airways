@@ -423,9 +423,12 @@ public class AdminController {
     }
 
     @GetMapping(value = "/journey/delete-invalid", produces = "text/plain")
-    public String deleteInvalidJourneys() {
+    public String deleteInvalidJourneys(@RequestParam(name = "dryRun", defaultValue = "false") boolean dryRun) {
         return worldBean.modifySync(world -> {
-            String result = "";
+            final String deletedLabel = dryRun ? "  would be deleted  " : "  deleted . . . . . ";
+            final String updatedLabel = dryRun ? "  would be updated  " : "  updated . . . . . ";
+
+            String result = dryRun ? "DRY RUN - nothing is changed\n\n" : "";
 
 
 
@@ -438,10 +441,14 @@ public class AdminController {
 
             int toProcess = Math.min(waitingForBoardingWithBrokenTransportFlights.size(), 100);
             for (int i = 0; i < toProcess; i++) {
-                world.journeys().deleteById(waitingForBoardingWithBrokenTransportFlights.get(i).getId());
+                final Journeys.Journey journey = waitingForBoardingWithBrokenTransportFlights.get(i);
+                logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForBoarding with broken transport flight");
+                if (!dryRun) {
+                    world.journeys().deleteById(journey.getId());
+                }
             }
 
-            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + deletedLabel + toProcess + "\n";
             result = result + "\n";
 
 
@@ -464,10 +471,14 @@ public class AdminController {
 
             toProcess = Math.min(waitingForBoardingWithTransportFlightsInInappropriateStatus.size(), 100);
             for (int i = 0; i < toProcess; i++) {
-                world.journeys().deleteById(waitingForBoardingWithTransportFlightsInInappropriateStatus.get(i).getId());
+                final Journeys.Journey journey = waitingForBoardingWithTransportFlightsInInappropriateStatus.get(i);
+                logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForBoarding with transport flight in inappropriate status");
+                if (!dryRun) {
+                    world.journeys().deleteById(journey.getId());
+                }
             }
 
-            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + deletedLabel + toProcess + "\n";
             result = result + "\n";
 
 
@@ -481,10 +492,14 @@ public class AdminController {
 
             toProcess = Math.min(waitingForCheckinWithBrokenTransportFlights.size(), 100);
             for (int i = 0; i < toProcess; i++) {
-                world.journeys().deleteById(waitingForCheckinWithBrokenTransportFlights.get(i).getId());
+                final Journeys.Journey journey = waitingForCheckinWithBrokenTransportFlights.get(i);
+                logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForCheckin with broken transport flight");
+                if (!dryRun) {
+                    world.journeys().deleteById(journey.getId());
+                }
             }
 
-            result = result + "  deleted . . . . . " + toProcess + "\n";
+            result = result + deletedLabel + toProcess + "\n";
             result = result + "\n";
 
 
@@ -497,17 +512,76 @@ public class AdminController {
 
             toProcess = Math.min(lookingForTicketsWithoutHeartbeat.size(), 100);
             for (int i = 0; i < toProcess; i++) {
-                lookingForTicketsWithoutHeartbeat.get(i).setHeartbeatTime(world.getWorldTime());
+                final Journeys.Journey journey = lookingForTicketsWithoutHeartbeat.get(i);
+                logInvalidJourneyChange(dryRun, journey, "set heartbeat time to now", "LookingForTickets without heartbeat");
+                if (!dryRun) {
+                    journey.setHeartbeatTime(world.getWorldTime());
+                }
             }
 
-            result = result + "  updated . . . . . " + toProcess + "\n";
+            result = result + updatedLabel + toProcess + "\n";
             result = result + "\n";
 
 
-            // todo ak1 check terminal states without heartbeat
+
+            // terminal statuses are cleaned up by heartbeat processing, so without heartbeat they would stay forever
+            List<Journeys.Journey> terminalStatusWithoutHeartbeat = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.Finished
+                            || j.getStatus() == Journeys.Status.CouldNotFindTickets)
+                    .toList();
+            result = result + "Terminal statuses (Finished, CouldNotFindTickets) without heartbeat:\n";
+            result = result + "  found . . . . . . " + terminalStatusWithoutHeartbeat.size() + "\n";
+
+            toProcess = Math.min(terminalStatusWithoutHeartbeat.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                final Journeys.Journey journey = terminalStatusWithoutHeartbeat.get(i);
+                logInvalidJourneyChange(dryRun, journey, "delete", "terminal status without heartbeat");
+                if (!dryRun) {
+                    world.journeys().deleteById(journey.getId());
+                }
+            }
+
+            result = result + deletedLabel + toProcess + "\n";
+            result = result + "\n";
+
+
+
+            // TooLateToBoard is not terminal, it gets back to looking for tickets by heartbeat processing
+            List<Journeys.Journey> tooLateToBoardWithoutHeartbeat = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.TooLateToBoard)
+                    .toList();
+            result = result + "TooLateToBoard without heartbeat:\n";
+            result = result + "  found . . . . . . " + tooLateToBoardWithoutHeartbeat.size() + "\n";
+
+            toProcess = Math.min(tooLateToBoardWithoutHeartbeat.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                final Journeys.Journey journey = tooLateToBoardWithoutHeartbeat.get(i);
+                logInvalidJourneyChange(dryRun, journey, "set heartbeat time to now", "TooLateToBoard without heartbeat");
+                if (!dryRun) {
+                    journey.setHeartbeatTime(world.getWorldTime());
+                }
+            }
+
+            result = result + updatedLabel + toProcess + "\n";
+            result = result + "\n";
 
             return result;
         });
+    }
+
+    private void logInvalidJourneyChange(final boolean dryRun, final Journeys.Journey journey, final String action, final String reason) {
+        log.info("delete-invalid{} - j/y #{} - {} - {}, status {}, from city #{}, to city #{}, location city #{}, t/f1 #{}, t/f2 #{}, heartbeat {}",
+                dryRun ? " (dry run)" : "",
+                journey.getId(),
+                action,
+                reason,
+                journey.getStatus(),
+                journey.getFromCityId(),
+                journey.getToCityId(),
+                journey.getLocationCityId(),
+                journey.getTransportFlight1Id(),
+                journey.getTransportFlight2Id(),
+                Time.toLdtOrNull(journey.getHeartbeatTime()));
     }
 
     @GetMapping("/fix-129")
