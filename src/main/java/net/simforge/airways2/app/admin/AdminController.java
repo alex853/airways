@@ -423,7 +423,7 @@ public class AdminController {
     }
 
     @GetMapping(value = "/journey/delete-invalid", produces = "text/plain")
-    public String deleteInvalidJourneys(@RequestParam(name = "dryRun", defaultValue = "false") boolean dryRun) {
+    public String deleteInvalidJourneys(@RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
         return worldBean.modifySync(world -> {
             final String deletedLabel = dryRun ? "  would be deleted  " : "  deleted . . . . . ";
             final String updatedLabel = dryRun ? "  would be updated  " : "  updated . . . . . ";
@@ -780,9 +780,14 @@ public class AdminController {
     @GetMapping(value = "/airport/create-links", produces = "text/plain")
     public String createAirport2CityLinks(@RequestParam("icao") String icao,
                                           @RequestParam(name = "maxDistance", defaultValue = "50") int maxDistance,
-                                          @RequestParam(name = "dryRun", defaultValue = "false") boolean dryRun) {
+                                          @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
         return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
+
+            if (dryRun) {
+                results.add("DRY RUN - nothing is changed");
+                results.add("");
+            }
 
             final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
             world.cities().all()

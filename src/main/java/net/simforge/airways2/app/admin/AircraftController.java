@@ -66,6 +66,11 @@ public class AircraftController {
         return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
 
+            if (dryRun) {
+                results.add("DRY RUN - nothing is changed");
+                results.add("");
+            }
+
             AtomicInteger updated = new AtomicInteger(0);
             world.aircrafts().all()
                     .filter(a -> a.getAircraftOperatorId() == World25.ShadowJetOperatorId

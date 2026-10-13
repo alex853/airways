@@ -39,7 +39,8 @@
    `size >= 5000` в `icaodata.csv` в радиусе 50 nm от города (`ImportMajorAirportsInVicinityOfCities`).
    Мелкие аэропорты, добавленные через `World25_009_create_some_airports` (`ImportSelectedAirports`),
    создаются **без** airport2city-линков — их надо привязывать вручную:
-   `/admin/airport/create-links?icao=...&dryRun=true`.
+   `/admin/airport/create-links?icao=...` (по умолчанию `dryRun=true`, ничего не меняет; для реального создания
+   линков нужно передать `dryRun=false`).
 7. Проверить результат (`/geo/cities`, `/admin/airport/missing-cities`, `/admin/airport/create-links?dryRun=true`).
 
 Для города, который **уже есть в мире**, импорт население не обновит — нужно выставить его вручную
