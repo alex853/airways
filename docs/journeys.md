@@ -18,11 +18,22 @@
   `isToCityReached` (`locationCityId == toCityId`). Если не достигнут (диверсия, другой аэропорт, аэропорт без
   городов), journey возвращается в `LookingForTickets` (`attemptCounter = 0`, heartbeat 1–3 суток) и продолжает
   путь к `toCity` (`JourneyControl.toCityNotReached`).
-- **`TooLateToBoard` не терминальный.** В момент события: статус `TooLateToBoard`, heartbeat = now + 10 мин…1 час,
+- **`TooLateToBoard` не терминальный.** В момент события: статус `TooLateToBoard`, heartbeat = now + 1…5 мин,
   локация возвращается в город у аэропорта вылета, success rate потока −0.01. По наступлению heartbeat
   (`restartAfterTooLateToBoard`): `transportFlight1Id = 0`, билеты tf2 возвращаются, journey уходит в
   `LookingForTickets` (общий хелпер `scheduleLookingForTickets`).
-- Терминальные статусы (удаляются `cleanup` через сутки): `Finished`, `CouldNotFindTickets`.
+- Терминальные статусы (удаляются `cleanup` через сутки): `Finished`, `CouldNotFindTickets`, **`Orphaned`**.
+- **`Orphaned`** — рейс (tf) журни неизвестен (удалён `FlightCleanup`), с ней ничего сделать нельзя
+  (`JourneyControl.orphaned`: возвращает билеты tf2, если они ещё есть, чистится через сутки).
+- **Ожидающие статусы живут по heartbeat раз в минуту** (`JourneyProcessor`):
+  - `WaitingForCheckIn` — tf нет → `Orphaned`;
+  - `WaitingForBoarding` — tf нет → `Orphaned`; посадка закончилась (статус tf не `CheckIn`/`WaitingForBoarding`/`Boarding`)
+    → `tooLateToBoard`; иначе проверка через минуту;
+  - `WaitingForDeboarding` — tf нет → `Orphaned`; tf в `Deboarding` или уже `Finished` → `deboard` («прибыли», дальше обычный
+    воркфлоу); иначе проверка через минуту.
+- `TooLateToBoard`: heartbeat 1–5 минут (чтобы tf ещё существовал, см. `FlightCleanup`).
+- `FlightCleanup` при удалении tf до удаления разбирает журни: ссылающиеся как `t/f1` → `resetJourneyForcefully`
+  (в `LookingForTickets`, если миссия ещё есть, иначе `Orphaned`), как `t/f2` → ссылка обнуляется.
 - `/admin/journey/delete-invalid?dryRun=true` — чистка невалидных journeys (в т.ч. терминальные без heartbeat,
   `TooLateToBoard` без heartbeat получает heartbeat = now).
 

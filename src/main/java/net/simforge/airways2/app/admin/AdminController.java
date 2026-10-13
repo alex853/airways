@@ -14,6 +14,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.world.processors.CityFlowHelper;
+import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -463,18 +464,28 @@ public class AdminController {
                         if (!present) {
                             return false;
                         }
-                        return flight.get().getStatus() != TransportFlights.Status.CheckIn
-                                && flight.get().getStatus() != TransportFlights.Status.Boarding
+                        return !TransportFlightHelper.flightStatusAllowsToBoard(flight.get().getStatus())
                                 && flight.get().getStatus() != TransportFlights.Status.WaitingForDeparture;
                     })
                     .toList();
             result = result + "WaitingForBoarding with transport flights in inappropriate status:\n";
             result = result + "  found . . . . . . " + waitingForBoardingWithTransportFlightsInInappropriateStatus.size() + "\n";
 
+            // the breakdown by status of the transport flight helps to understand where such journeys come from
+            final Map<TransportFlights.Status, Integer> inappropriateByTfStatus = new TreeMap<>();
+            for (final Journeys.Journey journey : waitingForBoardingWithTransportFlightsInInappropriateStatus) {
+                final TransportFlights.Status tfStatus = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow().getStatus();
+                inappropriateByTfStatus.merge(tfStatus, 1, Integer::sum);
+            }
+            for (final Map.Entry<TransportFlights.Status, Integer> entry : inappropriateByTfStatus.entrySet()) {
+                result = result + "  by t/f status " + entry.getKey() + " . . " + entry.getValue() + "\n";
+            }
+
             toProcess = Math.min(waitingForBoardingWithTransportFlightsInInappropriateStatus.size(), 100);
             for (int i = 0; i < toProcess; i++) {
                 final Journeys.Journey journey = waitingForBoardingWithTransportFlightsInInappropriateStatus.get(i);
-                logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForBoarding with transport flight in inappropriate status");
+                final TransportFlights.Status tfStatus = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow().getStatus();
+                logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForBoarding with transport flight in inappropriate status " + tfStatus);
                 if (!dryRun) {
                     world.journeys().deleteById(journey.getId());
                 }

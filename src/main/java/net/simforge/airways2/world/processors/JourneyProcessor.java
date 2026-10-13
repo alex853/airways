@@ -13,10 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 public class JourneyProcessor {
-    @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(JourneyProcessor.class);
 
     public static void process(final World world) {
@@ -36,7 +33,7 @@ public class JourneyProcessor {
             case ItinerariesDone -> itinerariesDone(world, journey);
             case SpendingTheirTime -> switchToReturnTrip(world, journey);
             case TooLateToBoard -> world.journeyControl().restartAfterTooLateToBoard(journey);
-            case Finished, CouldNotFindTickets -> cleanup(world, journey);
+            case Finished, CouldNotFindTickets, Orphaned -> cleanup(world, journey);
         }
     }
 
@@ -150,14 +147,16 @@ public class JourneyProcessor {
         return fromAirportIds.contains(tfm.fm.getDepartureAirportId()) && toAirportIds.contains(tfm.fm.getDestinationAirportId());
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForCheckin(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak2 'cancel journey safely'
+            world.journeyControl().orphaned(journey);
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
-            checkArgument(mission.isPresent()); // todo ak2 what if mission is empty - 'cancel journey safely'
+            if (mission.isEmpty()) {
+                world.journeyControl().orphaned(journey);
+                return;
+            }
             journey.setHeartbeatTime(Math.max(
                     TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak1 consider actual times here
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
@@ -168,26 +167,32 @@ public class JourneyProcessor {
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForBoarding(final World world, final Journeys.Journey journey) {
-        // most of the logic is in pax manager
+        // most of the logic is in pax manager, here the journey only watches that the boarding is not over yet
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak2 'cancel journey safely'
+            world.journeyControl().orphaned(journey);
         } else if (!TransportFlightHelper.flightStatusAllowsToBoard(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
             world.journeyControl().tooLateToBoard(journey);
+        } else {
+            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
         }
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            // todo ak2 'cancel journey safely'
+            world.journeyControl().orphaned(journey);
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
             world.journeyControl().deboard(journey);
+        } else if (flight.get().getStatus() == TransportFlights.Status.Finished) {
+            // the deboarding of the flight has been finished before the random time of the journey came, so it deboards anyway
+            log.info("j/y #{} - t/f #{} is already finished, deboarding", journey.getId(), flight.get().getId());
+            world.journeyControl().deboard(journey);
         } else {
-            // todo ak1 ???
+            // not expected status, let's look again in a minute
+            log.warn("j/y #{} - t/f #{} is in {} status, waiting for deboarding", journey.getId(), flight.get().getId(), flight.get().getStatus());
+            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
         }
     }
 

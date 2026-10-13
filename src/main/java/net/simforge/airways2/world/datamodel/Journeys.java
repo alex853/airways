@@ -296,7 +296,8 @@ public class Journeys {
         // persons CouldNotFindPersons(11),
         CouldNotFindTickets(12),
         TooLateToBoard(13),
-        // not sure we need it Terminated(14),
+        // terminal, the transport flight of the journey is not known anymore, the journey is cleaned up after a day
+        Orphaned(14),
         SpendingTheirTime(15)
         ;
 

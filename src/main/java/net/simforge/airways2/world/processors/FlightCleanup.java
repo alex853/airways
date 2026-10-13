@@ -85,16 +85,28 @@ public class FlightCleanup {
         final List<Journeys.Journey> journeys = world.journeys()
                 .filter(world.journeys().byAnyTransportFlightId(tf1.getId()))
                 .toList();
-        if (!journeys.isEmpty()) {
-            final List<String> viaTf1 = journeys.stream()
-                    .filter(j -> j.getTransportFlight1Id() == tf1.getId())
-                    .map(j -> "j/y #" + j.getId())
-                    .toList();
-            final List<String> viaTf2 = journeys.stream()
-                    .filter(j -> j.getTransportFlight2Id() == tf1.getId())
-                    .map(j -> "j/y #" + j.getId())
-                    .toList();
-            log.warn("flight cleanup - t/f #{} - related journeys will stay orphaned, via t/f1 {}, via t/f2 {}", tf1.getId(), viaTf1, viaTf2);
+        final boolean missionExists = world.flightMissions().byId(tf1.getFlightMissionId()).isPresent();
+        for (final Journeys.Journey journey : journeys) {
+            final Journeys.Status status = journey.getStatus();
+            if (status == Journeys.Status.Orphaned
+                    || status == Journeys.Status.Finished
+                    || status == Journeys.Status.CouldNotFindTickets) {
+                continue;
+            }
+
+            if (journey.getTransportFlight1Id() == tf1.getId()) {
+                // the journey is reset while the transport flight and its mission still exist, they are required for that
+                if (missionExists) {
+                    log.warn("flight cleanup - t/f #{} - j/y #{} in {} status is reset to looking for tickets", tf1.getId(), journey.getId(), status);
+                    world.journeyControl().resetJourneyForcefully(journey);
+                } else {
+                    log.warn("flight cleanup - t/f #{} - j/y #{} in {} status, mission not found, orphaned", tf1.getId(), journey.getId(), status);
+                    world.journeyControl().orphaned(journey);
+                }
+            } else {
+                log.warn("flight cleanup - t/f #{} - j/y #{} in {} status, t/f2 reference is cleared", tf1.getId(), journey.getId(), status);
+                journey.setTransportFlight2Id(0);
+            }
         }
 
         world.transportFlights().deleteById(tf1.getId());

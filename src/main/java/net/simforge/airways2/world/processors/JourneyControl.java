@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -229,16 +230,45 @@ public class JourneyControl {
         Journeys.Status oldStatus = journey.getStatus();
         int oldHeartbeatTime = journey.getHeartbeatTime();
 
-        TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        final Optional<TransportFlights.Flight> transportFlight1O = world.transportFlights().byId(journey.getTransportFlight1Id());
+        if (transportFlight1O.isEmpty()) {
+            orphaned(journey);
+            return;
+        }
+        final TransportFlights.Flight transportFlight1 = transportFlight1O.get();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
 
         // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
+        // the short delay gives a good chance that the transport flight still exists, see FlightCleanup
         journey.setStatus(Journeys.Status.TooLateToBoard);
-        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(10 * Time.ONE_MINUTE, Time.ONE_HOUR));
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_MINUTE, 5 * Time.ONE_MINUTE));
 
         moveBackToCityNextToDepartureAirportOrFromCity(journey, transportFlight1);
 
         log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, restart scheduled at {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime), Time.toLdt(journey.getHeartbeatTime()));
+    }
+
+    // The transport flight or the flight mission of the journey is not known, so nothing can be done with the journey,
+    // it is cleaned up after a day
+    public void orphaned(final Journeys.Journey journey) {
+        checkNotNull(journey);
+
+        final Journeys.Status oldStatus = journey.getStatus();
+
+        final int transportFlightId = journey.getTransportFlight1Id();
+        final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byId(transportFlightId);
+        final int flightMissionId = transportFlight.map(TransportFlights.Flight::getFlightMissionId).orElse(0);
+        final boolean flightMissionExists = flightMissionId > 0 && world.flightMissions().byId(flightMissionId).isPresent();
+
+        releaseTransportFlight2Tickets(journey);
+
+        journey.setStatus(Journeys.Status.Orphaned);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+
+        log.info("j/y #{} - orphaned, was in {} status, t/f #{} {}, f/m #{} {}, cleanup scheduled",
+                journey.getId(), oldStatus,
+                transportFlightId, transportFlight.isPresent() ? "exists" : "not found",
+                flightMissionId, flightMissionExists ? "exists" : "not found");
     }
 
     public void restartAfterTooLateToBoard(final Journeys.Journey journey) {
@@ -319,10 +349,12 @@ public class JourneyControl {
             return;
         }
 
-        world.transportFlightControl().releaseFlightTickets(
-                world.transportFlights().byId(journey.getTransportFlight2Id()).orElseThrow(),
-                journey.getGroupSize(),
-                journey.getBookedCabinService());
+        // the transport flight could be removed already, then there is nothing to release
+        world.transportFlights().byId(journey.getTransportFlight2Id())
+                .ifPresent(transportFlight2 -> world.transportFlightControl().releaseFlightTickets(
+                        transportFlight2,
+                        journey.getGroupSize(),
+                        journey.getBookedCabinService()));
         journey.setTransportFlight2Id(0);
     }
 
