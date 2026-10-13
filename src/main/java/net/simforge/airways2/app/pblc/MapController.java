@@ -119,6 +119,7 @@ public class MapController {
 
     private static List<AirportFlightDto> buildAirportFlights(final World world, final Airports.Airport airport) {
         final int now = world.getWorldTime();
+        final AirportRefs refs = new AirportRefs(world);
 
         final List<AirportFlightDto> active = new ArrayList<>();
         final List<AirportFlightDto> upcoming = new ArrayList<>();
@@ -134,10 +135,10 @@ public class MapController {
                         FlightMissions.Status.Finished))
                 .forEach(fm -> {
                     if (fm.getDepartureAirportId() == airport.getId()) {
-                        classifyAirportFlight(world, fm, "out", now, active, upcoming, recentByDirection);
+                        classifyAirportFlight(world, refs, fm, "out", now, active, upcoming, recentByDirection);
                     }
                     if (fm.getDestinationAirportId() == airport.getId()) {
-                        classifyAirportFlight(world, fm, "in", now, active, upcoming, recentByDirection);
+                        classifyAirportFlight(world, refs, fm, "in", now, active, upcoming, recentByDirection);
                     }
                 });
 
@@ -151,6 +152,7 @@ public class MapController {
     }
 
     private static void classifyAirportFlight(final World world,
+                                              final AirportRefs refs,
                                               final FlightMissions.Mission fm,
                                               final String direction,
                                               final int now,
@@ -163,10 +165,10 @@ public class MapController {
         final int actualTime = outbound ? fm.getActualDepartureWorldTime() : fm.getActualArrivalWorldTime();
 
         switch (fm.getStatus()) {
-            case Departure, Flying, Arrival -> active.add(toAirportFlight(world, fm, direction, "Flying"));
+            case Departure, Flying, Arrival -> active.add(toAirportFlight(world, refs, fm, direction, "Flying"));
             case Dispatched, Preflight -> {
                 if (plannedTime <= now + AIRPORT_UPCOMING_WINDOW) {
-                    upcoming.add(toAirportFlight(world, fm, direction, "Scheduled"));
+                    upcoming.add(toAirportFlight(world, refs, fm, direction, "Scheduled"));
                 }
             }
             case Postflight, Finished -> {
@@ -174,7 +176,7 @@ public class MapController {
                 if (time >= now - AIRPORT_RECENT_WINDOW) {
                     recentByDirection
                             .computeIfAbsent(direction, d -> new ArrayList<>())
-                            .add(new FlightRow(time, toAirportFlight(world, fm, direction, "Arrived")));
+                            .add(new FlightRow(time, toAirportFlight(world, refs, fm, direction, "Arrived")));
                 }
             }
             default -> {
@@ -183,6 +185,7 @@ public class MapController {
     }
 
     private static AirportFlightDto toAirportFlight(final World world,
+                                                    final AirportRefs refs,
                                                     final FlightMissions.Mission fm,
                                                     final String direction,
                                                     final String status) {
@@ -201,7 +204,7 @@ public class MapController {
                         Id.encode(aircraft.getId()),
                         aircraft.getRegNo(),
                         world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao()),
-                world.airports().byId(otherAirportId).orElseThrow().getIcao(),
+                refs.of(world.airports().byId(otherAirportId).orElseThrow()),
                 ldtOrNull(fm.getPlannedDepartureWorldTime()),
                 ldtOrNull(fm.getActualDepartureWorldTime()),
                 ldtOrNull(fm.getPlannedArrivalWorldTime()),
@@ -214,10 +217,12 @@ public class MapController {
     }
 
     private static AirportInfoDto buildAirportInfo(final World world, final Airports.Airport airport, final int topConnectionsLimit) {
-        final List<String> connectedCities = world.airport2city().allByAirportId(airport.getId())
+        final AirportRefs refs = new AirportRefs(world);
+
+        final List<CityRefDto> cities = world.airport2city().allByAirportId(airport.getId())
                 .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
                 .sorted(Comparator.comparing(Cities.City::getPopulation).reversed())
-                .map(Cities.City::getName)
+                .map(c -> new CityRefDto(Id.encode(c.getId()), c.getName(), c.getPopulation()))
                 .toList();
 
         final Map<String, IcaoToFlights> outboundConnections = world.airport2airportDailyFlightStats()
@@ -236,9 +241,13 @@ public class MapController {
                 Map.Entry::getValue,
                 IcaoToFlights::merge
         ));
-        final List<IcaoToFlights> topConnections = totalConnections.values().stream()
+        final List<TopConnectionDto> topConnections = totalConnections.values().stream()
                 .sorted(Comparator.comparingInt(IcaoToFlights::getFlights).reversed())
                 .limit(topConnectionsLimit)
+                .map(c -> {
+                    final AirportRefDto ref = refs.of(world.airports().byIcao(c.getIcao()).orElseThrow());
+                    return new TopConnectionDto(ref.getIcao(), ref.getName(), ref.getCountry(), c.getFlights());
+                })
                 .toList();
 
         final Collection<FlightMissions.Mission> aliveFlights = world.flightMissions().filter(
@@ -264,8 +273,14 @@ public class MapController {
                 .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
                 .count();
 
+        final AirportRefDto self = refs.of(airport);
         return new AirportInfoDto(
-                connectedCities,
+                self.getIcao(),
+                self.getName(),
+                self.getCountry(),
+                airport.getLatitude(),
+                airport.getLongitude(),
+                cities,
                 topConnections,
                 flightsOutbound,
                 flightsInbound,
@@ -302,8 +317,15 @@ public class MapController {
     @Data
     @AllArgsConstructor
     public static class AirportInfoDto {
-        private List<String> connectedCities;
-        private List<IcaoToFlights> topConnections;
+        private String icao;
+        private String name;
+        /** country of the most populated city the airport is linked to, null if the airport has no city */
+        private String country;
+        private float lat;
+        private float lon;
+        /** the most populated first */
+        private List<CityRefDto> cities;
+        private List<TopConnectionDto> topConnections;
         private int flightsOutbound;
         private int flightsInbound;
         private int aircraftParked;
@@ -329,7 +351,7 @@ public class MapController {
         private String status;
         private AircraftRefDto aircraft;
         /** the other end of the flight - destination for out, origin for in */
-        private String airport;
+        private AirportRefDto airport;
         private String std;
         private String atd;
         private String sta;
@@ -367,7 +389,58 @@ public class MapController {
 
     @Data
     @AllArgsConstructor
-    public static class IcaoToFlights {
+    public static class CityRefDto {
+        private String id;
+        private String name;
+        private int population;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AirportRefDto {
+        private String icao;
+        private String name;
+        private String country;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TopConnectionDto {
+        private String icao;
+        private String name;
+        private String country;
+        /** weekly flights, both directions */
+        private int flights;
+    }
+
+    /**
+     * Builds airport references with country names, the country of an airport is calculated once per request.
+     */
+    private static class AirportRefs {
+        private final World world;
+        private final Map<Integer, AirportRefDto> cache = new HashMap<>();
+
+        AirportRefs(final World world) {
+            this.world = world;
+        }
+
+        AirportRefDto of(final Airports.Airport airport) {
+            return cache.computeIfAbsent(airport.getId(), id -> new AirportRefDto(
+                    airport.getIcao(),
+                    airport.getName(),
+                    // country of the most populated city the airport is linked to
+                    world.airport2city().allByAirportId(airport.getId())
+                            .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
+                            .max(Comparator.comparingInt(Cities.City::getPopulation))
+                            .flatMap(c -> world.countries().byId(c.getCountryId()))
+                            .map(Countries.Country::getName)
+                            .orElse(null)));
+        }
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class IcaoToFlights {
         private String icao;
         private int flights;
 
