@@ -203,6 +203,10 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Бизнес-авиация Los Angeles:** `BusinessAviationTerminal` созданы в KBUR, KSNA, KLGB, KLAX (по подтверждению
+  со спутника). **KVNY Van Nuys** (size 3665, 7 nm от центра, главный бизнес-аэропорт региона) добавлен в
+  `World25_009`, линк `create-links?icao=KVNY` (дефолтный радиус) и терминал вручную. KONT, KCNO — без терминала;
+  военные KPMD, KSLI, KNTD, KNZJ — в списке военных.
 - **Melbourne (AU, аэропорт YMML) — из списка отсутствующих по VATSIM (появился после создания YSSY):** CSV
   3 666 000 → 5 266 000 (Greater Melbourne ~5,3 млн), `del` не нужен (пригороды <100k). Geelong (161 500, 37 nm),
   Ballarat, Bendigo не трогаем. Добавлен в `World25_012_selected_cities`. YMML (size 5945) и YMMB Moorabbin (size
