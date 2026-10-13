@@ -1,7 +1,7 @@
 package net.simforge.airways2.app.admin;
 
 import net.simforge.airways2.app.beans.WorldRunnerBean;
-import net.simforge.airways2.app.dto.AircraftFullDto;
+import net.simforge.airways2.app.dto.AircraftInfoDto;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -29,12 +29,12 @@ public class AircraftController {
     private VatsimTrackerBean vatsimTracker;
 
     @GetMapping("/all")
-    public List<AircraftFullDto> getAll(@RequestParam(name = "offset", required = false) final Integer offset,
+    public List<AircraftInfoDto> getAll(@RequestParam(name = "offset", required = false) final Integer offset,
                                         @RequestParam(name = "limit", required = false) final Integer limit) {
         return worldBean.read(world -> world.aircrafts().all()
                 .skip(offset != null ? offset : 0)
                 .limit(limit != null ? limit : Long.MAX_VALUE)
-                .map(a -> AircraftFullDto.from(world, a, false))
+                .map(a -> AircraftInfoDto.from(world, a, false))
                 .toList());
     }
 

@@ -14,7 +14,7 @@ import java.util.Optional;
 
 @Data
 @AllArgsConstructor
-public class AircraftFullDto {
+public class AircraftInfoDto {
     private String id;
     private String acType;
     private String acReg;
@@ -38,12 +38,12 @@ public class AircraftFullDto {
     private String lU;
     private int pax;
 
-    public static AircraftFullDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
+    public static AircraftInfoDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
         Optional<FlightTimeline> timeline = fm.map(FlightMissionToTimeline::byMission);
         Optional< TransportFlights.Flight> tf = fm.flatMap(f -> world.transportFlights().byFlightMissionId(f.getId()));
 
-        return new AircraftFullDto(
+        return new AircraftInfoDto(
                 Id.encode(a.getId(), encodeIds),
                 world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                 a.getRegNo(),
