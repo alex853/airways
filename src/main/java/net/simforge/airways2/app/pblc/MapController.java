@@ -102,6 +102,9 @@ public class MapController {
                 final List<AirportFacilityDto> facilities = world.airportFacilities().by(airport)
                         .map(f -> new AirportFacilityDto(
                                 Id.encode(f.getAircraftOperatorId()),
+                                world.aircraftOperators().byId(f.getAircraftOperatorId())
+                                        .map(AircraftOperators.AircraftOperator::getName)
+                                        .orElse(null),
                                 f.getType()))
                         .toList();
 
@@ -358,6 +361,7 @@ public class MapController {
     @AllArgsConstructor
     public static class AirportFacilityDto {
         private String operatorId;
+        private String operatorName;
         private AirportFacilities.Type type;
     }
 
