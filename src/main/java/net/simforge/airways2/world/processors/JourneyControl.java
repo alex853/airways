@@ -143,7 +143,7 @@ public class JourneyControl {
 
         shiftToNextTransportFlight(journey);
 
-        moveToCityNextToLanding(journey, transportFlight1);
+        moveToCityNextToLandingAirportOrToCity(journey, transportFlight1);
 
         if (noMoreTransportFlights(journey)) {
             journey.setStatus(Journeys.Status.ItinerariesDone);
@@ -226,20 +226,35 @@ public class JourneyControl {
                         Journeys.Status.WaitingForBoarding)
                 .contains(journey.getStatus()));
 
-        releaseTransportFlight2Tickets(journey);
-
         Journeys.Status oldStatus = journey.getStatus();
         int oldHeartbeatTime = journey.getHeartbeatTime();
 
         TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
-        
+
+        // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
         journey.setStatus(Journeys.Status.TooLateToBoard);
-        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(10 * Time.ONE_MINUTE, Time.ONE_HOUR));
 
-        moveBackToFromCity(journey, transportFlight1);
+        moveBackToCityNextToDepartureAirportOrFromCity(journey, transportFlight1);
 
-        log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, cleanup scheduled", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime));
+        log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, restart scheduled at {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime), Time.toLdt(journey.getHeartbeatTime()));
+    }
+
+    public void restartAfterTooLateToBoard(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.getStatus() == Journeys.Status.TooLateToBoard);
+
+        // the missed itinerary is dropped, no need to release its tickets, the flight is already boarding or departed
+        journey.setTransportFlight1Id(0);
+
+        releaseTransportFlight2Tickets(journey);
+
+        // location city is already set to the city next to the airport in tooLateToBoard
+
+        scheduleLookingForTickets(journey);
+
+        log.info("j/y #{} - too late to board, itineraries dropped, looking for tickets scheduled", journey.getId());
     }
 
     public void couldNotFindTickets(final Journeys.Journey journey) {
@@ -289,7 +304,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
-        moveBackToFromCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow());
+        moveBackToCityNextToDepartureAirportOrFromCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow());
 
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);
@@ -311,12 +326,12 @@ public class JourneyControl {
         journey.setTransportFlight2Id(0);
     }
 
-    private void moveBackToFromCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
+    private void moveBackToCityNextToDepartureAirportOrFromCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
         FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
         updateLocationCity(journey, journey.getFromCityId(), flightMission.getDepartureAirportId());
     }
 
-    private void moveToCityNextToLanding(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
+    private void moveToCityNextToLandingAirportOrToCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
         FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
         updateLocationCity(journey, journey.getToCityId(), flightMission.getActualLandingAirportId());
     }

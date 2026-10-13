@@ -35,7 +35,8 @@ public class JourneyProcessor {
             case JustArrived -> justArrived(world, journey);
             case ItinerariesDone -> itinerariesDone(world, journey);
             case SpendingTheirTime -> switchToReturnTrip(world, journey);
-            case Finished, CouldNotFindTickets, TooLateToBoard -> cleanup(world, journey);
+            case TooLateToBoard -> world.journeyControl().restartAfterTooLateToBoard(journey);
+            case Finished, CouldNotFindTickets -> cleanup(world, journey);
         }
     }
 
