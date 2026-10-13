@@ -255,8 +255,7 @@ public class MapController {
                 .filter(world.aircrafts().byLocationAirportId(airport.getId()))
                 .toList();
         final int aircraftParked = (int) aircraftLocatedAtAirport.stream()
-                .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
-                        && a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle)
+                .filter(a -> a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport)
                 .count();
         final int aircraftActive = (int) aircraftLocatedAtAirport.stream()
                 .filter(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Active)
