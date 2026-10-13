@@ -203,6 +203,12 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Melbourne (AU, аэропорт YMML) — из списка отсутствующих по VATSIM (появился после создания YSSY):** CSV
+  3 666 000 → 5 266 000 (Greater Melbourne ~5,3 млн), `del` не нужен (пригороды <100k). Geelong (161 500, 37 nm),
+  Ballarat, Bendigo не трогаем. Добавлен в `World25_012_selected_cities`. YMML (size 5945) и YMMB Moorabbin (size
+  5432, GA) создаются и привязываются автоматически; **YMEN Essendon** (size 3506, основной бизнес-аэропорт
+  города) добавлен в `World25_009`, переименован `Melbourne Essendon`, линк `create-links?icao=YMEN` и
+  `BusinessAviationTerminal` вручную. YMAV Avalon не берём. Attraction не нужен.
 - **Delhi (IN, аэропорт VIDP) — из списка отсутствующих по VATSIM, «семя» Северной Индии:** CSV `Dilli` → `Delhi`
   (английское имя), 10 400 900 → 31 900 900 (Delhi NCR ~32 млн). `del`: Ni dilli (New Delhi), Noida, Faridabad,
   Ghaziabad (≤20 nm). Rohtak (34 nm), Mirat/Meerut (40 nm), Panipat (50 nm) остаются отдельными. Добавлен в

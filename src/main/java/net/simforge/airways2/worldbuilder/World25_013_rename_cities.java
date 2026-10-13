@@ -28,7 +28,8 @@ public class World25_013_rename_cities {
                 new String[]{"SAEZ", "Buenos Aires Ezeiza"},
                 new String[]{"RCTP", "Taipei Taoyuan"},
                 new String[]{"HAAB", "Addis Ababa Bole"},
-                new String[]{"VIDP", "Delhi Indira Gandhi"}
+                new String[]{"VIDP", "Delhi Indira Gandhi"},
+                new String[]{"YMEN", "Melbourne Essendon"}
         ));
     }
 }

@@ -41,6 +41,7 @@ public class World25_009_create_some_airports {
                 "SCEL",
                 "WMKK",
                 "WSSS",
+                "YMEN",
                 "ZHCC",
                 "ZSPD", "ZSSS"
         });

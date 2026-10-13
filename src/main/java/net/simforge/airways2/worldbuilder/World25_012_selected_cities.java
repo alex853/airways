@@ -15,6 +15,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AT", "city-name:Innsbruck"},
 
                 new String[]{"country-code:AU", "city-name:Sydney"},
+                new String[]{"country-code:AU", "city-name:Melbourne"},
 
                 new String[]{"country-code:BE", "city-name:Brussels"},
 
