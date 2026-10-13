@@ -186,6 +186,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:US", "city-name:Salt Lake City"},
                 new String[]{"country-code:US", "city-name:Minneapolis-Saint Paul"},
                 new String[]{"country-code:US", "city-name:Nashville"},
+                new String[]{"country-code:US", "city-name:Honolulu"},
 
                 new String[]{"country-code:VN", "city-name:Ho Chi Minh City"}
         ));

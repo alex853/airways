@@ -164,6 +164,12 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Honolulu (US, аэропорт PHNL) — из списка отсутствующих по VATSIM:** весь остров Oahu собран в один город
+  (остров небольшой, Honolulu County ~1,0 млн), CSV 382 800 → 1 012 800. В CSV других гавайских городов нет, `del`
+  не нужен. Добавлен в `World25_012_selected_cities`. PHNL (size 14 708) и PHJR Kalaeloa (size 5 643) создаются и
+  привязываются автоматически импортом `ImportMajorAirportsInVicinityOfCities`, ручной `create-links` не нужен.
+  Attraction Honolulu = 3. Остальные острова (Maui, Big Island, Kauai) не трогаем, при необходимости добавлять
+  строками в CSV.
 - **Bremen (DE, аэропорт EDDW) — из списка отсутствующих по VATSIM:** город уже был в мире (545 000, линк только к
   EDDV Hannover по радиусу 50 nm), поэтому нужен только аэропорт: EDDW (size 2736 < 5000, автоматически не
   линкуется) добавлен в `World25_009`, линк `create-links?icao=EDDW` с дефолтным радиусом (только Bremen, 2 nm;
