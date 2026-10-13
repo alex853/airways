@@ -81,9 +81,9 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:GR", "city-name:Athens"},
                 new String[]{"country-code:GR", "city-name:Zakynthos"},
-                new String[]{"country-code:GR", "city-name:Iraklion"},
-                new String[]{"country-code:GR", "city-name:Kerkira"},
-                new String[]{"country-code:GR", "city-name:Rodos"},
+                new String[]{"country-code:GR", "city-name:Heraklion"},
+                new String[]{"country-code:GR", "city-name:Corfu"},
+                new String[]{"country-code:GR", "city-name:Rhodes"},
                 new String[]{"country-code:GR", "city-name:Kos"},
                 new String[]{"country-code:GR", "city-name:Samos"},
                 new String[]{"country-code:GR", "city-name:Skiathos"},

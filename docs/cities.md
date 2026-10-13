@@ -169,6 +169,11 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
   Страны Australia в мире не было — создаётся импортом. Добавлен в `World25_012_selected_cities`; YSSY (size 8938 ≥5000)
   подтянется и залинкуется автоматически через `ImportMajorAirportsInVicinityOfCities`. Аэропорты YWOL (Wollongong)
   и YWLM (Newcastle/Williamtown), а также YSBK (Bankstown) в мир не добавляем.
+- **Переименование существующих городов в английские имена:** в мире города были созданы транслитерацией из CSV.
+  `Kerkira` → `Corfu`, `Iraklion` → `Heraklion`, `Rodos` → `Rhodes` (GR). Делается шагом
+  `World25_013_rename_cities` (`RenameCities`, идемпотентный), который в `Application.main` стоит **перед**
+  `World25_012_selected_cities`; иначе импорт по новым именам из CSV создал бы дубликаты. Имена в CSV и в
+  `World25_012` изменены. После отработки шага вызов `World25_013` вернуть в комментарий.
 - **Группа «курорты и острова» (6 аэропортов), добавлены в `World25_012_selected_cities`, линки вручную
   (все `size < 5000`):**
 
