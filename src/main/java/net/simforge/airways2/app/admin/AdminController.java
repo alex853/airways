@@ -565,6 +565,28 @@ public class AdminController {
             result = result + updatedLabel + toProcess + "\n";
             result = result + "\n";
 
+            // such journeys are not able to find tickets, they are located nowhere
+            List<Journeys.Journey> lookingForTicketsWithZeroLocation = world.journeys()
+                    .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                    .filter(j -> j.getLocationCityId() == 0)
+                    .toList();
+            result = result + "LookingForTickets with zero location city:\n";
+            result = result + "  found . . . . . . " + lookingForTicketsWithZeroLocation.size() + "\n";
+
+            toProcess = Math.min(lookingForTicketsWithZeroLocation.size(), 100);
+            for (int i = 0; i < toProcess; i++) {
+                final Journeys.Journey journey = lookingForTicketsWithZeroLocation.get(i);
+                logInvalidJourneyChange(dryRun, journey, "delete", "LookingForTickets with zero location city");
+                if (!dryRun) {
+                    world.journeys().deleteById(journey.getId());
+                }
+            }
+
+            result = result + deletedLabel + toProcess + "\n";
+            result = result + "\n";
+
+
+
             return result;
         });
     }
