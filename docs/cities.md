@@ -99,7 +99,6 @@
 | KAPG | Phillips AAF | Baltimore | армейский аэродром |
 | KFMH | Otis ANGB | Boston | база нацгвардии |
 | KNUQ | Moffett Federal AFLD | San Francisco | NASA/бизнес-джеты — не обязательно плохой |
-| LIRN | Capodichino Mil | — (без города) | военная часть аэропорта Неаполя |
 | KFTG | Front Range | Aurora, Denver | гражданский GA, ложное срабатывание |
 
 **План:** военные удаляем из мира и при необходимости заменяем на реальные гражданские аэродромы города.
@@ -118,8 +117,7 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
 
 Созданы через `World25_009_create_some_airports`, но ни один город рядом в мир не импортирован, поэтому в симуляции
 пассажиропотока не участвуют (9 шт.): EFKS, LDDU, LEAL, LFKF, LGKO, LGSK, LGSM, LIRN, LPFR.
-Отложено: LIRN (Napoli) — решение позже; фактически это обычный гражданский Capodichino (NAP), не военная часть,
-из списка военных его можно убирать.
+LIRN (Capodichino, Naples) — обычный гражданский аэропорт, не военная часть; из списка военных убран.
 
 **План:** для каждого проанализировать, какой город/города рядом нужны, и пройти обычную процедуру
 «актуализировать и укрупнить мажорный сити» (импорт города → линк аэропорта). Предложения (2026-10-14):
@@ -132,7 +130,7 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
 | LGKO | Kos | 16 | Kos → 37 300 (весь остров) |
 | LGSM | Samos | 12 | Samos → 32 400 (весь остров) |
 | LGSK | Skiathos | 45 | Skiathos 5 100 или 6 100, потоки — через attraction |
-| LIRN | Napoli (Capodichino) | 33 | отложено; Napoli → ~3 095 000 |
+| LIRN | Naples (Capodichino) | 33 | Naples → 3 095 000, аэропорт переименован `Capodichino Mil` → `Capodichino` |
 | LFKF | Figari/Sud Corse | 8 | нет города рядом: линк к Ajaccio (30 nm) либо строка Porto-Vecchio в CSV |
 | EFKS | Kuusamo | 6 | Kuusamo 18 800 как есть |
 
@@ -169,6 +167,22 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
   Страны Australia в мире не было — создаётся импортом. Добавлен в `World25_012_selected_cities`; YSSY (size 8938 ≥5000)
   подтянется и залинкуется автоматически через `ImportMajorAirportsInVicinityOfCities`. Аэропорты YWOL (Wollongong)
   и YWLM (Newcastle/Williamtown), а также YSBK (Bankstown) в мир не добавляем.
+- **Корсика (FR, остров ~350 тыс.) — большой остров, собран в три города, а не в один (как Cyprus, не как Jersey):**
+
+  | Город | Зона | Население | Аэропорты |
+  |---|---|---|---|
+  | Ajaccio | юго-запад (Ajaccio, Propriano, Sartène) | 46 800 → 146 800 | LFKJ (в мире нет) |
+  | Bastia | северо-восток и север (Bastia, Cap Corse, Balagne, Calvi, Corte) | 42 000 → 132 000 | LFKB, LFKC (в мире нет) |
+  | Porto-Vecchio | юго-восток (Porto-Vecchio, Bonifacio) | в CSV не было, добавлена строка `France,FR,Porto-Vecchio,70000,41.59,9.28` | LFKF (в мире есть) |
+
+  Аэропорты острова: LFKF (Figari), LFKJ (Ajaccio Napoléon-Bonaparte, самый крупный, ~1,5 млн пасс.) и LFKB (Bastia
+  Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
+  и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
+  взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Третья группа (особые):** LIRN → Naples (CSV `Napoli` → `Naples`, 995 000 → 3 095 000, агломерация ~3,1 млн;
+  пригороды <100 тыс. не трогаем, Salerno 144 300 отдельный рынок); аэропорт LIRN переименован
+  `Capodichino Mil` → `Capodichino` (шаг `World25_013`, `RenameAirports`). EFKS → Kuusamo 18 800 как есть
+  (лыжный курорт). Attraction не нужен. Линки вручную: `create-links?icao=LIRN`, `create-links?icao=EFKS`.
 - **Переименование существующих городов в английские имена:** в мире города были созданы транслитерацией из CSV.
   `Kerkira` → `Corfu`, `Iraklion` → `Heraklion`, `Rodos` → `Rhodes` (GR). Делается шагом
   `World25_013_rename_cities` (`RenameCities`, идемпотентный), который в `Application.main` стоит **перед**
@@ -187,7 +201,7 @@ NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, F
   | LGSK Skiathos | Skiathos (GR) | 5 100 → 6 100 | весь остров, поток через attraction |
 
   В CSV `Alacant` переименован в `Alicante` (английское имя).
-  Остались отложенными LIRN (Napoli), LFKF (Figari), EFKS (Kuusamo).
+  LFKF (Figari, Корсика) — см. запись про Корсику ниже.
 - **Группа «острова и города без города» (7 аэропортов), население в CSV, `del` не нужен (пригородов ≥100 тыс. нет),
   все добавлены в `World25_012_selected_cities`:**
 

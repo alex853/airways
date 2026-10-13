@@ -70,8 +70,12 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Alicante"},
 
                 new String[]{"country-code:FI", "city-name:Helsinki"},
+                new String[]{"country-code:FI", "city-name:Kuusamo"},
 
                 new String[]{"country-code:FR", "city-name:Nice"},
+                new String[]{"country-code:FR", "city-name:Ajaccio"},
+                new String[]{"country-code:FR", "city-name:Bastia"},
+                new String[]{"country-code:FR", "city-name:Porto-Vecchio"},
 
                 new String[]{"country-code:GB", "city-name:Bristol"},
                 new String[]{"country-code:GB", "city-name:Jersey"},
@@ -101,6 +105,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:IT", "city-name:Venice"},
                 new String[]{"country-code:IT", "city-name:Palermo"},
+                new String[]{"country-code:IT", "city-name:Naples"},
 
                 new String[]{"country-code:IS", "city-name:Reykjavik"},
 

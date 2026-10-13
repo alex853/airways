@@ -107,6 +107,10 @@ public class Airports {
             return strings.byId(storage.getAsInt(id, nameIdField));
         }
 
+        public void setName(final String name) {
+            storage.set(id, nameIdField, strings.findOrAdd(name));
+        }
+
         public Geo.Coords getCoords() {
             return Geo.coords(getLatitude(), getLongitude());
         }

@@ -5238,7 +5238,7 @@ France,FR,Pantin,47700,48.9,2.41
 France,FR,Sartrouville,47600,48.94,2.18
 France,FR,Frejus,47400,43.45,6.73
 France,FR,Narbonne,47000,43.19,2.9
-France,FR,Ajaccio,46800,41.93,8.73
+France,FR,Ajaccio,146800,41.93,8.73
 France,FR,Albi,46600,43.93,2.15
 France,FR,Chalons-en-champagne,46500,48.97,4.36
 France,FR,Saint-herblain,46500,47.21,-1.65
@@ -5265,7 +5265,7 @@ France,FR,Douai,42300,50.37,3.08
 France,FR,Vincennes,42300,48.85,2.44
 France,FR,Wattrelos,42300,50.71,3.21
 France,FR,Bobigny,42100,48.91,2.44
-France,FR,Bastia,42000,42.71,9.46
+France,FR,Bastia,132000,42.71,9.46
 France,FR,Puteaux,41600,48.88,2.23
 France,FR,Mantes-la-jolie,41400,48.99,1.7
 France,FR,Thionville,41400,49.36,6.15
@@ -5426,6 +5426,7 @@ France,FR,Vallauris,25000,43.58,7.04
 France,FR,Cavaillon,24900,43.85,5.03
 France,FR,Chaumont,24900,48.11,5.14
 France,FR,Taverny,24900,49.02,2.19
+France,FR,Porto-Vecchio,70000,41.59,9.28
 Gabon,GA,Libreville,684800,0.39,9.45
 Gabon,GA,Port-gentil,120600,-0.72,8.78
 Gabon,GA,Masuku,42500,-1.63,13.6
@@ -7880,7 +7881,7 @@ Israel,IL,Qiryat ye'arim,3000,31.82,35.1
 Israel,IL,Kafar kama,2900,32.72,35.44
 Italy,IT,Roma,2618900,41.89,12.5
 Italy,IT,Milano,1212900,45.48,9.19
-Italy,IT,Napoli,995000,40.85,14.27
+Italy,IT,Naples,3095000,40.85,14.27
 Italy,IT,Torino,865700,45.08,7.68
 Italy,IT,Palermo,1171100,38.12,13.36
 Italy,IT,Genova,594900,44.42,8.93
