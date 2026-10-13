@@ -33,8 +33,8 @@ public class MapController {
                 .toList());
     }
 
-    @GetMapping("/aircraft/brief-info")
-    public AircraftInfoDto getAircraftBriefInfo(@RequestParam("id") String aircraftId) {
+    @GetMapping("/aircraft/info")
+    public AircraftInfoDto getAircraftInfo(@RequestParam("id") String aircraftId) {
         return worldBean.read(world -> AircraftInfoDto.from(world,
                 world.aircrafts()
                         .byId(Id.decode(aircraftId))
