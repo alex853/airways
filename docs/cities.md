@@ -203,6 +203,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Poretta, ~1,2 млн) добавлены в `World25_009`. Линки с дефолтным радиусом 50 nm: LFKF привяжется к Porto-Vecchio
   и к Ajaccio (30 nm), LFKJ к Ajaccio и Porto-Vecchio, LFKB к Bastia — это нормально, аэропорты острова
   взаимозаменяемы для соседних городов. Attraction: выставить всем трём городам (значения TBD).
+- **Delhi (IN, аэропорт VIDP) — из списка отсутствующих по VATSIM, «семя» Северной Индии:** CSV `Dilli` → `Delhi`
+  (английское имя), 10 400 900 → 31 900 900 (Delhi NCR ~32 млн). `del`: Ni dilli (New Delhi), Noida, Faridabad,
+  Ghaziabad (≤20 nm). Rohtak (34 nm), Mirat/Meerut (40 nm), Panipat (50 nm) остаются отдельными. Добавлен в
+  `World25_012_selected_cities`. VIDP (size 6652, автолинк) переименован в `Delhi Indira Gandhi`. VIDX Hindon не
+  берём. Attraction не нужен.
 - **Addis Ababa (ET, аэропорт HAAB) — из списка отсутствующих по VATSIM, «семя» Восточной Африки:** новая страна
   Ethiopia. CSV `Addis abeba` → `Addis Ababa` (английское имя), 2 763 500 → 4 763 500 (агломерация ~5 млн). `del`
   не нужен (пригородов ≥100k нет; Debre zeyit 98 700 и Nazret 176 800 отдельные). Добавлен в
