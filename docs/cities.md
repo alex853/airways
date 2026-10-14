@@ -392,3 +392,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Francisco morato, Itapecerica da serra, Sao caetano do sul, Ribeirao pires). Cubatao, Jundiai, Santos и порт
   Сантос (Sao vicente, Praia grande, Guaruja), Campinas остаются отдельными городами. Добавлен в
   `World25_012_selected_cities`. Аэропорты — SBGR, SBSP (SBKP — Campinas).
+- **Lyon (FR, аэропорты LFLL и LFLY) — из списка отсутствующих по VATSIM (№1):** CSV 443 600 → 2 300 600 (aire
+  d'attraction ~2,3 млн), `del Villeurbanne`. Saint-etienne и Grenoble остаются отдельными (не импортируются).
+  LFLL (size 6667) создаётся автоматически и связывается с Lyon, переименован `Lyon Saint-Exupery`. **LFLY Bron**
+  (size 3200, деловой/GA аэропорт) добавлен в `World25_009`, переименован `Lyon Bron`, линк `create-links?icao=LFLY`.
+  `BusinessAviationTerminal` в LFLL и LFLY. LFXA Amberieu (military) не берём. Attraction не нужен.

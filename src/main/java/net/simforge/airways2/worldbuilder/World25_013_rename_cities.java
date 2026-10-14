@@ -48,6 +48,8 @@ public class World25_013_rename_cities {
                 new String[]{"RJOO", "Osaka Itami"},
                 new String[]{"RPLL", "Manila Ninoy Aquino"},
                 new String[]{"RPLC", "Manila Clark"},
+                new String[]{"LFLL", "Lyon Saint-Exupery"},
+                new String[]{"LFLY", "Lyon Bron"},
                 new String[]{"VTBD", "Bangkok Don Mueang"},
                 new String[]{"VTBS", "Bangkok Suvarnabhumi"}
         ));

@@ -83,6 +83,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:FR", "city-name:Ajaccio"},
                 new String[]{"country-code:FR", "city-name:Bastia"},
                 new String[]{"country-code:FR", "city-name:Porto-Vecchio"},
+                new String[]{"country-code:FR", "city-name:Lyon"},
 
                 new String[]{"country-code:GB", "city-name:Bristol"},
                 new String[]{"country-code:GB", "city-name:Jersey"},

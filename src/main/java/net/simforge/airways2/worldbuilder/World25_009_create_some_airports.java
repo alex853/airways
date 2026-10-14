@@ -26,7 +26,7 @@ public class World25_009_create_some_airports {
                 "LCLK", "LCPH",
                 "LDDU", "LDSP",
                 "LEAL", "LEIB", "LEMG", "LEPA", "LEMH",
-                "LFKB", "LFKF", "LFKJ", "LFMN",
+                "LFKB", "LFKF", "LFKJ", "LFLY", "LFMN",
                 "LGAV", "LGIR", "LGKO", "LGKR", "LGRP", "LGSK", "LGSM", "LGZA",
                 "LHBP",
                 "LICJ", "LIML", "LIPZ", "LIRN", "LIRA",
