@@ -29,7 +29,7 @@ public class World25_009_create_some_airports {
                 "LFKB", "LFKF", "LFKJ", "LFMN",
                 "LGAV", "LGIR", "LGKO", "LGKR", "LGRP", "LGSK", "LGSM", "LGZA",
                 "LHBP",
-                "LICJ", "LIPZ", "LIRN", "LIRA",
+                "LICJ", "LIML", "LIPZ", "LIRN", "LIRA",
                 "LOWI",
                 "LPFR", "LPMA", "LPPT", "LPPR",
                 "LSGG", "LSZH",

@@ -19,7 +19,9 @@ public class World25_013_rename_cities {
         RenameCities.renameCities(Arrays.asList(
                 new String[]{"GR", "Kerkira", "Corfu"},
                 new String[]{"GR", "Iraklion", "Heraklion"},
-                new String[]{"GR", "Rodos", "Rhodes"}
+                new String[]{"GR", "Rodos", "Rhodes"},
+                new String[]{"IT", "Roma", "Rome"},
+                new String[]{"IT", "Milano", "Milan"}
         ));
 
         RenameAirports.renameAirports(Arrays.asList(

@@ -247,6 +247,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   `create-links?icao=VTBS`. VTBD (в `icaodata.csv` назван `Bangkok Intl`, на самом деле Don Mueang, size 7227)
   создаётся и привязывается автоматически, переименован `Bangkok Don Mueang`. `BusinessAviationTerminal` только в
   VTBS. VTBK Kamphaeng Saen не берём. Attraction 2 (`set-attraction`).
+- **Италия — актуализация существующих городов:** `Roma` → `Rome` (2 618 900 → 4 318 900, агломерация), `Milano` →
+  `Milan` (1 212 900 → 4 312 900, urban area; `del Monza`, `del Bergamo`), Venice 271 800 → 850 800 (метро с
+  Местре и Падуей). Naples, Palermo не менялись. Имена — шаг `RenameCities` в `World25_013`, население — `f1-tour-fixes`
+  (ImportCities не обновляет существующие). **LIML Linate** (size 3043, 4 nm) добавлен в `World25_009`, линк
+  `create-links?icao=LIML` на Milan. Attraction: Rome 5, Venice 5, Milan 3, Naples 2, Palermo 2.
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 

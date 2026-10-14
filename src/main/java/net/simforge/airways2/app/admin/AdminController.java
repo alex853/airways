@@ -765,23 +765,14 @@ public class AdminController {
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
-            final Cities.City austin = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Austin")).findFirst().orElseThrow();
-            austin.setPopulation(2475600);
+            final Cities.City rome = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Rome")).findFirst().orElseThrow();
+            rome.setPopulation(4318900);
 
-            final Cities.City lasVegas = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Las Vegas")).findFirst().orElseThrow();
-            lasVegas.setPopulation(2327900);
+            final Cities.City milan = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Milan")).findFirst().orElseThrow();
+            milan.setPopulation(4312900);
 
-            final Cities.City losAngeles = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Los Angeles")).findFirst().orElseThrow();
-            losAngeles.setPopulation(12847400);
-
-            final Cities.City dubai = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dubai")).findFirst().orElseThrow();
-            dubai.setPopulation(5940600);
-
-            final Cities.City abuDhabi = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Abu Dhabi")).findFirst().orElseThrow();
-            abuDhabi.setPopulation(1560400);
-
-            final Cities.City bremen = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Bremen")).findFirst().orElseThrow();
-            bremen.setPopulation(745000);
+            final Cities.City venice = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Venice")).findFirst().orElseThrow();
+            venice.setPopulation(850800);
 
             return null;
         });
