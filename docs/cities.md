@@ -397,3 +397,9 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   LFLL (size 6667) создаётся автоматически и связывается с Lyon, переименован `Lyon Saint-Exupery`. **LFLY Bron**
   (size 3200, деловой/GA аэропорт) добавлен в `World25_009`, переименован `Lyon Bron`, линк `create-links?icao=LFLY`.
   `BusinessAviationTerminal` в LFLL и LFLY. LFXA Amberieu (military) не берём. Attraction не нужен.
+- **Vancouver, Victoria, Calgary (CA, аэропорты CYVR, CYYJ, CYYC) — из списка отсутствующих по VATSIM, Канада:**
+  CSV Vancouver 1 836 500 → 2 900 500 (Metro Vancouver ~2,9 млн), Calgary 938 300 → 1 600 300 (CMA ~1,6 млн),
+  Victoria 289 400 без изменений (отдельный город, CYYJ Victoria Intl связан и с Vancouver, и с Victoria, так как
+  в 40 nm от центра Vancouver). `del` не нужен (пригороды <100k, Abbotsford 140k на 36 nm отдельный). CYVR (size
+  9653), CYYJ (size 5304), CYYC (size 8177) создаются автоматически. `BusinessAviationTerminal` в CYVR и CYYC.
+  CYXX Abbotsford (size 4952), CYPK, CZBB не берём. Attraction не нужен.

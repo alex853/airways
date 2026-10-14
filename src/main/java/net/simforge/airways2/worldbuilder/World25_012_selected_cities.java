@@ -25,6 +25,9 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:CA", "city-name:Toronto"},
                 new String[]{"country-code:CA", "city-name:Montreal"},
+                new String[]{"country-code:CA", "city-name:Vancouver"},
+                new String[]{"country-code:CA", "city-name:Victoria"},
+                new String[]{"country-code:CA", "city-name:Calgary"},
 
                 new String[]{"country-code:AR", "city-name:Buenos Aires"},
 
