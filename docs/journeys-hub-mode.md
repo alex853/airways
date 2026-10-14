@@ -1,6 +1,7 @@
-# Journeys: перелёты через хабы (hub mode) — отложено
+# Journeys: перелёты через хабы (hub mode) — тест (hub test)
 
-Статус: **отложено**, возвращаемся когда накопятся данные драйрана (`hub dry run` в логе).
+Статус: **идёт тест «по одной журне на рейс»** (см. раздел «Hub test»). Полноценный hub mode отложен до разбора
+результатов теста по логам.
 
 ## Идея
 
@@ -28,10 +29,33 @@
 - `JourneyProcessor.itinerariesDone`: если `locationCityId != toCityId` (посадка в другом аэропорту/городе), journey
   не считается завершённой, а возвращается в `LookingForTickets` (`attemptCounter = 0`, heartbeat 1–3 суток).
   Общий хелпер `JourneyControl.scheduleLookingForTickets`.
-- Драйран в `ShadowJetLogic.logHubDryRun` (только логирование, мир не меняется), хабы захардкожены в `HUB_ICAOS`
-  (EGLL, EDDF, EHAM, KJFK, OMDB). Сообщение на рейс, летящий в хаб:
-  `hub dry run - f/m #… - A -> B, a/c type … - … getting closer to destination: N, not getting closer: M,
-  locationCityId != fromCityId: X out of Y, locationCityId == 0: Z`.
+- Драйран (`logHubDryRun`) заменён на hub test (см. ниже), хабы по-прежнему захардкожены в
+  `ShadowJetLogic.HUB_ICAOS` (EGLL, EDDF, EHAM, KJFK, OMDB).
+
+## Hub test (одна журня на рейс в хаб)
+
+Код: `ShadowJetLogic.findHubTestJourney`, вызывается из `provideTransportFlightIfRequired`.
+
+- Для каждого рейса, **летящего в хаб из `HUB_ICAOS`**, выбирается **ровно одна** журня из `LookingForTickets`:
+  `locationCityId ∈ города вылета`, прямого рейса здесь нет (`toCityId ∉ города прилёта`), хаб ближе к
+  `toCity`, чем текущая локация. Из подходящих берётся та, у которой наибольшее сокращение расстояния
+  (`distanceNow − distanceFromHub`), и для которой хватает мест (с upgrade/downgrade класса, как у прямых).
+- Журня попадает в **мгновенный check-in** вместе с прямыми (загрузка 40–60%), считается в `maxCount`/остатке мест.
+  Журни, которых «будят» на 5 минут (10–20%), не меняются.
+- После посадки в хабе работает обычная логика: `justArrived` → `ItinerariesDone` → `toCityNotReached` →
+  `LookingForTickets` через 1–3 суток, дальше поиск прямого/стопавера от нового `locationCityId`.
+- Побочный эффект: у такой журни до посадки в хабе c2c success rate обновляется как у обычной (посадка в `toCity`
+  не происходит), это стоит учесть при разборе.
+
+**Логи** (все строки начинаются с `hub test - `):
+
+- Статистика на каждый рейс в хаб:
+  `hub test - f/m #… , t/f #… - A -> B, <тип ВС> - looking-for-tickets journeys getting closer to destination: N, not getting closer: M`.
+- Результат выбора: `hub test - f/m #…, t/f #… - A -> B - j/y #… selected, g/s …, cabin …, located at <город>, target
+  <город>, distance to target X nm now, Y nm from the hub` либо `… no suitable journey found (no candidate or no seats)`.
+- Посадка в чекин: `hub test - f/m #…, t/f #… - j/y #… booked to the flight and checked-in`.
+- Дальнейшая судьба смотрится по `j/y #<id>` (`checked-in`, `boarded`, `deboarded`, `TO city not reached`, и т.д.) и
+  `t/f #<id>`.
 
 ## Что показал драйран (первые логи)
 
@@ -53,6 +77,12 @@
 6. Success rate потока: не обновлять на промежуточных ногах, финальный успех — при достижении `toCity`.
 7. Лимит хопов и дедлайн; статистика `FlightStats.event`; фича-флаг.
 8. Умный выбор хаба: хаб ближе к цели, и из него есть направление в аэропорты `toCity` (по daily stats).
+
+## TODO
+
+- **`locationCityId == 0` у журней в `LookingForTickets`** (на первых логах ~11 штук на ~32 тыс.): понять, откуда
+  берутся, и что с ними делать (ближайший город по координатам или завершать). Это не часть hub test, смотрим
+  отдельно.
 
 ## Открытые вопросы
 
