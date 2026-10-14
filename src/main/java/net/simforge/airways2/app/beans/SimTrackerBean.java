@@ -119,6 +119,9 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
         threadStatus = ThreadStatus.HaveToStopNow;
         thread.join();
 
+        // the last state of the contexts should not be lost on a regular stop (deploy etc)
+        simTracker.saveContexts();
+
         log.info("thread stopped");
     }
 

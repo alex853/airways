@@ -17,6 +17,8 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -29,10 +31,27 @@ public class SimTracker {
     private static final Logger log = LoggerFactory.getLogger(SimTracker.class);
     private static final DecimalFormat df1 = new DecimalFormat("0.0");
 
+    // a position older than this means the track trail has a gap, the speed can't be measured over such a gap
+    private static final long STALE_POSITION_MILLIS = 10 * 60 * 1000;
+    // saved contexts with a position older than this are dropped on restore, the user is not on the line anymore
+    private static final long MAX_RESTORED_CONTEXT_AGE_MILLIS = 30 * 60 * 1000;
+
     private WorldAccess worldAccess;
     private List<AirportInfo> airportInfos;
 
     private final Map<Integer, Context> userContexts = new ConcurrentHashMap<>();
+
+    private final SimTrackerContextStore contextStore;
+    // the saved file must not be overwritten by an empty state before the contexts are restored
+    private volatile boolean contextsRestored = false;
+
+    public SimTracker() {
+        this(Paths.get("./sim-tracker/contexts.json"));
+    }
+
+    public SimTracker(final Path contextsFile) {
+        this.contextStore = new SimTrackerContextStore(contextsFile);
+    }
 
     public void processPosrep(int userId, String posrep) {
         checkArgument(userId > 0);
@@ -49,7 +68,17 @@ public class SimTracker {
         // todo ak1 rework all those staff into one single modifySync processing splitted somehow
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
 
-        List<TrackLeg> newTrackTrail = TrackLeg.buildNewTrackTrail(oldContext.trackTrail, oldContext.position, position);
+        // the old position stays for takeoff/landing detection, but the track trail starts again after a gap
+        // (the application was restarted, the client was offline), otherwise the speed would be measured over the gap
+        final boolean oldPositionIsStale = oldContext.position != null
+                && position.getTime() - oldContext.position.getTime() > STALE_POSITION_MILLIS;
+        if (oldPositionIsStale) {
+            log.info("SIM TRACKER: user {} - old position is {} s old, track trail is started again",
+                    userId, (position.getTime() - oldContext.position.getTime()) / 1000);
+        }
+        List<TrackLeg> newTrackTrail = oldPositionIsStale
+                ? TrackLeg.buildNewTrackTrail(null, null, position)
+                : TrackLeg.buildNewTrackTrail(oldContext.trackTrail, oldContext.position, position);
 
         newContext = newContext.toBuilder()
                 .position(position)
@@ -292,11 +321,27 @@ public class SimTracker {
     }
 
     public void saveContexts() {
-        // todo ak1
+        if (!contextsRestored) {
+            log.warn("SIM TRACKER: contexts are not restored yet, saving is skipped");
+            return;
+        }
+
+        try {
+            final int saved = contextStore.save(userContexts.values(), System.currentTimeMillis());
+            log.debug("SIM TRACKER: {} contexts saved to {}", saved, contextStore.getFile());
+        } catch (final Exception e) {
+            log.error("SIM TRACKER: unable to save contexts to {}", contextStore.getFile(), e);
+        }
     }
 
     public void restoreContexts() {
-        // todo ak1
+        final SimTrackerContextStore.Result result = contextStore.load(System.currentTimeMillis(), MAX_RESTORED_CONTEXT_AGE_MILLIS);
+        result.restored().forEach(c -> userContexts.put(c.getUserId(), c));
+        contextsRestored = true;
+
+        log.info("SIM TRACKER: {} contexts restored, {} dropped as stale, {} broken, user ids {}",
+                result.restored().size(), result.stale(), result.broken(),
+                result.restored().stream().map(Context::getUserId).sorted().toList());
     }
 
     @AllArgsConstructor
