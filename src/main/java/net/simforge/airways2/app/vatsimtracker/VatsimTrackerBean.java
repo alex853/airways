@@ -192,7 +192,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
 
             log.info("cycle stopped, status is {}", threadStatus);
         });
-        thread.setName("vatsim-tracker-bean-thread");
+        thread.setName("vatsim-tracker-thread");
         thread.start();
     }
 

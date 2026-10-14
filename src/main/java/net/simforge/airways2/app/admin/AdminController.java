@@ -231,22 +231,6 @@ public class AdminController {
         return "Pilot context for p/n #" + pilotNumber + " REMOVED";
     }
 
-    @SuppressWarnings("unused")
-    @GetMapping(value = "/flight/reschedule", produces = "text/plain")
-    public String rescheduleFlight(@RequestParam(name = "id") int fmId,
-                                   @RequestParam(name = "dof") String newDOF,
-                                   @RequestParam(name = "depTime") String newDepTime) {
-        /*
-         * this can be done only in fm dispatched state
-         * is new time in past or too close to now?
-         * fmId -> userId -> list of user's assignments -> is there any overlapping between user's flights?
-         * fmId -> aircraft -> aircraft's assignments -> is there any overlapping between aircraft's flights?
-         *                            is this order of flights doable in terms of aircraft location?
-         * update transport flight heartbeat, update journeys heartbeat
-         */
-        return null; // todo ak0 00000000 implement!
-    }
-
     @GetMapping(value = "/flight/cancel", produces = "text/plain")
     public String cancelFlight(@RequestParam(name = "id") String fmIdStr) {
         return worldBean.modifySync(world -> {

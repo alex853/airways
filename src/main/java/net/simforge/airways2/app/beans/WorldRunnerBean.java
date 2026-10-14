@@ -116,7 +116,7 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                 FlightStats.save();
             }
         });
-        thread.setName("world-runner-bean-thread");
+        thread.setName("world-runner-thread");
         thread.start();
     }
 
