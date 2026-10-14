@@ -765,14 +765,50 @@ public class AdminController {
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
-            final Cities.City rome = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Rome")).findFirst().orElseThrow();
-            rome.setPopulation(4318900);
+            final Cities.City berlin = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Berlin")).findFirst().orElseThrow();
+            berlin.setPopulation(4500300);
 
-            final Cities.City milan = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Milan")).findFirst().orElseThrow();
-            milan.setPopulation(4312900);
+            final Cities.City hamburg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Hamburg")).findFirst().orElseThrow();
+            hamburg.setPopulation(3000200);
 
-            final Cities.City venice = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Venice")).findFirst().orElseThrow();
-            venice.setPopulation(850800);
+            final Cities.City munich = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Munich")).findFirst().orElseThrow();
+            munich.setPopulation(2900100);
+
+            final Cities.City cologne = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Cologne")).findFirst().orElseThrow();
+            cologne.setPopulation(1700500);
+
+            final Cities.City frankfurt = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Frankfurt")).findFirst().orElseThrow();
+            frankfurt.setPopulation(2300000);
+
+            final Cities.City dortmund = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dortmund")).findFirst().orElseThrow();
+            dortmund.setPopulation(1400200);
+
+            final Cities.City stuttgart = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Stuttgart")).findFirst().orElseThrow();
+            stuttgart.setPopulation(1500500);
+
+            final Cities.City essen = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Essen")).findFirst().orElseThrow();
+            essen.setPopulation(2100600);
+
+            final Cities.City dusseldorf = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dusseldorf")).findFirst().orElseThrow();
+            dusseldorf.setPopulation(1600900);
+
+            final Cities.City duisburg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Duisburg")).findFirst().orElseThrow();
+            duisburg.setPopulation(1400700);
+
+            final Cities.City hanover = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Hanover")).findFirst().orElseThrow();
+            hanover.setPopulation(1000300);
+
+            final Cities.City nuremberg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Nuremberg")).findFirst().orElseThrow();
+            nuremberg.setPopulation(1000600);
+
+            final Cities.City leipzig = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Leipzig")).findFirst().orElseThrow();
+            leipzig.setPopulation(1100700);
+
+            final Cities.City dresden = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dresden")).findFirst().orElseThrow();
+            dresden.setPopulation(800000);
+
+            final Cities.City bonn = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Bonn")).findFirst().orElseThrow();
+            bonn.setPopulation(600000);
 
             return null;
         });

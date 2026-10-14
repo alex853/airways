@@ -21,7 +21,12 @@ public class World25_013_rename_cities {
                 new String[]{"GR", "Iraklion", "Heraklion"},
                 new String[]{"GR", "Rodos", "Rhodes"},
                 new String[]{"IT", "Roma", "Rome"},
-                new String[]{"IT", "Milano", "Milan"}
+                new String[]{"IT", "Milano", "Milan"},
+                new String[]{"DE", "Munchen", "Munich"},
+                new String[]{"DE", "Koln", "Cologne"},
+                new String[]{"DE", "Nurnberg", "Nuremberg"},
+                new String[]{"DE", "Hannover", "Hanover"},
+                new String[]{"DE", "Frankfurt am Main", "Frankfurt"}
         ));
 
         RenameAirports.renameAirports(Arrays.asList(

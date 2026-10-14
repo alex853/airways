@@ -252,6 +252,13 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Местре и Падуей). Naples, Palermo не менялись. Имена — шаг `RenameCities` в `World25_013`, население — `f1-tour-fixes`
   (ImportCities не обновляет существующие). **LIML Linate** (size 3043, 4 nm) добавлен в `World25_009`, линк
   `create-links?icao=LIML` на Milan. Attraction: Rome 5, Venice 5, Milan 3, Naples 2, Palermo 2.
+- **Германия — актуализация до агломераций:** 15 городов подняты до агломерации, 31 город ≥100k в радиусе 25 nm от
+  ближайшего ядра слит `del` (Рейн-Рур поделён по ближайшему ядру: Essen, Duisburg, Dusseldorf, Dortmund, Koln, Bonn;
+  Rhein-Main — Frankfurt; Halle — Leipzig; Potsdam — Berlin и т.д.). Bremen 745 000 не меняется (задан под F1),
+  Oldenburg не сливается. Английские имена: Munchen → Munich, Koln → Cologne, Nurnberg → Nuremberg, Hannover →
+  Hanover, Frankfurt am Main → Frankfurt (`RenameCities` в `World25_013`). Население — `f1-tour-fixes`. Attraction в
+  Германии не ставим. **EDLW** (Dortmund, size 1997) добавлен в `World25_009`, `create-links?icao=EDLW` с дефолтным
+  радиусом.
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 
