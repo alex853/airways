@@ -228,6 +228,15 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Baton Rouge (53 nm) отдельный, не трогаем. Добавлен в `World25_012_selected_cities`. KMSY (size 6304) создаётся и
   привязывается автоматически; `BusinessAviationTerminal` в KMSY вручную. KNEW Lakefront (size 4174, 12 nm) не берём
   по решению; KNBG (NAS JRB, в icaodata помечен civil) — военный. Attraction не нужен.
+- **Johannesburg + Pretoria (ZA, аэропорт FAOR) — из списка отсутствующих по VATSIM:** FAOR не было ни в
+  `icaodata.csv` (там старый код FAJS), ни в refdata до 3.1.3 (добавлен вручную рядом с OTHH, LTFM, VTBS).
+  В `icaodata.csv` строка `FAJS` заменена на `FAOR` (координаты -26.138889/28.245833, `O. R. Tambo International`),
+  чтобы автоимпорт создал правильный код. CSV: Johannesburg 1 975 500 → 8 900 500 (Johannesburg + Ekurhuleni +
+  West Rand), `del`: Soweto, Benoni, Tembisa, Boksburg, Krugersdorp, Brakpan, Springs, Alberton, Midrand,
+  Randfontein, Nigel, Westonaria; Pretoria 1 473 800 → 2 473 800, `del Verwoerdburg` (Centurion). Vereeniging,
+  Vanderbijlpark, Carltonville остаются отдельными. Оба города в `World25_012`; FAOR (size 10696) создаётся
+  автоматически и связывается с обоими; переименован `Johannesburg O.R. Tambo`. `BusinessAviationTerminal` в FAOR
+  вручную. FALA, FAGM, FAWB не берём; военные FAWK, FASK не берём. Attraction не нужен.
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 

@@ -207,7 +207,9 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:VN", "city-name:Ho Chi Minh City"},
 
-                new String[]{"country-code:ZA", "city-name:Cape Town"}
+                new String[]{"country-code:ZA", "city-name:Cape Town"},
+                new String[]{"country-code:ZA", "city-name:Johannesburg"},
+                new String[]{"country-code:ZA", "city-name:Pretoria"}
         ));
 
         ImportMajorAirportsInVicinityOfCities.main(new String[0]);
