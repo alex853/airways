@@ -103,10 +103,20 @@ public class AdminController {
         }
     }
 
+    /**
+     * Searches log lines, q may contain several alternatives separated by '||', a line matches if it contains any of them,
+     * e.g. q=j/y #33742||t/f #9467||f/m #4986
+     */
     @GetMapping("/log/search")
     public ResponseEntity<byte[]> searchLog(@RequestParam final String q,
                                             @RequestParam(defaultValue = "false") final boolean all) throws IOException {
         checkArgument(!q.isEmpty(), "Query must not be empty");
+
+        final List<String> terms = Arrays.stream(q.split("\\|\\|"))
+                .map(String::trim)
+                .filter(t -> !t.isEmpty())
+                .toList();
+        checkArgument(!terms.isEmpty(), "Query must have at least one non-empty term");
 
         final List<File> files = new ArrayList<>();
         if (all) {
@@ -124,7 +134,7 @@ public class AdminController {
             try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    if (line.contains(q)) {
+                    if (terms.stream().anyMatch(line::contains)) {
                         if (all && !headerPrinted) {
                             sb.append("=== ").append(file.getName()).append(" ===\n");
                             headerPrinted = true;
