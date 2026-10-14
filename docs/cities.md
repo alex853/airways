@@ -237,6 +237,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Vanderbijlpark, Carltonville остаются отдельными. Оба города в `World25_012`; FAOR (size 10696) создаётся
   автоматически и связывается с обоими; переименован `Johannesburg O.R. Tambo`. `BusinessAviationTerminal` в FAOR
   вручную. FALA, FAGM, FAWB не берём; военные FAWK, FASK не берём. Attraction не нужен.
+  Страна `South africa` в CSV исправлена на `South Africa` (все строки ZA), существующая страна в мире
+  переименована через `RenameCountries` в `World25_013` (страны ищутся по коду, дублей не будет).
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 

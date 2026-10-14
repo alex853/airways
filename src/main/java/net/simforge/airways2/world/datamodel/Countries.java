@@ -77,6 +77,10 @@ public class Countries {
         public String getName() {
             return strings.byId(storage.getAsInt(id, nameIdField));
         }
+
+        public void setName(final String name) {
+            storage.set(id, nameIdField, strings.findOrAdd(name));
+        }
     }
 
     private String readCode(int recordId) {

@@ -2,14 +2,20 @@ package net.simforge.airways2.worldbuilder;
 
 import net.simforge.airways2.worldbuilder.tools.RenameAirports;
 import net.simforge.airways2.worldbuilder.tools.RenameCities;
+import net.simforge.airways2.worldbuilder.tools.RenameCountries;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 
 // Renames cities which have been imported with transliterated names to the English ones, and airports with odd names.
 // It should be run BEFORE World25_012_selected_cities, otherwise the import creates duplicates by the new names.
 public class World25_013_rename_cities {
     public static void main(String[] args) throws IOException {
+        RenameCountries.renameCountries(Collections.singletonList(
+                new String[]{"ZA", "South Africa"}
+        ));
+
         RenameCities.renameCities(Arrays.asList(
                 new String[]{"GR", "Kerkira", "Corfu"},
                 new String[]{"GR", "Iraklion", "Heraklion"},
