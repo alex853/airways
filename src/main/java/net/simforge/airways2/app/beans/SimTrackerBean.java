@@ -19,6 +19,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class SimTrackerBean implements ApplicationRunner, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(SimTrackerBean.class);
 
+    private static final long WORLD_READY_TIMEOUT_MS = 10 * 60 * 1000;
+
     private final SimTracker simTracker = new SimTracker();
 
     private volatile ThreadStatus threadStatus = ThreadStatus.Startup;
@@ -36,7 +38,9 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
         thread = new Thread(() -> {
             log.info("thread started");
 
-            waitForWorldReady();
+            if (!waitForWorldReady()) {
+                return;
+            }
             simTracker.setWorldAccess(worldBean);
 
             simTracker.restoreContexts();
@@ -70,7 +74,7 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
 
             log.info("cycle stopped, status is {}", threadStatus);
         });
-        thread.setName("sim-tracker-bean-thread");
+        thread.setName("sim-tracker-thread");
         thread.start();
     }
 
@@ -83,10 +87,29 @@ public class SimTrackerBean implements ApplicationRunner, DisposableBean {
         }
     }
 
-    private void waitForWorldReady() {
-        while (!worldBean.isReady()) { // todo ak1 it can go wrong, but now it will cycle indefinitely
+    /**
+     * Waits for the world to be ready, gives up after WORLD_READY_TIMEOUT_MS or when the bean is told to stop.
+     *
+     * @return true if the world is ready, false if the thread has to exit (threadStatus is set accordingly)
+     */
+    private boolean waitForWorldReady() {
+        final long startedAt = System.currentTimeMillis();
+        while (!worldBean.isReady()) {
+            if (threadStatus == ThreadStatus.HaveToStopNow) {
+                log.info("stopped while waiting for the world, exiting");
+                threadStatus = ThreadStatus.Stopped;
+                return false;
+            }
+
+            if (System.currentTimeMillis() - startedAt > WORLD_READY_TIMEOUT_MS) {
+                log.error("world is not ready within {} minutes, sim tracker thread exits", WORLD_READY_TIMEOUT_MS / 60_000);
+                threadStatus = ThreadStatus.TerminatedDueToError;
+                return false;
+            }
+
             Misc.sleep(100);
         }
+        return true;
     }
 
     @Override
