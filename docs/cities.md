@@ -259,6 +259,19 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Hanover, Frankfurt am Main → Frankfurt (`RenameCities` в `World25_013`). Население — `f1-tour-fixes`. Attraction в
   Германии не ставим. **EDLW** (Dortmund, size 1997) добавлен в `World25_009`, `create-links?icao=EDLW` с дефолтным
   радиусом.
+- **Osaka / Kobe / Kyoto (JP, аэропорты RJBB и RJOO) — из списка отсутствующих по VATSIM, «семя» Кансая:** три
+  ядра остаются отдельными (как Tokyo/Yokohama/Kawasaki). CSV: Osaka 2 596 700 → 10 000 700, Kobe 1 535 100 →
+  2 300 100, Kyoto 1 468 200 → 2 500 200; `del` — города ≥100k в радиусе 25 nm до ближайшего ядра (Osaka: Sakai,
+  Higashiosaka, Nishinomiya, Amagasaki, Hirakata, Toyonaka, Nara, Suita и др.; Kobe: Akashi, Kakogawa, Sanda; Kyoto:
+  Takatsuki, Otsu, Uji, Kusatsu). Wakayama, Himeji, Tokushima остаются отдельными. RJBB (size 3500) и RJOO (size 4829)
+  ниже 5000 — через `World25_009`, переименованы `Osaka Kansai` и `Osaka Itami`, затем `create-links` на оба.
+  Терминалы и attraction не нужны.
+- **Manila (PH, аэропорт RPLL) — из списка отсутствующих по VATSIM, «семя» Филиппин:** новая страна Philippines.
+  CSV Manila 10 330 100 → 14 000 100 (Metro Manila), `del` 12 городов ≥100k в радиусе 25 nm (Bacoor, Cainta,
+  Binan, Taytay, Malolos, Binangonan, Santa rosa, Meycauayan, Antipolo, Baliuag, Cavite, San mateo). RPLL (size
+  5414) и RPLC Clark (size 6431, ≈41 nm) создаются автоматически и связываются с Manila; переименованы `Manila
+  Ninoy Aquino` и `Manila Clark` (`World25_013`). RPLB Subic, военные RPLS, RPUF не берём. Терминалы и attraction не
+  нужны.
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 

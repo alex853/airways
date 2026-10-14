@@ -8207,18 +8207,18 @@ Jamaica,JM,Discovery bay,2400,18.47,-77.39
 Jamaica,JM,Albany,1900,18.28,-76.84
 Japan,JP,Tokyo,8294200,35.67,139.77
 Japan,JP,Yokohama,3525600,35.47,139.62
-Japan,JP,Osaka,2596700,34.68,135.5
+Japan,JP,Osaka,10000700,34.68,135.5
 Japan,JP,Nagoya,2196400,35.15,136.91
 Japan,JP,Sapporo,1853600,43.06,141.34
-Japan,JP,Kobe,1535100,34.68,135.17
-Japan,JP,Kyoto,1468200,35.01,135.75
+Japan,JP,Kobe,2300100,34.68,135.17
+Japan,JP,Kyoto,2500200,35.01,135.75
 Japan,JP,Fukuoka,1376100,33.59,130.41
 Japan,JP,Kawasaki,1288000,35.53,139.7
 Japan,JP,Hiroshima,1134800,34.39,132.44
 Japan,JP,Sendai,1029200,38.26,140.89
 Japan,JP,Kitakyushu,1009700,33.88,130.86
 Japan,JP,Chiba,909800,35.61,140.11
-Japan,JP,Sakai,786200,34.57,135.48
+Japan,JP,del Sakai,786200,34.57,135.48
 Japan,JP,Kumamoto,667200,32.8,130.71
 Japan,JP,Okayama,632500,34.67,133.92
 Japan,JP,Sagamihara,630900,35.58,139.38
@@ -8226,7 +8226,7 @@ Japan,JP,Hamamatsu,594700,34.72,137.73
 Japan,JP,Funabashi,558800,35.7,139.99
 Japan,JP,Hachioji,558800,35.66,139.33
 Japan,JP,Kagoshima,553400,31.59,130.56
-Japan,JP,Higashiosaka,513900,34.67,135.59
+Japan,JP,del Higashiosaka,513900,34.67,135.59
 Japan,JP,Urawa,505000,35.87,139.64
 Japan,JP,Niigata,503300,37.92,139.04
 Japan,JP,Himeji,483300,34.83,134.69
@@ -8235,30 +8235,30 @@ Japan,JP,Omiya,471800,35.91,139.63
 Japan,JP,Matsudo,469800,35.78,139.9
 Japan,JP,Kawaguchi,468500,35.81,139.73
 Japan,JP,Shizuoka,468500,34.98,138.39
-Japan,JP,Nishinomiya,465800,34.73,135.34
+Japan,JP,del Nishinomiya,465800,34.73,135.34
 Japan,JP,Kanazawa,457300,36.56,136.64
 Japan,JP,Ichikawa,456000,35.72,139.93
-Japan,JP,Amagasaki,455800,34.71,135.41
+Japan,JP,del Amagasaki,455800,34.71,135.41
 Japan,JP,Utsunomiya,448700,36.56,139.89
 Japan,JP,Oita,440900,33.24,131.6
 Japan,JP,Kurashiki,434300,34.61,133.77
 Japan,JP,Yokosuka,430900,35.27,139.67
 Japan,JP,Nagasaki,413100,32.75,129.88
-Japan,JP,Hirakata,403800,34.81,135.66
+Japan,JP,del Hirakata,403800,34.81,135.66
 Japan,JP,Gifu,400500,35.42,136.76
 Japan,JP,Machida,390100,35.56,139.43
 Japan,JP,Fujisawa,388600,35.33,139.47
-Japan,JP,Toyonaka,387900,34.78,135.48
+Japan,JP,del Toyonaka,387900,34.78,135.48
 Japan,JP,Fukuyama,380800,34.5,133.37
 Japan,JP,Wakayama,380300,34.22,135.17
 Japan,JP,Toyohashi,373800,34.76,137.39
-Japan,JP,Nara,369000,34.69,135.83
+Japan,JP,del Nara,369000,34.69,135.83
 Japan,JP,Nagano,360700,36.65,138.18
 Japan,JP,Toyota,358900,35.09,137.16
 Japan,JP,Iwaki,358600,37.05,140.88
 Japan,JP,Asahikawa,358100,43.77,142.36
-Japan,JP,Takatsuki,354900,34.85,135.62
-Japan,JP,Suita,350700,34.75,135.52
+Japan,JP,del Takatsuki,354900,34.85,135.62
+Japan,JP,del Suita,350700,34.75,135.52
 Japan,JP,Okazaki,346500,34.96,137.16
 Japan,JP,Koriyama,338000,37.41,140.38
 Japan,JP,Tokorozawa,337100,35.8,139.47
@@ -8272,8 +8272,8 @@ Japan,JP,Koshigaya,315300,35.89,139.79
 Japan,JP,Miyazaki,307900,31.91,131.42
 Japan,JP,Naha,303500,26.21,127.7
 Japan,JP,Aomori,298400,40.83,140.74
-Japan,JP,Otsu,296800,35.01,135.87
-Japan,JP,Akashi,296700,34.66,134.98
+Japan,JP,del Otsu,296800,35.01,135.87
+Japan,JP,del Akashi,296700,34.66,134.98
 Japan,JP,Kasugai,295000,35.24,136.98
 Japan,JP,Yokkaichi,294100,34.97,136.64
 Japan,JP,Fukushima,293000,37.75,140.47
@@ -8282,16 +8282,16 @@ Japan,JP,Maebashi,284200,36.39,139.06
 Japan,JP,Hakodate,281200,41.8,140.74
 Japan,JP,Ichihara,280700,35.53,140.09
 Japan,JP,Ichinomiya,279000,35.3,136.8
-Japan,JP,Yao,273800,34.63,135.58
-Japan,JP,Kakogawa,269800,34.77,134.84
+Japan,JP,del Yao,273800,34.63,135.58
+Japan,JP,del Kakogawa,269800,34.77,134.84
 Japan,JP,Tokushima,266800,34.07,134.55
-Japan,JP,Ibaraki,261900,34.81,135.57
+Japan,JP,del Ibaraki,261900,34.81,135.57
 Japan,JP,Hiratsuka,257500,35.33,139.35
 Japan,JP,Yamagata,254400,38.25,140.33
 Japan,JP,Fukui,250100,36.08,136.22
 Japan,JP,Shimonoseki,247300,33.96,130.94
 Japan,JP,Mito,247000,36.38,140.47
-Japan,JP,Neyagawa,246800,34.79,135.64
+Japan,JP,del Neyagawa,246800,34.79,135.64
 Japan,JP,Takasaki,241200,36.33,139.02
 Japan,JP,Hachinohe,240400,40.52,141.53
 Japan,JP,Kurume,238300,33.31,130.51
@@ -8303,24 +8303,24 @@ Japan,JP,Soka,230100,35.82,139.79
 Japan,JP,Chigasaki,227300,35.33,139.41
 Japan,JP,Atsugi,224300,35.45,139.36
 Japan,JP,Yamato,219700,35.52,139.47
-Japan,JP,Takarazuka,219300,34.8,135.35
+Japan,JP,del Takarazuka,219300,34.8,135.35
 Japan,JP,Ageo,217800,35.95,139.61
 Japan,JP,Matsumoto,210700,36.24,137.97
 Japan,JP,Chofu,209900,35.65,139.55
 Japan,JP,Kasukabe,206200,35.98,139.77
 Japan,JP,Numazu,205600,35.1,138.86
-Japan,JP,Kishiwada,203000,34.47,135.39
+Japan,JP,del Kishiwada,203000,34.47,135.39
 Japan,JP,Odawara,202100,35.25,139.16
 Japan,JP,Kure,199700,34.25,132.56
-Japan,JP,Itami,194600,34.78,135.42
+Japan,JP,del Itami,194600,34.78,135.42
 Japan,JP,Nagaoka,194300,37.46,138.85
 Japan,JP,Kofu,193300,35.66,138.57
-Japan,JP,Uji,191200,34.9,135.8
+Japan,JP,del Uji,191200,34.9,135.8
 Japan,JP,Hitachi,190300,36.59,140.66
 Japan,JP,Suzuka,189700,34.88,136.58
 Japan,JP,Kushiro,187400,42.98,144.38
 Japan,JP,Kodaira,183200,35.74,139.49
-Japan,JP,Izumi,181700,34.48,135.42
+Japan,JP,del Izumi,181700,34.48,135.42
 Japan,JP,Yachiyo,178000,35.74,140.1
 Japan,JP,Sakura,176700,35.72,140.23
 Japan,JP,Mitaka,176300,35.68,139.57
@@ -8339,7 +8339,7 @@ Japan,JP,Anjo,165100,34.96,137.1
 Japan,JP,Tsu,163400,34.72,136.51
 Japan,JP,Ashikaga,161900,36.35,139.45
 Japan,JP,Sayama,161900,35.87,139.4
-Japan,JP,Kawanishi,159200,34.82,135.42
+Japan,JP,del Kawanishi,159200,34.82,135.42
 Japan,JP,Oyama,158100,36.32,139.8
 Japan,JP,Kumagaya,156900,36.15,139.39
 Japan,JP,Narashino,155700,35.69,140.04
@@ -8351,7 +8351,7 @@ Japan,JP,Tottori,152300,35.5,134.23
 Japan,JP,Ota,150800,36.3,139.38
 Japan,JP,Iruma,150600,35.83,139.38
 Japan,JP,Ogaki,150500,35.37,136.61
-Japan,JP,Moriguchi,149700,34.73,135.57
+Japan,JP,del Moriguchi,149700,34.73,135.57
 Japan,JP,Higashimurayama,147500,35.75,139.47
 Japan,JP,Komaki,147400,35.3,136.91
 Japan,JP,Otaru,147100,43.2,141.0
@@ -8366,43 +8366,43 @@ Japan,JP,Tsuchiura,136100,36.09,140.19
 Japan,JP,Joetsu,135700,37.12,138.25
 Japan,JP,Omuta,135700,33.02,130.44
 Japan,JP,Seto,133700,35.22,137.08
-Japan,JP,Kadoma,133100,34.73,135.59
+Japan,JP,del Kadoma,133100,34.73,135.59
 Japan,JP,Kakamigahara,132000,35.41,136.89
-Japan,JP,Matsubara,131600,34.57,135.55
+Japan,JP,del Matsubara,131600,34.57,135.55
 Japan,JP,Miyakonojo,131100,31.72,131.06
 Japan,JP,Zama,131100,35.5,139.4
 Japan,JP,Fujieda,130800,34.88,138.26
 Japan,JP,Abiko,130500,35.88,140.03
 Japan,JP,Misato,130400,35.83,139.88
-Japan,JP,Tondabayashi,129200,34.52,135.6
-Japan,JP,Daito,129000,34.71,135.62
+Japan,JP,del Tondabayashi,129200,34.52,135.6
+Japan,JP,del Daito,129000,34.71,135.62
 Japan,JP,Isesaki,129000,36.32,139.2
 Japan,JP,Higashihiroshima,128600,34.44,132.72
 Japan,JP,Ebetsu,128200,43.12,141.55
 Japan,JP,Ueda,126400,36.4,138.25
-Japan,JP,Kashihara,126300,34.5,135.8
+Japan,JP,del Kashihara,126300,34.5,135.8
 Japan,JP,Beppu,125400,33.28,131.5
 Japan,JP,Asaka,125300,35.83,139.58
 Japan,JP,Matsusaka,124500,34.58,136.53
-Japan,JP,Kusatsu,123900,35.02,135.95
+Japan,JP,del Kusatsu,123900,35.02,135.95
 Japan,JP,Niihama,123800,33.96,133.27
-Japan,JP,Mino,123500,34.83,135.47
+Japan,JP,del Mino,123500,34.83,135.47
 Japan,JP,Nobeoka,123400,32.58,131.68
 Japan,JP,Kisarazu,123200,35.38,139.93
 Japan,JP,Okinawa,123200,26.34,127.79
-Japan,JP,Kawachinagano,123100,34.48,135.57
+Japan,JP,del Kawachinagano,123100,34.48,135.57
 Japan,JP,Ebina,120900,35.47,139.42
 Japan,JP,Fujinomiya,120900,35.22,138.61
 Japan,JP,Noda,120800,35.95,139.87
-Japan,JP,Sanda,120600,34.89,135.22
-Japan,JP,Habikino,120100,34.56,135.61
+Japan,JP,del Sanda,120600,34.89,135.22
+Japan,JP,del Habikino,120100,34.56,135.61
 Japan,JP,Yaizu,119800,34.87,138.32
 Japan,JP,Toyokawa,119700,34.82,137.39
 Japan,JP,Ishinomaki,119200,38.43,141.29
 Japan,JP,Aizuwakamatsu,116900,37.49,139.93
 Japan,JP,Hofu,116500,34.05,131.57
 Japan,JP,Imabari,116300,34.06,133.0
-Japan,JP,Ikoma,115900,34.7,135.72
+Japan,JP,del Ikoma,115900,34.7,135.72
 Japan,JP,Higashikurume,115500,35.76,139.53
 Japan,JP,Kokubunji,115500,35.7,139.48
 Japan,JP,Toda,114500,35.82,139.68
@@ -8432,7 +8432,7 @@ Japan,JP,Inazawa,101800,35.25,136.77
 Japan,JP,Isehara,101300,35.41,139.32
 Japan,JP,Sakata,100800,38.91,139.83
 Japan,JP,Tokai,100700,35.03,136.89
-Japan,JP,Ikeda,100100,34.82,135.43
+Japan,JP,del Ikeda,100100,34.82,135.43
 Japan,JP,Tsuruoka,100100,38.73,139.82
 Japan,JP,Konan,99900,35.34,136.86
 Japan,JP,Muroran,99800,42.34,141.01
@@ -12543,33 +12543,33 @@ Peru,PE,Bernal,5600,-5.45,-80.75
 Peru,PE,Huallanca,5600,-9.88,-76.96
 Peru,PE,Illimo,5600,-6.42,-79.83
 Peru,PE,Orcopampa,5600,-15.27,-72.36
-Philippines,PH,Manila,10330100,14.62,120.97
+Philippines,PH,Manila,14000100,14.62,120.97
 Philippines,PH,Davao,951000,7.11,125.63
 Philippines,PH,Cebu,776600,10.32,123.9
 Philippines,PH,Cagayan,463900,8.45,124.67
 Philippines,PH,Bacolod,452500,10.63,122.97
 Philippines,PH,Iloilo,390900,10.69,122.55
-Philippines,PH,Bacoor,339400,14.46,120.94
+Philippines,PH,del Bacoor,339400,14.46,120.94
 Philippines,PH,Mandaue,309700,10.33,123.93
 Philippines,PH,Angeles,292600,15.15,120.55
 Philippines,PH,Baguio,273100,16.43,120.57
-Philippines,PH,Cainta,272700,14.58,121.12
+Philippines,PH,del Cainta,272700,14.58,121.12
 Philippines,PH,San pedro,256200,14.29,121.41
 Philippines,PH,San fernando,250500,15.03,120.69
 Philippines,PH,Lucena,240500,13.95,121.6
 Philippines,PH,Lapu-lapu,218100,10.33,123.93
-Philippines,PH,Binan,216800,14.34,121.08
+Philippines,PH,del Binan,216800,14.34,121.08
 Philippines,PH,Calamba,215600,14.21,121.15
 Philippines,PH,General santos,211900,6.1,125.25
 Philippines,PH,Olongapo,210500,14.82,120.28
-Philippines,PH,Taytay,195900,14.57,121.13
-Philippines,PH,Malolos,191300,14.85,120.81
-Philippines,PH,Binangonan,190400,14.48,121.19
+Philippines,PH,del Taytay,195900,14.57,121.13
+Philippines,PH,del Malolos,191300,14.85,120.81
+Philippines,PH,del Binangonan,190400,14.48,121.19
 Philippines,PH,Tacloban,189100,11.29,125.02
-Philippines,PH,Santa rosa,187100,14.44,120.88
+Philippines,PH,del Santa rosa,187100,14.44,120.88
 Philippines,PH,Cotabato,178200,7.23,124.25
-Philippines,PH,Meycauayan,177900,14.73,120.91
-Philippines,PH,Antipolo,169900,14.59,121.17
+Philippines,PH,del Meycauayan,177900,14.73,120.91
+Philippines,PH,del Antipolo,169900,14.59,121.17
 Philippines,PH,Zamboanga,163700,6.92,122.08
 Philippines,PH,Toledo,152500,10.38,123.64
 Philippines,PH,Calbayog,146100,12.07,124.63
@@ -12580,11 +12580,11 @@ Philippines,PH,San pablo,138900,14.05,121.32
 Philippines,PH,Cabanatuan,136500,15.5,120.97
 Philippines,PH,Dagupan,136200,16.03,120.35
 Philippines,PH,Roxas,134700,11.6,122.75
-Philippines,PH,Baliuag,133800,14.96,120.89
-Philippines,PH,Cavite,125400,14.47,120.9
+Philippines,PH,del Baliuag,133800,14.96,120.89
+Philippines,PH,del Cavite,125400,14.47,120.9
 Philippines,PH,Guagua,123800,14.97,120.63
 Philippines,PH,Butuan,123700,8.93,125.52
-Philippines,PH,San mateo,120200,14.71,121.13
+Philippines,PH,del San mateo,120200,14.71,121.13
 Philippines,PH,Santiago,118300,16.69,121.54
 Philippines,PH,Santa cruz,117700,14.29,121.41
 Philippines,PH,Tagum,117600,7.38,125.81

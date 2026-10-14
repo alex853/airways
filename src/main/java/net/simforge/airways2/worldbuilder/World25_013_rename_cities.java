@@ -44,6 +44,10 @@ public class World25_013_rename_cities {
                 new String[]{"VIDP", "Delhi Indira Gandhi"},
                 new String[]{"YMEN", "Melbourne Essendon"},
                 new String[]{"FAOR", "Johannesburg O.R. Tambo"},
+                new String[]{"RJBB", "Osaka Kansai"},
+                new String[]{"RJOO", "Osaka Itami"},
+                new String[]{"RPLL", "Manila Ninoy Aquino"},
+                new String[]{"RPLC", "Manila Clark"},
                 new String[]{"VTBD", "Bangkok Don Mueang"},
                 new String[]{"VTBS", "Bangkok Suvarnabhumi"}
         ));

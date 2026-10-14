@@ -107,6 +107,9 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:JP", "city-name:Tokyo"},
                 new String[]{"country-code:JP", "city-name:Yokohama"},
                 new String[]{"country-code:JP", "city-name:Kawasaki"},
+                new String[]{"country-code:JP", "city-name:Osaka"},
+                new String[]{"country-code:JP", "city-name:Kobe"},
+                new String[]{"country-code:JP", "city-name:Kyoto"},
 
                 new String[]{"country-code:IN", "city-name:Mumbai"},
                 new String[]{"country-code:IN", "city-name:Delhi"},
@@ -139,6 +142,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:NL", "city-name:Amsterdam"},
                 new String[]{"country-code:NL", "city-name:Rotterdam"},
                 new String[]{"country-code:NL", "city-name:The Hague"},
+
+                new String[]{"country-code:PH", "city-name:Manila"},
 
                 new String[]{"country-code:PL", "city-name:Warsaw"},
                 new String[]{"country-code:PL", "city-name:Gdansk"},
