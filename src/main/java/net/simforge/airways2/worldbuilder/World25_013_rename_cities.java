@@ -50,6 +50,7 @@ public class World25_013_rename_cities {
                 new String[]{"RPLC", "Manila Clark"},
                 new String[]{"LFLL", "Lyon Saint-Exupery"},
                 new String[]{"LFLY", "Lyon Bron"},
+                new String[]{"LMML", "Malta Luqa"},
                 new String[]{"VTBD", "Bangkok Don Mueang"},
                 new String[]{"VTBS", "Bangkok Suvarnabhumi"}
         ));

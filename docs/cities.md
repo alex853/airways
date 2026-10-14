@@ -407,3 +407,10 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   (Fukuoka MEA ~2,6 млн), `del` Kasuga, Kurume, Saga (≤21 nm). Kitakyushu (28 nm), Omuta, Shimonoseki, Sasebo,
   Kumamoto, Nagasaki остаются отдельными (не импортируются). RJFF (size 2808, ниже 5000) — через `World25_009`,
   `create-links?icao=RJFF`. Терминал и attraction не нужны.
+- **Malta (MT, LMML) и Sint Maarten (SX, TNCM) — острова, из списка отсутствующих по VATSIM:** в CSV для островов
+  не было подходящего города (Malta — только пункты <100k, Sint Maarten — ничего), поэтому добавлены строки:
+  `Malta,MT,Malta,560000` (остров целиком) и `Sint Maarten,SX,Sint Maarten,75000` (весь остров, голландская и
+  французская части; аэропорт голландский, имя Sint Maarten; в `icaodata.csv` страна `Netherlands Antilles`).
+  Мелкие пункты Malta не помечаются `del` (<100k). LMML (size 5815) создаётся автоматически, переименован
+  `Malta Luqa`; TNCM (size 2301) — через `World25_009`, `create-links?icao=TNCM`. TFFG Grand Case не берём.
+  `BusinessAviationTerminal` в LMML и TNCM. Attraction: Malta 5, Sint Maarten 15 (`set-attraction`).

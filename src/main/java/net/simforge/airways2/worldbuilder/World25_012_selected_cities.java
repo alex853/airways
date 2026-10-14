@@ -139,6 +139,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:NO", "city-name:Bergen"},
                 new String[]{"country-code:NO", "city-name:Stavanger"},
 
+                new String[]{"country-code:MT", "city-name:Malta"},
+
                 new String[]{"country-code:MX", "city-name:Mexico"},
                 new String[]{"country-code:MX", "city-name:Tijuana"},
 
@@ -176,6 +178,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:SE", "city-name:Gothenburg"},
 
                 new String[]{"country-code:TH", "city-name:Bangkok"},
+
+                new String[]{"country-code:SX", "city-name:Sint Maarten"},
 
                 new String[]{"country-code:TR", "city-name:Istanbul"},
                 new String[]{"country-code:TR", "city-name:Izmir"},

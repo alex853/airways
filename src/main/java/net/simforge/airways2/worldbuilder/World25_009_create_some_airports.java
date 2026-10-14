@@ -40,6 +40,7 @@ public class World25_009_create_some_airports {
                 "OTHH",
                 "RJBB", "RJFF", "RJOO",
                 "SCEL",
+                "TNCM",
                 "VTBS",
                 "WMKK",
                 "WSSS",
