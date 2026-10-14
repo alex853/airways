@@ -14,7 +14,8 @@
    поэтому свежесозданные аэропорты исчезают из списка не сразу).
 3. Для остальных считается анализ по `city-population.csv` (города в радиусе 30 nm).
 
-Скрипт отчёта лежит у ассистента в памяти проекта (`memory/vatsim_backlog.sh`), он не входит в репозиторий.
+Скрипт отчёта: [`scripts/vatsim_backlog.sh`](../scripts/vatsim_backlog.sh) (`bash scripts/vatsim_backlog.sh [workdir]`),
+токен читается из `admin-requests.http` в корне репозитория.
 
 ## Формат таблицы
 
