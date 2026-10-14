@@ -165,6 +165,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:SE", "city-name:Stockholm"},
                 new String[]{"country-code:SE", "city-name:Gothenburg"},
 
+                new String[]{"country-code:TH", "city-name:Bangkok"},
+
                 new String[]{"country-code:TR", "city-name:Istanbul"},
                 new String[]{"country-code:TR", "city-name:Izmir"},
                 new String[]{"country-code:TR", "city-name:Bursa"},

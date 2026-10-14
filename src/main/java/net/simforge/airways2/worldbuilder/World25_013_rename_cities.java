@@ -36,7 +36,9 @@ public class World25_013_rename_cities {
                 new String[]{"HAAB", "Addis Ababa Bole"},
                 new String[]{"VIDP", "Delhi Indira Gandhi"},
                 new String[]{"YMEN", "Melbourne Essendon"},
-                new String[]{"FAOR", "Johannesburg O.R. Tambo"}
+                new String[]{"FAOR", "Johannesburg O.R. Tambo"},
+                new String[]{"VTBD", "Bangkok Don Mueang"},
+                new String[]{"VTBS", "Bangkok Suvarnabhumi"}
         ));
     }
 }

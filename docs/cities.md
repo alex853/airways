@@ -239,6 +239,14 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   вручную. FALA, FAGM, FAWB не берём; военные FAWK, FASK не берём. Attraction не нужен.
   Страна `South africa` в CSV исправлена на `South Africa` (все строки ZA), существующая страна в мире
   переименована через `RenameCountries` в `World25_013` (страны ищутся по коду, дублей не будет).
+- **Bangkok (TH, аэропорты VTBS и VTBD) — из списка отсутствующих по VATSIM, «семя» Юго-Восточной Азии:** новая
+  страна Thailand. CSV `Krung thep` → `Bangkok` (английское имя), 5 455 200 → 10 900 200 (Bangkok Metropolitan
+  Region ~11 млн). `del`: Samut prakan, Nonthaburi, Pak kret, Phra pradaeng, Thanyaburi, Khlong luang (≤22 nm от
+  центра). Nakhon pathom (26 nm), Chon buri, Si racha остаются отдельными. VTBS (Suvarnabhumi) нет в
+  `icaodata.csv`, берётся из refdata 3.1.3: добавлен в `World25_009`, переименован `Bangkok Suvarnabhumi`, линк
+  `create-links?icao=VTBS`. VTBD (в `icaodata.csv` назван `Bangkok Intl`, на самом деле Don Mueang, size 7227)
+  создаётся и привязывается автоматически, переименован `Bangkok Don Mueang`. `BusinessAviationTerminal` только в
+  VTBS. VTBK Kamphaeng Saen не берём. Attraction 2 (`set-attraction`).
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 
