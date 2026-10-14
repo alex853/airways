@@ -403,3 +403,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   в 40 nm от центра Vancouver). `del` не нужен (пригороды <100k, Abbotsford 140k на 36 nm отдельный). CYVR (size
   9653), CYYJ (size 5304), CYYC (size 8177) создаются автоматически. `BusinessAviationTerminal` в CYVR и CYYC.
   CYXX Abbotsford (size 4952), CYPK, CZBB не берём. Attraction не нужен.
+- **Fukuoka (JP, аэропорт RJFF) — из списка отсутствующих по VATSIM, «семя» Кюсю:** CSV 1 376 100 → 2 600 100
+  (Fukuoka MEA ~2,6 млн), `del` Kasuga, Kurume, Saga (≤21 nm). Kitakyushu (28 nm), Omuta, Shimonoseki, Sasebo,
+  Kumamoto, Nagasaki остаются отдельными (не импортируются). RJFF (size 2808, ниже 5000) — через `World25_009`,
+  `create-links?icao=RJFF`. Терминал и attraction не нужны.

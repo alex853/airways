@@ -114,6 +114,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:JP", "city-name:Osaka"},
                 new String[]{"country-code:JP", "city-name:Kobe"},
                 new String[]{"country-code:JP", "city-name:Kyoto"},
+                new String[]{"country-code:JP", "city-name:Fukuoka"},
 
                 new String[]{"country-code:IN", "city-name:Mumbai"},
                 new String[]{"country-code:IN", "city-name:Delhi"},
