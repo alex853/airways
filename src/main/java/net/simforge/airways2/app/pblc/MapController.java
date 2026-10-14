@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,9 +71,20 @@ public class MapController {
                     .limit(RECENT_FLIGHTS_LIMIT)
                     .map(fm -> FlightMinDto.from(world, fm))
                     .toList();
-            return new AircraftFullInfoDto(
-                    AircraftInfoDto.from(world, aircraft, true),
-                    recentFlights);
+            final AircraftInfoDto info = AircraftInfoDto.from(world, aircraft, true);
+
+            // names and countries of all the airports mentioned in the response, by ICAO
+            final AirportRefs refs = new AirportRefs(world);
+            final Map<String, AirportRefDto> airports = new LinkedHashMap<>();
+            Stream.concat(
+                            Stream.of(info.getLcApt(), info.getDep(), info.getDest()),
+                            recentFlights.stream().flatMap(f -> Stream.of(f.getDep(), f.getDest())))
+                    .filter(Objects::nonNull)
+                    .distinct()
+                    .forEach(icao -> world.airports().byIcao(icao)
+                            .ifPresent(a -> airports.put(icao, refs.of(a))));
+
+            return new AircraftFullInfoDto(info, recentFlights, airports);
         });
     }
 
@@ -312,6 +325,8 @@ public class MapController {
     public static class AircraftFullInfoDto {
         private final AircraftInfoDto info;
         private final List<FlightMinDto> recentFlights;
+        /** airports referenced by info and recentFlights, by ICAO */
+        private final Map<String, AirportRefDto> airports;
     }
 
     @Data
