@@ -7,7 +7,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
+import java.util.function.LongSupplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -23,6 +26,15 @@ public class Storage<T> {
     /** @noinspection unused*/
     private static final int RECORD_EXISTS = 0;
     private static final int RECORD_EMPTY_OR_DELETED = 1;
+
+    // a deleted record keeps the time of deletion in minutes from this moment in the first 4 bytes of its body
+    private static final long QUARANTINE_EPOCH_MILLIS = Instant.parse("2020-01-01T00:00:00Z").toEpochMilli();
+    private static final int DELETED_AT_SIZE = 4;
+
+    /**
+     * How long a deleted record is not reused if the builder does not say another value.
+     */
+    public static final Duration DEFAULT_DELETED_RECORD_QUARANTINE = Duration.ofDays(1);
 
     private final String name;
     private final Instantiator<T> instantiator;
@@ -41,10 +53,19 @@ public class Storage<T> {
     //   current time millis 8b
     private byte[] data = new byte[0];
 
+    private long deletedRecordQuarantineMillis;
+    private final LongSupplier clock;
+    private final boolean canStoreDeletedAt;
+    // deleted records which are known to the storage: {recordId, deletedAt}, the oldest deletion first
+    private final ArrayDeque<int[]> deletedRecords = new ArrayDeque<>();
+
     private Storage(final String name,
                     final Instantiator<T> instantiator,
                     final DataType idDataType,
-                    final DataField[] dataFields) {
+                    final DataField[] dataFields,
+                    final long deletedRecordQuarantineMillis,
+                    final boolean deletedRecordQuarantineIsExplicit,
+                    final LongSupplier clock) {
         checkNotNull(dataFields);
 
         this.name = name;
@@ -52,6 +73,18 @@ public class Storage<T> {
         this.idDataType = idDataType;
         this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
+
+        this.deletedRecordQuarantineMillis = deletedRecordQuarantineMillis;
+        this.clock = clock;
+        this.canStoreDeletedAt = recordSize - recordHeaderSize >= DELETED_AT_SIZE;
+        if (deletedRecordQuarantineMillis > 0 && !canStoreDeletedAt) {
+            if (deletedRecordQuarantineIsExplicit) {
+                throw new IllegalStateException("Storage " + name + " has records too small to keep the deletion time, "
+                        + "at least " + DELETED_AT_SIZE + " bytes of data are required for the quarantine");
+            }
+            // the default quarantine is just not applicable to such records
+            this.deletedRecordQuarantineMillis = 0;
+        }
 
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
         Arrays.sort(sortedDataFields, Comparator.comparingInt(Object::hashCode));
@@ -72,6 +105,7 @@ public class Storage<T> {
             return;
         }
         data = Files.readAllBytes(dataPath);
+        rebuildDeletedRecords();
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -85,6 +119,7 @@ public class Storage<T> {
 
     public void reset() {
         data = new byte[0];
+        deletedRecords.clear();
     }
 
     /**
@@ -144,67 +179,107 @@ public class Storage<T> {
         return Optional.of(instantiator.create(first.getAsInt()));
     }
     
+    /**
+     * Adds a new record. A deleted record is reused only when its quarantine is over, otherwise the storage grows.
+     */
     public int addRecord() {
-        // todo ak3 optimization - ids of deleted records can be temporarily stored somewhere to improve performance
-        int deletedRecordId = 0;
+        final int[] oldest = deletedRecords.peekFirst();
+        if (oldest != null && isQuarantineOver(oldest[1])) {
+            deletedRecords.pollFirst();
+
+            final int recordId = oldest[0];
+            final int headerOffset = getRecordHeaderOffset(recordId);
+            // the body keeps the 'deleted at' time, it must be clean for the new record
+            Arrays.fill(data, headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
+            data[headerOffset] = RECORD_EXISTS;
+            return recordId;
+        }
+
+        final int addedRecordId = getTotalStoredRecordCount() + 1;
+        // todo ak3 to check if new id is possible according to idDataType
+        final byte[] newData = new byte[data.length + recordSize];
+        System.arraycopy(data, 0, newData, 0, data.length);
+        data = newData;
+        return addedRecordId;
+    }
+
+    /**
+     * Deletes a record. The storage is not shrunk, the record id is not reused until the quarantine is over.
+     */
+    public void deleteRecord(final int recordId) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+
+        final int headerOffset = getRecordHeaderOffset(recordId);
+        data[headerOffset] = RECORD_EMPTY_OR_DELETED;
+        Arrays.fill(data, headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
+
+        final int deletedAt = currentDeletedAtMinutes();
+        if (canStoreDeletedAt) {
+            setIntAtOffset(headerOffset + recordHeaderSize, deletedAt);
+        }
+        deletedRecords.addLast(new int[]{recordId, deletedAt});
+    }
+
+    /**
+     * Count of deleted records which can not be reused yet because of the quarantine
+     */
+    public int getQuarantinedDeletedRecordCount() {
+        return (int) deletedRecords.stream().filter(r -> !isQuarantineOver(r[1])).count();
+    }
+
+    /**
+     * Count of deleted records which are ready to be reused
+     */
+    public int getReusableDeletedRecordCount() {
+        return (int) deletedRecords.stream().filter(r -> isQuarantineOver(r[1])).count();
+    }
+
+    public long getDeletedRecordQuarantineMillis() {
+        return deletedRecordQuarantineMillis;
+    }
+
+    private boolean isQuarantineOver(final int deletedAtMinutes) {
+        if (deletedRecordQuarantineMillis <= 0) {
+            return true;
+        }
+        final long deletedAtMillis = QUARANTINE_EPOCH_MILLIS + deletedAtMinutes * 60_000L;
+        final long ageMillis = clock.getAsLong() - deletedAtMillis;
+        return ageMillis >= deletedRecordQuarantineMillis;
+    }
+
+    private int currentDeletedAtMinutes() {
+        final long minutes = (clock.getAsLong() - QUARANTINE_EPOCH_MILLIS) / 60_000L;
+        // zero means 'unknown' (records deleted before the quarantine was introduced)
+        return (int) Math.max(1, Math.min(Integer.MAX_VALUE, minutes));
+    }
+
+    /**
+     * Rebuilds the list of deleted records from the data, the oldest deletion first.
+     * Deleted records without the 'deleted at' time are treated as deleted just now, so they are quarantined as well.
+     */
+    private void rebuildDeletedRecords() {
+        deletedRecords.clear();
+
+        final List<int[]> found = new ArrayList<>();
+        final int now = currentDeletedAtMinutes();
         for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
             if (!isDeleted(recordId)) {
                 continue;
             }
 
-            deletedRecordId = recordId;
-            break;
-        }
-
-        if (deletedRecordId != 0) {
-            data[getRecordHeaderOffset(deletedRecordId)] = RECORD_EXISTS;
-            return deletedRecordId;
-        } else {
-            final int addedRecordId = getTotalStoredRecordCount() + 1;
-            // todo ak3 to check if new id is possible according to idDataType
-            final byte[] newData = new byte[data.length + recordSize];
-            System.arraycopy(data, 0, newData, 0, data.length);
-            data = newData;
-            return addedRecordId;
-        }
-    }
-
-    public void deleteRecord(final int recordId) {
-        checkRecordIdInBounds(recordId);
-        checkRecordIdIsNotDeleted(recordId);
-
-        data[getRecordHeaderOffset(recordId)] = RECORD_EMPTY_OR_DELETED;
-        Arrays.fill(data, getRecordHeaderOffset(recordId) + 1, getRecordHeaderOffset(recordId+1), (byte) 0);
-
-        vacuumDeletedRecordsAtTail();
-    }
-
-    private void vacuumDeletedRecordsAtTail() {
-        int lastNonDeletedRecordId = -1;
-        int currRecordId = getTotalStoredRecordCount();
-        while (currRecordId >= 1) {
-            if (!isDeleted(currRecordId)) {
-                lastNonDeletedRecordId = currRecordId;
-                break;
+            int deletedAt = canStoreDeletedAt ? getIntAtOffset(getRecordHeaderOffset(recordId) + recordHeaderSize) : 0;
+            if (deletedAt <= 0) {
+                deletedAt = now;
+                if (canStoreDeletedAt) {
+                    setIntAtOffset(getRecordHeaderOffset(recordId) + recordHeaderSize, deletedAt);
+                }
             }
-            currRecordId--;
+            found.add(new int[]{recordId, deletedAt});
         }
 
-        if (lastNonDeletedRecordId == -1) {
-            return;
-        }
-
-        final int recordsToRemove = getTotalStoredRecordCount() - lastNonDeletedRecordId;
-        if (recordsToRemove == 0) {
-            return;
-        }
-
-        log.warn("vacuuming {} storage, dropping {} records at tail, new total stored record count {}",
-                name, recordsToRemove, lastNonDeletedRecordId);
-
-        final byte[] newData = new byte[lastNonDeletedRecordId * recordSize];
-        System.arraycopy(data, 0, newData, 0, newData.length);
-        data = newData;
+        found.sort(Comparator.<int[]>comparingInt(r -> r[1]).thenComparingInt(r -> r[0]));
+        deletedRecords.addAll(found);
     }
 
     public void printDeletedRecordInfo() {
@@ -245,6 +320,8 @@ public class Storage<T> {
 
         log.info("deleted record info for {} storage - total stored {}, deleted {}, highest deleted id {}, longest deleted sequence {}, highest id of longest deleted sequence {}",
                 name, totalRecords, deletedRecords, highestDeletedId, longestDeletedSequence, highestIdOfLongestDeletedSequence);
+        log.info("deleted record quarantine for {} storage - quarantine {}, in quarantine {}, ready to be reused {}",
+                name, Duration.ofMillis(deletedRecordQuarantineMillis), getQuarantinedDeletedRecordCount(), getReusableDeletedRecordCount());
     }
 
     public int getAsInt(final int recordId, final DataField dataField) {
@@ -479,8 +556,31 @@ public class Storage<T> {
         private Instantiator<T> instantiator;
         private DataType idDataType;
         private final LinkedList<DataField> dataFields = new LinkedList<>();
+        private long deletedRecordQuarantineMillis = DEFAULT_DELETED_RECORD_QUARANTINE.toMillis();
+        private boolean deletedRecordQuarantineIsExplicit = false;
+        private LongSupplier clock = System::currentTimeMillis;
 
         private Builder() {
+        }
+
+        /**
+         * A deleted record is not reused during this time (one day by default, zero means 'reuse at once').
+         * It requires at least 4 bytes of data in a record, the default one is skipped for smaller records.
+         */
+        public Builder<T> deletedRecordQuarantine(final Duration quarantine) {
+            checkNotNull(quarantine);
+            checkArgument(!quarantine.isNegative(), "quarantine should not be negative");
+            this.deletedRecordQuarantineMillis = quarantine.toMillis();
+            this.deletedRecordQuarantineIsExplicit = true;
+            return this;
+        }
+
+        /**
+         * Source of current time in milliseconds, it is intended for tests.
+         */
+        public Builder<T> clock(final LongSupplier clock) {
+            this.clock = checkNotNull(clock);
+            return this;
         }
 
         public Builder<T> name(final String name) {
@@ -509,7 +609,8 @@ public class Storage<T> {
             if (dataFields.isEmpty()) {
                 throw new IllegalStateException("dataFields not set");
             }
-            return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]));
+            return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]),
+                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock);
         }
     }
 

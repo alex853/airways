@@ -5,12 +5,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StorageRecordsTest {
+    // no quarantine - the tests below check the reuse of deleted records, see StorageQuarantineTest for the quarantine
     private final Storage<Object> storage = Storage.builder()
             .withInstantiator(recordId -> recordId)
+            .deletedRecordQuarantine(Duration.ZERO)
             .withDataField(DataField.of(DataType.Signed32bit))
             .withDataField(DataField.of(DataType.LatLong24bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
