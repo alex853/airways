@@ -249,6 +249,12 @@ public class ShadowJetLogic {
                     continue;
                 }
 
+                // journeys heading to the hub cities have a direct flight here, they are handled by the regular logic
+                // and are not counted at all, otherwise they would always look like 'getting closer'
+                if (toCitiesId.contains(journey.getToCityId()) || collectedIds.contains(journey.getId())) {
+                    continue;
+                }
+
                 final Geo.Coords locationCoords = cityCoordsCache.computeIfAbsent(locationCityId,
                         id -> world.cities().byId(id).orElseThrow().getCoords());
                 final Geo.Coords targetCoords = cityCoordsCache.computeIfAbsent(journey.getToCityId(),
@@ -262,11 +268,6 @@ public class ShadowJetLogic {
                     continue;
                 }
                 closer++;
-
-                // journeys with a direct flight are handled by the regular logic
-                if (toCitiesId.contains(journey.getToCityId()) || collectedIds.contains(journey.getId())) {
-                    continue;
-                }
 
                 final double reduction = distanceNow - distanceFromHub;
                 if (best != null && reduction <= bestReduction) {

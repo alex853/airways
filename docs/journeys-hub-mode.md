@@ -49,7 +49,7 @@
 
 **Логи** (все строки начинаются с `hub test - `):
 
-- Статистика на каждый рейс в хаб:
+- Статистика на каждый рейс в хаб (журни, летящие в город хаба, то есть с прямым рейсом, **не учитываются**):
   `hub test - f/m #… , t/f #… - A -> B, <тип ВС> - looking-for-tickets journeys getting closer to destination: N, not getting closer: M`.
 - Результат выбора: `hub test - f/m #…, t/f #… - A -> B - j/y #… selected, g/s …, cabin …, located at <город>, target
   <город>, distance to target X nm now, Y nm from the hub` либо `… no suitable journey found (no candidate or no seats)`.
