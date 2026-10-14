@@ -223,6 +223,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   не нужен (пригородов ≥100k нет; Debre zeyit 98 700 и Nazret 176 800 отдельные). Добавлен в
   `World25_012_selected_cities`. HAAB (size 7500, автолинк) переименован `Bole Intl` → `Addis Ababa Bole`. Военный
   HAHM Harar Meda не берём. Attraction не нужен.
+- **New Orleans (US, аэропорт KMSY) — из списка отсутствующих по VATSIM:** CSV `New orleans` → `New Orleans`,
+  466 600 → 1 270 600 (агломерация MSA ~1,27 млн; город сам ~380k). `del Metairie` (147 900, 4 nm от KMSY).
+  Baton Rouge (53 nm) отдельный, не трогаем. Добавлен в `World25_012_selected_cities`. KMSY (size 6304) создаётся и
+  привязывается автоматически; `BusinessAviationTerminal` в KMSY вручную. KNEW Lakefront (size 4174, 12 nm) не берём
+  по решению; KNBG (NAS JRB, в icaodata помечен civil) — военный. Attraction не нужен.
 - **Taiwan (RCTP, RCKH) — из списка отсутствующих по VATSIM:** новая страна, два города (остров большой, но
   остальное — Taichung, Tainan, Chiayi и др. — пока не добавляем):
 
