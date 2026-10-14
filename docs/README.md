@@ -10,6 +10,8 @@
 - [vatsim-backlog.md](vatsim-backlog.md) — VATSIM-бэклог: формат отчёта, как получить, приоритеты регионов
 - [journeys.md](journeys.md) — journeys: жизненный цикл, локация, решения (ItinerariesDone, TooLateToBoard), далёкое будущее
 - [journeys-hub-mode.md](journeys-hub-mode.md) — перелёты через хабы (hub mode): идея, статус, драйран, план (отложено)
+- [storage-quarantine.md](storage-quarantine.md) — Storage: карантин удалённых записей (не переиспользовать id сразу), дизайн
+- [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
 - [users.md](users.md) — пользователи: временное хранилище на property-файлах, токены, последняя посадка
 
 ## Правила ведения
