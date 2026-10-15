@@ -98,6 +98,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:GB", "city-name:Manchester"},
 
                 new String[]{"country-code:GR", "city-name:Athens"},
+                new String[]{"country-code:GR", "city-name:Thessaloniki"},
                 new String[]{"country-code:GR", "city-name:Zakynthos"},
                 new String[]{"country-code:GR", "city-name:Heraklion"},
                 new String[]{"country-code:GR", "city-name:Corfu"},

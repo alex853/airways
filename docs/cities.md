@@ -445,3 +445,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   4 nm от ядра; тёзка Vancouver BC, который в мире уже есть). Gresham (96,9k) <100k не помечен, Salem (44 nm)
   отдельный рынок, не импортируется. KPDX (size 7915) создаётся автоматически, имя `Portland Intl` оставлено.
   KHIO Hillsboro (3243) не берём. Терминал и attraction не нужны.
+- **Thessaloniki (GR, аэропорт LGTS) — из списка отсутствующих по VATSIM (1837 упоминаний):** CSV 372 100 →
+  1 000 100 (метро ~1,0 млн; хвост 100 сохранён). Пригородов ≥100k нет (Kalamaria 89k), `del` не нужен. Katerini,
+  Larisa, Volos — отдельные рынки. LGTS (size 4848, ниже 5000) — через `World25_009`, `create-links?icao=LGTS`,
+  переименован `Thessaloniki Makedonia`. Военные аэродромы рядом (LGSD, LGAX, LGLR…) уже `military`.
+  `BusinessAviationTerminal` в LGTS. Attraction не нужен.
