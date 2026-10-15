@@ -15562,7 +15562,7 @@ LL09,42.2806,-88.0945,civil,610,Air Estates Inc,Mundelein,Illinois,United States
 LL0A,31.8979,34.6908,military,3206,Palmahim AB,Palmahim AB,,Israel
 LL0B,30.8594,34.4431,civil,1495,Nizzana West,Nizzana West,,Israel
 LL0C,31.2589,34.6436,civil,1237,Hatserim Northwest,Hatserim Northwest,,Israel
-LL0D,31.2334,34.6626,civil,7055,Hatserim,Hatserim,,Israel
+LL0D,31.2334,34.6626,military,7055,Hatserim,Hatserim,,Israel
 LL0E,29.9062,35.0667,civil,1015,Yotvata,Yotvata,,Israel
 LL0F,31.2286,35.1909,civil,1400,Arad,Amman,,Israel
 LL10,41.7348,-88.2034,civil,1320,Naper Aero Club,Naperville,Illinois,United States
@@ -15608,12 +15608,12 @@ LL98,40.9436,-89.1083,civil,610,John W Meils Rla,Rutland,Illinois,United States
 LLAZ,31.3686,34.2944,civil,800,Katif,Gush-Katif,,Israel
 LLBG,32.0106,34.8772,civil,8513,Ben Gurion,Tel Aviv,,Israel
 LLBS,31.2881,34.7231,civil,1040,Teyman,Beer-Sheba,,Israel
-LLEK,31.8395,34.8218,civil,7177,Tel Nov,Tel Nov,,Israel
+LLEK,31.8395,34.8218,military,7177,Tel Nov,Tel Nov,,Israel
 LLES,32.4417,35.0036,civil,3050,Eyn-Shemer,Eyn-Shemer,,Israel
 LLET,29.5594,34.9592,civil,1903,Eilat,Eilat,,Israel
 LLEY,30.6232,35.2021,civil,1202,En Yahav,En Yahav,,Israel
 LLHA,32.8094,35.0431,civil,1206,Haifa,Haifa,,Israel
-LLHS,31.7625,34.7272,civil,7300,Hatzor,Hatzor,,Israel
+LLHS,31.7625,34.7272,military,7300,Hatzor,Hatzor,,Israel
 LLHZ,32.1806,34.8347,civil,903,Herzlia,Herzlia,,Israel
 LLIB,32.9806,35.5708,civil,2200,M.I. Ben-Yaakov,Rosh-Pina,,Israel
 LLJR,31.8647,35.2192,civil,1964,Jerusalem,Jerusalem,,Israel
@@ -15623,7 +15623,7 @@ LLMR,30.6556,34.8083,civil,520,Mitzpe-Ramon,Mitzpe-Ramon,,Israel
 LLMZ,31.3417,35.3917,civil,1200,I.Bar-Yehuda,Metzada,,Israel
 LLNV,31.2083,35.0123,military,9009,Nevatim AB,Nevatim AB,,Israel
 LLOV,29.9361,34.9411,military,6211,Ovda AB,Ovda,,Israel
-LLRD,32.6604,35.1822,civil,7382,Ramat David,Ramat David,,Israel
+LLRD,32.6604,35.1822,military,7382,Ramat David,Ramat David,,Israel
 LLRM,30.7761,34.6667,civil,5710,Ramon,Ramon,,Israel
 LLSD,32.1158,34.7822,civil,1743,Sde Dov,Tel Aviv,,Israel
 LMML,35.8586,14.4781,civil,5815,Luqa,Malta,,Malta

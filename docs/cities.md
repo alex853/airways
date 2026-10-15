@@ -432,3 +432,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   отдельным. UMMS Minsk-2 (size 3604, ниже 5000) — через `World25_009`, `create-links?icao=UMMS`, переименован
   `Minsk National`. UMMM Minsk-1 (2092) не берём, UMLI Machulishchi (военная авиабаза с типом `civil`) не берём.
   Терминал и attraction не нужны.
+- **Tel Aviv (IL, аэропорт LLBG) — из списка отсутствующих по VATSIM (№1, 3436 упоминаний), Израиль, «семя
+  региона»:** CSV `Tel aviv-yafo` 366 900 → `Tel Aviv` 4 000 900 (Gush Dan, ~4,0–4,3 млн; хвост 900 сохранён). `del`
+  у девяти городов ≥100k в 25 nm от ядра: Rishon lez#iyyon, Ashdod, Petah# tiqwa, Netanya, H#olon, Bene beraq,
+  Bat yam, Ramat gan, Reh#ovot. Ashqelon (26 nm, граница) не вливаем и не импортируем. Yerushalayim (29 nm от ядра,
+  отдельный рынок) отложен. LLBG (size 8513) создаётся автоматически, переименован `Tel Aviv Ben Gurion`.
+  Военные базы с типом `civil` и size ≥5000 в радиусе 50 nm (LLEK Tel Nov, LLHS Hatzor, LLRD Ramat David, LL0D
+  Hatserim) переведены в `military` в `icaodata.csv`, чтобы автоимпорт их не создал. LLSD Sde Dov (закрыт) не берём.
+  `BusinessAviationTerminal` в LLBG. Attraction не нужен.

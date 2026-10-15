@@ -111,6 +111,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:HU", "city-name:Budapest"},
 
+                new String[]{"country-code:IL", "city-name:Tel Aviv"},
+
                 new String[]{"country-code:JP", "city-name:Tokyo"},
                 new String[]{"country-code:JP", "city-name:Yokohama"},
                 new String[]{"country-code:JP", "city-name:Kawasaki"},
