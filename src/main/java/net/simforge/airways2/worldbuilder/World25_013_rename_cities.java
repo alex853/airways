@@ -54,7 +54,8 @@ public class World25_013_rename_cities {
                 new String[]{"LMML", "Malta Luqa"},
                 new String[]{"VTBD", "Bangkok Don Mueang"},
                 new String[]{"VTBS", "Bangkok Suvarnabhumi"},
-                new String[]{"OERK", "Riyadh King Khalid"}
+                new String[]{"OERK", "Riyadh King Khalid"},
+                new String[]{"UMMS", "Minsk National"}
         ));
     }
 }

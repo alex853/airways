@@ -23,6 +23,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:BR", "city-name:Sao Paulo"},
 
+                new String[]{"country-code:BY", "city-name:Minsk"},
+
                 new String[]{"country-code:CA", "city-name:Toronto"},
                 new String[]{"country-code:CA", "city-name:Montreal"},
                 new String[]{"country-code:CA", "city-name:Vancouver"},

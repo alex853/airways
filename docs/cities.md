@@ -427,3 +427,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   480 900 (CMA ~480–500 тыс.; хвост 900 сохранён). `del` не нужен (в 25 nm нет городов ≥100k). CYHZ (size 5027)
   создаётся автоматически, имя `Halifax Intl` оставлено. CYAW Halifax/Shearwater и CYZX Greenwood (военные) не
   берём. Терминал и attraction не нужны.
+- **Minsk (BY, аэропорт UMMS) — из списка отсутствующих по VATSIM (1885 упоминаний), Беларусь:** CSV 1 646 600 →
+  2 300 600 (агломерация ~2,3 млн; хвост 600 сохранён). `del` не нужен: Barisaw (154,9k) ~39 nm от центра, остаётся
+  отдельным. UMMS Minsk-2 (size 3604, ниже 5000) — через `World25_009`, `create-links?icao=UMMS`, переименован
+  `Minsk National`. UMMM Minsk-1 (2092) не берём, UMLI Machulishchi (военная авиабаза с типом `civil`) не берём.
+  Терминал и attraction не нужны.
