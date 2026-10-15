@@ -11,6 +11,7 @@ import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.app.vatsimtracker.PilotContext;
 import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.world.processors.CityFlowHelper;
@@ -756,56 +757,95 @@ public class AdminController {
         return getFlowInfo(idStr);
     }
 
+    // One-shot: renames cities to the English names and sets agglomeration populations (the tail of the old
+    // number is kept). The content is replaced each time. Cities are looked up by name, so renames go first.
     @GetMapping("/f1-tour-fixes")
     public void f1TourFixes() {
         worldBean.modifySync(world -> {
-            final Cities.City berlin = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Berlin")).findFirst().orElseThrow();
-            berlin.setPopulation(4500300);
-
-            final Cities.City hamburg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Hamburg")).findFirst().orElseThrow();
-            hamburg.setPopulation(3000200);
-
-            final Cities.City munich = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Munich")).findFirst().orElseThrow();
-            munich.setPopulation(2900100);
-
-            final Cities.City cologne = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Cologne")).findFirst().orElseThrow();
-            cologne.setPopulation(1700500);
-
-            final Cities.City frankfurt = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Frankfurt")).findFirst().orElseThrow();
-            frankfurt.setPopulation(2300000);
-
-            final Cities.City dortmund = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dortmund")).findFirst().orElseThrow();
-            dortmund.setPopulation(1400200);
-
-            final Cities.City stuttgart = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Stuttgart")).findFirst().orElseThrow();
-            stuttgart.setPopulation(1500500);
-
-            final Cities.City essen = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Essen")).findFirst().orElseThrow();
-            essen.setPopulation(2100600);
-
-            final Cities.City dusseldorf = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dusseldorf")).findFirst().orElseThrow();
-            dusseldorf.setPopulation(1600900);
-
-            final Cities.City duisburg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Duisburg")).findFirst().orElseThrow();
-            duisburg.setPopulation(1400700);
-
-            final Cities.City hanover = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Hanover")).findFirst().orElseThrow();
-            hanover.setPopulation(1000300);
-
-            final Cities.City nuremberg = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Nuremberg")).findFirst().orElseThrow();
-            nuremberg.setPopulation(1000600);
-
-            final Cities.City leipzig = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Leipzig")).findFirst().orElseThrow();
-            leipzig.setPopulation(1100700);
-
-            final Cities.City dresden = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Dresden")).findFirst().orElseThrow();
-            dresden.setPopulation(800000);
-
-            final Cities.City bonn = world.cities().all().filter(c -> c.getName().equalsIgnoreCase("Bonn")).findFirst().orElseThrow();
-            bonn.setPopulation(600000);
+            renameCity(world, "Wien", "Vienna");
+            renameCity(world, "Praha", "Prague");
+            renameCity(world, "Geneve", "Geneva");
+            renameCity(world, "Mexico", "Mexico City");
+            setCityPopulation(world, "Paris", 11500700);
+            setCityPopulation(world, "New York", 19000700);
+            setCityPopulation(world, "Atlanta", 6300900);
+            setCityPopulation(world, "Washington", 6400500);
+            setCityPopulation(world, "Boston", 4900100);
+            setCityPopulation(world, "Chicago", 9500400);
+            setCityPopulation(world, "Houston", 7300100);
+            setCityPopulation(world, "Dallas", 5500600);
+            setCityPopulation(world, "Fort Worth", 2400800);
+            setCityPopulation(world, "Miami", 3000500);
+            setCityPopulation(world, "Fort Lauderdale", 1500000);
+            setCityPopulation(world, "Tampa", 2400300);
+            setCityPopulation(world, "St. Petersburg", 750500);
+            setCityPopulation(world, "Detroit", 4300100);
+            setCityPopulation(world, "Phoenix", 5000900);
+            setCityPopulation(world, "Denver", 2400000);
+            setCityPopulation(world, "Aurora", 600000);
+            setCityPopulation(world, "San Diego", 3300000);
+            setCityPopulation(world, "San Antonio", 2600900);
+            setCityPopulation(world, "Baltimore", 2800600);
+            setCityPopulation(world, "Madrid", 6700000);
+            setCityPopulation(world, "Barcelona", 5300400);
+            setCityPopulation(world, "London", 9500300);
+            setCityPopulation(world, "Manchester", 2800500);
+            setCityPopulation(world, "Athens", 3600100);
+            setCityPopulation(world, "Lisbon", 2900700);
+            setCityPopulation(world, "Istanbul", 15500200);
+            setCityPopulation(world, "Zurich", 1400900);
+            setCityPopulation(world, "Helsinki", 1500324);
+            setCityPopulation(world, "Dublin", 2100900);
+            setCityPopulation(world, "Brussels", 2100800);
+            setCityPopulation(world, "Vienna", 2900100);
+            setCityPopulation(world, "Prague", 2700800);
+            setCityPopulation(world, "Budapest", 3000300);
+            setCityPopulation(world, "Mumbai", 20000500);
+            setCityPopulation(world, "Moscow", 13000300);
+            setCityPopulation(world, "Saint Petersburg", 5600400);
+            setCityPopulation(world, "Toronto", 6500800);
+            setCityPopulation(world, "Santiago de Chile", 6500900);
+            setCityPopulation(world, "Kowloon", 6000200);
+            setCityPopulation(world, "Hong Kong Island", 1500800);
+            setCityPopulation(world, "Tokyo", 13500200);
+            setCityPopulation(world, "Stockholm", 2400400);
+            setCityPopulation(world, "Copenhagen", 2100700);
+            setCityPopulation(world, "Birmingham", 2900700);
+            setCityPopulation(world, "Glasgow", 1800800);
+            setCityPopulation(world, "Liverpool", 900100);
+            setCityPopulation(world, "Edinburgh", 900600);
+            setCityPopulation(world, "Gothenburg", 1000300);
+            setCityPopulation(world, "Gdansk", 1100000);
+            setCityPopulation(world, "Geneva", 1000200);
+            setCityPopulation(world, "Nice", 1000800);
+            setCityPopulation(world, "Stuttgart", 2700500);
+            setCityPopulation(world, "Warsaw", 3100600);
+            setCityPopulation(world, "Jeddah", 4700200);
+            setCityPopulation(world, "Bursa", 3100600);
+            setCityPopulation(world, "Tijuana", 2100800);
 
             return null;
         });
+    }
+
+    private static void renameCity(final World world, final String oldName, final String newName) {
+        final Optional<Cities.City> city = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(oldName)).findFirst();
+        if (city.isEmpty()) {
+            log.warn("f1-tour-fixes - rename city '{}' to '{}': city not found, skipped", oldName, newName);
+            return;
+        }
+        city.get().setName(newName);
+        log.info("f1-tour-fixes - city '{}' renamed to '{}'", oldName, newName);
+    }
+
+    private static void setCityPopulation(final World world, final String name, final int population) {
+        final Optional<Cities.City> city = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(name)).findFirst();
+        if (city.isEmpty()) {
+            log.warn("f1-tour-fixes - set population of '{}': city not found, skipped", name);
+            return;
+        }
+        log.info("f1-tour-fixes - city '{}' population {} -> {}", name, city.get().getPopulation(), population);
+        city.get().setPopulation(population);
     }
 
     @GetMapping(value = "/airport/missing-cities", produces = "text/plain")

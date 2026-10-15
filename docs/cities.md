@@ -455,3 +455,18 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   архипелаг, центр на Torshavn, ~16 nm от аэропорта). Страну FO создаёт импорт. EKVG Vagar (size 1246) — через
   `World25_009`, `create-links?icao=EKVG`, переименован `Faroe Islands Vagar`. Терминал не нужен. Attraction 3
   (`set-attraction`).
+- **Ревизия населения мира и имён (F1 Tour Fixes):** часть импортированных городов осталась с населением
+  по CSV (муниципалитет), а не по агломерации. Укрупнены (хвост старого числа сохранён) через
+  `AdminController.f1TourFixes` и в `city-population.csv`: Paris 11.5M, New York 19.0M, Atlanta 6.3M, Washington
+  6.4M, Boston 4.9M, Chicago 9.5M, Houston 7.3M, Dallas 5.5M + Fort Worth 2.4M (метро 7.9M), Miami 3.0M + Fort
+  Lauderdale 1.5M (Florida-кластер), Tampa 2.4M + St. Petersburg 0.75M, Detroit 4.3M, Phoenix 5.0M, Denver 2.4M +
+  Aurora 0.6M, San Diego 3.3M, San Antonio 2.6M, Baltimore 2.8M, Madrid 6.7M, Barcelona 5.3M, London 9.5M,
+  Manchester 2.8M, Athens 3.6M, Lisbon 2.9M, Istanbul 15.5M, Zurich 1.4M, Helsinki 1.5M, Dublin 2.1M, Brussels
+  2.1M, Vienna 2.9M, Prague 2.7M, Budapest 3.0M, Mumbai 20.0M, Moscow 13.0M, Saint Petersburg 5.6M, Toronto
+  6.5M, Santiago de Chile 6.5M, Kowloon 6.0M + Hong Kong Island 1.5M, Tokyo 13.5M (Yokohama, Kawasaki отдельно),
+  Stockholm 2.4M, Copenhagen 2.1M, Birmingham 2.9M, Glasgow 1.8M, Liverpool 0.9M, Edinburgh 0.9M, Gothenburg
+  1.0M, Gdansk 1.1M, Geneva 1.0M, Nice 1.0M, Stuttgart 2.7M, Warsaw 3.1M, Jeddah 4.7M, Bursa 3.1M, Tijuana
+  2.1M. Для поликентричных кластеров общий бюджет агломерации разнесён между ядрами, чтобы не было двойного
+  счёта потока. Переименованы: `Wien` → `Vienna`, `Praha` → `Prague`, `Geneve` → `Geneva`, `Mexico` → `Mexico
+  City` (в CSV, в `World25_012` и в мире через `f1TourFixes`). Оценки приблизительные. Импорты `009`, `012`,
+  `013` закомментированы в `Application.main`.

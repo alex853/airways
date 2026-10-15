@@ -719,7 +719,7 @@ Australia,AU,Tennant creek,4100,-19.65,134.18
 Australia,AU,Nhulunbuy,3400,-12.19,136.76
 Australia,AU,Howard springs,3100,-12.47,131.04
 Australia,AU,Yulara,2700,-25.23,131.06
-Austria,AT,Wien,1504100,48.22,16.37
+Austria,AT,Vienna,2900100,48.22,16.37
 Austria,AT,Graz,216100,47.08,15.42
 Austria,AT,Linz,184800,48.31,14.29
 Austria,AT,Salzburg,145800,47.81,13.04
@@ -1138,7 +1138,7 @@ Belarus,BY,Vasilevicy,5000,52.25,29.83
 Belarus,BY,Vysokoje,4100,52.36,23.39
 Belarus,BY,Kosava,2500,52.76,25.16
 Belarus,BY,Disna,2400,55.57,28.22
-Belgium,BE,Brussels,1005800,50.83,4.33
+Belgium,BE,Brussels,2100800,50.83,4.33
 Belgium,BE,Antwerpen,455800,51.22,4.42
 Belgium,BE,Gent,229400,51.05,3.72
 Belgium,BE,Charleroi,200400,50.42,4.43
@@ -2333,7 +2333,7 @@ Cameroon,CM,Rey bouba,6200,8.67,14.18
 Cameroon,CM,Ambam,6000,2.39,11.28
 Cameroon,CM,Meri,5600,10.79,14.1
 Cameroon,CM,Tignere,5400,7.37,12.65
-Canada,CA,Toronto,4551800,43.65,-79.38
+Canada,CA,Toronto,6500800,43.65,-79.38
 Canada,CA,Montreal,3256300,45.52,-73.57
 Canada,CA,Vancouver,2900500,49.28,-123.13
 Canada,CA,Calgary,1600300,51.05,-114.06
@@ -2734,7 +2734,7 @@ Chad,TD,Am dam,2900,12.77,20.47
 Chad,TD,Barda#,2300,21.35,16.98
 Chad,TD,Aouzou,1800,21.81,17.45
 Chad,TD,Rig-rig,865,14.26,14.36
-Chile,CL,Santiago de Chile,4434900,-33.46,-70.64
+Chile,CL,Santiago de Chile,6500900,-33.46,-70.64
 Chile,CL,Puente Alto,515400,-33.61,-70.57
 Chile,CL,Vina del mar,307400,-33.01,-71.55
 Chile,CL,Antofagasta,306700,-23.65,-70.39
@@ -2796,7 +2796,7 @@ China,CN,Nanjing,2870200,32.05,118.78
 China,CN,Taiyuan,2690500,37.87,112.55
 China,CN,Changchun,2337000,43.87,125.35
 China,CN,Zhengzhou,13052700,34.75,113.67
-China,CN,Kowloon,2040200,22.32,114.17
+China,CN,Kowloon,6000200,22.32,114.17
 China,CN,Jinan,1961500,36.67,117.0
 China,CN,Dalian,1925200,38.92,121.65
 China,CN,Changsha,1891000,28.2,112.97
@@ -2812,7 +2812,7 @@ China,CN,Xinyang,1412300,32.13,114.07
 China,CN,Lanzhou,1409200,36.05,103.68
 China,CN,Fushun,1409000,41.87,123.88
 China,CN,Hefei,1362900,31.85,117.28
-China,CN,Hong Kong Island,1345800,22.27,114.14
+China,CN,Hong Kong Island,1500800,22.27,114.14
 China,CN,Baotou,1226600,40.6,110.05
 China,CN,Anshan,1226200,41.12,122.95
 China,CN,Shantou,1221300,23.37,116.67
@@ -3640,7 +3640,7 @@ Cyprus,CY,Ayia Napa,140000,35.05,33.98
 Cyprus,CY,del Lefka,6800,35.11,32.85
 Cyprus,CY,del Geri,6700,35.1,33.42
 Cyprus,CY,del Ypsonas,6700,34.69,32.97
-Czech republic,CZ,Praha,1157800,50.08,14.43
+Czech republic,CZ,Prague,2700800,50.08,14.43
 Czech republic,CZ,Brno,376200,49.2,16.61
 Czech republic,CZ,Ostrava,316700,49.83,18.27
 Czech republic,CZ,Plzen,165300,49.75,13.37
@@ -3940,7 +3940,7 @@ Czech republic,CZ,Cvikov,4400,50.78,14.63
 Czech republic,CZ,Dolni benesov,4400,49.92,18.12
 Czech republic,CZ,Hluk,4400,48.98,17.53
 Czech republic,CZ,Horni sucha,4400,49.8,18.5
-Denmark,DK,Copenhagen,1089700,55.68,12.57
+Denmark,DK,Copenhagen,2100700,55.68,12.57
 Denmark,DK,Arhus,224400,56.16,10.21
 Denmark,DK,Odense,145600,55.4,10.38
 Denmark,DK,Aalborg,121500,57.03,9.93
@@ -5024,7 +5024,7 @@ Fiji,FJ,Tavua,2600,-17.44,177.87
 Fiji,FJ,Deuba,1800,-18.25,177.9
 Fiji,FJ,Tubou,840,-18.23,-178.8
 Fiji,FJ,Navouvalu,645,-16.99,178.7
-Finland,FI,Helsinki,642324,60.17,24.94
+Finland,FI,Helsinki,1500324,60.17,24.94
 Finland,FI,Espoo,227400,60.21,24.66
 Finland,FI,Tampere,202700,61.52,23.76
 Finland,FI,Vantaa,185900,60.29,25.04
@@ -5127,11 +5127,11 @@ Finland,FI,Noormarkku,6100,61.59,21.83
 Finland,FI,Eurajoki,5900,61.22,21.71
 Finland,FI,Nakkila,5900,61.37,21.97
 Finland,FI,Sakyla,5000,61.05,22.37
-France,FR,Paris,2107700,48.86,2.34
+France,FR,Paris,11500700,48.86,2.34
 France,FR,Marseille,826300,43.31,5.37
 France,FR,Lyon,2300600,45.76,4.83
 France,FR,Toulouse,417400,43.62,1.45
-France,FR,Nice,329800,43.7,7.27
+France,FR,Nice,1000800,43.7,7.27
 France,FR,Nantes,285700,47.23,-1.57
 France,FR,Strasbourg,274700,48.58,7.76
 France,FR,Montpellier,231900,43.61,3.87
@@ -5603,7 +5603,7 @@ Germany,DE,Munich,2900100,48.14,11.58
 Germany,DE,Cologne,1700500,50.95,6.97
 Germany,DE,Frankfurt,2300000,50.12,8.68
 Germany,DE,Dortmund,1400200,51.51,7.48
-Germany,DE,Stuttgart,1500500,48.79,9.19
+Germany,DE,Stuttgart,2700500,48.79,9.19
 Germany,DE,Essen,2100600,51.47,7.0
 Germany,DE,Dusseldorf,1600900,51.24,6.79
 Germany,DE,Bremen,745000,53.08,8.81
@@ -5916,7 +5916,7 @@ Ghana,GH,Kpandae,8200,8.47,-0.02
 Ghana,GH,Akim swedru,7300,5.9,-1.02
 Ghana,GH,Aboso,5400,5.37,-1.93
 Ghana,GH,Bekwai,3500,6.45,-1.58
-Greece,GR,Athens,762100,37.98,23.73
+Greece,GR,Athens,3600100,37.98,23.73
 Greece,GR,Thessaloniki,1000100,40.64,22.94
 Greece,GR,Piraieus,179600,37.96,23.64
 Greece,GR,Patrai,164000,38.24,21.73
@@ -6705,7 +6705,7 @@ Honduras,HN,Yarumela,3000,14.33,-87.63
 Honduras,HN,Casa quemada,2900,15.12,-88.09
 Honduras,HN,Guaymitas,2300,15.5,-87.72
 Honduras,HN,Jerico,2300,15.95,-85.97
-Hungary,HU,Budapest,1727300,47.51,19.08
+Hungary,HU,Budapest,3000300,47.51,19.08
 Hungary,HU,Debrecen,205100,47.54,21.63
 Hungary,HU,Miskolc,181100,48.1,20.79
 Hungary,HU,Szeged,162500,46.26,20.16
@@ -7078,7 +7078,7 @@ Iceland,IS,Laugarvatn,181,64.22,-20.73
 Iceland,IS,Hofsos,177,65.9,-19.43
 Iceland,IS,Hrisey,177,66.0,-18.38
 Iceland,IS,Breiddalsvik,175,64.8,-14.0
-India,IN,Mumbai,13922500,18.96,72.82
+India,IN,Mumbai,20000500,18.96,72.82
 India,IN,Delhi,31900900,28.67,77.21
 India,IN,Kolkata,4852800,22.57,88.36
 India,IN,Bengaluru,4547300,12.97,77.56
@@ -7737,7 +7737,7 @@ Iraq,IQ,#afak,17800,32.07,45.26
 Iraq,IQ,Al-fuhud,17800,30.97,46.71
 Iraq,IQ,Al-h#amdaniyah,17600,36.27,43.38
 Iraq,IQ,Ar-rifa#i,17200,31.73,46.11
-Ireland,IE,Dublin,1027900,53.33,-6.25
+Ireland,IE,Dublin,2100900,53.33,-6.25
 Ireland,IE,Cork,195400,51.9,-8.47
 Ireland,IE,Limerick,85700,52.67,-8.63
 Ireland,IE,Galway,68600,53.28,-9.06
@@ -8206,7 +8206,7 @@ Jamaica,JM,Cambridge,3700,18.32,-77.89
 Jamaica,JM,Maroon town,2900,18.35,-77.79
 Jamaica,JM,Discovery bay,2400,18.47,-77.39
 Jamaica,JM,Albany,1900,18.28,-76.84
-Japan,JP,Tokyo,8294200,35.67,139.77
+Japan,JP,Tokyo,13500200,35.67,139.77
 Japan,JP,Yokohama,3525600,35.47,139.62
 Japan,JP,Osaka,10000700,34.68,135.5
 Japan,JP,Nagoya,2196400,35.15,136.91
@@ -10237,12 +10237,12 @@ Mauritius,MU,La gaulette,1800,-20.36,57.65
 Mauritius,MU,Saint aubin,1800,-20.49,57.53
 Mauritius,MU,Bambous virieux,1700,-20.33,57.76
 Mauritius,MU,Congomah,1700,-20.14,57.58
-Mexico,MX,Mexico,21705100,19.43,-99.14
+Mexico,MX,Mexico City,21705100,19.43,-99.14
 Mexico,MX,del Ecatepec,1769900,19.6,-99.05
 Mexico,MX,Guadalajara,1672000,20.67,-103.35
 Mexico,MX,Puebla,1370800,19.05,-98.22
 Mexico,MX,Juarez,1330800,31.74,-106.49
-Mexico,MX,Tijuana,1313800,32.53,-117.02
+Mexico,MX,Tijuana,2100800,32.53,-117.02
 Mexico,MX,del Nezahualcoyotl,1259100,19.41,-99.03
 Mexico,MX,Monterrey,1142900,25.67,-100.32
 Mexico,MX,Leon,1084400,21.12,-101.69
@@ -12608,12 +12608,12 @@ Philippines,PH,Pulilan,77500,14.91,120.85
 Philippines,PH,Trece martires,24800,14.28,120.86
 Philippines,PH,La carlota,23900,10.43,122.92
 Philippines,PH,Isabela,13900,10.21,122.99
-Poland,PL,Warsaw,1676600,52.26,21.02
+Poland,PL,Warsaw,3100600,52.26,21.02
 Poland,PL,Lodz,776400,51.77,19.46
 Poland,PL,Krakow,810800,50.06,19.96
 Poland,PL,Wroclaw,636800,51.11,17.03
 Poland,PL,Poznan,574100,52.4,16.9
-Poland,PL,Gdansk,462000,54.36,18.64
+Poland,PL,Gdansk,1100000,54.36,18.64
 Poland,PL,Szczecin,414200,53.43,14.53
 Poland,PL,Bydgoszcz,369500,53.12,18.01
 Poland,PL,Lublin,358400,51.24,22.57
@@ -12908,7 +12908,7 @@ Poland,PL,Chelmza,15300,53.18,18.61
 Poland,PL,Kartuzy,15300,54.33,18.2
 Poland,PL,Milanowek,15300,52.13,20.66
 Poland,PL,Nowy tomysl,15300,52.31,16.12
-Portugal,PT,Lisbon,560700,38.72,-9.14
+Portugal,PT,Lisbon,2900700,38.72,-9.14
 Portugal,PT,Porto,1826400,41.15,-8.62
 Portugal,PT,Amadora,176000,38.75,-9.24
 Portugal,PT,Braga,914800,41.55,-8.43
@@ -13521,8 +13521,8 @@ Rumania,RO,Corbii mari,8300,44.55,25.5
 Rumania,RO,Dumbraveni,8300,46.24,24.58
 Rumania,RO,Potlogi,8300,44.55,25.58
 Rumania,RO,Razvad,8300,44.93,25.53
-Russia,RU,Moscow,11102300,55.75,37.62
-Russia,RU,Saint Petersburg,4079400,59.93,30.32
+Russia,RU,Moscow,13000300,55.75,37.62
+Russia,RU,Saint Petersburg,5600400,59.93,30.32
 Russia,RU,Novosibirsk,1434100,55.04,82.93
 Russia,RU,Jekaterinburg,1299700,56.85,60.6
 Russia,RU,Niznij novgorod,1266500,56.33,44.0
@@ -13948,7 +13948,7 @@ Sao tome and principe,ST,Neves,7000,0.38,6.57
 Sao tome and principe,ST,Santana,7000,0.26,6.23
 Sao tome and principe,ST,Santo antonio,1200,1.65,7.41
 Saudi Arabia,SA,Riyadh,7500500,24.65,46.77
-Saudi Arabia,SA,Jeddah,2643200,21.5,39.17
+Saudi Arabia,SA,Jeddah,4700200,21.5,39.17
 Saudi Arabia,SA,Mecca,1618400,21.43,39.82
 Saudi Arabia,SA,Al-madinah,854500,24.48,39.59
 Saudi Arabia,SA,Dammam,2707300,26.43,50.1
@@ -14866,8 +14866,8 @@ South Korea,KR,S#nsan,18300,36.25,128.31
 South Korea,KR,#dong,18100,35.71,129.32
 South Korea,KR,P#lgyo,17800,34.84,127.34
 South Korea,KR,Yonggwang,17800,35.27,126.51
-Spain,ES,Madrid,3167000,40.42,-3.71
-Spain,ES,Barcelona,1549400,41.4,2.17
+Spain,ES,Madrid,6700000,40.42,-3.71
+Spain,ES,Barcelona,5300400,41.4,2.17
 Spain,ES,Valencia,750100,39.48,-0.39
 Spain,ES,Sevilla,699000,37.4,-5.98
 Spain,ES,Zaragoza,641500,41.65,-0.89
@@ -15326,8 +15326,8 @@ Swaziland,SZ,Hluti,7100,-27.23,31.61
 Swaziland,SZ,Simunye,6800,-26.18,31.95
 Swaziland,SZ,Pigg's peak,5600,-25.96,31.24
 Swaziland,SZ,Siteki,5100,-26.46,31.95
-Sweden,SE,Stockholm,1250400,59.33,18.07
-Sweden,SE,Gothenburg,510300,57.72,12.01
+Sweden,SE,Stockholm,2400400,59.33,18.07
+Sweden,SE,Gothenburg,1000300,57.72,12.01
 Sweden,SE,Malmo,258600,55.61,13.02
 Sweden,SE,Uppsala,127400,59.86,17.64
 Sweden,SE,Vasteras,105700,59.62,16.54
@@ -15426,8 +15426,8 @@ Sweden,SE,Sala,12000,59.93,16.6
 Sweden,SE,Ronneby,11700,56.21,15.28
 Sweden,SE,Mjolby,11600,58.33,15.13
 Sweden,SE,Lindome,10800,57.56,12.09
-Switzerland,CH,Zurich,347900,47.38,8.54
-Switzerland,CH,Geneve,181200,46.21,6.14
+Switzerland,CH,Zurich,1400900,47.38,8.54
+Switzerland,CH,Geneva,1000200,46.21,6.14
 Switzerland,CH,Basel,164700,47.57,7.58
 Switzerland,CH,Bern,123300,46.95,7.44
 Switzerland,CH,Lausanne,118000,46.52,6.62
@@ -16129,10 +16129,10 @@ Tunisia,TN,Surban,6300,35.29,10.38
 Tunisia,TN,Jamnah,6200,33.57,9.03
 Tunisia,TN,Sabibah,6200,35.55,9.08
 Tunisia,TN,Al-#ala,2900,35.62,9.55
-Turkey,TR,Istanbul,9592200,41.01,28.96
+Turkey,TR,Istanbul,15500200,41.01,28.96
 Turkey,TR,Ankara,3500800,39.93,32.85
 Turkey,TR,Izmir,2445800,38.43,27.15
-Turkey,TR,Bursa,1305600,40.2,29.08
+Turkey,TR,Bursa,3100600,40.2,29.08
 Turkey,TR,Adana,1235700,37.0,35.32
 Turkey,TR,Gaziantep,1018400,37.07,37.39
 Turkey,TR,Konya,811700,37.88,32.48
@@ -16723,15 +16723,15 @@ United Arab Emirates,AE,Ra's al-h#aymah,109000,25.79,55.94
 United Arab Emirates,AE,Al-fujayrah,46600,25.13,56.34
 United Arab Emirates,AE,Umm al-qaywayn,35200,25.59,55.56
 United Arab Emirates,AE,H#awr fakkan,31800,25.34,56.36
-United Kingdom,GB,London,7593300,51.52,-0.1
-United Kingdom,GB,Glasgow,1081800,55.87,-4.27
-United Kingdom,GB,Birmingham,1017700,52.48,-1.91
-United Kingdom,GB,Liverpool,473100,53.42,-2.99
-United Kingdom,GB,Edinburgh,452600,55.95,-3.22
+United Kingdom,GB,London,9500300,51.52,-0.1
+United Kingdom,GB,Glasgow,1800800,55.87,-4.27
+United Kingdom,GB,Birmingham,2900700,52.48,-1.91
+United Kingdom,GB,Liverpool,900100,53.42,-2.99
+United Kingdom,GB,Edinburgh,900600,55.95,-3.22
 United Kingdom,GB,Sheffield,428300,53.39,-1.48
 United Kingdom,GB,Leeds,427900,53.81,-1.55
 United Kingdom,GB,Bristol,717600,51.46,-2.6
-United Kingdom,GB,Manchester,400500,53.48,-2.25
+United Kingdom,GB,Manchester,2800500,53.48,-2.25
 United Kingdom,GB,Leicester,325500,52.64,-1.13
 United Kingdom,GB,Kingston upon hull,314900,53.75,-0.36
 United Kingdom,GB,Coventry,300100,52.42,-1.5
@@ -17024,16 +17024,16 @@ United Kingdom,GB,Eccles,35800,53.49,-2.33
 United Kingdom,GB,Hitchin,35700,51.96,-0.28
 United Kingdom,GB,Pontypool,35700,51.7,-3.04
 United Kingdom,GB,Jersey,103300,49.19,-2.11
-United States,US,New York,8091700,40.67,-73.94
+United States,US,New York,19000700,40.67,-73.94
 United States,US,Los Angeles,12847400,34.11,-118.41
-United States,US,Chicago,2862400,41.84,-87.68
-United States,US,Houston,2020100,29.77,-95.39
+United States,US,Chicago,9500400,41.84,-87.68
+United States,US,Houston,7300100,29.77,-95.39
 United States,US,Philadelphia,1472500,40.01,-75.13
-United States,US,Phoenix,1409900,33.54,-112.07
-United States,US,San Diego,1276000,32.81,-117.14
-United States,US,San Antonio,1234900,29.46,-98.51
-United States,US,Dallas,1212600,32.79,-96.77
-United States,US,Detroit,904100,42.38,-83.1
+United States,US,Phoenix,5000900,33.54,-112.07
+United States,US,San Diego,3300000,32.81,-117.14
+United States,US,San Antonio,2600900,29.46,-98.51
+United States,US,Dallas,5500600,32.79,-96.77
+United States,US,Detroit,4300100,42.38,-83.1
 United States,US,del San jose,900200,37.3,-121.85
 United States,US,Jacksonville,786100,30.33,-81.66
 United States,US,Indianapolis,778800,39.78,-86.15
@@ -17041,15 +17041,15 @@ United States,US,San Francisco,7650000,37.77,-122.45
 United States,US,Columbus,730900,39.99,-82.99
 United States,US,Austin,2475600,30.31,-97.75
 United States,US,Memphis,1335000,35.11,-90.01
-United States,US,Baltimore,624600,39.3,-76.61
-United States,US,Fort Worth,599800,32.75,-97.34
+United States,US,Baltimore,2800600,39.3,-76.61
+United States,US,Fort Worth,2400800,32.75,-97.34
 United States,US,El paso,591600,31.85,-106.44
 United States,US,Charlotte,2912000,35.2,-80.83
 United States,US,Milwaukee,585600,43.06,-87.97
-United States,US,Boston,577100,42.34,-71.02
+United States,US,Boston,4900100,42.34,-71.02
 United States,US,Seattle,2546200,47.62,-122.35
-United States,US,Denver,721000,39.77,-104.87
-United States,US,Washington,556500,38.91,-77.02
+United States,US,Denver,2400000,39.77,-104.87
+United States,US,Washington,6400500,38.91,-77.02
 United States,US,Nashville,2546000,36.17,-86.78
 United States,US,Portland,2500900,45.54,-122.66
 United States,US,Las Vegas,2327900,36.21,-115.22
@@ -17064,12 +17064,12 @@ United States,US,Sacramento,453700,38.57,-121.47
 United States,US,Virginia beach,445100,36.74,-76.04
 United States,US,Kansas city,443200,39.12,-94.55
 United States,US,Mesa,439400,33.42,-111.74
-United States,US,Atlanta,423900,33.76,-84.42
+United States,US,Atlanta,6300900,33.76,-84.42
 United States,US,Omaha,408400,41.26,-96.01
 United States,US,del Oakland,397800,37.77,-122.22
 United States,US,Tulsa,385900,36.13,-95.92
 United States,US,Honolulu,1012800,21.32,-157.8
-United States,US,Miami,380500,25.78,-80.21
+United States,US,Miami,3000500,25.78,-80.21
 United States,US,Minneapolis-Saint Paul,3702600,44.96,-93.27
 United States,US,del Minneapolis,372600,44.96,-93.27
 United States,US,Colorado springs,371200,38.86,-104.76
@@ -17080,10 +17080,10 @@ United States,US,del Anaheim,333400,33.84,-117.87
 United States,US,Saint louis,329200,38.64,-90.24
 United States,US,Raleigh,324400,35.82,-78.66
 United States,US,Pittsburgh,324000,40.44,-79.98
-United States,US,Tampa,321300,27.96,-82.48
+United States,US,Tampa,2400300,27.96,-82.48
 United States,US,Cincinnati,313700,39.14,-84.51
 United States,US,Toledo,309000,41.66,-83.58
-United States,US,Aurora,399000,39.71,-104.73
+United States,US,Aurora,600000,39.71,-104.73
 United States,US,Riverside,287400,33.94,-117.4
 United States,US,Buffalo,283500,42.89,-78.86
 United States,US,Corpus christi,281100,27.71,-97.29
@@ -17093,7 +17093,7 @@ United States,US,Bakersfield,278500,35.36,-119.0
 United States,US,Stockton,278100,37.97,-121.31
 United States,US,Anchorage,403000,61.18,-149.19
 United States,US,Lexington-fayette,269500,38.04,-84.46
-United States,US,St. Petersburg,248500,27.76,-82.64
+United States,US,St. Petersburg,750500,27.76,-82.64
 United States,US,Louisville,247600,38.22,-85.74
 United States,US,Plano,245900,33.05,-96.75
 United States,US,Norfolk,244600,36.92,-76.24
@@ -17154,7 +17154,7 @@ United States,US,Knoxville,173500,35.97,-83.95
 United States,US,Ontario,169600,34.05,-117.61
 United States,US,Oceanside,168500,33.23,-117.31
 United States,US,del Garden grove,167400,33.78,-117.96
-United States,US,Fort Lauderdale,167000,26.14,-80.14
+United States,US,Fort Lauderdale,1500000,26.14,-80.14
 United States,US,Aurora,165800,41.77,-88.29
 United States,US,Huntsville,165600,34.71,-86.63
 United States,US,del Santa clarita,164800,34.41,-118.51

@@ -35,7 +35,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AR", "city-name:Buenos Aires"},
 
                 new String[]{"country-code:CH", "city-name:Zurich"},
-                new String[]{"country-code:CH", "city-name:Geneve"},
+                new String[]{"country-code:CH", "city-name:Geneva"},
 
                 new String[]{"country-code:CL", "city-name:Santiago de Chile"},
                 new String[]{"country-code:CL", "city-name:Puente Alto"},
@@ -149,7 +149,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:MT", "city-name:Malta"},
 
-                new String[]{"country-code:MX", "city-name:Mexico"},
+                new String[]{"country-code:MX", "city-name:Mexico City"},
                 new String[]{"country-code:MX", "city-name:Tijuana"},
 
                 new String[]{"country-code:MY", "city-name:Kuala Lumpur"},
