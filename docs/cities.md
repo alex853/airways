@@ -440,3 +440,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Военные базы с типом `civil` и size ≥5000 в радиусе 50 nm (LLEK Tel Nov, LLHS Hatzor, LLRD Ramat David, LL0D
   Hatserim) переведены в `military` в `icaodata.csv`, чтобы автоимпорт их не создал. LLSD Sde Dov (закрыт) не берём.
   `BusinessAviationTerminal` в LLBG. Attraction не нужен.
+- **Portland (US, аэропорт KPDX) — из списка отсутствующих по VATSIM (№2, 3033 упоминания):** CSV 539 900 →
+  2 500 900 (метро Portland–Vancouver–Hillsboro, MSA ~2,5 млн; хвост 900 сохранён), `del Vancouver` (WA, 153,4k,
+  4 nm от ядра; тёзка Vancouver BC, который в мире уже есть). Gresham (96,9k) <100k не помечен, Salem (44 nm)
+  отдельный рынок, не импортируется. KPDX (size 7915) создаётся автоматически, имя `Portland Intl` оставлено.
+  KHIO Hillsboro (3243) не берём. Терминал и attraction не нужны.
