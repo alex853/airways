@@ -12,8 +12,9 @@ import java.util.Collections;
 // It should be run BEFORE World25_012_selected_cities, otherwise the import creates duplicates by the new names.
 public class World25_013_rename_cities {
     public static void main(String[] args) throws IOException {
-        RenameCountries.renameCountries(Collections.singletonList(
-                new String[]{"ZA", "South Africa"}
+        RenameCountries.renameCountries(Arrays.asList(
+                new String[]{"ZA", "South Africa"},
+                new String[]{"SA", "Saudi Arabia"}
         ));
 
         RenameCities.renameCities(Arrays.asList(
@@ -52,7 +53,8 @@ public class World25_013_rename_cities {
                 new String[]{"LFLY", "Lyon Bron"},
                 new String[]{"LMML", "Malta Luqa"},
                 new String[]{"VTBD", "Bangkok Don Mueang"},
-                new String[]{"VTBS", "Bangkok Suvarnabhumi"}
+                new String[]{"VTBS", "Bangkok Suvarnabhumi"},
+                new String[]{"OERK", "Riyadh King Khalid"}
         ));
     }
 }

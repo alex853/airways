@@ -3,6 +3,9 @@
 Идея проекта — симуляция пассажиропотока между городами (в первую очередь для авиакомпаний).
 Поэтому «город» в мире — это не административная единица, а зона притяжения аэропорта.
 
+> Практическая инструкция по всему процессу (чек-лист анализа, правила населения и имён, острова, терминалы,
+> attraction, порядок работы): [city-airport-playbook.md](city-airport-playbook.md).
+
 ## Источники данных
 
 - `src/main/resources/city-population.csv` — исходный список городов и населения. Во многом устарел.
@@ -414,3 +417,9 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Мелкие пункты Malta не помечаются `del` (<100k). LMML (size 5815) создаётся автоматически, переименован
   `Malta Luqa`; TNCM (size 2301) — через `World25_009`, `create-links?icao=TNCM`. TFFG Grand Case не берём.
   `BusinessAviationTerminal` в LMML и TNCM. Attraction: Malta 5, Sint Maarten 15 (`set-attraction`).
+- **Riyadh (SA, аэропорт OERK) — из списка отсутствующих по VATSIM (№8, 2512 упоминаний), Ближний Восток:** 
+  CSV `Ar-riyad#` 3 561 500 → `Riyadh` 7 500 500 (агломерация, оценка ~7,5–8 млн; хвост 500 сохранён). 
+  Al-Kharj (194,5k, 64 nm от аэропорта) остаётся отдельным городом, `del` не нужен. Страна в CSV `Saudi arabia` →
+  `Saudi Arabia` (CSV + `RenameCountries` в `013`). OERK (size 8429) создаётся автоматически, переименован
+  `Riyadh King Khalid`. OERY (military), OETH Thumamah (4307) и мелкие OE0x не берём. 
+  `BusinessAviationTerminal` в OERK. Attraction не нужен.

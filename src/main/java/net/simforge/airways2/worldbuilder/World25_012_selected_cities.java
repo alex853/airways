@@ -170,6 +170,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:RU", "city-name:Saint Petersburg"},
                 new String[]{"country-code:RU", "city-name:Sochi"},
 
+                new String[]{"country-code:SA", "city-name:Riyadh"},
                 new String[]{"country-code:SA", "city-name:Jeddah"},
                 new String[]{"country-code:SA", "city-name:Mecca"},
                 new String[]{"country-code:SA", "city-name:Dammam"},
