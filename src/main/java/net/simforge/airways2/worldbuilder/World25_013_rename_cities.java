@@ -57,7 +57,8 @@ public class World25_013_rename_cities {
                 new String[]{"OERK", "Riyadh King Khalid"},
                 new String[]{"UMMS", "Minsk National"},
                 new String[]{"LLBG", "Tel Aviv Ben Gurion"},
-                new String[]{"LGTS", "Thessaloniki Makedonia"}
+                new String[]{"LGTS", "Thessaloniki Makedonia"},
+                new String[]{"EKVG", "Faroe Islands Vagar"}
         ));
     }
 }

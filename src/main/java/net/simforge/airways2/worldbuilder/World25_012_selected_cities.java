@@ -82,6 +82,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:ET", "city-name:Addis Ababa"},
 
+                new String[]{"country-code:FO", "city-name:Faroe Islands"},
+
                 new String[]{"country-code:FI", "city-name:Helsinki"},
                 new String[]{"country-code:FI", "city-name:Kuusamo"},
 

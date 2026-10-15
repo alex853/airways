@@ -450,3 +450,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Larisa, Volos — отдельные рынки. LGTS (size 4848, ниже 5000) — через `World25_009`, `create-links?icao=LGTS`,
   переименован `Thessaloniki Makedonia`. Военные аэродромы рядом (LGSD, LGAX, LGLR…) уже `military`.
   `BusinessAviationTerminal` в LGTS. Attraction не нужен.
+- **Faroe Islands (FO, аэропорт EKVG) — из списка отсутствующих по VATSIM (2855 упоминаний), «семя» Северной
+  Атлантики:** в CSV городов Фарер не было, добавлена строка `Faroe Islands,FO,Faroe Islands,54000,62.01,-6.77` (весь
+  архипелаг, центр на Torshavn, ~16 nm от аэропорта). Страну FO создаёт импорт. EKVG Vagar (size 1246) — через
+  `World25_009`, `create-links?icao=EKVG`, переименован `Faroe Islands Vagar`. Терминал не нужен. Attraction 3
+  (`set-attraction`).
