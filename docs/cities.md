@@ -423,3 +423,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   `Saudi Arabia` (CSV + `RenameCountries` в `013`). OERK (size 8429) создаётся автоматически, переименован
   `Riyadh King Khalid`. OERY (military), OETH Thumamah (4307) и мелкие OE0x не берём. 
   `BusinessAviationTerminal` в OERK. Attraction не нужен.
+- **Halifax (CA, аэропорт CYHZ) — из списка отсутствующих по VATSIM (1965 упоминаний), Канада:** CSV 268 900 →
+  480 900 (CMA ~480–500 тыс.; хвост 900 сохранён). `del` не нужен (в 25 nm нет городов ≥100k). CYHZ (size 5027)
+  создаётся автоматически, имя `Halifax Intl` оставлено. CYAW Halifax/Shearwater и CYZX Greenwood (военные) не
+  берём. Терминал и attraction не нужны.
