@@ -60,7 +60,9 @@ public class World25_013_rename_cities {
                 new String[]{"LGTS", "Thessaloniki Makedonia"},
                 new String[]{"EKVG", "Faroe Islands Vagar"},
                 new String[]{"OJAI", "Amman Queen Alia"},
-                new String[]{"TJSJ", "San Juan Luis Munoz Marin"}
+                new String[]{"TJSJ", "San Juan Luis Munoz Marin"},
+                new String[]{"EGAA", "Belfast International"},
+                new String[]{"EGAC", "Belfast City"}
         ));
     }
 }

@@ -551,3 +551,17 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
     создаётся импортом.
   - `BusinessAviationTerminal`: TJSJ, YBBN, OJAI, GCLP, MMUN, MYNN. Attraction: Hurghada 5, San Juan 5,
     Cancun 8, Nassau 5, Gran Canaria 5.
+- **EGAA, NZAA — Belfast и Auckland (VATSIM-бэклог, 2026-10-17):**
+  - **Belfast (GB, EGAA):** CSV 248 600 → 700 600 (городская агломерация ~650-700k, оценка приблизительная). Newtownabbey,
+    Bangor, Lisburn меньше 100k, `del` не ставим (опечатка `Newtonabbey` в CSV исправлена на `Newtownabbey`). Добавлен
+    в `World25_012_selected_cities`. EGAA (size 4722) и EGAC Belfast City (1826, 12 nm) через `World25_009`, линки
+    вручную (`create-links`), имена `Belfast International` и `Belfast City` (`World25_013`). Londonderry и Dundalk не берём.
+  - **Auckland (NZ, NZAA):** CSV разбивал агломерацию на четыре города: 379 600 → 1 700 600 (urban area ~1,7M,
+    оценка приблизительная), `del Manukau` (344 400), `del North shore` (193 000), `del Waitakere` (154 400).
+    Hamilton (52 nm) остаётся отдельным рынком. NZAA (6742) создаётся автоматически, имя `Auckland Intl` оставлено.
+    Страна `New zealand` в CSV исправлена на `New Zealand` (все 189 строк, иначе страна создалась бы с кривым именем),
+    страна создаётся импортом.
+  - **NZWP Whenuapai** (военная база, в `icaodata` стоял `civil`, size 5906 попал бы в автоимпорт): тип в `icaodata.csv`
+    изменён на `military`, в мир не попадёт.
+  - Терминалы бизнес-авиации не ставим. Attraction: Auckland 3.
+
