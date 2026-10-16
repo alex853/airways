@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -37,6 +38,7 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
+            .withHeartbeatIndex(1) // heartbeatField index: position among withDataField calls (status=0, heartbeatTime=1)
             .build();
 
     private final DataField statusRawField = storage.getDataField(0);
@@ -82,7 +84,14 @@ public class Journeys {
     }
 
     public Optional<Journey> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
+        return storage.nextForHeartbeat(worldTime);
+    }
+
+    /**
+     * Differences between the heartbeat index and the data, an empty list means they are consistent (a scan, for tests and diagnostics).
+     */
+    public List<String> checkHeartbeatIndex() {
+        return storage.checkHeartbeatIndex();
     }
 
     public Stream<Journey> allWithZeroHeartbeat() {

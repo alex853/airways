@@ -12,7 +12,15 @@ import java.util.function.Supplier;
 
 public class Processing {
     private static final Logger log = LoggerFactory.getLogger(Processing.class);
-    private static final int CIRCUIT_BREAKER_COUNTER_LIMIT = 2_000;
+    /**
+     * The circuit breaker of the processing cycles: at most so many objects (or events) are processed by one processor in one
+     * world step. It protects the world from an endless cycle (a processor which does not clear the heartbeat of its object
+     * would get the same object again and again) and works as a limiter of the load when a lot of objects are due at once
+     * (the rest is processed in the next steps). The limit was introduced with the generic processing tools
+     * (commit b187d2e8, 2025-10-10) and raised from 1000 to 2000 on 2026-04-11 (commit e2e96242). It is covered
+     * by ProcessingHeartbeatTest, see also docs/heartbeat-index.md.
+     */
+    static final int CIRCUIT_BREAKER_COUNTER_LIMIT = 2_000;
 
     public static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
                                      final Consumer<T> processor) {

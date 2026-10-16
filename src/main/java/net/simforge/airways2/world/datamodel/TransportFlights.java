@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,6 +36,7 @@ public class TransportFlights {
             .withDataField(DataField.of(DataType.Signed32bit)) // total tickets - 10bits Y(economy), 8bits W(premium economy), 7bits J(business), 5bit F(first)
             .withDataField(DataField.of(DataType.Signed32bit)) // remained tickets
             .withDataField(DataField.of(DataType.Signed32bit)) // checked-in / on board / ...
+            .withHeartbeatIndex(1) // heartbeatField index: position among withDataField calls (status=0, heartbeatTime=1)
             .build();
 
     private final DataField statusField = storage.getDataField(0);
@@ -104,8 +106,14 @@ public class TransportFlights {
     }
 
     public Optional<Flight> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(recordId -> readHeartbeatTime(recordId) <= worldTime
-                && readHeartbeatTime(recordId) != 0);
+        return storage.nextForHeartbeat(worldTime);
+    }
+
+    /**
+     * Differences between the heartbeat index and the data, an empty list means they are consistent (a scan, for tests and diagnostics).
+     */
+    public List<String> checkHeartbeatIndex() {
+        return storage.checkHeartbeatIndex();
     }
 
     public Optional<Flight> byId(final int id) {

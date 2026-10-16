@@ -11,6 +11,7 @@ import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.airways2.world.processors.TransportFlightControl;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -410,6 +411,7 @@ public class FlightWorkflowTest {
         final int finishTime = world.getWorldTime() + seconds;
         while (world.getWorldTime() < finishTime) {
             world.process(world.getWorldTime() + 10);
+            assertHeartbeatIndexesAreConsistent();
         }
     }
 
@@ -417,6 +419,19 @@ public class FlightWorkflowTest {
         final int finishTime = world.getWorldTime() + maxSeconds;
         while (world.getWorldTime() < finishTime && !condition.getAsBoolean()) {
             world.process(world.getWorldTime() + 10);
+            assertHeartbeatIndexesAreConsistent();
         }
+    }
+
+    // the heartbeat indexes of the storages must match their data after every step of the world, whatever the scenario does
+    private void assertHeartbeatIndexesAreConsistent() {
+        assertEquals(List.of(), world.journeys().checkHeartbeatIndex(), "journeys heartbeat index");
+        assertEquals(List.of(), world.transportFlights().checkHeartbeatIndex(), "transport flights heartbeat index");
+        assertEquals(List.of(), world.flightMissions().checkHeartbeatIndex(), "flight missions heartbeat index");
+    }
+
+    @AfterEach
+    public void heartbeatIndexesAreConsistentAtTheEnd() {
+        assertHeartbeatIndexesAreConsistent();
     }
 }

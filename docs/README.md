@@ -11,6 +11,7 @@
 - [change-tracking-cache.md](change-tracking-cache.md) — кэш ответов по отметкам изменений хранилищ (`Storage.getLastChangedAtMillis`, `ChangeTrackedCache`, `CachedJson`, gzip)
 - [cities.md](cities.md) — города и население: CSV, соглашение `del`, операция «актуализировать и укрупнить мажорный сити»
 - [vatsim-backlog.md](vatsim-backlog.md) — VATSIM-бэклог: формат отчёта, как получить, приоритеты регионов
+- [heartbeat-index.md](heartbeat-index.md) — индекс по heartbeat (`HeartbeatIndex`, `Storage.withHeartbeatIndex`) для журни и рейсов, circuit breaker в `Processing`
 - [journeys.md](journeys.md) — journeys: жизненный цикл, локация, решения (ItinerariesDone, TooLateToBoard), далёкое будущее
 - [journeys-hub-mode.md](journeys-hub-mode.md) — перелёты через хабы (hub mode): идея, статус, драйран, план (отложено)
 - [storage-quarantine.md](storage-quarantine.md) — Storage: карантин удалённых записей (не переиспользовать id сразу), дизайн

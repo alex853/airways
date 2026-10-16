@@ -16,6 +16,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 public class Storage<T> {
     private static final Logger log = LoggerFactory.getLogger(Storage.class);
@@ -46,6 +47,10 @@ public class Storage<T> {
     private final DataField[] sortedDataFields;
     private final int[] sortedDataFieldHashs;
 
+    // optional index of the records by their heartbeat time, see Builder#withHeartbeatIndex
+    private final DataField heartbeatIndexField;
+    private final HeartbeatIndex heartbeatIndex;
+
     // todo ak3 some header:
     //   version 1b
     //   record count 4b
@@ -69,7 +74,8 @@ public class Storage<T> {
                     final DataField[] dataFields,
                     final long deletedRecordQuarantineMillis,
                     final boolean deletedRecordQuarantineIsExplicit,
-                    final LongSupplier clock) {
+                    final LongSupplier clock,
+                    final int heartbeatIndexFieldIndex) {
         checkNotNull(dataFields);
 
         this.name = name;
@@ -89,6 +95,17 @@ public class Storage<T> {
             }
             // the default quarantine is just not applicable to such records
             this.deletedRecordQuarantineMillis = 0;
+        }
+
+        if (heartbeatIndexFieldIndex >= 0) {
+            checkArgument(heartbeatIndexFieldIndex < dataFields.length, "heartbeat index field is out of the data fields");
+            checkArgument(dataFields[heartbeatIndexFieldIndex].dataType() == DataType.Signed32bit,
+                    "heartbeat index field must be Signed32bit, it is " + dataFields[heartbeatIndexFieldIndex].dataType());
+            this.heartbeatIndexField = dataFields[heartbeatIndexFieldIndex];
+            this.heartbeatIndex = new HeartbeatIndex();
+        } else {
+            this.heartbeatIndexField = null;
+            this.heartbeatIndex = null;
         }
 
         sortedDataFields = Arrays.copyOf(dataFields, dataFields.length);
@@ -111,6 +128,7 @@ public class Storage<T> {
         }
         data = Files.readAllBytes(dataPath);
         rebuildDeletedRecords();
+        rebuildHeartbeatIndex();
         markChanged();
     }
 
@@ -138,6 +156,9 @@ public class Storage<T> {
     public void reset() {
         data = new byte[0];
         deletedRecords.clear();
+        if (heartbeatIndex != null) {
+            heartbeatIndex.clear();
+        }
         markChanged();
     }
 
@@ -230,6 +251,10 @@ public class Storage<T> {
     public void deleteRecord(final int recordId) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
+
+        if (heartbeatIndex != null) {
+            heartbeatIndex.remove(readHeartbeatIndexField(recordId), recordId); // before the body is cleared
+        }
 
         final int headerOffset = getRecordHeaderOffset(recordId);
         data[headerOffset] = RECORD_EMPTY_OR_DELETED;
@@ -440,6 +465,8 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
 
         final int fieldOffset = getFieldOffset(recordId, dataField);
+        final boolean isHeartbeatField = heartbeatIndex != null && dataField == heartbeatIndexField;
+        final int oldHeartbeatTime = isHeartbeatField ? getIntAtOffset(fieldOffset) : 0;
 
         switch (dataField.dataType()) {
             case Unsigned8bit -> {
@@ -459,6 +486,10 @@ public class Storage<T> {
             }
             case Signed32bit -> setIntAtOffset(fieldOffset, value); // no need to check if value is within limits
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
+        }
+
+        if (isHeartbeatField) {
+            heartbeatIndex.update(recordId, oldHeartbeatTime, value);
         }
 
         markChanged(); // after the data is written: whoever sees the new stamp sees the new data
@@ -586,6 +617,7 @@ public class Storage<T> {
         private long deletedRecordQuarantineMillis = DEFAULT_DELETED_RECORD_QUARANTINE.toMillis();
         private boolean deletedRecordQuarantineIsExplicit = false;
         private LongSupplier clock = System::currentTimeMillis;
+        private int heartbeatIndexFieldIndex = -1;
 
         private Builder() {
         }
@@ -607,6 +639,17 @@ public class Storage<T> {
          */
         public Builder<T> clock(final LongSupplier clock) {
             this.clock = checkNotNull(clock);
+            return this;
+        }
+
+        /**
+         * The storage keeps an index of its records by the heartbeat time kept in the data field with this number (the order of
+         * withDataField calls, from zero), the field must be Signed32bit, zero means 'no heartbeat'.
+         * Then {@link Storage#nextForHeartbeat(int)} does not scan the storage.
+         */
+        public Builder<T> withHeartbeatIndex(final int dataFieldIndex) {
+            checkArgument(dataFieldIndex >= 0, "dataFieldIndex should not be negative");
+            this.heartbeatIndexFieldIndex = dataFieldIndex;
             return this;
         }
 
@@ -637,7 +680,7 @@ public class Storage<T> {
                 throw new IllegalStateException("dataFields not set");
             }
             return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]),
-                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock);
+                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock, heartbeatIndexFieldIndex);
         }
     }
 
@@ -651,6 +694,85 @@ public class Storage<T> {
 
         static <T> Condition<T> and(Condition<T> condition1, Condition<T> condition2) {
             return recordId -> condition1.test(recordId) && condition2.test(recordId);
+        }
+    }
+
+    /**
+     * The record with the earliest heartbeat time, if that time is not later than the world time (zero heartbeat means 'none').
+     * It uses the heartbeat index, so it does not scan the storage; the storage must be built with a heartbeat index.
+     */
+    public Optional<T> nextForHeartbeat(final int worldTime) {
+        checkState(heartbeatIndex != null, "the storage %s has no heartbeat index", name);
+
+        while (true) {
+            final OptionalInt recordId = heartbeatIndex.firstDue(worldTime);
+            if (recordId.isEmpty()) {
+                return Optional.empty();
+            }
+
+            final int id = recordId.getAsInt();
+            final int indexedHeartbeatTime = heartbeatIndex.earliestHeartbeatTime().orElseThrow();
+            if (!isOutOfBounds(id) && !isDeleted(id) && readHeartbeatIndexField(id) == indexedHeartbeatTime) {
+                return Optional.of(instantiator.create(id));
+            }
+
+            // must never happen, the index is maintained by the storage itself; the entry is dropped not to be stuck on it
+            log.error("heartbeat index of {} storage is broken: record {} has no heartbeat time {}", name, id, indexedHeartbeatTime);
+            heartbeatIndex.remove(indexedHeartbeatTime, id);
+        }
+    }
+
+    /**
+     * Entries of the heartbeat index in the order of processing, each is {heartbeat time, record id}. For diagnostics.
+     */
+    public List<int[]> heartbeatIndexEntries() {
+        checkState(heartbeatIndex != null, "the storage %s has no heartbeat index", name);
+        return heartbeatIndex.entries();
+    }
+
+    /**
+     * Compares the heartbeat index with the data of the storage, a scan of all the records. It returns descriptions of the differences,
+     * an empty list means the index is consistent. It is intended for tests and diagnostics.
+     */
+    public List<String> checkHeartbeatIndex() {
+        checkState(heartbeatIndex != null, "the storage %s has no heartbeat index", name);
+
+        final List<String> problems = new ArrayList<>();
+        final Set<Long> expected = new HashSet<>();
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
+            if (isDeleted(recordId)) {
+                continue;
+            }
+            final int heartbeatTime = readHeartbeatIndexField(recordId);
+            if (heartbeatTime != 0) {
+                expected.add(((long) heartbeatTime << 32) | recordId);
+                if (!heartbeatIndex.contains(heartbeatTime, recordId)) {
+                    problems.add("record " + recordId + " has heartbeat time " + heartbeatTime + " but it is not in the index");
+                }
+            }
+        }
+        for (final int[] entry : heartbeatIndex.entries()) {
+            if (!expected.contains(((long) entry[0] << 32) | entry[1])) {
+                problems.add("index entry {" + entry[0] + ", " + entry[1] + "} does not match any record");
+            }
+        }
+        return problems;
+    }
+
+    private int readHeartbeatIndexField(final int recordId) {
+        return getIntAtOffset(getFieldOffset(recordId, heartbeatIndexField));
+    }
+
+    private void rebuildHeartbeatIndex() {
+        if (heartbeatIndex == null) {
+            return;
+        }
+
+        heartbeatIndex.clear();
+        for (int recordId = 1; recordId <= getTotalStoredRecordCount(); recordId++) {
+            if (!isDeleted(recordId)) {
+                heartbeatIndex.add(readHeartbeatIndexField(recordId), recordId);
+            }
         }
     }
 

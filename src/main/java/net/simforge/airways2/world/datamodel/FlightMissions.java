@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
@@ -46,6 +45,7 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned16bit)) // userId
+            .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (aircraftId=0, status=1, heartbeatTime=2)
             .build();
 
     private final DataField aircraftIdField = storage.getDataField(0);
@@ -75,14 +75,11 @@ public class FlightMissions {
 
     private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
 
-    private final TreeMap<Integer, List<Integer>> heartbeatTimeIndex = new TreeMap<>();
-
     public FlightMissions() {
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-        heartbeatTimeIndex_rebuild();
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -106,9 +103,6 @@ public class FlightMissions {
     }
 
     public void deleteById(final int id) {
-        int oldHeartbeatTime = readHeartbeatTime(id);
-        heartbeatTimeIndex_remove(oldHeartbeatTime, id);
-
         storage.deleteRecord(id);
     }
 
@@ -147,34 +141,14 @@ public class FlightMissions {
     }
 
     public Optional<Mission> nextForHeartbeat(final int worldTime) {
-        try (Timing.Timer ignored = Timing.label("FlightMissions.nextForHeartbeat")) {
-            while (true) {
-                if (heartbeatTimeIndex.isEmpty()) {
-                    return Optional.empty();
-                }
+        return storage.nextForHeartbeat(worldTime);
+    }
 
-                int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
-                List<Integer> ids = heartbeatTimeIndex.get(minimalHeartbeatTime);
-                if (ids == null || ids.isEmpty()) {
-                    heartbeatTimeIndex.remove(minimalHeartbeatTime);
-                    continue;
-                }
-
-                if (minimalHeartbeatTime > worldTime) {
-                    return Optional.empty();
-                }
-
-                int recordId = ids.get(0);
-                int actualHeartbeatTime = readHeartbeatTime(recordId);
-                if (actualHeartbeatTime != minimalHeartbeatTime) {
-                    // this means that something is wrong here, however this has not been seen since the fix
-                    ids.remove(0);
-                    continue;
-                }
-
-                return storage.byId(recordId);
-            }
-        }
+    /**
+     * Differences between the heartbeat index and the data, an empty list means they are consistent (a scan, for tests and diagnostics).
+     */
+    public List<String> checkHeartbeatIndex() {
+        return storage.checkHeartbeatIndex();
     }
 
     public class Mission {
@@ -229,12 +203,7 @@ public class FlightMissions {
         }
 
         public void setHeartbeatTime(final int heartbeatTime) {
-            int oldHeartbeatTime = readHeartbeatTime(id);
-            heartbeatTimeIndex_remove(oldHeartbeatTime, id);
-
             storage.set(id, heartbeatTimeField, heartbeatTime);
-
-            heartbeatTimeIndex_add(heartbeatTime, id);
         }
 
         public int getDepartureAirportId() {
@@ -390,45 +359,10 @@ public class FlightMissions {
         return statusBitField.getInt(recordId);
     }
 
-    private void heartbeatTimeIndex_rebuild() {
-        heartbeatTimeIndex.clear();
-        storage.all().forEach(m -> heartbeatTimeIndex_add(m.getHeartbeatTime(), m.getId()));
-        int minimalHeartbeatTime = heartbeatTimeIndex.firstKey();
-        log.info("heartbeatTimeIndex_rebuild minimalHeartbeatTime: {}, size {}, size {}",
-                minimalHeartbeatTime,
-                heartbeatTimeIndex.get(minimalHeartbeatTime).size(),
-                heartbeatTimeIndex.size());
-    }
-
-    private void heartbeatTimeIndex_remove(int heartbeatTime, int recordId) {
-        List<Integer> ids = heartbeatTimeIndex.get(heartbeatTime);
-        if (ids == null) {
-            return;
-        }
-        if (ids.isEmpty()) {
-            heartbeatTimeIndex.remove(heartbeatTime);
-            return;
-        }
-        int index = ids.indexOf(recordId);
-        if (index == -1) {
-            return;
-        }
-        ids.remove(index);
-    }
-
-    private void heartbeatTimeIndex_add(int heartbeatTime, int recordId) {
-        if (heartbeatTime == 0) {
-            return;
-        }
-        heartbeatTimeIndex.computeIfAbsent(heartbeatTime, k -> new ArrayList<>()).add(recordId);
-    }
-
     public String printHeartbeatTimeIndex() {
-        StringBuffer sb = new StringBuffer();
-        heartbeatTimeIndex.forEach((ts, list) -> sb
-                .append(TimeTools.ts(ts)).append('\n')
-                .append(list.toString()).append('\n')
-                .append('\n'));
+        final StringBuilder sb = new StringBuilder();
+        storage.heartbeatIndexEntries().forEach(e -> sb
+                .append(TimeTools.ts(e[0])).append(' ').append(e[1]).append(System.lineSeparator()));
         return sb.toString();
     }
 
