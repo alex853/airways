@@ -3,11 +3,17 @@ package net.simforge.airways2.world.computations;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
 public class FlightTimeline {
 
     public static final int START_TO_BLOCKS_OFF_MINUTES = 30;
 
     public static FlightTimeline byFlyingTime(Duration flyingTime) {
+        checkNotNull(flyingTime);
+        checkArgument(!flyingTime.isNegative(), "Flying time can not be negative, it is " + flyingTime);
+
         FlightTimeline result = new FlightTimeline();
 
         result.flying.scheduledDuration = flyingTime;
@@ -16,11 +22,17 @@ public class FlightTimeline {
     }
 
     public static FlightTimeline byScheduledDepartureArrivalTime(LocalDateTime scheduledDepartureTime, LocalDateTime scheduledArrivalTime) {
+        checkNotNull(scheduledDepartureTime);
+        checkNotNull(scheduledArrivalTime);
+
         FlightTimeline result = new FlightTimeline();
 
         Duration duration = Duration.between(scheduledDepartureTime, scheduledArrivalTime);
         duration = duration.minus(result.departure.scheduledDuration);
         duration = duration.minus(result.arrival.scheduledDuration);
+        checkArgument(!duration.isNegative(),
+                "The interval between the departure " + scheduledDepartureTime + " and the arrival " + scheduledArrivalTime
+                        + " is too short, the flying time would be " + duration);
 
         result.flying.scheduledDuration = duration;
 
@@ -162,8 +174,17 @@ public class FlightTimeline {
             return actualTime;
         }
 
+        /**
+         * Sets the actual time of the milestone (null clears it) and recalculates the estimated times of the following milestones.
+         * The timeline must be scheduled before, see scheduleDepartureTime. The order of the actual times is not checked on purpose:
+         * the moments are detected from the tracking data with a lag and may come in any order.
+         */
         public void setActualTime(LocalDateTime actualTime) {
-            this.actualTime = actualTime; // todo ak0 checks and tests
+            if (FlightTimeline.this.blocksOff.scheduledTime == null) {
+                throw new IllegalStateException("The timeline is not scheduled yet, call scheduleDepartureTime before setting the actual times");
+            }
+
+            this.actualTime = actualTime;
 
             updateEstimatedTimes();
         }

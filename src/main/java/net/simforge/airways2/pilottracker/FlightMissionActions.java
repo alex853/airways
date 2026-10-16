@@ -92,8 +92,6 @@ class FlightMissionActions {
 
             if (mission.getStatus() == FlightMissions.Status.Arrival) {
                 world.flightMissionControl().blocksOn(mission);
-
-                // todo ak0 no!!! ShadowJetLogic.deboardTransportFlightIfExists(world, mission);
             } else {
                 throw new IllegalStateException("unexpected mission status " + mission.getStatus());
             }

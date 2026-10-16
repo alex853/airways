@@ -140,8 +140,11 @@ public class Storage<T> {
         return lastChangedAtMillis;
     }
 
+    // The storage is written by one thread at a time (all the writes go under the write lock of the world), so the
+    // read-modify-write is safe. The field is volatile only to make the new value visible to the threads which read it without a lock.
+    @SuppressWarnings("NonAtomicOperationOnVolatileField")
     private void markChanged() {
-        lastChangedAtMillis = Math.max(clock.getAsLong(), lastChangedAtMillis + 1);
+        lastChangedAtMillis =Math.max(clock.getAsLong(), lastChangedAtMillis + 1);
     }
 
     public void save(final Path rootPath) throws IOException {
