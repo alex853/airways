@@ -130,3 +130,43 @@
 7. **Вживую не проверялось**: изменения не выкатывались на сервер. Смотреть `WARN` и события `FlightStats` после выкатки.
 8. **Точный возврат** для старых journey (без `lastKnownLocationCityId`) остаётся приблизительным, см. раздел
    «Далёкое будущее» и TODO про удаление старой логики выше.
+
+## ShadowJet: посадка рейса и вылет посреди посадки
+
+`ShadowJetLogic.provideTransportFlightIfRequired` (вызывается, когда появляется VATSIM-миссия):
+1. создаёт t/f и запускает check-in;
+2. подбирает журни из `LookingForTickets` (по `locationCityId`, доля загрузки 0.4–0.6 от мест), бронирует их и сразу
+   регистрирует (`checkin`, `locationCityId` обнуляется, `lastKnownLocationCityId` хранит город);
+3. сразу запускает посадку (`startBoarding`): темп `PaxManager` 15 PAX/мин, оценка окончания = `now + ceil(остаток / 15 ×
+   60) с + 3 мин запаса` (на 120 PAX это ~11 минут).
+
+**Решение по модели: темп посадки и логику регистрации не меняем.** Пилот на VATSIM уходит с гейта когда хочет;
+если он ждёт посадку до конца, он увозит больше пассажиров, если нет, меньше (так же и при полёте в Airways).
+Опоздавшие журни не проблема модели, это ожидаемый результат (`tooLateToBoard`, возврат в город перед рейсом).
+Поэтому ничего ускорять и «честнее» делать не нужно, нужно **правильно реагировать на прерывание посадки**.
+
+**Сделано (тесты: `PaxManagerTest`, `FlightWorkflowTest`, `ShadowJetLogicTest`):**
+- при вылете t/f с гейта в статусе `Boarding` (`TransportFlightControl.whenFlightDepartsFromGate`) вызывается
+  `paxManager().finishBoarding(tf)`: не севшие журни получают `tooLateToBoard`, запись посадки удаляется из мапы
+  `boardings`;
+- при принудительном окончании посадки журни, посадка которой начата, но не закончена (в счётчике посадки уже есть её
+  пассажиры), садится (`OnBoard`), чтобы `paxOnBoard` не прыгал вниз: скачок вверх лучше скачка вниз;
+- `PaxManager.finishBoarding` и `TransportFlightControl.startDeboarding` выставляют `paxOnBoard` = сумма `groupSize`
+  журни в `OnBoard` (`PaxManager.countPaxOnBoard`), без «призраков» счётчика посадки (`confirmedOnBoard + (int)
+  counter`): раньше такие пассажиры не были привязаны ни к какой журни, рейс не доходил до `paxOnBoard == 0` и висел в
+  `Deboarding` до окна дебординга (на деплое 16 октября окно закрыло 1253 таких рейса, 79% с остатком 1-3 PAX);
+- при отмене рейса (`unloadJourneysForcefullyFromActiveFlight`) запись посадки тоже удаляется (`dropBoardingState`).
+
+**Отключение VATSIM-пилота (`PilotContext`), что происходит с f/m, t/f и журни:**
+
+| Ситуация | Стадия контекста | Действие | t/f и журни |
+|---|---|---|---|
+| Офлайн на земле до взлёта (Preflight/Departing, в том числе посреди посадки) | Preflight/Departing | `mission_cancelBeforeTakeoffIfExists` | `cancelTransportFlightIfExists`: журни возвращаются в город до рейса, tf `Cancelled`, `paxOnBoard = 0` |
+| Офлайн в полёте дольше допустимого | Flying → FlyingOffline | `mission_cancelFromFlying` | то же самое, даже если фактически рейс почти долетел (см. todo в коде) |
+| Посадка замечена, затем офлайн | Arriving | `mission_blocksOnAndFinish` | `blocksOn` → tf `WaitingForDeboarding`, `finish`, `deboardTransportFlightIfExists` → tf `Deboarding`, журни разгружаются как обычно |
+| Дорулил до гейта и сразу офлайн, прибытие ещё не определено (определяется с лагом) | Arriving | то же самое | то же самое, отдельной ветки не нужно |
+| Офлайн, когда уже `Arrived` | Arrived | сброс контекста | миссия уже завершена, tf разгружается |
+
+Все эти ситуации покрыты в `FlightWorkflowTest` (раздел «the pilot disconnects», действия те же, что у
+`PilotContext`). Сам `PilotContext` по-прежнему тестируется в `VatsimTrackerTest` только на уровне f/m и самолёта,
+t/f и журни там не проверяются.

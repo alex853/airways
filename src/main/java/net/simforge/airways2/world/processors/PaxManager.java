@@ -114,6 +114,18 @@ public class PaxManager {
 
         log.info("t/f #{} - boarding - finish", transportFlight.getId());
 
+        // The journey whose boarding has been started but not finished (its PAX are already counted in PAX on board by the
+        // boarding counter) boards now, so PAX on board does not jump down. A jump up is better than a jump down.
+        final Boarding boarding = boardings.get(transportFlight.getId());
+        if (boarding != null && (int) boarding.getCounterValue() > 0) {
+            world.journeys()
+                    .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
+                    .ifPresent(journey -> {
+                        journeyControl().board(journey);
+                        log.info("t/f #{} - boarding - j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), boarding.getCounterValue());
+                    });
+        }
+
         final Collection<Journeys.Journey> failedToBoardJourneys = world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
                         Journeys.Status.WaitingForCheckIn,
@@ -123,7 +135,29 @@ public class PaxManager {
 
         failedToBoardJourneys.forEach(j -> journeyControl().tooLateToBoard(j));
 
+        // the boarding counter may hold PAX of the group which has not boarded yet, they are nobody's PAX
+        transportFlight.setPaxOnBoard(countPaxOnBoard(transportFlight));
+
         boardings.remove(transportFlight.getId());
+    }
+
+    /**
+     * The boarding of the cancelled flight is not finished by finishBoarding, its state must not stay in memory.
+     */
+    public void dropBoardingState(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        boardings.remove(transportFlight.getId());
+    }
+
+    /**
+     * Sum of the group sizes of the journeys which are on board of the flight.
+     */
+    public int countPaxOnBoard(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        return world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
     }
 
     private Boarding restoreBoardingState(final TransportFlights.Flight transportFlight) {

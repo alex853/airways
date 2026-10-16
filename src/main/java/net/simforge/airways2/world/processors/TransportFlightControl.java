@@ -223,6 +223,11 @@ public class TransportFlightControl {
     }
 
     public void whenFlightDepartsFromGate(final TransportFlights.Flight transportFlight) {
+        // the pilot is not obliged to wait for the end of the boarding, the journeys which are not on board are too late
+        if (transportFlight.getStatus() == TransportFlights.Status.Boarding) {
+            paxManager().finishBoarding(transportFlight);
+        }
+
         transportFlight.setStatus(TransportFlights.Status.Departure);
 
         log.info("t/f #{} - departed", transportFlight.getId());
@@ -264,6 +269,9 @@ public class TransportFlightControl {
 
         world.log(EventLog.EventType.TransportFlightDeboardingStarted, EventLog.id(transportFlight));
         deboardingStartTimes.put(transportFlight.getId(), world.getWorldTime());
+
+        // PAX on board is the sum of the journeys on board, it is set before the journeys leave the 'on board' status
+        transportFlight.setPaxOnBoard(paxManager().countPaxOnBoard(transportFlight));
 
         world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
 
@@ -341,6 +349,7 @@ public class TransportFlightControl {
                 .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
 
         transportFlight.setPaxOnBoard(0);
+        paxManager().dropBoardingState(transportFlight);
 
         log.warn("t/f #{} - unloaded forcefully, set PAX on board to 0", transportFlight.getId());
     }
