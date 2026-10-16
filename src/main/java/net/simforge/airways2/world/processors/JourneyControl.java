@@ -252,7 +252,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_MINUTE, 5 * Time.ONE_MINUTE));
 
-        moveBackToDepartureCity(journey, Optional.of(transportFlight1));
+        moveBackToDepartureCity(journey);
 
         log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, restart scheduled at {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime), Time.toLdt(journey.getHeartbeatTime()));
     }
@@ -345,7 +345,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
-        moveBackToDepartureCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()));
+        moveBackToDepartureCity(journey);
 
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);
@@ -372,7 +372,7 @@ public class JourneyControl {
 
     // Returns the journey to the city where it was before the flight. The stored last known location goes first, the transport
     // flight is not needed for it and may be lost; otherwise (old records) the city is guessed using the flight mission
-    private void moveBackToDepartureCity(final Journeys.Journey journey, final Optional<TransportFlights.Flight> transportFlight1) {
+    private void moveBackToDepartureCity(final Journeys.Journey journey) {
         final int lastKnownLocationCityId = journey.getLastKnownLocationCityId();
         if (lastKnownLocationCityId != 0) {
             journey.setLocationCityId(lastKnownLocationCityId);
@@ -380,6 +380,8 @@ public class JourneyControl {
                     world.cities().byId(lastKnownLocationCityId).map(city -> city.getName()).orElse("<unknown>"));
             return;
         }
+
+        final Optional<TransportFlights.Flight> transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id());
 
         FlightStats.event("journey - move back to departure city - no last known location");
 

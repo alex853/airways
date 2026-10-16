@@ -144,7 +144,6 @@ public class ShadowJetLogic {
         if (hubTest != null) {
             actualCabinServices.put(hubTest.journey().getId(), hubTest.seating().service());
             collected.add(hubTest.journey());
-            remained = hubTest.seating().remained();
         }
 
         // some journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes
