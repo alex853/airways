@@ -94,6 +94,10 @@ public class Airport2AirportDailyFlightStat {
         log.info("midnight count rotation - DONE, processed {} records, removed {} records", recordCount, toBeRemoved.size());
     }
 
+    public Stream<FlightStats> all() {
+        return storage.all();
+    }
+
     public Stream<FlightStats> allByFromAirportId(final int fromAirportId) {
         checkArgument(fromAirportId > 0);
         return storage.filter(recordId -> readFromAirportId(recordId) == fromAirportId);

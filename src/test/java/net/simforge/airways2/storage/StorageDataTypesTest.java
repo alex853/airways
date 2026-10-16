@@ -161,5 +161,83 @@ class StorageDataTypesTest {
                         .build());
     }
 
-    // todo ak0 tests for cases when wrong formats on wrong methods
+    // ---- wrong formats on wrong methods ----
+
+    private static final java.util.List<DataType> INT_TYPES = java.util.List.of(
+            DataType.Signed32bit, DataType.Unsigned8bit, DataType.Unsigned16bit, DataType.Unsigned24bit);
+    private static final java.util.List<DataType> FLOAT_TYPES = java.util.List.of(
+            DataType.Float, DataType.LatLong24bit, DataType.LatLong16bit);
+
+    private DataField fieldOf(final DataType dataType) {
+        return switch (dataType) {
+            case Signed32bit -> signed32bitField;
+            case Unsigned8bit -> unsigned8bitField;
+            case Unsigned16bit -> unsigned16bitField;
+            case Unsigned24bit -> unsigned24bitField;
+            case Float -> floatField;
+            case LatLong24bit -> latLong24bitField;
+            case LatLong16bit -> latLong16bitField;
+            case PlainString -> plainString20Field;
+        };
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "PlainString"})
+    public void test_getAsInt_is_not_applicable_to_not_integer_types(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.getAsInt(recordId, fieldOf(dataType)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString"})
+    public void test_getAsFloat_is_not_applicable_to_not_float_types(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.getAsFloat(recordId, fieldOf(dataType)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString"})
+    public void test_getAsString_is_applicable_to_plain_string_only(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.getAsString(recordId, fieldOf(dataType)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "PlainString"})
+    public void test_set_int_is_not_applicable_to_not_integer_types(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString"})
+    public void test_set_float_is_not_applicable_to_not_float_types(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1.5f));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString"})
+    public void test_set_string_is_applicable_to_plain_string_only(final DataType dataType) {
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), "text"));
+    }
+
+    @Test
+    public void test_wrong_method_does_not_change_the_value() {
+        storage.set(recordId, unsigned16bitField, 1234);
+        storage.set(recordId, floatField, 2.5f);
+        storage.set(recordId, plainString20Field, "text");
+
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, unsigned16bitField, 9.5f));
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, floatField, 7));
+        assertThrows(IllegalStateException.class, () -> storage.set(recordId, plainString20Field, 7));
+
+        assertEquals(1234, storage.getAsInt(recordId, unsigned16bitField));
+        assertEquals(2.5f, storage.getAsFloat(recordId, floatField));
+        assertEquals("text", storage.getAsString(recordId, plainString20Field));
+    }
+
+    @Test
+    public void test_every_data_type_is_covered_by_the_helper_lists() {
+        final java.util.Set<DataType> covered = new java.util.HashSet<>(INT_TYPES);
+        covered.addAll(FLOAT_TYPES);
+        covered.add(DataType.PlainString);
+
+        assertEquals(java.util.Set.of(DataType.values()), covered);
+    }
 }

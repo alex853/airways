@@ -5,11 +5,17 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
-// todo ak0 tests!!!!
+/**
+ * Strings of the world, they are addressed by ids starting from 1. A string is stored in UTF-8, its length (up to 255
+ * bytes) is stored in one unsigned byte before the string.
+ */
 public class Strings {
+    private static final int MAX_STRING_LENGTH_IN_BYTES = 255;
+
     private int[] indices = new int[1];
     private byte[] strings = new byte[0];
 
@@ -50,11 +56,11 @@ public class Strings {
     public String byId(final int id) {
         final int startingIndex = indices[id];
         final int length = Byte.toUnsignedInt(strings[startingIndex]);
-        return new String(strings, startingIndex + 1, length);
+        return new String(strings, startingIndex + 1, length, StandardCharsets.UTF_8);
     }
 
     public int find(String str) {
-        final byte[] target = str.getBytes();
+        final byte[] target = str.getBytes(StandardCharsets.UTF_8);
         for (int id = 1; id < indices.length; id++) {
             final int startingIndex = indices[id];
             final int length = Byte.toUnsignedInt(strings[startingIndex]);
@@ -77,7 +83,11 @@ public class Strings {
             return foundId;
         }
 
-        final byte[] target = str.getBytes();
+        final byte[] target = str.getBytes(StandardCharsets.UTF_8);
+        // the length is stored in one unsigned byte, a longer string would get a wrong length
+        if (target.length > MAX_STRING_LENGTH_IN_BYTES) {
+            throw new IllegalArgumentException("String is too long, " + target.length + " bytes while max length is " + MAX_STRING_LENGTH_IN_BYTES + " bytes");
+        }
 
         final int[] newIndices = new int[indices.length + 1];
         System.arraycopy(indices, 0, newIndices, 0, indices.length);
@@ -87,7 +97,7 @@ public class Strings {
         final int newId = newIndices.length-1;
         final int newStartingPoint = strings.length;
         newIndices[newId] = newStartingPoint;
-        newStrings[newStartingPoint] = (byte) target.length; // todo ak0 check the case when strings longer than 128 bytes, this can lead to negative values here!
+        newStrings[newStartingPoint] = (byte) target.length; // unsigned, up to 255, see Byte.toUnsignedInt in byId
         System.arraycopy(target, 0, newStrings, newStartingPoint+1, target.length);
 
         this.indices = newIndices;

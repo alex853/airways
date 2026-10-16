@@ -22,7 +22,11 @@ public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
 
-    // todo ak0 regularly show existing stats for most active airports in log messages
+    // the most active airports are shown in the log regularly, the stats are the flights of the last 8 days
+    private static final int ACTIVE_AIRPORTS_LOG_PERIOD = Time.ONE_HOUR;
+    private static final int ACTIVE_AIRPORTS_LOG_LIMIT = 25;
+    private static int activeAirportsLoggedAt = Integer.MIN_VALUE;
+
     // todo ak1 hubs are hardcoded for the hub test, later should be calculated from flight stats
     private static final Set<String> HUB_ICAOS = Set.of("EGLL", "EDDF", "EHAM", "KJFK", "OMDB");
 
@@ -101,7 +105,43 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
+    /**
+     * Airports with the most flights (departures and arrivals) of the last 8 days, ICAO to the count, the busiest first.
+     */
+    public static Map<String, Integer> mostActiveAirports(final World world, final int limit) {
+        final Map<Integer, Integer> flightsByAirportId = new HashMap<>();
+        world.airport2airportDailyFlightStats().all().forEach(stats -> {
+            final int count = stats.getTotalCount();
+            flightsByAirportId.merge(stats.getFromAirportId(), count, Integer::sum);
+            flightsByAirportId.merge(stats.getToAirportId(), count, Integer::sum);
+        });
+
+        final Map<String, Integer> result = new LinkedHashMap<>();
+        flightsByAirportId.entrySet().stream()
+                .map(e -> Map.entry(world.airports().getIcao(e.getKey()).orElse("#" + e.getKey()), e.getValue()))
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
+                .limit(limit)
+                .forEach(e -> result.put(e.getKey(), e.getValue()));
+        return result;
+    }
+
+    private static void logMostActiveAirportsRegularly(final World world) {
+        final int now = world.getWorldTime();
+        if (activeAirportsLoggedAt != Integer.MIN_VALUE && now >= activeAirportsLoggedAt && now - activeAirportsLoggedAt < ACTIVE_AIRPORTS_LOG_PERIOD) {
+            return;
+        }
+        activeAirportsLoggedAt = now;
+
+        try {
+            log.info("Stats - most active airports by flights of the last 8 days: {}", mostActiveAirports(world, ACTIVE_AIRPORTS_LOG_LIMIT));
+        } catch (final RuntimeException e) {
+            log.warn("Stats - unable to calculate most active airports", e);
+        }
+    }
+
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
+        logMostActiveAirportsRegularly(world);
+
         String from = world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow();
         String to = world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow();
         String route = from + "-" + to;

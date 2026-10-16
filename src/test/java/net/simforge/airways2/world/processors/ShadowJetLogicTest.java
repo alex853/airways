@@ -285,4 +285,36 @@ public class ShadowJetLogicTest {
         assertEquals(0, transportFlight.getPaxCheckedIn());
         assertEquals(SEATS, transportFlight.getRemainedTickets().getTotal());
     }
+
+    @Test
+    public void test__most_active_airports_are_counted_by_departures_and_arrivals_of_the_last_days() {
+        final Airports.Airport airportC = world.airports().create(10, 10, "CCC", "CCCC", "Charlie");
+        for (int i = 0; i < 3; i++) {
+            world.airport2airportDailyFlightStats().incrementTodayCount(airportA.getId(), airportB.getId());
+        }
+        world.airport2airportDailyFlightStats().incrementTodayCount(airportB.getId(), airportC.getId());
+
+        final java.util.Map<String, Integer> top = ShadowJetLogic.mostActiveAirports(world, 10);
+
+        assertEquals(List.of("BBBB", "AAAA", "CCCC"), new ArrayList<>(top.keySet())); // the busiest first
+        assertEquals(4, top.get("BBBB")); // 3 arrivals + 1 departure
+        assertEquals(3, top.get("AAAA"));
+        assertEquals(1, top.get("CCCC"));
+    }
+
+    @Test
+    public void test__most_active_airports_are_limited() {
+        final Airports.Airport airportC = world.airports().create(10, 10, "CCC", "CCCC", "Charlie");
+        world.airport2airportDailyFlightStats().incrementTodayCount(airportA.getId(), airportB.getId());
+        world.airport2airportDailyFlightStats().incrementTodayCount(airportB.getId(), airportC.getId());
+
+        assertEquals(1, ShadowJetLogic.mostActiveAirports(world, 1).size());
+    }
+
+    @Test
+    public void test__most_active_airports_of_an_empty_world_is_empty() {
+        final World emptyWorld = World.create(new InMemoryStorageStrategy(), Time.START_TIME_EPOCH_SECONDS);
+
+        assertTrue(ShadowJetLogic.mostActiveAirports(emptyWorld, 10).isEmpty());
+    }
 }
