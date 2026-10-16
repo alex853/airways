@@ -55,7 +55,7 @@ public class TransportFlightProcessor {
                 }
             }
             case Deboarding -> {
-                if (tfControl.areAllPaxDeboarded(transportFlight)) {
+                if (tfControl.areAllPaxDeboarded(transportFlight) || tfControl.deboardingWindowExpired(transportFlight)) {
                     tfControl.finish(transportFlight);
                 } else {
                     tfControl.continueDeboarding(transportFlight);

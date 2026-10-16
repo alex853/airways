@@ -206,6 +206,24 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 - После этого убрать из `GeoController` кэш `countryIdByAirportId` и `invalidateAirportCountries()`, а из
   `AdminController` зависимость от `GeoController` (сейчас она нужна только для сброса кэша).
 
+### 5. Импорты `009`, `012`, `013` в `Application.main` после деплоя
+
+После каждого пакета городов и аэропортов нужно закомментировать `World25_009_create_some_airports`,
+`World25_012_selected_cities` и `World25_013_rename_cities` обратно (отдельным коммитом), иначе импорты гоняются при
+каждом старте. Сейчас они раскомментированы (последний пакет: EKBI, HEGN, TJSJ, YBBN, OJAI, GCLP, MMUN, MYNN).
+
+### 6. Прочее, обсуждённое и не сделанное
+
+- **Cozumel** как отдельный город: MMCZ Cozumel Intl создан автоматически и привязан к Cancun, сам город Cozumel
+  (69 400) не импортирован (по аналогии с Victoria у Vancouver можно добавить).
+- **Имена аэропортов:** многие аэропорты в мире имеют сырые имена из refdata (например, `Lake X`); проверить и привести к
+  формату `<Город> <Название>`, как делали через `World25_013` (`RenameAirports`).
+- **`/geo/cities`:** мапа `icaosByCityId` строится на каждый запрос (за один проход); если станет заметно, кэшировать так
+  же, как `countryIdByAirportId` в `GeoController` (с инвалидацией при `create-links`).
+- **Аэропорты без собственной страны** (пункт 4 выше) и после появления `countryId` в `Airports` убрать из
+  `GeoController` кэш `countryIdByAirportId` и зависимость `AdminController` от `GeoController`.
+- **Бэклог VATSIM:** остаются «тонкие» EETN Tallinn, LIEO Olbia (Сардиния), далее Европа/США по списку; особые KPNS, KJAC.
+
 ## Выполнено
 
 - **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется через `/admin/f1-tour-fixes`.

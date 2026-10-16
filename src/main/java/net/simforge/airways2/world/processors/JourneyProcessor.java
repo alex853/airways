@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.app.tools.FlightStats;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -171,28 +172,39 @@ public class JourneyProcessor {
         // most of the logic is in pax manager, here the journey only watches that the boarding is not over yet
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            world.journeyControl().orphaned(journey);
-        } else if (!TransportFlightHelper.flightStatusAllowsToBoard(flight.get().getStatus())) { // checkin & boarding finished -> journey is too late
-            world.journeyControl().tooLateToBoard(journey);
-        } else {
+            log.warn("j/y #{} - t/f #{} not found, journey is waiting for boarding, forceful return", journey.getId(), journey.getTransportFlight1Id());
+            world.journeyControl().resetJourneyForcefully(journey);
+            FlightStats.event("journey - waiting for boarding - no TF found");
+        } else if (TransportFlightHelper.flightStatusAllowsToBoard(flight.get().getStatus())) {
             journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
+        } else { // checkin & boarding finished -> journey is too late
+            world.journeyControl().tooLateToBoard(journey);
         }
     }
 
     private static void waitingForDeboarding(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            world.journeyControl().orphaned(journey);
+            // the transport flight is lost, the journey is returned back to the city where it was before the flight
+            log.warn("j/y #{} - t/f #{} not found, journey is waiting for deboarding, forceful return", journey.getId(), journey.getTransportFlight1Id());
+            world.journeyControl().resetJourneyForcefully(journey);
+            FlightStats.event("journey - waiting for deboarding - no TF found");
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
-            world.journeyControl().deboard(journey);
+            // the moment of deboarding is a random decision: deboard with some probability, otherwise check again in a minute
+            if (Math.random() < TransportFlightHelper.DEBOARDING_PROBABILITY_PER_MINUTE) {
+                world.journeyControl().deboard(journey);
+            } else {
+                journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
+            }
         } else if (flight.get().getStatus() == TransportFlights.Status.Finished) {
             // the deboarding of the flight has been finished before the random time of the journey came, so it deboards anyway
-            log.info("j/y #{} - t/f #{} is already finished, deboarding", journey.getId(), flight.get().getId());
+            log.warn("j/y #{} - t/f #{} is already finished, deboarding", journey.getId(), flight.get().getId());
             world.journeyControl().deboard(journey);
         } else {
-            // not expected status, let's look again in a minute
-            log.warn("j/y #{} - t/f #{} is in {} status, waiting for deboarding", journey.getId(), flight.get().getId(), flight.get().getStatus());
-            journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
+            // not expected status, we do not understand what it is, so the journey is orphaned (no reset, PAX on board is not touched)
+            log.warn("j/y #{} - t/f #{} is in {} status, journey is waiting for deboarding, orphaned", journey.getId(), flight.get().getId(), flight.get().getStatus());
+            FlightStats.event("journey - waiting for deboarding - unexpected TF status");
+            world.journeyControl().orphaned(journey);
         }
     }
 

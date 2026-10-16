@@ -42,6 +42,7 @@ public class JourneyControl {
                 service);
         journey.setHeartbeatTime(world.getWorldTime());
         journey.setLocationCityId(c2cFlow.getFromCityId());
+        journey.setLastKnownLocationCityId(c2cFlow.getFromCityId());
         return journey;
     }
 
@@ -103,6 +104,10 @@ public class JourneyControl {
 
         journey.setStatus(Journeys.Status.WaitingForBoarding);
         journey.setHeartbeatTime(world.getWorldTime());
+
+        if (journey.getLocationCityId() != 0) {
+            journey.setLastKnownLocationCityId(journey.getLocationCityId());
+        }
         journey.setLocationCityId(0);
 
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
@@ -130,7 +135,10 @@ public class JourneyControl {
         journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
 
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        world.transportFlightControl().decreasePaxOnBoard(flight, journey.getGroupSize());
+        // the flight could be already finished, then there is nothing to decrease
+        if (flight.getStatus() == TransportFlights.Status.Deboarding) {
+            world.transportFlightControl().decreasePaxOnBoard(flight, journey.getGroupSize());
+        }
 
         log.info("j/y #{} - deboarded from t/f #{}, g/s {}, new PAX on board {}", journey.getId(), journey.getTransportFlight1Id(), journey.getGroupSize(), flight.getPaxOnBoard());
     }
@@ -144,7 +152,7 @@ public class JourneyControl {
 
         shiftToNextTransportFlight(journey);
 
-        moveToCityNextToLandingAirportOrToCity(journey, transportFlight1);
+        moveToLandingAirportCity(journey, transportFlight1);
 
         if (noMoreTransportFlights(journey)) {
             journey.setStatus(Journeys.Status.ItinerariesDone);
@@ -180,6 +188,7 @@ public class JourneyControl {
         journey.setToCityId(fromCityId);
         // location must match from city, otherwise it could keep a random city of the landing airport (e.g. after diversion)
         journey.setLocationCityId(toCityId);
+        journey.setLastKnownLocationCityId(toCityId);
 
         scheduleLookingForTickets(journey);
 
@@ -243,7 +252,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_MINUTE, 5 * Time.ONE_MINUTE));
 
-        moveBackToCityNextToDepartureAirportOrFromCity(journey, transportFlight1);
+        moveBackToDepartureCity(journey, Optional.of(transportFlight1));
 
         log.info("j/y #{} - too late to board, was in {} status and heartbeat time {}, restart scheduled at {}", journey.getId(), oldStatus, Time.toLdtOrNull(oldHeartbeatTime), Time.toLdt(journey.getHeartbeatTime()));
     }
@@ -305,7 +314,7 @@ public class JourneyControl {
 
         world.journeys()
                 .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
-                .forEach(this::scheduleDeboardingAtRandomTime);
+                .forEach(this::scheduleDeboarding);
     }
 
     private boolean noMoreTransportFlights(final Journeys.Journey journey) {
@@ -317,11 +326,13 @@ public class JourneyControl {
         journey.setTransportFlight2Id(0);
     }
     
-    private void scheduleDeboardingAtRandomTime(final Journeys.Journey journey) {
+    // The moment of the deboarding is not chosen here: the journey checks the flight every minute and JourneyProcessor
+    // decides randomly (DEBOARDING_PROBABILITY_PER_MINUTE) whether to deboard now or to wait one more minute
+    private void scheduleDeboarding(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * TransportFlightHelper.DEBOARDING_DURATION));
+        journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
 
-        log.info("j/y #{} - deboarding from t/f #{} scheduled at {}", journey.getId(), journey.getTransportFlight1Id(), Time.toLdt(journey.getHeartbeatTime()));
+        log.info("j/y #{} - waiting for deboarding from t/f #{}, first check at {}", journey.getId(), journey.getTransportFlight1Id(), Time.toLdt(journey.getHeartbeatTime()));
     }
 
     // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states
@@ -334,7 +345,7 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
-        moveBackToCityNextToDepartureAirportOrFromCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow());
+        moveBackToDepartureCity(journey, world.transportFlights().byId(journey.getTransportFlight1Id()));
 
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);
@@ -342,6 +353,7 @@ public class JourneyControl {
         releaseTransportFlight2Tickets(journey);
 
         log.info("j/y #{} - has been reset forcefully back to LookingForTickets, status BEFORE was {}", journey.getId(), oldStatus);
+        FlightStats.event("journey - reset journey forcefully");
     }
 
     private void releaseTransportFlight2Tickets(Journeys.Journey journey) {
@@ -358,12 +370,36 @@ public class JourneyControl {
         journey.setTransportFlight2Id(0);
     }
 
-    private void moveBackToCityNextToDepartureAirportOrFromCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
-        FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
-        updateLocationCity(journey, journey.getFromCityId(), flightMission.getDepartureAirportId());
+    // Returns the journey to the city where it was before the flight. The stored last known location goes first, the transport
+    // flight is not needed for it and may be lost; otherwise (old records) the city is guessed using the flight mission
+    private void moveBackToDepartureCity(final Journeys.Journey journey, final Optional<TransportFlights.Flight> transportFlight1) {
+        final int lastKnownLocationCityId = journey.getLastKnownLocationCityId();
+        if (lastKnownLocationCityId != 0) {
+            journey.setLocationCityId(lastKnownLocationCityId);
+            log.info("j/y #{} - moved back to the last known location, city #{} {}", journey.getId(), lastKnownLocationCityId,
+                    world.cities().byId(lastKnownLocationCityId).map(city -> city.getName()).orElse("<unknown>"));
+            return;
+        }
+
+        FlightStats.event("journey - move back to departure city - no last known location");
+
+        // the counter of these messages shows how often the journeys still go the old way
+        log.warn("j/y #{} - last known location is not set, moving back the old way, t/f #{} {}", journey.getId(), journey.getTransportFlight1Id(), transportFlight1.isPresent() ? "exists" : "not found");
+
+        final Optional<FlightMissions.Mission> flightMission = transportFlight1
+                .flatMap(tf -> world.flightMissions().byId(tf.getFlightMissionId()));
+        if (flightMission.isPresent()) {
+            updateLocationCity(journey, journey.getFromCityId(), flightMission.get().getDepartureAirportId());
+        } else {
+            // the transport flight or its mission is lost and the city before the flight is not known, the best guess
+            journey.setLocationCityId(journey.getFromCityId());
+            journey.setLastKnownLocationCityId(journey.getFromCityId());
+            log.warn("j/y #{} - t/f #{} or its mission not found, last known location is not set, location is set to the from city", journey.getId(), journey.getTransportFlight1Id());
+            FlightStats.event("journey - move back to departure city - no FM found");
+        }
     }
 
-    private void moveToCityNextToLandingAirportOrToCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
+    private void moveToLandingAirportCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {
         FlightMissions.Mission flightMission = world.flightMissions().byId(transportFlight1.getFlightMissionId()).orElseThrow();
         updateLocationCity(journey, journey.getToCityId(), flightMission.getActualLandingAirportId());
     }
@@ -373,8 +409,11 @@ public class JourneyControl {
         if (!cities.isEmpty()) {
             if (cities.contains(targetCityId)) {
                 journey.setLocationCityId(targetCityId);
+                journey.setLastKnownLocationCityId(targetCityId);
             } else {
-                journey.setLocationCityId(Tools.random(cities).orElseThrow());
+                final int randomCityId = Tools.random(cities).orElseThrow();
+                journey.setLocationCityId(randomCityId);
+                journey.setLastKnownLocationCityId(randomCityId);
             }
         } else {
             String icao = world.airports().byId(targetAirportId).orElseThrow().getIcao();

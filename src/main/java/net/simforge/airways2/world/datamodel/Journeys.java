@@ -30,9 +30,9 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight1Id      3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight2Id      3 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationCityId          2 bytes
-            // ----------------------------------------------------- sum                   20 bytes
-            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // lastKnownLocationCityId 2 bytes
+            // ----------------------------------------------------- sum                   22 bytes
+            // -------------------------------------------- reserved 10 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
@@ -54,6 +54,7 @@ public class Journeys {
     private final DataField transportFlight1IdField = storage.getDataField(6);
     private final DataField transportFlight2IdField = storage.getDataField(7);
     private final DataField locationCityIdField = storage.getDataField(8);
+    private final DataField lastKnownLocationCityIdField = storage.getDataField(9);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -221,6 +222,18 @@ public class Journeys {
             storage.set(id, locationCityIdField, locationCityId);
         }
 
+        /**
+         * The last non-zero location city: locationCityId is zeroed while the journey is in the flight, so this is
+         * the place to return to if the flight is lost. Zero when it is not known (old records).
+         */
+        public int getLastKnownLocationCityId() {
+            return readLastKnownLocationCityId(id);
+        }
+
+        public void setLastKnownLocationCityId(int lastKnownLocationCityId) {
+            storage.set(id, lastKnownLocationCityIdField, lastKnownLocationCityId);
+        }
+
         @Override
         public String toString() {
             return String.format("{ id: %s, status: %s }", id, getStatus());
@@ -278,6 +291,10 @@ public class Journeys {
 
     private int readLocationCityId(int recordId) {
         return storage.getAsInt(recordId, locationCityIdField);
+    }
+
+    private int readLastKnownLocationCityId(int recordId) {
+        return storage.getAsInt(recordId, lastKnownLocationCityIdField);
     }
 
     public enum Status {

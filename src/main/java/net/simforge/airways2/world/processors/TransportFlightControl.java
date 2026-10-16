@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -22,12 +23,18 @@ public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
     private static final int BOARDING_TICK = Time.TICK;
     private static final int DEBOARDING_TICK = Time.ONE_MINUTE;
+    // the deboarding must not last longer, the flight is finished when the window is over
+    private static final int DEBOARDING_WINDOW = Time.ONE_HOUR;
+    private static final int DEBOARDING_WINDOW_CACHE_TTL = 2 * Time.ONE_HOUR;
 
     private static final Logger log = LoggerFactory.getLogger(TransportFlightControl.class);
 
     private final World world;
 
     private final Map<String, CabinLayout> cabinLayouts = new TreeMap<>();
+
+    // t/f id -> deboarding start time, filled lazily from the event log
+    private final Map<Integer, Integer> deboardingStartTimes = new HashMap<>();
 
     public TransportFlightControl(final World world) {
         this.world = world;
@@ -255,6 +262,9 @@ public class TransportFlightControl {
         transportFlight.setStatus(TransportFlights.Status.Deboarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
 
+        world.log(EventLog.EventType.TransportFlightDeboardingStarted, EventLog.id(transportFlight));
+        deboardingStartTimes.put(transportFlight.getId(), world.getWorldTime());
+
         world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
 
         log.info("t/f #{} - deboarding started, PAX on board {}", transportFlight.getId(), transportFlight.getPaxOnBoard());
@@ -280,13 +290,46 @@ public class TransportFlightControl {
         return transportFlight.getPaxOnBoard() == 0;
     }
 
+    /**
+     * The deboarding must not last longer than DEBOARDING_WINDOW. The start time is taken from the event log (cached),
+     * the flight without the start event is considered as expired.
+     */
+    public boolean deboardingWindowExpired(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+
+        final int now = world.getWorldTime();
+        deboardingStartTimes.values().removeIf(startTime -> now - startTime > DEBOARDING_WINDOW_CACHE_TTL);
+
+        // null is not stored in the map, the flight without the start event is expired
+        final Integer startTime = deboardingStartTimes.computeIfAbsent(transportFlight.getId(), this::findDeboardingStartTime);
+
+        return startTime == null || now - startTime >= DEBOARDING_WINDOW;
+    }
+
+    // null if there is no start event
+    private Integer findDeboardingStartTime(final int transportFlightId) {
+        return world.eventLog()
+                .byObject(EventLog.ObjectType.TransportFlight.code(), transportFlightId)
+                .filter(event -> event.getType() == EventLog.EventType.TransportFlightDeboardingStarted)
+                .map(EventLog.Event::getTime)
+                .max(Integer::compare)
+                .orElse(null);
+    }
+
     public void finish(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
-        checkArgument(areAllPaxDeboarded(transportFlight));
+
+        if (!areAllPaxDeboarded(transportFlight)) {
+            log.warn("t/f #{} - finished with PAX {} still on board", transportFlight.getId(), transportFlight.getPaxOnBoard());
+            FlightStats.event("t/f - finished with PAX still on board");
+        }
 
         transportFlight.setStatus(TransportFlights.Status.Finished);
         transportFlight.setHeartbeatTime(0);
+        transportFlight.setPaxOnBoard(0);
+
+        deboardingStartTimes.remove(transportFlight.getId());
 
         log.info("t/f #{} - finished", transportFlight.getId());
     }
