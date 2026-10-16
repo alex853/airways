@@ -49,6 +49,8 @@ public class TransportFlights {
     private final BitAccessField paxCheckedInOnBoardFieldBits = BitAccessField.instance(storage, paxCheckedInOnBoardField);
     private final BitAccessField.Section paxCheckedInBitField = paxCheckedInOnBoardFieldBits.section(0, 10);
     private final BitAccessField.Section paxOnBoardBitField = paxCheckedInOnBoardFieldBits.section(10, 10);
+    // bits 20..29 of the same field, they were free; 2 bits (30, 31) are still free, see getPaxCarried
+    private final BitAccessField.Section paxCarriedBitField = paxCheckedInOnBoardFieldBits.section(20, 10);
 
     // Flight mission id to id of its transport flight (the first one if there are several). The records are created only in
     // create() and deleted only in deleteById(), flightMissionId of a record never changes, so the index is kept in these
@@ -212,6 +214,31 @@ public class TransportFlights {
         public void setPaxOnBoard(final int paxOnBoard) {
             checkArgument(paxOnBoard >= 0);
             paxOnBoardBitField.setInt(id, paxOnBoard);
+        }
+
+        /**
+         * How many passengers the flight carried: the PAX on board at the takeoff, it is set once by
+         * TransportFlightControl.whenFlightTakeoffs. Zero means 'not known': the flight has not taken off yet (or has been
+         * cancelled before that), or it is an old flight which was finished before this field appeared.
+         * <p>
+         * The value lives in the same 32 bits as 'PAX checked-in' (bits 0..9) and 'PAX on board' (bits 10..19), in bits 20..29, which
+         * were not used. There was no reserved space in the record of the transport flight, so the counter is squeezed here,
+         * no migration of the stored data is required: the old records have zeros in these bits.
+         * <p>
+         * 10 bits are 0..1023 passengers, the same limit the neighbour counters have, the setter refuses a bigger value,
+         * otherwise it would overwrite the neighbour bits.
+         * <p>
+         * todo ak2 the record of the transport flight must be extended with the reserved space, and the counter must get its own
+         *   field with its own range, then this section is released. It is not urgent: nobody reads the value yet,
+         *   it is only collected to be used later (statistics of the carried passengers).
+         */
+        public int getPaxCarried() {
+            return paxCarriedBitField.getInt(id);
+        }
+
+        public void setPaxCarried(final int paxCarried) {
+            checkArgument(paxCarried >= 0 && paxCarried < 1024, "PAX carried must be 0..1023, it is " + paxCarried);
+            paxCarriedBitField.setInt(id, paxCarried);
         }
 
         @Override

@@ -183,4 +183,52 @@ class TransportFlightsTest {
 
         assertEquals(first.getId(), loaded.byFlightMissionId(mission.getId()).orElseThrow().getId());
     }
+
+    @Test
+    public void test__pax_carried_is_independent_of_neighbour_counters() {
+        final TransportFlights.Flight flight = flightFor(mission());
+
+        flight.setPaxCheckedIn(1023);
+        flight.setPaxOnBoard(777);
+        flight.setPaxCarried(555);
+
+        assertEquals(1023, flight.getPaxCheckedIn());
+        assertEquals(777, flight.getPaxOnBoard());
+        assertEquals(555, flight.getPaxCarried());
+
+        flight.setPaxCheckedIn(0);
+        flight.setPaxOnBoard(0);
+        assertEquals(555, flight.getPaxCarried());
+
+        flight.setPaxCarried(1023);
+        flight.setPaxCheckedIn(5);
+        flight.setPaxOnBoard(7);
+        assertEquals(1023, flight.getPaxCarried());
+        assertEquals(5, flight.getPaxCheckedIn());
+        assertEquals(7, flight.getPaxOnBoard());
+    }
+
+    @Test
+    public void test__pax_carried_is_zero_by_default_and_refuses_wrong_values() {
+        final TransportFlights.Flight flight = flightFor(mission());
+
+        assertEquals(0, flight.getPaxCarried());
+        assertThrows(IllegalArgumentException.class, () -> flight.setPaxCarried(-1));
+        assertThrows(IllegalArgumentException.class, () -> flight.setPaxCarried(1024));
+        assertEquals(0, flight.getPaxCarried());
+    }
+
+    @Test
+    public void test__pax_carried_survives_the_save_and_load(@TempDir final Path dir) throws IOException {
+        final TransportFlights.Flight flight = flightFor(mission());
+        flight.setPaxOnBoard(120);
+        flight.setPaxCarried(118);
+        transportFlights.save(dir);
+
+        final TransportFlights loaded = new TransportFlights();
+        loaded.loadIfExists(dir);
+
+        assertEquals(118, loaded.byId(flight.getId()).orElseThrow().getPaxCarried());
+        assertEquals(120, loaded.byId(flight.getId()).orElseThrow().getPaxOnBoard());
+    }
 }

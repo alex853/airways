@@ -318,6 +318,28 @@ public class PaxManagerTest {
                 "PAX on board after deboarding is " + transportFlight.getPaxOnBoard());
     }
 
+    @Test
+    public void test__pax_carried_is_set_at_the_takeoff_and_stays_after_the_deboarding() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(8, 12);
+
+        tfControl.startBoarding(transportFlight);
+        runBoardingFor(10 * Time.ONE_MINUTE);
+        tfControl.waitForDeparture(transportFlight);
+        tfControl.whenFlightDepartsFromGate(transportFlight);
+        assertEquals(0, transportFlight.getPaxCarried());
+
+        tfControl.whenFlightTakeoffs(transportFlight);
+        assertEquals(8 + 12, transportFlight.getPaxCarried());
+
+        tfControl.whenFlightLands(transportFlight);
+        tfControl.whenFlightArrivesToGate(transportFlight);
+        tfControl.startDeboarding(transportFlight);
+        journeys.forEach(j -> world.journeyControl().deboard(j));
+
+        assertTrue(tfControl.areAllPaxDeboarded(transportFlight));
+        assertEquals(8 + 12, transportFlight.getPaxCarried());
+    }
+
     private void flyToTheGate() {
         flyToTheGate(true);
     }

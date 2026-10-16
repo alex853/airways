@@ -236,6 +236,8 @@ public class TransportFlightControl {
 
     public void whenFlightTakeoffs(final TransportFlights.Flight transportFlight) {
         transportFlight.setStatus(TransportFlights.Status.Flying);
+        // the passengers who are on board at the takeoff are the ones who are carried
+        transportFlight.setPaxCarried(transportFlight.getPaxOnBoard());
 
         log.info("t/f #{} - flying", transportFlight.getId());
     }

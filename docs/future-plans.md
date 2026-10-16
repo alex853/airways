@@ -86,3 +86,9 @@
 
 - Перелёты через хабы: [journeys-hub-mode.md](journeys-hub-mode.md) (идёт hub test).
 - Карантин удалённых записей Storage: [storage-quarantine.md](storage-quarantine.md) (дизайн).
+
+## Transport flights: расширить запись, счётчик перевезённых пассажиров
+
+В записи T/F (24 байта) нет резерва. Счётчик перевезённых пассажиров (`paxCarried`, ставится при взлёте в `whenFlightTakeoffs`, пока нигде
+не читается) временно живёт в свободных битах 20..29 поля `paxCheckedInOnBoard` (10 бит, 0..1023, ноль значит «неизвестно»).
+todo ak2: расширить запись T/F с запасом и вынести счётчик в собственное поле. Подробное объяснение у `Flight.getPaxCarried()`.
