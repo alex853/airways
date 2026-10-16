@@ -26,15 +26,21 @@ import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
@@ -60,29 +66,32 @@ public class AdminController {
     @Autowired
     private VatsimTrackerBean vatsimTracker;
 
+    // The log files are big, they are streamed from the disk and never loaded into the memory (1 GB host).
     @GetMapping("/log/full")
-    public ResponseEntity<byte[]> getFullLog() throws IOException {
-        byte[] bytes = IOHelper.loadFile(new File("./logs/logback.log")).getBytes();
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .contentLength(bytes.length)
-                .body(bytes);
+    public ResponseEntity<Resource> getFullLog() {
+        return streamLogFile(new File("./logs/logback.log"));
     }
 
     @GetMapping("/log/date/{date}")
-    public ResponseEntity<byte[]> getFullLog(@PathVariable final String date) throws IOException {
+    public ResponseEntity<Resource> getFullLog(@PathVariable final String date) {
         checkArgument(date.length() == 10);
         final LocalDate parsedDate = checkNotNull(LocalDate.parse(date));
 
         final String fileName = String.format("logback.%04d-%02d-%02d.log",
                 parsedDate.getYear(), parsedDate.getMonthValue(), parsedDate.getDayOfMonth());
-        byte[] bytes = IOHelper.loadFile(new File("./logs/" + fileName)).getBytes();
+        // the log of the current day is in logback.log, the dated file appears after the rotation at midnight
+        return streamLogFile(new File("./logs/" + fileName));
+    }
+
+    private static ResponseEntity<Resource> streamLogFile(final File file) {
+        if (!file.isFile()) {
+            return ResponseEntity.notFound().build();
+        }
 
         return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .contentLength(bytes.length)
-                .body(bytes);
+                // no content length: the current log is being written while it is sent, so the size is not known in advance
+                .contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8))
+                .body(new FileSystemResource(file));
     }
 
     @GetMapping("/log/tail")
@@ -110,8 +119,8 @@ public class AdminController {
      * e.g. q=j/y #33742||t/f #9467||f/m #4986
      */
     @GetMapping("/log/search")
-    public ResponseEntity<byte[]> searchLog(@RequestParam final String q,
-                                            @RequestParam(defaultValue = "false") final boolean all) throws IOException {
+    public ResponseEntity<StreamingResponseBody> searchLog(@RequestParam final String q,
+                                                           @RequestParam(defaultValue = "false") final boolean all) {
         checkArgument(!q.isEmpty(), "Query must not be empty");
 
         final List<String> terms = Arrays.stream(q.split("\\|\\|"))
@@ -130,29 +139,31 @@ public class AdminController {
         }
         files.add(new File("./logs/logback.log"));
 
-        final StringBuilder sb = new StringBuilder();
-        for (final File file : files) {
-            boolean headerPrinted = false;
-            try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (terms.stream().anyMatch(line::contains)) {
-                        if (all && !headerPrinted) {
-                            sb.append("=== ").append(file.getName()).append(" ===\n");
-                            headerPrinted = true;
+        // The matching lines are written to the response one by one, they are never collected in the memory (1 GB host).
+        final StreamingResponseBody body = outputStream -> {
+            final Writer writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8));
+            for (final File file : files) {
+                boolean headerPrinted = false;
+                try (final BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (terms.stream().anyMatch(line::contains)) {
+                            if (all && !headerPrinted) {
+                                writer.write("=== " + file.getName() + " ===\n");
+                                headerPrinted = true;
+                            }
+                            writer.write(line);
+                            writer.write('\n');
                         }
-                        sb.append(line).append('\n');
                     }
                 }
             }
-        }
-
-        final byte[] bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
+            writer.flush();
+        };
 
         return ResponseEntity.ok()
-                .contentType(MediaType.TEXT_PLAIN)
-                .contentLength(bytes.length)
-                .body(bytes);
+                .contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8))
+                .body(body);
     }
 
     @GetMapping(value = "/timing", produces = "text/plain")
