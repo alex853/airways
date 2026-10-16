@@ -135,11 +135,17 @@ public class JourneyProcessor {
                 .orElseThrow(() -> new NoSuchElementException("Unable to find F/M # " + tf.getFlightMissionId() + " for T/F " + tf)));
     }
 
-    // todo ak1 upgrade/downgrade service class
-    //   another cabin service field is required, kind of 'booked cabin service'
-    //   existing 'cabin service' should be renamed to 'preferred cabin service'
-    //   if there are no seats available for 'preferred', journey may upgrade by one class (Y -> W, or J -> F, but not Y -> J, or Y -> F)
-    //   or downgrade by one class, and store actual cabin service to 'booked cabin service'
+    // todo ak2 upgrade/downgrade service class in the ticket search (the regular route finding)
+    //   done: journey has 'preferred cabin service' and 'booked cabin service', CabinLayout.Service knows upgradedService()/downgradedService()
+    //   (Y -> W, J -> F, but not Y -> J, or Y -> F), ShadowJetLogic already seats journeys with one class upgrade/downgrade
+    //   and stores the actual class to 'booked cabin service'
+    //   not done: the search through tickets (allSuitableForRouteFinding/enoughSeatsAvailable, bookDirectFlightJourneyNoChecks,
+    //   bookStopoverFlightsJourneyNoChecks) looks at 'preferred cabin service' only, so if there are no seats in it, the journey
+    //   does not upgrade/downgrade, it waits and retries; isThereEnoughTickets below is not used by anybody
+    //   why ak2 and not ak1: this search was built for the network of scheduled flights, and they are switched off (or almost off).
+    //   Now all the ShadowJet flights appear only 10-15 minutes before the engines start, so the journeys can hardly find
+    //   such flights by the search at all (the search needs a 4 hours reserve before departure), and the improvement
+    //   would not change much. It makes sense to return to this when the scheduled flights or something similar come back.
     private static boolean isThereEnoughTickets(final Journeys.Journey journey, final TransportFlights.Flight tf) {
         return tf.getRemainedTickets().get(journey.getPreferredCabinService()) >= journey.getGroupSize();
     }
