@@ -6,9 +6,14 @@ import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.tools.CabinLayout;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -17,6 +22,8 @@ import static net.simforge.airways2.storage.Storage.Condition.and;
 import static net.simforge.airways2.world.processors.TransportFlightHelper.VALID_STATUS_CODES_FOR_TICKET_PURCHASE;
 
 public class TransportFlights {
+    private static final Logger log = LoggerFactory.getLogger(TransportFlights.class);
+
     private final Storage<Flight> storage = Storage.<Flight>builder()
             .name("transport-flights")
             .withInstantiator(Flight::new)
@@ -41,8 +48,19 @@ public class TransportFlights {
     private final BitAccessField.Section paxCheckedInBitField = paxCheckedInOnBoardFieldBits.section(0, 10);
     private final BitAccessField.Section paxOnBoardBitField = paxCheckedInOnBoardFieldBits.section(10, 10);
 
+    // Flight mission id to id of its transport flight (the first one if there are several). The records are created only in
+    // create() and deleted only in deleteById(), flightMissionId of a record never changes, so the index is kept in these
+    // methods and rebuilt after the loading. It makes byFlightMissionId() O(1) instead of a scan of all the flights.
+    private final Map<Integer, Integer> flightIdByMissionId = new ConcurrentHashMap<>();
+
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        rebuildFlightIdByMissionId();
+    }
+
+    private void rebuildFlightIdByMissionId() {
+        flightIdByMissionId.clear();
+        storage.all().forEach(flight -> flightIdByMissionId.putIfAbsent(flight.getFlightMissionId(), flight.getId()));
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -59,6 +77,10 @@ public class TransportFlights {
         flight.setStatus(Status.Scheduled);
         flight.setHeartbeatTime(0);
         storage.set(id, flightMissionIdField, flightMission.getId());
+        final int firstFlightId = flightIdByMissionId.merge(flightMission.getId(), id, Math::min);
+        if (firstFlightId != id) {
+            log.warn("f/m #{} already has t/f #{}, new t/f #{} is created for it too", flightMission.getId(), firstFlightId, id);
+        }
         storage.set(id, scheduledFlightIdField, scheduledFlight != null ? scheduledFlight.getId() : 0);
         storage.set(id, totalTicketsField, totalTickets.toSigned32bit());
         storage.set(id, remainedTicketsField, totalTickets.toSigned32bit());
@@ -67,7 +89,14 @@ public class TransportFlights {
     }
 
     public void deleteById(final int id) {
+        final int flightMissionId = readFlightMissionId(id); // before the record is cleared by the deletion
         storage.deleteRecord(id);
+
+        if (flightIdByMissionId.remove(flightMissionId, id)) {
+            // not expected, but if the mission has another transport flight, it becomes the first one
+            storage.findFirst(recordId -> readFlightMissionId(recordId) == flightMissionId)
+                    .ifPresent(other -> flightIdByMissionId.put(flightMissionId, other.getId()));
+        }
     }
 
     public Stream<Flight> all() {
@@ -84,7 +113,8 @@ public class TransportFlights {
     }
 
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {
-        return storage.findFirst(recordId -> readFlightMissionId(recordId) == flightMissionId);
+        final Integer id = flightIdByMissionId.get(flightMissionId);
+        return id == null ? Optional.empty() : storage.byId(id);
     }
 
     public Stream<Flight> allSuitableForRouteFinding(Journeys.Journey journey) {
