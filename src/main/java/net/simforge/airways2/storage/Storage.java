@@ -237,7 +237,7 @@ public class Storage<T> {
         }
 
         final int addedRecordId = getTotalStoredRecordCount() + 1;
-        // todo ak3 to check if new id is possible according to idDataType
+        // todo ak1 to check if new id is possible according to idDataType
         final byte[] newData = new byte[data.length + recordSize];
         System.arraycopy(data, 0, newData, 0, data.length);
         data = newData;

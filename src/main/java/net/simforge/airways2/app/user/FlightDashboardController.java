@@ -80,7 +80,7 @@ public class FlightDashboardController {
 
             return new Status2Dto(
                     simStatus,
-                    new VatsimStatusDto(), // todo ak1 vatsim tracking & dashboard integration rework
+                    new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
                     buildUserDto(userId, simStatus));
         });
@@ -148,11 +148,11 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
-            world.flightMissionControl().startOrCancel(flight); // todo ak1 why there is 'OR CANCEL' ????
+            world.flightMissionControl().startOrCancel(flight); // todo ak2 why there is 'OR CANCEL' ????
 
             if (simTrackerConnected) {
                 world.flightMissionControl().switchToExternalCoordinatesMode(flight);
@@ -221,7 +221,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
@@ -253,7 +253,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
@@ -281,7 +281,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - takeoff", flightId);
@@ -309,7 +309,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - landing", flightId);
@@ -338,7 +338,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
@@ -375,7 +375,7 @@ public class FlightDashboardController {
 
             //noinspection StatementWithEmptyBody
             if (vatsimTrackerBean.isUserConnected(userId)) {
-                // todo ak1 vatsim support
+                // todo ak2 vatsim support
             }
 
             log.info("f/m #{} - flight-dashboard - start-deboarding", flightId);
@@ -403,13 +403,13 @@ public class FlightDashboardController {
 
             boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 
-            // todo ak1 checks?
+            // todo ak2 checks?
 //            if (simTrackerBean.isUserConnected(userId)) {
 //                throw new IllegalStateException("manual finish-flight is prohibited");
 //            }
 //
 //            if (vatsimTrackerBean.isUserConnected(userId)) {
-                 // todo ak1 vatsim support
+                 // todo ak2 vatsim support
 //            }
 
             log.info("f/m #{} - flight-dashboard - finish", flightId);

@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-// todo ak3 indexed access can improve all the operations
+// todo ak1 indexed access can improve all the operations
 public class Airport2AirportDailyFlightStat {
     private static final Logger log = LoggerFactory.getLogger(Airport2AirportDailyFlightStat.class);
 

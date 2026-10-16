@@ -279,6 +279,6 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
     }
 
     public boolean isUserConnected(int userId) {
-        return false; // todo ak1 vatsim support
+        return false; // todo ak2 vatsim support
     }
 }

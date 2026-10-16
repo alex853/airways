@@ -12,7 +12,7 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-// todo ak2 add precondition checks for all the statuses
+// todo ak1 add precondition checks for all the statuses
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
@@ -46,7 +46,7 @@ public class FlightMissionControl {
 
             world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
             log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
-            // todo ak2 t/f actions in case of flight cancellation
+            // todo ak1 t/f actions in case of flight cancellation
 
             return;
         }
@@ -59,7 +59,7 @@ public class FlightMissionControl {
             world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
             log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
                     mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
-            // todo ak2 t/f actions in case of flight cancellation
+            // todo ak1 t/f actions in case of flight cancellation
 
             return;
         }
@@ -102,7 +102,7 @@ public class FlightMissionControl {
         world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
-        // todo ak2 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
+        // todo ak1 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
     }
 
     // Checks are shared between sim tracker 'reschedule' action and the reschedule itself, order matters for UI

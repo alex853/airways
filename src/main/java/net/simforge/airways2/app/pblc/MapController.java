@@ -42,7 +42,7 @@ public class MapController {
 
     @GetMapping("/aircraft/flying")
     public List<AircraftMapDto> getFlyingAircraft() {
-        // todo ak2 separate thread to build this data outside of web-request and provide caching of this big dataset
+        // todo ak1 separate thread to build this data outside of web-request and provide caching of this big dataset
         return worldBean.read(world -> world.aircrafts()
                 .filter(world.aircrafts().byLocationStatus(Aircrafts.LocationStatus.Flying))
                 .map(AircraftMapDto::from)

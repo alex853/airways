@@ -40,7 +40,7 @@ public class RandomFlightMissionGenerator {
         final int departureTime = world.getWorldTime() + 4 * Time.ONE_HOUR;
 
         final FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMissionFromCurrentLocationAirport(world, aircraft, destinationAirport, departureTime);
-        world.transportFlightControl().createTransportFlight(mission); // todo ak3 apply fixes from shadowjet code - decreased to ak3 because this code is not running and probably outdated for now
+        world.transportFlightControl().createTransportFlight(mission); // todo ak3 apply fixes from shadowjet code - decreased to ak3 because this code is not running and probably outdated for now - OUTDATED FOR NOW BECAUSE THIS CODE IS NOT RUNNING AND PROBABLY OUTDATED FOR NOW
 
         world.log(EventLog.EventType.FlightDispatchedRandomly, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight dispatched randomly, aircraft {}", mission.getId(), aircraft.getRegNo());
