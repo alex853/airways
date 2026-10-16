@@ -84,17 +84,21 @@ public class FlightWorkflowTest {
     public void test__happy_path__everybody_boards_flies_deboards_and_stays_at_the_destination() {
         provideFlight();
 
-        // booked and checked-in, the boarding has started
+        // booked, a part is checked-in at once and the others check-in later, the boarding has started
         assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
         journeys.forEach(j -> {
-            assertEquals(Journeys.Status.WaitingForBoarding, j.getStatus());
             assertEquals(transportFlight.getId(), j.getTransportFlight1Id());
-            assertEquals(0, j.getLocationCityId()); // in the flight
             assertEquals(cityA.getId(), j.getLastKnownLocationCityId());
+            if (j.getStatus() == Journeys.Status.WaitingForBoarding) {
+                assertEquals(0, j.getLocationCityId()); // in the flight
+            } else {
+                assertEquals(Journeys.Status.WaitingForCheckIn, j.getStatus());
+                assertEquals(cityA.getId(), j.getLocationCityId());
+            }
         });
 
-        // the boarding is over: all are on board
-        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        // the boarding is over: all are on board, also the ones who checked-in later
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
         journeys.forEach(j -> assertEquals(Journeys.Status.OnBoard, j.getStatus()));
         assertEquals(TOTAL_PAX, transportFlight.getPaxOnBoard());
@@ -127,7 +131,10 @@ public class FlightWorkflowTest {
 
         runFor(40); // a part of the journeys is on board, the rest is still waiting for boarding
         final List<Journeys.Journey> onBoard = journeysIn(Journeys.Status.OnBoard);
-        final List<Journeys.Journey> notBoarded = journeysIn(Journeys.Status.WaitingForBoarding);
+        // the ones who have not boarded yet and the ones who have not even checked-in yet
+        final List<Journeys.Journey> notBoarded = journeys.stream()
+                .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding || j.getStatus() == Journeys.Status.WaitingForCheckIn)
+                .toList();
         assertTrue(!onBoard.isEmpty() && !notBoarded.isEmpty(), "the test expects a partly boarded flight");
 
         startFlightAndDepart();
@@ -160,7 +167,7 @@ public class FlightWorkflowTest {
 
         assertEquals(Journeys.Status.LookingForTickets, tooBig.getStatus());
         assertEquals(0, tooBig.getTransportFlight1Id());
-        journeys.forEach(j -> assertEquals(Journeys.Status.WaitingForBoarding, j.getStatus()));
+        journeys.forEach(j -> assertTrue(j.getTransportFlight1Id() > 0, "j/y #" + j.getId() + " is not booked"));
     }
 
     // ---- deviations ----
@@ -168,15 +175,13 @@ public class FlightWorkflowTest {
     @Test
     public void test__deviation__transport_flight_is_lost_while_journeys_wait_for_boarding__they_return_to_the_departure_city() {
         provideFlight();
+        // a part of the journeys is checked-in and waits for boarding, the others wait for their check-in time
+        assertTrue(!journeysIn(Journeys.Status.WaitingForBoarding).isEmpty() && !journeysIn(Journeys.Status.WaitingForCheckIn).isEmpty());
 
         world.transportFlights().deleteById(transportFlight.getId());
-        runFor(3 * Time.ONE_MINUTE);
+        runFor(21 * Time.ONE_MINUTE); // the last check-in time is in 20 minutes
 
-        journeys.forEach(j -> {
-            assertEquals(Journeys.Status.LookingForTickets, j.getStatus());
-            assertEquals(cityA.getId(), j.getLocationCityId());
-            assertEquals(0, j.getTransportFlight1Id());
-        });
+        assertJourneysAreReturnedTo(cityA);
     }
 
     @Test
@@ -260,7 +265,7 @@ public class FlightWorkflowTest {
     @Test
     public void test__disconnect__pilot_goes_offline_while_flying_longer_than_allowed__flight_is_cancelled_and_journeys_return_to_the_departure_city() {
         provideFlight();
-        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         world.flightMissionControl().startOrCancel(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
@@ -279,7 +284,7 @@ public class FlightWorkflowTest {
     @Test
     public void test__disconnect__pilot_goes_offline_right_after_landing__flight_is_finished_and_journeys_deboard_as_usual() {
         provideFlight();
-        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         world.flightMissionControl().startOrCancel(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
@@ -309,7 +314,7 @@ public class FlightWorkflowTest {
         // the arrival (blocks-on) is detected with a lag, so the pilot context is still in the Arriving stage,
         // the aircraft is at the gate, but the mission is in Arrival status: the same actions as above
         provideFlight();
-        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         world.flightMissionControl().startOrCancel(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
@@ -381,7 +386,7 @@ public class FlightWorkflowTest {
 
     private void boardEverybodyFlyAndStartDeboarding() {
         provideFlight();
-        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         startFlightAndFlyToTheGate();
         runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.Deboarding);
         assertEquals(TransportFlights.Status.Deboarding, transportFlight.getStatus());

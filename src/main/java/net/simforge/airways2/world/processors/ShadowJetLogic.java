@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static net.simforge.airways2.storage.Storage.Condition.and;
+
 
 public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
@@ -24,6 +24,24 @@ public class ShadowJetLogic {
 
     // todo ak2 hubs are hardcoded for the hub test, later should be calculated from flight stats
     private static final Set<String> HUB_ICAOS = Set.of("EGLL", "EDDF", "EHAM", "KJFK", "OMDB");
+
+    // the flight is filled up to a random part of its seats
+    private static final int MIN_FILL_PERCENT = 70;
+    private static final int MAX_FILL_PERCENT = 100;
+    // journeys are taken from a random sample of the candidates
+    private static final int CANDIDATES_SAMPLE_SIZE = 500;
+    // The selected journeys are booked at once, but they check-in at different times: a part checks-in at once (the first
+    // group), the others get a random check-in time inside the interval of their group. The flight gets the planned fill
+    // only if it stays at the gate long enough, all the check-ins happen during CHECKIN_GROUPS_MAX_MINUTES.
+    // percent of the selected journeys, check-in interval start and end in minutes since the provision of the flight
+    private record CheckInGroup(int percent, int fromMinutes, int toMinutes) {
+    }
+
+    private static final List<CheckInGroup> CHECKIN_GROUPS = List.of(
+            new CheckInGroup(30, 0, 0), // checked-in at once
+            new CheckInGroup(30, 0, 5),
+            new CheckInGroup(20, 5, 10),
+            new CheckInGroup(20, 10, 20));
 
     public static Aircrafts.Aircraft findAvailableAircraftOrCreateNew(
             final World world,
@@ -101,32 +119,28 @@ public class ShadowJetLogic {
             return;
         }
 
-        TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+        final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.1f);
 
         world.transportFlightControl().startCheckIn(transportFlight);
 
-        int journeyBooked = 0;
-        int paxBooked = 0;
+        // The flight is filled up to a random part of its seats. Direct journeys and journeys of the hub test live in one
+        // pool: a random sample of the candidates is taken, then the journeys are seated in the random order.
+        final int fillPercent = Tools.random(MIN_FILL_PERCENT, MAX_FILL_PERCENT);
+        final int targetPax = transportFlight.getTotalTickets().getTotal() * fillPercent / 100;
 
-        double loadFactor = Tools.random(40, 60) / 100.0;
-        int consideredAvgPaxPerJourney = 5;
-        int maxCount = (int) ((transportFlight.getTotalTickets().getTotal() * loadFactor) / consideredAvgPaxPerJourney);
+        final HubInfo hub = findHubInfo(world, mission);
+        final CandidatePool pool = collectCandidates(world, fromCitiesId, toCitiesId, hub);
 
-        List<Journeys.Journey> collected = new ArrayList<>();
-
+        final List<Candidate> selected = new ArrayList<>();
+        final Map<Integer, CabinLayout.Service> actualCabinServices = new HashMap<>();
         CabinLayout remained = transportFlight.getRemainedTickets();
-
-        Stream<Journeys.Journey> journeyStream = world.journeys()
-                .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
-                .filter(j -> fromCitiesId.contains(j.getLocationCityId())
-                        && toCitiesId.contains(j.getToCityId()));
-        Iterator<Journeys.Journey> it = journeyStream.iterator();
-        Map<Integer, CabinLayout.Service> actualCabinServices = new HashMap<>();
-        while (it.hasNext()
-                && (remained.getTotal() > 0)
-                && (collected.size() < maxCount)) {
-            Journeys.Journey journey = it.next();
+        int paxPlanned = 0;
+        for (final Candidate candidate : pool.sample()) {
+            final Journeys.Journey journey = candidate.journey();
+            if (paxPlanned + journey.getGroupSize() > targetPax) {
+                continue;
+            }
 
             final Seating seating = trySeat(remained, journey);
             if (seating == null) {
@@ -134,47 +148,62 @@ public class ShadowJetLogic {
             }
 
             actualCabinServices.put(journey.getId(), seating.service());
-            collected.add(journey);
+            selected.add(candidate);
             remained = seating.remained();
+            paxPlanned += journey.getGroupSize();
         }
-        log.info("T/f prov - f/m #{}, t/f #{} - Selected load factor {}, Remained seats {}, Found journeys: {}", mission.getId(), transportFlight.getId(), loadFactor, remained, collected.stream().map(Journeys.Journey::getId).toList());
+        log.info("T/f prov - f/m #{}, t/f #{} - Selected fill {}%, target PAX {}, planned PAX {}, Remained seats {}, candidates {} (direct {}, hub {}), sample {}, selected {} (direct {}, hub {}): {}",
+                mission.getId(), transportFlight.getId(), fillPercent, targetPax, paxPlanned, remained,
+                pool.candidatesCount(), pool.directCount(), pool.hubCount(), pool.sample().size(),
+                selected.size(), selected.stream().filter(c -> c.kind() == CandidateKind.DIRECT).count(),
+                selected.stream().filter(c -> c.kind() == CandidateKind.HUB).count(),
+                selected.stream().map(c -> "j/y #" + c.journey().getId()).toList());
 
-        // hub test - exactly one journey which does not have a direct flight here, but gets closer to its destination via the hub
-        final HubTestCandidate hubTest = findHubTestJourney(world, mission, transportFlight, fromCitiesId, toCitiesId, collected, remained);
-        if (hubTest != null) {
-            actualCabinServices.put(hubTest.journey().getId(), hubTest.seating().service());
-            collected.add(hubTest.journey());
+        if (hub != null) {
+            logHubSelection(world, mission, transportFlight, hub, pool, selected, actualCabinServices);
         }
 
-        // some journeys to ping 'looking for tickets' processing randomly distributed in next 5 minutes
-        int someToAwake = Tools.random(10, 20);
-        int awaken = 0;
-        for (int i = 0; i < someToAwake; i++) {
-            if (!it.hasNext()) {
-                break;
-            }
-            Journeys.Journey journey = it.next();
-            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(0, 5 * Time.ONE_MINUTE));
-            awaken++;
-        }
-        log.info("T/f prov - f/m #{}, t/f #{} - Awaken {} journeys", mission.getId(), transportFlight.getId(), awaken);
+        // all the selected journeys are booked, but they check-in at different times, see CHECKIN_GROUPS
+        Collections.shuffle(selected, random);
 
-        for (Journeys.Journey journey : collected) {
-            world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
-            world.journeyControl().waitForCheckin(journey);
-            world.journeyControl().checkin(journey);
+        int journeyCheckedIn = 0;
+        int paxCheckedIn = 0;
+        int journeyDelayed = 0;
+        int paxDelayed = 0;
+        int percentFrom = 0;
+        for (final CheckInGroup group : CHECKIN_GROUPS) {
+            final int percentTo = percentFrom + group.percent();
+            // the borders are rounded the same way for the neighbour groups, so all the selected journeys get to a group
+            final int firstIndex = (int) Math.round(selected.size() * percentFrom / 100.0);
+            final int lastIndex = (int) Math.round(selected.size() * percentTo / 100.0);
+            percentFrom = percentTo;
 
-            journeyBooked++;
-            paxBooked += journey.getGroupSize();
+            for (int i = firstIndex; i < lastIndex; i++) {
+                final Journeys.Journey journey = selected.get(i).journey();
+                final boolean hubJourney = selected.get(i).kind() == CandidateKind.HUB;
 
-            log.info("T/f prov - f/m #{}, t/f #{} - Journey {} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey);
-            if (hubTest != null && hubTest.journey().getId() == journey.getId()) {
-                log.info("hub test - f/m #{}, t/f #{} - j/y #{} booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey.getId());
+                world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
+                world.journeyControl().waitForCheckin(journey);
+
+                if (group.toMinutes() == 0) {
+                    world.journeyControl().checkin(journey);
+                    journeyCheckedIn++;
+                    paxCheckedIn += journey.getGroupSize();
+
+                    log.info("T/f prov - f/m #{}, t/f #{} - j/y #{} ({}) booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey.getId(), hubJourney ? "hub test" : "direct");
+                } else {
+                    journey.setHeartbeatTime(world.getWorldTime() + Tools.random(group.fromMinutes() * Time.ONE_MINUTE, group.toMinutes() * Time.ONE_MINUTE));
+                    journeyDelayed++;
+                    paxDelayed += journey.getGroupSize();
+
+                    log.info("T/f prov - f/m #{}, t/f #{} - j/y #{} ({}) booked to the flight, check-in later at {}", mission.getId(), transportFlight.getId(), journey.getId(), Time.toLdt(journey.getHeartbeatTime()), hubJourney ? "hub test" : "direct");
+                }
             }
         }
 
         world.transportFlightControl().startBoarding(transportFlight);
-        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, boarding started, DONE", mission.getId(), transportFlight.getId(), journeyBooked, paxBooked);
+        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, {} journeys / {} PAX booked and will check-in later, boarding started, DONE",
+                mission.getId(), transportFlight.getId(), journeyCheckedIn, paxCheckedIn, journeyDelayed, paxDelayed);
     }
 
     private record Seating(CabinLayout remained, CabinLayout.Service service) {
@@ -194,116 +223,126 @@ public class ShadowJetLogic {
         return null;
     }
 
-    private record HubTestCandidate(Journeys.Journey journey, Seating seating) {
+    private enum CandidateKind {
+        DIRECT, HUB
+    }
+
+    private record Candidate(Journeys.Journey journey, CandidateKind kind, double distanceNow, double distanceFromHub) {
+    }
+
+    private record HubInfo(Airports.Airport airport, String icao, String departureIcao, String aircraftTypeIcao) {
+    }
+
+    private record CandidatePool(List<Candidate> sample, int candidatesCount, int directCount, int hubCount,
+                                 int closerCount, int notCloserCount) {
+    }
+
+    // not null if the flight goes to a hub, then the journeys which getting closer to their destinations are candidates too
+    private static HubInfo findHubInfo(final World world, final FlightMissions.Mission mission) {
+        final Airports.Airport hubAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        if (!HUB_ICAOS.contains(hubAirport.getIcao())) {
+            return null;
+        }
+
+        final String departureIcao = world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao();
+        final String aircraftTypeIcao = world.aircrafts().byId(mission.getAircraftId())
+                .flatMap(a -> world.aircraftTypes().byId(a.getAircraftTypeId()))
+                .map(AircraftTypes.AircraftType::getIcao)
+                .orElse("?");
+        return new HubInfo(hubAirport, hubAirport.getIcao(), departureIcao, aircraftTypeIcao);
     }
 
     /**
-     * 'Journeys via hubs' test. If the flight goes to a hub, finds exactly one looking-for-tickets journey which is located
-     * at the departure cities, has no direct flight here, and gets closer to its destination after flying to the hub.
-     * The journey which gets the biggest distance reduction is chosen. It is booked and checked-in together with the direct
-     * journeys. After landing at the hub it goes through the regular itineraries-done logic (TO city not reached ->
-     * looking for tickets again). All hub test lines in the log start with 'hub test - '.
+     * Looking-for-tickets journeys which are located at the departure cities and are able to take the flight:
+     * direct journeys (their destination is served by the arrival airport) and, if the flight goes to a hub, journeys which
+     * have no direct flight here but get closer to their destination via the hub ('journeys via hubs' test).
+     * Both kinds are in one pool; the first CANDIDATES_SAMPLE_SIZE candidates are taken and returned in a random order (the counters count only the scanned journeys).
      */
-    private static HubTestCandidate findHubTestJourney(final World world,
-                                                       final FlightMissions.Mission mission,
-                                                       final TransportFlights.Flight transportFlight,
-                                                       final Set<Integer> fromCitiesId,
-                                                       final Set<Integer> toCitiesId,
-                                                       final Collection<Journeys.Journey> alreadyCollected,
-                                                       final CabinLayout remained) {
-        try {
-            final Airports.Airport hubAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-            final String hubIcao = hubAirport.getIcao();
-            if (!HUB_ICAOS.contains(hubIcao)) {
-                return null;
-            }
+    private static CandidatePool collectCandidates(final World world,
+                                                   final Set<Integer> fromCitiesId,
+                                                   final Set<Integer> toCitiesId,
+                                                   final HubInfo hub) {
+        final List<Candidate> sample = new ArrayList<>();
+        final Map<Integer, Geo.Coords> cityCoordsCache = new HashMap<>();
+        int direct = 0;
+        int hubCount = 0;
+        int closer = 0;
+        int notCloser = 0;
 
-            final String departureIcao = world.airports().byId(mission.getDepartureAirportId()).orElseThrow().getIcao();
-            final String aircraftTypeIcao = world.aircrafts().byId(mission.getAircraftId())
-                    .flatMap(a -> world.aircraftTypes().byId(a.getAircraftTypeId()))
-                    .map(AircraftTypes.AircraftType::getIcao)
-                    .orElse("?");
+        final Iterator<Journeys.Journey> it = world.journeys()
+                .filter(and(world.journeys().byStatus(Journeys.Status.LookingForTickets), world.journeys().byLocationCityIdIn(fromCitiesId)))
+                .iterator();
+        while (it.hasNext()) {
+            final Journeys.Journey journey = it.next();
+            final int locationCityId = journey.getLocationCityId();
 
-            final Set<Integer> collectedIds = alreadyCollected.stream().map(Journeys.Journey::getId).collect(Collectors.toSet());
-            final Geo.Coords hubCoords = hubAirport.getCoords();
-            final Map<Integer, Geo.Coords> cityCoordsCache = new HashMap<>();
-
-            int closer = 0;
-            int notCloser = 0;
-            Journeys.Journey best = null;
-            Seating bestSeating = null;
-            double bestReduction = 0;
-            double bestDistanceNow = 0;
-            double bestDistanceFromHub = 0;
-
-            final Iterator<Journeys.Journey> it = world.journeys()
-                    .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
-                    .iterator();
-            while (it.hasNext()) {
-                final Journeys.Journey journey = it.next();
-
-                // only journeys which are located at the cities of departure airport are able to take this flight
-                final int locationCityId = journey.getLocationCityId();
-                if (!fromCitiesId.contains(locationCityId)) {
+            final Candidate candidate;
+            if (toCitiesId.contains(journey.getToCityId())) {
+                candidate = new Candidate(journey, CandidateKind.DIRECT, 0, 0);
+                direct++;
+            } else if (hub != null) {
+                final double distanceNow;
+                final double distanceFromHub;
+                try {
+                    final Geo.Coords locationCoords = cityCoordsCache.computeIfAbsent(locationCityId,
+                            id -> world.cities().byId(id).orElseThrow().getCoords());
+                    final Geo.Coords targetCoords = cityCoordsCache.computeIfAbsent(journey.getToCityId(),
+                            id -> world.cities().byId(id).orElseThrow().getCoords());
+                    distanceNow = Geo.distance(locationCoords, targetCoords);
+                    distanceFromHub = Geo.distance(hub.airport().getCoords(), targetCoords);
+                } catch (final RuntimeException e) {
+                    log.warn("hub test - j/y #{} - failed to calculate distances", journey.getId(), e);
                     continue;
                 }
-
-                // journeys heading to the hub cities have a direct flight here, they are handled by the regular logic
-                // and are not counted at all, otherwise they would always look like 'getting closer'
-                if (toCitiesId.contains(journey.getToCityId()) || collectedIds.contains(journey.getId())) {
-                    continue;
-                }
-
-                final Geo.Coords locationCoords = cityCoordsCache.computeIfAbsent(locationCityId,
-                        id -> world.cities().byId(id).orElseThrow().getCoords());
-                final Geo.Coords targetCoords = cityCoordsCache.computeIfAbsent(journey.getToCityId(),
-                        id -> world.cities().byId(id).orElseThrow().getCoords());
-
-                final double distanceNow = Geo.distance(locationCoords, targetCoords);
-                final double distanceFromHub = Geo.distance(hubCoords, targetCoords);
 
                 if (distanceFromHub >= distanceNow) {
                     notCloser++;
                     continue;
                 }
                 closer++;
-
-                final double reduction = distanceNow - distanceFromHub;
-                if (best != null && reduction <= bestReduction) {
-                    continue;
-                }
-
-                final Seating seating = trySeat(remained, journey);
-                if (seating == null) {
-                    continue;
-                }
-
-                best = journey;
-                bestSeating = seating;
-                bestReduction = reduction;
-                bestDistanceNow = distanceNow;
-                bestDistanceFromHub = distanceFromHub;
+                candidate = new Candidate(journey, CandidateKind.HUB, distanceNow, distanceFromHub);
+                hubCount++;
+            } else {
+                continue;
             }
 
-            log.info("hub test - f/m #{}, t/f #{} - {} -> {}, {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}",
-                    mission.getId(), transportFlight.getId(), departureIcao, hubIcao, aircraftTypeIcao, closer, notCloser);
-
-            if (best == null) {
-                log.info("hub test - f/m #{}, t/f #{} - {} -> {} - no suitable journey found (no candidate or no seats)",
-                        mission.getId(), transportFlight.getId(), departureIcao, hubIcao);
-                return null;
+            // the first CANDIDATES_SAMPLE_SIZE candidates are enough, they are shuffled below
+            sample.add(candidate);
+            if (sample.size() >= CANDIDATES_SAMPLE_SIZE) {
+                break;
             }
+        }
 
+        Collections.shuffle(sample, random);
+        return new CandidatePool(sample, sample.size(), direct, hubCount, closer, notCloser);
+    }
+
+    // hub test statistics, the lines start with 'hub test - ', see docs/journeys-hub-mode.md
+    private static void logHubSelection(final World world,
+                                        final FlightMissions.Mission mission,
+                                        final TransportFlights.Flight transportFlight,
+                                        final HubInfo hub,
+                                        final CandidatePool pool,
+                                        final List<Candidate> selected,
+                                        final Map<Integer, CabinLayout.Service> actualCabinServices) {
+        log.info("hub test - f/m #{}, t/f #{} - {} -> {}, {} - looking-for-tickets journeys getting closer to destination: {}, not getting closer: {}",
+                mission.getId(), transportFlight.getId(), hub.departureIcao(), hub.icao(), hub.aircraftTypeIcao(), pool.closerCount(), pool.notCloserCount());
+
+        final List<Candidate> hubSelected = selected.stream().filter(c -> c.kind() == CandidateKind.HUB).toList();
+        if (hubSelected.isEmpty()) {
+            log.info("hub test - f/m #{}, t/f #{} - {} -> {} - no suitable journey found (no candidate or no seats)",
+                    mission.getId(), transportFlight.getId(), hub.departureIcao(), hub.icao());
+            return;
+        }
+
+        for (final Candidate candidate : hubSelected) {
+            final Journeys.Journey journey = candidate.journey();
             log.info("hub test - f/m #{}, t/f #{} - {} -> {} - j/y #{} selected, g/s {}, cabin {}, located at {}, target {}, distance to target {} nm now, {} nm from the hub",
-                    mission.getId(), transportFlight.getId(), departureIcao, hubIcao, best.getId(), best.getGroupSize(), bestSeating.service(),
-                    world.cities().byId(best.getLocationCityId()).orElseThrow().getName(),
-                    world.cities().byId(best.getToCityId()).orElseThrow().getName(),
-                    Math.round(bestDistanceNow), Math.round(bestDistanceFromHub));
-
-            return new HubTestCandidate(best, bestSeating);
-        } catch (final Exception e) {
-            log.warn("hub test - f/m #{} - failed", mission.getId(), e);
-            return null;
+                    mission.getId(), transportFlight.getId(), hub.departureIcao(), hub.icao(), journey.getId(), journey.getGroupSize(),
+                    actualCabinServices.get(journey.getId()),
+                    world.cities().byId(journey.getLocationCityId()).orElseThrow().getName(),
+                    world.cities().byId(journey.getToCityId()).orElseThrow().getName(),
+                    Math.round(candidate.distanceNow()), Math.round(candidate.distanceFromHub()));
         }
     }
 

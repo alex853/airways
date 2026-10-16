@@ -9,6 +9,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -244,6 +245,12 @@ public class Journeys {
         checkNotNull(status);
 
         return recordId -> readStatusCode(recordId) == status.code();
+    }
+
+    public Storage.Condition<Journey> byLocationCityIdIn(final Collection<Integer> cityIds) {
+        checkNotNull(cityIds);
+
+        return recordId -> cityIds.contains(readLocationCityId(recordId));
     }
 
     public Storage.Condition<Journey> byTransportFlight1Id(final int transportFlightId) {

@@ -93,7 +93,7 @@
   случай, журни `Orphaned` с `WARN`, без сброса и без изменения `paxOnBoard`);
 - `journey - reset journey forcefully` — общий счётчик сбросов.
 Следующий шаг: по этой статистике найти «толстые» места, откуда журни теряют tf, и чинить причины; аналогичный
-отказ от `Orphaned` для `WaitingForCheckIn` и прочих путей пока не делаем.
+для `WaitingForCheckIn` теперь тоже `resetJourneyForcefully` вместо `Orphaned` (события `journey - waiting for check-in - no TF found` и `... - no FM found`); остальные пути пока не трогаем.
 
 ## TODO: поле в t/f для счётчиков времени и резерв места в записи
 
@@ -135,8 +135,10 @@
 
 `ShadowJetLogic.provideTransportFlightIfRequired` (вызывается, когда появляется VATSIM-миссия):
 1. создаёт t/f и запускает check-in;
-2. подбирает журни из `LookingForTickets` (по `locationCityId`, доля загрузки 0.4–0.6 от мест), бронирует их и сразу
-   регистрирует (`checkin`, `locationCityId` обнуляется, `lastKnownLocationCityId` хранит город);
+2. подбирает журни из `LookingForTickets` (прямые и хабовые в одной куче, цель 70–100% мест, подробности в
+   [journeys-hub-mode.md](journeys-hub-mode.md)), бронирует их; 30% сразу регистрирует (`checkin`, `locationCityId`
+   обнуляется, `lastKnownLocationCityId` хранит город), остальные регистрируются позже во время посадки: 30% в течение
+   5 минут, 20% на 5-10 минуте, 20% на 10-20 минуте;
 3. сразу запускает посадку (`startBoarding`): темп `PaxManager` 15 PAX/мин, оценка окончания = `now + ceil(остаток / 15 ×
    60) с + 3 мин запаса` (на 120 PAX это ~11 минут).
 

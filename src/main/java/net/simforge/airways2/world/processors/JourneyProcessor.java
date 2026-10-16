@@ -151,11 +151,15 @@ public class JourneyProcessor {
     private static void waitingForCheckin(final World world, final Journeys.Journey journey) {
         final Optional<TransportFlights.Flight> flight = world.transportFlights().byId(journey.getTransportFlight1Id());
         if (flight.isEmpty()) {
-            world.journeyControl().orphaned(journey);
+            log.warn("j/y #{} - t/f #{} not found, journey is waiting for check-in, forceful return", journey.getId(), journey.getTransportFlight1Id());
+            world.journeyControl().resetJourneyForcefully(journey);
+            FlightStats.event("journey - waiting for check-in - no TF found");
         } else if (TransportFlightHelper.flightStatusBeforeCheckin(flight.get().getStatus())) {
             final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.get().getFlightMissionId());
             if (mission.isEmpty()) {
-                world.journeyControl().orphaned(journey);
+                log.warn("j/y #{} - t/f #{} has no mission, journey is waiting for check-in, forceful return", journey.getId(), flight.get().getId());
+                world.journeyControl().resetJourneyForcefully(journey);
+                FlightStats.event("journey - waiting for check-in - no FM found");
                 return;
             }
             journey.setHeartbeatTime(Math.max(

@@ -150,6 +150,19 @@ public class PaxManager {
     }
 
     /**
+     * True if there are no journeys which are going to board the flight: all of them are on board or are already too late.
+     * The journeys which have not checked-in yet are going to board, so the boarding goes on for them.
+     */
+    public boolean areAllBoarded(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        return world.journeys()
+                .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
+                        Journeys.Status.WaitingForCheckIn,
+                        Journeys.Status.WaitingForBoarding))
+                .isEmpty();
+    }
+
+    /**
      * Sum of the group sizes of the journeys which are on board of the flight.
      */
     public int countPaxOnBoard(final TransportFlights.Flight transportFlight) {
@@ -176,11 +189,15 @@ public class PaxManager {
         int remainingToBoard = remainedToBoardJourneys.stream()
                 .map(Journeys.Journey::getGroupSize)
                 .reduce(0, Integer::sum);
+        int readyToBoard = remainedToBoardJourneys.stream()
+                .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
 
         transportFlight.setPaxOnBoard(actualOnBoard);
         log.info("t/f #{} - boarding - restored, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
 
-        return new Boarding(actualOnBoard, remainingToBoard, world.getWorldTime());
+        return new Boarding(actualOnBoard, remainingToBoard, readyToBoard, world.getWorldTime());
     }
 
     private void refreshBoardingState(Boarding boarding, TransportFlights.Flight transportFlight) {
@@ -202,6 +219,10 @@ public class PaxManager {
 
         boarding.confirmedOnBoard = actualOnBoard;
         boarding.remainingToBoard = remainingToBoard;
+        boarding.readyToBoard = remainedToBoardJourneys.stream()
+                .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
+                .map(Journeys.Journey::getGroupSize)
+                .reduce(0, Integer::sum);
         boarding.recalculateEstimatedBoardingFinishTime(world.getWorldTime());
 
         log.info("t/f #{} - boarding - refreshed, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
@@ -212,15 +233,19 @@ public class PaxManager {
         private static final int ratePaxPerMinute = 15;
 
         private int confirmedOnBoard;
+        // all journeys which are not on board yet, including the ones which have not checked-in yet, it is used for the estimation
         private int remainingToBoard;
+        // the journeys which have checked-in and are able to board now, the boarding counter can not go beyond them
+        private int readyToBoard;
         private int estimatedBoardingFinishTime;
 
         private int counterLastTime;
         private double counterValue;
 
-        public Boarding(final int actualOnBoard, final int remainingToBoard, final int worldTime) {
+        public Boarding(final int actualOnBoard, final int remainingToBoard, final int readyToBoard, final int worldTime) {
             this.confirmedOnBoard = actualOnBoard;
             this.remainingToBoard = remainingToBoard;
+            this.readyToBoard = readyToBoard;
             recalculateEstimatedBoardingFinishTime(worldTime);
 
             this.counterValue = 0.0;
@@ -246,8 +271,8 @@ public class PaxManager {
             counterLastTime = worldTime;
 
             counterValue += deltaAvailable;
-            if (counterValue > remainingToBoard) {
-                counterValue = remainingToBoard;
+            if (counterValue > readyToBoard) {
+                counterValue = readyToBoard;
             }
         }
 
@@ -255,6 +280,7 @@ public class PaxManager {
             counterValue -= groupSize;
             confirmedOnBoard += groupSize;
             remainingToBoard -= groupSize;
+            readyToBoard -= groupSize;
         }
 
         public int getEstimatedBoardingFinishTime() {
@@ -272,6 +298,7 @@ public class PaxManager {
             return "Boarding{" +
                     "cnfd: " + confirmedOnBoard +
                     ", rem: " + remainingToBoard +
+                    ", rdy: " + readyToBoard +
                     ", eFinT: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
                     ", cnt: " + counterValue +
                     ", t: " + TimeTools.hhmmOrNull(counterLastTime) +

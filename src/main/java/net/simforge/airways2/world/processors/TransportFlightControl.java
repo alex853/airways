@@ -139,7 +139,7 @@ public class TransportFlightControl {
 
     public void increasePaxCheckedIn(TransportFlights.Flight transportFlight, int groupSize) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);
+        checkArgument(TransportFlightHelper.flightStatusAllowsToCheckIn(transportFlight.getStatus()));
         checkArgument(groupSize > 0);
 
         transportFlight.setPaxCheckedIn(transportFlight.getPaxCheckedIn() + groupSize);
@@ -200,7 +200,8 @@ public class TransportFlightControl {
 
     public boolean areAllPaxBoarded(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        return transportFlight.getPaxOnBoard() >= transportFlight.getSoldTickets();
+        // by the journeys, not by PAX on board: the counter of the boarding is not a reliable sign of the end of the boarding
+        return paxManager().areAllBoarded(transportFlight);
     }
 
     public boolean isBoardingFinishTimePassed(final TransportFlights.Flight transportFlight) {
