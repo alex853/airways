@@ -47,6 +47,13 @@ public class Countries {
         return storage.findFirst(recordId -> code.equals(readCode(recordId)));
     }
 
+    /**
+     * The moment of the last change of the storage, see {@link Storage#getLastChangedAtMillis()}.
+     */
+    public long getLastChangedAtMillis() {
+        return storage.getLastChangedAtMillis();
+    }
+
     public Stream<Country> all() {
         return storage.all();
     }

@@ -55,6 +55,10 @@ public class Storage<T> {
 
     private long deletedRecordQuarantineMillis;
     private final LongSupplier clock;
+    // The moment of the last change of the storage (loading, adding or deleting a record, any setter). It is read by other
+    // threads without any lock, a cache of the data of the storage compares it with the value it was built with.
+    // Every change makes the value strictly greater than the previous one, even if the clock has not moved.
+    private volatile long lastChangedAtMillis;
     private final boolean canStoreDeletedAt;
     // deleted records which are known to the storage: {recordId, deletedAt}, the oldest deletion first
     private final ArrayDeque<int[]> deletedRecords = new ArrayDeque<>();
@@ -76,6 +80,7 @@ public class Storage<T> {
 
         this.deletedRecordQuarantineMillis = deletedRecordQuarantineMillis;
         this.clock = clock;
+        this.lastChangedAtMillis = clock.getAsLong();
         this.canStoreDeletedAt = recordSize - recordHeaderSize >= DELETED_AT_SIZE;
         if (deletedRecordQuarantineMillis > 0 && !canStoreDeletedAt) {
             if (deletedRecordQuarantineIsExplicit) {
@@ -106,6 +111,19 @@ public class Storage<T> {
         }
         data = Files.readAllBytes(dataPath);
         rebuildDeletedRecords();
+        markChanged();
+    }
+
+    /**
+     * The moment of the last change of the storage: the loading, adding or deleting of a record, any setter. A new value is
+     * always greater than the previous one. It can be read from any thread, without any lock.
+     */
+    public long getLastChangedAtMillis() {
+        return lastChangedAtMillis;
+    }
+
+    private void markChanged() {
+        lastChangedAtMillis = Math.max(clock.getAsLong(), lastChangedAtMillis + 1);
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -120,6 +138,7 @@ public class Storage<T> {
     public void reset() {
         data = new byte[0];
         deletedRecords.clear();
+        markChanged();
     }
 
     /**
@@ -192,6 +211,7 @@ public class Storage<T> {
             // the body keeps the 'deleted at' time, it must be clean for the new record
             Arrays.fill(data, headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
             data[headerOffset] = RECORD_EXISTS;
+            markChanged();
             return recordId;
         }
 
@@ -200,6 +220,7 @@ public class Storage<T> {
         final byte[] newData = new byte[data.length + recordSize];
         System.arraycopy(data, 0, newData, 0, data.length);
         data = newData;
+        markChanged();
         return addedRecordId;
     }
 
@@ -219,6 +240,7 @@ public class Storage<T> {
             setIntAtOffset(headerOffset + recordHeaderSize, deletedAt);
         }
         deletedRecords.addLast(new int[]{recordId, deletedAt});
+        markChanged();
     }
 
     /**
@@ -438,6 +460,8 @@ public class Storage<T> {
             case Signed32bit -> setIntAtOffset(fieldOffset, value); // no need to check if value is within limits
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
+
+        markChanged(); // after the data is written: whoever sees the new stamp sees the new data
     }
 
     public void set(final int recordId, final DataField dataField, final float value) {
@@ -470,6 +494,8 @@ public class Storage<T> {
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
+
+        markChanged();
     }
 
     public void set(final int recordId, final DataField dataField, final String value) {
@@ -491,6 +517,7 @@ public class Storage<T> {
                 data[fieldOffset] = (byte) value.length();
                 System.arraycopy(value.getBytes(), 0, data, fieldOffset + 1, value.length());
             }
+            markChanged();
         } else {
             throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }

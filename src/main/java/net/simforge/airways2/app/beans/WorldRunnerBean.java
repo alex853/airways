@@ -140,6 +140,14 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
         return worldTime;
     }
 
+    /**
+     * The world without taking the lock: only for reading the change stamps of the storages
+     * ({@code Storage#getLastChangedAtMillis}, they are volatile), nothing else is safe to do with it. Null before the world is loaded.
+     */
+    public World getWorldForChangeStamps() {
+        return world;
+    }
+
     @Override
     public <T> T read(final Action<T> action) {
         checkArgument(isReady());

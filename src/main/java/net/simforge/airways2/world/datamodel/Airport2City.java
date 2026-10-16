@@ -34,6 +34,13 @@ public class Airport2City {
         storage.save(rootPath);
     }
 
+    /**
+     * The moment of the last change of the storage, see {@link Storage#getLastChangedAtMillis()}.
+     */
+    public long getLastChangedAtMillis() {
+        return storage.getLastChangedAtMillis();
+    }
+
     public Optional<Link> byAirportIdAndCityId(final int airportId, final int cityId) {
         checkArgument(airportId > 0);
         checkArgument(cityId > 0);

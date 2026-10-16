@@ -45,6 +45,13 @@ public class Cities {
         storage.save(rootPath);
     }
 
+    /**
+     * The moment of the last change of the storage, see {@link Storage#getLastChangedAtMillis()}.
+     */
+    public long getLastChangedAtMillis() {
+        return storage.getLastChangedAtMillis();
+    }
+
     public Stream<City> all() {
         return storage.all();
     }

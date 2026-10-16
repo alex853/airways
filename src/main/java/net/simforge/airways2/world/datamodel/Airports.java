@@ -69,6 +69,13 @@ public class Airports {
         return storage.findFirst(recordId -> icao.equals(readIcao(recordId)));
     }
 
+    /**
+     * The moment of the last change of the storage, see {@link Storage#getLastChangedAtMillis()}.
+     */
+    public long getLastChangedAtMillis() {
+        return storage.getLastChangedAtMillis();
+    }
+
     public Stream<Airport> all() {
         return storage.all();
     }

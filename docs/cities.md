@@ -190,11 +190,13 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 ### 4. Страна аэропорта: нет собственного `countryId`
 
 Сейчас у аэропорта в `Airports` нет страны. `/geo/airports` вычисляет её на лету как страну самого населённого
-города из `airport2city` (`GeoController.countryNameByAirportId`), поэтому:
+города из `airport2city` (`GeoController.buildCountryIdByAirportId`, при каждой сборке закэшированного ответа), поэтому:
 - аэропорт без городской связи отдаёт `country = null` (так выглядели EKVG, LGTS, UMMS между `009` и `create-links`);
 - у аэропорта с несколькими городами из разных стран страна зависит от населения (пока граница не пересекается,
   но это неявное правило);
 - в `AirportDto` страна отдаётся именем, а не `countryId`, как в `CityDto`.
+
+Подробный план (структура записи, миграция хранилища, порядок работ, открытые вопросы): [airports-record-extension.md](airports-record-extension.md), пока не реализовано.
 
 Что поправить:
 - **Расширить структуру `Airports`:** добавить поле `countryId` (`Unsigned8bit`, как в `Cities`: ссылка на страну
@@ -203,8 +205,9 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 - Заполнять `countryId` при создании аэропорта (из `icaodata.csv`/refdata) и отдавать его в `AirportDto` (по аналогии
   с `CityDto.countryId`), а не вычислять по связям.
 - Нужны миграция хранилища `Airports` и заполнение `countryId` у существующих аэропортов.
-- После этого убрать из `GeoController` кэш `countryIdByAirportId` и `invalidateAirportCountries()`, а из
-  `AdminController` зависимость от `GeoController` (сейчас она нужна только для сброса кэша).
+- После этого убрать из `GeoController` пересчёт `buildCountryIdByAirportId` (кэш `countryIdByAirportId`,
+  `invalidateAirportCountries()` и зависимость `AdminController` от `GeoController` уже убраны, ответы `/geo/*` кэшируются
+  по отметкам изменений хранилищ, см. [change-tracking-cache.md](change-tracking-cache.md)).
 
 ### 5. Импорты `009`, `012`, `013` в `Application.main` после деплоя
 
@@ -218,10 +221,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   (69 400) не импортирован (по аналогии с Victoria у Vancouver можно добавить).
 - **Имена аэропортов:** многие аэропорты в мире имеют сырые имена из refdata (например, `Lake X`); проверить и привести к
   формату `<Город> <Название>`, как делали через `World25_013` (`RenameAirports`).
-- **`/geo/cities`:** мапа `icaosByCityId` строится на каждый запрос (за один проход); если станет заметно, кэшировать так
-  же, как `countryIdByAirportId` в `GeoController` (с инвалидацией при `create-links`).
-- **Аэропорты без собственной страны** (пункт 4 выше) и после появления `countryId` в `Airports` убрать из
-  `GeoController` кэш `countryIdByAirportId` и зависимость `AdminController` от `GeoController`.
+- **`/geo/*`:** готовый JSON кэшируется и пересобирается только при изменении хранилищ
+  ([change-tracking-cache.md](change-tracking-cache.md)); после появления `countryId` в `Airports` убрать пересчёт страны.
 - **Бэклог VATSIM:** остаются «тонкие» EETN Tallinn, LIEO Olbia (Сардиния), далее Европа/США по списку; особые KPNS, KJAC.
 
 ## Выполнено

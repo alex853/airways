@@ -3,7 +3,6 @@ package net.simforge.airways2.app.admin;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
-import net.simforge.airways2.app.pblc.GeoController;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
@@ -57,8 +56,6 @@ public class AdminController {
     @Autowired
     private WorldRunnerBean worldBean;
 
-    @Autowired
-    private GeoController geoController;
     @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired
     private VatsimTrackerBean vatsimTracker;
@@ -830,8 +827,6 @@ public class AdminController {
 
             return null;
         });
-
-        geoController.invalidateAirportCountries();
     }
 
     private static void renameCity(final World world, final String oldName, final String newName) {
@@ -886,7 +881,7 @@ public class AdminController {
     public String createAirport2CityLinks(@RequestParam("icao") String icao,
                                           @RequestParam(name = "maxDistance", defaultValue = "50") int maxDistance,
                                           @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
-        final String result = worldBean.modifySync(world -> {
+        return worldBean.modifySync(world -> {
             List<String> results = new ArrayList<>();
 
             if (dryRun) {
@@ -914,11 +909,6 @@ public class AdminController {
 
             return Strings.join(results, '\n');
         });
-
-        if (!dryRun) {
-            geoController.invalidateAirportCountries();
-        }
-        return result;
     }
 
     @GetMapping(value = "/airport/create-business-aviation-terminal", produces = "text/plain")

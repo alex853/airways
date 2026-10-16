@@ -1,14 +1,19 @@
 package net.simforge.airways2.app.pblc;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.tools.CachedJson;
+import net.simforge.airways2.app.tools.ChangeTrackedCache;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -17,90 +22,116 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Countries, cities and airports of the world. The data changes rarely, so every response is built, serialized to JSON and
+ * compressed once, and it is rebuilt only when the storages it depends on have changed (see {@link ChangeTrackedCache}).
+ * A request which finds the response up to date does not take the world lock.
+ */
 @RestController
 @RequestMapping("/geo")
 @CrossOrigin
 public class GeoController {
+    private static final long[] WORLD_IS_NOT_READY = {-1};
+
     @Autowired
     private WorldRunnerBean worldBean;
 
-    /**
-     * Airport id to country id (country of the most populated city the airport is linked to). Airports are created
-     * with a world restart, but airport2city links and city populations can change in a running world (admin
-     * create-links, f1-tour-fixes), so the map is dropped by {@link #invalidateAirportCountries()} and rebuilt lazily.
-     */
-    private volatile Map<Integer, Integer> countryIdByAirportId;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-    public void invalidateAirportCountries() {
-        countryIdByAirportId = null;
-    }
+    // the storages the response depends on
+    private final ChangeTrackedCache<CachedJson> countriesCache = new ChangeTrackedCache<>(
+            "geo countries",
+            () -> stamps(world -> new long[]{
+                    world.countries().getLastChangedAtMillis()}),
+            () -> buildJson("countries", this::buildCountries));
 
-    // todo ak0 wrap the response into json and keep that json in memory
+    private final ChangeTrackedCache<CachedJson> citiesCache = new ChangeTrackedCache<>(
+            "geo cities",
+            () -> stamps(world -> new long[]{
+                    world.cities().getLastChangedAtMillis(),
+                    world.airport2city().getLastChangedAtMillis(),
+                    world.airports().getLastChangedAtMillis()}),
+            () -> buildJson("cities", this::buildCities));
+
+    private final ChangeTrackedCache<CachedJson> airportsCache = new ChangeTrackedCache<>(
+            "geo airports",
+            () -> stamps(world -> new long[]{
+                    world.airports().getLastChangedAtMillis(),
+                    world.airport2city().getLastChangedAtMillis(),
+                    world.cities().getLastChangedAtMillis(),
+                    world.countries().getLastChangedAtMillis()}),
+            () -> buildJson("airports", this::buildAirports));
+
     @GetMapping("/countries")
-    public List<CountryDto> getCountries() {
-        try (final Timing.Timer ignored = Timing.label("GeoController - getCountries")) {
-            return worldBean.read(world -> world.countries().all()
-                    .map(c -> new CountryDto(
-                            Id.encode(c.getId()),
-                            c.getCode(),
-                            c.getName()))
-                    .sorted(Comparator.comparing(CountryDto::getName, String.CASE_INSENSITIVE_ORDER)
-                            .thenComparing(CountryDto::getCode))
-                    .toList());
-        }
+    public ResponseEntity<byte[]> getCountries(@RequestHeader(value = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding) {
+        return countriesCache.get().toResponse(acceptEncoding);
     }
 
-    // todo ak0 wrap the response into json and keep that json in memory
     @GetMapping("/cities")
-    public List<CityDto> getCities() {
-        try (final Timing.Timer ignored = Timing.label("GeoController - getCities")) {
-            return worldBean.read(world -> {
-                final Map<Integer, List<String>> icaosByCityId = icaosByCityId(world);
-                return world.cities().all()
-                        .map(c -> new CityDto(
-                                Id.encode(c.getId()),
-                                c.getCountryId(),
-                                c.getName(),
-                                c.getPopulation(),
-                                c.getLatitude(),
-                                c.getLongitude(),
-                                icaosByCityId.getOrDefault(c.getId(), List.of())))
-                        .sorted(Comparator.comparing(CityDto::getName, String.CASE_INSENSITIVE_ORDER)
-                                .thenComparing(CityDto::getCountryId))
-                        .toList();
-            });
-        }
+    public ResponseEntity<byte[]> getCities(@RequestHeader(value = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding) {
+        return citiesCache.get().toResponse(acceptEncoding);
     }
 
-    // todo ak0 wrap the response into json and keep that json in memory
     @GetMapping("/airports")
-    public List<AirportDto> getAirports() {
-        try (final Timing.Timer ignored = Timing.label("GeoController - getAirports")) {
-            return worldBean.read(world -> {
-                final Map<Integer, Integer> countryIdByAirportId = countryIdByAirportId(world);
-                final Map<Integer, String> countryNameById = new HashMap<>();
-                return world.airports().all()
-                        .map(a -> new AirportDto(
-                                Id.encode(a.getId()),
-                                a.getLatitude(),
-                                a.getLongitude(),
-                                a.getIata(),
-                                a.getIcao(),
-                                a.getName(),
-                                countryName(world, countryNameById, countryIdByAirportId.get(a.getId()))))
-                        .sorted(Comparator.comparing(AirportDto::getIcao))
-                        .toList();
-            });
+    public ResponseEntity<byte[]> getAirports(@RequestHeader(value = HttpHeaders.ACCEPT_ENCODING, required = false) final String acceptEncoding) {
+        return airportsCache.get().toResponse(acceptEncoding);
+    }
+
+    private long[] stamps(final java.util.function.Function<World, long[]> reader) {
+        final World world = worldBean.getWorldForChangeStamps();
+        return world == null ? WORLD_IS_NOT_READY : reader.apply(world);
+    }
+
+    // the data is read under the world lock, the serialization and compression are done outside of it
+    private <T> CachedJson buildJson(final String name, final java.util.function.Function<World, List<T>> dataBuilder) {
+        try (final Timing.Timer ignored = Timing.label("GeoController - build " + name)) {
+            final List<T> data = worldBean.read(dataBuilder::apply);
+            return CachedJson.of(objectMapper, data);
         }
     }
 
-    private Map<Integer, Integer> countryIdByAirportId(final World world) {
-        Map<Integer, Integer> map = countryIdByAirportId;
-        if (map == null) {
-            map = buildCountryIdByAirportId(world);
-            countryIdByAirportId = map;
-        }
-        return map;
+    private List<CountryDto> buildCountries(final World world) {
+        return world.countries().all()
+                .map(c -> new CountryDto(
+                        Id.encode(c.getId()),
+                        c.getCode(),
+                        c.getName()))
+                .sorted(Comparator.comparing(CountryDto::getName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(CountryDto::getCode))
+                .toList();
+    }
+
+    private List<CityDto> buildCities(final World world) {
+        final Map<Integer, List<String>> icaosByCityId = icaosByCityId(world);
+        return world.cities().all()
+                .map(c -> new CityDto(
+                        Id.encode(c.getId()),
+                        c.getCountryId(),
+                        c.getName(),
+                        c.getPopulation(),
+                        c.getLatitude(),
+                        c.getLongitude(),
+                        icaosByCityId.getOrDefault(c.getId(), List.of())))
+                .sorted(Comparator.comparing(CityDto::getName, String.CASE_INSENSITIVE_ORDER)
+                        .thenComparing(CityDto::getCountryId))
+                .toList();
+    }
+
+    private List<AirportDto> buildAirports(final World world) {
+        final Map<Integer, Integer> countryIdByAirportId = buildCountryIdByAirportId(world);
+        final Map<Integer, String> countryNameById = new HashMap<>();
+        return world.airports().all()
+                .map(a -> new AirportDto(
+                        Id.encode(a.getId()),
+                        a.getLatitude(),
+                        a.getLongitude(),
+                        a.getIata(),
+                        a.getIcao(),
+                        a.getName(),
+                        countryName(world, countryNameById, countryIdByAirportId.get(a.getId()))))
+                .sorted(Comparator.comparing(AirportDto::getIcao))
+                .toList();
     }
 
     /**
@@ -119,7 +150,7 @@ public class GeoController {
 
         final Map<Integer, Integer> result = new HashMap<>();
         biggestCityByAirportId.forEach((airportId, city) -> result.put(airportId, city.getCountryId()));
-        return Map.copyOf(result);
+        return result;
     }
 
     private static String countryName(final World world, final Map<Integer, String> cache, final Integer countryId) {
