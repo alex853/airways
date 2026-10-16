@@ -6,7 +6,6 @@ import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +35,7 @@ public class GeoController {
         countryIdByAirportId = null;
     }
 
+    // todo ak0 wrap the response into json and keep that json in memory
     @GetMapping("/countries")
     public List<CountryDto> getCountries() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCountries")) {
@@ -50,6 +50,7 @@ public class GeoController {
         }
     }
 
+    // todo ak0 wrap the response into json and keep that json in memory
     @GetMapping("/cities")
     public List<CityDto> getCities() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getCities")) {
@@ -71,6 +72,7 @@ public class GeoController {
         }
     }
 
+    // todo ak0 wrap the response into json and keep that json in memory
     @GetMapping("/airports")
     public List<AirportDto> getAirports() {
         try (final Timing.Timer ignored = Timing.label("GeoController - getAirports")) {
