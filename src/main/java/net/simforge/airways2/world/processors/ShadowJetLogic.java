@@ -22,7 +22,8 @@ public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
 
-    // todo ak2 hubs are hardcoded for the hub test, later should be calculated from flight stats
+    // todo ak0 regularly show existing stats for most active airports in log messages
+    // todo ak1 hubs are hardcoded for the hub test, later should be calculated from flight stats
     private static final Set<String> HUB_ICAOS = Set.of("EGLL", "EDDF", "EHAM", "KJFK", "OMDB");
 
     // the flight is filled up to a random part of its seats

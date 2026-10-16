@@ -65,7 +65,7 @@ public class SimTracker {
             oldContext = Context.forUser(userId);
         }
 
-        // todo ak1 rework all those staff into one single modifySync processing splitted somehow
+        // todo ak2 rework all those staff into one single modifySync processing splitted somehow
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
 
         // the old position stays for takeoff/landing detection, but the track trail starts again after a gap
@@ -294,7 +294,7 @@ public class SimTracker {
                 : Optional.empty();
 
         return new TrackPosition(
-                System.currentTimeMillis(), // todo ak1 read it from posrep
+                System.currentTimeMillis(), // todo ak2 read it from posrep
                 posrep.isOnGround(),
                 coords,
                 airport.map(AirportInfo::getIcao).orElse(null),
@@ -487,7 +487,7 @@ public class SimTracker {
             checkArgument("E0".equals(formatStr));
 
             return new E0Posrep(
-                    timeStr, // todo ak1 parse it
+                    timeStr, // todo ak2 parse it
                     Integer.parseInt(onGroundStr) == 1,
                     Float.parseFloat(latitudeStr),
                     Float.parseFloat(longitureStr),

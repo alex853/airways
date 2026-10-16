@@ -163,7 +163,7 @@ public class FlightTimeline {
         }
 
         public void setActualTime(LocalDateTime actualTime) {
-            this.actualTime = actualTime; // todo ak3 checks
+            this.actualTime = actualTime; // todo ak1 checks and tests
 
             updateEstimatedTimes();
         }

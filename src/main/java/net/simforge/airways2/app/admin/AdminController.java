@@ -247,7 +247,7 @@ public class AdminController {
             fm.setStatus(FlightMissions.Status.Cancelled);
             results.add("F/M #" + fmId + " cancelled");
 
-            // todo ak1 cancelling a flight while the flight is not active or is not flying should not update an aircraft as this will affect another flight if there is any one is in progress
+            // todo ak2 cancelling a flight while the flight is not active or is not flying should not update an aircraft as this will affect another flight if there is any one is in progress
             Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, world.aircrafts().byId(fm.getAircraftId()).orElseThrow());
             results.add("A/C #" + aircraft.getId() + ", " + aircraft.getRegNo() + " is parked in " + world.airports().getIcao(aircraft.getLocationAirportId()).orElseThrow());
 
