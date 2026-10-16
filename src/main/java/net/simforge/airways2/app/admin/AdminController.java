@@ -600,6 +600,64 @@ public class AdminController {
         });
     }
 
+    /**
+     * Journeys in WaitingForDeboarding without heartbeat are leftovers of the old deboarding scheme: nothing wakes them up anymore.
+     * New scheme always sets the heartbeat when the journey goes to WaitingForDeboarding, so such journeys are stuck forever.
+     * <p>
+     * mode=deboard (default): the heartbeat is set to a random moment within the next 30 minutes and JourneyProcessor does the rest
+     * (the finished flight - deboards, the lost flight - forceful return, an unexpected status - orphaned), the passengers are kept.
+     * mode=delete: the journeys are deleted.
+     */
+    @GetMapping(value = "/journey/stuck-waiting-for-deboarding", produces = "text/plain")
+    public String stuckWaitingForDeboarding(@RequestParam(name = "dryRun", defaultValue = "true") final boolean dryRun,
+                                            @RequestParam(name = "mode", defaultValue = "deboard") final String mode,
+                                            @RequestParam(name = "limit", defaultValue = "500") final int limit) {
+        checkArgument(mode.equals("deboard") || mode.equals("delete"), "mode must be deboard or delete");
+        return worldBean.modifySync(world -> {
+            final List<Journeys.Journey> stuck = world.journeys().allWithZeroHeartbeat()
+                    .filter(j -> j.getStatus() == Journeys.Status.WaitingForDeboarding)
+                    .toList();
+
+            final Map<String, Integer> byTfStatus = new TreeMap<>();
+            final Map<String, Integer> paxByTfStatus = new TreeMap<>();
+            for (final Journeys.Journey journey : stuck) {
+                final String tfStatus = world.transportFlights().byId(journey.getTransportFlight1Id())
+                        .map(tf -> tf.getStatus().name())
+                        .orElse("<t/f not found>");
+                byTfStatus.merge(tfStatus, 1, Integer::sum);
+                paxByTfStatus.merge(tfStatus, journey.getGroupSize(), Integer::sum);
+            }
+
+            final StringBuilder result = new StringBuilder();
+            if (dryRun) {
+                result.append("DRY RUN - nothing is changed\n\n");
+            }
+            result.append("WaitingForDeboarding without heartbeat, mode ").append(mode).append(":\n");
+            result.append("  found . . . . . . ").append(stuck.size()).append("\n");
+            byTfStatus.forEach((status, count) -> result.append("  by t/f status ").append(status)
+                    .append(" . . ").append(count).append(" j/y, ").append(paxByTfStatus.get(status)).append(" pax\n"));
+
+            final int toProcess = Math.min(stuck.size(), limit);
+            for (int i = 0; i < toProcess; i++) {
+                final Journeys.Journey journey = stuck.get(i);
+                if (mode.equals("delete")) {
+                    logInvalidJourneyChange(dryRun, journey, "delete", "WaitingForDeboarding without heartbeat");
+                    if (!dryRun) {
+                        world.journeys().deleteById(journey.getId());
+                    }
+                } else {
+                    logInvalidJourneyChange(dryRun, journey, "set heartbeat time to soon", "WaitingForDeboarding without heartbeat");
+                    if (!dryRun) {
+                        journey.setHeartbeatTime(world.getWorldTime() + 1 + (int) (Math.random() * 30 * Time.ONE_MINUTE));
+                    }
+                }
+            }
+            result.append(dryRun ? "  would be processed " : "  processed . . . . ").append(toProcess)
+                    .append(" (limit ").append(limit).append(")\n");
+            return result.toString();
+        });
+    }
+
     private void logInvalidJourneyChange(final boolean dryRun, final Journeys.Journey journey, final String action, final String reason) {
         log.info("delete-invalid{} - j/y #{} - {} - {}, status {}, from city #{}, to city #{}, location city #{}, t/f1 #{}, t/f2 #{}, heartbeat {}",
                 dryRun ? " (dry run)" : "",

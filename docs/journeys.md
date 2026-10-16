@@ -172,3 +172,15 @@
 Все эти ситуации покрыты в `FlightWorkflowTest` (раздел «the pilot disconnects», действия те же, что у
 `PilotContext`). Сам `PilotContext` по-прежнему тестируется в `VatsimTrackerTest` только на уровне f/m и самолёта,
 t/f и журни там не проверяются.
+
+## Зависшие WaitingForDeboarding после смены схемы дебординга
+
+В новой схеме журни при переходе в `WaitingForDeboarding` всегда получает heartbeat (проверка рейса раз в минуту). Журни без heartbeat в этом
+статусе остались от старой схемы и никогда не проснутся. Анализ прода 2026-10-16 (через `/admin/journey/all` и `/admin/transport-flight/all`):
+3884 журни (21 562 пассажира) в `WaitingForDeboarding` без heartbeat, все на рейсах в статусе `Finished` (даты рейсов 06.10 - 15.10).
+`OnBoard` без heartbeat (2802) нормальны: рейсы сегодняшние и живые. Рейсов без heartbeat в статусах, где он нужен, нет
+(`Boarding` и `Deboarding` с heartbeat, остальное без него по дизайну).
+
+Лечение: `/admin/journey/stuck-waiting-for-deboarding?dryRun=true&mode=deboard|delete&limit=500`. `deboard` ставит heartbeat на
+случайный момент в ближайшие 30 минут, дальше `JourneyProcessor` (рейс завершён → дебординг, рейса нет → forceful return, странный статус →
+orphaned), пассажиры сохраняются; `delete` удаляет журни.
