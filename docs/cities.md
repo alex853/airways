@@ -512,3 +512,23 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   счёта потока. Переименованы: `Wien` → `Vienna`, `Praha` → `Prague`, `Geneve` → `Geneva`, `Mexico` → `Mexico
   City` (в CSV, в `World25_012` и в мире через `f1TourFixes`). Оценки приблизительные. Импорты `009`, `012`,
   `013` закомментированы в `Application.main`.
+- **EKBI, HEGN, TJSJ, YBBN, OJAI, GCLP, MMUN, MYNN — пакет из списка отсутствующих по VATSIM (2026-10-16):**
+  - **Billund (DK, EKBI):** в CSV город был как населённый пункт, `Billund` 6 100 → 400 100 (зона притяжения
+    аэропорта: Vejle, Kolding, Esbjerg, Horsens, Herning, Fredericia, все <100k; хвост 100 сохранён). EKBI
+    (size 3094) через `World25_009`.
+  - **Hurghada (EG, HEGN):** `Al-#ardaqah` 70 200 → `Hurghada` 290 200, `Safaja` → `Safaga`. HEGN (7010)
+    автоматически.
+  - **San Juan (PR, TJSJ):** Пуэрто-Рико в CSV не было, строка-«семя» `Puerto Rico,PR,San Juan,2100000` (метро
+    San Juan–Bayamón–Caguas). TJSJ (5492) автоматически, имя `San Juan Luis Munoz Marin`.
+  - **Brisbane (AU, YBBN):** 1 598 600 → 2 600 600 (Greater Brisbane). Gold Coast, Sunshine Coast отдельные.
+    YBBN (5332) автоматически; YBAF Archerfield не берём.
+  - **Amman (JO, OJAI):** 1 293 700 → 4 500 700 (Greater Amman), `del` Az-zarqa', Ar-russayfah, Wadi as-sir.
+    OJAI (7287) автоматически, `Amman Queen Alia`; OJAM Marka не берём. Страна Jordan создаётся импортом.
+  - **Gran Canaria (ES, GCLP):** по прецеденту Tenerife/Mallorca остров-«семя» `Gran Canaria` 855 000,
+    `del Las palmas` (356 200). GCLP (6215) автоматически, имя `Gran Canaria` оставлено.
+  - **Cancun (MX, MMUN):** 478 400 → 900 400. MMUN (3504) через `World25_009`. Побочно MMCZ Cozumel Intl
+    (5181, 31 nm) создастся автоматически и привяжется к Cancun (Cozumel как город не импортируем).
+  - **Nassau (BS, MYNN):** 226 100 → 275 100 (New Providence). MYNN (5898) автоматически. Страна Bahamas
+    создаётся импортом.
+  - `BusinessAviationTerminal`: TJSJ, YBBN, OJAI, GCLP, MMUN, MYNN. Attraction: Hurghada 5, San Juan 5,
+    Cancun 8, Nassau 5, Gran Canaria 5.
