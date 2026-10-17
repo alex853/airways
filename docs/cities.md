@@ -564,4 +564,14 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **NZWP Whenuapai** (военная база, в `icaodata` стоял `civil`, size 5906 попал бы в автоимпорт): тип в `icaodata.csv`
     изменён на `military`, в мир не попадёт.
   - Терминалы бизнес-авиации не ставим. Attraction: Auckland 3.
+- **KOKC, HKJK, UWKD — Oklahoma City, Nairobi, Kazan (VATSIM-бэклог, 2026-10-17):**
+  - **Oklahoma City (US, KOKC):** CSV 527 100 → 1 400 100 (метро ~1,4M, оценка приблизительная), `del Norman` (100 300, 16 nm).
+    KOKC (size 9301) создаётся автоматически, имя `Oklahoma City Will Rogers`. KPWA Wiley Post (основной GA/бизнес) в мир
+    не берём по решению; KTIK Tinker AFB военный. `BusinessAviationTerminal` на KOKC.
+  - **Nairobi (KE, HKJK):** CSV 2 504 400 → 5 300 400 (метро с Kiambu, Ruiru, Thika, ~5,3M, приблизительно). Ruiru (93 200) и Thika
+    (96 600) меньше 100k, `del` не ставим. Страна Kenya создаётся импортом. HKJK (size 4124) через `World25_009` и затем вручную
+    `create-links`, имя `Nairobi Jomo Kenyatta`. HKNW Wilson в мир не берём по решению; HKRE Eastleigh (военная база Moi AB) не берём.
+  - **Kazan (RU, UWKD):** CSV 1 108 100 → 1 600 100 (агломерация ~1,6M, приблизительно), `del Zelenodolsk` (100 100, ~20 nm).
+    UWKD (size 6976) автоматически, имя `Kazan` оставлено.
+  - Attraction не ставим. Бизнес-терминал только на KOKC.
 
