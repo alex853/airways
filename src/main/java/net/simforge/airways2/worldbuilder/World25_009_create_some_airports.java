@@ -44,7 +44,7 @@ public class World25_009_create_some_airports {
                 "SCEL",
                 "TNCM",
                 "UMMS",
-                "VTBS",
+                "VTBS", "VTSP",
                 "WMKK",
                 "WSSS",
                 "YMEN",

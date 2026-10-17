@@ -574,4 +574,12 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **Kazan (RU, UWKD):** CSV 1 108 100 → 1 600 100 (агломерация ~1,6M, приблизительно), `del Zelenodolsk` (100 100, ~20 nm).
     UWKD (size 6976) автоматически, имя `Kazan` оставлено.
   - Attraction не ставим. Бизнес-терминал только на KOKC.
+- **VTSP, YPPH - Phuket и Perth (VATSIM-бэклог, 2026-10-18):**
+  - **Phuket (TH, VTSP):** по прецеденту островов (Malta, Gran Canaria) одна строка на остров: CSV 82 800 → 420 800 (провинция
+    Phuket, оценка приблизительная). VTSP (size 3000, меньше 5000) через `World25_009`, линк вручную (`create-links`), имя
+    `Phuket Intl`. VTSG Krabi (материк, 40 nm) не берём. `BusinessAviationTerminal` на VTSP, attraction 15.
+  - **Perth (AU, YPPH):** CSV 1 412 900 → 2 300 900 (Greater Perth ~2,3M, приблизительно), пригородов ≥100k нет, `del` нет.
+    YPPH (size 5616) создаётся автоматически, имя `Perth Intl` оставлено. YPEA Pearce (военная база RAAF, в `icaodata` стоял
+    `civil`, size 5881 попал бы в автоимпорт): тип изменён на `military`. YPJT Jandakot (GA/бизнес) в мир не берём по решению.
+    Терминалы и attraction для Perth не ставим.
 

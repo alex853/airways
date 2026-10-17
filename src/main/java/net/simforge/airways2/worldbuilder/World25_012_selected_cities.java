@@ -17,6 +17,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AU", "city-name:Sydney"},
                 new String[]{"country-code:AU", "city-name:Melbourne"},
                 new String[]{"country-code:AU", "city-name:Brisbane"},
+                new String[]{"country-code:AU", "city-name:Perth"},
 
                 new String[]{"country-code:BE", "city-name:Brussels"},
 
@@ -204,6 +205,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:SE", "city-name:Gothenburg"},
 
                 new String[]{"country-code:TH", "city-name:Bangkok"},
+                new String[]{"country-code:TH", "city-name:Phuket"},
 
                 new String[]{"country-code:SX", "city-name:Sint Maarten"},
 
