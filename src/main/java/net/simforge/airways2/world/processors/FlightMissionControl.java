@@ -37,31 +37,41 @@ public class FlightMissionControl {
         log.info("f/m #{} - flight switched to external coordinates mode", mission.getId());
     }
 
-    public void startOrCancel(final FlightMissions.Mission mission) {
+    /**
+     * The result of {@link #start}: the mission is started, or it is not and the reason says why. A failed start changes nothing,
+     * the caller decides what to do: cancel the mission ({@link #cancelDispatched}), report an error to the user, etc.
+     */
+    public record StartResult(boolean started, String reason) {
+        public static StartResult ok() {
+            return new StartResult(true, null);
+        }
+
+        public static StartResult failed(final String reason) {
+            return new StartResult(false, reason);
+        }
+    }
+
+    /**
+     * Starts the mission (Dispatched -> Preflight) if the mission and the aircraft are fine for that: the mission is
+     * Dispatched, the aircraft is idle and parked at the departure airport. If not, nothing is changed and the result tells why.
+     */
+    public StartResult start(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         final FlightMissions.Status actualStatus = mission.getStatus();
         if (actualStatus != FlightMissions.Status.Dispatched) {
-            mission.setStatus(FlightMissions.Status.Cancelled);
-
-            world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
-            log.info("f/m #{} - flight cancelled - flight actual state {} while expected {}", mission.getId(), actualStatus, FlightMissions.Status.Dispatched);
-            // todo ak1 t/f actions in case of flight cancellation
-
-            return;
+            final String reason = String.format("flight actual state %s while expected %s", actualStatus, FlightMissions.Status.Dispatched);
+            log.warn("f/m #{} - flight can not be started - {}", mission.getId(), reason);
+            return StartResult.failed(reason);
         }
 
         if (aircraft.getOperationalStatus() != Aircrafts.OperationalStatus.Idle
                 || aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport
                 || aircraft.getLocationAirportId() != mission.getDepartureAirportId()) {
-            mission.setStatus(FlightMissions.Status.Cancelled);
-
-            world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
-            log.info("f/m #{} - flight cancelled - aircraft {} actual operational status {}, location status {}, location airport {}",
-                    mission.getId(), aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
-            // todo ak1 t/f actions in case of flight cancellation
-
-            return;
+            final String reason = String.format("aircraft %s actual operational status %s, location status %s, location airport %s",
+                    aircraft.getRegNo(), aircraft.getOperationalStatus(), aircraft.getLocationStatus(), aircraft.getLocationAirportId());
+            log.warn("f/m #{} - flight can not be started - {}", mission.getId(), reason);
+            return StartResult.failed(reason);
         }
 
         int worldTime = world.getWorldTime();
@@ -74,6 +84,23 @@ public class FlightMissionControl {
 
         world.log(EventLog.EventType.FlightStarted, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - flight started and in Preflight status, aircraft {} is activated", mission.getId(), aircraft.getRegNo());
+        return StartResult.ok();
+    }
+
+    /**
+     * Cancels the mission which has not been started: the aircraft was not touched by it. The transport flight of the mission, if there is
+     * one, is cancelled too and its journeys are returned to the cities where they were before.
+     */
+    public void cancelDispatched(final FlightMissions.Mission mission, final String reason) {
+        checkArgument(mission.getStatus() == FlightMissions.Status.Dispatched, "only a dispatched mission can be cancelled this way");
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+        mission.setStatus(FlightMissions.Status.Cancelled);
+
+        world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
+        log.info("f/m #{} - flight cancelled - {}", mission.getId(), reason);
+
+        transportFlightControl().cancelTransportFlightIfExists(mission);
     }
 
     public void cancelFlightAndReturnAircraftToDepartureAirport(final FlightMissions.Mission mission) {
@@ -102,7 +129,9 @@ public class FlightMissionControl {
         world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
-        // todo ak1 t/f actions in case of flight cancellation - Apr 2026 it seems already implemented in ShadowJet code?
+        // The t/f of the mission is not touched here: the callers (PilotContext, cancel before takeoff and cancel from flying)
+        // cancel it right after this call by ShadowJetLogic.cancelTransportFlightIfExists, which unloads the journeys
+        // back to the departure city. It is covered by FlightWorkflowTest (cancellation and disconnect tests).
     }
 
     // Checks are shared between sim tracker 'reschedule' action and the reschedule itself, order matters for UI

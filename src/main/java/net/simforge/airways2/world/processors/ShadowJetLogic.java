@@ -387,19 +387,6 @@ public class ShadowJetLogic {
         }
     }
 
-    public static void cancelTransportFlightIfExists(World world, FlightMissions.Mission mission) {
-        Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
-        if (transportFlightO.isEmpty()) {
-            return;
-        }
-
-        TransportFlights.Flight transportFlight = transportFlightO.get();
-        world.transportFlightControl().unloadJourneysForcefullyFromActiveFlight(transportFlight);
-        transportFlight.setStatus(TransportFlights.Status.Cancelled);
-
-        log.warn("f/m #{}, t/f #{}, PAX {} - flight cancelled, all PAX unloaded", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
-    }
-
     public static void deboardTransportFlightIfExists(World world, FlightMissions.Mission mission) {
         Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
         if (transportFlightO.isEmpty()) {

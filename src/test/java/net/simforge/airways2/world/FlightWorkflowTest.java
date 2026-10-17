@@ -6,9 +6,12 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
+import net.simforge.airways2.world.datamodel.EventsToProcess;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import net.simforge.airways2.world.processors.FlightMissionControl;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.airways2.world.processors.TransportFlightControl;
 import org.junit.jupiter.api.AfterEach;
@@ -22,6 +25,8 @@ import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -251,12 +256,12 @@ public class FlightWorkflowTest {
     @Test
     public void test__disconnect__pilot_goes_offline_on_the_ground_during_the_boarding__flight_is_cancelled_and_journeys_stay_in_the_departure_city() {
         provideFlight();
-        world.flightMissionControl().startOrCancel(mission); // Preflight, as PilotContext dispatches and starts the mission
+        world.flightMissionControl().start(mission); // Preflight, as PilotContext dispatches and starts the mission
         runFor(40); // a part of the journeys is on board
 
         // PilotContext.mission_cancelBeforeTakeoffIfExists
         world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
-        ShadowJetLogic.cancelTransportFlightIfExists(world, mission);
+        world.transportFlightControl().cancelTransportFlightIfExists(mission);
 
         assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
         assertEquals(0, transportFlight.getPaxOnBoard());
@@ -267,7 +272,7 @@ public class FlightWorkflowTest {
     public void test__disconnect__pilot_goes_offline_while_flying_longer_than_allowed__flight_is_cancelled_and_journeys_return_to_the_departure_city() {
         provideFlight();
         runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
-        world.flightMissionControl().startOrCancel(mission);
+        world.flightMissionControl().start(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
         runFor(10 * Time.ONE_MINUTE);
@@ -275,7 +280,7 @@ public class FlightWorkflowTest {
 
         // PilotContext.mission_cancelFromFlying
         world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
-        ShadowJetLogic.cancelTransportFlightIfExists(world, mission);
+        world.transportFlightControl().cancelTransportFlightIfExists(mission);
 
         assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
         assertEquals(0, transportFlight.getPaxOnBoard());
@@ -286,7 +291,7 @@ public class FlightWorkflowTest {
     public void test__disconnect__pilot_goes_offline_right_after_landing__flight_is_finished_and_journeys_deboard_as_usual() {
         provideFlight();
         runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
-        world.flightMissionControl().startOrCancel(mission);
+        world.flightMissionControl().start(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
         runFor(Time.ONE_MINUTE);
@@ -316,7 +321,7 @@ public class FlightWorkflowTest {
         // the aircraft is at the gate, but the mission is in Arrival status: the same actions as above
         provideFlight();
         runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
-        world.flightMissionControl().startOrCancel(mission);
+        world.flightMissionControl().start(mission);
         world.flightMissionControl().blocksOff(mission);
         world.flightMissionControl().takeoff(mission);
         runFor(Time.ONE_MINUTE);
@@ -356,6 +361,206 @@ public class FlightWorkflowTest {
         assertEquals(0, transportFlight.getPaxOnBoard());
     }
 
+    // ---- cancellation of the flight: what happens with the t/f and the journeys ----
+
+    @Test
+    public void test__cancellation__pilot_goes_offline_after_blocks_off_before_takeoff__flight_is_cancelled_and_journeys_stay_in_the_departure_city() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        startFlightAndDepart();
+        assertEquals(FlightMissions.Status.Departure, mission.getStatus());
+        journeys.forEach(j -> assertEquals(Journeys.Status.OnBoard, j.getStatus()));
+
+        // PilotContext.mission_cancelBeforeTakeoffIfExists in Departure status
+        world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
+        world.transportFlightControl().cancelTransportFlightIfExists(mission);
+
+        assertEquals(FlightMissions.Status.Cancelled, mission.getStatus());
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        assertEquals(0, transportFlight.getPaxOnBoard());
+        assertJourneysAreReturnedTo(cityA);
+        assertAircraftIsBackAtTheDepartureAirport();
+    }
+
+    @Test
+    public void test__cancellation__t_f_stays_cancelled_and_does_not_come_back_to_life_in_the_world() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        world.flightMissionControl().start(mission);
+        world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
+        world.transportFlightControl().cancelTransportFlightIfExists(mission);
+
+        runFor(2 * Time.ONE_HOUR);
+
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        assertEquals(0, transportFlight.getPaxOnBoard());
+        journeys.forEach(j -> assertEquals(0, j.getTransportFlight1Id()));
+    }
+
+    // ---- start of the mission: the result and what the callers do with a failure ----
+
+    @Test
+    public void test__start__mission_which_is_not_dispatched_anymore_is_refused_and_goes_on() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        assertTrue(world.flightMissionControl().start(mission).started());
+        assertEquals(FlightMissions.Status.Preflight, mission.getStatus());
+
+        final FlightMissionControl.StartResult second = world.flightMissionControl().start(mission); // the second start of the same mission
+
+        assertFalse(second.started());
+        assertTrue(second.reason().contains("Preflight"), second.reason());
+        assertEquals(FlightMissions.Status.Preflight, mission.getStatus()); // the mission is not cancelled by the failed start
+        assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
+        journeys.forEach(j -> assertEquals(transportFlight.getId(), j.getTransportFlight1Id()));
+    }
+
+    @Test
+    public void test__start__aircraft_is_not_at_the_departure_airport__start_is_refused_and_nothing_is_changed() {
+        provideFlight();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setLocationAirportId(airportB.getId());
+
+        final FlightMissionControl.StartResult result = world.flightMissionControl().start(mission);
+
+        assertFalse(result.started());
+        assertTrue(result.reason().contains("location airport"), result.reason());
+        assertEquals(FlightMissions.Status.Dispatched, mission.getStatus());
+        assertEquals(Aircrafts.OperationalStatus.Idle, aircraft.getOperationalStatus());
+        assertEquals(airportB.getId(), aircraft.getLocationAirportId());
+        assertEquals(0, aircraft.getFlightMissionId());
+    }
+
+    @Test
+    public void test__start__aircraft_is_busy__start_is_refused_and_the_aircraft_keeps_its_own_flight() {
+        provideFlight();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
+        aircraft.setFlightMissionId(12345);
+
+        final FlightMissionControl.StartResult result = world.flightMissionControl().start(mission);
+
+        assertFalse(result.started());
+        assertEquals(FlightMissions.Status.Dispatched, mission.getStatus());
+        assertEquals(Aircrafts.OperationalStatus.Active, aircraft.getOperationalStatus());
+        assertEquals(12345, aircraft.getFlightMissionId());
+    }
+
+    @Test
+    public void test__start__aircraft_in_the_air_is_refused() {
+        provideFlight();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setLocationStatus(Aircrafts.LocationStatus.Flying);
+
+        assertFalse(world.flightMissionControl().start(mission).started());
+        assertEquals(FlightMissions.Status.Dispatched, mission.getStatus());
+    }
+
+    @Test
+    public void test__cancel_dispatched__t_f_is_cancelled_and_journeys_return_to_the_departure_city_and_stay_there() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        journeys.forEach(j -> assertEquals(Journeys.Status.OnBoard, j.getStatus()));
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setLocationAirportId(airportB.getId());
+        final FlightMissionControl.StartResult result = world.flightMissionControl().start(mission);
+        assertFalse(result.started());
+
+        world.flightMissionControl().cancelDispatched(mission, result.reason());
+
+        assertEquals(FlightMissions.Status.Cancelled, mission.getStatus());
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        assertEquals(0, transportFlight.getPaxOnBoard());
+        assertJourneysAreReturnedTo(cityA);
+        assertEquals(airportB.getId(), aircraft.getLocationAirportId()); // the aircraft is not touched by the cancellation
+
+        runFor(2 * Time.ONE_HOUR);
+
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        journeys.forEach(j -> assertEquals(0, j.getTransportFlight1Id()));
+    }
+
+    @Test
+    public void test__cancel_dispatched__mission_without_a_t_f_is_cancelled_without_trouble() {
+        world.flightMissionControl().cancelDispatched(mission, "test");
+
+        assertEquals(FlightMissions.Status.Cancelled, mission.getStatus());
+        assertTrue(world.transportFlights().byFlightMissionId(mission.getId()).isEmpty());
+    }
+
+    @Test
+    public void test__cancel_dispatched__started_mission_can_not_be_cancelled_this_way() {
+        assertTrue(world.flightMissionControl().start(mission).started());
+
+        assertThrows(IllegalArgumentException.class, () -> world.flightMissionControl().cancelDispatched(mission, "test"));
+        assertEquals(FlightMissions.Status.Preflight, mission.getStatus());
+    }
+
+    // ---- NPC pilot goes on duty (PilotOnDuty event of the world) ----
+
+    private FlightMissions.Mission scheduleNpcMissionWithFlight() {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final FlightMissions.Mission npcMission = FlightMissionHelper.scheduleDispatchedMission(
+                world, aircraft, airportA, airportB, world.getWorldTime() + 45 * Time.ONE_MINUTE);
+        assertEquals(FlightMissions.CharacterMode.NPC, npcMission.getCharacterMode());
+
+        ShadowJetLogic.provideTransportFlightIfRequired(world, npcMission);
+        transportFlight = world.transportFlights().byFlightMissionId(npcMission.getId()).orElseThrow();
+        return npcMission;
+    }
+
+    @Test
+    public void test__pilot_on_duty__npc_mission_is_started_when_everything_is_fine() {
+        final FlightMissions.Mission npcMission = scheduleNpcMissionWithFlight();
+
+        runUntil(30 * Time.ONE_MINUTE, () -> npcMission.getStatus() != FlightMissions.Status.Dispatched);
+
+        assertEquals(FlightMissions.Status.Preflight, npcMission.getStatus());
+        assertEquals(npcMission.getId(), world.aircrafts().byId(npcMission.getAircraftId()).orElseThrow().getFlightMissionId());
+        assertTrue(transportFlight.getStatus() != TransportFlights.Status.Cancelled);
+    }
+
+    @Test
+    public void test__pilot_on_duty__npc_mission_is_cancelled_with_its_t_f_when_the_aircraft_has_gone__journeys_return_to_the_departure_city() {
+        final FlightMissions.Mission npcMission = scheduleNpcMissionWithFlight();
+        runFor(10 * Time.ONE_MINUTE); // the flight is selling and checking-in the journeys
+        assertEquals(FlightMissions.Status.Dispatched, npcMission.getStatus());
+        assertTrue(journeys.stream().allMatch(j -> j.getTransportFlight1Id() == transportFlight.getId()));
+        world.aircrafts().byId(npcMission.getAircraftId()).orElseThrow().setLocationAirportId(airportB.getId());
+
+        runUntil(30 * Time.ONE_MINUTE, () -> npcMission.getStatus() != FlightMissions.Status.Dispatched);
+
+        assertEquals(FlightMissions.Status.Cancelled, npcMission.getStatus());
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        assertJourneysAreReturnedTo(cityA);
+
+        runFor(Time.ONE_HOUR);
+
+        assertEquals(TransportFlights.Status.Cancelled, transportFlight.getStatus());
+        journeys.forEach(j -> assertEquals(0, j.getTransportFlight1Id()));
+    }
+
+    @Test
+    public void test__pilot_on_duty__second_event_for_a_started_mission_does_not_cancel_it() {
+        final FlightMissions.Mission npcMission = scheduleNpcMissionWithFlight();
+        runUntil(30 * Time.ONE_MINUTE, () -> npcMission.getStatus() != FlightMissions.Status.Dispatched);
+        assertEquals(FlightMissions.Status.Preflight, npcMission.getStatus());
+
+        world.eventsToProcess().sendEvent(EventsToProcess.Type.PilotOnDuty, npcMission.getId(), world.getWorldTime());
+        runFor(Time.ONE_MINUTE);
+
+        assertTrue(npcMission.getStatus() != FlightMissions.Status.Cancelled);
+        assertTrue(transportFlight.getStatus() != TransportFlights.Status.Cancelled);
+    }
+
+    private void assertAircraftIsBackAtTheDepartureAirport() {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        assertEquals(Aircrafts.OperationalStatus.Idle, aircraft.getOperationalStatus());
+        assertEquals(Aircrafts.LocationStatus.ParkedAtAirport, aircraft.getLocationStatus());
+        assertEquals(airportA.getId(), aircraft.getLocationAirportId());
+        assertEquals(0, aircraft.getFlightMissionId());
+    }
+
     private void assertJourneysAreReturnedTo(final Cities.City city) {
         journeys.forEach(j -> {
             assertEquals(Journeys.Status.LookingForTickets, j.getStatus());
@@ -372,7 +577,7 @@ public class FlightWorkflowTest {
     }
 
     private void startFlightAndDepart() {
-        world.flightMissionControl().startOrCancel(mission);
+        world.flightMissionControl().start(mission);
         world.flightMissionControl().blocksOff(mission);
     }
 

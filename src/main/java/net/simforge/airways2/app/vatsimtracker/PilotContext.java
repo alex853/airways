@@ -7,6 +7,7 @@ import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.world.AircraftTypeRemapping;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.world.processors.FlightMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.commons.io.Csv;
@@ -476,11 +477,17 @@ public class PilotContext {
                     world.getWorldTime() + Time.HALF_AN_HOUR);
             mission.setCharacterMode(FlightMissions.CharacterMode.PC);
 
-            world.flightMissionControl().startOrCancel(mission);
+            final FlightMissionControl.StartResult startResult = world.flightMissionControl().start(mission);
+            if (startResult.started()) {
+                ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
 
-            ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
+                FlightStats.event("vatsim - dispatchNewAndStart");
+            } else {
+                // a cancelled mission gets no transport flight and no journeys
+                world.flightMissionControl().cancelDispatched(mission, startResult.reason());
 
-            FlightStats.event("vatsim - dispatchNewAndStart");
+                FlightStats.event("vatsim - dispatchNewAndStart - start failed, cancelled");
+            }
 
             return mission;
         });
@@ -645,7 +652,7 @@ public class PilotContext {
                 world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
                 world.flightMissionControl().scheduleQuickRemoval(mission.get());
 
-                ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
+                world.transportFlightControl().cancelTransportFlightIfExists(mission.get());
             } else {
                 throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.get().getStatus());
             }
@@ -674,7 +681,7 @@ public class PilotContext {
             if (mission.get().getStatus() == FlightMissions.Status.Flying) {
                 world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission.get());
 
-                ShadowJetLogic.cancelTransportFlightIfExists(world, mission.get());
+                world.transportFlightControl().cancelTransportFlightIfExists(mission.get());
             } else {
                 throw new IllegalStateException("unexpected f/m #" + flightMissionId + " mission status " + mission.get().getStatus());
             }

@@ -160,6 +160,18 @@ public class FlightMissionProcessor {
         if (mission.getCharacterMode() == FlightMissions.CharacterMode.PC) {
             return;
         }
-        world.flightMissionControl().startOrCancel(mission);
+
+        final FlightMissionControl.StartResult startResult = world.flightMissionControl().start(mission);
+        if (startResult.started()) {
+            return;
+        }
+
+        // Something has changed since the mission was dispatched. A dispatched mission is cancelled with its t/f and journeys,
+        // a mission which has moved on (started, cancelled, finished) is left as it is.
+        if (mission.getStatus() == FlightMissions.Status.Dispatched) {
+            world.flightMissionControl().cancelDispatched(mission, startResult.reason());
+        } else {
+            log.warn("f/m #{} - pilot on duty event is ignored - {}", mission.getId(), startResult.reason());
+        }
     }
 }

@@ -17,6 +17,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
+import net.simforge.airways2.world.processors.FlightMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,7 +153,14 @@ public class FlightDashboardController {
             }
 
             log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
-            world.flightMissionControl().startOrCancel(flight); // todo ak2 why there is 'OR CANCEL' ????
+            // todo ak2 a manual start should not cancel the flight silently: answer with an error which says what exactly was
+            //   checked and what failed (startResult.reason() has it: the flight status, or the aircraft operational status,
+            //   location status, location airport), the flight stays Dispatched and the pilot can fix the cause and try again.
+            //   Now the old behaviour is kept: the flight is cancelled, the user sees only the new status of the flight.
+            final FlightMissionControl.StartResult startResult = world.flightMissionControl().start(flight);
+            if (!startResult.started()) {
+                world.flightMissionControl().cancelDispatched(flight, startResult.reason());
+            }
 
             if (simTrackerConnected) {
                 world.flightMissionControl().switchToExternalCoordinatesMode(flight);

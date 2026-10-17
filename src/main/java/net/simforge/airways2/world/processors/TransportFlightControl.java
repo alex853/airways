@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.TreeMap;
 
@@ -343,6 +344,25 @@ public class TransportFlightControl {
         deboardingStartTimes.remove(transportFlight.getId());
 
         log.info("t/f #{} - finished", transportFlight.getId());
+    }
+
+    /**
+     * Cancels the transport flight of the mission, if there is one: all its journeys are unloaded forcefully (they go back to the cities
+     * where they were before) and the flight becomes Cancelled.
+     */
+    public void cancelTransportFlightIfExists(final FlightMissions.Mission mission) {
+        checkNotNull(mission);
+
+        final Optional<TransportFlights.Flight> transportFlightO = world.transportFlights().byFlightMissionId(mission.getId());
+        if (transportFlightO.isEmpty()) {
+            return;
+        }
+
+        final TransportFlights.Flight transportFlight = transportFlightO.get();
+        unloadJourneysForcefullyFromActiveFlight(transportFlight);
+        transportFlight.setStatus(TransportFlights.Status.Cancelled);
+
+        log.warn("f/m #{}, t/f #{}, PAX {} - flight cancelled, all PAX unloaded", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
     }
 
     // Active flight is expectedly transportFlight1Id for all the journeys

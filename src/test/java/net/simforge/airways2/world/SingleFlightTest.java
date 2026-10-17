@@ -77,7 +77,7 @@ public class SingleFlightTest {
         mission.setCharacterMode(FlightMissions.CharacterMode.PC);
 
         runWorldForNHours(1);
-        world.flightMissionControl().startOrCancel(mission);
+        world.flightMissionControl().start(mission);
         runWorldForNHours(1);
         world.flightMissionControl().blocksOff(mission);
         runWorldForNHours(1);

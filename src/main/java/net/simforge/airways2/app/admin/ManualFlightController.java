@@ -4,6 +4,7 @@ import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.dto.FlightMinDto;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.FlightMissionControl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,11 @@ public class ManualFlightController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
-            world.flightMissionControl().startOrCancel(flight);
+            // todo ak2 the same as in the flight dashboard: an error with the reason instead of the silent cancellation
+            final FlightMissionControl.StartResult startResult = world.flightMissionControl().start(flight);
+            if (!startResult.started()) {
+                world.flightMissionControl().cancelDispatched(flight, startResult.reason());
+            }
             return FlightMinDto.from(world, flight);
         });
     }
