@@ -12,7 +12,6 @@ import java.util.*;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-// todo ak1 add precondition checks for all the statuses
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
@@ -208,7 +207,15 @@ public class FlightMissionControl {
         return cancelledIdsScheduledForQuickRemoval.remove(mission.getId());
     }
 
+    // The status of the mission is the precondition of every step of the flight: a step is allowed from one status only.
+    private static void checkStatus(final FlightMissions.Mission mission, final String step, final FlightMissions.Status expected) {
+        checkArgument(mission.getStatus() == expected,
+                "f/m #" + mission.getId() + " - " + step + " requires status " + expected + ", the actual status is " + mission.getStatus());
+    }
+
     public void blocksOff(final FlightMissions.Mission mission) {
+        checkStatus(mission, "blocksOff", FlightMissions.Status.Preflight);
+
         mission.setStatus(FlightMissions.Status.Departure);
         mission.setActualDepartureWorldTime(world.getWorldTime());
 
@@ -223,6 +230,8 @@ public class FlightMissionControl {
     }
 
     public void takeoff(final FlightMissions.Mission mission) {
+        checkStatus(mission, "takeoff", FlightMissions.Status.Departure);
+
         mission.setStatus(FlightMissions.Status.Flying);
         mission.setActualTakeoffWorldTime(world.getWorldTime());
 
@@ -245,6 +254,8 @@ public class FlightMissionControl {
     }
 
     public void landing(final FlightMissions.Mission mission, Airports.Airport landingAirport) {
+        checkStatus(mission, "landing", FlightMissions.Status.Flying);
+
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         mission.setStatus(FlightMissions.Status.Arrival);
@@ -271,6 +282,8 @@ public class FlightMissionControl {
     }
 
     public void blocksOn(final FlightMissions.Mission mission) {
+        checkStatus(mission, "blocksOn", FlightMissions.Status.Arrival);
+
         mission.setStatus(FlightMissions.Status.Postflight);
         mission.setActualArrivalWorldTime(world.getWorldTime());
 
@@ -294,6 +307,8 @@ public class FlightMissionControl {
     }
 
     public void finish(final FlightMissions.Mission mission) {
+        checkStatus(mission, "finish", FlightMissions.Status.Postflight);
+
         mission.setStatus(FlightMissions.Status.Finished);
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
