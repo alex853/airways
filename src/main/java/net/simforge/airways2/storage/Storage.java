@@ -41,6 +41,8 @@ public class Storage<T> {
     private final Instantiator<T> instantiator;
     /** @noinspection FieldCanBeLocal, unused */
     private final DataType idDataType;
+    // the highest record id which fits into the id data type
+    private final long maxRecordId;
     private final DataField[] dataFields;
     private final int recordSize;
 
@@ -81,6 +83,7 @@ public class Storage<T> {
         this.name = name;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
+        this.maxRecordId = maxRecordIdOf(idDataType);
         this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
 
@@ -222,8 +225,23 @@ public class Storage<T> {
         return Optional.of(instantiator.create(first.getAsInt()));
     }
     
+    // A storage without the id data type (a bare test storage) is limited by int only.
+    private static long maxRecordIdOf(final DataType idDataType) {
+        if (idDataType == null) {
+            return Integer.MAX_VALUE;
+        }
+        return switch (idDataType) {
+            case Unsigned8bit -> 255;
+            case Unsigned16bit -> 65_535;
+            case Unsigned24bit -> 16_777_215;
+            case Signed32bit -> Integer.MAX_VALUE;
+            default -> throw new IllegalArgumentException("Record id data type must be an integer one, it is " + idDataType);
+        };
+    }
+
     /**
      * Adds a new record. A deleted record is reused only when its quarantine is over, otherwise the storage grows.
+     * If the new id does not fit into the id data type of the storage, the storage is full and IllegalStateException is thrown.
      */
     public int addRecord() {
         final int[] oldest = deletedRecords.peekFirst();
@@ -240,7 +258,11 @@ public class Storage<T> {
         }
 
         final int addedRecordId = getTotalStoredRecordCount() + 1;
-        // todo ak1 to check if new id is possible according to idDataType
+        // a reused id was checked when it was given, only a new id can be out of the id data type
+        if (addedRecordId > maxRecordId) {
+            throw new IllegalStateException("Storage " + name + " is full: record id " + addedRecordId
+                    + " does not fit into " + idDataType + " (max id is " + maxRecordId + ")");
+        }
         final byte[] newData = new byte[data.length + recordSize];
         System.arraycopy(data, 0, newData, 0, data.length);
         data = newData;
