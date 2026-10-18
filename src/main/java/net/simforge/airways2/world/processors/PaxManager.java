@@ -89,6 +89,7 @@ public class PaxManager {
     /**
      * The state of one operation of one flight. The counter holds PAX of the group which is being processed right now.
      */
+    // todo ak3 checkin on the same rails?
     public abstract static class Operation {
         protected final World world;
         protected TransportFlights.Flight transportFlight;
