@@ -1600,7 +1600,7 @@ Botswana,BW,Maunatlala,3400,-22.57,27.57
 Botswana,BW,Masunga,3300,-20.67,27.42
 Botswana,BW,Mopipi,3300,-21.18,24.88
 Brazil,BR,Sao Paulo,22260100,-23.53,-46.63
-Brazil,BR,Rio de janeiro,6150200,-22.91,-43.2
+Brazil,BR,Rio de Janeiro,13000200,-22.91,-43.2
 Brazil,BR,Salvador,2637000,-12.97,-38.5
 Brazil,BR,Belo horizonte,2375300,-19.92,-43.94
 Brazil,BR,Fortaleza,2305800,-3.78,-38.59
@@ -1613,11 +1613,11 @@ Brazil,BR,Porto alegre,1384000,-30.04,-51.22
 Brazil,BR,Goiania,1175100,-16.72,-49.26
 Brazil,BR,del Guarulhos,1139100,-23.46,-46.49
 Brazil,BR,Campinas,1028700,-22.91,-47.08
-Brazil,BR,Nova iguacu,994600,-22.74,-43.47
-Brazil,BR,Sao goncalo,943600,-22.84,-43.07
+Brazil,BR,del Nova iguacu,994600,-22.74,-43.47
+Brazil,BR,del Sao goncalo,943600,-22.84,-43.07
 Brazil,BR,Sao luis,902900,-2.5,-44.3
 Brazil,BR,Maceio,900600,-9.65,-35.75
-Brazil,BR,Duque de caxias,820500,-22.77,-43.31
+Brazil,BR,del Duque de caxias,820500,-22.77,-43.31
 Brazil,BR,Natal,760800,-5.8,-35.22
 Brazil,BR,del Sao bernardo do campo,735700,-23.71,-46.54
 Brazil,BR,Teresina,730700,-5.1,-42.8
@@ -1633,10 +1633,10 @@ Brazil,BR,Sorocaba,542100,-23.49,-47.47
 Brazil,BR,Uberlandia,538800,-18.9,-48.28
 Brazil,BR,Cuiaba,524300,-15.61,-56.09
 Brazil,BR,Aracaju,495100,-10.91,-37.07
-Brazil,BR,Niteroi,471100,-22.9,-43.13
+Brazil,BR,del Niteroi,471100,-22.9,-43.13
 Brazil,BR,Juiz de fora,468100,-21.75,-43.36
-Brazil,BR,Sao joao de meriti,467000,-22.8,-43.35
-Brazil,BR,Belford roxo,464100,-22.75,-43.42
+Brazil,BR,del Sao joao de meriti,467000,-22.8,-43.35
+Brazil,BR,del Belford roxo,464100,-22.75,-43.42
 Brazil,BR,Feira de santana,463800,-12.25,-38.97
 Brazil,BR,Londrina,463800,-23.3,-51.18
 Brazil,BR,Joinville,454200,-26.32,-48.84
@@ -1703,7 +1703,7 @@ Brazil,BR,Juazeiro do norte,222000,-7.21,-39.32
 Brazil,BR,del Embu,218900,-23.64,-46.84
 Brazil,BR,Sumare,216800,-22.8,-47.29
 Brazil,BR,Santa luzia,216600,-19.78,-43.87
-Brazil,BR,Mage,213200,-22.65,-43.05
+Brazil,BR,del Mage,213200,-22.65,-43.05
 Brazil,BR,del Taboao da serra,212300,-23.6,-46.78
 Brazil,BR,Sao jose dos pinhais,209600,-25.57,-49.18
 Brazil,BR,Marilia,207200,-22.21,-49.95
@@ -1725,7 +1725,7 @@ Brazil,BR,Rio grande,187500,-32.05,-52.11
 Brazil,BR,del Itapevi,186900,-23.55,-46.94
 Brazil,BR,Araraquara,185900,-21.75,-48.13
 Brazil,BR,Petrolina,185900,-9.38,-40.51
-Brazil,BR,Itaborai,184300,-22.75,-42.87
+Brazil,BR,del Itaborai,184300,-22.75,-42.87
 Brazil,BR,Hortolandia,179400,-22.85,-47.26
 Brazil,BR,Cachoeiro de itapemirim,178200,-20.85,-41.13
 Brazil,BR,Santa barbara d'oeste,177700,-22.75,-47.42
@@ -1745,7 +1745,7 @@ Brazil,BR,del Ferraz de vasconcelos,158700,-23.54,-46.37
 Brazil,BR,Ilheus,158100,-14.78,-39.05
 Brazil,BR,Nova friburgo,157600,-22.26,-42.54
 Brazil,BR,del Francisco morato,155300,-23.27,-46.75
-Brazil,BR,Nilopolis,155000,-22.8,-43.42
+Brazil,BR,del Nilopolis,155000,-22.8,-43.42
 Brazil,BR,Luziania,154900,-16.25,-47.92
 Brazil,BR,Itajai,154400,-26.9,-48.68
 Brazil,BR,Rondonopolis,154000,-16.47,-54.64
@@ -1769,7 +1769,7 @@ Brazil,BR,Itu,135100,-23.26,-47.3
 Brazil,BR,Paranagua,134500,-25.51,-48.54
 Brazil,BR,Juazeiro,134300,-9.42,-40.5
 Brazil,BR,Sabara,133500,-19.89,-43.87
-Brazil,BR,Queimados,133200,-22.7,-43.58
+Brazil,BR,del Queimados,133200,-22.7,-43.58
 Brazil,BR,Pindamonhangaba,130000,-22.92,-45.47
 Brazil,BR,Sapucaia,129400,-29.83,-51.16
 Brazil,BR,Jequie,129100,-13.85,-40.08
@@ -9020,9 +9020,9 @@ Latvia,LV,Piltene,1000,57.22,21.66
 Latvia,LV,Staicele,1000,57.84,24.75
 Latvia,LV,Subate,842,56.02,25.91
 Latvia,LV,Durbe,466,56.59,21.35
-Lebanon,LB,Bayrut,1185300,33.88,35.5
+Lebanon,LB,Beirut,2500300,33.88,35.5
 Lebanon,LB,Tarabulus as-sam,215500,34.43,35.87
-Lebanon,LB,Sayda',150900,33.57,35.39
+Lebanon,LB,del Sayda',150900,33.57,35.39
 Lebanon,LB,Sur,118500,33.28,35.21
 Lebanon,LB,An-nabatiyat-at-tahta,90500,33.41,35.48
 Lebanon,LB,Juniyah,80800,33.97,35.63
@@ -9852,7 +9852,7 @@ Malaysia,MY,Kuala lipis,14700,4.18,102.05
 Malaysia,MY,Pantai remis,14600,4.45,100.63
 Malaysia,MY,Gurun,14300,5.82,100.48
 Malaysia,MY,Bandar baru salak tinggi,14200,2.8,101.75
-Maldives,MV,Male,83500,4.17,73.5
+Maldives,MV,Male,250800,4.17,73.5
 Maldives,MV,Hithadhoo,9800,-0.59,73.08
 Maldives,MV,Fuvammulah,7900,-0.3,73.43
 Maldives,MV,Kulhudhuffushi,7400,6.62,73.05
@@ -10569,238 +10569,6 @@ Mongolia,MN,Ondorhaan,15300,47.34,110.65
 Mongolia,MN,Tosoncengel,13100,48.77,98.26
 Mongolia,MN,Nalajh,11700,47.77,107.26
 Mongolia,MN,Cojr,9300,46.36,108.36
-Montenegro,YU,Beograd,1126900,44.83,20.5
-Montenegro,YU,Pristina,209100,42.65,21.17
-Montenegro,YU,Novi sad,192000,45.25,19.85
-Montenegro,YU,Nis,174600,43.33,21.9
-Montenegro,YU,Kragujevac,147000,44.02,20.92
-Montenegro,YU,Podgorica,141400,42.47,19.28
-Montenegro,YU,Prizren,127000,42.23,20.74
-Montenegro,YU,Subotica,100200,46.07,19.68
-Montenegro,YU,Pec,83000,42.66,20.31
-Montenegro,YU,Zrenjanin,80100,45.37,20.4
-Montenegro,YU,Dakovica,78100,42.39,20.43
-Montenegro,YU,Kosovska mitrovica,76600,42.89,20.87
-Montenegro,YU,Pancevo,76600,44.87,20.66
-Montenegro,YU,Cacak,73700,43.9,20.33
-Montenegro,YU,Gnjilane,70800,42.47,21.48
-Montenegro,YU,Leskovac,63600,43.0,21.95
-Montenegro,YU,Smederevo,63100,44.67,20.93
-Montenegro,YU,Niksic,62200,42.78,18.94
-Montenegro,YU,Valjevo,61800,44.28,19.89
-Montenegro,YU,Kraljevo,58200,43.74,20.67
-Montenegro,YU,Krusevac,57800,43.58,21.32
-Montenegro,YU,Uzice,55400,43.87,19.84
-Montenegro,YU,Vranje,55400,42.57,21.91
-Montenegro,YU,Sabac,55200,44.76,19.69
-Montenegro,YU,Novi pazar,55000,43.15,20.52
-Montenegro,YU,Sombor,51300,45.78,19.12
-Montenegro,YU,Pozarevac,42200,44.63,21.19
-Montenegro,YU,Kikinda,42100,45.84,20.45
-Montenegro,YU,Pirot,40900,43.17,22.6
-Montenegro,YU,Zajecar,40000,43.91,22.3
-Montenegro,YU,Urosevac,39900,42.38,21.17
-Montenegro,YU,Bor,39700,44.13,22.1
-Montenegro,YU,Sremska mitrovica,39300,44.98,19.61
-Montenegro,YU,Vrsac,36300,45.13,21.3
-Montenegro,YU,Jagodina,35800,43.98,21.26
-Montenegro,YU,Borca,35200,44.87,20.45
-Montenegro,YU,Ruma,32400,45.0,19.83
-Montenegro,YU,Backa palanka,29600,45.25,19.39
-Montenegro,YU,Kosovo polje,29300,42.63,21.12
-Montenegro,YU,Prokuplje,27200,43.24,21.59
-Montenegro,YU,Indija,26400,45.05,20.09
-Montenegro,YU,Vrbas,26100,45.57,19.65
-Montenegro,YU,Becej,25900,45.63,20.04
-Montenegro,YU,Paracin,25500,43.87,21.41
-Montenegro,YU,Smederevska palanka,25500,44.37,20.96
-Montenegro,YU,Arandelovac,24500,44.31,20.57
-Montenegro,YU,Orahovac,24300,42.41,20.66
-Montenegro,YU,Gornji milanovac,24100,44.03,20.46
-Montenegro,YU,Pljevlja,23800,43.36,19.36
-Montenegro,YU,Lazarevac,23700,44.39,20.27
-Montenegro,YU,Obrenovac,23700,44.66,20.21
-Montenegro,YU,Kaluderica,22400,44.75,20.57
-Montenegro,YU,Mladenovac,22300,44.43,20.7
-Montenegro,YU,Loznica,20900,44.53,19.22
-Montenegro,YU,Cuprija,20600,43.93,21.38
-Montenegro,YU,Senta,20500,45.94,20.09
-Montenegro,YU,Priboj,19600,43.59,19.54
-Montenegro,YU,Apatin,19400,45.67,18.98
-Montenegro,YU,Knjazevac,19400,43.57,22.26
-Montenegro,YU,Kula,19400,45.62,19.52
-Montenegro,YU,Temerin,19300,45.41,19.89
-Montenegro,YU,Stara pazova,18800,44.99,20.16
-Montenegro,YU,Veternik,18700,45.25,19.76
-Montenegro,YU,Futog,18600,45.24,19.71
-Montenegro,YU,Sremcica,18500,44.68,20.39
-Montenegro,YU,Nova pazova,18300,44.94,20.22
-Montenegro,YU,Negotin,17900,44.23,22.53
-Montenegro,YU,Trstenik,17300,43.62,21.01
-Montenegro,YU,Aleksinac,16800,43.54,21.71
-Montenegro,YU,Podujevo,16800,42.91,21.19
-Montenegro,YU,Sid,16400,45.13,19.23
-Montenegro,YU,Backa topola,16300,45.82,19.64
-Montenegro,YU,Velika plana,16300,44.33,21.07
-Montenegro,YU,Vlasotince,16300,42.96,22.12
-Montenegro,YU,Prijepolje,15100,43.39,19.65
-Montenegro,YU,Novi becej,14500,45.6,20.14
-Montenegro,YU,Kovin,14300,44.75,20.98
-Montenegro,YU,Surcin,14300,44.79,20.28
-Montenegro,YU,Petrovaradin,14000,45.25,19.88
-Montenegro,YU,Kursumlija,13700,43.15,21.27
-Montenegro,YU,Presevo,13600,42.31,21.65
-Montenegro,YU,Pozega,13300,43.85,20.04
-Montenegro,YU,Sjenica,13200,43.27,20.0
-Montenegro,YU,Srbobran,13100,45.55,19.8
-Montenegro,YU,Ivanjica,12400,43.58,20.23
-Montenegro,YU,Bujanovac,12200,42.46,21.77
-Montenegro,YU,Kac,11200,45.3,19.94
-Montenegro,YU,Sremska kamenica,11200,45.22,19.84
-Montenegro,YU,Lacarak,11000,45.0,19.57
-Montenegro,YU,Surdulica,11000,42.69,22.17
-Montenegro,YU,Ripanj,10800,44.64,20.52
-Montenegro,YU,Bela crkva,10700,44.9,21.42
-Montenegro,YU,Ada,10600,45.8,20.13
-Montenegro,YU,Kanjiza,10300,46.07,20.05
-Montenegro,YU,Nova varos,10300,43.46,19.81
-Montenegro,YU,Crvenka,10200,45.66,19.46
-Montenegro,YU,Majdanpek,10100,44.42,21.94
-Montenegro,YU,Lebane,10000,42.92,21.74
-Montenegro,YU,Vrnjacka banja,10000,43.62,20.9
-Montenegro,YU,Odzaci,9900,45.51,19.26
-Montenegro,YU,Zabalj,9700,45.37,20.06
-Montenegro,YU,Bajina basta,9600,43.97,19.57
-Montenegro,YU,Padinska skela,9600,44.94,20.43
-Montenegro,YU,Kostolac,9500,44.71,21.17
-Montenegro,YU,Svilajnac,9500,44.23,21.2
-Montenegro,YU,Ulcinj,9500,41.93,19.21
-Montenegro,YU,Novi banovci,9400,44.95,20.28
-Montenegro,YU,Kladovo,9200,44.61,22.61
-Montenegro,YU,Tutin,9200,42.99,20.33
-Montenegro,YU,Sivac,9100,45.7,19.38
-Montenegro,YU,Curug,8900,45.47,20.07
-Montenegro,YU,Sremski karlovci,8900,45.2,19.93
-Montenegro,YU,Bela palanka,8700,43.22,22.31
-Montenegro,YU,Vrcin,8700,44.67,20.59
-Montenegro,YU,Bajmok,8600,45.97,19.42
-Montenegro,YU,Lestane,8600,44.73,20.58
-Montenegro,YU,Grocka,8400,44.67,20.72
-Montenegro,YU,Sokobanja,8400,43.64,21.87
-Montenegro,YU,Vladicin han,8400,42.71,22.06
-Montenegro,YU,Barajevo,8300,44.58,20.42
-Montenegro,YU,Dobanovci,8200,44.83,20.23
-Montenegro,YU,Beocin,8100,45.2,19.72
-Montenegro,YU,Petrovac,7800,45.36,19.59
-Montenegro,YU,Svrljig,7800,43.41,22.12
-Montenegro,YU,Kacarevo,7700,44.97,20.69
-Montenegro,YU,Loznicko polje,7700,44.56,19.22
-Montenegro,YU,Palic,7700,46.11,19.77
-Montenegro,YU,Novi knezevac,7600,46.05,20.1
-Montenegro,YU,Starcevo,7600,44.81,20.7
-Montenegro,YU,Banatsko novo selo,7500,44.99,20.78
-Montenegro,YU,Lapovo,7500,44.18,21.1
-Montenegro,YU,Sevojno,7500,43.85,19.9
-Montenegro,YU,Bogatic,7400,44.84,19.48
-Montenegro,YU,Backo petrovo selo,7300,45.71,20.08
-Montenegro,YU,Cantavir,7200,45.92,19.76
-Montenegro,YU,Klupci,7200,44.53,19.25
-Montenegro,YU,Ugrinovci,7200,44.88,20.19
-Montenegro,YU,Dimitrovgrad,7000,43.01,22.78
-Montenegro,YU,Dolovo,6900,44.9,20.88
-Montenegro,YU,Arilje,6800,43.75,20.1
-Montenegro,YU,Backi petrovac,6800,45.36,19.59
-Montenegro,YU,Kovacica,6800,45.11,20.62
-Montenegro,YU,Majur,6800,44.77,19.65
-Montenegro,YU,Mol,6800,45.76,20.13
-Montenegro,YU,Novo milosevo,6800,45.72,20.3
-Montenegro,YU,Veliki trnovac,6800,42.48,21.74
-Montenegro,YU,Baric,6700,44.65,20.26
-Montenegro,YU,Melenci,6600,45.51,20.32
-Montenegro,YU,Raska,6600,43.29,20.62
-Montenegro,YU,Aleksandrovac,6500,43.46,21.05
-Montenegro,YU,Omoljica,6500,44.76,20.73
-Montenegro,YU,Banja koviljaca,6300,44.51,19.16
-Montenegro,YU,Beska,6300,45.13,20.07
-Montenegro,YU,Horgos,6300,46.16,19.97
-Montenegro,YU,Jabuka,6300,43.35,19.52
-Montenegro,YU,Zvecka,6200,44.64,20.16
-Montenegro,YU,Bac,6100,45.39,19.24
-Montenegro,YU,Backi jarak,6100,45.37,19.88
-Montenegro,YU,Bavaniste,6100,44.82,20.88
-Montenegro,YU,Vranjska banja,6100,42.56,21.99
-Montenegro,YU,Jakovo,6000,44.76,20.26
-Montenegro,YU,Kljajicevo,6000,45.77,19.28
-Montenegro,YU,Pocerski pricinovic,6000,44.73,19.7
-Montenegro,YU,Ub,6000,44.46,20.07
-Montenegro,YU,Banatski karlovac,5900,45.05,21.02
-Montenegro,YU,Mokrin,5900,45.94,20.41
-Montenegro,YU,Titel,5900,45.21,20.29
-Montenegro,YU,Vinca,5900,44.76,20.62
-Montenegro,YU,Bolec,5800,44.72,20.6
-Montenegro,YU,Donji komren,5800,43.35,21.88
-Montenegro,YU,Padina,5800,45.12,20.73
-Montenegro,YU,Kovilj,5700,45.23,20.02
-Montenegro,YU,Kusadak,5700,44.4,20.8
-Montenegro,YU,Lozovik,5700,44.46,21.1
-Montenegro,YU,Rumenka,5700,45.29,19.74
-Montenegro,YU,Stara moravica,5700,45.87,19.47
-Montenegro,YU,Veliko gradiste,5700,44.76,21.51
-Montenegro,YU,Batocina,5600,44.15,21.08
-Montenegro,YU,Backo gradiste,5500,45.53,20.03
-Montenegro,YU,Badovinci,5500,44.79,19.37
-Montenegro,YU,Blace,5500,43.3,21.29
-Montenegro,YU,Celarevo,5500,45.27,19.53
-Montenegro,YU,Kisac,5500,45.35,19.73
-Montenegro,YU,Mali idos,5500,45.71,19.67
-Montenegro,YU,Stari banovci,5500,44.99,20.29
-Montenegro,YU,Topola,5500,44.25,20.68
-Montenegro,YU,Bezdan,5300,45.85,18.93
-Montenegro,YU,Umka,5300,44.68,20.3
-Montenegro,YU,Ruski krstur,5200,45.56,19.42
-Montenegro,YU,Cicevac,5100,43.72,21.45
-Montenegro,YU,Durdevo,5100,45.32,20.06
-Montenegro,YU,Golubinci,5100,44.99,20.77
-Montenegro,YU,Vojka,5100,44.94,20.15
-Montenegro,YU,Karavukovo,5000,45.5,19.19
-Montenegro,YU,Sonta,5000,45.59,19.1
-Montenegro,YU,Crepaja,4900,45.01,20.64
-Montenegro,YU,Irig,4900,45.1,19.86
-Montenegro,YU,Krupanj,4900,44.37,19.36
-Montenegro,YU,Radinac,4900,44.63,20.97
-Montenegro,YU,Coka,4800,45.94,20.14
-Montenegro,YU,Mali zvornik,4800,44.4,19.12
-Montenegro,YU,Prigrevica,4800,45.68,19.09
-Montenegro,YU,Rusanj,4800,44.68,20.44
-Montenegro,YU,Stanisic,4800,45.94,19.17
-Montenegro,YU,Azanja,4700,44.43,20.88
-Montenegro,YU,Brus,4700,43.38,21.03
-Montenegro,YU,Kucura,4700,45.52,19.59
-Montenegro,YU,Lesnica,4700,44.65,19.31
-Montenegro,YU,Opovo,4700,45.05,20.43
-Montenegro,YU,Babusnica,4600,43.06,22.41
-Montenegro,YU,Koceljeva,4600,44.47,19.81
-Montenegro,YU,Kucevo,4600,44.48,21.67
-Montenegro,YU,Sajkas,4600,45.27,20.09
-Montenegro,YU,Veliki crljeni,4600,44.47,20.28
-Montenegro,YU,Brzi brod,4500,43.31,21.97
-Montenegro,YU,Niska banja,4500,43.3,22.02
-Montenegro,YU,Despotovac,4400,44.09,21.45
-Montenegro,YU,Bosilegrad,2700,42.5,22.47
-Montenegro,YU,Grdelica,2400,42.9,22.07
-Montenegro,YU,Resavica,2400,44.07,21.52
-Montenegro,YU,Ovca,2300,44.89,20.54
-Montenegro,YU,Zlatibor,2300,43.72,19.7
-Montenegro,YU,Guca,2000,43.78,20.23
-Montenegro,YU,Rudovci,1800,44.37,20.42
-Montenegro,YU,Sopot,1800,44.52,20.57
-Montenegro,YU,Mionica,1700,44.25,20.08
-Montenegro,YU,Baljevac,1600,43.39,20.64
-Montenegro,YU,Aleksinacki rudnik,1500,43.56,21.69
-Montenegro,YU,Bogovina,1300,43.9,21.94
-Montenegro,YU,Josanicka banja,1200,43.39,20.75
-Montenegro,YU,Predejane,1200,42.83,22.13
-Montenegro,YU,Brza palanka,1100,44.47,22.45
 Morocco,MA,Ad-d#ar-al-bayda,3672900,33.6,-7.62
 Morocco,MA,Ar-ribat,1550100,34.02,-6.84
 Morocco,MA,Fas,1002600,34.05,-5.0
@@ -14056,238 +13824,238 @@ Senegal,SN,Passi,4700,13.98,-16.27
 Senegal,SN,Semme,3800,15.2,-12.95
 Senegal,SN,Kahone,2900,14.15,-16.02
 Senegal,SN,Gollere,2800,16.26,-14.1
-Serbia,YU,Beograd,1126900,44.83,20.5
-Serbia,YU,Pristina,209100,42.65,21.17
-Serbia,YU,Novi sad,192000,45.25,19.85
-Serbia,YU,Nis,174600,43.33,21.9
-Serbia,YU,Kragujevac,147000,44.02,20.92
-Serbia,YU,Podgorica,141400,42.47,19.28
-Serbia,YU,Prizren,127000,42.23,20.74
-Serbia,YU,Subotica,100200,46.07,19.68
-Serbia,YU,Pec,83000,42.66,20.31
-Serbia,YU,Zrenjanin,80100,45.37,20.4
-Serbia,YU,Dakovica,78100,42.39,20.43
-Serbia,YU,Kosovska mitrovica,76600,42.89,20.87
-Serbia,YU,Pancevo,76600,44.87,20.66
-Serbia,YU,Cacak,73700,43.9,20.33
-Serbia,YU,Gnjilane,70800,42.47,21.48
-Serbia,YU,Leskovac,63600,43.0,21.95
-Serbia,YU,Smederevo,63100,44.67,20.93
-Serbia,YU,Niksic,62200,42.78,18.94
-Serbia,YU,Valjevo,61800,44.28,19.89
-Serbia,YU,Kraljevo,58200,43.74,20.67
-Serbia,YU,Krusevac,57800,43.58,21.32
-Serbia,YU,Uzice,55400,43.87,19.84
-Serbia,YU,Vranje,55400,42.57,21.91
-Serbia,YU,Sabac,55200,44.76,19.69
-Serbia,YU,Novi pazar,55000,43.15,20.52
-Serbia,YU,Sombor,51300,45.78,19.12
-Serbia,YU,Pozarevac,42200,44.63,21.19
-Serbia,YU,Kikinda,42100,45.84,20.45
-Serbia,YU,Pirot,40900,43.17,22.6
-Serbia,YU,Zajecar,40000,43.91,22.3
-Serbia,YU,Urosevac,39900,42.38,21.17
-Serbia,YU,Bor,39700,44.13,22.1
-Serbia,YU,Sremska mitrovica,39300,44.98,19.61
-Serbia,YU,Vrsac,36300,45.13,21.3
-Serbia,YU,Jagodina,35800,43.98,21.26
-Serbia,YU,Borca,35200,44.87,20.45
-Serbia,YU,Ruma,32400,45.0,19.83
-Serbia,YU,Backa palanka,29600,45.25,19.39
-Serbia,YU,Kosovo polje,29300,42.63,21.12
-Serbia,YU,Prokuplje,27200,43.24,21.59
-Serbia,YU,Indija,26400,45.05,20.09
-Serbia,YU,Vrbas,26100,45.57,19.65
-Serbia,YU,Becej,25900,45.63,20.04
-Serbia,YU,Paracin,25500,43.87,21.41
-Serbia,YU,Smederevska palanka,25500,44.37,20.96
-Serbia,YU,Arandelovac,24500,44.31,20.57
-Serbia,YU,Orahovac,24300,42.41,20.66
-Serbia,YU,Gornji milanovac,24100,44.03,20.46
-Serbia,YU,Pljevlja,23800,43.36,19.36
-Serbia,YU,Lazarevac,23700,44.39,20.27
-Serbia,YU,Obrenovac,23700,44.66,20.21
-Serbia,YU,Kaluderica,22400,44.75,20.57
-Serbia,YU,Mladenovac,22300,44.43,20.7
-Serbia,YU,Loznica,20900,44.53,19.22
-Serbia,YU,Cuprija,20600,43.93,21.38
-Serbia,YU,Senta,20500,45.94,20.09
-Serbia,YU,Priboj,19600,43.59,19.54
-Serbia,YU,Apatin,19400,45.67,18.98
-Serbia,YU,Knjazevac,19400,43.57,22.26
-Serbia,YU,Kula,19400,45.62,19.52
-Serbia,YU,Temerin,19300,45.41,19.89
-Serbia,YU,Stara pazova,18800,44.99,20.16
-Serbia,YU,Veternik,18700,45.25,19.76
-Serbia,YU,Futog,18600,45.24,19.71
-Serbia,YU,Sremcica,18500,44.68,20.39
-Serbia,YU,Nova pazova,18300,44.94,20.22
-Serbia,YU,Negotin,17900,44.23,22.53
-Serbia,YU,Trstenik,17300,43.62,21.01
-Serbia,YU,Aleksinac,16800,43.54,21.71
-Serbia,YU,Podujevo,16800,42.91,21.19
-Serbia,YU,Sid,16400,45.13,19.23
-Serbia,YU,Backa topola,16300,45.82,19.64
-Serbia,YU,Velika plana,16300,44.33,21.07
-Serbia,YU,Vlasotince,16300,42.96,22.12
-Serbia,YU,Prijepolje,15100,43.39,19.65
-Serbia,YU,Novi becej,14500,45.6,20.14
-Serbia,YU,Kovin,14300,44.75,20.98
-Serbia,YU,Surcin,14300,44.79,20.28
-Serbia,YU,Petrovaradin,14000,45.25,19.88
-Serbia,YU,Kursumlija,13700,43.15,21.27
-Serbia,YU,Presevo,13600,42.31,21.65
-Serbia,YU,Pozega,13300,43.85,20.04
-Serbia,YU,Sjenica,13200,43.27,20.0
-Serbia,YU,Srbobran,13100,45.55,19.8
-Serbia,YU,Ivanjica,12400,43.58,20.23
-Serbia,YU,Bujanovac,12200,42.46,21.77
-Serbia,YU,Kac,11200,45.3,19.94
-Serbia,YU,Sremska kamenica,11200,45.22,19.84
-Serbia,YU,Lacarak,11000,45.0,19.57
-Serbia,YU,Surdulica,11000,42.69,22.17
-Serbia,YU,Ripanj,10800,44.64,20.52
-Serbia,YU,Bela crkva,10700,44.9,21.42
-Serbia,YU,Ada,10600,45.8,20.13
-Serbia,YU,Kanjiza,10300,46.07,20.05
-Serbia,YU,Nova varos,10300,43.46,19.81
-Serbia,YU,Crvenka,10200,45.66,19.46
-Serbia,YU,Majdanpek,10100,44.42,21.94
-Serbia,YU,Lebane,10000,42.92,21.74
-Serbia,YU,Vrnjacka banja,10000,43.62,20.9
-Serbia,YU,Odzaci,9900,45.51,19.26
-Serbia,YU,Zabalj,9700,45.37,20.06
-Serbia,YU,Bajina basta,9600,43.97,19.57
-Serbia,YU,Padinska skela,9600,44.94,20.43
-Serbia,YU,Kostolac,9500,44.71,21.17
-Serbia,YU,Svilajnac,9500,44.23,21.2
-Serbia,YU,Ulcinj,9500,41.93,19.21
-Serbia,YU,Novi banovci,9400,44.95,20.28
-Serbia,YU,Kladovo,9200,44.61,22.61
-Serbia,YU,Tutin,9200,42.99,20.33
-Serbia,YU,Sivac,9100,45.7,19.38
-Serbia,YU,Curug,8900,45.47,20.07
-Serbia,YU,Sremski karlovci,8900,45.2,19.93
-Serbia,YU,Bela palanka,8700,43.22,22.31
-Serbia,YU,Vrcin,8700,44.67,20.59
-Serbia,YU,Bajmok,8600,45.97,19.42
-Serbia,YU,Lestane,8600,44.73,20.58
-Serbia,YU,Grocka,8400,44.67,20.72
-Serbia,YU,Sokobanja,8400,43.64,21.87
-Serbia,YU,Vladicin han,8400,42.71,22.06
-Serbia,YU,Barajevo,8300,44.58,20.42
-Serbia,YU,Dobanovci,8200,44.83,20.23
-Serbia,YU,Beocin,8100,45.2,19.72
-Serbia,YU,Petrovac,7800,45.36,19.59
-Serbia,YU,Svrljig,7800,43.41,22.12
-Serbia,YU,Kacarevo,7700,44.97,20.69
-Serbia,YU,Loznicko polje,7700,44.56,19.22
-Serbia,YU,Palic,7700,46.11,19.77
-Serbia,YU,Novi knezevac,7600,46.05,20.1
-Serbia,YU,Starcevo,7600,44.81,20.7
-Serbia,YU,Banatsko novo selo,7500,44.99,20.78
-Serbia,YU,Lapovo,7500,44.18,21.1
-Serbia,YU,Sevojno,7500,43.85,19.9
-Serbia,YU,Bogatic,7400,44.84,19.48
-Serbia,YU,Backo petrovo selo,7300,45.71,20.08
-Serbia,YU,Cantavir,7200,45.92,19.76
-Serbia,YU,Klupci,7200,44.53,19.25
-Serbia,YU,Ugrinovci,7200,44.88,20.19
-Serbia,YU,Dimitrovgrad,7000,43.01,22.78
-Serbia,YU,Dolovo,6900,44.9,20.88
-Serbia,YU,Arilje,6800,43.75,20.1
-Serbia,YU,Backi petrovac,6800,45.36,19.59
-Serbia,YU,Kovacica,6800,45.11,20.62
-Serbia,YU,Majur,6800,44.77,19.65
-Serbia,YU,Mol,6800,45.76,20.13
-Serbia,YU,Novo milosevo,6800,45.72,20.3
-Serbia,YU,Veliki trnovac,6800,42.48,21.74
-Serbia,YU,Baric,6700,44.65,20.26
-Serbia,YU,Melenci,6600,45.51,20.32
-Serbia,YU,Raska,6600,43.29,20.62
-Serbia,YU,Aleksandrovac,6500,43.46,21.05
-Serbia,YU,Omoljica,6500,44.76,20.73
-Serbia,YU,Banja koviljaca,6300,44.51,19.16
-Serbia,YU,Beska,6300,45.13,20.07
-Serbia,YU,Horgos,6300,46.16,19.97
-Serbia,YU,Jabuka,6300,43.35,19.52
-Serbia,YU,Zvecka,6200,44.64,20.16
-Serbia,YU,Bac,6100,45.39,19.24
-Serbia,YU,Backi jarak,6100,45.37,19.88
-Serbia,YU,Bavaniste,6100,44.82,20.88
-Serbia,YU,Vranjska banja,6100,42.56,21.99
-Serbia,YU,Jakovo,6000,44.76,20.26
-Serbia,YU,Kljajicevo,6000,45.77,19.28
-Serbia,YU,Pocerski pricinovic,6000,44.73,19.7
-Serbia,YU,Ub,6000,44.46,20.07
-Serbia,YU,Banatski karlovac,5900,45.05,21.02
-Serbia,YU,Mokrin,5900,45.94,20.41
-Serbia,YU,Titel,5900,45.21,20.29
-Serbia,YU,Vinca,5900,44.76,20.62
-Serbia,YU,Bolec,5800,44.72,20.6
-Serbia,YU,Donji komren,5800,43.35,21.88
-Serbia,YU,Padina,5800,45.12,20.73
-Serbia,YU,Kovilj,5700,45.23,20.02
-Serbia,YU,Kusadak,5700,44.4,20.8
-Serbia,YU,Lozovik,5700,44.46,21.1
-Serbia,YU,Rumenka,5700,45.29,19.74
-Serbia,YU,Stara moravica,5700,45.87,19.47
-Serbia,YU,Veliko gradiste,5700,44.76,21.51
-Serbia,YU,Batocina,5600,44.15,21.08
-Serbia,YU,Backo gradiste,5500,45.53,20.03
-Serbia,YU,Badovinci,5500,44.79,19.37
-Serbia,YU,Blace,5500,43.3,21.29
-Serbia,YU,Celarevo,5500,45.27,19.53
-Serbia,YU,Kisac,5500,45.35,19.73
-Serbia,YU,Mali idos,5500,45.71,19.67
-Serbia,YU,Stari banovci,5500,44.99,20.29
-Serbia,YU,Topola,5500,44.25,20.68
-Serbia,YU,Bezdan,5300,45.85,18.93
-Serbia,YU,Umka,5300,44.68,20.3
-Serbia,YU,Ruski krstur,5200,45.56,19.42
-Serbia,YU,Cicevac,5100,43.72,21.45
-Serbia,YU,Durdevo,5100,45.32,20.06
-Serbia,YU,Golubinci,5100,44.99,20.77
-Serbia,YU,Vojka,5100,44.94,20.15
-Serbia,YU,Karavukovo,5000,45.5,19.19
-Serbia,YU,Sonta,5000,45.59,19.1
-Serbia,YU,Crepaja,4900,45.01,20.64
-Serbia,YU,Irig,4900,45.1,19.86
-Serbia,YU,Krupanj,4900,44.37,19.36
-Serbia,YU,Radinac,4900,44.63,20.97
-Serbia,YU,Coka,4800,45.94,20.14
-Serbia,YU,Mali zvornik,4800,44.4,19.12
-Serbia,YU,Prigrevica,4800,45.68,19.09
-Serbia,YU,Rusanj,4800,44.68,20.44
-Serbia,YU,Stanisic,4800,45.94,19.17
-Serbia,YU,Azanja,4700,44.43,20.88
-Serbia,YU,Brus,4700,43.38,21.03
-Serbia,YU,Kucura,4700,45.52,19.59
-Serbia,YU,Lesnica,4700,44.65,19.31
-Serbia,YU,Opovo,4700,45.05,20.43
-Serbia,YU,Babusnica,4600,43.06,22.41
-Serbia,YU,Koceljeva,4600,44.47,19.81
-Serbia,YU,Kucevo,4600,44.48,21.67
-Serbia,YU,Sajkas,4600,45.27,20.09
-Serbia,YU,Veliki crljeni,4600,44.47,20.28
-Serbia,YU,Brzi brod,4500,43.31,21.97
-Serbia,YU,Niska banja,4500,43.3,22.02
-Serbia,YU,Despotovac,4400,44.09,21.45
-Serbia,YU,Bosilegrad,2700,42.5,22.47
-Serbia,YU,Grdelica,2400,42.9,22.07
-Serbia,YU,Resavica,2400,44.07,21.52
-Serbia,YU,Ovca,2300,44.89,20.54
-Serbia,YU,Zlatibor,2300,43.72,19.7
-Serbia,YU,Guca,2000,43.78,20.23
-Serbia,YU,Rudovci,1800,44.37,20.42
-Serbia,YU,Sopot,1800,44.52,20.57
-Serbia,YU,Mionica,1700,44.25,20.08
-Serbia,YU,Baljevac,1600,43.39,20.64
-Serbia,YU,Aleksinacki rudnik,1500,43.56,21.69
-Serbia,YU,Bogovina,1300,43.9,21.94
-Serbia,YU,Josanicka banja,1200,43.39,20.75
-Serbia,YU,Predejane,1200,42.83,22.13
-Serbia,YU,Brza palanka,1100,44.47,22.45
+Serbia,RS,Belgrade,1700900,44.83,20.5
+Kosovo,XK,Pristina,209100,42.65,21.17
+Serbia,RS,Novi sad,192000,45.25,19.85
+Serbia,RS,Nis,174600,43.33,21.9
+Serbia,RS,Kragujevac,147000,44.02,20.92
+Montenegro,ME,Podgorica,141400,42.47,19.28
+Kosovo,XK,Prizren,127000,42.23,20.74
+Serbia,RS,Subotica,100200,46.07,19.68
+Kosovo,XK,Pec,83000,42.66,20.31
+Serbia,RS,Zrenjanin,80100,45.37,20.4
+Kosovo,XK,Dakovica,78100,42.39,20.43
+Kosovo,XK,Kosovska mitrovica,76600,42.89,20.87
+Serbia,RS,Pancevo,76600,44.87,20.66
+Serbia,RS,Cacak,73700,43.9,20.33
+Kosovo,XK,Gnjilane,70800,42.47,21.48
+Serbia,RS,Leskovac,63600,43.0,21.95
+Serbia,RS,Smederevo,63100,44.67,20.93
+Montenegro,ME,Niksic,62200,42.78,18.94
+Serbia,RS,Valjevo,61800,44.28,19.89
+Serbia,RS,Kraljevo,58200,43.74,20.67
+Serbia,RS,Krusevac,57800,43.58,21.32
+Serbia,RS,Uzice,55400,43.87,19.84
+Serbia,RS,Vranje,55400,42.57,21.91
+Serbia,RS,Sabac,55200,44.76,19.69
+Serbia,RS,Novi pazar,55000,43.15,20.52
+Serbia,RS,Sombor,51300,45.78,19.12
+Serbia,RS,Pozarevac,42200,44.63,21.19
+Serbia,RS,Kikinda,42100,45.84,20.45
+Serbia,RS,Pirot,40900,43.17,22.6
+Serbia,RS,Zajecar,40000,43.91,22.3
+Kosovo,XK,Urosevac,39900,42.38,21.17
+Serbia,RS,Bor,39700,44.13,22.1
+Serbia,RS,Sremska mitrovica,39300,44.98,19.61
+Serbia,RS,Vrsac,36300,45.13,21.3
+Serbia,RS,Jagodina,35800,43.98,21.26
+Serbia,RS,Borca,35200,44.87,20.45
+Serbia,RS,Ruma,32400,45.0,19.83
+Serbia,RS,Backa palanka,29600,45.25,19.39
+Kosovo,XK,Kosovo polje,29300,42.63,21.12
+Serbia,RS,Prokuplje,27200,43.24,21.59
+Serbia,RS,Indija,26400,45.05,20.09
+Serbia,RS,Vrbas,26100,45.57,19.65
+Serbia,RS,Becej,25900,45.63,20.04
+Serbia,RS,Paracin,25500,43.87,21.41
+Serbia,RS,Smederevska palanka,25500,44.37,20.96
+Serbia,RS,Arandelovac,24500,44.31,20.57
+Kosovo,XK,Orahovac,24300,42.41,20.66
+Serbia,RS,Gornji milanovac,24100,44.03,20.46
+Montenegro,ME,Pljevlja,23800,43.36,19.36
+Serbia,RS,Lazarevac,23700,44.39,20.27
+Serbia,RS,Obrenovac,23700,44.66,20.21
+Serbia,RS,Kaluderica,22400,44.75,20.57
+Serbia,RS,Mladenovac,22300,44.43,20.7
+Serbia,RS,Loznica,20900,44.53,19.22
+Serbia,RS,Cuprija,20600,43.93,21.38
+Serbia,RS,Senta,20500,45.94,20.09
+Serbia,RS,Priboj,19600,43.59,19.54
+Serbia,RS,Apatin,19400,45.67,18.98
+Serbia,RS,Knjazevac,19400,43.57,22.26
+Serbia,RS,Kula,19400,45.62,19.52
+Serbia,RS,Temerin,19300,45.41,19.89
+Serbia,RS,Stara pazova,18800,44.99,20.16
+Serbia,RS,Veternik,18700,45.25,19.76
+Serbia,RS,Futog,18600,45.24,19.71
+Serbia,RS,Sremcica,18500,44.68,20.39
+Serbia,RS,Nova pazova,18300,44.94,20.22
+Serbia,RS,Negotin,17900,44.23,22.53
+Serbia,RS,Trstenik,17300,43.62,21.01
+Serbia,RS,Aleksinac,16800,43.54,21.71
+Kosovo,XK,Podujevo,16800,42.91,21.19
+Serbia,RS,Sid,16400,45.13,19.23
+Serbia,RS,Backa topola,16300,45.82,19.64
+Serbia,RS,Velika plana,16300,44.33,21.07
+Serbia,RS,Vlasotince,16300,42.96,22.12
+Serbia,RS,Prijepolje,15100,43.39,19.65
+Serbia,RS,Novi becej,14500,45.6,20.14
+Serbia,RS,Kovin,14300,44.75,20.98
+Serbia,RS,Surcin,14300,44.79,20.28
+Serbia,RS,Petrovaradin,14000,45.25,19.88
+Serbia,RS,Kursumlija,13700,43.15,21.27
+Serbia,RS,Presevo,13600,42.31,21.65
+Serbia,RS,Pozega,13300,43.85,20.04
+Serbia,RS,Sjenica,13200,43.27,20.0
+Serbia,RS,Srbobran,13100,45.55,19.8
+Serbia,RS,Ivanjica,12400,43.58,20.23
+Serbia,RS,Bujanovac,12200,42.46,21.77
+Serbia,RS,Kac,11200,45.3,19.94
+Serbia,RS,Sremska kamenica,11200,45.22,19.84
+Serbia,RS,Lacarak,11000,45.0,19.57
+Serbia,RS,Surdulica,11000,42.69,22.17
+Serbia,RS,Ripanj,10800,44.64,20.52
+Serbia,RS,Bela crkva,10700,44.9,21.42
+Serbia,RS,Ada,10600,45.8,20.13
+Serbia,RS,Kanjiza,10300,46.07,20.05
+Serbia,RS,Nova varos,10300,43.46,19.81
+Serbia,RS,Crvenka,10200,45.66,19.46
+Serbia,RS,Majdanpek,10100,44.42,21.94
+Serbia,RS,Lebane,10000,42.92,21.74
+Serbia,RS,Vrnjacka banja,10000,43.62,20.9
+Serbia,RS,Odzaci,9900,45.51,19.26
+Serbia,RS,Zabalj,9700,45.37,20.06
+Serbia,RS,Bajina basta,9600,43.97,19.57
+Serbia,RS,Padinska skela,9600,44.94,20.43
+Serbia,RS,Kostolac,9500,44.71,21.17
+Serbia,RS,Svilajnac,9500,44.23,21.2
+Montenegro,ME,Ulcinj,9500,41.93,19.21
+Serbia,RS,Novi banovci,9400,44.95,20.28
+Serbia,RS,Kladovo,9200,44.61,22.61
+Serbia,RS,Tutin,9200,42.99,20.33
+Serbia,RS,Sivac,9100,45.7,19.38
+Serbia,RS,Curug,8900,45.47,20.07
+Serbia,RS,Sremski karlovci,8900,45.2,19.93
+Serbia,RS,Bela palanka,8700,43.22,22.31
+Serbia,RS,Vrcin,8700,44.67,20.59
+Serbia,RS,Bajmok,8600,45.97,19.42
+Serbia,RS,Lestane,8600,44.73,20.58
+Serbia,RS,Grocka,8400,44.67,20.72
+Serbia,RS,Sokobanja,8400,43.64,21.87
+Serbia,RS,Vladicin han,8400,42.71,22.06
+Serbia,RS,Barajevo,8300,44.58,20.42
+Serbia,RS,Dobanovci,8200,44.83,20.23
+Serbia,RS,Beocin,8100,45.2,19.72
+Serbia,RS,Petrovac,7800,45.36,19.59
+Serbia,RS,Svrljig,7800,43.41,22.12
+Serbia,RS,Kacarevo,7700,44.97,20.69
+Serbia,RS,Loznicko polje,7700,44.56,19.22
+Serbia,RS,Palic,7700,46.11,19.77
+Serbia,RS,Novi knezevac,7600,46.05,20.1
+Serbia,RS,Starcevo,7600,44.81,20.7
+Serbia,RS,Banatsko novo selo,7500,44.99,20.78
+Serbia,RS,Lapovo,7500,44.18,21.1
+Serbia,RS,Sevojno,7500,43.85,19.9
+Serbia,RS,Bogatic,7400,44.84,19.48
+Serbia,RS,Backo petrovo selo,7300,45.71,20.08
+Serbia,RS,Cantavir,7200,45.92,19.76
+Serbia,RS,Klupci,7200,44.53,19.25
+Serbia,RS,Ugrinovci,7200,44.88,20.19
+Serbia,RS,Dimitrovgrad,7000,43.01,22.78
+Serbia,RS,Dolovo,6900,44.9,20.88
+Serbia,RS,Arilje,6800,43.75,20.1
+Serbia,RS,Backi petrovac,6800,45.36,19.59
+Serbia,RS,Kovacica,6800,45.11,20.62
+Serbia,RS,Majur,6800,44.77,19.65
+Serbia,RS,Mol,6800,45.76,20.13
+Serbia,RS,Novo milosevo,6800,45.72,20.3
+Serbia,RS,Veliki trnovac,6800,42.48,21.74
+Serbia,RS,Baric,6700,44.65,20.26
+Serbia,RS,Melenci,6600,45.51,20.32
+Serbia,RS,Raska,6600,43.29,20.62
+Serbia,RS,Aleksandrovac,6500,43.46,21.05
+Serbia,RS,Omoljica,6500,44.76,20.73
+Serbia,RS,Banja koviljaca,6300,44.51,19.16
+Serbia,RS,Beska,6300,45.13,20.07
+Serbia,RS,Horgos,6300,46.16,19.97
+Serbia,RS,Jabuka,6300,43.35,19.52
+Serbia,RS,Zvecka,6200,44.64,20.16
+Serbia,RS,Bac,6100,45.39,19.24
+Serbia,RS,Backi jarak,6100,45.37,19.88
+Serbia,RS,Bavaniste,6100,44.82,20.88
+Serbia,RS,Vranjska banja,6100,42.56,21.99
+Serbia,RS,Jakovo,6000,44.76,20.26
+Serbia,RS,Kljajicevo,6000,45.77,19.28
+Serbia,RS,Pocerski pricinovic,6000,44.73,19.7
+Serbia,RS,Ub,6000,44.46,20.07
+Serbia,RS,Banatski karlovac,5900,45.05,21.02
+Serbia,RS,Mokrin,5900,45.94,20.41
+Serbia,RS,Titel,5900,45.21,20.29
+Serbia,RS,Vinca,5900,44.76,20.62
+Serbia,RS,Bolec,5800,44.72,20.6
+Serbia,RS,Donji komren,5800,43.35,21.88
+Serbia,RS,Padina,5800,45.12,20.73
+Serbia,RS,Kovilj,5700,45.23,20.02
+Serbia,RS,Kusadak,5700,44.4,20.8
+Serbia,RS,Lozovik,5700,44.46,21.1
+Serbia,RS,Rumenka,5700,45.29,19.74
+Serbia,RS,Stara moravica,5700,45.87,19.47
+Serbia,RS,Veliko gradiste,5700,44.76,21.51
+Serbia,RS,Batocina,5600,44.15,21.08
+Serbia,RS,Backo gradiste,5500,45.53,20.03
+Serbia,RS,Badovinci,5500,44.79,19.37
+Serbia,RS,Blace,5500,43.3,21.29
+Serbia,RS,Celarevo,5500,45.27,19.53
+Serbia,RS,Kisac,5500,45.35,19.73
+Serbia,RS,Mali idos,5500,45.71,19.67
+Serbia,RS,Stari banovci,5500,44.99,20.29
+Serbia,RS,Topola,5500,44.25,20.68
+Serbia,RS,Bezdan,5300,45.85,18.93
+Serbia,RS,Umka,5300,44.68,20.3
+Serbia,RS,Ruski krstur,5200,45.56,19.42
+Serbia,RS,Cicevac,5100,43.72,21.45
+Serbia,RS,Durdevo,5100,45.32,20.06
+Serbia,RS,Golubinci,5100,44.99,20.77
+Serbia,RS,Vojka,5100,44.94,20.15
+Serbia,RS,Karavukovo,5000,45.5,19.19
+Serbia,RS,Sonta,5000,45.59,19.1
+Serbia,RS,Crepaja,4900,45.01,20.64
+Serbia,RS,Irig,4900,45.1,19.86
+Serbia,RS,Krupanj,4900,44.37,19.36
+Serbia,RS,Radinac,4900,44.63,20.97
+Serbia,RS,Coka,4800,45.94,20.14
+Serbia,RS,Mali zvornik,4800,44.4,19.12
+Serbia,RS,Prigrevica,4800,45.68,19.09
+Serbia,RS,Rusanj,4800,44.68,20.44
+Serbia,RS,Stanisic,4800,45.94,19.17
+Serbia,RS,Azanja,4700,44.43,20.88
+Serbia,RS,Brus,4700,43.38,21.03
+Serbia,RS,Kucura,4700,45.52,19.59
+Serbia,RS,Lesnica,4700,44.65,19.31
+Serbia,RS,Opovo,4700,45.05,20.43
+Serbia,RS,Babusnica,4600,43.06,22.41
+Serbia,RS,Koceljeva,4600,44.47,19.81
+Serbia,RS,Kucevo,4600,44.48,21.67
+Serbia,RS,Sajkas,4600,45.27,20.09
+Serbia,RS,Veliki crljeni,4600,44.47,20.28
+Serbia,RS,Brzi brod,4500,43.31,21.97
+Serbia,RS,Niska banja,4500,43.3,22.02
+Serbia,RS,Despotovac,4400,44.09,21.45
+Serbia,RS,Bosilegrad,2700,42.5,22.47
+Serbia,RS,Grdelica,2400,42.9,22.07
+Serbia,RS,Resavica,2400,44.07,21.52
+Serbia,RS,Ovca,2300,44.89,20.54
+Serbia,RS,Zlatibor,2300,43.72,19.7
+Serbia,RS,Guca,2000,43.78,20.23
+Serbia,RS,Rudovci,1800,44.37,20.42
+Serbia,RS,Sopot,1800,44.52,20.57
+Serbia,RS,Mionica,1700,44.25,20.08
+Serbia,RS,Baljevac,1600,43.39,20.64
+Serbia,RS,Aleksinacki rudnik,1500,43.56,21.69
+Serbia,RS,Bogovina,1300,43.9,21.94
+Serbia,RS,Josanicka banja,1200,43.39,20.75
+Serbia,RS,Predejane,1200,42.83,22.13
+Serbia,RS,Brza palanka,1100,44.47,22.45
 Seychelles,SC,Victoria,25500,-4.62,55.45
 Seychelles,SC,Anse royal,3700,-4.73,55.52
 Seychelles,SC,Cascade,2400,-4.67,55.5

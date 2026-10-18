@@ -15879,16 +15879,16 @@ LW0K,41.9124,21.9554,civil,632,Mavrovica,Mavrovica,,"Macedonia, Former Yugoslav 
 LWOH,41.18,20.7423,civil,2537,Ohrid,Ohrid,,"Macedonia, Former Yugoslav Republic of"
 LWSK,41.9616,21.6214,civil,2454,Skopje,Skopje,,"Macedonia, Former Yugoslav Republic of"
 LXGB,36.1525,-5.34833,military,1998,Gibraltar AB,Gibraltar,,Gibraltar
-LY0A,44.7751,20.9616,civil,2184,Kovin,Kovin,,Serbia and Montenegro
-LY0B,44.0182,22.1371,civil,1086,Bor,Bor,,Serbia and Montenegro
-LY0C,42.4352,20.4274,civil,1800,Amiko,Amiko,,Serbia and Montenegro
-LYBE,44.8194,20.3071,civil,3397,Belgrade,Belgrade,,Serbia and Montenegro
-LYBT,44.9353,20.2575,civil,5917,Batajnica,Batajnica,,Serbia and Montenegro
-LYNI,43.3373,21.8537,civil,3893,Nis,Nis,,Serbia and Montenegro
-LYPG,42.3594,19.2519,civil,2501,Podgorica,Podgorica,,Serbia and Montenegro
-LYPR,42.5728,21.0358,civil,2507,Pristina,Pristina,,Serbia and Montenegro
-LYTV,42.4047,18.7233,civil,2498,Tivat,Tivat,,Serbia and Montenegro
-LYVR,45.1478,21.3153,civil,2512,Vrsac,Vrsac,,Serbia and Montenegro
+LY0A,44.7751,20.9616,civil,2184,Kovin,Kovin,,Serbia
+LY0B,44.0182,22.1371,civil,1086,Bor,Bor,,Serbia
+LY0C,42.4352,20.4274,civil,1800,Amiko,Amiko,,Kosovo
+LYBE,44.8194,20.3071,civil,3397,Belgrade,Belgrade,,Serbia
+LYBT,44.9353,20.2575,military,5917,Batajnica,Batajnica,,Serbia
+LYNI,43.3373,21.8537,civil,3893,Nis,Nis,,Serbia
+LYPG,42.3594,19.2519,civil,2501,Podgorica,Podgorica,,Montenegro
+LYPR,42.5728,21.0358,civil,2507,Pristina,Pristina,,Kosovo
+LYTV,42.4047,18.7233,civil,2498,Tivat,Tivat,,Montenegro
+LYVR,45.1478,21.3153,civil,2512,Vrsac,Vrsac,,Serbia
 LZDB,48.9969,18.1922,civil,2196,Dubnica,Dubnica,,Slovakia
 LZIB,48.17,17.2128,civil,8082,M.R. Stefanik,Bratislava,,Slovakia
 LZKZ,48.6631,21.2411,civil,4196,Kosice,Kosice,,Slovakia
@@ -23648,9 +23648,9 @@ Z27I,-28.6918,24.0439,civil,2100,Schmidtsdrif,Schmidtsdrif,,South Africa
 Z27K,-22.8388,28.2103,civil,1101,Swartwater Highway Strip,Swartwater,,South Africa
 Z27L,-23.2579,28.4085,civil,1655,Baltimore New,Baltimore,,South Africa
 Z27P,1.97,45.2097,civil,1100,Uadan Highway Strip,Uadan,,Somalia
-Z27S,43.8989,19.6979,civil,3078,Ponikve,Ponikve,,Serbia and Montenegro
-Z27U,43.2745,20.0504,civil,2496,Sjenica,Sjenica,,Serbia and Montenegro
-Z27V,45.7223,19.0577,civil,1817,Sombor,Sombor,,Serbia and Montenegro
+Z27S,43.8989,19.6979,civil,3078,Ponikve,Ponikve,,Serbia
+Z27U,43.2745,20.0504,civil,2496,Sjenica,Sjenica,,Serbia
+Z27V,45.7223,19.0577,civil,1817,Sombor,Sombor,,Serbia
 Z28P,16.2848,103.769,civil,2100,Roiet,Roiet,,Thailand
 Z28Q,14.9542,102.074,civil,1200,Korat AAF,Nakhon Ratchasima,,Thailand
 Z28S,36.4319,10.0156,civil,1865,Saminjah,Saminjah,,Tunisia

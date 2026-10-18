@@ -24,6 +24,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:BH", "city-name:Bahrain"},
 
                 new String[]{"country-code:BR", "city-name:Sao Paulo"},
+                new String[]{"country-code:BR", "city-name:Rio de Janeiro"},
 
                 new String[]{"country-code:BS", "city-name:Nassau"},
 
@@ -149,6 +150,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:KR", "city-name:Seoul"},
 
+                new String[]{"country-code:LB", "city-name:Beirut"},
+
                 new String[]{"country-code:LU", "city-name:Luxembourg"},
 
                 new String[]{"country-code:LV", "city-name:Riga"},
@@ -160,6 +163,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:NO", "city-name:Stavanger"},
 
                 new String[]{"country-code:MT", "city-name:Malta"},
+
+                new String[]{"country-code:MV", "city-name:Male"},
 
                 new String[]{"country-code:MX", "city-name:Mexico City"},
                 new String[]{"country-code:MX", "city-name:Tijuana"},
@@ -190,6 +195,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:QA", "city-name:Doha"},
 
                 new String[]{"country-code:RO", "city-name:Bucharest"},
+
+                new String[]{"country-code:RS", "city-name:Belgrade"},
 
                 new String[]{"country-code:RU", "city-name:Moscow"},
                 new String[]{"country-code:RU", "city-name:Saint Petersburg"},

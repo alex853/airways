@@ -582,4 +582,29 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
     YPPH (size 5616) создаётся автоматически, имя `Perth Intl` оставлено. YPEA Pearce (военная база RAAF, в `icaodata` стоял
     `civil`, size 5881 попал бы в автоимпорт): тип изменён на `military`. YPJT Jandakot (GA/бизнес) в мир не берём по решению.
     Терминалы и attraction для Perth не ставим.
+- **LYBE - Belgrade (VATSIM-бэклог, 2026-10-18) и чистка данных бывшей Югославии:**
+  - **Чистка CSV:** блок городов бывшей Югославии (232 города, код `YU`) был записан в `city-population.csv` дважды, под именами `Montenegro`
+    и `Serbia` (по сути идентичные строки, Beograd дважды). Лишний блок `Montenegro,YU` удалён, оставшиеся города разнесены по
+    странам: `Serbia,RS` (218), `Kosovo,XK` (10: Pristina, Prizren, Pec, Dakovica, Kosovska mitrovica, Gnjilane, Urosevac,
+    Kosovo polje, Orahovac, Podujevo), `Montenegro,ME` (4: Podgorica, Niksic, Pljevlja, Ulcinj). Аэропорты со страной
+    `Serbia and Montenegro` в `icaodata.csv` (13 штук) отнесены к странам по ближайшему городу. `Beograd` → `Belgrade`.
+  - **Belgrade (RS):** 1 126 900 → 1 700 900 (городская территория ~1,7M, приблизительно). Пригороды (Pancevo 77k, Borca 35k и др.)
+    меньше 100k, `del` нет. LYBE (size 3397) через `World25_009`, линк вручную (`create-links`), имя `Belgrade Nikola Tesla`.
+    LYBT Batajnica (военная авиабаза с типом `civil`, size 5917) помечен `military`. Страна Serbia создаётся импортом, Kosovo и
+    Montenegro появятся вместе со своими городами. Терминал и attraction не ставим.
+- **SBGL - Rio de Janeiro (VATSIM-бэклог, 2026-10-18):** CSV разбивал агломерацию на муниципалитеты. Rio de Janeiro 6 150 200 → 13 000 200
+  (метро ~13M, приблизительно), имя `Rio de janeiro` → `Rio de Janeiro`. `del` на 10 муниципалитетов ≥100k в 25 nm от ядра: Duque de caxias,
+  Sao joao de meriti, Niteroi, Nilopolis, Belford roxo, Sao goncalo, Nova iguacu, Mage, Queimados, Itaborai. Petropolis (~24 nm, граничный
+  случай), Teresopolis, Nova friburgo, Volta redonda остаются отдельными. SBGL (size 7188) создаётся автоматически, имя
+  `Rio de Janeiro Galeao`. SBRJ Santos Dumont, SBJR Jacarepagua (GA/бизнес), SBAF Campo dos Afonsos (военная) в мир не берём.
+  Терминалы и attraction не ставим.
+- **VRMM - Male (VATSIM-бэклог, 2026-10-18):** Мальдивы, остров-государство. Male 83 500 → 250 800 (Greater Male с Hulhumale и соседними
+  островами, оценка приблизительная); остальные острова мелкие (самый крупный Hithadhoo 9 800), не трогаем. Страна Maldives создаётся
+  импортом. VRMM (size 3215, меньше 5000) через `World25_009`, линк вручную (`create-links`), имя `Male Intl` оставлено. VRMG Gan
+  и VRMH Hanimaadhoo не берём. `BusinessAviationTerminal` на VRMM, attraction 30.
+- **OLBA - Beirut (VATSIM-бэклог, 2026-10-18):** `Bayrut` 1 185 300 → `Beirut` 2 500 300 (Greater Beirut вместе с Sidon, оценка
+  приблизительная), `del Sayda'` (150 900, ~19 nm от центра). Juniyah, B#abda, #alayh меньше 100k, `del` не ставим. Sur (Tyre, 118 500, ~35 nm)
+  и Tarabulus (Tripoli, 215 500, ~41 nm) остаются отдельными. Damascus и города Израиля рядом не берём (граница). OLBA (size 10491)
+  создаётся автоматически, имя `Beirut Intl` оставлено. OLRA Rayak AB и OLKA Rene Mouawad AB (`military`) не импортируются. Страна
+  Lebanon создаётся импортом. Терминалы и attraction не ставим.
 
