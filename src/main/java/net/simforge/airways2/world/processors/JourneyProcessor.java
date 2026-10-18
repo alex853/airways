@@ -200,14 +200,10 @@ public class JourneyProcessor {
             world.journeyControl().resetJourneyForcefully(journey);
             FlightStats.event("journey - waiting for deboarding - no TF found");
         } else if (flight.get().getStatus() == TransportFlights.Status.Deboarding) {
-            // the moment of deboarding is a random decision: deboard with some probability, otherwise check again in a minute
-            if (Math.random() < TransportFlightHelper.DEBOARDING_PROBABILITY_PER_MINUTE) {
-                world.journeyControl().deboard(journey);
-            } else {
-                journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
-            }
+            // the flight lets the journeys out (PaxManager, deboarding counter), the journey only keeps watching the flight
+            journey.setHeartbeatTime(world.getWorldTime() + PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL);
         } else if (flight.get().getStatus() == TransportFlights.Status.Finished) {
-            // the deboarding of the flight has been finished before the random time of the journey came, so it deboards anyway
+            // the flight has been finished before the deboarding counter reached the journey (the window is over), so it deboards anyway
             log.warn("j/y #{} - t/f #{} is already finished, deboarding", journey.getId(), flight.get().getId());
             world.journeyControl().deboard(journey);
         } else {

@@ -514,7 +514,7 @@ public class FlightDashboardController {
             case Scheduled -> TransportFlights.Status.CheckIn.name() + " at " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
             case CheckIn -> TransportFlights.Status.WaitingForBoarding.name() + " since " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinEndTime(flight));
             case WaitingForBoarding -> TransportFlights.Status.Boarding.name() + " when Captain clears";
-            case Boarding -> TransportFlights.Status.WaitingForDeparture.name() + " at ~" + TimeTools.hhmmOrNull(world.paxManager().getEstimatedBoardingFinishTime(transportFlight));
+            case Boarding -> TransportFlights.Status.WaitingForDeparture.name() + " at ~" + TimeTools.hhmmOrNull(world.paxManager().boarding(transportFlight).getEstimatedFinishTime());
             case WaitingForDeparture -> TransportFlights.Status.Departure.name();
             case Departure -> TransportFlights.Status.Flying.name();
             case Flying -> TransportFlights.Status.Arrival.name();

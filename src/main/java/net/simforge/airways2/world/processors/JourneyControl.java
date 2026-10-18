@@ -326,11 +326,11 @@ public class JourneyControl {
         journey.setTransportFlight2Id(0);
     }
     
-    // The moment of the deboarding is not chosen here: the journey checks the flight every minute and JourneyProcessor
-    // decides randomly (DEBOARDING_PROBABILITY_PER_MINUTE) whether to deboard now or to wait one more minute
+    // The moment of the deboarding is not chosen here: the flight lets the journeys out one after another (PaxManager, deboarding
+    // counter). The heartbeat of the journey is only a safety net, see JourneyProcessor.waitingForDeboarding
     private void scheduleDeboarding(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.WaitingForDeboarding);
-        journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_MINUTE);
+        journey.setHeartbeatTime(world.getWorldTime() + PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL);
 
         log.info("j/y #{} - waiting for deboarding from t/f #{}, first check at {}", journey.getId(), journey.getTransportFlight1Id(), Time.toLdt(journey.getHeartbeatTime()));
     }
