@@ -607,4 +607,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   и Tarabulus (Tripoli, 215 500, ~41 nm) остаются отдельными. Damascus и города Израиля рядом не берём (граница). OLBA (size 10491)
   создаётся автоматически, имя `Beirut Intl` оставлено. OLRA Rayak AB и OLKA Rene Mouawad AB (`military`) не импортируются. Страна
   Lebanon создаётся импортом. Терминалы и attraction не ставим.
+- **OKKK - Kuwait City (VATSIM-бэклог, 2026-10-18):** `OKKK` в бэклоге оказался не кодом района полётной информации, а **новым ICAO-кодом Kuwait
+  International** (смена `OKBK` → `OKKK` в феврале 2023, IATA `KWI`). В `icaodata.csv` строка `OKBK` переименована в `OKKK` (координаты и
+  размер те же, `size 6916`), отсюда аэропорт попадает в автоимпорт. В `city-population.csv` единого города не было: агломерация
+  разбита на десятки районов. Ядро `Al-kuwayt` (38 400, 9 nm) → `Kuwait City` 3 100 400 (агломерация ~3,1M, приблизительно), `del` на районы ≥100k:
+  As-salimiyah 152 100, Jalib as-suyuh 142 700, As-sabah#iyah 131 200, H#itan-al-janubiyah 127 700; районы меньше 100k не трогаем. Страна
+  Kuwait создаётся импортом. Военные OKAJ, OKAS уже `military`; Z19M (дорожная полоса) не берём. Имя `Kuwait Intl` оставлено.
+  `BusinessAviationTerminal` на OKKK, attraction ставим (значение определить после деплоя).
 

@@ -148,6 +148,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:KE", "city-name:Nairobi"},
 
+                new String[]{"country-code:KW", "city-name:Kuwait City"},
+
                 new String[]{"country-code:KR", "city-name:Seoul"},
 
                 new String[]{"country-code:LB", "city-name:Beirut"},
