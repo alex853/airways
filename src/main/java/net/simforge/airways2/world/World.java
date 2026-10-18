@@ -42,6 +42,7 @@ public class World {
     private final CityFlows cityFlows = new CityFlows(this);
     private final City2CityFlows city2CityFlows = new City2CityFlows();
     private final Journeys journeys = new Journeys();
+    private final Persons persons = new Persons();
 
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
@@ -97,6 +98,7 @@ public class World {
             world.cityFlows.loadIfExists(rootPath);
             world.city2CityFlows.loadIfExists(rootPath);
             world.journeys.loadIfExists(rootPath);
+            world.persons.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -136,6 +138,7 @@ public class World {
             cityFlows.save(rootPath);
             city2CityFlows.save(rootPath);
             journeys.save(rootPath);
+            persons.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -247,6 +250,10 @@ public class World {
 
     public Journeys journeys() {
         return journeys;
+    }
+
+    public Persons persons() {
+        return persons;
     }
 
     public JourneyControl journeyControl() {
