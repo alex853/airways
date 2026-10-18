@@ -185,7 +185,7 @@ public class TransportFlightControl {
         transportFlight.setStatus(TransportFlights.Status.Boarding);
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
 
-        paxManager().startBoarding(transportFlight);
+        paxManager().boarding(transportFlight).start();
 
         log.info("t/f #{} - boarding started", transportFlight.getId());
     }
@@ -194,7 +194,7 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        paxManager().continueBoarding(transportFlight);
+        paxManager().boarding(transportFlight).proceed();
 
         transportFlight.setHeartbeatTime(world.getWorldTime() + BOARDING_TICK);
     }
@@ -209,14 +209,14 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        return paxManager().wasBoardingFinishTimePassed(transportFlight);
+        return paxManager().boarding(transportFlight).wasFinishTimePassed();
     }
 
     public void waitForDeparture(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-        paxManager().finishBoarding(transportFlight);
+        paxManager().boarding(transportFlight).finish();
 
         transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
         transportFlight.setHeartbeatTime(0);
@@ -227,7 +227,7 @@ public class TransportFlightControl {
     public void whenFlightDepartsFromGate(final TransportFlights.Flight transportFlight) {
         // the pilot is not obliged to wait for the end of the boarding, the journeys which are not on board are too late
         if (transportFlight.getStatus() == TransportFlights.Status.Boarding) {
-            paxManager().finishBoarding(transportFlight);
+            paxManager().boarding(transportFlight).finish();
         }
 
         transportFlight.setStatus(TransportFlights.Status.Departure);
@@ -279,7 +279,7 @@ public class TransportFlightControl {
 
         world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
 
-        paxManager().startDeboarding(transportFlight);
+        paxManager().deboarding(transportFlight).start();
 
         log.info("t/f #{} - deboarding started, PAX on board {}", transportFlight.getId(), transportFlight.getPaxOnBoard());
     }
@@ -296,7 +296,7 @@ public class TransportFlightControl {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
 
-        paxManager().continueDeboarding(transportFlight);
+        paxManager().deboarding(transportFlight).proceed();
 
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
     }
@@ -345,7 +345,7 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
         transportFlight.setPaxOnBoard(0);
 
-        paxManager().finishDeboarding(transportFlight);
+        paxManager().deboarding(transportFlight).finish();
         deboardingStartTimes.remove(transportFlight.getId());
 
         log.info("t/f #{} - finished", transportFlight.getId());
@@ -377,8 +377,7 @@ public class TransportFlightControl {
                 .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
 
         transportFlight.setPaxOnBoard(0);
-        paxManager().dropBoardingState(transportFlight);
-        paxManager().dropDeboardingState(transportFlight);
+        paxManager().dropState(transportFlight);
 
         log.warn("t/f #{} - unloaded forcefully, set PAX on board to 0", transportFlight.getId());
     }

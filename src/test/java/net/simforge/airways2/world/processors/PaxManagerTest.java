@@ -84,7 +84,7 @@ public class PaxManagerTest {
         final int finishTime = world.getWorldTime() + seconds;
         while (world.getWorldTime() < finishTime) {
             world.setWorldTime(world.getWorldTime() + 10);
-            paxManager.continueBoarding(transportFlight);
+            paxManager.boarding(transportFlight).proceed();
         }
     }
 
@@ -101,7 +101,7 @@ public class PaxManagerTest {
 
         tfControl.startBoarding(transportFlight);
 
-        assertEquals(startTime + 8 * Time.ONE_MINUTE + RESERVE, paxManager.getEstimatedBoardingFinishTime(transportFlight));
+        assertEquals(startTime + 8 * Time.ONE_MINUTE + RESERVE, paxManager.boarding(transportFlight).getEstimatedFinishTime());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class PaxManagerTest {
 
         tfControl.startBoarding(transportFlight);
 
-        assertEquals(startTime + 64 + RESERVE, paxManager.getEstimatedBoardingFinishTime(transportFlight));
+        assertEquals(startTime + 64 + RESERVE, paxManager.boarding(transportFlight).getEstimatedFinishTime());
     }
 
     @Test
@@ -118,10 +118,10 @@ public class PaxManagerTest {
         checkedInJourneys(30, 30);
 
         tfControl.startBoarding(transportFlight);
-        assertFalse(paxManager.wasBoardingFinishTimePassed(transportFlight));
+        assertFalse(paxManager.boarding(transportFlight).wasFinishTimePassed());
 
-        world.setWorldTime(paxManager.getEstimatedBoardingFinishTime(transportFlight));
-        assertTrue(paxManager.wasBoardingFinishTimePassed(transportFlight));
+        world.setWorldTime(paxManager.boarding(transportFlight).getEstimatedFinishTime());
+        assertTrue(paxManager.boarding(transportFlight).wasFinishTimePassed());
     }
 
     @Test
@@ -167,7 +167,7 @@ public class PaxManagerTest {
 
         assertEquals(6, transportFlight.getPaxOnBoard());
         // remaining to board is 20, so the estimate is 20 / 15 * 60 = 80 seconds + reserve
-        assertEquals(startTime + 80 + RESERVE, paxManager.getEstimatedBoardingFinishTime(transportFlight));
+        assertEquals(startTime + 80 + RESERVE, paxManager.boarding(transportFlight).getEstimatedFinishTime());
     }
 
     @Test
@@ -355,7 +355,7 @@ public class PaxManagerTest {
         tfControl.startBoarding(transportFlight);
         for (int i = 0; i < 1000 && !paxManager.areAllBoarded(transportFlight); i++) {
             world.setWorldTime(world.getWorldTime() + 10);
-            paxManager.continueBoarding(transportFlight);
+            paxManager.boarding(transportFlight).proceed();
         }
         assertTrue(paxManager.areAllBoarded(transportFlight));
         tfControl.waitForDeparture(transportFlight);
@@ -574,7 +574,7 @@ public class PaxManagerTest {
         final int waitingBefore = waitingGroups(journeys);
         assertTrue(waitingBefore > 0 && waitingBefore < 5, "waiting " + waitingBefore);
 
-        paxManager.dropDeboardingState(transportFlight); // the same as a restart of the application
+        paxManager.dropState(transportFlight); // the same as a restart of the application
 
         final List<Integer> pax = deboardEverybody(journeys, 500);
 
@@ -652,8 +652,8 @@ public class PaxManagerTest {
         checkedInJourneys(5);
         tfControl.startBoarding(transportFlight);
 
-        assertThrows(IllegalArgumentException.class, () -> paxManager.continueDeboarding(transportFlight));
-        assertThrows(IllegalArgumentException.class, () -> paxManager.startDeboarding(transportFlight));
+        assertThrows(IllegalArgumentException.class, () -> paxManager.deboarding(transportFlight).proceed());
+        assertThrows(IllegalArgumentException.class, () -> paxManager.deboarding(transportFlight).start());
     }
 
     @Test
@@ -743,7 +743,7 @@ public class PaxManagerTest {
         }
         second.setStatus(TransportFlights.Status.Deboarding);
         second.setPaxOnBoard(24);
-        paxManager.startDeboarding(second);
+        paxManager.deboarding(second).start();
 
         for (int tick = 0; tick < 500 && (waitingGroups(firstJourneys) > 0 || waitingGroups(secondJourneys) > 0); tick++) {
             world.setWorldTime(world.getWorldTime() + 10);

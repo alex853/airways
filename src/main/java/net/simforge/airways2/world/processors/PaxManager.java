@@ -9,12 +9,25 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+/**
+ * Moves PAX of a transport flight in and out of the aircraft. The boarding and the deboarding are one mechanism, {@link Operation}:
+ * a fractional counter grows with the rate of the operation, the journeys are processed one after another (the lowest id first) as soon
+ * as the counter covers the group size, PAX on board changes smoothly together with the counter. The operations differ only in the
+ * journeys they work with, the rate, the effect on a journey and the way PAX on board is calculated.
+ * <p>
+ * Usage: {@code paxManager.boarding(tf).start()}, {@code paxManager.deboarding(tf).proceed()}, etc. The state of an operation is kept in
+ * memory and is restored lazily from the journeys after a restart of the application.
+ */
 public class PaxManager {
     private static final Logger log = LoggerFactory.getLogger(PaxManager.class);
 
@@ -26,197 +39,27 @@ public class PaxManager {
         this.world = world;
     }
 
-    private JourneyControl journeyControl() {
-        return world.journeyControl();
-    }
-
-    public void startBoarding(final TransportFlights.Flight transportFlight) {
+    public Boarding boarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding
-                || transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        log.info("t/f #{} - boarding - STARTING", transportFlight.getId());
-
-        tick(transportFlight);
+        final Boarding boarding = boardings.computeIfAbsent(transportFlight.getId(), id -> new Boarding(world, transportFlight, boardings));
+        boarding.transportFlight = transportFlight;
+        return boarding;
     }
 
-    public void continueBoarding(final TransportFlights.Flight transportFlight) {
+    public Deboarding deboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        tick(transportFlight);
-    }
-
-    private void tick(final TransportFlights.Flight transportFlight) {
-        Boarding boarding = boardings.get(transportFlight.getId());
-        if (boarding == null) {
-            boarding = restoreBoardingState(transportFlight);
-            boardings.put(transportFlight.getId(), boarding);
-        } else {
-            refreshBoardingState(boarding, transportFlight);
-        }
-
-        final Optional<Journeys.Journey> nextToBoard = world.journeys()
-                .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding));
-        if (nextToBoard.isEmpty()) {
-            log.info("t/f #{} - boarding - no j/y to board, {}", transportFlight.getId(), boarding);
-            return;
-        }
-
-        boarding.tickDelta(world.getWorldTime());
-
-        if (boarding.getCounterValue() >= nextToBoard.get().getGroupSize()) {
-            journeyControl().board(nextToBoard.get());
-            boarding.updateStateWhenSomeoneBoarded(nextToBoard.get().getGroupSize());
-        }
-
-        int currentExpectedPax = boarding.getConfirmedOnBoard() + (int) boarding.getCounterValue();
-        if (currentExpectedPax != transportFlight.getPaxOnBoard()) {
-            transportFlight.setPaxOnBoard(currentExpectedPax);
-        }
-
-        log.info("t/f #{} - boarding - PAX {}, {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), boarding);
-    }
-
-    public int getEstimatedBoardingFinishTime(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        Boarding boarding = boardings.get(transportFlight.getId());
-        if (boarding == null) {
-            boarding = restoreBoardingState(transportFlight);
-            if (boarding.getRemainingToBoard() == 0) {
-                return 0;
-            }
-            boardings.put(transportFlight.getId(), boarding);
-        }
-        return boarding.getEstimatedBoardingFinishTime();
-    }
-
-    public boolean wasBoardingFinishTimePassed(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        Boarding boarding = boardings.get(transportFlight.getId());
-        if (boarding == null) {
-            boarding = restoreBoardingState(transportFlight);
-            if (boarding.getRemainingToBoard() == 0) {
-                return true;
-            }
-            boardings.put(transportFlight.getId(), boarding);
-        }
-        return boarding.getEstimatedBoardingFinishTime() <= world.getWorldTime();
-    }
-
-    public void finishBoarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
-
-        log.info("t/f #{} - boarding - finish", transportFlight.getId());
-
-        // The journey whose boarding has been started but not finished (its PAX are already counted in PAX on board by the
-        // boarding counter) boards now, so PAX on board does not jump down. A jump up is better than a jump down.
-        final Boarding boarding = boardings.get(transportFlight.getId());
-        if (boarding != null && (int) boarding.getCounterValue() > 0) {
-            world.journeys()
-                    .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
-                    .ifPresent(journey -> {
-                        journeyControl().board(journey);
-                        log.info("t/f #{} - boarding - j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), boarding.getCounterValue());
-                    });
-        }
-
-        final Collection<Journeys.Journey> failedToBoardJourneys = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                        Journeys.Status.WaitingForCheckIn,
-                        Journeys.Status.WaitingForBoarding))
-                .toList();
-        log.info("t/f #{} - boarding - found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
-
-        failedToBoardJourneys.forEach(j -> journeyControl().tooLateToBoard(j));
-
-        // the boarding counter may hold PAX of the group which has not boarded yet, they are nobody's PAX
-        transportFlight.setPaxOnBoard(countPaxOnBoard(transportFlight));
-
-        boardings.remove(transportFlight.getId());
+        final Deboarding deboarding = deboardings.computeIfAbsent(transportFlight.getId(), id -> new Deboarding(world, transportFlight, deboardings));
+        deboarding.transportFlight = transportFlight;
+        return deboarding;
     }
 
     /**
-     * The boarding of the cancelled flight is not finished by finishBoarding, its state must not stay in memory.
+     * The operations of the cancelled flight are not finished, their state must not stay in memory.
      */
-    public void dropBoardingState(final TransportFlights.Flight transportFlight) {
+    public void dropState(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         boardings.remove(transportFlight.getId());
-    }
-
-    /**
-     * The deboarding is driven by the same fractional counter as the boarding, in the opposite direction and a bit faster: the counter
-     * grows with the deboarding rate and the journeys leave the flight one after another (the lowest id first) as soon as the counter
-     * covers the group size. PAX on board goes down smoothly, not by a whole group at a random moment.
-     */
-    public void startDeboarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
-
-        deboardings.put(transportFlight.getId(), new Deboarding(world.getWorldTime()));
-
-        log.info("t/f #{} - deboarding - STARTING", transportFlight.getId());
-    }
-
-    public void continueDeboarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
-
-        // after a restart of the application the state is not in the memory: the journeys which are still waiting are the state
-        final Deboarding deboarding = deboardings.computeIfAbsent(transportFlight.getId(), id -> new Deboarding(world.getWorldTime()));
-
-        final List<Journeys.Journey> waiting = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
-                .toList();
-        int remaining = waiting.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
-
-        deboarding.tickDelta(world.getWorldTime(), remaining);
-
-        for (final Journeys.Journey journey : waiting) {
-            if (deboarding.counterValue < journey.getGroupSize()) {
-                break;
-            }
-            journeyControl().deboard(journey);
-            deboarding.counterValue -= journey.getGroupSize();
-            remaining -= journey.getGroupSize();
-        }
-
-        // the counter holds the PAX of the group which is leaving now, they are not on board anymore
-        transportFlight.setPaxOnBoard(Math.max(0, remaining - (int) deboarding.counterValue));
-
-        log.info("t/f #{} - deboarding - PAX {}, remaining {}, counter {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), remaining, deboarding.counterValue);
-    }
-
-    /**
-     * The flight is finished (all the PAX have left or the deboarding window is over). The journeys which are still waiting are woken
-     * up to look at the finished flight and to deboard at once.
-     */
-    public void finishDeboarding(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-
         deboardings.remove(transportFlight.getId());
-
-        world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
-                .forEach(journey -> journey.setHeartbeatTime(world.getWorldTime()));
-    }
-
-    /**
-     * The deboarding of the cancelled flight is not finished by finishDeboarding, its state must not stay in memory.
-     */
-    public void dropDeboardingState(final TransportFlights.Flight transportFlight) {
-        checkNotNull(transportFlight);
-        deboardings.remove(transportFlight.getId());
-    }
-
-    // PAX per time with a random factor, the same formula for the boarding and for the deboarding
-    private static double counterDelta(final int timeElapsedSeconds, final int ratePaxPerMinute) {
-        return timeElapsedSeconds / (Time.ONE_MINUTE / (double) ratePaxPerMinute) * (Tools.random(85, 125) / 100.0);
     }
 
     /**
@@ -243,88 +86,122 @@ public class PaxManager {
                 .reduce(0, Integer::sum);
     }
 
-    private Boarding restoreBoardingState(final TransportFlights.Flight transportFlight) {
-        int actualOnBoard = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(
-                        transportFlight.getId(),
-                        Journeys.Status.OnBoard))
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-
-        List<Journeys.Journey> remainedToBoardJourneys = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                        Journeys.Status.WaitingForBoarding,
-                        Journeys.Status.WaitingForCheckIn))
-                .toList();
-        int remainingToBoard = remainedToBoardJourneys.stream()
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-        int readyToBoard = remainedToBoardJourneys.stream()
-                .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-
-        transportFlight.setPaxOnBoard(actualOnBoard);
-        log.info("t/f #{} - boarding - restored, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
-
-        return new Boarding(actualOnBoard, remainingToBoard, readyToBoard, world.getWorldTime());
-    }
-
-    private void refreshBoardingState(Boarding boarding, TransportFlights.Flight transportFlight) {
-        int actualOnBoard = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(
-                        transportFlight.getId(),
-                        Journeys.Status.OnBoard))
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-
-        List<Journeys.Journey> remainedToBoardJourneys = world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                        Journeys.Status.WaitingForBoarding,
-                        Journeys.Status.WaitingForCheckIn))
-                .toList();
-        int remainingToBoard = remainedToBoardJourneys.stream()
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-
-        boarding.confirmedOnBoard = actualOnBoard;
-        boarding.remainingToBoard = remainingToBoard;
-        boarding.readyToBoard = remainedToBoardJourneys.stream()
-                .filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding)
-                .map(Journeys.Journey::getGroupSize)
-                .reduce(0, Integer::sum);
-        boarding.recalculateEstimatedBoardingFinishTime(world.getWorldTime());
-
-        log.info("t/f #{} - boarding - refreshed, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
-    }
-
-    public static class Deboarding {
-        public static final int RATE_PAX_PER_MINUTE = 25;
-        /**
-         * A journey which waits for deboarding looks at its flight this often. The deboarding itself is done by the flight, the look is
-         * a safety net: the flight can be lost or finished.
-         */
-        public static final int JOURNEY_WATCH_INTERVAL = 5 * Time.ONE_MINUTE;
+    /**
+     * The state of one operation of one flight. The counter holds PAX of the group which is being processed right now.
+     */
+    public abstract static class Operation {
+        protected final World world;
+        protected TransportFlights.Flight transportFlight;
+        private final Map<Integer, ? extends Operation> registry;
 
         private int counterLastTime;
-        private double counterValue;
+        protected double counterValue;
+        private boolean refreshed;
+        /**
+         * The journeys which can be processed now, the lowest id first. Filled by refreshState.
+         */
+        protected List<Journeys.Journey> ready = List.of();
 
-        private Deboarding(final int worldTime) {
-            this.counterLastTime = worldTime;
+        private Operation(final World world, final TransportFlights.Flight transportFlight, final Map<Integer, ? extends Operation> registry) {
+            this.world = world;
+            this.transportFlight = transportFlight;
+            this.registry = registry;
+            this.counterLastTime = world.getWorldTime();
             this.counterValue = 0.0;
         }
 
-        private void tickDelta(final int worldTime, final int remainingToDeboard) {
-            counterValue += counterDelta(worldTime - counterLastTime, RATE_PAX_PER_MINUTE);
-            counterLastTime = worldTime;
+        protected abstract String name();
 
-            if (counterValue > remainingToDeboard) {
-                counterValue = remainingToDeboard;
+        protected abstract int ratePaxPerMinute();
+
+        protected abstract Set<TransportFlights.Status> startStatuses();
+
+        protected abstract Set<TransportFlights.Status> proceedStatuses();
+
+        /**
+         * Recalculates the state from the journeys, fills {@link #ready}.
+         */
+        protected abstract void refreshState();
+
+        /**
+         * The counter can not go beyond this value.
+         */
+        protected abstract int counterLimit();
+
+        /**
+         * The journey has been processed by the counter, the operation does its effect on the journey and updates its own state.
+         */
+        protected abstract void onJourneyCompleted(Journeys.Journey journey);
+
+        protected abstract int expectedPaxOnBoard();
+
+        public void start() {
+            checkArgument(startStatuses().contains(transportFlight.getStatus()));
+            log.info("t/f #{} - {} - STARTING", transportFlight.getId(), name());
+        }
+
+        public void proceed() {
+            checkArgument(proceedStatuses().contains(transportFlight.getStatus()));
+            tick();
+        }
+
+        /**
+         * Forgets the state of the operation.
+         */
+        public void drop() {
+            registry.remove(transportFlight.getId());
+        }
+
+        protected final void tick() {
+            refresh();
+
+            tickDelta();
+
+            for (final Journeys.Journey journey : ready) {
+                if (counterValue < journey.getGroupSize()) {
+                    break;
+                }
+                onJourneyCompleted(journey);
+                counterValue -= journey.getGroupSize();
+            }
+
+            final int expectedPax = expectedPaxOnBoard();
+            if (expectedPax != transportFlight.getPaxOnBoard()) {
+                transportFlight.setPaxOnBoard(expectedPax);
+            }
+
+            log.info("t/f #{} - {} - PAX {}, {}", transportFlight.getId(), name(), transportFlight.getPaxOnBoard(), this);
+        }
+
+        protected final void refresh() {
+            refreshState();
+            refreshed = true;
+        }
+
+        protected final void ensureRefreshed() {
+            if (!refreshed) {
+                refresh();
+            }
+        }
+
+        protected final void resetCounter() {
+            counterValue = 0.0;
+            counterLastTime = world.getWorldTime();
+        }
+
+        private void tickDelta() {
+            final int timeElapsed = world.getWorldTime() - counterLastTime;
+            counterLastTime = world.getWorldTime();
+
+            // PAX per time with a random factor, the same formula for all the operations
+            counterValue += timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute()) * (Tools.random(85, 125) / 100.0);
+            if (counterValue > counterLimit()) {
+                counterValue = counterLimit();
             }
         }
     }
 
-    private static class Boarding {
+    public static final class Boarding extends Operation {
         private static final int boardingTimeReserve = 3 * Time.ONE_MINUTE;
         private static final int ratePaxPerMinute = 15;
 
@@ -335,58 +212,122 @@ public class PaxManager {
         private int readyToBoard;
         private int estimatedBoardingFinishTime;
 
-        private int counterLastTime;
-        private double counterValue;
-
-        public Boarding(final int actualOnBoard, final int remainingToBoard, final int readyToBoard, final int worldTime) {
-            this.confirmedOnBoard = actualOnBoard;
-            this.remainingToBoard = remainingToBoard;
-            this.readyToBoard = readyToBoard;
-            recalculateEstimatedBoardingFinishTime(worldTime);
-
-            this.counterValue = 0.0;
-            this.counterLastTime = worldTime;
+        private Boarding(final World world, final TransportFlights.Flight transportFlight, final Map<Integer, Boarding> registry) {
+            super(world, transportFlight, registry);
         }
 
-        public int getConfirmedOnBoard() {
-            return confirmedOnBoard;
+        @Override
+        protected String name() {
+            return "boarding";
         }
 
-        public int getRemainingToBoard() {
-            return remainingToBoard;
+        @Override
+        protected int ratePaxPerMinute() {
+            return ratePaxPerMinute;
         }
 
-        public double getCounterValue() {
-            return counterValue;
+        @Override
+        protected Set<TransportFlights.Status> startStatuses() {
+            return EnumSet.of(TransportFlights.Status.WaitingForBoarding, TransportFlights.Status.Boarding);
         }
 
-        public void tickDelta(final int worldTime) {
-            final int timeElapsed = worldTime - counterLastTime;
-            final double deltaAvailable = counterDelta(timeElapsed, ratePaxPerMinute);
+        @Override
+        protected Set<TransportFlights.Status> proceedStatuses() {
+            return EnumSet.of(TransportFlights.Status.Boarding);
+        }
 
-            counterLastTime = worldTime;
+        @Override
+        public void start() {
+            super.start();
+            tick();
+        }
 
-            counterValue += deltaAvailable;
-            if (counterValue > readyToBoard) {
-                counterValue = readyToBoard;
+        @Override
+        protected void refreshState() {
+            confirmedOnBoard = world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                    .map(Journeys.Journey::getGroupSize)
+                    .reduce(0, Integer::sum);
+
+            final List<Journeys.Journey> remained = world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
+                            Journeys.Status.WaitingForBoarding,
+                            Journeys.Status.WaitingForCheckIn))
+                    .toList();
+            remainingToBoard = remained.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
+            ready = remained.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding).toList();
+            readyToBoard = ready.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
+
+            estimatedBoardingFinishTime = world.getWorldTime()
+                    + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
+                    + boardingTimeReserve;
+        }
+
+        @Override
+        protected int counterLimit() {
+            return readyToBoard;
+        }
+
+        @Override
+        protected void onJourneyCompleted(final Journeys.Journey journey) {
+            world.journeyControl().board(journey);
+            confirmedOnBoard += journey.getGroupSize();
+            remainingToBoard -= journey.getGroupSize();
+            readyToBoard -= journey.getGroupSize();
+        }
+
+        @Override
+        protected int expectedPaxOnBoard() {
+            return confirmedOnBoard + (int) counterValue;
+        }
+
+        public int getEstimatedFinishTime() {
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+            ensureRefreshed();
+            if (remainingToBoard == 0) {
+                return 0;
             }
-        }
-
-        public void updateStateWhenSomeoneBoarded(int groupSize) {
-            counterValue -= groupSize;
-            confirmedOnBoard += groupSize;
-            remainingToBoard -= groupSize;
-            readyToBoard -= groupSize;
-        }
-
-        public int getEstimatedBoardingFinishTime() {
             return estimatedBoardingFinishTime;
         }
 
-        private void recalculateEstimatedBoardingFinishTime(int worldTime) {
-            this.estimatedBoardingFinishTime = worldTime
-                    + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
-                    + boardingTimeReserve;
+        public boolean wasFinishTimePassed() {
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+            ensureRefreshed();
+            if (remainingToBoard == 0) {
+                return true;
+            }
+            return estimatedBoardingFinishTime <= world.getWorldTime();
+        }
+
+        public void finish() {
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
+
+            log.info("t/f #{} - boarding - finish", transportFlight.getId());
+
+            // The journey whose boarding has been started but not finished (its PAX are already counted in PAX on board by the
+            // boarding counter) boards now, so PAX on board does not jump down. A jump up is better than a jump down.
+            if ((int) counterValue > 0) {
+                world.journeys()
+                        .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
+                        .ifPresent(journey -> {
+                            world.journeyControl().board(journey);
+                            log.info("t/f #{} - boarding - j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), counterValue);
+                        });
+            }
+
+            final Collection<Journeys.Journey> failedToBoardJourneys = world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
+                            Journeys.Status.WaitingForCheckIn,
+                            Journeys.Status.WaitingForBoarding))
+                    .toList();
+            log.info("t/f #{} - boarding - found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
+
+            failedToBoardJourneys.forEach(j -> world.journeyControl().tooLateToBoard(j));
+
+            // the boarding counter may hold PAX of the group which has not boarded yet, they are nobody's PAX
+            transportFlight.setPaxOnBoard(world.paxManager().countPaxOnBoard(transportFlight));
+
+            drop();
         }
 
         @Override
@@ -397,8 +338,95 @@ public class PaxManager {
                     ", rdy: " + readyToBoard +
                     ", eFinT: " + TimeTools.hhmmOrNull(estimatedBoardingFinishTime) +
                     ", cnt: " + counterValue +
-                    ", t: " + TimeTools.hhmmOrNull(counterLastTime) +
                     '}';
+        }
+    }
+
+    /**
+     * The deboarding goes in the opposite direction and a bit faster than the boarding: the journeys leave the flight one after another
+     * as soon as the counter covers the group size. PAX on board goes down smoothly, not by a whole group at a random moment.
+     */
+    public static final class Deboarding extends Operation {
+        public static final int RATE_PAX_PER_MINUTE = 25;
+        /**
+         * A journey which waits for deboarding looks at its flight this often. The deboarding itself is done by the flight, the look is
+         * a safety net: the flight can be lost or finished.
+         */
+        public static final int JOURNEY_WATCH_INTERVAL = 5 * Time.ONE_MINUTE;
+
+        // PAX who are still in the aircraft, the journeys which are still waiting are the state
+        private int remainingToDeboard;
+
+        private Deboarding(final World world, final TransportFlights.Flight transportFlight, final Map<Integer, Deboarding> registry) {
+            super(world, transportFlight, registry);
+        }
+
+        @Override
+        protected String name() {
+            return "deboarding";
+        }
+
+        @Override
+        protected int ratePaxPerMinute() {
+            return RATE_PAX_PER_MINUTE;
+        }
+
+        @Override
+        protected Set<TransportFlights.Status> startStatuses() {
+            return EnumSet.of(TransportFlights.Status.Deboarding);
+        }
+
+        @Override
+        protected Set<TransportFlights.Status> proceedStatuses() {
+            return EnumSet.of(TransportFlights.Status.Deboarding);
+        }
+
+        @Override
+        public void start() {
+            super.start();
+            resetCounter();
+        }
+
+        @Override
+        protected void refreshState() {
+            ready = world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
+                    .toList();
+            remainingToDeboard = ready.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
+        }
+
+        @Override
+        protected int counterLimit() {
+            return remainingToDeboard;
+        }
+
+        @Override
+        protected void onJourneyCompleted(final Journeys.Journey journey) {
+            world.journeyControl().deboard(journey);
+            remainingToDeboard -= journey.getGroupSize();
+        }
+
+        @Override
+        protected int expectedPaxOnBoard() {
+            // the counter holds the PAX of the group which is leaving now, they are not on board anymore
+            return Math.max(0, remainingToDeboard - (int) counterValue);
+        }
+
+        /**
+         * The flight is finished (all the PAX have left or the deboarding window is over). The journeys which are still waiting are woken
+         * up to look at the finished flight and to deboard at once.
+         */
+        public void finish() {
+            world.journeys()
+                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
+                    .forEach(journey -> journey.setHeartbeatTime(world.getWorldTime()));
+
+            drop();
+        }
+
+        @Override
+        public String toString() {
+            return "Deboarding{rem: " + remainingToDeboard + ", cnt: " + counterValue + '}';
         }
     }
 }
