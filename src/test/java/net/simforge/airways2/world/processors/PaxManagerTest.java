@@ -671,6 +671,96 @@ public class PaxManagerTest {
         assertEquals(0, waitingGroups(journeys));
     }
 
+    @Test
+    public void test__random_flights_keep_all_the_invariants_of_the_deboarding() {
+        final java.util.Random random = new java.util.Random(20261018);
+        for (int flight = 0; flight < 25; flight++) {
+            beforeEach(); // a clean world for every random flight
+
+            final int groupCount = 1 + random.nextInt(30);
+            final int[] groups = new int[groupCount];
+            int total = 0;
+            for (int i = 0; i < groupCount; i++) {
+                groups[i] = 1 + random.nextInt(Math.max(1, Math.min(10, (144 - total) / (groupCount - i))));
+                total += groups[i];
+            }
+            final List<Journeys.Journey> journeys = startDeboardingOf(groups);
+            final int maxGroup = java.util.Arrays.stream(groups).max().orElse(1);
+
+            int previousPax = total;
+            int ticks = 0;
+            while (waitingGroups(journeys) > 0 && ticks < 2000) {
+                deboardingTick();
+                ticks++;
+                final int pax = transportFlight.getPaxOnBoard();
+                final int waiting = waitingPax(journeys);
+                final String where = "flight " + flight + " groups " + java.util.Arrays.toString(groups) + " tick " + ticks;
+                assertTrue(pax <= previousPax, "PAX on board goes up, " + where);
+                assertTrue(previousPax - pax <= maxPaxPerTick() + maxGroup, "PAX on board jumps, " + where);
+                assertTrue(pax <= waiting, "PAX on board is more than waiting, " + where);
+                assertEquals(waiting == 0, pax == 0, "PAX on board and waiting disagree, " + where);
+                previousPax = pax;
+            }
+
+            assertEquals(0, waitingGroups(journeys), "somebody is still waiting after " + ticks + " ticks, groups " + java.util.Arrays.toString(groups));
+            final double minTicks = total / (DEBOARDING_RATE * MAX_FACTOR) * 6;
+            final double maxTicks = total / (DEBOARDING_RATE * MIN_FACTOR) * 6;
+            assertTrue(ticks >= Math.floor(minTicks) - 1 && ticks <= Math.ceil(maxTicks) + 1,
+                    "ticks " + ticks + ", expected " + minTicks + " .. " + maxTicks + ", groups " + java.util.Arrays.toString(groups));
+            journeys.forEach(j -> assertEquals(Journeys.Status.JustArrived, j.getStatus()));
+        }
+    }
+
+    @Test
+    public void test__journey_which_watches_its_flight_does_not_deboard_by_itself_and_looks_again_in_5_minutes() {
+        final List<Journeys.Journey> journeys = startDeboardingOf(100); // the group needs about 4 minutes
+        final Journeys.Journey journey = journeys.get(0);
+        final int watchTime = journey.getHeartbeatTime();
+        assertEquals(world.getWorldTime() + PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL, watchTime);
+
+        world.setWorldTime(watchTime);
+        JourneyProcessor.process(world); // the flight did not let the journey out (its tick has not been done), the journey only watches
+
+        assertEquals(Journeys.Status.WaitingForDeboarding, journey.getStatus());
+        assertEquals(watchTime + PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL, journey.getHeartbeatTime());
+        assertEquals(100, transportFlight.getPaxOnBoard()); // the journey did not touch PAX on board either
+    }
+
+    @Test
+    public void test__two_flights_deboard_independently_with_their_own_counters() {
+        final List<Journeys.Journey> firstJourneys = startDeboardingOf(10, 10, 10);
+        final FlightMissions.Mission anotherMission = world.flightMissions().createDispatchedMission(
+                world.aircrafts().byId(world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow().getAircraftId()).orElseThrow(),
+                world.airports().byIcao("AAAA").orElseThrow(), world.airports().byIcao("BBBB").orElseThrow(),
+                startTime + 5 * Time.ONE_HOUR, startTime + 7 * Time.ONE_HOUR);
+        final TransportFlights.Flight second = tfControl.createTransportFlight(anotherMission);
+        final List<Journeys.Journey> secondJourneys = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            final Journeys.Journey journey = world.journeys().create(
+                    Journeys.Status.WaitingForDeboarding, cityA.getId(), cityB.getId(), 6, CabinLayout.Service.Y);
+            journey.setTransportFlight1Id(second.getId());
+            secondJourneys.add(journey);
+        }
+        second.setStatus(TransportFlights.Status.Deboarding);
+        second.setPaxOnBoard(24);
+        paxManager.startDeboarding(second);
+
+        for (int tick = 0; tick < 500 && (waitingGroups(firstJourneys) > 0 || waitingGroups(secondJourneys) > 0); tick++) {
+            world.setWorldTime(world.getWorldTime() + 10);
+            tfControl.continueDeboarding(transportFlight);
+            tfControl.continueDeboarding(second);
+            assertEquals(waitingGroups(firstJourneys) == 0, transportFlight.getPaxOnBoard() == 0);
+            assertEquals(waitingGroups(secondJourneys) == 0, second.getPaxOnBoard() == 0);
+            assertTrue(transportFlight.getPaxOnBoard() <= waitingPax(firstJourneys));
+            assertTrue(second.getPaxOnBoard() <= waitingPax(secondJourneys));
+        }
+
+        firstJourneys.forEach(j -> assertEquals(Journeys.Status.JustArrived, j.getStatus()));
+        secondJourneys.forEach(j -> assertEquals(Journeys.Status.JustArrived, j.getStatus()));
+        assertEquals(0, transportFlight.getPaxOnBoard());
+        assertEquals(0, second.getPaxOnBoard());
+    }
+
     private void flyToTheGate() {
         flyToTheGate(true);
     }
