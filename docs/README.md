@@ -18,6 +18,8 @@
 - [storage-quarantine.md](storage-quarantine.md) — Storage: карантин удалённых записей (не переиспользовать id сразу), дизайн
 - [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
 - [users.md](users.md) — пользователи: временное хранилище на property-файлах, токены, последняя посадка
+- [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
+- [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано
 
 ## Правила ведения
 
