@@ -613,5 +613,5 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   разбита на десятки районов. Ядро `Al-kuwayt` (38 400, 9 nm) → `Kuwait City` 3 100 400 (агломерация ~3,1M, приблизительно), `del` на районы ≥100k:
   As-salimiyah 152 100, Jalib as-suyuh 142 700, As-sabah#iyah 131 200, H#itan-al-janubiyah 127 700; районы меньше 100k не трогаем. Страна
   Kuwait создаётся импортом. Военные OKAJ, OKAS уже `military`; Z19M (дорожная полоса) не берём. Имя `Kuwait Intl` оставлено.
-  `BusinessAviationTerminal` на OKKK, attraction ставим (значение определить после деплоя).
+  `BusinessAviationTerminal` на OKKK, attraction не ставим.
 
