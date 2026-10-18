@@ -17,13 +17,12 @@ class UserStorageTest {
 
     @Test
     public void test__person_id_and_vatsim_cid_are_read(@TempDir final Path dir) throws IOException {
-        writeUser(dir, "token=abc123def456ghi789\nlast.location.airport=KOAK\nperson.id=1\nvatsim.cid=913904\n");
+        writeUser(dir, "token=abc123def456ghi789\nperson.id=1\nvatsim.cid=913904\n");
 
         final User user = new UserStorage(dir).findById(1).orElseThrow();
 
         assertEquals(1, user.getPersonId());
         assertEquals(913904, user.getVatsimCid());
-        assertEquals("KOAK", user.getLastLocationAirport().orElseThrow());
     }
 
     @Test
@@ -47,18 +46,13 @@ class UserStorageTest {
     }
 
     @Test
-    public void test__person_id_and_vatsim_cid_survive_the_update_of_last_location_airport(@TempDir final Path dir) throws IOException {
-        writeUser(dir, "token=abc123def456ghi789\nlast.location.airport=KOAK\nperson.id=1\nvatsim.cid=913904\n");
+    public void test__old_last_location_airport_property_is_ignored_and_the_file_is_not_touched(@TempDir final Path dir) throws IOException {
+        final String content = "token=abc123def456ghi789\nlast.location.airport=KOAK\nperson.id=1\n";
+        writeUser(dir, content);
+
         final UserStorage storage = new UserStorage(dir);
 
-        storage.updateLastLocationAirport(1, "KSFO");
-
-        final User reloaded = new UserStorage(dir).findById(1).orElseThrow();
-        assertEquals("KSFO", reloaded.getLastLocationAirport().orElseThrow());
-        assertEquals(1, reloaded.getPersonId());
-        assertEquals(913904, reloaded.getVatsimCid());
-        final String content = Files.readString(dir.resolve("user-1.cfg"));
-        assertTrue(content.contains("person.id=1"), content);
-        assertTrue(content.contains("vatsim.cid=913904"), content);
+        assertTrue(storage.findByToken("abc123def456ghi789").isPresent());
+        assertEquals(content, Files.readString(dir.resolve("user-1.cfg")));
     }
 }

@@ -11,32 +11,30 @@
 - Формат файла:
   ```
   token=abc123def456ghi789
-  last.location.airport=WSSS
   person.id=1
   vatsim.cid=1234567
   ```
   - `token` — буквенно-цифровая комбинация 10–20 символов, по ней пользователь опознаётся (иначе warn в логе);
-  - `last.location.airport` — ICAO аэропорта последней посадки пользователя.
   - `person.id` — id персоны (пилота) пользователя в хранилище `persons` мира, 0 или отсутствие значит «персоны нет» (см. [persons-pilots.md](persons-pilots.md));
-  - `vatsim.cid` — VATSIM CID пользователя. Оба свойства читаются `UserStorage` и сохраняются при записи файла.
+  - `vatsim.cid` — VATSIM CID пользователя. Оба свойства только читаются `UserStorage`, файл приложение не пишет.
+  - Прежнее свойство `last.location.airport` больше не используется (последняя локация лежит в персоне), в старых файлах оно просто игнорируется.
 - Файлы создаются и токены задаются вручную.
 
 ## Где используется
 
 - `UserService.findUserIdByToken` (используется `AuthFilter` для `/busy-birds`, `/flight-dashboard`, `/sim`) —
   поиск пользователя по токену через `UserStorage`. Прежний хардкод токена `123` убран.
-- `FlightMissionControl.landing` — на каждой посадке рейса пользователя (`mission.getUserId() > 0`)
-  в файл пользователя пишется `last.location.airport`. Остальные свойства файла сохраняются, запись через временный
-  файл с атомарной заменой.
+- `FlightMissionControl.landing`: на каждой посадке рейса пользователя (`mission.getUserId() > 0`) локация его персоны
+  (`Persons.byUserId`) становится «аэропорт посадки». Если у пользователя нет персоны, в лог пишется warning.
 
 ## Код
 
-`net.simforge.airways2.app.userstorage`: `User` (id, token, lastLocationAirport), `UserStorage`.
+`net.simforge.airways2.app.userstorage`: `User` (id, token, personId, vatsimCid), `UserStorage`.
 
 ## /flight-dashboard/status2: секция user
 
-В ответ добавлена секция `user`: `id`, `lastLocationAirport` и `location` — результат сверки аэропорта, в котором
-пилот загрузился (`sim.airportIcao`), с `last.location.airport`:
+В ответ добавлена секция `user`: `id`, `lastLocationAirport` (аэропорт локации персоны пользователя, `User.personId`) и `location`: результат сверки аэропорта, в котором
+пилот загрузился (`sim.airportIcao`), с этим аэропортом. Если у пользователя нет персоны или персона не в аэропорту, ограничений нет:
 
 | `location.state` | Когда |
 |---|---|
@@ -44,7 +42,7 @@
 | `WRONG_AIRPORT` | на земле в аэропорту, не совпал с последней посадкой |
 | `UNKNOWN` | трекер не подключён, пилот в воздухе или на земле вне аэропорта |
 
-`location.expectedAirport` (последняя посадка) и `location.currentAirport` (аэропорт, где пилот стоит сейчас)
+`location.expectedAirport` (аэропорт персоны) и `location.currentAirport` (аэропорт, где пилот стоит сейчас)
 заполняются всегда, когда значение известно, независимо от `state`.
 
 Вординг сообщения формирует веб-морда по коду состояния; веб-морда блокирует действия при `WRONG_AIRPORT`.
@@ -56,6 +54,7 @@
   `/flight-dashboard/*` (`start-flight`, `start-boarding`, `reschedule`, `blocks-off` и др.) тоже отказывали на
   бэке при `WRONG_AIRPORT`.
 - Опции переезда/перелёта для пилота, оказавшегося не в том аэропорту.
+- Проверять не только аэропорт, но и состояние персоны: ожидаем `Idle` в аэропорту, а персона может быть в `Resting`, `Travelling` и т.д. (`todo ak3` в `FlightDashboardController`).
 
 - Решить, user это или pilot, и перенести в нормальную модель данных.
 - Админский токен (`admin.token`) по-прежнему берётся из настроек.

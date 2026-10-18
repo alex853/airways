@@ -15,6 +15,7 @@ import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionControl;
@@ -83,23 +84,36 @@ public class FlightDashboardController {
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
-                    buildUserDto(userId, simStatus));
+                    buildUserDto(world, userId, simStatus));
         });
     }
 
-    private static UserDto buildUserDto(final int userId, final SimTracker.UserStatus simStatus) {
+    private static UserDto buildUserDto(final World world, final int userId, final SimTracker.UserStatus simStatus) {
         final Optional<User> userO = UserStorage.getInstance().findById(userId);
         if (userO.isEmpty()) {
             return null;
         }
 
         final User user = userO.get();
-        final String lastLocationAirport = user.getLastLocationAirport().orElse(null);
+        final String lastLocationAirport = findPersonAirportIcao(world, user);
 
         return new UserDto(
                 Id.encode(user.getId()),
                 lastLocationAirport,
                 buildUserLocationDto(lastLocationAirport, simStatus));
+    }
+
+    // The airport where the pilot is expected to be: the location of the person of the user, null if there is no person or the person
+    // is not at an airport (it is not checked yet, no restrictions then).
+    // todo ak3 check the state of the person too: the person is expected to be Idle at the airport, but it may be Resting, Travelling, etc
+    private static String findPersonAirportIcao(final World world, final User user) {
+        if (user.getPersonId() <= 0) {
+            return null;
+        }
+        return world.persons().byId(user.getPersonId())
+                .filter(p -> p.getLocationType() == Persons.LocationType.Airport)
+                .flatMap(p -> world.airports().getIcao(p.getLocationId()))
+                .orElse(null);
     }
 
     // Compares the airport where the pilot has been loaded with the airport where the pilot has landed last time.

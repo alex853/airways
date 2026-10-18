@@ -79,6 +79,14 @@ public class Persons {
         return storage.byId(id);
     }
 
+    /**
+     * The player character of the user, a scan: there are few persons which belong to users.
+     */
+    public Optional<Person> byUserId(final int userId) {
+        checkArgument(userId > 0, "userId is mandatory");
+        return storage.findFirst(recordId -> storage.getAsInt(recordId, userIdField) == userId);
+    }
+
     public Optional<Person> nextForHeartbeat(final int worldTime) {
         return storage.nextForHeartbeat(worldTime);
     }

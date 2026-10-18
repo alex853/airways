@@ -1,6 +1,5 @@
 package net.simforge.airways2.world.processors;
 
-import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -263,7 +262,10 @@ public class FlightMissionControl {
         mission.setActualLandingAirportId(landingAirport.getId());
 
         if (mission.getUserId() > 0) {
-            UserStorage.getInstance().updateLastLocationAirport(mission.getUserId(), landingAirport.getIcao());
+            // the last location of the pilot is the location of its person
+            world.persons().byUserId(mission.getUserId()).ifPresentOrElse(
+                    person -> person.setLocation(Persons.LocationType.Airport, landingAirport.getId()),
+                    () -> log.warn("f/m #{} - user #{} has no person, its location is not saved", mission.getId(), mission.getUserId()));
         }
 
         // todo ak3 pilot/pilots/cabin crew - set status, location

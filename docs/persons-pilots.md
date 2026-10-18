@@ -9,6 +9,9 @@
 (шаг потом удалён). Посмотреть персону: `GET /admin/person/{id}` (`PersonController`, все поля записи). Логики (процессор по
 heartbeat, назначения, состояния) пока нет.
 
+**Последняя локация пилота живёт в персоне:** посадка рейса пользователя ставит локацию его персоны (тип Airport), дашборд сверяет
+аэропорт с локацией персоны (`User.personId`). Из `UserStorage` свойство `last.location.airport` убрано.
+
 Связанные доки: [users.md](users.md), [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md),
 [heartbeat-index.md](heartbeat-index.md).
 
