@@ -23,7 +23,7 @@ import static net.simforge.airways2.world.datamodel.EventsToProcess.Type.StartAu
 public class TransportFlightControl {
     private static final int CHECKIN_TICK = Time.ONE_MINUTE;
     private static final int BOARDING_TICK = Time.TICK;
-    private static final int DEBOARDING_TICK = Time.ONE_MINUTE;
+    private static final int DEBOARDING_TICK = Time.TICK;
     // the deboarding must not last longer, the flight is finished when the window is over
     private static final int DEBOARDING_WINDOW = Time.ONE_HOUR;
     private static final int DEBOARDING_WINDOW_CACHE_TTL = 2 * Time.ONE_HOUR;
@@ -279,6 +279,8 @@ public class TransportFlightControl {
 
         world.journeyControl().scheduleDeboardingForAllOnBoardJourneys(transportFlight);
 
+        paxManager().startDeboarding(transportFlight);
+
         log.info("t/f #{} - deboarding started, PAX on board {}", transportFlight.getId(), transportFlight.getPaxOnBoard());
     }
 
@@ -293,6 +295,8 @@ public class TransportFlightControl {
     public void continueDeboarding(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+
+        paxManager().continueDeboarding(transportFlight);
 
         transportFlight.setHeartbeatTime(world.getWorldTime() + DEBOARDING_TICK);
     }
@@ -341,6 +345,7 @@ public class TransportFlightControl {
         transportFlight.setHeartbeatTime(0);
         transportFlight.setPaxOnBoard(0);
 
+        paxManager().finishDeboarding(transportFlight);
         deboardingStartTimes.remove(transportFlight.getId());
 
         log.info("t/f #{} - finished", transportFlight.getId());
@@ -373,6 +378,7 @@ public class TransportFlightControl {
 
         transportFlight.setPaxOnBoard(0);
         paxManager().dropBoardingState(transportFlight);
+        paxManager().dropDeboardingState(transportFlight);
 
         log.warn("t/f #{} - unloaded forcefully, set PAX on board to 0", transportFlight.getId());
     }

@@ -12,6 +12,7 @@ import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.FlightMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.world.processors.PaxManager;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.airways2.world.processors.TransportFlightControl;
 import org.junit.jupiter.api.AfterEach;
@@ -196,7 +197,8 @@ public class FlightWorkflowTest {
         assertEquals(TOTAL_PAX, journeysIn(Journeys.Status.WaitingForDeboarding).stream().mapToInt(Journeys.Journey::getGroupSize).sum());
 
         world.transportFlights().deleteById(transportFlight.getId());
-        runFor(3 * Time.ONE_MINUTE);
+        // the journeys look at their flight every 5 minutes (the safety net)
+        runFor(PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL + Time.ONE_MINUTE);
 
         journeys.forEach(j -> {
             assertEquals(Journeys.Status.LookingForTickets, j.getStatus());
@@ -210,7 +212,7 @@ public class FlightWorkflowTest {
         boardEverybodyFlyAndStartDeboarding();
 
         transportFlight.setStatus(TransportFlights.Status.Flying);
-        runFor(3 * Time.ONE_MINUTE);
+        runFor(PaxManager.Deboarding.JOURNEY_WATCH_INTERVAL + Time.ONE_MINUTE);
 
         journeys.forEach(j -> assertEquals(Journeys.Status.Orphaned, j.getStatus()));
     }
@@ -232,23 +234,54 @@ public class FlightWorkflowTest {
     }
 
     @Test
-    public void test__deviation__pax_on_board_counter_does_not_reach_zero__the_deboarding_window_finishes_the_flight() {
+    public void test__deviation__corrupted_pax_on_board_is_healed_by_the_deboarding__the_flight_finishes_when_the_last_journey_has_left() {
         boardEverybodyFlyAndStartDeboarding();
         transportFlight.setPaxOnBoard(transportFlight.getPaxOnBoard() + 5); // 'phantom' PAX who are not in any journey
 
-        // all the journeys have deboarded in a few minutes, but 5 PAX are still on board
-        runUntil(Time.ONE_HOUR / 2, this::allJourneysHaveDeboarded);
-        assertTrue(allJourneysHaveDeboarded());
-        assertEquals(5, transportFlight.getPaxOnBoard());
-        assertEquals(TransportFlights.Status.Deboarding, transportFlight.getStatus());
+        // PAX on board is counted from the journeys which are still waiting, so the phantom PAX disappear at the first tick
+        runFor(10);
+        assertTrue(transportFlight.getPaxOnBoard() <= TOTAL_PAX, "PAX on board " + transportFlight.getPaxOnBoard());
 
-        // the flight lives until the deboarding window (an hour since the start) is over
-        runUntil(2 * Time.ONE_HOUR, () -> transportFlight.getStatus() == TransportFlights.Status.Finished);
+        runUntil(Time.ONE_HOUR / 2, () -> transportFlight.getStatus() == TransportFlights.Status.Finished);
         assertEquals(TransportFlights.Status.Finished, transportFlight.getStatus());
         assertEquals(0, transportFlight.getPaxOnBoard());
 
         runUntil(4 * Time.ONE_HOUR, this::allJourneysAreSpendingTheirTime);
         journeys.forEach(j -> assertEquals(Journeys.Status.SpendingTheirTime, j.getStatus()));
+    }
+
+    @Test
+    public void test__deboarding__pax_on_board_goes_down_gradually_while_the_world_runs() {
+        boardEverybodyFlyAndStartDeboarding();
+        assertEquals(TOTAL_PAX, transportFlight.getPaxOnBoard());
+
+        final List<Integer> pax = new ArrayList<>();
+        for (int i = 0; i < 60 && transportFlight.getStatus() == TransportFlights.Status.Deboarding; i++) {
+            runFor(10);
+            pax.add(transportFlight.getPaxOnBoard());
+        }
+
+        assertEquals(TransportFlights.Status.Finished, transportFlight.getStatus());
+        assertEquals(0, transportFlight.getPaxOnBoard());
+        // 24 PAX at 25 PAX per minute are out in about a minute, the number goes down by a few PAX every 10 seconds
+        assertTrue(pax.size() <= 12, "ticks " + pax.size() + " " + pax);
+        assertTrue(pax.stream().distinct().count() >= 4, "PAX on board values: " + pax);
+        int previous = TOTAL_PAX;
+        for (final int value : pax) {
+            assertTrue(value <= previous, "PAX on board goes up: " + pax);
+            assertTrue(previous - value <= 8, "PAX on board jumps: " + pax);
+            previous = value;
+        }
+    }
+
+    @Test
+    public void test__deboarding__nobody_waits_for_a_random_roll_every_journey_leaves_within_a_few_minutes() {
+        boardEverybodyFlyAndStartDeboarding();
+
+        runUntil(10 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.Finished);
+
+        assertEquals(TransportFlights.Status.Finished, transportFlight.getStatus());
+        journeys.forEach(j -> assertTrue(j.getStatus() != Journeys.Status.WaitingForDeboarding && j.getStatus() != Journeys.Status.OnBoard));
     }
 
     // ---- the pilot disconnects (the same actions as PilotContext does for VATSIM pilots) ----

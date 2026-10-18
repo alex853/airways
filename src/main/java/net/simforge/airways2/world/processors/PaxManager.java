@@ -15,12 +15,12 @@ import java.util.stream.Collectors;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-// todo ak0 the same should be done for deboarding
 public class PaxManager {
     private static final Logger log = LoggerFactory.getLogger(PaxManager.class);
 
     private final World world;
     private final Map<Integer, Boarding> boardings = new TreeMap<>();
+    private final Map<Integer, Deboarding> deboardings = new TreeMap<>();
 
     public PaxManager(final World world) {
         this.world = world;
@@ -150,6 +150,76 @@ public class PaxManager {
     }
 
     /**
+     * The deboarding is driven by the same fractional counter as the boarding, in the opposite direction and a bit faster: the counter
+     * grows with the deboarding rate and the journeys leave the flight one after another (the lowest id first) as soon as the counter
+     * covers the group size. PAX on board goes down smoothly, not by a whole group at a random moment.
+     */
+    public void startDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+
+        deboardings.put(transportFlight.getId(), new Deboarding(world.getWorldTime()));
+
+        log.info("t/f #{} - deboarding - STARTING", transportFlight.getId());
+    }
+
+    public void continueDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+
+        // after a restart of the application the state is not in the memory: the journeys which are still waiting are the state
+        final Deboarding deboarding = deboardings.computeIfAbsent(transportFlight.getId(), id -> new Deboarding(world.getWorldTime()));
+
+        final List<Journeys.Journey> waiting = world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
+                .toList();
+        int remaining = waiting.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
+
+        deboarding.tickDelta(world.getWorldTime(), remaining);
+
+        for (final Journeys.Journey journey : waiting) {
+            if (deboarding.counterValue < journey.getGroupSize()) {
+                break;
+            }
+            journeyControl().deboard(journey);
+            deboarding.counterValue -= journey.getGroupSize();
+            remaining -= journey.getGroupSize();
+        }
+
+        // the counter holds the PAX of the group which is leaving now, they are not on board anymore
+        transportFlight.setPaxOnBoard(Math.max(0, remaining - (int) deboarding.counterValue));
+
+        log.info("t/f #{} - deboarding - PAX {}, remaining {}, counter {}", transportFlight.getId(), transportFlight.getPaxOnBoard(), remaining, deboarding.counterValue);
+    }
+
+    /**
+     * The flight is finished (all the PAX have left or the deboarding window is over). The journeys which are still waiting are woken
+     * up to look at the finished flight and to deboard at once.
+     */
+    public void finishDeboarding(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+
+        deboardings.remove(transportFlight.getId());
+
+        world.journeys()
+                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
+                .forEach(journey -> journey.setHeartbeatTime(world.getWorldTime()));
+    }
+
+    /**
+     * The deboarding of the cancelled flight is not finished by finishDeboarding, its state must not stay in memory.
+     */
+    public void dropDeboardingState(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        deboardings.remove(transportFlight.getId());
+    }
+
+    // PAX per time with a random factor, the same formula for the boarding and for the deboarding
+    private static double counterDelta(final int timeElapsedSeconds, final int ratePaxPerMinute) {
+        return timeElapsedSeconds / (Time.ONE_MINUTE / (double) ratePaxPerMinute) * (Tools.random(85, 125) / 100.0);
+    }
+
+    /**
      * True if there are no journeys which are going to board the flight: all of them are on board or are already too late.
      * The journeys which have not checked-in yet are going to board, so the boarding goes on for them.
      */
@@ -228,6 +298,32 @@ public class PaxManager {
         log.info("t/f #{} - boarding - refreshed, remained {}", transportFlight.getId(), remainedToBoardJourneys.stream().map(j -> "j/y #" + j.getId()).collect(Collectors.toSet()));
     }
 
+    public static class Deboarding {
+        public static final int RATE_PAX_PER_MINUTE = 25;
+        /**
+         * A journey which waits for deboarding looks at its flight this often. The deboarding itself is done by the flight, the look is
+         * a safety net: the flight can be lost or finished.
+         */
+        public static final int JOURNEY_WATCH_INTERVAL = 5 * Time.ONE_MINUTE;
+
+        private int counterLastTime;
+        private double counterValue;
+
+        private Deboarding(final int worldTime) {
+            this.counterLastTime = worldTime;
+            this.counterValue = 0.0;
+        }
+
+        private void tickDelta(final int worldTime, final int remainingToDeboard) {
+            counterValue += counterDelta(worldTime - counterLastTime, RATE_PAX_PER_MINUTE);
+            counterLastTime = worldTime;
+
+            if (counterValue > remainingToDeboard) {
+                counterValue = remainingToDeboard;
+            }
+        }
+    }
+
     private static class Boarding {
         private static final int boardingTimeReserve = 3 * Time.ONE_MINUTE;
         private static final int ratePaxPerMinute = 15;
@@ -266,7 +362,7 @@ public class PaxManager {
 
         public void tickDelta(final int worldTime) {
             final int timeElapsed = worldTime - counterLastTime;
-            final double deltaAvailable = timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute) * (Tools.random(85, 125) / 100.0);
+            final double deltaAvailable = counterDelta(timeElapsed, ratePaxPerMinute);
 
             counterLastTime = worldTime;
 
