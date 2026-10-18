@@ -27,7 +27,6 @@ public class Application {
 //        World25_011_busybirds.main(args);
 //        World25_012_selected_cities.main(args);
 //        World25_013_rename_cities.main(args);
-        World25_014_first_pilot.main(args);
 //        World25_099_f1_tour.main(args);
 
         SpringApplication.run(Application.class, args);

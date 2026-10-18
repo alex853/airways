@@ -5,6 +5,10 @@
 Теперь **одна сущность** `Person`, и только для тех, кто имеет субъектность: пилоты и cabin crew. Пассажиры (груз журни) персонами
 не становятся, журни остаются как есть.
 
+**Статус.** Хранилище `persons` заведено (`Persons`), первая персона (id 1, пилот пользователя 1) создана однократным шагом мира
+(шаг потом удалён). Посмотреть персону: `GET /admin/person/{id}` (`PersonController`, все поля записи). Логики (процессор по
+heartbeat, назначения, состояния) пока нет.
+
 Связанные доки: [users.md](users.md), [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md),
 [heartbeat-index.md](heartbeat-index.md).
 
