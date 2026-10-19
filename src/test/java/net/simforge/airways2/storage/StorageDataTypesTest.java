@@ -16,6 +16,8 @@ class StorageDataTypesTest {
             .withDataField(DataField.of(DataType.Float))
             .withDataField(DataField.of(DataType.LatLong24bit))
             .withDataField(DataField.of(DataType.LatLong16bit))
+            .withDataField(DataField.of(DataType.Tenths8bit))
+            .withDataField(DataField.of(DataType.Float16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
             .build();
 
@@ -26,7 +28,9 @@ class StorageDataTypesTest {
     private final DataField floatField = storage.getDataField(4);
     private final DataField latLong24bitField = storage.getDataField(5);
     private final DataField latLong16bitField = storage.getDataField(6);
-    private final DataField plainString20Field = storage.getDataField(7);
+    private final DataField tenths8bitField = storage.getDataField(7);
+    private final DataField float16bitField = storage.getDataField(8);
+    private final DataField plainString20Field = storage.getDataField(9);
 
     private final int recordId = storage.addRecord();
 
@@ -166,7 +170,7 @@ class StorageDataTypesTest {
     private static final java.util.List<DataType> INT_TYPES = java.util.List.of(
             DataType.Signed32bit, DataType.Unsigned8bit, DataType.Unsigned16bit, DataType.Unsigned24bit);
     private static final java.util.List<DataType> FLOAT_TYPES = java.util.List.of(
-            DataType.Float, DataType.LatLong24bit, DataType.LatLong16bit);
+            DataType.Float, DataType.LatLong24bit, DataType.LatLong16bit, DataType.Tenths8bit, DataType.Float16bit);
 
     private DataField fieldOf(final DataType dataType) {
         return switch (dataType) {
@@ -177,12 +181,14 @@ class StorageDataTypesTest {
             case Float -> floatField;
             case LatLong24bit -> latLong24bitField;
             case LatLong16bit -> latLong16bitField;
+            case Tenths8bit -> tenths8bitField;
+            case Float16bit -> float16bitField;
             case PlainString -> plainString20Field;
         };
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "PlainString"})
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString"})
     public void test_getAsInt_is_not_applicable_to_not_integer_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsInt(recordId, fieldOf(dataType)));
     }
@@ -200,7 +206,7 @@ class StorageDataTypesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "PlainString"})
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString"})
     public void test_set_int_is_not_applicable_to_not_integer_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1));
     }
@@ -240,4 +246,4 @@ class StorageDataTypesTest {
 
         assertEquals(java.util.Set.of(DataType.values()), covered);
     }
-}
+}

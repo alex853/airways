@@ -145,6 +145,11 @@ public class SimTrackerContextStore {
                 : null;
         dto.measuredGs = context.getMeasuredGs();
         dto.flightMissionId = context.getFlightMissionId();
+        if (context.getNightMeter() != null) {
+            dto.hasNightMeter = true;
+            dto.nightSeconds = context.getNightMeter().getNightSeconds();
+            dto.nightCountedAt = context.getNightMeter().getCountedAt();
+        }
         return dto;
     }
 
@@ -173,6 +178,9 @@ public class SimTrackerContextStore {
                 .trackTrail(trackTrail != null ? new ArrayList<>(trackTrail) : null)
                 .measuredGs(dto.measuredGs)
                 .flightMissionId(dto.flightMissionId)
+                .nightMeter(dto.hasNightMeter
+                        ? new NightTimeMeter(dto.nightSeconds, dto.nightCountedAt)
+                        : null)
                 .build();
     }
 
@@ -190,6 +198,10 @@ public class SimTrackerContextStore {
         List<String> trackTrail;
         float measuredGs;
         Integer flightMissionId;
+        // the night time meter of the flight, an old file has none of it
+        boolean hasNightMeter;
+        double nightSeconds;
+        int nightCountedAt;
     }
 
     private static class PositionDto {

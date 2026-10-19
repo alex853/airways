@@ -9,6 +9,7 @@ import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
+import net.simforge.airways2.world.processors.BusyBirdsPilotPay;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.JavaTime;
@@ -206,11 +207,12 @@ public class BusyBirdsController {
         private String id;
         private String description;
         private List<LegDto> legs;
+        private SalaryDto salary; // total for the pilot, the sum of the legs
         private List<String> messages;
 
         public static PlanDto from(BusyBirdsMissionControl.MissionPlan plan) {
             if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                return new PlanDto("failure", null, null, null, plan.getMessages());
+                return new PlanDto("failure", null, null, null, null, plan.getMessages());
             }
 
             final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
@@ -222,10 +224,11 @@ public class BusyBirdsController {
                     Time.toLdt(leg.getPlannedDepTime()).toLocalDate().toString(),
                     JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
                     JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
-                    JavaTime.toHhmm(leg.getPlannedDuration())
+                    JavaTime.toHhmm(leg.getPlannedDuration()),
+                    SalaryDto.from(leg.getSalary())
             )).toList();
 
-            return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, null);
+            return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, SalaryDto.from(plan.getTotalSalary()), null);
         }
     }
 
@@ -241,6 +244,20 @@ public class BusyBirdsController {
         private final String depTime;
         private final String arrTime;
         private final String duration;
+        private final SalaryDto salary; // what the pilot gets for the leg
+    }
+
+    // Money is integer. total is flightPay + incomeShare.
+    @Data
+    @AllArgsConstructor
+    public static class SalaryDto {
+        private final int flightPay; // base hourly rate of the aircraft type * planned duration
+        private final int incomeShare; // share of the income of the mission, revenue leg only
+        private final int total;
+
+        public static SalaryDto from(final BusyBirdsPilotPay.Salary salary) {
+            return new SalaryDto(salary.flightPay(), salary.incomeShare(), salary.total());
+        }
     }
 
     @Data

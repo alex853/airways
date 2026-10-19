@@ -80,6 +80,8 @@ public class DataField {
             case Float -> 4;
             case LatLong24bit -> 3;
             case LatLong16bit -> 2;
+            case Tenths8bit -> 1;
+            case Float16bit -> 2;
             case PlainString -> 1 + length;
             //case PackedTo6BitsString -> (length * 6) / 8 + (((length * 6) % 8) > 0 ? 1 : 0);
         };

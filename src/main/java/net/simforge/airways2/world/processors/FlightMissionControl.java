@@ -78,7 +78,7 @@ public class FlightMissionControl {
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
         aircraft.setFlightMissionId(mission.getId());
         aircraft.setLastUpdated(worldTime);
-        // todo ak3 pilot/pilots/cabin crew - set status
+        world.personControl().onMissionStarted(mission);
 
         world.log(EventLog.EventType.FlightStarted, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDepartureAirportId()));
         log.info("f/m #{} - flight started and in Preflight status, aircraft {} is activated", mission.getId(), aircraft.getRegNo());
@@ -125,6 +125,7 @@ public class FlightMissionControl {
         aircraft.setLastUpdated(world.getWorldTime());
 
         world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
+        world.personControl().onMissionCancelled(mission, mission.getDepartureAirportId());
         log.info("f/m #{} - flight cancelled from {}", mission.getId(), actualStatus);
 
         // The t/f of the mission is not touched here: the callers (PilotContext, cancel before takeoff and cancel from flying)
@@ -234,9 +235,10 @@ public class FlightMissionControl {
         mission.setStatus(FlightMissions.Status.Flying);
         mission.setActualTakeoffWorldTime(world.getWorldTime());
 
-        // todo ak3 pilot/pilots/cabin crew - set status, location
+        world.personControl().onMissionTakeoff(mission);
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
         aircraft.setLocationStatus(Aircrafts.LocationStatus.Flying);
 
         final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -261,14 +263,8 @@ public class FlightMissionControl {
         mission.setActualLandingWorldTime(world.getWorldTime());
         mission.setActualLandingAirportId(landingAirport.getId());
 
-        if (mission.getUserId() > 0) {
-            // the last location of the pilot is the location of its person
-            world.persons().byUserId(mission.getUserId()).ifPresentOrElse(
-                    person -> person.setLocation(Persons.LocationType.Airport, landingAirport.getId()),
-                    () -> log.warn("f/m #{} - user #{} has no person, its location is not saved", mission.getId(), mission.getUserId()));
-        }
 
-        // todo ak3 pilot/pilots/cabin crew - set status, location
+        world.personControl().onMissionLanding(mission, landingAirport);
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingIn);
         aircraft.setLocationAirportId(landingAirport.getId());
@@ -323,7 +319,8 @@ public class FlightMissionControl {
 
         aircraft.setLastUpdated(world.getWorldTime());
 
-        // todo ak3 pilot/pilots/cabin crew - set status, location
+        world.personControl().onMissionFinished(mission);
+        world.busyBirdsMissionControl().payPilot(mission);
         // todo ak3 pilot assignements / aircraft assignments?
 
         world.log(EventLog.EventType.FlightFinished, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
