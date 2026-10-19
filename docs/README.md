@@ -21,6 +21,7 @@
 - [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
 - [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано
 - [clients-and-flight-modes.md](clients-and-flight-modes.md) — клиенты (веб, G7 FlightBag), режимы флайт-дашборда (manual, SimTracker, VATSIM), BusyBirds и ShadowJet, стартовый экран (описание и планы)
+- [use-cases.md](use-cases.md) — основные юзкейсы, которые обязана поддерживать система (BusyBirds через G7 автоматически; через веб, ручной режим и варианты), список изменений и оценка
 - [time-storage-review.md](time-storage-review.md) — ревью: как в дата-модели хранятся времена, даты и длительности (форматы, наблюдения, предложения)
 
 ## Правила ведения

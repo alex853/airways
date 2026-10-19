@@ -4,9 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.tools.Id;
+import net.simforge.airways2.app.userstorage.User;
+import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.BusyBirdsPilotPay;
@@ -103,6 +106,11 @@ public class BusyBirdsController {
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
             Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
+            final String pilotProblem = pilotBookingProblem(world, userId, aircraft);
+            if (pilotProblem != null) {
+                return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
+            }
+
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
@@ -145,6 +153,11 @@ public class BusyBirdsController {
 
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
 
+            final String pilotProblem = pilotBookingProblem(world, userId, aircraft);
+            if (pilotProblem != null) {
+                return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
+            }
+
             if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
                 return new BookMissionResponse("failure", Collections.singletonList("aircraft is not parked at airport"));
             }
@@ -171,6 +184,32 @@ public class BusyBirdsController {
             return new BookMissionResponse("success", Collections.singletonList(
                     "Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime())));
         });
+    }
+
+    // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands. Returns the reason of
+    // the refusal, null if the booking is allowed.
+    private static String pilotBookingProblem(final World world, final int userId, final Aircrafts.Aircraft aircraft) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        return pilotBookingProblem(world, personId, aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport ? aircraft.getLocationAirportId() : 0);
+    }
+
+    static String pilotBookingProblem(final World world, final int personId, final int aircraftAirportId) {
+        final Optional<Persons.Person> person = personId > 0 ? world.persons().byId(personId) : Optional.empty();
+        if (person.isEmpty()) {
+            return "You have no pilot (person), so no flight can be booked.";
+        }
+        if (person.get().getState() != Persons.State.Idle) {
+            return "Your pilot is busy now (" + person.get().getState() + "), so no flight can be booked.";
+        }
+        if (person.get().getLocationType() != Persons.LocationType.Airport) {
+            return "Your pilot is not at an airport, so no flight can be booked.";
+        }
+        if (aircraftAirportId > 0 && person.get().getLocationId() != aircraftAirportId) {
+            final String pilotAirport = world.airports().getIcao(person.get().getLocationId()).orElse("?");
+            final String aircraftAirport = world.airports().getIcao(aircraftAirportId).orElse("?");
+            return "Your pilot is at " + pilotAirport + " but the aircraft is at " + aircraftAirport + ", the flight cannot be booked.";
+        }
+        return null;
     }
 
     @Data
