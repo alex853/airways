@@ -66,7 +66,11 @@ public class World25_013_rename_cities {
                 new String[]{"KOKC", "Oklahoma City Will Rogers"},
                 new String[]{"HKJK", "Nairobi Jomo Kenyatta"},
                 new String[]{"LYBE", "Belgrade Nikola Tesla"},
-                new String[]{"SBGL", "Rio de Janeiro Galeao"}
+                new String[]{"SBGL", "Rio de Janeiro Galeao"},
+                new String[]{"LFML", "Marseille Provence"},
+                new String[]{"ENTC", "Tromso Langnes"},
+                new String[]{"UMKK", "Kaliningrad Khrabrovo"},
+                new String[]{"RPVM", "Cebu Mactan"}
         ));
     }
 }

@@ -614,4 +614,12 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   As-salimiyah 152 100, Jalib as-suyuh 142 700, As-sabah#iyah 131 200, H#itan-al-janubiyah 127 700; районы меньше 100k не трогаем. Страна
   Kuwait создаётся импортом. Военные OKAJ, OKAS уже `military`; Z19M (дорожная полоса) не берём. Имя `Kuwait Intl` оставлено.
   `BusinessAviationTerminal` на OKKK, attraction не ставим.
-
+- **LFML - Marseille, ENTC - Tromso, UMKK - Kaliningrad, RPVM - Cebu (VATSIM-бэклог, 2026-10-19):** все четыре тип 2 (нового города в мире нет).
+  **Marseille** 826 300 → 1 900 300 (aire d'attraction Marseille-Aix, ~1,9M, приблизительно), `del Aix-en-provence` (139 000, 14 nm от Marseille).
+  Toulon (161 600, 26 nm), Nimes, Avignon, Arles остаются отдельными рынками. LFML (size 5933) создаётся автоматически, имя
+  `Marseille Provence`; Les Milles и военные (LFMY, LFMI, LFTR и др.) не берём. **Tromso** 52 100 → 77 100 (~77k), ENTC (size 2384, шаг `009` и
+  `create-links`), имя `Tromso Langnes`. **Kaliningrad** 434 700 → 650 700 (агломерация ~650k), UMKK (size 2501, `009` и `create-links`), имя
+  `Kaliningrad Khrabrovo`; Z25W Chkalovsk (10 nm) не трогаем (решение пользователя: `military` не ставим), Klaipeda и Elblag за границей отдельные.
+  **Cebu** 776 600 → 3 000 600 (Metro Cebu ~3,0M), `del Mandaue` (309 700) и `del Lapu-lapu` (218 100) по 2 nm от ядра; **Toledo** (152 500, 16 nm,
+  за горами) по решению пользователя остаётся отдельным городом; RPVM (size 3318, `009` и `create-links`), имя `Cebu Mactan`; RPVT
+  Tagbilaran не берём. `BusinessAviationTerminal` только на LFML, attraction не ставим. Шаги `009`, `012`, `013` включены на деплой.

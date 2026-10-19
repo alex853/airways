@@ -5128,7 +5128,7 @@ Finland,FI,Eurajoki,5900,61.22,21.71
 Finland,FI,Nakkila,5900,61.37,21.97
 Finland,FI,Sakyla,5000,61.05,22.37
 France,FR,Paris,11500700,48.86,2.34
-France,FR,Marseille,826300,43.31,5.37
+France,FR,Marseille,1900300,43.31,5.37
 France,FR,Lyon,2300600,45.76,4.83
 France,FR,Toulouse,417400,43.62,1.45
 France,FR,Nice,1000800,43.7,7.27
@@ -5147,7 +5147,7 @@ France,FR,Angers,153800,47.48,-0.54
 France,FR,Brest,152000,48.39,-4.5
 France,FR,Le mans,149300,48.0,0.2
 France,FR,Dijon,146400,47.33,5.03
-France,FR,Aix-en-provence,139000,43.53,5.44
+France,FR,del Aix-en-provence,139000,43.53,5.44
 France,FR,Clermont-ferrand,137300,45.78,3.08
 France,FR,Nimes,137200,43.84,4.35
 France,FR,Amiens,135800,49.9,2.3
@@ -11455,7 +11455,7 @@ Norway,NO,Fredrikstad-sarpsborg,96600,59.24,10.94
 Norway,NO,Drammen,90000,59.75,10.2
 Norway,NO,Porsgrunn-skien,84900,59.15,9.66
 Norway,NO,Kristiansand,63400,58.15,7.99
-Norway,NO,Tromso,52100,69.66,18.94
+Norway,NO,Tromso,77100,69.66,18.94
 Norway,NO,Tonsberg,44700,59.27,10.42
 Norway,NO,Alesund,44000,62.48,6.2
 Norway,NO,Haugesund,40300,59.42,5.27
@@ -12315,19 +12315,19 @@ Peru,PE,Illimo,5600,-6.42,-79.83
 Peru,PE,Orcopampa,5600,-15.27,-72.36
 Philippines,PH,Manila,14000100,14.62,120.97
 Philippines,PH,Davao,951000,7.11,125.63
-Philippines,PH,Cebu,776600,10.32,123.9
+Philippines,PH,Cebu,3000600,10.32,123.9
 Philippines,PH,Cagayan,463900,8.45,124.67
 Philippines,PH,Bacolod,452500,10.63,122.97
 Philippines,PH,Iloilo,390900,10.69,122.55
 Philippines,PH,del Bacoor,339400,14.46,120.94
-Philippines,PH,Mandaue,309700,10.33,123.93
+Philippines,PH,del Mandaue,309700,10.33,123.93
 Philippines,PH,Angeles,292600,15.15,120.55
 Philippines,PH,Baguio,273100,16.43,120.57
 Philippines,PH,del Cainta,272700,14.58,121.12
 Philippines,PH,San pedro,256200,14.29,121.41
 Philippines,PH,San fernando,250500,15.03,120.69
 Philippines,PH,Lucena,240500,13.95,121.6
-Philippines,PH,Lapu-lapu,218100,10.33,123.93
+Philippines,PH,del Lapu-lapu,218100,10.33,123.93
 Philippines,PH,del Binan,216800,14.34,121.08
 Philippines,PH,Calamba,215600,14.21,121.15
 Philippines,PH,General santos,211900,6.1,125.25
@@ -13328,7 +13328,7 @@ Russia,RU,Tomsk,488300,56.5,84.97
 Russia,RU,Kemerovo,474800,55.33,86.08
 Russia,RU,Tula,459700,54.2,37.61
 Russia,RU,Kirov,444100,58.6,49.66
-Russia,RU,Kaliningrad,434700,54.71,20.5
+Russia,RU,Kaliningrad,650700,54.71,20.5
 Russia,RU,Ceboksary,424400,56.13,47.25
 Russia,RU,Brjansk,409900,53.26,34.42
 Russia,RU,Magnitogorsk,409800,53.42,58.97
