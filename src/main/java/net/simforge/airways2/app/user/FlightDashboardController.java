@@ -81,27 +81,29 @@ public class FlightDashboardController {
                 simStatus = SimTracker.UserStatus.none();
             }
 
-            // With the sim tracker the flight is the one the tracker follows, without it (manual mode) it is the next active flight of the user.
-            Optional<FlightMissions.Mission> flight;
-            if (simTrackerConnected) {
-                Integer flightMissionId = simStatus.getFlightMissionId() != null ? Id.decode(simStatus.getFlightMissionId()) : null;
-                flight = flightMissionId != null ? world.flightMissions().byId(flightMissionId) : Optional.empty();
-            } else {
+            // The flight is the one the tracker follows, and the next active flight of the user when the tracker does not know it (it is not connected
+            // or the flight is manual).
+            Optional<FlightMissions.Mission> flight = Optional.empty();
+            if (simTrackerConnected && simStatus.getFlightMissionId() != null) {
+                flight = world.flightMissions().byId(Id.decode(simStatus.getFlightMissionId()));
+            }
+            if (flight.isEmpty()) {
                 flight = findActiveFlight(world, userId);
             }
 
-            // The actions which the dashboard may offer: the ones of the sim tracker (it checks the position of the aircraft) or the manual ones.
-            final List<SimTracker.UserAction> actions = simTrackerConnected
-                    ? (simStatus.getActions() != null ? simStatus.getActions() : List.of())
-                    : flight.map(fm -> buildManualActions(world, fm)).orElse(List.of());
+            final FlightMissions.Mission fm = flight.orElse(null);
+            final TrackingMode mode = resolveMode(fm, simTrackerConnected);
+
+            // A manual flight is not about the position of the sim, so the sim does not take part in the verdict about the pilot
+            final SimTracker.UserStatus verdictSim = mode == TrackingMode.MANUAL ? SimTracker.UserStatus.none() : simStatus;
 
             return new Status2Dto(
-                    simTrackerConnected ? TrackingMode.SIM_TRACKER : TrackingMode.MANUAL,
-                    actions,
+                    mode,
+                    buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)),
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
-                    flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
-                    buildPilotDto(world, userId, simStatus));
+                    flight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null),
+                    buildPilotDto(world, userId, verdictSim));
         });
     }
 
@@ -114,13 +116,55 @@ public class FlightDashboardController {
                 .findFirst();
     }
 
+    /**
+     * Who does the steps of the flight: null while it is not decided (the flight is not started yet, the pilot chooses with the button he presses),
+     * after the start it is the mode which the flight was started in. A flight started before the mode was stored is tracked if the tracker is connected.
+     */
+    static TrackingMode resolveMode(final FlightMissions.Mission flight, final boolean simTrackerConnected) {
+        if (flight == null) {
+            return null;
+        }
+        return switch (flight.getTrackingMode()) {
+            case Manual -> TrackingMode.MANUAL;
+            case SimTracker -> TrackingMode.SIM_TRACKER;
+            case Vatsim -> TrackingMode.VATSIM;
+            case None -> flight.getStatus() == FlightMissions.Status.Dispatched
+                    ? null
+                    : (simTrackerConnected ? TrackingMode.SIM_TRACKER : TrackingMode.MANUAL);
+        };
+    }
+
+    /**
+     * What the dashboard may offer now. Before the start: the start of the tracker (it checks the position of the aircraft, only while the tracker is
+     * connected) and the manual start, the pilot chooses. After the start: the actions of the tracker, or the manual ones, by the mode of the flight.
+     */
+    static List<SimTracker.UserAction> buildActions(final World world,
+                                                    final FlightMissions.Mission flight,
+                                                    final SimTracker.UserStatus simStatus,
+                                                    final boolean simTrackerConnected,
+                                                    final int pilotAirportId) {
+        if (flight == null) {
+            return List.of();
+        }
+
+        final List<SimTracker.UserAction> trackerActions = simTrackerConnected && simStatus.getActions() != null ? simStatus.getActions() : List.of();
+        final TrackingMode mode = resolveMode(flight, simTrackerConnected);
+
+        if (mode == null) {
+            final List<SimTracker.UserAction> actions = new ArrayList<>(trackerActions);
+            actions.addAll(buildManualActions(world, flight, pilotAirportId));
+            return actions;
+        }
+        return mode == TrackingMode.MANUAL ? buildManualActions(world, flight, pilotAirportId) : trackerActions;
+    }
+
     // The steps which the pilot does with buttons when nothing tracks the flight. There are no checks of the position of the aircraft here,
     // an action is listed (and allowed) when the flight and its transport flight are in the status where the controller accepts it.
-    static List<SimTracker.UserAction> buildManualActions(final World world, final FlightMissions.Mission flight) {
+    static List<SimTracker.UserAction> buildManualActions(final World world, final FlightMissions.Mission flight, final int pilotAirportId) {
         final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
         final List<SimTracker.UserAction> actions = new ArrayList<>();
         switch (flight.getStatus()) {
-            case Dispatched -> actions.add(manualAction("start-flight"));
+            case Dispatched -> actions.add(manualStartAction(world, flight, pilotAirportId));
             case Preflight -> {
                 if (tf != null && tf.getStatus() == TransportFlights.Status.WaitingForBoarding) {
                     actions.add(manualAction("start-boarding"));
@@ -141,6 +185,33 @@ public class FlightDashboardController {
             default -> { }
         }
         return actions;
+    }
+
+    // The pilot starts a flight from the airport where the pilot is: the position of the sim means nothing for a manual flight, the world is what counts
+    private static SimTracker.UserAction manualStartAction(final World world, final FlightMissions.Mission flight, final int pilotAirportId) {
+        final boolean pilotAtDeparture = pilotAirportId == flight.getDepartureAirportId();
+        final String icao = world.airports().getIcao(flight.getDepartureAirportId()).orElse("?");
+        // the same condition as the start of the flight itself has (FlightMissionControl.start)
+        final boolean aircraftAtDeparture = world.aircrafts().byId(flight.getAircraftId())
+                .map(a -> a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle
+                        && a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport
+                        && a.getLocationAirportId() == flight.getDepartureAirportId())
+                .orElse(false);
+        return new SimTracker.UserAction("start-flight-manual", pilotAtDeparture && aircraftAtDeparture, List.of(
+                new SimTracker.CheckResult("The pilot is at the departure airport " + icao, pilotAtDeparture),
+                new SimTracker.CheckResult("The aircraft is idle at the departure airport " + icao, aircraftAtDeparture)));
+    }
+
+    // The airport where the pilot of the user is in the world, 0 if there is no pilot or the pilot is not at an airport
+    private static int pilotAirportId(final World world, final int userId) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        if (personId <= 0) {
+            return 0;
+        }
+        return world.persons().byId(personId)
+                .filter(p -> p.getLocationType() == Persons.LocationType.Airport)
+                .map(Persons.Person::getLocationId)
+                .orElse(0);
     }
 
     // A manual landing is allowed not earlier than a part of the planned duration after takeoff, the same rule as the one of the endpoint.
@@ -237,8 +308,32 @@ public class FlightDashboardController {
         }
     }
 
+    // True if the steps of the flight are done by the sim tracker: the flight was started in this mode, or it was started before the mode was stored
+    // (or it is not started yet) and the tracker is connected.
+    private boolean isTrackedBySimTracker(final FlightMissions.Mission flight, final int userId) {
+        return switch (flight.getTrackingMode()) {
+            case SimTracker -> true;
+            case Manual, Vatsim -> false;
+            case None -> simTrackerBean.isUserConnected(userId);
+        };
+    }
+
+    // The status of the sim of the user for the checks of a flight which the sim tracker follows: without the reports there is nothing to check.
+    private SimTracker.UserStatus requireConnectedSimStatus(final int userId) {
+        final SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+        if (simStatus == null) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "the sim tracker is not connected: no reports from the sim for a while");
+        }
+        return simStatus;
+    }
+
     private void checkUserMayUseDashboard(final World world, final int userId) {
-        SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+        checkUserMayUseDashboard(world, userId, false);
+    }
+
+    // The sim is not asked where the pilot is when the flight is manual: the position of the sim means nothing for it.
+    private void checkUserMayUseDashboard(final World world, final int userId, final boolean ignoreSim) {
+        SimTracker.UserStatus simStatus = ignoreSim ? null : simTrackerBean.getSimStatus(userId);
         if (simStatus == null) {
             simStatus = SimTracker.UserStatus.none();
         }
@@ -246,11 +341,29 @@ public class FlightDashboardController {
         checkDashboardIsAllowed(buildUserLocation(world, user, userId, simStatus));
     }
 
+    /**
+     * @param mode "manual" or "tracker": the pilot chooses how the flight goes. Without it the flight is tracked if the sim tracker is connected
+     *             (the tab of G7 does not send it) and manual otherwise.
+     */
     @PostMapping("/start-flight")
     public Status2Dto startFlight(@RequestAttribute("userId") int userId,
-                                  @RequestParam(name = "flightId") String flightIdStr) {
+                                  @RequestParam(name = "flightId") String flightIdStr,
+                                  @RequestParam(name = "mode", required = false) String mode) {
         return worldBean.modifySync(world -> {
-            checkUserMayUseDashboard(world, userId);
+            final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+            final FlightMissions.TrackingMode trackingMode;
+            if (mode == null) {
+                trackingMode = simTrackerConnected ? FlightMissions.TrackingMode.SimTracker : FlightMissions.TrackingMode.Manual;
+            } else if (mode.equals("manual")) {
+                trackingMode = FlightMissions.TrackingMode.Manual;
+            } else if (mode.equals("tracker")) {
+                trackingMode = FlightMissions.TrackingMode.SimTracker;
+            } else {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown mode '" + mode + "', expected 'manual' or 'tracker'");
+            }
+            final boolean tracked = trackingMode == FlightMissions.TrackingMode.SimTracker;
+
+            checkUserMayUseDashboard(world, userId, !tracked);
             int flightId = Id.decode(flightIdStr);
 
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -259,10 +372,18 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Dispatched, "flight status is not as expected");
 
-            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+            // the pilot starts from the airport where the pilot is, in any mode
+            final int pilotAirportId = pilotAirportId(world, userId);
+            if (pilotAirportId != flight.getDepartureAirportId()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the pilot is at " + world.airports().getIcao(pilotAirportId).orElse("no airport")
+                        + " but the flight departs from " + world.airports().getIcao(flight.getDepartureAirportId()).orElse("?"));
+            }
 
-            if (simTrackerConnected) {
-                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            if (tracked) {
+                if (!simTrackerConnected) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "the sim tracker is not connected, the flight can only be started manually");
+                }
+                SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
                 checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-flight");
             }
@@ -272,18 +393,18 @@ public class FlightDashboardController {
                 // todo ak2 vatsim support
             }
 
-            log.info("f/m #{} - flight-dashboard - start-flight2", flightId);
-            // todo ak2 a manual start should not cancel the flight silently: answer with an error which says what exactly was
-            //   checked and what failed (startResult.reason() has it: the flight status, or the aircraft operational status,
-            //   location status, location airport), the flight stays Dispatched and the pilot can fix the cause and try again.
-            //   Now the old behaviour is kept: the flight is cancelled, the user sees only the new status of the flight.
+            log.info("f/m #{} - flight-dashboard - start-flight, mode {}", flightId, trackingMode);
+            // a start which fails changes nothing: the flight stays Dispatched, the pilot sees the reason and can fix the cause and try again
             final FlightMissionControl.StartResult startResult = world.flightMissionControl().start(flight);
             if (!startResult.started()) {
-                world.flightMissionControl().cancelDispatched(flight, startResult.reason());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flight cannot be started: " + startResult.reason());
             }
 
-            if (simTrackerConnected) {
+            world.flightMissionControl().setTrackingMode(flight, trackingMode);
+            if (tracked) {
                 world.flightMissionControl().switchToExternalCoordinatesMode(flight);
+            }
+            if (simTrackerConnected) {
                 simTrackerBean.refreshContext(userId);
             }
 
@@ -304,10 +425,10 @@ public class FlightDashboardController {
 
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
-            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+            final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 
-            if (simTrackerConnected) {
-                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            if (isTrackedBySimTracker(flight, userId)) {
+                SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
                 checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "reschedule");
             }
@@ -341,10 +462,10 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
 
-            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+            final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 
-            if (simTrackerConnected) {
-                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            if (isTrackedBySimTracker(flight, userId)) {
+                SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
                 checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-boarding");
             }
@@ -378,8 +499,8 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
-                throw new IllegalStateException("manual blocks-off is prohibited");
+            if (isTrackedBySimTracker(flight, userId)) {
+                throw new IllegalStateException("manual blocks-off is prohibited: the flight is tracked by the sim tracker");
             }
 
             //noinspection StatementWithEmptyBody
@@ -407,8 +528,8 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Departure, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
-                throw new IllegalStateException("manual takeoff is prohibited");
+            if (isTrackedBySimTracker(flight, userId)) {
+                throw new IllegalStateException("manual takeoff is prohibited: the flight is tracked by the sim tracker");
             }
 
             //noinspection StatementWithEmptyBody
@@ -436,8 +557,8 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Flying, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
-                throw new IllegalStateException("manual landing is prohibited");
+            if (isTrackedBySimTracker(flight, userId)) {
+                throw new IllegalStateException("manual landing is prohibited: the flight is tracked by the sim tracker");
             }
 
             //noinspection StatementWithEmptyBody
@@ -470,8 +591,8 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Arrival, "flight status is not as expected");
 
-            if (simTrackerBean.isUserConnected(userId)) {
-                throw new IllegalStateException("manual blocks-on is prohibited");
+            if (isTrackedBySimTracker(flight, userId)) {
+                throw new IllegalStateException("manual blocks-on is prohibited: the flight is tracked by the sim tracker");
             }
 
             //noinspection StatementWithEmptyBody
@@ -504,10 +625,10 @@ public class FlightDashboardController {
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
 
-            boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+            final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 
-            if (simTrackerConnected) {
-                SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            if (isTrackedBySimTracker(flight, userId)) {
+                SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
                 checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
                 checkActionAllowed(simStatus, "start-deboarding");
             }
@@ -690,7 +811,8 @@ public class FlightDashboardController {
     @AllArgsConstructor
     @Data
     public static class Status2Dto {
-        // Who tracks the flight: the sim tracker does Blocks Off, Takeoff, Landing, Blocks On itself, in manual mode the pilot does them with buttons
+        // Who does the steps of the flight (Blocks Off, Takeoff, Landing, Blocks On): the sim tracker or the pilot with buttons (manual). The mode is
+        // chosen when the flight is started and does not change after that; null until then (and when there is no flight).
         private final TrackingMode mode;
         // What the dashboard may offer now, the same list for both modes
         private final List<SimTracker.UserAction> actions;
@@ -710,7 +832,8 @@ public class FlightDashboardController {
 
     public enum TrackingMode {
         SIM_TRACKER,
-        MANUAL
+        MANUAL,
+        VATSIM
     }
 
     public enum UserLocationState {

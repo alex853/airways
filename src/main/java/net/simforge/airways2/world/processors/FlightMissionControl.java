@@ -30,6 +30,14 @@ public class FlightMissionControl {
         return world.transportFlightControl();
     }
 
+    /**
+     * Who does the steps of the flight (blocks off, takeoff, landing, blocks on). It is set when the flight is started and is not changed after that.
+     */
+    public void setTrackingMode(final FlightMissions.Mission mission, final FlightMissions.TrackingMode trackingMode) {
+        mission.setTrackingMode(trackingMode);
+        log.info("f/m #{} - tracking mode {}", mission.getId(), trackingMode);
+    }
+
     public void switchToExternalCoordinatesMode(FlightMissions.Mission mission) {
         mission.setCoordinatesSource(FlightMissions.CoordinatesSource.TrackedViaTracker);
         log.info("f/m #{} - flight switched to external coordinates mode", mission.getId());

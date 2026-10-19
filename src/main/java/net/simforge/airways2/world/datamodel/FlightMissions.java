@@ -77,6 +77,7 @@ public class FlightMissions {
     private final BitAccessField flags2Bits = BitAccessField.instance(storage, flags2RawField);
     private final BitAccessField.Section nightTakeoffBitField = flags2Bits.section(0, 1);
     private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
+    private final BitAccessField.Section trackingModeBitField = flags2Bits.section(2, 2);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField3 = storage.getDataField(11);
     @SuppressWarnings("unused")
@@ -230,6 +231,19 @@ public class FlightMissions {
         public void setNightMinutes(final float nightMinutes) {
             checkArgument(nightMinutes >= 0, "night time can not be negative");
             storage.set(id, nightMinutesField, nightMinutes);
+        }
+
+        /**
+         * Who does the steps of the flight (blocks off, takeoff, landing, blocks on): set when the flight is started and is not changed after that.
+         * None for a flight which is not started yet, for a flight of an NPC and for a flight started before the mode was stored.
+         */
+        public TrackingMode getTrackingMode() {
+            return TrackingMode.byCode(trackingModeBitField.getInt(id));
+        }
+
+        public void setTrackingMode(final TrackingMode trackingMode) {
+            checkNotNull(trackingMode);
+            trackingModeBitField.setInt(id, trackingMode.ordinal());
         }
 
         public CoordinatesSource getCoordinatesSource() {
@@ -408,6 +422,20 @@ public class FlightMissions {
                 case 0 -> NPC;
                 case 1 -> PC;
                 default -> throw new IllegalArgumentException("Invalid character mode code: " + code);
+            };
+        }
+    }
+
+    public enum TrackingMode {
+        None, Manual, SimTracker, Vatsim;
+
+        public static TrackingMode byCode(final int code) {
+            return switch (code) {
+                case 0 -> None;
+                case 1 -> Manual;
+                case 2 -> SimTracker;
+                case 3 -> Vatsim;
+                default -> throw new IllegalArgumentException("Invalid tracking mode code: " + code);
             };
         }
     }

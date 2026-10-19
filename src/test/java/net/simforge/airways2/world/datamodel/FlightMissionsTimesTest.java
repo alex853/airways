@@ -148,4 +148,29 @@ class FlightMissionsTimesTest {
         assertEquals(132.0f, loadedMission.getNightMinutes(), 0.0f);
         assertEquals(true, loadedMission.isNightTakeoff());
     }
+
+    @Test
+    public void test__tracking_mode_is_none_by_default_and_does_not_touch_the_night_flags(@TempDir final Path dir) throws IOException {
+        final FlightMissions.Mission mission = mission();
+        assertEquals(FlightMissions.TrackingMode.None, mission.getTrackingMode());
+
+        mission.setNightTakeoff(true);
+        mission.setNightLanding(true);
+        for (final FlightMissions.TrackingMode mode : FlightMissions.TrackingMode.values()) {
+            mission.setTrackingMode(mode);
+            assertEquals(mode, mission.getTrackingMode());
+            assertEquals(true, mission.isNightTakeoff());
+            assertEquals(true, mission.isNightLanding());
+        }
+
+        mission.setTrackingMode(FlightMissions.TrackingMode.Manual);
+        mission.setNightTakeoff(false);
+        assertEquals(FlightMissions.TrackingMode.Manual, mission.getTrackingMode());
+        assertEquals(true, mission.isNightLanding());
+
+        world.flightMissions().save(dir);
+        final FlightMissions loaded = new FlightMissions();
+        loaded.loadIfExists(dir);
+        assertEquals(FlightMissions.TrackingMode.Manual, loaded.byId(mission.getId()).orElseThrow().getTrackingMode());
+    }
 }

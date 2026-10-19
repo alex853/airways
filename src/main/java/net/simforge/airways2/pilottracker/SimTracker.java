@@ -36,6 +36,10 @@ public class SimTracker {
     private static final long STALE_POSITION_MILLIS = 10 * 60 * 1000;
     // saved contexts with a position older than this are dropped on restore, the user is not on the line anymore
     private static final long MAX_RESTORED_CONTEXT_AGE_MILLIS = 30 * 60 * 1000;
+    // The user is connected while the reports come (the client sends one every 10 seconds). Without a report the connection is lost after 3 minutes,
+    // and after 10 minutes if the user has a flight which is started (Preflight or further): a pause of the sim or a lost network must not drop it.
+    static final long CONNECTED_IDLE_MILLIS = 3 * 60 * 1000;
+    static final long CONNECTED_ACTIVE_FLIGHT_MILLIS = 10 * 60 * 1000;
 
     private WorldAccess worldAccess;
     private List<AirportInfo> airportInfos;
@@ -97,12 +101,24 @@ public class SimTracker {
         newContext = processEvents(oldContext, newContext, worldTime);
 
         newContext = doChecks(newContext);
+        newContext = updateActiveFlight(newContext);
 
         userContexts.put(userId, newContext);
     }
 
-    private void updateAircraftLocation(Context context) {
+    // A flight which the pilot started manually is not followed by the tracker: its steps are done with the buttons of the dashboard and the position of
+    // the aircraft is flown by the world, the reports of the sim change nothing in it.
+    private boolean isManualFlight(final Context context) {
         if (context.getFlightMissionId() == null) {
+            return false;
+        }
+        return worldAccess.read(world -> world.flightMissions().byId(context.getFlightMissionId())
+                .map(fm -> fm.getTrackingMode() == FlightMissions.TrackingMode.Manual)
+                .orElse(false));
+    }
+
+    private void updateAircraftLocation(Context context) {
+        if (context.getFlightMissionId() == null || isManualFlight(context)) {
             return;
         }
 
@@ -134,7 +150,7 @@ public class SimTracker {
     }
 
     private Context processEvents(Context oldContext, Context newContext, int worldTime) {
-        if (newContext.getFlightMissionId() == null) {
+        if (newContext.getFlightMissionId() == null || isManualFlight(newContext)) {
             return newContext;
         }
         Context result = newContext;
@@ -202,7 +218,7 @@ public class SimTracker {
     // mission, or after a restart when the saved context is lost) and the counting goes on from the value which the flight mission has kept.
     // The time is counted from blocks off to blocks on, that is while the flight mission is in Departure, Flying or Arrival status.
     private Context measureNightTime(final Context context, final int worldTime) {
-        if (context.getFlightMissionId() == null) {
+        if (context.getFlightMissionId() == null || isManualFlight(context)) {
             return context.withNightMeter(null);
         }
         return worldAccess.read(world -> {
@@ -237,13 +253,29 @@ public class SimTracker {
 
         Context newContext = validateOrFindCurrentFlightMission(oldContext);
         newContext = doChecks(newContext);
+        newContext = updateActiveFlight(newContext);
 
         userContexts.put(userId, newContext);
+    }
+
+    // Whether the user has a flight which is started (Preflight or further, a flight which is only Dispatched does not count): the connection of the
+    // user lives longer then. It is kept in the context so the status of the user does not have to ask the world.
+    private Context updateActiveFlight(final Context context) {
+        final boolean activeFlight = worldAccess.read(world -> world.flightMissions().allByUserId(context.getUserId())
+                .anyMatch(fm -> switch (fm.getStatus()) {
+                    case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                    default -> false;
+                }));
+        return activeFlight == context.isActiveFlight() ? context : context.toBuilder().activeFlight(activeFlight).build();
     }
 
     private Context doChecks(Context context) {
         if (context.getFlightMissionId() == null) {
             return context;
+        }
+        if (isManualFlight(context)) {
+            // the dashboard offers the manual actions for such a flight
+            return context.toBuilder().actions(new ArrayList<>()).build();
         }
 
         return worldAccess.read(world -> {
@@ -366,13 +398,22 @@ public class SimTracker {
                 posrep.getAltitude());
     }
 
+    /**
+     * The status of the user, null if the user is not connected: there were no reports or the last one is too old (see CONNECTED_IDLE_MILLIS).
+     */
     public UserStatus getUserStatus(int userId) {
         Context context = userContexts.get(userId);
-        if (context != null) {
+        if (isConnected(context, System.currentTimeMillis())) {
             return UserStatus.from(context);
         } else {
             return null;
         }
+    }
+
+    static boolean isConnected(final Context context, final long nowMillis) {
+        return context != null
+                && context.position != null
+                && nowMillis - context.position.getTime() <= (context.activeFlight ? CONNECTED_ACTIVE_FLIGHT_MILLIS : CONNECTED_IDLE_MILLIS);
     }
 
     public void setWorldAccess(WorldAccess worldAccess) {
@@ -422,6 +463,8 @@ public class SimTracker {
         private final List<UserAction> actions;
         // the night time of the flight of flightMissionId, null if there is no flight mission or it is not measured yet
         private final NightTimeMeter nightMeter;
+        // the user has a started flight (Preflight or further), see CONNECTED_ACTIVE_FLIGHT_MILLIS
+        private final boolean activeFlight;
 
         public static Context forUser(int userId) {
             return Context.builder()

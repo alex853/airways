@@ -23,6 +23,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class DashboardManualActionsTest {
     private World world;
     private FlightMissions.Mission mission;
+    // the pilot stands at the departure airport of the flight
+    private int departureId;
 
     @BeforeEach
     void beforeEach() {
@@ -32,15 +34,16 @@ class DashboardManualActionsTest {
         final Aircrafts.Aircraft aircraft = world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", a);
         final int departure = world.getWorldTime() + Time.ONE_HOUR;
         mission = world.flightMissions().createDispatchedMission(aircraft, a, b, departure, departure + 2 * Time.ONE_HOUR);
+        departureId = a.getId();
     }
 
     private List<String> names() {
-        return FlightDashboardController.buildManualActions(world, mission).stream().map(SimTracker.UserAction::getName).toList();
+        return FlightDashboardController.buildManualActions(world, mission, departureId).stream().map(SimTracker.UserAction::getName).toList();
     }
 
     @Test
     void ferryFlightGoesThroughAllTheSteps() {
-        assertEquals(List.of("start-flight"), names());
+        assertEquals(List.of("start-flight-manual"), names());
 
         mission.setStatus(FlightMissions.Status.Preflight);
         assertEquals(List.of("blocks-off"), names());
@@ -94,17 +97,117 @@ class DashboardManualActionsTest {
         // planned duration is 2 hours, so the earliest landing is 1.5 hours after the takeoff
 
         world.setWorldTime(takeoff + 90 * 60 - 1);
-        final SimTracker.UserAction early = FlightDashboardController.buildManualActions(world, mission).get(0);
+        final SimTracker.UserAction early = FlightDashboardController.buildManualActions(world, mission, departureId).get(0);
         assertEquals("landing", early.getName());
         assertFalse(early.isAllowed());
         assertFalse(early.getChecks().get(0).isResult());
 
         world.setWorldTime(takeoff + 90 * 60);
-        assertTrue(FlightDashboardController.buildManualActions(world, mission).get(0).isAllowed());
+        assertTrue(FlightDashboardController.buildManualActions(world, mission, departureId).get(0).isAllowed());
     }
 
     @Test
     void manualActionsAreAllowed() {
-        assertTrue(FlightDashboardController.buildManualActions(world, mission).stream().allMatch(SimTracker.UserAction::isAllowed));
+        assertTrue(FlightDashboardController.buildManualActions(world, mission, departureId).stream().allMatch(SimTracker.UserAction::isAllowed));
+    }
+
+    // ---- the mode of the flight and the actions which the dashboard offers
+
+    private static SimTracker.UserStatus connected(final SimTracker.UserAction... actions) {
+        return new SimTracker.UserStatus("Connected", null, "At airport", "EGLF", true, false, "0.0", List.of(actions));
+    }
+
+    private static List<String> names(final List<SimTracker.UserAction> actions) {
+        return actions.stream().map(SimTracker.UserAction::getName).toList();
+    }
+
+    private static SimTracker.UserAction trackerAction(final String name) {
+        return new SimTracker.UserAction(name, true, List.of());
+    }
+
+    @Test
+    void modeIsNotDecidedBeforeTheStart() {
+        assertEquals(null, FlightDashboardController.resolveMode(mission, false));
+        assertEquals(null, FlightDashboardController.resolveMode(mission, true));
+        assertEquals(null, FlightDashboardController.resolveMode(null, true));
+    }
+
+    @Test
+    void modeIsTheOneTheFlightWasStartedIn() {
+        mission.setStatus(FlightMissions.Status.Preflight);
+
+        mission.setTrackingMode(FlightMissions.TrackingMode.Manual);
+        assertEquals(FlightDashboardController.TrackingMode.MANUAL, FlightDashboardController.resolveMode(mission, true));
+
+        mission.setTrackingMode(FlightMissions.TrackingMode.SimTracker);
+        assertEquals(FlightDashboardController.TrackingMode.SIM_TRACKER, FlightDashboardController.resolveMode(mission, false));
+    }
+
+    @Test
+    void aFlightStartedBeforeTheModeWasStoredFollowsTheConnection() {
+        mission.setStatus(FlightMissions.Status.Flying);
+
+        assertEquals(FlightDashboardController.TrackingMode.SIM_TRACKER, FlightDashboardController.resolveMode(mission, true));
+        assertEquals(FlightDashboardController.TrackingMode.MANUAL, FlightDashboardController.resolveMode(mission, false));
+    }
+
+    @Test
+    void beforeTheStartWithoutTheTrackerOnlyTheManualStartIsOffered() {
+        assertEquals(List.of("start-flight-manual"),
+                names(FlightDashboardController.buildActions(world, mission, SimTracker.UserStatus.none(), false, departureId)));
+    }
+
+    @Test
+    void beforeTheStartWithTheTrackerBothStartsAreOffered() {
+        final SimTracker.UserStatus sim = connected(trackerAction("start-flight"), trackerAction("reschedule"));
+
+        assertEquals(List.of("start-flight", "reschedule", "start-flight-manual"),
+                names(FlightDashboardController.buildActions(world, mission, sim, true, departureId)));
+    }
+
+    @Test
+    void aManualFlightGetsTheManualActionsEvenIfTheTrackerIsConnected() {
+        mission.setStatus(FlightMissions.Status.Preflight);
+        mission.setTrackingMode(FlightMissions.TrackingMode.Manual);
+        final SimTracker.UserStatus sim = connected(trackerAction("blocks-off"), trackerAction("reschedule"));
+
+        assertEquals(List.of("blocks-off"), names(FlightDashboardController.buildActions(world, mission, sim, true, departureId)));
+
+        mission.setStatus(FlightMissions.Status.Departure);
+        assertEquals(List.of("takeoff"), names(FlightDashboardController.buildActions(world, mission, sim, true, departureId)));
+    }
+
+    @Test
+    void aTrackedFlightGetsTheActionsOfTheTracker() {
+        mission.setStatus(FlightMissions.Status.Preflight);
+        mission.setTrackingMode(FlightMissions.TrackingMode.SimTracker);
+        final SimTracker.UserStatus sim = connected(trackerAction("blocks-off"), trackerAction("reschedule"));
+
+        assertEquals(List.of("blocks-off", "reschedule"), names(FlightDashboardController.buildActions(world, mission, sim, true, departureId)));
+    }
+
+    @Test
+    void theManualStartIsNotAllowedWhenThePilotIsNotAtTheDepartureAirport() {
+        final SimTracker.UserAction elsewhere = FlightDashboardController.buildManualActions(world, mission, departureId + 1).get(0);
+        assertEquals("start-flight-manual", elsewhere.getName());
+        assertFalse(elsewhere.isAllowed());
+        assertFalse(elsewhere.getChecks().get(0).isResult());
+
+        // a pilot who is nowhere (no pilot, or the pilot is not at an airport)
+        assertFalse(FlightDashboardController.buildManualActions(world, mission, 0).get(0).isAllowed());
+
+        assertTrue(FlightDashboardController.buildManualActions(world, mission, departureId).get(0).isAllowed());
+    }
+
+    @Test
+    void theManualStartIsNotAllowedWhenTheAircraftIsNotIdleAtTheDepartureAirport() {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Active);
+
+        final SimTracker.UserAction start = FlightDashboardController.buildManualActions(world, mission, departureId).get(0);
+
+        assertFalse(start.isAllowed());
+        assertTrue(start.getChecks().get(0).isResult());
+        assertFalse(start.getChecks().get(1).isResult());
     }
 }
