@@ -39,8 +39,8 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserved
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // nightSeconds, seconds from blocks off to blocks on at night, up to 16 777 215
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             // ---------------------------------------------------------------------------------------------------------
@@ -63,10 +63,11 @@ public class FlightMissions {
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
     private final DataField actualLandingAirportIdField = storage.getDataField(9);
-    @SuppressWarnings("unused")
-    private final DataField reserved8bitsField2 = storage.getDataField(10);
-    @SuppressWarnings("unused")
-    private final DataField reserved24bitsField3 = storage.getDataField(11);
+    private final DataField flagsRawField = storage.getDataField(10);
+    private final BitAccessField flagsBits = BitAccessField.instance(storage, flagsRawField);
+    private final BitAccessField.Section nightTakeoffBitField = flagsBits.section(0, 1);
+    private final BitAccessField.Section nightLandingBitField = flagsBits.section(1, 1);
+    private final DataField nightSecondsField = storage.getDataField(11);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField4 = storage.getDataField(12);
     @SuppressWarnings("unused")
@@ -74,6 +75,7 @@ public class FlightMissions {
     private final DataField userIdField = storage.getDataField(14);
 
     private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
+    private static final int MAX_NIGHT_SECONDS = (1 << 24) - 1;
 
     public FlightMissions() {
     }
@@ -187,6 +189,40 @@ public class FlightMissions {
         public void setCharacterMode(CharacterMode characterMode) {
             checkNotNull(characterMode);
             characterModeBitField.setInt(id, characterMode.ordinal());
+        }
+
+        /**
+         * The takeoff was at night, see DayNight. False for the old records and while the takeoff has not happened.
+         */
+        public boolean isNightTakeoff() {
+            return nightTakeoffBitField.getBoolean(id);
+        }
+
+        public void setNightTakeoff(final boolean nightTakeoff) {
+            nightTakeoffBitField.setBoolean(id, nightTakeoff);
+        }
+
+        public boolean isNightLanding() {
+            return nightLandingBitField.getBoolean(id);
+        }
+
+        public void setNightLanding(final boolean nightLanding) {
+            nightLandingBitField.setBoolean(id, nightLanding);
+        }
+
+        /**
+         * Seconds of the flight (from blocks off to blocks on, the taxi included) which were at night. It is accumulated while the flight goes.
+         */
+        public int getNightSeconds() {
+            return storage.getAsInt(id, nightSecondsField);
+        }
+
+        /**
+         * Adds seconds to the night time of the flight, the sum is limited by 24 bits (194 days).
+         */
+        public void addNightSeconds(final int seconds) {
+            checkArgument(seconds >= 0);
+            storage.set(id, nightSecondsField, Math.min(MAX_NIGHT_SECONDS, getNightSeconds() + seconds));
         }
 
         public CoordinatesSource getCoordinatesSource() {

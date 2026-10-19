@@ -43,6 +43,7 @@ public class World {
     private final City2CityFlows city2CityFlows = new City2CityFlows();
     private final Journeys journeys = new Journeys();
     private final Persons persons = new Persons();
+    private final PilotLogbook pilotLogbook = new PilotLogbook();
 
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
@@ -52,6 +53,7 @@ public class World {
     private final FlightMissionControl flightMissionControl = new FlightMissionControl(this);
     private final TransportFlightControl transportFlightControl = new TransportFlightControl(this);
     private final JourneyControl journeyControl = new JourneyControl(this);
+    private final PersonControl personControl = new PersonControl(this);
     private final PaxManager paxManager = new PaxManager(this);
 
     private final City2CityFlowControl c2cFlowControl = new City2CityFlowControl(this);
@@ -99,6 +101,7 @@ public class World {
             world.city2CityFlows.loadIfExists(rootPath);
             world.journeys.loadIfExists(rootPath);
             world.persons.loadIfExists(rootPath);
+            world.pilotLogbook.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -139,6 +142,7 @@ public class World {
             city2CityFlows.save(rootPath);
             journeys.save(rootPath);
             persons.save(rootPath);
+            pilotLogbook.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -256,8 +260,16 @@ public class World {
         return persons;
     }
 
+    public PilotLogbook pilotLogbook() {
+        return pilotLogbook;
+    }
+
     public JourneyControl journeyControl() {
         return journeyControl;
+    }
+
+    public PersonControl personControl() {
+        return personControl;
     }
 
     public PaxManager paxManager() {

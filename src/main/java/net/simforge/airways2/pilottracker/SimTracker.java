@@ -113,6 +113,7 @@ public class SimTracker {
                 log.warn("no aircraft found!!!");
                 return null;
             }
+            world.flightMissionControl().accountNightTime(mission.get(), context.position.getCoords().getLat(), context.position.getCoords().getLon());
             aircraft.get().setLocationLatitude((float) context.position.getCoords().getLat());
             aircraft.get().setLocationLongitude((float) context.position.getCoords().getLon());
             aircraft.get().setLocationHeading(context.position.getHeading());

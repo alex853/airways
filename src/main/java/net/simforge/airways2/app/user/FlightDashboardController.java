@@ -95,39 +95,54 @@ public class FlightDashboardController {
         }
 
         final User user = userO.get();
-        final String lastLocationAirport = findPersonAirportIcao(world, user);
+        final Optional<Persons.Person> person = user.getPersonId() > 0 ? world.persons().byId(user.getPersonId()) : Optional.empty();
 
-        return new UserDto(
-                Id.encode(user.getId()),
-                lastLocationAirport,
-                buildUserLocationDto(lastLocationAirport, simStatus));
-    }
-
-    // The airport where the pilot is expected to be: the location of the person of the user, null if there is no person or the person
-    // is not at an airport (it is not checked yet, no restrictions then).
-    // todo ak3 check the state of the person too: the person is expected to be Idle at the airport, but it may be Resting, Travelling, etc
-    private static String findPersonAirportIcao(final World world, final User user) {
-        if (user.getPersonId() <= 0) {
-            return null;
-        }
-        return world.persons().byId(user.getPersonId())
+        // The airport where the pilot is expected to be: the location of the person of the user, null if there is no person or
+        // the person is not at an airport.
+        final String expectedAirport = person
                 .filter(p -> p.getLocationType() == Persons.LocationType.Airport)
                 .flatMap(p -> world.airports().getIcao(p.getLocationId()))
                 .orElse(null);
+
+        final boolean flightInProgress = simStatus.getFlightMissionId() != null || userHasActiveFlight(world, userId);
+
+        return new UserDto(
+                Id.encode(user.getId()),
+                expectedAirport,
+                buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress, simStatus));
     }
 
-    // Compares the airport where the pilot has been loaded with the airport where the pilot has landed last time.
-    // Expected and current airports are filled whenever they are known, state is only the verdict.
-    private static UserLocationDto buildUserLocationDto(final String lastLocationAirport, final SimTracker.UserStatus simStatus) {
-        final String expectedAirport = lastLocationAirport;
+    // The flight of the user which has been started and is not finished yet, the person is on duty then.
+    private static boolean userHasActiveFlight(final World world, final int userId) {
+        return world.flightMissions().allByUserId(userId)
+                .anyMatch(fm -> switch (fm.getStatus()) {
+                    case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                    default -> false;
+                });
+    }
+
+    // The pilot is expected to be Idle at the airport of its person and the airport where the pilot has been loaded is the same.
+    // A flight in progress is always valid (the person is OnDuty, the pilot may be nowhere). Expected and current airports are filled
+    // whenever they are known, state is only the verdict.
+    static UserLocationDto buildUserLocationDto(final String expectedAirport,
+                                                final Persons.State personState,
+                                                final boolean hasPerson,
+                                                final boolean flightInProgress,
+                                                final SimTracker.UserStatus simStatus) {
         final String currentAirport = "At airport".equals(simStatus.getLocationStatus()) ? simStatus.getAirportIcao() : null;
 
         final UserLocationState state;
-        if (expectedAirport == null) {
-            // no history yet - no restrictions
+        if (!hasPerson) {
+            // no person yet - no restrictions
             state = UserLocationState.OK;
-        } else if (simStatus.getFlightMissionId() != null) {
+        } else if (flightInProgress) {
             // flight is in progress - the check is not applied
+            state = UserLocationState.OK;
+        } else if (personState != Persons.State.Idle) {
+            // todo ak3 a person who is Resting or Travelling can be 'woken up' or 'brought back' by the user, but it costs something
+            state = UserLocationState.PERSON_NOT_IDLE;
+        } else if (expectedAirport == null) {
+            // the person is not at an airport - no restrictions
             state = UserLocationState.OK;
         } else if (currentAirport == null) {
             // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
@@ -598,6 +613,7 @@ public class FlightDashboardController {
     public enum UserLocationState {
         OK,
         WRONG_AIRPORT,
+        PERSON_NOT_IDLE,
         UNKNOWN
     }
 
