@@ -154,6 +154,16 @@ class FlightNightTimeTest {
     }
 
     @Test
+    public void test__every_flight_in_the_logbook_is_ifr_for_now__ifr_time_is_the_whole_flight_time() {
+        flyTheWholeFlight(12, 0, 132);
+
+        final PilotLogbook.Entry entry = entry();
+        assertTrue(entry.isIfr());
+        assertEquals(2.2f, entry.getFlightTime(), 0.001f);
+        assertEquals(2.2f, entry.getIfrTime(), 0.001f);
+    }
+
+    @Test
     public void test__a_flight_in_the_day_has_no_night_time_and_day_takeoff_and_landing() {
         flyTheWholeFlight(12, 0, 60);
 

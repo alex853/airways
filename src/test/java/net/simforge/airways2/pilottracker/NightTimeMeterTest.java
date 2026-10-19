@@ -22,12 +22,12 @@ class NightTimeMeterTest {
     }
 
     private static NightTimeMeter counting(final int startHour, final int startMinute) {
-        return new NightTimeMeter(1, 0.0, 0).startAt(utc(startHour, startMinute));
+        return new NightTimeMeter(0.0, 0).startAt(utc(startHour, startMinute));
     }
 
     @Test
     public void test__a_new_meter_is_not_counting_and_has_no_night() {
-        final NightTimeMeter meter = new NightTimeMeter(1, 0.0, 0);
+        final NightTimeMeter meter = new NightTimeMeter(0.0, 0);
 
         assertFalse(meter.isCounting());
         assertEquals(0.0, meter.getNightSeconds(), 0.0);
@@ -36,9 +36,8 @@ class NightTimeMeterTest {
 
     @Test
     public void test__it_is_raised_from_the_flight_mission__the_value_is_restored_and_the_counting_starts_at_the_next_report() {
-        final NightTimeMeter meter = NightTimeMeter.restoredFromMission(5, 12.5f);
+        final NightTimeMeter meter = NightTimeMeter.restoredFromMission(12.5f);
 
-        assertEquals(5, meter.getMissionId());
         assertEquals(750.0, meter.getNightSeconds(), 0.0);
         assertFalse(meter.isCounting());
 
@@ -154,13 +153,5 @@ class NightTimeMeterTest {
 
         assertEquals(0.0, meter.getNightSeconds(), 0.0);
         assertEquals(600.0, later.getNightSeconds(), 0.0);
-    }
-
-    @Test
-    public void test__the_meter_keeps_its_mission() {
-        final NightTimeMeter meter = NightTimeMeter.restoredFromMission(77, 0.0f);
-
-        assertEquals(77, meter.report(true, LAT, LON, utc(22, 0)).getMissionId());
-        assertEquals(77, meter.startAt(utc(22, 0)).stop().getMissionId());
     }
 }

@@ -165,12 +165,11 @@ public class SimTrackerContextStoreTest {
     @Test
     public void night_time_meter_is_saved_and_restored_with_the_exact_value() throws Exception {
         final SimTracker.Context context = context(7, NOW, false, null, 42)
-                .withNightMeter(new NightTimeMeter(42, 4321.987654321, 1_750_000_123));
+                .withNightMeter(new NightTimeMeter(4321.987654321, 1_750_000_123));
 
         store.save(List.of(context), NOW);
 
         final NightTimeMeter meter = store.load(NOW, MAX_AGE).restored().get(0).getNightMeter();
-        assertEquals(42, meter.getMissionId());
         assertEquals(4321.987654321, meter.getNightSeconds(), 0.0);
         assertEquals(1_750_000_123, meter.getCountedAt());
         assertTrue(meter.isCounting());

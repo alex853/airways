@@ -119,7 +119,7 @@ public class SimTracker {
             }
             // the exact night time is in the context, the flight mission only keeps the current value to restore the context after a restart
             final NightTimeMeter nightMeter = context.getNightMeter();
-            if (nightMeter != null && Objects.equals(nightMeter.getMissionId(), mission.get().getId())) {
+            if (nightMeter != null) {
                 mission.get().setNightMinutes(nightMeter.getNightMinutes());
             }
             aircraft.get().setLocationLatitude((float) context.position.getCoords().getLat());
@@ -212,8 +212,8 @@ public class SimTracker {
             }
 
             NightTimeMeter meter = context.getNightMeter();
-            if (meter == null || !Objects.equals(meter.getMissionId(), mission.get().getId())) {
-                meter = NightTimeMeter.restoredFromMission(mission.get().getId(), mission.get().getNightMinutes());
+            if (meter == null) {
+                meter = NightTimeMeter.restoredFromMission(mission.get().getNightMinutes());
                 log.info("SIM TRACKER: night time of f/m #{} is restored from the flight mission, {} min", mission.get().getId(), meter.getNightMinutes());
             }
 
@@ -438,6 +438,7 @@ public class SimTracker {
         public Context resetFlightMissionId() {
             return this.toBuilder()
                     .flightMissionId(null)
+                    .nightMeter(null)
                     .build();
         }
 
@@ -445,6 +446,7 @@ public class SimTracker {
             checkArgument(flightMissionId > 0);
             return this.toBuilder()
                     .flightMissionId(flightMissionId)
+                    .nightMeter(null) // the night time of the new mission is restored from the mission at the next report
                     .build();
         }
     }

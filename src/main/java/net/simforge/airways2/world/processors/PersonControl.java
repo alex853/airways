@@ -98,6 +98,9 @@ public class PersonControl {
                 blocksOff,
                 blocksOn);
 
+        // For now every flight is IFR (all the flight plans are filed in SimBrief), so IFR time is the whole flight time. VFR flights are to come later,
+        // the source of the flight rules is not decided yet.
+        entry.setIfr(true);
         entry.setNightTakeoff(mission.isNightTakeoff());
         entry.setNightLanding(mission.isNightLanding());
         // seconds to hours, the storage rounds it to a tenth; the night time cannot be longer than the flight time
