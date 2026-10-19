@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -75,19 +76,83 @@ public class FlightDashboardController {
     public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+            final boolean simTrackerConnected = simStatus != null;
             if (simStatus == null) {
                 simStatus = SimTracker.UserStatus.none();
             }
 
-            Integer flightMissionId = simStatus.getFlightMissionId() != null ? Id.decode(simStatus.getFlightMissionId()) : null;
-            Optional<FlightMissions.Mission> flight = flightMissionId != null ? world.flightMissions().byId(flightMissionId) : Optional.empty();
+            // With the sim tracker the flight is the one the tracker follows, without it (manual mode) it is the next active flight of the user.
+            Optional<FlightMissions.Mission> flight;
+            if (simTrackerConnected) {
+                Integer flightMissionId = simStatus.getFlightMissionId() != null ? Id.decode(simStatus.getFlightMissionId()) : null;
+                flight = flightMissionId != null ? world.flightMissions().byId(flightMissionId) : Optional.empty();
+            } else {
+                flight = findActiveFlight(world, userId);
+            }
+
+            // The actions which the dashboard may offer: the ones of the sim tracker (it checks the position of the aircraft) or the manual ones.
+            final List<SimTracker.UserAction> actions = simTrackerConnected
+                    ? (simStatus.getActions() != null ? simStatus.getActions() : List.of())
+                    : flight.map(fm -> buildManualActions(world, fm)).orElse(List.of());
 
             return new Status2Dto(
+                    simTrackerConnected ? TrackingMode.SIM_TRACKER : TrackingMode.MANUAL,
+                    actions,
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
                     buildUserDto(world, userId, simStatus));
         });
+    }
+
+    // The next active flight of the user: the earliest one which is not finished or cancelled.
+    private static Optional<FlightMissions.Mission> findActiveFlight(final World world, final int userId) {
+        return world.flightMissions()
+                .allByUserId(userId)
+                .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
+                .filter(fm -> !FlightMissionHelper.isFinishedOrCancelled(fm))
+                .findFirst();
+    }
+
+    // The steps which the pilot does with buttons when nothing tracks the flight. There are no checks of the position of the aircraft here,
+    // an action is listed (and allowed) when the flight and its transport flight are in the status where the controller accepts it.
+    static List<SimTracker.UserAction> buildManualActions(final World world, final FlightMissions.Mission flight) {
+        final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
+        final List<SimTracker.UserAction> actions = new ArrayList<>();
+        switch (flight.getStatus()) {
+            case Dispatched -> actions.add(manualAction("start-flight"));
+            case Preflight -> {
+                if (tf != null && tf.getStatus() == TransportFlights.Status.WaitingForBoarding) {
+                    actions.add(manualAction("start-boarding"));
+                } else if (tf == null || tf.getStatus() == TransportFlights.Status.WaitingForDeparture) {
+                    actions.add(manualAction("blocks-off"));
+                }
+            }
+            case Departure -> actions.add(manualAction("takeoff"));
+            case Flying -> actions.add(manualLandingAction(world, flight));
+            case Arrival -> actions.add(manualAction("blocks-on"));
+            case Postflight -> {
+                if (tf != null && tf.getStatus() == TransportFlights.Status.WaitingForDeboarding) {
+                    actions.add(manualAction("start-deboarding"));
+                } else if (tf == null || tf.getStatus() == TransportFlights.Status.Finished) {
+                    actions.add(manualAction("finish-flight"));
+                }
+            }
+            default -> { }
+        }
+        return actions;
+    }
+
+    // A manual landing is allowed not earlier than a part of the planned duration after takeoff, the same rule as the one of the endpoint.
+    private static SimTracker.UserAction manualLandingAction(final World world, final FlightMissions.Mission flight) {
+        final int earliest = FlightMissionHelper.calcEarliestAllowedLandingTime(flight);
+        final boolean allowed = earliest <= world.getWorldTime();
+        return new SimTracker.UserAction("landing", allowed,
+                List.of(new SimTracker.CheckResult("Landing is not allowed earlier than " + TimeTools.hhmmOrNull(earliest), allowed)));
+    }
+
+    private static SimTracker.UserAction manualAction(final String name) {
+        return new SimTracker.UserAction(name, true, List.of());
     }
 
     private static UserDto buildUserDto(final World world, final int userId, final SimTracker.UserStatus simStatus) {
@@ -381,6 +446,10 @@ public class FlightDashboardController {
                 // todo ak2 vatsim support
             }
 
+            final int earliestLanding = FlightMissionHelper.calcEarliestAllowedLandingTime(flight);
+            if (world.getWorldTime() < earliestLanding) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Manual landing is not allowed earlier than " + TimeTools.hhmmOrNull(earliestLanding));
+            }
             log.info("f/m #{} - flight-dashboard - landing", flightId);
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
@@ -622,6 +691,10 @@ public class FlightDashboardController {
     @AllArgsConstructor
     @Data
     public static class Status2Dto {
+        // Who tracks the flight: the sim tracker does Blocks Off, Takeoff, Landing, Blocks On itself, in manual mode the pilot does them with buttons
+        private final TrackingMode mode;
+        // What the dashboard may offer now, the same list for both modes
+        private final List<SimTracker.UserAction> actions;
         private final SimTracker.UserStatus sim;
         private final VatsimStatusDto vatsim;
         private final FlightUltraDto flight;
@@ -643,6 +716,11 @@ public class FlightDashboardController {
         private final UserLocationState state;
         private final String expectedAirport;
         private final String currentAirport;
+    }
+
+    public enum TrackingMode {
+        SIM_TRACKER,
+        MANUAL
     }
 
     public enum UserLocationState {

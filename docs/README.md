@@ -20,6 +20,7 @@
 - [users.md](users.md) — пользователи: временное хранилище на property-файлах, токены, последняя посадка
 - [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
 - [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано
+- [clients-and-flight-modes.md](clients-and-flight-modes.md) — клиенты (веб, G7 FlightBag), режимы флайт-дашборда (manual, SimTracker, VATSIM), BusyBirds и ShadowJet, стартовый экран (описание и планы)
 - [time-storage-review.md](time-storage-review.md) — ревью: как в дата-модели хранятся времена, даты и длительности (форматы, наблюдения, предложения)
 
 ## Правила ведения
