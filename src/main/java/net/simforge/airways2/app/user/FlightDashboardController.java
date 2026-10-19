@@ -101,7 +101,7 @@ public class FlightDashboardController {
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(fm -> FlightUltraDto.from(world, fm, true)).orElse(null),
-                    buildUserDto(world, userId, simStatus));
+                    buildPilotDto(world, userId, simStatus));
         });
     }
 
@@ -155,16 +155,15 @@ public class FlightDashboardController {
         return new SimTracker.UserAction(name, true, List.of());
     }
 
-    private static UserDto buildUserDto(final World world, final int userId, final SimTracker.UserStatus simStatus) {
+    // What the dashboards need to know about the pilot of the user: the verdict about where the pilot is and whether the dashboard may be used.
+    // The profile of the pilot (initials, avatar etc.) is not here, it is in /pilot.
+    private static UserLocationDto buildPilotDto(final World world, final int userId, final SimTracker.UserStatus simStatus) {
         final Optional<User> userO = UserStorage.getInstance().findById(userId);
         if (userO.isEmpty()) {
             return null;
         }
 
-        final User user = userO.get();
-        final UserLocationDto location = buildUserLocation(world, user, userId, simStatus);
-
-        return new UserDto(Id.encode(user.getId()), location.getExpectedAirport(), location);
+        return buildUserLocation(world, userO.get(), userId, simStatus);
     }
 
     // The person of the user decides where the pilot is expected to be. A user without a person is not allowed to use the dashboard at all.
@@ -698,16 +697,7 @@ public class FlightDashboardController {
         private final SimTracker.UserStatus sim;
         private final VatsimStatusDto vatsim;
         private final FlightUltraDto flight;
-        private final UserDto user;
-    }
-
-    @AllArgsConstructor
-    @Data
-    public static class UserDto {
-        private final String id;
-        private final String lastLocationAirport;
-        private final UserLocationDto location;
-        // todo ak2 initials, avatar, money etc. are to be added here
+        private final UserLocationDto pilot;
     }
 
     @AllArgsConstructor

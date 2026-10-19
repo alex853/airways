@@ -70,7 +70,7 @@
 
 - **Ручной режим и 10% оплаты** нужно реализовать: сейчас `BusyBirdsPilotPay` платит полную сумму независимо от режима (коэффициент режима в
   `todo ak3`, рядом с коэффициентами currency). Нужен признак режима рейса, который ставится дашбордом или трекером.
-- Веб должен учитывать новые состояния проверки пилота в `status2.user.location.state` (`NO_PERSON`, `PERSON_NOT_IDLE`, `PERSON_NOT_AT_AIRPORT`,
+- Веб должен учитывать новые состояния проверки пилота в `status2.pilot.state` (`NO_PERSON`, `PERSON_NOT_IDLE`, `PERSON_NOT_AT_AIRPORT`,
   `WRONG_AIRPORT`) и 403 от действий дашборда в этих состояниях.
 - На странице BusyBirds уже есть колонки оплаты пилота за плечо (`Flight pay`, `Income share`) и итог по плану.
 - Страницу персонажа и логбук (данные есть: `/admin/person/{id}`, `PilotLogbook`) нужно показать пользователю (personal data page).

@@ -86,6 +86,8 @@ public class AuthFilter extends OncePerRequestFilter {
     }
 
     private static void send401Response(HttpServletResponse response) throws IOException {
+        // without it a browser reports a refused token as a CORS error and the page cannot tell the user what is wrong
+        response.setHeader("Access-Control-Allow-Origin", "*");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.getWriter().write("Missing or invalid Authorization header");
     }

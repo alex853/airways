@@ -9,6 +9,7 @@ import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
+import net.simforge.airways2.world.datamodel.Persons;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -30,6 +31,35 @@ import java.util.List;
 public class PilotController {
     @Autowired
     private WorldRunnerBean worldBean;
+
+    /**
+     * The pilot of the user as a person: who it is and where the pilot is now. Facts only, no verdicts (whether a flight may be booked or
+     * started is told by the dashboard and by BusyBirds).
+     */
+    @GetMapping
+    public PilotDto getPilot(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> {
+            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+            final Persons.Person person = personId > 0 ? world.persons().byId(personId).orElse(null) : null;
+            if (person == null) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
+            }
+
+            String airportIcao = null;
+            String airportName = null;
+            String cityName = null;
+            switch (person.getLocationType()) {
+                case Airport -> {
+                    airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
+                    airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
+                }
+                case City -> cityName = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
+                default -> { }
+            }
+
+            return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName);
+        });
+    }
 
     @GetMapping("/logbook")
     public LogbookDto getLogbook(@RequestAttribute("userId") final int userId) {
@@ -67,8 +97,7 @@ public class PilotController {
             nightLandings += e.getNightLandings();
         }
 
-        return new LogbookDto(personId,
-                new LogbookTotalsDto(entries.size(), round1(flightTime), round1(nightTime), round1(ifrTime),
+        return new LogbookDto(new LogbookTotalsDto(entries.size(), round1(flightTime), round1(nightTime), round1(ifrTime),
                         dayTakeoffs, nightTakeoffs, dayLandings, nightLandings),
                 entries);
     }
@@ -101,8 +130,20 @@ public class PilotController {
 
     @Data
     @AllArgsConstructor
+    public static class PilotDto {
+        private String initials;
+        private String state;
+        private String locationType;
+        // the airport where the pilot is (ICAO and name), null if the pilot is not at an airport
+        private String airportIcao;
+        private String airportName;
+        // the city where the pilot is, null if the pilot is not in a city
+        private String cityName;
+    }
+
+    @Data
+    @AllArgsConstructor
     public static class LogbookDto {
-        private int personId;
         private LogbookTotalsDto totals;
         private List<LogbookEntryDto> entries;
     }

@@ -33,6 +33,21 @@ public class BusyBirdsController {
     @Autowired
     private WorldRunnerBean worldBean;
 
+    /**
+     * Whether the user may book BusyBirds flights at all: the pilot of the user is Idle at an airport. Whether the pilot stands where the aircraft
+     * stands is checked when an aircraft is booked.
+     */
+    @GetMapping("/booking-status")
+    public BookingStatusDto getBookingStatus(@RequestAttribute("userId") int userId) {
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+
+            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+            final String problem = pilotBookingProblem(world, personId, 0);
+            return new BookingStatusDto(problem == null, problem);
+        });
+    }
+
     @GetMapping("/mission/to-book")
     public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
@@ -210,6 +225,13 @@ public class BusyBirdsController {
             return "Your pilot is at " + pilotAirport + " but the aircraft is at " + aircraftAirport + ", the flight cannot be booked.";
         }
         return null;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class BookingStatusDto {
+        private boolean canBook;
+        private String problem;
     }
 
     @Data
