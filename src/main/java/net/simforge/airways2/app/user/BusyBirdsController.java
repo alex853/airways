@@ -62,7 +62,9 @@ public class BusyBirdsController {
 
                         return new MissionDto(
                                 Id.encode(j.getId()),
+                                Id.encode(fromCity.getId()),
                                 fromCity.getName(),
+                                Id.encode(toCity.getId()),
                                 toCity.getName(),
                                 j.getPreferredCabinService().name(),
                                 j.getGroupSize(),
@@ -238,7 +240,9 @@ public class BusyBirdsController {
     @AllArgsConstructor
     public static class MissionDto {
         private String id;
+        private String fromCityId;
         private String fromCityName;
+        private String toCityId;
         private String toCityName;
         private String pCs;
         private int pax;
