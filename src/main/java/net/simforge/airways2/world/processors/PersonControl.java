@@ -100,8 +100,8 @@ public class PersonControl {
 
         entry.setNightTakeoff(mission.isNightTakeoff());
         entry.setNightLanding(mission.isNightLanding());
-        // seconds to tenths of hour (360 s), half up, the night time cannot be longer than the flight time
-        entry.setNightTimeTenths(Math.min(entry.getFlightTimeTenths(), (mission.getNightSeconds() + 180) / 360));
+        // seconds to hours, the storage rounds it to a tenth; the night time cannot be longer than the flight time
+        entry.setNightTime(Math.min(entry.getFlightTime(), mission.getNightSeconds() / 3600.0f));
 
         log.info("p/s #{} - logbook entry #{}: {} -> {}, {} min, f/m #{}", person.getId(), entry.getId(),
                 world.airports().getIcao(entry.getFromAirportId()).orElse("#" + entry.getFromAirportId()),

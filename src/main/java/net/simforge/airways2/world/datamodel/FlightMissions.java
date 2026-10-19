@@ -29,7 +29,7 @@ public class FlightMissions {
             .withInstantiator(Mission::new)
             .withIdOf(DataType.Unsigned24bit)
             .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // status 0..15, modes 765xxxxx, bits xxx4xxxx are non-used
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 1: status 0..15 (bits 0-3), bit 4 is not used, coordinates source (bits 5-6), character mode (bit 7)
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
@@ -39,7 +39,7 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
             .withDataField(DataField.of(DataType.Unsigned24bit)) // nightSeconds, seconds from blocks off to blocks on at night, up to 16 777 215
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
@@ -49,12 +49,12 @@ public class FlightMissions {
             .build();
 
     private final DataField aircraftIdField = storage.getDataField(0);
-    private final DataField statusRawField = storage.getDataField(1);
-    private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
-    private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
-    //private final BitAccessField.Section unusedBitField = statusFieldBits.section(4, 1);
-    private final BitAccessField.Section coordinatesSourceBitField = statusFieldBits.section(5, 2);
-    private final BitAccessField.Section characterModeBitField = statusFieldBits.section(7, 1);
+    private final DataField flags1RawField = storage.getDataField(1);
+    private final BitAccessField flags1Bits = BitAccessField.instance(storage, flags1RawField);
+    private final BitAccessField.Section statusBitField = flags1Bits.section(0, 4);
+    //private final BitAccessField.Section unusedBitField = flags1Bits.section(4, 1);
+    private final BitAccessField.Section coordinatesSourceBitField = flags1Bits.section(5, 2);
+    private final BitAccessField.Section characterModeBitField = flags1Bits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(2);
     private final DataField departureAirportIdField = storage.getDataField(3);
     private final DataField destinationAirportIdField = storage.getDataField(4);
@@ -63,10 +63,10 @@ public class FlightMissions {
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
     private final DataField actualLandingAirportIdField = storage.getDataField(9);
-    private final DataField flagsRawField = storage.getDataField(10);
-    private final BitAccessField flagsBits = BitAccessField.instance(storage, flagsRawField);
-    private final BitAccessField.Section nightTakeoffBitField = flagsBits.section(0, 1);
-    private final BitAccessField.Section nightLandingBitField = flagsBits.section(1, 1);
+    private final DataField flags2RawField = storage.getDataField(10);
+    private final BitAccessField flags2Bits = BitAccessField.instance(storage, flags2RawField);
+    private final BitAccessField.Section nightTakeoffBitField = flags2Bits.section(0, 1);
+    private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
     private final DataField nightSecondsField = storage.getDataField(11);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField4 = storage.getDataField(12);

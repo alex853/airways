@@ -221,8 +221,8 @@ class FlightNightTimeTest {
         control.finish(mission);
 
         final PilotLogbook.Entry entry = world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId())).findFirst().orElseThrow();
-        assertEquals(22, entry.getFlightTimeTenths()); // 2.2 hours
-        assertEquals(22, entry.getNightTimeTenths()); // all of it is at night, the taxi included
+        assertEquals(2.2f, entry.getFlightTime(), 0.001f); // 2.2 hours
+        assertEquals(2.2f, entry.getNightTime(), 0.001f); // all of it is at night, the taxi included
         assertEquals(1, entry.getNightTakeoffs());
         assertEquals(1, entry.getNightLandings());
     }
@@ -267,8 +267,8 @@ class FlightNightTimeTest {
         assertEquals(0, entry.getDayTakeoffs());
         assertEquals(1, entry.getNightLandings());
         assertEquals(0, entry.getDayLandings());
-        assertEquals(4, entry.getFlightTimeTenths()); // 25 minutes
-        assertEquals(4, entry.getNightTimeTenths()); // the same 25 minutes
+        assertEquals(0.4f, entry.getFlightTime(), 0.001f); // 25 minutes
+        assertEquals(0.4f, entry.getNightTime(), 0.001f); // the same 25 minutes
     }
 
     @Test
@@ -284,8 +284,8 @@ class FlightNightTimeTest {
         control.finish(mission);
 
         final PilotLogbook.Entry entry = world.pilotLogbook().all().findFirst().orElseThrow();
-        assertTrue(entry.getNightTimeTenths() <= entry.getFlightTimeTenths());
-        assertEquals(entry.getFlightTimeTenths(), entry.getNightTimeTenths());
+        assertTrue(entry.getNightTime() <= entry.getFlightTime());
+        assertEquals(entry.getFlightTime(), entry.getNightTime(), 0.001f);
     }
 
     @Test

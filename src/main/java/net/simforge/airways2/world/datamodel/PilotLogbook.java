@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class PilotLogbook {
     private static final int MAX_MINUTES = (1 << 24) - 1;
     private static final int MAX_16BIT = 65535;
-    private static final int MAX_TENTHS = 255;
 
     private final Storage<Entry> storage = Storage.<Entry>builder()
             .name("pilot-logbook")
@@ -36,9 +35,9 @@ public class PilotLogbook {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOff, minutes      3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOn, minutes       3 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit)) // flight kind bits: bit 0 IFR, bit 6 night takeoff, bit 7 night landing, bits 1-5 are free  1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flightTime, tenths of hour 0-255     1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // nightTime, tenths of hour           1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // ifrTime, tenths of hour             1 byte
+            .withDataField(DataField.of(DataType.Tenths8bit)) // flightTime, hours 0.0-25.5 step 0.1  1 byte
+            .withDataField(DataField.of(DataType.Tenths8bit)) // nightTime, hours 0.0-25.5            1 byte
+            .withDataField(DataField.of(DataType.Tenths8bit)) // ifrTime, hours 0.0-25.5              1 byte
             // ----------------------------------------------------- sum                   21 bytes
             // -------------------------------------------- reserved 11 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
@@ -120,10 +119,10 @@ public class PilotLogbook {
         nightLandingBit.setInt(id, 0);
         // the flight rules are not known yet, VFR until the source is connected
         ifrBit.setInt(id, 0);
-        // the times are in tenths of hour. Night and IFR time are not calculated yet, zeros mean not classified
-        storage.set(id, flightTimeField, flightTimeTenths(blocksOnMinutes - blocksOffMinutes));
-        storage.set(id, nightTimeField, 0);
-        storage.set(id, ifrTimeField, 0);
+        // the times are hours with one digit (Tenths8bit). Night time and IFR time are set later, zeros until then
+        storage.set(id, flightTimeField, flightTimeHours(blocksOnMinutes - blocksOffMinutes));
+        storage.set(id, nightTimeField, 0.0f);
+        storage.set(id, ifrTimeField, 0.0f);
         return new Entry(id);
     }
 
@@ -142,16 +141,21 @@ public class PilotLogbook {
     }
 
     /**
-     * Minutes to tenths of hour (6 minutes each), rounded half up: 7 h 33 min is 453 min, 75.5 tenths, 7.6 hours. A byte holds up to 25.5 hours.
+     * Minutes to hours with one digit: 7 h 33 min is 453 min, 7.55 hours, 7.6 hours (the tenths are rounded half up by whole minutes, 6
+     * minutes each). A flight longer than 25.5 hours is cut: that is what Tenths8bit holds.
      */
-    public static int flightTimeTenths(final int minutes) {
+    public static float flightTimeHours(final int minutes) {
         checkArgument(minutes >= 0);
-        return Math.min(MAX_TENTHS, (minutes + 3) / 6);
+        return Math.min(255, (minutes + 3) / 6) / 10.0f;
     }
 
-    private static void checkTenths(final int tenths) {
-        checkArgument(0 <= tenths && tenths <= MAX_TENTHS, "time is a byte of tenths of hour");
+    /**
+     * The same rounding as the storage does for Tenths8bit, to compare the times as they are stored.
+     */
+    private static int tenths(final float hours) {
+        return Math.round(hours * 10.0f);
     }
+
 
     @SuppressWarnings("LombokGetterMayBeUsed")
     public class Entry {
@@ -197,24 +201,26 @@ public class PilotLogbook {
         }
 
         /**
-         * Flight time in tenths of hour: from blocks off to blocks on.
+         * Flight time in hours with one digit: from blocks off to blocks on.
          */
-        public int getFlightTimeTenths() {
-            return storage.getAsInt(id, flightTimeField);
+        public float getFlightTime() {
+            return storage.getAsFloat(id, flightTimeField);
         }
 
-        public int getNightTimeTenths() {
-            return storage.getAsInt(id, nightTimeField);
+        /**
+         * Night time in hours with one digit, it can not be longer than the flight time.
+         */
+        public float getNightTime() {
+            return storage.getAsFloat(id, nightTimeField);
         }
 
-        public void setNightTimeTenths(final int tenths) {
-            checkTenths(tenths);
-            checkArgument(tenths <= getFlightTimeTenths(), "night time is longer than the flight time");
-            storage.set(id, nightTimeField, tenths);
+        public void setNightTime(final float hours) {
+            checkArgument(tenths(hours) <= tenths(getFlightTime()), "night time is longer than the flight time");
+            storage.set(id, nightTimeField, hours);
         }
 
-        public int getIfrTimeTenths() {
-            return storage.getAsInt(id, ifrTimeField);
+        public float getIfrTime() {
+            return storage.getAsFloat(id, ifrTimeField);
         }
 
         /**
@@ -227,7 +233,7 @@ public class PilotLogbook {
         public void setIfr(final boolean ifr) {
             ifrBit.setBoolean(id, ifr);
             // IFR time is the time of the flight under an IFR flight plan (SimBrief), the real time in the clouds (IMC) is another thing
-            storage.set(id, ifrTimeField, ifr ? getFlightTimeTenths() : 0);
+            storage.set(id, ifrTimeField, ifr ? getFlightTime() : 0.0f);
         }
 
         public int getDayTakeoffs() {

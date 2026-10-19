@@ -91,56 +91,56 @@ class PilotLogbookTest {
     @Test
     public void test__flight_time_is_the_difference_of_the_blocks_in_tenths_of_hour_rounded_half_up() {
         // 7 h 33 min is 453 min, 75.5 tenths, 7.6 hours
-        assertEquals(76, entry(1, START, START + 453 * 60).getFlightTimeTenths());
+        assertEquals(7.6f, entry(1, START, START + 453 * 60).getFlightTime(), 0.001f);
         // 7 h 32 min is 452 min, 75.33 tenths, 7.5 hours
-        assertEquals(75, entry(1, START, START + 452 * 60).getFlightTimeTenths());
-        assertEquals(0, entry(1, START, START).getFlightTimeTenths());
-        assertEquals(0, entry(1, START, START + 2 * 60).getFlightTimeTenths()); // 0.03 hours
-        assertEquals(1, entry(1, START, START + 3 * 60).getFlightTimeTenths()); // 0.05 hours, half up
-        assertEquals(15, entry(1, START, START + 90 * 60).getFlightTimeTenths()); // 1.5 hours
-        assertEquals(23, entry(1, START, START + 138 * 60).getFlightTimeTenths()); // 2.3 hours
+        assertEquals(7.5f, entry(1, START, START + 452 * 60).getFlightTime(), 0.001f);
+        assertEquals(0.0f, entry(1, START, START).getFlightTime(), 0.001f);
+        assertEquals(0.0f, entry(1, START, START + 2 * 60).getFlightTime(), 0.001f); // 0.03 hours
+        assertEquals(0.1f, entry(1, START, START + 3 * 60).getFlightTime(), 0.001f); // 0.05 hours, half up
+        assertEquals(1.5f, entry(1, START, START + 90 * 60).getFlightTime(), 0.001f); // 1.5 hours
+        assertEquals(2.3f, entry(1, START, START + 138 * 60).getFlightTime(), 0.001f); // 2.3 hours
     }
 
     @Test
     public void test__flight_time_is_a_byte_it_holds_up_to_25_hours_5_tenths() {
-        assertEquals(255, entry(1, START, START + 1530 * 60).getFlightTimeTenths()); // 25.5 hours
-        assertEquals(255, entry(1, START, START + 2000 * 60).getFlightTimeTenths()); // longer is cut
+        assertEquals(25.5f, entry(1, START, START + 1530 * 60).getFlightTime(), 0.001f); // 25.5 hours
+        assertEquals(25.5f, entry(1, START, START + 2000 * 60).getFlightTime(), 0.001f); // longer is cut
     }
 
     @Test
     public void test__flight_time_conversion_of_minutes() {
-        assertEquals(0, PilotLogbook.flightTimeTenths(0));
-        assertEquals(0, PilotLogbook.flightTimeTenths(2));
-        assertEquals(1, PilotLogbook.flightTimeTenths(3));
-        assertEquals(1, PilotLogbook.flightTimeTenths(6));
-        assertEquals(1, PilotLogbook.flightTimeTenths(8));
-        assertEquals(2, PilotLogbook.flightTimeTenths(9));
-        assertEquals(10, PilotLogbook.flightTimeTenths(60));
-        assertEquals(255, PilotLogbook.flightTimeTenths(100000));
-        assertThrows(IllegalArgumentException.class, () -> PilotLogbook.flightTimeTenths(-1));
+        assertEquals(0.0f, PilotLogbook.flightTimeHours(0), 0.001f);
+        assertEquals(0.0f, PilotLogbook.flightTimeHours(2), 0.001f);
+        assertEquals(0.1f, PilotLogbook.flightTimeHours(3), 0.001f);
+        assertEquals(0.1f, PilotLogbook.flightTimeHours(6), 0.001f);
+        assertEquals(0.1f, PilotLogbook.flightTimeHours(8), 0.001f);
+        assertEquals(0.2f, PilotLogbook.flightTimeHours(9), 0.001f);
+        assertEquals(1.0f, PilotLogbook.flightTimeHours(60), 0.001f);
+        assertEquals(25.5f, PilotLogbook.flightTimeHours(100000), 0.001f);
+        assertThrows(IllegalArgumentException.class, () -> PilotLogbook.flightTimeHours(-1));
     }
 
     @Test
     public void test__night_and_ifr_time_are_zero_until_they_are_calculated_and_cannot_exceed_the_flight_time() {
         final PilotLogbook.Entry entry = entry(1, START, START + 138 * 60); // 2.3 hours
-        assertEquals(0, entry.getNightTimeTenths());
-        assertEquals(0, entry.getIfrTimeTenths());
+        assertEquals(0.0f, entry.getNightTime(), 0.001f);
+        assertEquals(0.0f, entry.getIfrTime(), 0.001f);
 
-        entry.setNightTimeTenths(8);
-        assertEquals(8, entry.getNightTimeTenths());
+        entry.setNightTime(0.8f);
+        assertEquals(0.8f, entry.getNightTime(), 0.001f);
         entry.setIfr(true);
-        assertEquals(23, entry.getIfrTimeTenths());
-        assertEquals(23, entry.getFlightTimeTenths());
+        assertEquals(2.3f, entry.getIfrTime(), 0.001f);
+        assertEquals(2.3f, entry.getFlightTime(), 0.001f);
 
-        assertThrows(IllegalArgumentException.class, () -> entry.setNightTimeTenths(24));
-        assertThrows(IllegalArgumentException.class, () -> entry.setNightTimeTenths(-1));
-        assertEquals(8, entry.getNightTimeTenths());
+        assertThrows(IllegalArgumentException.class, () -> entry.setNightTime(2.4f));
+        assertThrows(IllegalArgumentException.class, () -> entry.setNightTime(-0.1f));
+        assertEquals(0.8f, entry.getNightTime(), 0.001f);
     }
 
     @Test
     public void test__times_are_three_bytes_after_the_counters_byte(@TempDir final Path dir) throws IOException {
         final PilotLogbook.Entry entry = entry(1, START, START + 138 * 60);
-        entry.setNightTimeTenths(8);
+        entry.setNightTime(0.8f);
         // the header (1), the person (3), the aircraft (3), the airports (2 + 2), the two times (3 + 3) and the counters byte (1)
         final int offset = 1 + 3 + 3 + 2 + 2 + 3 + 3 + 1;
 
@@ -156,14 +156,14 @@ class PilotLogbookTest {
     @Test
     public void test__ifr_time_is_the_whole_flight_time_when_the_flight_is_ifr_and_zero_when_it_is_vfr() {
         final PilotLogbook.Entry entry = entry(1, START, START + 453 * 60); // 7.6 hours
-        assertEquals(0, entry.getIfrTimeTenths());
+        assertEquals(0.0f, entry.getIfrTime(), 0.001f);
 
         entry.setIfr(true);
-        assertEquals(76, entry.getIfrTimeTenths());
-        assertEquals(76, entry.getFlightTimeTenths());
+        assertEquals(7.6f, entry.getIfrTime(), 0.001f);
+        assertEquals(7.6f, entry.getFlightTime(), 0.001f);
 
         entry.setIfr(false);
-        assertEquals(0, entry.getIfrTimeTenths());
+        assertEquals(0.0f, entry.getIfrTime(), 0.001f);
         assertFalse(entry.isIfr());
     }
 
