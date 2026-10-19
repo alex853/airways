@@ -3,7 +3,6 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.DayNight;
 import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,39 +229,6 @@ public class FlightMissionControl {
         log.info("f/m #{} - aircraft {} departed from gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow());
     }
 
-    /**
-     * A piece of the flight longer than this is not counted as a whole: the tracker was offline, nobody knows what happened there.
-     */
-    public static final int MAX_NIGHT_INTERVAL_SECONDS = 15 * Time.ONE_MINUTE;
-
-    /**
-     * A position report of the flight in the air: the time since the previous update of the aircraft goes to the night time of the
-     * flight if it is night at the reported position now. It must be called before the aircraft is updated (the time of its last update
-     * is the beginning of the interval).
-     */
-    public void accountNightTime(final FlightMissions.Mission mission, final double latitude, final double longitude) {
-        if (mission.getStatus() != FlightMissions.Status.Flying) {
-            return;
-        }
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-        addNightSecondsSinceLastUpdate(mission, aircraft, latitude, longitude, true);
-    }
-
-    /**
-     * @param airborne a piece in the air is limited by MAX_NIGHT_INTERVAL_SECONDS (the tracker could be offline), a piece on the ground
-     *                 (taxi after blocks off and before blocks on) is not limited
-     */
-    private void addNightSecondsSinceLastUpdate(final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final double latitude, final double longitude, final boolean airborne) {
-        final int now = world.getWorldTime();
-        final int last = aircraft.getLastUpdated();
-        if (last <= 0 || now <= last) {
-            return;
-        }
-        if (DayNight.isNight(latitude, longitude, now)) {
-            mission.addNightSeconds(airborne ? Math.min(now - last, MAX_NIGHT_INTERVAL_SECONDS) : now - last);
-        }
-    }
-
     public void takeoff(final FlightMissions.Mission mission) {
         checkStatus(mission, "takeoff", FlightMissions.Status.Departure);
 
@@ -271,13 +237,7 @@ public class FlightMissionControl {
 
         world.personControl().onMissionTakeoff(mission);
 
-        final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-        mission.setNightTakeoff(DayNight.isNight(departureAirport.getLatitude(), departureAirport.getLongitude(), world.getWorldTime()));
-
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-
-        // the taxi from blocks off to the takeoff goes to the night time too
-        addNightSecondsSinceLastUpdate(mission, aircraft, departureAirport.getLatitude(), departureAirport.getLongitude(), false);
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.Flying);
 
@@ -298,10 +258,6 @@ public class FlightMissionControl {
         checkStatus(mission, "landing", FlightMissions.Status.Flying);
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-
-        // the last piece of the flight, from the last position report to the landing
-        addNightSecondsSinceLastUpdate(mission, aircraft, landingAirport.getLatitude(), landingAirport.getLongitude(), true);
-        mission.setNightLanding(DayNight.isNight(landingAirport.getLatitude(), landingAirport.getLongitude(), world.getWorldTime()));
 
         mission.setStatus(FlightMissions.Status.Arrival);
         mission.setActualLandingWorldTime(world.getWorldTime());
@@ -332,10 +288,6 @@ public class FlightMissionControl {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-
-        // the taxi from the landing to blocks on goes to the night time too
-        final Airports.Airport landedAt = world.airports().byId(mission.getActualLandingAirportId()).orElse(locationAirport);
-        addNightSecondsSinceLastUpdate(mission, aircraft, landedAt.getLatitude(), landedAt.getLongitude(), false);
 
         aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
         aircraft.setLocationAirportId(locationAirport.getId());

@@ -453,6 +453,9 @@ public class Storage<T> {
             case Tenths8bit -> {
                 return Byte.toUnsignedInt(data[fieldOffset]) / 10.0f;
             }
+            case Float16bit -> {
+                return Half.fromBits((Byte.toUnsignedInt(data[fieldOffset]) << 8) + Byte.toUnsignedInt(data[fieldOffset + 1]));
+            }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
@@ -555,6 +558,12 @@ public class Storage<T> {
                 // 3.42 is rounded to 3.4 and is stored as 34, the value out of [0.0 .. 25.5] is an error, it is not cut
                 checkArgument(!Float.isNaN(value) && 0.0f <= value && value <= 25.5f, "Tenths value out of range [0.0 .. 25.5]: " + value);
                 data[fieldOffset] = (byte) Math.round(value * 10.0);
+            }
+            case Float16bit -> {
+                // the value out of the half float range is an error, the accuracy of the stored value depends on its size
+                final int bits = Half.toBits(value);
+                data[fieldOffset] = (byte) (bits >> 8);
+                data[fieldOffset + 1] = (byte) bits;
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }

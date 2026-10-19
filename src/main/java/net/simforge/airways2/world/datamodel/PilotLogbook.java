@@ -8,6 +8,7 @@ import net.simforge.airways2.world.Time;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -16,11 +17,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 /**
  * Flights of the pilots: one record is one flight of one person, from blocks off to blocks on. It is written when the flight is finished.
  * <p>
- * The times are minutes from the start of the world (2025-01-01), 3 bytes: it is about 31 years. The duration is not stored, it is the
- * difference of the two times. The type of the aircraft is not stored, the aircraft is not deleted, so the type is read from it.
+ * The date of the flight (the UTC date of blocks off, two bytes, days from 2024-12-31, about 179 years) and the two times of blocks off and blocks on
+ * (12 bits of minutes of that date each, in one 24-bit field) are kept the same way as the flight missions keep them, see DateMinutes. The duration is
+ * not stored, it is the difference of the two times. The type of the aircraft is not stored, the aircraft is not deleted, so the type is read from it.
  */
 public class PilotLogbook {
-    private static final int MAX_MINUTES = (1 << 24) - 1;
     private static final int MAX_16BIT = 65535;
 
     private final Storage<Entry> storage = Storage.<Entry>builder()
@@ -32,34 +33,36 @@ public class PilotLogbook {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId              3 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // fromAirportId           2 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // toAirportId             2 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOff, minutes      3 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOn, minutes       3 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flight kind bits: bit 0 IFR, bit 6 night takeoff, bit 7 night landing, bits 1-5 are free  1 byte
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // dateOfFlight, days      2 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOff + blocksOn, 12 bits of minutes of the date each  3 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags: bit 0 IFR, bit 6 night takeoff, bit 7 night landing, bits 1-5 are free  1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // flightTime, hours 0.0-25.5 step 0.1  1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // nightTime, hours 0.0-25.5            1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // ifrTime, hours 0.0-25.5              1 byte
-            // ----------------------------------------------------- sum                   21 bytes
-            // -------------------------------------------- reserved 11 bytes to align total size to 32 bytes
+            // ----------------------------------------------------- sum                   20 bytes
+            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve                  1 byte
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .build();
 
     private final DataField personIdField = storage.getDataField(0);
     private final DataField aircraftIdField = storage.getDataField(1);
     private final DataField fromAirportIdField = storage.getDataField(2);
     private final DataField toAirportIdField = storage.getDataField(3);
-    private final DataField blocksOffField = storage.getDataField(4);
-    private final DataField blocksOnField = storage.getDataField(5);
-    private final DataField kindRawField = storage.getDataField(6);
-    private final BitAccessField kindBits = BitAccessField.instance(storage, kindRawField);
+    private final DataField dateOfFlightField = storage.getDataField(4);
+    private final DataField blockTimesRawField = storage.getDataField(5);
+    private final BitAccessField blockTimesBits = BitAccessField.instance(storage, blockTimesRawField);
+    private final BitAccessField.Section blocksOffBitField = blockTimesBits.section(DateMinutes.TIME_BITS, DateMinutes.TIME_BITS);
+    private final BitAccessField.Section blocksOnBitField = blockTimesBits.section(0, DateMinutes.TIME_BITS);
+    private final DataField flagsRawField = storage.getDataField(6);
+    private final BitAccessField flagsBits = BitAccessField.instance(storage, flagsRawField);
     // The bit 0 is the flight rules, the day and night bits are in the top of the byte on purpose: they are going to be reworked,
     // and the bits 1-5 between them are free for other flags. A record is one flight: one takeoff and one landing, each of them is
     // either at day (bit is 0) or at night (bit is 1). Nobody edits them.
-    private final BitAccessField.Section ifrBit = kindBits.section(0, 1); // 1 is IFR, 0 is VFR
-    private final BitAccessField.Section nightTakeoffBit = kindBits.section(6, 1);
-    private final BitAccessField.Section nightLandingBit = kindBits.section(7, 1);
+    private final BitAccessField.Section ifrBit = flagsBits.section(0, 1); // 1 is IFR, 0 is VFR
+    private final BitAccessField.Section nightTakeoffBit = flagsBits.section(6, 1);
+    private final BitAccessField.Section nightLandingBit = flagsBits.section(7, 1);
     private final DataField flightTimeField = storage.getDataField(7);
     private final DataField nightTimeField = storage.getDataField(8);
     private final DataField ifrTimeField = storage.getDataField(9);
@@ -103,41 +106,30 @@ public class PilotLogbook {
         checkArgument(aircraftId > 0, "aircraftId is mandatory");
         checkArgument(1 <= fromAirportId && fromAirportId <= MAX_16BIT, "fromAirportId is out of 16 bits");
         checkArgument(1 <= toAirportId && toAirportId <= MAX_16BIT, "toAirportId is out of 16 bits");
-        final int blocksOffMinutes = toMinutes(blocksOffTime);
-        final int blocksOnMinutes = toMinutes(blocksOnTime);
-        checkArgument(blocksOnMinutes >= blocksOffMinutes, "blocks on is before blocks off");
+        final LocalDate dateOfFlight = Time.toLdt(blocksOffTime).toLocalDate();
+        final int blocksOffStored = DateMinutes.toStored(dateOfFlight, blocksOffTime);
+        final int blocksOnStored = DateMinutes.toStored(dateOfFlight, blocksOnTime);
+        checkArgument(blocksOnStored >= blocksOffStored, "blocks on is before blocks off");
+        final int dateOfFlightDays = DateMinutes.toDays(dateOfFlight);
 
         final int id = storage.addRecord();
         storage.set(id, personIdField, personId);
         storage.set(id, aircraftIdField, aircraftId);
         storage.set(id, fromAirportIdField, fromAirportId);
         storage.set(id, toAirportIdField, toAirportId);
-        storage.set(id, blocksOffField, blocksOffMinutes);
-        storage.set(id, blocksOnField, blocksOnMinutes);
+        storage.set(id, dateOfFlightField, dateOfFlightDays);
+        blocksOffBitField.setInt(id, blocksOffStored);
+        blocksOnBitField.setInt(id, blocksOnStored);
         // day or night of the takeoff and of the landing is not calculated yet, day is the default
         nightTakeoffBit.setInt(id, 0);
         nightLandingBit.setInt(id, 0);
         // the flight rules are not known yet, VFR until the source is connected
         ifrBit.setInt(id, 0);
         // the times are hours with one digit (Tenths8bit). Night time and IFR time are set later, zeros until then
-        storage.set(id, flightTimeField, flightTimeHours(blocksOnMinutes - blocksOffMinutes));
+        storage.set(id, flightTimeField, flightTimeHours(blocksOnStored - blocksOffStored));
         storage.set(id, nightTimeField, 0.0f);
         storage.set(id, ifrTimeField, 0.0f);
         return new Entry(id);
-    }
-
-    /**
-     * World time in seconds to minutes from the start of the world, the seconds are dropped.
-     */
-    public static int toMinutes(final int worldTime) {
-        checkArgument(worldTime >= Time.START_TIME_EPOCH_SECONDS, "time is before the start of the world");
-        final int minutes = (worldTime - Time.START_TIME_EPOCH_SECONDS) / Time.ONE_MINUTE;
-        checkArgument(minutes <= MAX_MINUTES, "time is out of 3 bytes of minutes");
-        return minutes;
-    }
-
-    public static int fromMinutes(final int minutes) {
-        return Time.START_TIME_EPOCH_SECONDS + minutes * Time.ONE_MINUTE;
     }
 
     /**
@@ -186,18 +178,25 @@ public class PilotLogbook {
         }
 
         /**
+         * The UTC date of blocks off.
+         */
+        public LocalDate getDateOfFlight() {
+            return DateMinutes.fromDays(storage.getAsInt(id, dateOfFlightField));
+        }
+
+        /**
          * World time in seconds, with an accuracy of a minute.
          */
         public int getBlocksOffTime() {
-            return fromMinutes(storage.getAsInt(id, blocksOffField));
+            return DateMinutes.fromStored(getDateOfFlight(), blocksOffBitField.getInt(id));
         }
 
         public int getBlocksOnTime() {
-            return fromMinutes(storage.getAsInt(id, blocksOnField));
+            return DateMinutes.fromStored(getDateOfFlight(), blocksOnBitField.getInt(id));
         }
 
         public int getDurationMinutes() {
-            return storage.getAsInt(id, blocksOnField) - storage.getAsInt(id, blocksOffField);
+            return blocksOnBitField.getInt(id) - blocksOffBitField.getInt(id);
         }
 
         /**

@@ -138,11 +138,11 @@ class PilotLogbookTest {
     }
 
     @Test
-    public void test__times_are_three_bytes_after_the_counters_byte(@TempDir final Path dir) throws IOException {
+    public void test__times_are_three_bytes_after_the_flags_byte(@TempDir final Path dir) throws IOException {
         final PilotLogbook.Entry entry = entry(1, START, START + 138 * 60);
         entry.setNightTime(0.8f);
-        // the header (1), the person (3), the aircraft (3), the airports (2 + 2), the two times (3 + 3) and the counters byte (1)
-        final int offset = 1 + 3 + 3 + 2 + 2 + 3 + 3 + 1;
+        // the header (1), the person (3), the aircraft (3), the airports (2 + 2), the date (2), the two times (3) and the flags byte (1)
+        final int offset = 1 + 3 + 3 + 2 + 2 + 2 + 3 + 1;
 
         logbook.save(dir);
 
@@ -186,8 +186,8 @@ class PilotLogbookTest {
     @Test
     public void test__flight_kind_byte__ifr_is_bit_0_night_takeoff_and_night_landing_are_the_top_bits_and_the_middle_is_free(@TempDir final Path dir) throws IOException {
         final PilotLogbook.Entry entry = logbook.create(1, 77, 10, 20, START, START + 60);
-        // the byte follows the header (1), the person (3), the aircraft (3), the airports (2 + 2) and the two times (3 + 3)
-        final int offset = 1 + 3 + 3 + 2 + 2 + 3 + 3;
+        // the byte follows the header (1), the person (3), the aircraft (3), the airports (2 + 2), the date (2) and the two times (3)
+        final int offset = 1 + 3 + 3 + 2 + 2 + 2 + 3;
 
         logbook.save(dir);
         assertEquals((byte) 0x00, Files.readAllBytes(dir.resolve("pilot-logbook"))[offset]); // VFR, day takeoff, day landing
@@ -210,13 +210,55 @@ class PilotLogbookTest {
     }
 
     @Test
-    public void test__three_bytes_of_minutes_are_about_31_years() {
-        // 2^24 minutes
-        assertTrue((1 << 24) / (365.0 * 24 * 60) > 31 && (1 << 24) / (365.0 * 24 * 60) < 32);
+    public void test__the_date_of_flight_is_the_utc_date_of_blocks_off_and_a_flight_over_midnight_is_fine() {
+        final int blocksOff = (int) java.time.LocalDateTime.of(2025, 6, 21, 23, 50).toEpochSecond(java.time.ZoneOffset.UTC);
+        final int blocksOn = (int) java.time.LocalDateTime.of(2025, 6, 22, 2, 10).toEpochSecond(java.time.ZoneOffset.UTC);
 
-        // the world time is int seconds, it ends in 2038, that is earlier than the minutes do
+        final PilotLogbook.Entry entry = entry(1, blocksOff, blocksOn);
+
+        assertEquals(java.time.LocalDate.of(2025, 6, 21), entry.getDateOfFlight());
+        assertEquals(blocksOff, entry.getBlocksOffTime());
+        assertEquals(blocksOn, entry.getBlocksOnTime());
+        assertEquals(140, entry.getDurationMinutes());
+        assertEquals(2.3f, entry.getFlightTime(), 0.001f);
+    }
+
+    @Test
+    public void test__the_window_of_the_times_is_the_one_of_the_flight_missions__blocks_on_up_to_about_two_days_after_the_midnight() {
+        final int blocksOff = (int) java.time.LocalDateTime.of(2025, 6, 21, 23, 59).toEpochSecond(java.time.ZoneOffset.UTC);
+
+        // 25 hours later, 49 hours after the midnight of the date: inside the window
+        assertEquals(1500, entry(1, blocksOff, blocksOff + 25 * 3600).getDurationMinutes());
+
+        // 50 hours after the midnight of the date is out of the window
+        assertThrows(IllegalArgumentException.class, () -> entry(1, blocksOff, blocksOff + 26 * 3600 + 3600));
+    }
+
+    @Test
+    public void test__two_bytes_of_days_hold_about_179_years_and_the_world_time_is_int_seconds_which_ends_in_2038() {
+        // 65535 days from 2024-12-31
+        assertTrue(65535 / 365.25 > 179 && 65535 / 365.25 < 180);
+
+        // the last second of the int world time is the last day of the logbook of the world
         final PilotLogbook.Entry entry = entry(1, Integer.MAX_VALUE - 600, Integer.MAX_VALUE);
+        assertEquals(java.time.LocalDate.of(2038, 1, 19), entry.getDateOfFlight());
         assertTrue(entry.getBlocksOnTime() <= Integer.MAX_VALUE && entry.getBlocksOnTime() > Integer.MAX_VALUE - 60);
+    }
+
+    @Test
+    public void test__the_date_is_two_bytes_before_the_times_on_the_disk(@TempDir final Path dir) throws IOException {
+        entry(1, START + 3600, START + 7200); // 2025-01-01, the day number 1
+        final int offsetOfDate = 1 + 3 + 3 + 2 + 2;
+
+        logbook.save(dir);
+
+        final byte[] data = Files.readAllBytes(dir.resolve("pilot-logbook"));
+        assertEquals(0, data[offsetOfDate]);
+        assertEquals(1, data[offsetOfDate + 1]);
+        // 01:00 and 02:00 of the day: 60 + 1000 = 1060 = 0x424 and 120 + 1000 = 1120 = 0x460, so 0x424460
+        assertEquals((byte) 0x42, data[offsetOfDate + 2]);
+        assertEquals((byte) 0x44, data[offsetOfDate + 3]);
+        assertEquals((byte) 0x60, data[offsetOfDate + 4]);
     }
 
     @Test

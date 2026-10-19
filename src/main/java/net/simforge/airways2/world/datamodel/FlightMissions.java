@@ -40,9 +40,9 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // nightSeconds, seconds from blocks off to blocks on at night, up to 16 777 215
             .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Float16bit)) // nightMinutes, half float: the night time from blocks off to blocks on, measured by the sim tracker, see getNightMinutes
             // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned16bit)) // userId
             .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (aircraftId=0, status=1, heartbeatTime=2)
@@ -63,19 +63,27 @@ public class FlightMissions {
     private final DataField actualDepartureAndTakeoffTimeField = storage.getDataField(7);
     private final DataField actualLandingAndArrivalTimeField = storage.getDataField(8);
     private final DataField actualLandingAirportIdField = storage.getDataField(9);
+    // two times of the date of flight in one 24-bit field: the first one is in the high 12 bits, the second one is in the low 12 bits, see DateMinutes
+    private final BitAccessField plannedTimesBits = BitAccessField.instance(storage, plannedDepartureAndArrivalTimeField);
+    private final BitAccessField.Section plannedDepartureTimeBitField = plannedTimesBits.section(DateMinutes.TIME_BITS, DateMinutes.TIME_BITS);
+    private final BitAccessField.Section plannedArrivalTimeBitField = plannedTimesBits.section(0, DateMinutes.TIME_BITS);
+    private final BitAccessField actualDepartureTakeoffTimesBits = BitAccessField.instance(storage, actualDepartureAndTakeoffTimeField);
+    private final BitAccessField.Section actualDepartureTimeBitField = actualDepartureTakeoffTimesBits.section(DateMinutes.TIME_BITS, DateMinutes.TIME_BITS);
+    private final BitAccessField.Section actualTakeoffTimeBitField = actualDepartureTakeoffTimesBits.section(0, DateMinutes.TIME_BITS);
+    private final BitAccessField actualLandingArrivalTimesBits = BitAccessField.instance(storage, actualLandingAndArrivalTimeField);
+    private final BitAccessField.Section actualLandingTimeBitField = actualLandingArrivalTimesBits.section(DateMinutes.TIME_BITS, DateMinutes.TIME_BITS);
+    private final BitAccessField.Section actualArrivalTimeBitField = actualLandingArrivalTimesBits.section(0, DateMinutes.TIME_BITS);
     private final DataField flags2RawField = storage.getDataField(10);
     private final BitAccessField flags2Bits = BitAccessField.instance(storage, flags2RawField);
     private final BitAccessField.Section nightTakeoffBitField = flags2Bits.section(0, 1);
     private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
-    private final DataField nightSecondsField = storage.getDataField(11);
+    @SuppressWarnings("unused")
+    private final DataField reserved24bitsField3 = storage.getDataField(11);
     @SuppressWarnings("unused")
     private final DataField reserved24bitsField4 = storage.getDataField(12);
-    @SuppressWarnings("unused")
-    private final DataField reserved16bitsField5 = storage.getDataField(13);
+    private final DataField nightMinutesField = storage.getDataField(13);
     private final DataField userIdField = storage.getDataField(14);
 
-    private static final LocalDate DAY_BEFORE_FIRST_DAY = LocalDate.of(2024, 12, 31);
-    private static final int MAX_NIGHT_SECONDS = (1 << 24) - 1;
 
     public FlightMissions() {
     }
@@ -211,18 +219,17 @@ public class FlightMissions {
         }
 
         /**
-         * Seconds of the flight (from blocks off to blocks on, the taxi included) which were at night. It is accumulated while the flight goes.
+         * The night time of the flight in minutes (from blocks off to blocks on, the taxi included), as the sim tracker has measured it. It is a half float
+         * (the step is 1 minute up to 34 hours), so this is not an accumulator: the sim tracker keeps the exact value in its context and only writes it here,
+         * to restore it after a restart. Zero for the old records and the flights which are not tracked.
          */
-        public int getNightSeconds() {
-            return storage.getAsInt(id, nightSecondsField);
+        public float getNightMinutes() {
+            return storage.getAsFloat(id, nightMinutesField);
         }
 
-        /**
-         * Adds seconds to the night time of the flight, the sum is limited by 24 bits (194 days).
-         */
-        public void addNightSeconds(final int seconds) {
-            checkArgument(seconds >= 0);
-            storage.set(id, nightSecondsField, Math.min(MAX_NIGHT_SECONDS, getNightSeconds() + seconds));
+        public void setNightMinutes(final float nightMinutes) {
+            checkArgument(nightMinutes >= 0, "night time can not be negative");
+            storage.set(id, nightMinutesField, nightMinutes);
         }
 
         public CoordinatesSource getCoordinatesSource() {
@@ -263,68 +270,61 @@ public class FlightMissions {
         }
 
         public int getPlannedDepartureWorldTime() {
-            return getTime12bit(plannedDepartureAndArrivalTimeField, true);
+            return getTime(plannedDepartureTimeBitField);
         }
 
         public void setPlannedDepartureWorldTime(final int plannedDepartureWorldTime) {
             final LocalDateTime ldt = Time.toLdtOrNull(plannedDepartureWorldTime);
             setDateOfFlight(ldt != null ? ldt.toLocalDate() : null);
-            setTime12bit(plannedDepartureAndArrivalTimeField, true, plannedDepartureWorldTime);
+            setTime(plannedDepartureTimeBitField, plannedDepartureWorldTime);
         }
 
         public int getPlannedArrivalWorldTime() {
-            return getTime12bit(plannedDepartureAndArrivalTimeField, false);
+            return getTime(plannedArrivalTimeBitField);
         }
 
         public void setPlannedArrivalWorldTime(final int plannedArrivalWorldTime) {
-            setTime12bit(plannedDepartureAndArrivalTimeField, false, plannedArrivalWorldTime);
+            setTime(plannedArrivalTimeBitField, plannedArrivalWorldTime);
         }
 
         public int getActualDepartureWorldTime() {
-            return getTime12bit(actualDepartureAndTakeoffTimeField, true);
+            return getTime(actualDepartureTimeBitField);
         }
 
         public void setActualDepartureWorldTime(final int actualDepartureWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeField, true, actualDepartureWorldTime);
+            setTime(actualDepartureTimeBitField, actualDepartureWorldTime);
         }
 
         public int getActualTakeoffWorldTime() {
-            return getTime12bit(actualDepartureAndTakeoffTimeField, false);
+            return getTime(actualTakeoffTimeBitField);
         }
 
         public void setActualTakeoffWorldTime(final int actualTakeoffWorldTime) {
-            setTime12bit(actualDepartureAndTakeoffTimeField, false, actualTakeoffWorldTime);
+            setTime(actualTakeoffTimeBitField, actualTakeoffWorldTime);
         }
 
         public int getActualLandingWorldTime() {
-            return getTime12bit(actualLandingAndArrivalTimeField, true);
+            return getTime(actualLandingTimeBitField);
         }
 
         public void setActualLandingWorldTime(final int actualLandingWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeField, true, actualLandingWorldTime);
+            setTime(actualLandingTimeBitField, actualLandingWorldTime);
         }
 
         public int getActualArrivalWorldTime() {
-            return getTime12bit(actualLandingAndArrivalTimeField, false);
+            return getTime(actualArrivalTimeBitField);
         }
 
         public void setActualArrivalWorldTime(final int actualArrivalWorldTime) {
-            setTime12bit(actualLandingAndArrivalTimeField, false, actualArrivalWorldTime);
+            setTime(actualArrivalTimeBitField, actualArrivalWorldTime);
         }
 
         public LocalDate getDateOfFlight() {
-            final int days = storage.getAsIntUnsafe(id, dateOfFlightField);
-            if (days == 0) {
-                return null;
-            }
-            return DAY_BEFORE_FIRST_DAY.plusDays(days);
+            return DateMinutes.fromDays(storage.getAsIntUnsafe(id, dateOfFlightField));
         }
 
         public void setDateOfFlight(final LocalDate dateOfFlight) {
-            final int days = dateOfFlight != null
-                    ? (int) ChronoUnit.DAYS.between(DAY_BEFORE_FIRST_DAY, dateOfFlight)
-                    : 0;
-            storage.setUnsafe(id, dateOfFlightField, days);
+            storage.setUnsafe(id, dateOfFlightField, DateMinutes.toDays(dateOfFlight));
         }
 
         public int getUserId() {
@@ -335,54 +335,12 @@ public class FlightMissions {
             storage.set(id, userIdField, userId);
         }
 
-        private int getTime12bit(final DataField dataField, final boolean high) {
-            final LocalDate dateOfFlight = getDateOfFlight();
-            final int value = read12bits(dataField, high);
-            if (dateOfFlight != null && value != 0) {
-                final int minutes = value - 1000;
-                checkArgument(-1000 < minutes && minutes < 3000);
-
-                return Time.fromLdt(dateOfFlight.atStartOfDay().plusMinutes(minutes));
-            } else {
-                return 0;
-            }
+        private int getTime(final BitAccessField.Section section) {
+            return DateMinutes.fromStored(getDateOfFlight(), section.getInt(id));
         }
 
-        private void setTime12bit(final DataField dataField, final boolean high, final int worldTime) {
-            final LocalDate dateOfFlight = getDateOfFlight();
-            if (dateOfFlight != null && worldTime != 0) {
-                final LocalDateTime baseTime = dateOfFlight.atStartOfDay();
-                final LocalDateTime thisTime = Time.toLdt(worldTime);
-                final int minutes = (int) Duration.between(baseTime, thisTime).getSeconds() / 60;
-                checkArgument(-1000 < minutes && minutes < 3000);
-
-                write12bits(dataField, high, minutes + 1000);
-
-                final int check = read12bits(dataField, high);
-                if (check != minutes + 1000) {
-                    log.warn("setTimeExp high {}, dof {}, worldTime {}, minutes {}, minutes+1000 {}, check {}", high, dateOfFlight, thisTime, minutes, minutes + 1000, check);
-                }
-            } else {
-                write12bits(dataField, high, 0);
-            }
-        }
-
-        private int read12bits(final DataField dataField, final boolean high) {
-            final int mask = high ? 0b111111111111000000000000 : 0b000000000000111111111111;
-            final int shift = high ? 12 : 0;
-
-            final int raw = storage.getAsIntUnsafe(id, dataField);
-            return (raw & mask) >> shift;
-        }
-
-        private void write12bits(final DataField dataField, final boolean high, final int value) {
-            final int mask = high ? 0b111111111111000000000000 : 0b000000000000111111111111;
-            final int shift = high ? 12 : 0;
-
-            final int shiftedValue = value << shift;
-            final int raw = storage.getAsIntUnsafe(id, dataField);
-            final int anotherPart = (raw & ~mask);
-            storage.setUnsafe(id, dataField, shiftedValue | anotherPart);
+        private void setTime(final BitAccessField.Section section, final int worldTime) {
+            section.setInt(id, DateMinutes.toStored(getDateOfFlight(), worldTime));
         }
 
         @Override

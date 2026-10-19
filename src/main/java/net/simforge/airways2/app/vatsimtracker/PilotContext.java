@@ -575,7 +575,6 @@ public class PilotContext {
                 mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyHeadingMode);
             }
 
-            world.flightMissionControl().accountNightTime(mission, position.getCoords().getLat(), position.getCoords().getLon());
             aircraft.setLocationLatitude((float) position.getCoords().getLat());
             aircraft.setLocationLongitude((float) position.getCoords().getLon());
             aircraft.setLocationHeading(position.getHeading());

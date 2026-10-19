@@ -83,7 +83,7 @@ public class PersonControl {
     private void writeLogbook(final Persons.Person person, final FlightMissions.Mission mission) {
         final int blocksOff = mission.getActualDepartureWorldTime();
         final int blocksOn = mission.getActualArrivalWorldTime();
-        if (blocksOff < Time.START_TIME_EPOCH_SECONDS || blocksOn < blocksOff) {
+        if (blocksOff < Time.START_TIME_EPOCH_SECONDS || blocksOn < blocksOff || blocksOn - blocksOff > 1530 * Time.ONE_MINUTE) {
             log.warn("p/s #{} - f/m #{} is not written to the logbook, its blocks off {} and blocks on {} are not valid", person.getId(), mission.getId(), blocksOff, blocksOn);
             return;
         }
@@ -101,7 +101,7 @@ public class PersonControl {
         entry.setNightTakeoff(mission.isNightTakeoff());
         entry.setNightLanding(mission.isNightLanding());
         // seconds to hours, the storage rounds it to a tenth; the night time cannot be longer than the flight time
-        entry.setNightTime(Math.min(entry.getFlightTime(), mission.getNightSeconds() / 3600.0f));
+        entry.setNightTime(Math.min(entry.getFlightTime(), mission.getNightMinutes() / 60.0f));
 
         log.info("p/s #{} - logbook entry #{}: {} -> {}, {} min, f/m #{}", person.getId(), entry.getId(),
                 world.airports().getIcao(entry.getFromAirportId()).orElse("#" + entry.getFromAirportId()),
