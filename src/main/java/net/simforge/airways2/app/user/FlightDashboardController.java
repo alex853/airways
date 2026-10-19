@@ -23,7 +23,9 @@ import net.simforge.airways2.world.processors.FlightMissionHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Objects;
@@ -95,7 +97,16 @@ public class FlightDashboardController {
         }
 
         final User user = userO.get();
-        final Optional<Persons.Person> person = user.getPersonId() > 0 ? world.persons().byId(user.getPersonId()) : Optional.empty();
+        final UserLocationDto location = buildUserLocation(world, user, userId, simStatus);
+
+        return new UserDto(Id.encode(user.getId()), location.getExpectedAirport(), location);
+    }
+
+    // The person of the user decides where the pilot is expected to be. A user without a person is not allowed to use the dashboard at all.
+    static UserLocationDto buildUserLocation(final World world, final User user, final int userId, final SimTracker.UserStatus simStatus) {
+        final Optional<Persons.Person> person = user != null && user.getPersonId() > 0
+                ? world.persons().byId(user.getPersonId())
+                : Optional.empty();
 
         // The airport where the pilot is expected to be: the location of the person of the user, null if there is no person or
         // the person is not at an airport.
@@ -106,10 +117,7 @@ public class FlightDashboardController {
 
         final boolean flightInProgress = simStatus.getFlightMissionId() != null || userHasActiveFlight(world, userId);
 
-        return new UserDto(
-                Id.encode(user.getId()),
-                expectedAirport,
-                buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress, simStatus));
+        return buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress, simStatus);
     }
 
     // The flight of the user which has been started and is not finished yet, the person is on duty then.
@@ -121,9 +129,9 @@ public class FlightDashboardController {
                 });
     }
 
-    // The pilot is expected to be Idle at the airport of its person and the airport where the pilot has been loaded is the same.
-    // A flight in progress is always valid (the person is OnDuty, the pilot may be nowhere). Expected and current airports are filled
-    // whenever they are known, state is only the verdict.
+    // The verdict about the pilot: the person is expected to be Idle at an airport and the pilot has to be loaded at the same airport. A flight in
+    // progress is valid (the person is OnDuty, the pilot may be nowhere). Expected and current airports are filled whenever they are known, state is
+    // only the verdict. The states which block the dashboard are listed in UserLocationState.
     static UserLocationDto buildUserLocationDto(final String expectedAirport,
                                                 final Persons.State personState,
                                                 final boolean hasPerson,
@@ -133,8 +141,8 @@ public class FlightDashboardController {
 
         final UserLocationState state;
         if (!hasPerson) {
-            // no person yet - no restrictions
-            state = UserLocationState.OK;
+            // nobody flies without a pilot
+            state = UserLocationState.NO_PERSON;
         } else if (flightInProgress) {
             // flight is in progress - the check is not applied
             state = UserLocationState.OK;
@@ -142,8 +150,8 @@ public class FlightDashboardController {
             // todo ak3 a person who is Resting or Travelling can be 'woken up' or 'brought back' by the user, but it costs something
             state = UserLocationState.PERSON_NOT_IDLE;
         } else if (expectedAirport == null) {
-            // the person is not at an airport - no restrictions
-            state = UserLocationState.OK;
+            // the pilot is Idle but is not at an airport (in the air, in a hotel, in a city): something is wrong, nothing can be started from there
+            state = UserLocationState.PERSON_NOT_AT_AIRPORT;
         } else if (currentAirport == null) {
             // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
             state = UserLocationState.UNKNOWN;
@@ -156,10 +164,29 @@ public class FlightDashboardController {
         return new UserLocationDto(state, expectedAirport, currentAirport);
     }
 
+    /**
+     * The dashboard is not available if the verdict about the pilot blocks it.
+     */
+    static void checkDashboardIsAllowed(final UserLocationDto location) {
+        if (location.getState().blocksDashboard()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Flight dashboard is not available: " + location.getState());
+        }
+    }
+
+    private void checkUserMayUseDashboard(final World world, final int userId) {
+        SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
+        if (simStatus == null) {
+            simStatus = SimTracker.UserStatus.none();
+        }
+        final User user = UserStorage.getInstance().findById(userId).orElse(null);
+        checkDashboardIsAllowed(buildUserLocation(world, user, userId, simStatus));
+    }
+
     @PostMapping("/start-flight")
     public Status2Dto startFlight(@RequestAttribute("userId") int userId,
                                   @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -205,6 +232,7 @@ public class FlightDashboardController {
                                  @RequestParam(name = "flightId") String flightIdStr,
                                  @RequestParam(name = "shiftMinutes") int shiftMinutes) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -235,6 +263,7 @@ public class FlightDashboardController {
     public Status2Dto startBoarding(@RequestAttribute("userId") int userId,
                                     @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -276,6 +305,7 @@ public class FlightDashboardController {
     public Status2Dto blocksOff(@RequestAttribute("userId") int userId,
                                 @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -304,6 +334,7 @@ public class FlightDashboardController {
     public Status2Dto takeoff(@RequestAttribute("userId") int userId,
                               @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -332,6 +363,7 @@ public class FlightDashboardController {
     public Status2Dto landing(@RequestAttribute("userId") int userId,
                               @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -361,6 +393,7 @@ public class FlightDashboardController {
     public Status2Dto blocksOn(@RequestAttribute("userId") int userId,
                                @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -389,6 +422,7 @@ public class FlightDashboardController {
     public Status2Dto startDeboarding(@RequestAttribute("userId") int userId,
                                       @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -430,6 +464,7 @@ public class FlightDashboardController {
     public Status2Dto finish(@RequestAttribute("userId") int userId,
                              @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
             int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -612,9 +647,23 @@ public class FlightDashboardController {
 
     public enum UserLocationState {
         OK,
-        WRONG_AIRPORT,
+        // the user has no person, nobody flies without a pilot
+        NO_PERSON,
+        // the person is not Idle (Resting, Travelling, OnDuty without a flight)
         PERSON_NOT_IDLE,
-        UNKNOWN
+        // the person is Idle but is not at an airport
+        PERSON_NOT_AT_AIRPORT,
+        // the pilot is loaded at an airport which is not the airport of the person
+        WRONG_AIRPORT,
+        // the sim tracker does not say where the pilot is: it is not connected, the pilot is in the air or on the ground out of any airport
+        UNKNOWN;
+
+        /**
+         * The actions of the dashboard are refused in these states. UNKNOWN does not block: the dashboard is used without the sim tracker too.
+         */
+        public boolean blocksDashboard() {
+            return this == NO_PERSON || this == PERSON_NOT_IDLE || this == PERSON_NOT_AT_AIRPORT || this == WRONG_AIRPORT;
+        }
     }
 
     @AllArgsConstructor
