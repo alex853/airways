@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The pilot of the user: what the user sees about the person who flies for the user (token authentication, see AuthFilter).
@@ -70,6 +72,81 @@ public class PilotController {
             }
             return buildLogbook(world, personId);
         });
+    }
+
+    /**
+     * The experience of the pilot: the totals of the logbook and, for every type of aircraft in the logbook, the currency on the type (how recent and how
+     * much). It is the first look at the qualifications, the rules which use these numbers (stars, pay) come later.
+     */
+    @GetMapping("/qualifications")
+    public QualificationsDto getQualifications(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> {
+            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+            if (personId <= 0 || world.persons().byId(personId).isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
+            }
+            return buildQualifications(world, personId, world.getWorldTime());
+        });
+    }
+
+    // The window of "recent landings" is 24 hours for the tests, it is going to be 90 days
+    static final int RECENT_LANDINGS_WINDOW_HOURS = 24;
+    // The flights of the last 12 months
+    static final int RECENT_FLIGHTS_WINDOW_DAYS = 365;
+
+    static QualificationsDto buildQualifications(final World world, final int personId, final int worldTime) {
+        final int recentLandingsFrom = worldTime - RECENT_LANDINGS_WINDOW_HOURS * 60 * 60;
+        final int recentFlightsFrom = worldTime - RECENT_FLIGHTS_WINDOW_DAYS * 24 * 60 * 60;
+
+        // the type of the aircraft by its ICAO code, in the order of the first flight on it
+        final Map<String, TypeAccumulator> byType = new LinkedHashMap<>();
+        world.pilotLogbook()
+                .filter(world.pilotLogbook().byPersonId(personId))
+                .sorted(Comparator.comparingInt(PilotLogbook.Entry::getBlocksOffTime))
+                .forEach(e -> {
+                    final String type = world.aircrafts().byId(e.getAircraftId())
+                            .flatMap(a -> world.aircraftTypes().byId(a.getAircraftTypeId()))
+                            .map(t -> t.getIcao())
+                            .orElse("?");
+                    final TypeAccumulator acc = byType.computeIfAbsent(type, TypeAccumulator::new);
+
+                    final int landings = e.getDayLandings() + e.getNightLandings();
+                    acc.flights++;
+                    acc.landings += landings;
+                    acc.nightTakeoffs += e.getNightTakeoffs();
+                    acc.nightLandings += e.getNightLandings();
+                    acc.flightTime += e.getFlightTime();
+                    // a flight counts for the time of its landing, that is the blocks on
+                    if (e.getBlocksOnTime() >= recentLandingsFrom) {
+                        acc.recentLandings += landings;
+                    }
+                    if (e.getBlocksOnTime() >= recentFlightsFrom) {
+                        acc.recentFlights++;
+                    }
+                });
+
+        final List<TypeCurrencyDto> types = byType.values().stream()
+                .sorted(Comparator.comparingDouble((TypeAccumulator a) -> a.flightTime).reversed().thenComparing(a -> a.type))
+                .map(a -> new TypeCurrencyDto(a.type, a.recentLandings, a.landings, a.nightTakeoffs, a.nightLandings,
+                        a.recentFlights, a.flights, round1(a.flightTime)))
+                .toList();
+
+        return new QualificationsDto(buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS, types);
+    }
+
+    private static class TypeAccumulator {
+        final String type;
+        int flights;
+        int recentFlights;
+        int landings;
+        int recentLandings;
+        int nightTakeoffs;
+        int nightLandings;
+        float flightTime;
+
+        TypeAccumulator(final String type) {
+            this.type = type;
+        }
     }
 
     // The flights of the person, the latest first, with the totals.
@@ -139,6 +216,36 @@ public class PilotController {
         private String airportName;
         // the city where the pilot is, null if the pilot is not in a city
         private String cityName;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class QualificationsDto {
+        // the totals of the whole logbook
+        private LogbookTotalsDto totals;
+        // the windows of the "recent" numbers of the types: landings (hours) and flights (days)
+        private int recentLandingsWindowHours;
+        private int recentFlightsWindowDays;
+        private List<TypeCurrencyDto> types;
+    }
+
+    /**
+     * The currency of the pilot on a type of aircraft (the ICAO code of the type).
+     */
+    @Data
+    @AllArgsConstructor
+    public static class TypeCurrencyDto {
+        private String aircraftType;
+        // landings in the recent window (recentLandingsWindowHours)
+        private int recentLandings;
+        private int landings;
+        private int nightTakeoffs;
+        private int nightLandings;
+        // flights (segments) in the last 12 months
+        private int recentFlights;
+        private int flights;
+        // hours
+        private float flightTime;
     }
 
     @Data
