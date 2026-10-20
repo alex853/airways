@@ -75,6 +75,18 @@ public class Airport2City {
         return new Link(linkId);
     }
 
+    /**
+     * Removes the link of the airport with the city (a link through the sea or the border, for example). Returns false if there was no such link.
+     */
+    public boolean delete(final int airportId, final int cityId) {
+        final Optional<Link> link = byAirportIdAndCityId(airportId, cityId);
+        if (link.isEmpty()) {
+            return false;
+        }
+        storage.deleteRecord(link.get().id);
+        return true;
+    }
+
     public class Link {
         private final int id;
 

@@ -981,6 +981,44 @@ public class AdminController {
         });
     }
 
+    /**
+     * Removes the link of an airport with a city, for a link which should not be (through the sea or the border). The city is given by name, it has to
+     * be one of the cities linked with the airport. dryRun is true by default, nothing is changed then.
+     */
+    @GetMapping(value = "/airport/delete-link", produces = "text/plain")
+    public String deleteAirport2CityLink(@RequestParam("icao") String icao,
+                                         @RequestParam("city") String cityName,
+                                         @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
+        return worldBean.modifySync(world -> {
+            List<String> results = new ArrayList<>();
+
+            if (dryRun) {
+                results.add("DRY RUN - nothing is changed");
+                results.add("");
+            }
+
+            final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
+            final List<Cities.City> linked = world.airport2city().allByAirportId(airport.getId())
+                    .map(link -> world.cities().byId(link.getCityId()).orElseThrow())
+                    .filter(c -> c.getName().equalsIgnoreCase(cityName))
+                    .toList();
+            if (linked.size() != 1) {
+                return "Expected exactly one city named " + cityName + " linked with " + icao + ", found " + linked.size();
+            }
+
+            final Cities.City city = linked.get(0);
+            if (dryRun) {
+                results.add(Str.al(city.getName(), 20) + " should be unlinked from " + airport.getIcao());
+            } else {
+                world.airport2city().delete(airport.getId(), city.getId());
+                log.info("airport {} - the link with city {} is deleted", airport.getIcao(), city.getName());
+                results.add(Str.al(city.getName(), 20) + " unlinked from " + airport.getIcao());
+            }
+
+            return Strings.join(results, '\n');
+        });
+    }
+
     @GetMapping(value = "/airport/create-business-aviation-terminal", produces = "text/plain")
     public String createAirportBusinessAviationTerminal(@RequestParam("icao") String icao) {
         return worldBean.modifySync(world -> {
