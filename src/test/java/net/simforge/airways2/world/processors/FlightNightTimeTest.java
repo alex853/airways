@@ -20,8 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The night data of a flight: the sim tracker measures it (see NightTimeMeter) and puts it to the flight mission, the flight mission control does not
- * calculate it. At the end of the flight the data go to the logbook of the pilot.
+ * The night data of a flight (day or night of takeoff and landing, night time) are in the flight mission, at the end of the flight they go to the logbook of
+ * the pilot. The flight mission control sets them for the flights of users (see ManualFlightNightDataTest), these tests put their own data in the mission
+ * before the finish to check what the logbook does with them.
  */
 class FlightNightTimeTest {
     private World world;
@@ -31,6 +32,8 @@ class FlightNightTimeTest {
     private Aircrafts.Aircraft aircraft;
     private FlightMissions.Mission mission;
     private Persons.Person person;
+    // the night data which a test puts in the flight mission just before the finish
+    private Runnable overrideNightData = () -> { };
 
     private static int utc(final int hour, final int minute) {
         return (int) LocalDateTime.of(2025, 6, 21, 0, 0).plusHours(hour).plusMinutes(minute).toEpochSecond(ZoneOffset.UTC);
@@ -59,6 +62,7 @@ class FlightNightTimeTest {
         control.landing(mission, airportB);
         world.setWorldTime(utc(blocksOffHour, blocksOffMinute) + minutesInTheFlight * 60);
         control.blocksOn(mission);
+        overrideNightData.run();
         control.finish(mission);
     }
 
@@ -113,23 +117,16 @@ class FlightNightTimeTest {
         assertEquals(12.34f, mission.getNightMinutes(), 0.01f);
     }
 
-    @Test
-    public void test__the_flight_mission_control_does_not_touch_the_night_data() {
-        flyTheWholeFlight(22, 0, 60);
-
-        assertFalse(mission.isNightTakeoff());
-        assertFalse(mission.isNightLanding());
-        assertEquals(0.0f, mission.getNightMinutes(), 0.0f);
-    }
-
     // ---- the logbook gets the night data of the mission
 
     @Test
     public void test__night_flight_from_blocks_off_to_blocks_on__night_time_equals_flight_time() {
         // blocks off 22:00, blocks on 00:12: 2 hours 12 minutes, 2.2 hours
-        mission.setNightTakeoff(true);
-        mission.setNightLanding(true);
-        mission.setNightMinutes(132.0f);
+        overrideNightData = () -> {
+            mission.setNightTakeoff(true);
+            mission.setNightLanding(true);
+            mission.setNightMinutes(132.0f);
+        };
 
         flyTheWholeFlight(22, 0, 132);
 
@@ -144,7 +141,7 @@ class FlightNightTimeTest {
 
     @Test
     public void test__night_minutes_go_to_the_logbook_in_tenths_of_hour() {
-        mission.setNightMinutes(20.0f); // 0.33 hours
+        overrideNightData = () -> mission.setNightMinutes(20.0f); // 0.33 hours
 
         flyTheWholeFlight(22, 0, 25); // 25 minutes, 0.4 hours
 
@@ -175,8 +172,10 @@ class FlightNightTimeTest {
 
     @Test
     public void test__a_flight_from_the_day_into_the_night() {
-        mission.setNightLanding(true);
-        mission.setNightMinutes(30.0f);
+        overrideNightData = () -> {
+            mission.setNightLanding(true);
+            mission.setNightMinutes(30.0f);
+        };
 
         flyTheWholeFlight(20, 0, 90);
 
@@ -189,7 +188,7 @@ class FlightNightTimeTest {
 
     @Test
     public void test__night_time_in_the_logbook_cannot_be_longer_than_the_flight_time() {
-        mission.setNightMinutes(5000.0f); // too much on purpose
+        overrideNightData = () -> mission.setNightMinutes(5000.0f); // too much on purpose
 
         flyTheWholeFlight(22, 0, 60);
 

@@ -575,11 +575,8 @@ public class PilotContext {
                 mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyHeadingMode);
             }
 
-            aircraft.setLocationLatitude((float) position.getCoords().getLat());
-            aircraft.setLocationLongitude((float) position.getCoords().getLon());
-            aircraft.setLocationHeading(position.getHeading());
-            aircraft.setLocationAltitude(position.getActualAltitude());
-            aircraft.setLastUpdated(world.getWorldTime());
+            world.flightMissionControl().moveAircraft(mission, position.getCoords().getLat(), position.getCoords().getLon(),
+                    position.getHeading(), position.getActualAltitude());
 
             return mission;
         });

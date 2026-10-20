@@ -8,7 +8,6 @@ import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.pilottracker.track.TrackLeg;
 import net.simforge.airways2.pilottracker.track.TrackPosition;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.DayNight;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -93,12 +92,9 @@ public class SimTracker {
                 .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
 
-        final int worldTime = worldAccess.read(World::getWorldTime);
-        newContext = measureNightTime(newContext, worldTime);
-
         updateAircraftLocation(newContext);
 
-        newContext = processEvents(oldContext, newContext, worldTime);
+        newContext = processEvents(oldContext, newContext);
 
         newContext = doChecks(newContext);
         newContext = updateActiveFlight(newContext);
@@ -133,23 +129,15 @@ public class SimTracker {
                 log.warn("no aircraft found!!!");
                 return null;
             }
-            // the exact night time is in the context, the flight mission only keeps the current value to restore the context after a restart
-            final NightTimeMeter nightMeter = context.getNightMeter();
-            if (nightMeter != null) {
-                mission.get().setNightMinutes(nightMeter.getNightMinutes());
-            }
-            aircraft.get().setLocationLatitude((float) context.position.getCoords().getLat());
-            aircraft.get().setLocationLongitude((float) context.position.getCoords().getLon());
-            aircraft.get().setLocationHeading(context.position.getHeading());
-            aircraft.get().setLocationAltitude(context.position.getAltitude());
-
-            aircraft.get().setLastUpdated(world.getWorldTime());
+            // the position goes to the flight mission control: it moves the aircraft and counts the night time of the flight
+            world.flightMissionControl().moveAircraft(mission.get(), context.position.getCoords().getLat(), context.position.getCoords().getLon(),
+                    context.position.getHeading(), context.position.getAltitude());
 
             return null;
         });
     }
 
-    private Context processEvents(Context oldContext, Context newContext, int worldTime) {
+    private Context processEvents(Context oldContext, Context newContext) {
         if (newContext.getFlightMissionId() == null || isManualFlight(newContext)) {
             return newContext;
         }
@@ -170,77 +158,25 @@ public class SimTracker {
             if (newRunningAndMoving) {
                 log.info("SIM TRACKER: BLOCKS OFF detected");
                 FlightMissionActions.mission_blocksOff(worldAccess, "sim", newContext.getFlightMissionId());
-                // the night time is counted from blocks off
-                result = result.withNightMeter(result.getNightMeter().startAt(worldTime));
             }
         } else if (fmStatus == FlightMissions.Status.Departure) {
             if (takeoffEvent) {
                 log.info("SIM TRACKER: TAKEOFF detected");
                 FlightMissionActions.mission_takeoff(worldAccess, "sim", newContext.getFlightMissionId());
-                markNight(newContext, true);
             }
         } else if (fmStatus == FlightMissions.Status.Flying) {
             if (landingEvent) {
                 log.info("SIM TRACKER: LANDING detected");
                 FlightMissionActions.mission_landing(worldAccess, "sim", newContext.getFlightMissionId(), newContext.position.getAirportIcao());
-                markNight(newContext, false);
             }
         } else if (fmStatus == FlightMissions.Status.Arrival) {
             if (newStoppedAndShutdown) {
                 log.info("SIM TRACKER: BLOCKS ON detected");
                 FlightMissionActions.mission_blocksOn(worldAccess, "sim", newContext.getFlightMissionId());
-                // the night time is counted till blocks on
-                result = result.withNightMeter(result.getNightMeter().stop());
             }
         }
 
         return result;
-    }
-
-    // Day or night of the takeoff or of the landing: by the place of the report and the time of the world, it goes to the flight mission.
-    private void markNight(final Context context, final boolean takeoff) {
-        worldAccess.modifySync(world -> {
-            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(context.getFlightMissionId());
-            if (mission.isEmpty()) {
-                return null;
-            }
-            final boolean night = DayNight.isNight(context.position.getCoords().getLat(), context.position.getCoords().getLon(), world.getWorldTime());
-            if (takeoff) {
-                mission.get().setNightTakeoff(night);
-            } else {
-                mission.get().setNightLanding(night);
-            }
-            return null;
-        });
-    }
-
-    // The night time of the flight is measured here, in the context. The context is raised from the flight mission (the first report for the
-    // mission, or after a restart when the saved context is lost) and the counting goes on from the value which the flight mission has kept.
-    // The time is counted from blocks off to blocks on, that is while the flight mission is in Departure, Flying or Arrival status.
-    private Context measureNightTime(final Context context, final int worldTime) {
-        if (context.getFlightMissionId() == null || isManualFlight(context)) {
-            return context.withNightMeter(null);
-        }
-        return worldAccess.read(world -> {
-            final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(context.getFlightMissionId());
-            if (mission.isEmpty()) {
-                return context;
-            }
-
-            NightTimeMeter meter = context.getNightMeter();
-            if (meter == null) {
-                meter = NightTimeMeter.restoredFromMission(mission.get().getNightMinutes());
-                log.info("SIM TRACKER: night time of f/m #{} is restored from the flight mission, {} min", mission.get().getId(), meter.getNightMinutes());
-            }
-
-            final FlightMissions.Status status = mission.get().getStatus();
-            final boolean counting = status == FlightMissions.Status.Departure
-                    || status == FlightMissions.Status.Flying
-                    || status == FlightMissions.Status.Arrival;
-            meter = meter.report(counting, context.position.getCoords().getLat(), context.position.getCoords().getLon(), worldTime);
-
-            return context.withNightMeter(meter);
-        });
     }
 
     public void refreshContext(int userId) {
@@ -461,8 +397,6 @@ public class SimTracker {
         private final float measuredGs;
         private final Integer flightMissionId;
         private final List<UserAction> actions;
-        // the night time of the flight of flightMissionId, null if there is no flight mission or it is not measured yet
-        private final NightTimeMeter nightMeter;
         // the user has a started flight (Preflight or further), see CONNECTED_ACTIVE_FLIGHT_MILLIS
         private final boolean activeFlight;
 
@@ -472,16 +406,9 @@ public class SimTracker {
                     .build();
         }
 
-        public Context withNightMeter(final NightTimeMeter nightMeter) {
-            return this.toBuilder()
-                    .nightMeter(nightMeter)
-                    .build();
-        }
-
         public Context resetFlightMissionId() {
             return this.toBuilder()
                     .flightMissionId(null)
-                    .nightMeter(null)
                     .build();
         }
 
@@ -489,7 +416,6 @@ public class SimTracker {
             checkArgument(flightMissionId > 0);
             return this.toBuilder()
                     .flightMissionId(flightMissionId)
-                    .nightMeter(null) // the night time of the new mission is restored from the mission at the next report
                     .build();
         }
     }

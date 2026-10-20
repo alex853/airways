@@ -36,6 +36,8 @@ public class FlightMissionProcessor {
         final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
         final FlightTimeline timeline = FlightMissionToTimeline.byMission(mission);
 
+        countNightTimeOnTheGround(world, mission);
+
         switch (mission.getStatus()) {
             case Preflight -> {
                 if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC) {
@@ -92,6 +94,19 @@ public class FlightMissionProcessor {
         }
     }
 
+    // Between blocks off and takeoff, and between landing and blocks on, the aircraft of a flight of a user stays at the airport and nobody sets its position,
+    // but the night time goes on. A flight which the sim tracker follows gets its positions from the sim.
+    private static void countNightTimeOnTheGround(final World world, final FlightMissions.Mission mission) {
+        final FlightMissions.Status status = mission.getStatus();
+        if (mission.getUserId() <= 0
+                || (status != FlightMissions.Status.Departure && status != FlightMissions.Status.Arrival)
+                || mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.TrackedViaTracker) {
+            return;
+        }
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        world.flightMissionControl().countNightTime(mission, aircraft.getLocationLatitude(), aircraft.getLocationLongitude());
+    }
+
     private static void flySimpleFlight(final World world, final int worldTime, final FlightMissions.Mission mission) {
         final Airports.Airport fromAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport toAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
@@ -115,11 +130,8 @@ public class FlightMissionProcessor {
             final Geo.Coords coords = aircraftPosition.getCoords();
 
 
-            aircraft.setLocationLatitude((float) coords.getLat());
-            aircraft.setLocationLongitude((float) coords.getLon());
-            aircraft.setLocationHeading((int) Geo.bearing(coords, toAirport.getCoords()));
-
-            aircraft.setLastUpdated(worldTime);
+            world.flightMissionControl().moveAircraft(mission, coords.getLat(), coords.getLon(),
+                    (int) Geo.bearing(coords, toAirport.getCoords()), aircraft.getLocationAltitude());
 
             // todo ak3 not implemented in #old                       pilot.setHeartbeatDt(timeMachine.now().plusMinutes(1));
 
@@ -127,6 +139,9 @@ public class FlightMissionProcessor {
 
             if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC) {
                 world.flightMissionControl().landing(mission, toAirport);
+            } else {
+                // the simple flight is over, the pilot has not pressed Landing yet: the aircraft is over the destination airport and the night time goes on
+                world.flightMissionControl().countNightTime(mission, toAirport.getLatitude(), toAirport.getLongitude());
             }
         }
     }
@@ -149,9 +164,8 @@ public class FlightMissionProcessor {
 
         Geo.Coords currentPosition = Geo.destination(aircraft.getLocationCoords(), aircraft.getLocationHeading(), distanceNm);
 
-        aircraft.setLocationLatitude((float) currentPosition.getLat());
-        aircraft.setLocationLongitude((float) currentPosition.getLon());
-        aircraft.setLastUpdated(worldTime);
+        world.flightMissionControl().moveAircraft(mission, currentPosition.getLat(), currentPosition.getLon(),
+                aircraft.getLocationHeading(), aircraft.getLocationAltitude());
     }
 
     private static void processPilotOnDutyEvent(World world, EventsToProcess.Event event) {

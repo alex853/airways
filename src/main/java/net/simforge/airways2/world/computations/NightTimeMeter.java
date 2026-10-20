@@ -1,16 +1,13 @@
-package net.simforge.airways2.pilottracker;
-
-import net.simforge.airways2.world.computations.DayNight;
+package net.simforge.airways2.world.computations;
 
 /**
- * The night time of a flight from blocks off to blocks on, as the sim tracker measures it from the position reports. The sim tracker keeps it in
- * the context of the user (the exact value, seconds as a double) and only writes the current value to the flight mission, to restore it if the
- * context is lost (a restart of the application): after the restore the value is as exact as the flight mission keeps it (a half float of minutes,
- * a few seconds), and the measurement goes on.
+ * The night time of a flight from blocks off to blocks on, as the flight mission control measures it from the positions of the aircraft (whoever sets
+ * them: the sim tracker, the VATSIM tracker or the simple flight of the world). The control keeps it in memory (the exact value, seconds as a double)
+ * and only writes the current value to the flight mission, to restore it if the application is restarted: after the restore the value is as exact as
+ * the flight mission keeps it (a half float of minutes, a few seconds), and the measurement goes on.
  * <p>
- * The meter is immutable. It belongs to the flight mission of the context: when the context goes to another mission it drops the meter, and the next
- * report restores a new one from that mission. A report adds the time since the previous report if it is night at the reported position; the time of one report is limited
- * by {@link #MAX_PIECE_SECONDS}: the client could be offline, nobody knows what happened there.
+ * The meter is immutable. A report adds the time since the previous report if it is night at the reported position; the time of one report is limited
+ * by {@link #MAX_PIECE_SECONDS}: a tracker could be offline, nobody knows what happened there.
  */
 public final class NightTimeMeter {
     public static final int MAX_PIECE_SECONDS = 15 * 60;

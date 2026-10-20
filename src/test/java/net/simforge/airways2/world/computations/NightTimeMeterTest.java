@@ -1,4 +1,4 @@
-package net.simforge.airways2.pilottracker;
+package net.simforge.airways2.world.computations;
 
 import org.junit.jupiter.api.Test;
 

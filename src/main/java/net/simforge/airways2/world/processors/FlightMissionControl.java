@@ -3,6 +3,8 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.DayNight;
+import net.simforge.airways2.world.computations.NightTimeMeter;
 import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +30,55 @@ public class FlightMissionControl {
 
     private TransportFlightControl transportFlightControl() {
         return world.transportFlightControl();
+    }
+
+    // The night time meters of the flights of users between blocks off and blocks on, by the id of the flight mission. The exact values live here, the flight
+    // mission only keeps the rounded value to restore the meter after a restart of the application.
+    private final Map<Integer, NightTimeMeter> nightMeters = new HashMap<>();
+
+    // The night data (day or night of takeoff and landing, night time) are for the flights which users fly: they go to the logbook of the pilot
+    private static boolean isUserFlight(final FlightMissions.Mission mission) {
+        return mission.getUserId() > 0;
+    }
+
+    /**
+     * The only way to give the aircraft of a flight a new position in the flight: the sim tracker, the VATSIM tracker and the simple flight of the world
+     * all come here. It sets the coordinates and counts the night time of the flight of a user.
+     */
+    public void moveAircraft(final FlightMissions.Mission mission, final double latitude, final double longitude, final int heading, final int altitude) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        aircraft.setLocationLatitude((float) latitude);
+        aircraft.setLocationLongitude((float) longitude);
+        aircraft.setLocationHeading(heading);
+        aircraft.setLocationAltitude(altitude);
+        aircraft.setLastUpdated(world.getWorldTime());
+
+        countNightTime(mission, latitude, longitude);
+    }
+
+    /**
+     * The aircraft of a flight is at this position now (it is also called when it does not move: taxiing, parked at the gate between blocks off and takeoff).
+     * Between blocks off and blocks on the time since the previous position goes to the night time of the flight if it is night there.
+     */
+    public void countNightTime(final FlightMissions.Mission mission, final double latitude, final double longitude) {
+        if (!isUserFlight(mission) || !isBetweenBlocksOffAndBlocksOn(mission)) {
+            return;
+        }
+
+        NightTimeMeter meter = nightMeters.get(mission.getId());
+        if (meter == null) {
+            // the application was restarted: the meter is raised from the flight mission
+            meter = NightTimeMeter.restoredFromMission(mission.getNightMinutes());
+            log.info("f/m #{} - night time is restored from the flight mission, {} min", mission.getId(), Math.round(meter.getNightMinutes()));
+        }
+        meter = meter.report(true, latitude, longitude, world.getWorldTime());
+        nightMeters.put(mission.getId(), meter);
+        mission.setNightMinutes(meter.getNightMinutes());
+    }
+
+    private static boolean isBetweenBlocksOffAndBlocksOn(final FlightMissions.Mission mission) {
+        final FlightMissions.Status status = mission.getStatus();
+        return status == FlightMissions.Status.Departure || status == FlightMissions.Status.Flying || status == FlightMissions.Status.Arrival;
     }
 
     /**
@@ -102,6 +153,7 @@ public class FlightMissionControl {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
         mission.setStatus(FlightMissions.Status.Cancelled);
+        nightMeters.remove(mission.getId());
 
         world.log(EventLog.EventType.FlightCancelled, EventLog.userId(mission.getUserId()), mission, aircraft);
         log.info("f/m #{} - flight cancelled - {}", mission.getId(), reason);
@@ -118,6 +170,7 @@ public class FlightMissionControl {
                 || actualStatus == FlightMissions.Status.Flying);
 
         mission.setStatus(FlightMissions.Status.Cancelled);
+        nightMeters.remove(mission.getId());
 
         final Airports.Airport departureAirport = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
 
@@ -226,6 +279,10 @@ public class FlightMissionControl {
 
         mission.setStatus(FlightMissions.Status.Departure);
         mission.setActualDepartureWorldTime(world.getWorldTime());
+        if (isUserFlight(mission)) {
+            // the night time is counted from blocks off
+            nightMeters.put(mission.getId(), NightTimeMeter.restoredFromMission(mission.getNightMinutes()).startAt(world.getWorldTime()));
+        }
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setLocationStatus(Aircrafts.LocationStatus.TaxiingOut);
@@ -250,6 +307,10 @@ public class FlightMissionControl {
         aircraft.setLocationStatus(Aircrafts.LocationStatus.Flying);
 
         final Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
+        if (isUserFlight(mission)) {
+            // day or night of the takeoff is by the departure airport and the time of the world, whoever tracks the flight
+            mission.setNightTakeoff(DayNight.isNight(locationAirport.getLatitude(), locationAirport.getLongitude(), world.getWorldTime()));
+        }
         aircraft.setLocationAirportId(0);
         aircraft.setLocationLatitude(locationAirport.getLatitude());
         aircraft.setLocationLongitude(locationAirport.getLongitude());
@@ -271,6 +332,11 @@ public class FlightMissionControl {
         mission.setActualLandingWorldTime(world.getWorldTime());
         mission.setActualLandingAirportId(landingAirport.getId());
 
+
+        if (isUserFlight(mission)) {
+            // the same for the landing: by the landing airport
+            mission.setNightLanding(DayNight.isNight(landingAirport.getLatitude(), landingAirport.getLongitude(), world.getWorldTime()));
+        }
 
         world.personControl().onMissionLanding(mission, landingAirport);
 
@@ -297,6 +363,17 @@ public class FlightMissionControl {
 
         final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
 
+        if (isUserFlight(mission)) {
+            // the last piece of the night time is at the gate, then the counting is over
+            NightTimeMeter meter = nightMeters.remove(mission.getId());
+            if (meter == null) {
+                meter = NightTimeMeter.restoredFromMission(mission.getNightMinutes());
+            }
+            meter = meter.report(true, locationAirport.getLatitude(), locationAirport.getLongitude(), world.getWorldTime()).stop();
+            mission.setNightMinutes(meter.getNightMinutes());
+            log.info("f/m #{} - night time of the flight {} min", mission.getId(), Math.round(meter.getNightMinutes()));
+        }
+
         aircraft.setLocationStatus(Aircrafts.LocationStatus.ParkedAtAirport);
         aircraft.setLocationAirportId(locationAirport.getId());
         aircraft.setLocationLatitude(locationAirport.getLatitude());
@@ -316,6 +393,7 @@ public class FlightMissionControl {
         checkStatus(mission, "finish", FlightMissions.Status.Postflight);
 
         mission.setStatus(FlightMissions.Status.Finished);
+        nightMeters.remove(mission.getId());
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         aircraft.setOperationalStatus(Aircrafts.OperationalStatus.Idle);

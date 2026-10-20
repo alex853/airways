@@ -163,39 +163,19 @@ public class SimTrackerContextStoreTest {
     }
 
     @Test
-    public void night_time_meter_is_saved_and_restored_with_the_exact_value() throws Exception {
-        final SimTracker.Context context = context(7, NOW, false, null, 42)
-                .withNightMeter(new NightTimeMeter(4321.987654321, 1_750_000_123));
-
-        store.save(List.of(context), NOW);
-
-        final NightTimeMeter meter = store.load(NOW, MAX_AGE).restored().get(0).getNightMeter();
-        assertEquals(4321.987654321, meter.getNightSeconds(), 0.0);
-        assertEquals(1_750_000_123, meter.getCountedAt());
-        assertTrue(meter.isCounting());
-    }
-
-    @Test
-    public void context_without_night_time_meter_is_restored_without_it() throws Exception {
-        store.save(List.of(context(7, NOW, true, "EGLL", 42)), NOW);
-
-        assertNull(store.load(NOW, MAX_AGE).restored().get(0).getNightMeter());
-    }
-
-    @Test
-    public void file_saved_before_the_night_time_meter_existed_is_restored_without_it() throws Exception {
+    public void file_with_the_night_time_meter_of_the_old_format_is_restored_and_the_meter_is_ignored() throws Exception {
         Files.createDirectories(file.getParent());
         Files.writeString(file, """
                 {"version": 1, "savedAt": 1, "contexts": [
                   {"userId": 9, "position": {"time": %d, "onGround": true, "lat": 1.0, "lon": 2.0, "heading": 0, "altitude": 0},
-                   "flightMissionId": 11}
+                   "flightMissionId": 11, "hasNightMeter": true, "nightSeconds": 4321.5, "nightCountedAt": 1750000000}
                 ]}
                 """.formatted(NOW));
 
         final SimTracker.Context restored = store.load(NOW, MAX_AGE).restored().get(0);
 
+        // the night time meter is kept by the flight mission control now, an old file only has to be readable
         assertEquals(11, restored.getFlightMissionId());
-        assertNull(restored.getNightMeter());
     }
 
     private static SimTracker.Context context(final int userId, final long positionTime, final boolean onGround,
