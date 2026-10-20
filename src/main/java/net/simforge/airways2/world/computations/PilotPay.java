@@ -8,7 +8,7 @@ import net.simforge.airways2.world.datamodel.PilotContracts;
  * known (the journeys of a ShadowJet flight) the result changes with it.
  * <p>
  * What the pilot lacks (a currency) and the manual flight reduce the pay. The reductions are added up, they are not multiplied: coefficient =
- * max(10%, 100% - the sum). The numbers are whole percents and the result is rounded half up, so the calculation is the same everywhere.
+ * max(10%, 100% - the sum). The calculation is in floating point and only the result is rounded (Math.round, half up).
  * <p>
  * The income share is the base percent of the experience level of the pilot (the level is in the parameters) of the base income of the contract.
  */
@@ -79,7 +79,7 @@ public final class PilotPay {
      * The flight pay: the base flight pay of the contract with the coefficient of its parameters.
      */
     public static int flightPay(final PilotContracts.Contract contract) {
-        return (int) ((contract.getBaseFlightPay() * (long) flightPayCoefficientPercent(contract.getPayParams()) + 50) / 100);
+        return (int) Math.round(contract.getBaseFlightPay() * (double) flightPayCoefficientPercent(contract.getPayParams()) / 100.0);
     }
 
     /**
@@ -92,9 +92,7 @@ public final class PilotPay {
             return 0;
         }
         final PilotPayParams params = contract.getPayParams();
-        // whole numbers: the base share in tenths of a percent, the coefficient in percents; 1000 tenths is 100% and the coefficient is divided by 100
-        final long tenths = Math.round(baseIncomeSharePercent(params.getExperienceLevel()) * 10.0f);
-        return (int) ((income * tenths * incomeShareCoefficientPercent(params) + 50_000) / 100_000);
+        return (int) Math.round((double) income * baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 10_000.0);
     }
 
     /**
