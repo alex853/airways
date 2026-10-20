@@ -11,7 +11,7 @@ public class World25_009_create_some_airports {
                 "CYYZ",
                 "EBBR",
                 "EDDF", "EDDK", "EDDL", "EDDP", "EDDS", "EDDV", "EDDW", "EDDN", "EDDC", "EDLW",
-                "EFHK", "EFKS",
+                "EFHK", "EFKS", "EFRO",
                 "EGAA", "EGAC", "EGBB", "EGCC", "EGGD", "EGJJ", "EGLF", "EGPK", "EGSS", "EGLC", "EGGW", "EGPF",
                 "EHAM", "EHRD",
                 "EKBI", "EKCH", "EKVG",
@@ -22,11 +22,12 @@ public class World25_009_create_some_airports {
                 "EVRA",
                 "FACT",
                 "GCTS",
+                "GMMX",
                 "HKJK",
                 "KAUS", "KBOS", "KBUR", "KHND", "KJFK", "KLAX", "KSFO", "KLGA", "KSAN", "KSNA", "KVNY",
                 "LCLK", "LCPH",
                 "LDDU", "LDSP",
-                "LEAL", "LEIB", "LEMG", "LEPA", "LEMH",
+                "LEAL", "LEBB", "LEIB", "LEMG", "LEPA", "LEMH",
                 "LFKB", "LFKF", "LFKJ", "LFLY", "LFMN",
                 "LGAV", "LGIR", "LGKO", "LGKR", "LGRP", "LGSK", "LGSM", "LGTS", "LGZA",
                 "LHBP",
@@ -49,8 +50,8 @@ public class World25_009_create_some_airports {
                 "VTBS", "VTSP",
                 "WMKK",
                 "WSSS",
-                "YMEN",
-                "ZHCC",
+                "YMEN", "YPAD",
+                "ZGGG", "ZHCC",
                 "ZSPD", "ZSSS"
         });
     }

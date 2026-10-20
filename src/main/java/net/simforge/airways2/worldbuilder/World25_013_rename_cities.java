@@ -70,7 +70,11 @@ public class World25_013_rename_cities {
                 new String[]{"LFML", "Marseille Provence"},
                 new String[]{"ENTC", "Tromso Langnes"},
                 new String[]{"UMKK", "Kaliningrad Khrabrovo"},
-                new String[]{"RPVM", "Cebu Mactan"}
+                new String[]{"RPVM", "Cebu Mactan"},
+                new String[]{"GMMX", "Marrakech Menara"},
+                new String[]{"ZGGG", "Guangzhou Baiyun"},
+                new String[]{"YPAD", "Adelaide"},
+                new String[]{"LXGB", "Gibraltar"}
         ));
     }
 }

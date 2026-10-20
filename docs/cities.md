@@ -623,3 +623,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   **Cebu** 776 600 → 3 000 600 (Metro Cebu ~3,0M), `del Mandaue` (309 700) и `del Lapu-lapu` (218 100) по 2 nm от ядра; **Toledo** (152 500, 16 nm,
   за горами) по решению пользователя остаётся отдельным городом; RPVM (size 3318, `009` и `create-links`), имя `Cebu Mactan`; RPVT
   Tagbilaran не берём. `BusinessAviationTerminal` только на LFML, attraction не ставим. Шаги `009`, `012`, `013` включены на деплой.
+- **LEBB - Bilbao, LXGB - Gibraltar, GMMX - Marrakech, EFRO - Rovaniemi, YPAD - Adelaide, ZGGG - Guangzhou (VATSIM-бэклог, 2026-10-20):** все шесть типа 2 (города в мире нет), аэропорты размером <5000, поэтому идут через `009` + `create-links`.
+  **Bilbao** 343 100 → 1 000 100 (Greater Bilbao ~1,0M, приблизительно); пригороды (Barakaldo 90k, Getxo 80k) <100k, `del` не нужен; Vitoria, Donostia, Santander остаются отдельными рынками. Имя аэропорта `Bilbao` (как в `icaodata`).
+  **Gibraltar:** города в CSV не было, добавлен seed `Gibraltar,GI,Gibraltar,270000` (Campo de Gibraltar: Gibraltar, La Linea, Algeciras, San Roque; страна GI новая), `del Algeciras` (102 100, 5 nm от аэропорта). LXGB в `icaodata.csv` был `military` (Gibraltar AB), тип исправлен на `civil`, имя `Gibraltar` (через `013`). Ceuta и Tanjah через пролив не линкуем.
+  **Marrakech:** в CSV `Marrakus` 848 000 переименован в `Marrakech`, 848 000 → 1 348 000 (агломерация ~1,35M), страна Morocco новая в мире, имя аэропорта `Marrakech Menara`, attraction не ставим.
+  **Rovaniemi** 36 600 → 62 600 (муниципалитет), attraction 7 (Santa Claus Village), EFKE Tornio, EFKM, Z11E не берём.
+  **Adelaide** 1 089 700 → 1 389 700 (Greater Adelaide ~1,4M), имя `Adelaide` (вместо `Adelaide Intl`); YPED Edinburgh (Military, тип `civil` в `icaodata`) не берём, YPPF Parafield не берём.
+  **Guangzhou** 3 244 900 → 13 944 900 (агломерация ~14M), `del Foshan` (496 300, 12 nm) и `del Daliang` (156 700, 21 nm); Dongguan (380 700, 27 nm) остаётся отдельным рынком (решение пользователя), Zhuhai/Aomen/Jiangmen/Huicheng не трогаем. Имя `Guangzhou Baiyun`.
+  Терминалы `BusinessAviationTerminal` не создаём (решение пользователя). Шаги `009`, `012`, `013` включены на деплой. После деплоя: `create-links` для LEBB, LXGB, GMMX, EFRO, YPAD, ZGGG и attraction 7 для Rovaniemi.

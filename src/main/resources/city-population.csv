@@ -544,7 +544,7 @@ Australia,AU,Sydney,6077200,-33.87,151.21
 Australia,AU,Melbourne,5266000,-37.81,144.96
 Australia,AU,Brisbane,2600600,-27.46,153.02
 Australia,AU,Perth,2300900,-31.96,115.84
-Australia,AU,Adelaide,1089700,-34.93,138.6
+Australia,AU,Adelaide,1389700,-34.93,138.6
 Australia,AU,del Newcastle,502300,-32.92,151.75
 Australia,AU,Gold coast,457900,-28.07,153.44
 Australia,AU,Canberra,323100,-35.31,149.13
@@ -2790,7 +2790,7 @@ China,CN,Tianjin,3945900,39.13,117.2
 China,CN,Shenyang,3527800,41.8,123.45
 China,CN,Xian,3480600,34.27,108.9
 China,CN,Chongqing,3378900,29.57,106.58
-China,CN,Guangzhou,3244900,23.12,113.25
+China,CN,Guangzhou,13944900,23.12,113.25
 China,CN,Harbin,3129300,45.75,126.65
 China,CN,Nanjing,2870200,32.05,118.78
 China,CN,Taiyuan,2690500,37.87,112.55
@@ -2890,7 +2890,7 @@ China,CN,Wuhu,512500,31.35,118.37
 China,CN,Xingtai,512500,37.07,114.49
 China,CN,Zhunmen,499600,22.41,113.98
 China,CN,Jiaozuo,497800,35.25,113.22
-China,CN,Foshan,496300,23.03,113.12
+China,CN,del Foshan,496300,23.03,113.12
 China,CN,Yuanlong,494800,22.44,114.02
 China,CN,Tanggu,490000,39.0,117.67
 China,CN,Zhangye,489600,38.93,100.45
@@ -3012,7 +3012,7 @@ China,CN,Korla,158400,41.73,86.15
 China,CN,Beian,158300,48.27,126.6
 China,CN,Yichun,157800,47.7,128.9
 China,CN,Acheng,157300,45.54,126.96
-China,CN,Daliang,156700,22.84,113.25
+China,CN,del Daliang,156700,22.84,113.25
 China,CN,Boshan,156600,36.48,117.85
 China,CN,Dunhua,156600,43.35,128.22
 China,CN,Qianjiang,156000,30.43,112.89
@@ -5044,7 +5044,7 @@ Finland,FI,Mikkeli,46100,61.7,27.26
 Finland,FI,Hyvinkaa,43600,60.64,24.87
 Finland,FI,Jarvenpaa,37500,60.48,25.1
 Finland,FI,Rauma,36700,61.13,21.52
-Finland,FI,Rovaniemi,36600,66.49,25.7
+Finland,FI,Rovaniemi,62600,66.49,25.7
 Finland,FI,Lohja,36300,60.25,24.08
 Finland,FI,Kokkola,35600,63.84,23.12
 Finland,FI,Kajaani,35400,64.23,27.73
@@ -5916,6 +5916,7 @@ Ghana,GH,Kpandae,8200,8.47,-0.02
 Ghana,GH,Akim swedru,7300,5.9,-1.02
 Ghana,GH,Aboso,5400,5.37,-1.93
 Ghana,GH,Bekwai,3500,6.45,-1.58
+Gibraltar,GI,Gibraltar,270000,36.14,-5.35
 Greece,GR,Athens,3600100,37.98,23.73
 Greece,GR,Thessaloniki,1000100,40.64,22.94
 Greece,GR,Piraieus,179600,37.96,23.64
@@ -10572,7 +10573,7 @@ Mongolia,MN,Cojr,9300,46.36,108.36
 Morocco,MA,Ad-d#ar-al-bayda,3672900,33.6,-7.62
 Morocco,MA,Ar-ribat,1550100,34.02,-6.84
 Morocco,MA,Fas,1002600,34.05,-5.0
-Morocco,MA,Marrakus,848000,31.63,-8.0
+Morocco,MA,Marrakech,1348000,31.63,-8.0
 Morocco,MA,Tanjah,620400,35.79,-5.81
 Morocco,MA,Agadir,608600,30.42,-9.61
 Morocco,MA,Miknas,545000,33.9,-5.56
@@ -14645,7 +14646,7 @@ Spain,ES,Murcia,408700,37.98,-1.13
 Spain,ES,del Las palmas,356200,28.1,-15.43
 Spain,ES,Mallorca,970000,39.57,2.65
 Spain,ES,del Palma,345700,39.57,2.65
-Spain,ES,Bilbao,343100,43.25,-2.93
+Spain,ES,Bilbao,1000100,43.25,-2.93
 Spain,ES,Valladolid,313900,41.65,-4.74
 Spain,ES,Alicante,812000,38.35,-0.48
 Spain,ES,Cordoba,309900,37.88,-4.77
@@ -14693,7 +14694,7 @@ Spain,ES,Santa coloma de gramenet,109600,41.47,2.22
 Spain,ES,Torrejon de ardoz,108200,40.46,-3.48
 Spain,ES,del Marbella,107200,36.52,-4.89
 Spain,ES,Ourense,105300,42.33,-7.87
-Spain,ES,Algeciras,102100,36.13,-5.45
+Spain,ES,del Algeciras,102100,36.13,-5.45
 Spain,ES,Alcobendas,99700,40.54,-3.64
 Spain,ES,Reus,91600,41.16,1.11
 Spain,ES,Santiago de compostela,91100,42.88,-8.54

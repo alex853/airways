@@ -18,6 +18,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AU", "city-name:Melbourne"},
                 new String[]{"country-code:AU", "city-name:Brisbane"},
                 new String[]{"country-code:AU", "city-name:Perth"},
+                new String[]{"country-code:AU", "city-name:Adelaide"},
 
                 new String[]{"country-code:BE", "city-name:Brussels"},
 
@@ -50,6 +51,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:CN", "city-name:Zhengzhou"},
                 new String[]{"country-code:CN", "city-name:Shanghai"},
                 new String[]{"country-code:CN", "city-name:Beijing"},
+                new String[]{"country-code:CN", "city-name:Guangzhou"},
 
                 new String[]{"country-code:CY", "city-name:Nicosia"},
                 new String[]{"country-code:CY", "city-name:Limassol"},
@@ -87,6 +89,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Malaga"},
                 new String[]{"country-code:ES", "city-name:Alicante"},
                 new String[]{"country-code:ES", "city-name:Gran Canaria"},
+                new String[]{"country-code:ES", "city-name:Bilbao"},
 
                 new String[]{"country-code:ET", "city-name:Addis Ababa"},
 
@@ -94,6 +97,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:FI", "city-name:Helsinki"},
                 new String[]{"country-code:FI", "city-name:Kuusamo"},
+                new String[]{"country-code:FI", "city-name:Rovaniemi"},
 
                 new String[]{"country-code:FR", "city-name:Nice"},
                 new String[]{"country-code:FR", "city-name:Ajaccio"},
@@ -158,6 +162,10 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:LU", "city-name:Luxembourg"},
 
                 new String[]{"country-code:LV", "city-name:Riga"},
+
+                new String[]{"country-code:MA", "city-name:Marrakech"},
+
+                new String[]{"country-code:GI", "city-name:Gibraltar"},
 
                 new String[]{"country-code:MC", "city-name:Monte Carlo"},
 
