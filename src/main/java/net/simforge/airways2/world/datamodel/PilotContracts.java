@@ -24,8 +24,10 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class PilotContracts {
     private static final int MAX_16BIT = 65535;
-    // the share is kept in tenths of a percent, 0..100%
-    private static final int MAX_SHARE_TENTHS = 1000;
+    // the flight pay is kept in three bytes
+    public static final int MAX_FLIGHT_PAY = 16_777_215;
+    // the base share of the income is a percent with one digit after the point (Tenths8bit): 0.0 to 25.5
+    public static final float MAX_SHARE_PERCENT = 25.5f;
 
     private final Storage<Contract> storage = Storage.<Contract>builder()
             .name("pilot-contracts")
@@ -35,15 +37,16 @@ public class PilotContracts {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // flightMissionId                3 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // operatorId                     2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // personId                       3 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // baseFlightPay                    4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // baseIncomeSharePercent, tenths of a percent  2 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // baseFlightPay                  3 bytes
+            .withDataField(DataField.of(DataType.Tenths8bit)) // baseIncomeSharePercent, 0.0-25.5 step 0.1  1 byte
             .withDataField(DataField.of(DataType.Unsigned8bit)) // penalties, see Penalty          1 byte
-            // ----------------------------------------------------- sum                   16 bytes
-            // -------------------------------------------- reserved 16 bytes to align total size to 32 bytes
+            // ----------------------------------------------------- sum                   14 bytes
+            // -------------------------------------------- reserved 18 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .build();
 
     private final DataField flightMissionIdField = storage.getDataField(0);
@@ -82,6 +85,10 @@ public class PilotContracts {
         }
     }
 
+    private static void checkSharePercent(final float percent) {
+        checkArgument(percent >= 0.0f && percent <= MAX_SHARE_PERCENT, "the base share is from 0.0 to 25.5 percents");
+    }
+
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
         contractIdByMissionId.clear();
@@ -117,18 +124,18 @@ public class PilotContracts {
     /**
      * A contract for a flight mission, without penalties.
      *
-     * @param baseIncomeSharePercentTenths the base share of the income in tenths of a percent, 0.5% is 5
+     * @param baseIncomeSharePercent the base share of the income in percents, 0.0 to 25.5 with one digit after the point (0.5 is half a percent)
      */
     public Contract create(final int flightMissionId,
                            final int operatorId,
                            final int personId,
                            final int baseFlightPay,
-                           final int baseIncomeSharePercentTenths) {
+                           final float baseIncomeSharePercent) {
         checkArgument(flightMissionId > 0, "flightMissionId is mandatory");
         checkArgument(operatorId >= 1 && operatorId <= MAX_16BIT, "operatorId is out of 16 bits");
         checkArgument(personId > 0, "personId is mandatory");
-        checkArgument(baseFlightPay >= 0, "the flight pay can not be negative");
-        checkArgument(baseIncomeSharePercentTenths >= 0 && baseIncomeSharePercentTenths <= MAX_SHARE_TENTHS, "the share is from 0 to 100%");
+        checkArgument(baseFlightPay >= 0 && baseFlightPay <= MAX_FLIGHT_PAY, "the flight pay is from 0 to 3 bytes");
+        checkSharePercent(baseIncomeSharePercent);
         checkArgument(!contractIdByMissionId.containsKey(flightMissionId), "the flight mission has a contract already");
 
         final int id = storage.addRecord();
@@ -136,7 +143,7 @@ public class PilotContracts {
         storage.set(id, operatorIdField, operatorId);
         storage.set(id, personIdField, personId);
         storage.set(id, baseFlightPayField, baseFlightPay);
-        storage.set(id, baseIncomeSharePercentField, baseIncomeSharePercentTenths);
+        storage.set(id, baseIncomeSharePercentField, baseIncomeSharePercent);
         storage.set(id, penaltiesRawField, 0);
         contractIdByMissionId.put(flightMissionId, id);
         return new Contract(id);
@@ -184,20 +191,20 @@ public class PilotContracts {
         }
 
         public void setBaseFlightPay(final int baseFlightPay) {
-            checkArgument(baseFlightPay >= 0, "the flight pay can not be negative");
+            checkArgument(baseFlightPay >= 0 && baseFlightPay <= MAX_FLIGHT_PAY, "the flight pay is from 0 to 3 bytes");
             storage.set(id, baseFlightPayField, baseFlightPay);
         }
 
         /**
-         * The base share of the income in tenths of a percent, 0.5% is 5.
+         * The base share of the income in percents, with one digit after the point: 0.5 is half a percent.
          */
-        public int getBaseIncomeSharePercentTenths() {
-            return storage.getAsInt(id, baseIncomeSharePercentField);
+        public float getBaseIncomeSharePercent() {
+            return storage.getAsFloat(id, baseIncomeSharePercentField);
         }
 
-        public void setBaseIncomeSharePercentTenths(final int tenths) {
-            checkArgument(tenths >= 0 && tenths <= MAX_SHARE_TENTHS, "the share is from 0 to 100%");
-            storage.set(id, baseIncomeSharePercentField, tenths);
+        public void setBaseIncomeSharePercent(final float percent) {
+            checkSharePercent(percent);
+            storage.set(id, baseIncomeSharePercentField, percent);
         }
 
         public boolean hasPenalty(final Penalty penalty) {

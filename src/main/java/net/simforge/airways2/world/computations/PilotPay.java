@@ -1,0 +1,104 @@
+package net.simforge.airways2.world.computations;
+
+import net.simforge.airways2.world.datamodel.PilotContracts;
+import net.simforge.airways2.world.datamodel.PilotContracts.Penalty;
+
+/**
+ * What a pilot gets for a flight by the contract: the final flight pay and income share are calculated from the base numbers and the penalties of the
+ * contract, see docs/flight-contracts.md. Nothing is stored, so when a penalty is set (the manual flight) or the income is known (the journeys of a
+ * ShadowJet flight) the result changes with it.
+ * <p>
+ * The penalties are added up, they are not multiplied: coefficient = max(10%, 100% - the sum). The numbers are whole percents and the result is
+ * rounded half up, so the calculation is the same everywhere.
+ */
+public final class PilotPay {
+    // the penalties of the flight pay, in percents
+    public static final int NO_TYPE_CURRENCY_PERCENT = 25;
+    public static final int NO_NIGHT_CURRENCY_PERCENT = 25;
+    public static final int NO_CARRY_PASSENGERS_PERCENT = 25;
+    public static final int MANUAL_PERCENT = 67;
+    // the pay is not less than this part of the base
+    public static final int MIN_COEFFICIENT_PERCENT = 10;
+
+    // the base share of the income by the experience level 0 to 5, in percents
+    private static final float[] BASE_SHARE_BY_LEVEL = {0.5f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f};
+
+    private PilotPay() {
+    }
+
+    /**
+     * The base share of the income for an experience level of the pilot on the type of the aircraft.
+     */
+    public static float baseIncomeSharePercent(final int experienceLevel) {
+        if (experienceLevel < 0 || experienceLevel >= BASE_SHARE_BY_LEVEL.length) {
+            throw new IllegalArgumentException("experience level is from 0 to " + (BASE_SHARE_BY_LEVEL.length - 1) + ": " + experienceLevel);
+        }
+        return BASE_SHARE_BY_LEVEL[experienceLevel];
+    }
+
+    /**
+     * The coefficient of the flight pay in percents (10 to 100): all the penalties count.
+     */
+    public static int flightPayCoefficientPercent(final PilotContracts.Contract contract) {
+        int penalties = 0;
+        if (contract.hasPenalty(Penalty.NoTypeCurrency)) {
+            penalties += NO_TYPE_CURRENCY_PERCENT;
+        }
+        if (contract.hasPenalty(Penalty.NoNightCurrency)) {
+            penalties += NO_NIGHT_CURRENCY_PERCENT;
+        }
+        if (contract.hasPenalty(Penalty.NoCarryPassengers)) {
+            penalties += NO_CARRY_PASSENGERS_PERCENT;
+        }
+        if (contract.hasPenalty(Penalty.Manual)) {
+            penalties += MANUAL_PERCENT;
+        }
+        return coefficient(penalties);
+    }
+
+    /**
+     * The coefficient of the income share in percents (10 to 100): only the type currency and the manual flight count.
+     */
+    public static int incomeShareCoefficientPercent(final PilotContracts.Contract contract) {
+        int penalties = 0;
+        if (contract.hasPenalty(Penalty.NoTypeCurrency)) {
+            penalties += NO_TYPE_CURRENCY_PERCENT;
+        }
+        if (contract.hasPenalty(Penalty.Manual)) {
+            penalties += MANUAL_PERCENT;
+        }
+        return coefficient(penalties);
+    }
+
+    private static int coefficient(final int penaltiesPercent) {
+        return Math.max(MIN_COEFFICIENT_PERCENT, 100 - penaltiesPercent);
+    }
+
+    /**
+     * The flight pay: the base flight pay of the contract with the penalties.
+     */
+    public static int flightPay(final PilotContracts.Contract contract) {
+        return (int) ((contract.getBaseFlightPay() * (long) flightPayCoefficientPercent(contract) + 50) / 100);
+    }
+
+    /**
+     * The income share: the base share of the contract (percents with one digit) of the income of the flight, with the penalties.
+     *
+     * @param income the income of the flight, what its journeys pay (zero for a flight without passengers)
+     */
+    public static int incomeShare(final PilotContracts.Contract contract, final int income) {
+        if (income <= 0) {
+            return 0;
+        }
+        // whole numbers: the base share in tenths of a percent, the coefficient in percents; 1000 tenths is 100% and the coefficient is divided by 100
+        final long tenths = Math.round(contract.getBaseIncomeSharePercent() * 10.0f);
+        return (int) ((income * tenths * incomeShareCoefficientPercent(contract) + 50_000) / 100_000);
+    }
+
+    /**
+     * Everything the pilot gets for the flight.
+     */
+    public static int total(final PilotContracts.Contract contract, final int income) {
+        return flightPay(contract) + incomeShare(contract, income);
+    }
+}
