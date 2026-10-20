@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The currency of a pilot on the types of aircraft: the numbers by the logbook, the recent ones by the time of the landing (blocks on).
@@ -110,5 +112,156 @@ class PilotQualificationsTest {
 
         assertEquals(1, ga7c.getRecentLandings());
         assertEquals(2, ga7c.getLandings());
+    }
+
+    // ---- the criteria of the currency on a type
+
+    @Test
+    void threeLandingsInTheWindowMeanCanCarryPassengers() {
+        flight(1, gulfstream, 1 * Time.ONE_HOUR, 60);
+        flight(1, gulfstream, 5 * Time.ONE_HOUR, 60);
+        flight(1, gulfstream, 20 * Time.ONE_HOUR, 60);
+        flight(1, citation, 1 * Time.ONE_HOUR, 60);
+        flight(1, citation, 5 * Time.ONE_HOUR, 60);
+        flight(1, citation, 30 * Time.ONE_HOUR, 60); // outside the window
+
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+
+        assertEquals(3, q.getCriteria().getRecentLandings());
+        assertTrue(type(q, "GA7C").isCanCarryPassengers());
+        assertFalse(type(q, "C25C").isCanCarryPassengers());
+    }
+
+    @Test
+    void aNightTakeoffAndANightLandingInTheWindowMeanNightFlying() {
+        final PilotLogbook.Entry first = flight(1, gulfstream, 2 * Time.ONE_HOUR, 60);
+        first.setNightTakeoff(true);
+        // a night takeoff only
+        assertFalse(type(PilotController.buildQualifications(world, 1, now), "GA7C").isNightFlying());
+
+        // the night landing is on another flight, both are in the window
+        final PilotLogbook.Entry second = flight(1, gulfstream, 4 * Time.ONE_HOUR, 60);
+        second.setNightLanding(true);
+        final TypeCurrencyDto ga7c = type(PilotController.buildQualifications(world, 1, now), "GA7C");
+        assertTrue(ga7c.isNightFlying());
+        assertEquals(1, ga7c.getRecentNightTakeoffs());
+        assertEquals(1, ga7c.getRecentNightLandings());
+    }
+
+    @Test
+    void theNightOutsideTheWindowIsNotNightFlying() {
+        final PilotLogbook.Entry old = flight(1, gulfstream, 30 * Time.ONE_HOUR, 60);
+        old.setNightTakeoff(true);
+        old.setNightLanding(true);
+
+        final TypeCurrencyDto ga7c = type(PilotController.buildQualifications(world, 1, now), "GA7C");
+
+        assertFalse(ga7c.isNightFlying());
+        assertEquals(0, ga7c.getRecentNightTakeoffs());
+        // the totals still have it
+        assertEquals(1, ga7c.getNightTakeoffs());
+        assertEquals(1, ga7c.getNightLandings());
+    }
+
+    @Test
+    void twelveFlightsInTheLastTwelveMonthsMeanTypeCurrent() {
+        for (int i = 1; i <= 11; i++) {
+            flight(1, gulfstream, i * 10 * DAY, 60);
+        }
+        assertFalse(type(PilotController.buildQualifications(world, 1, now), "GA7C").isTypeCurrent());
+
+        flight(1, gulfstream, 100 * DAY + 1, 60);
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+
+        assertEquals(12, q.getCriteria().getRecentFlights());
+        assertTrue(type(q, "GA7C").isTypeCurrent());
+    }
+
+    @Test
+    void twelveFlightsAreNotEnoughWithoutTwelveHours() {
+        for (int i = 1; i <= 12; i++) {
+            flight(1, gulfstream, i * 10 * DAY, 30);   // 12 flights, 6 hours
+        }
+
+        final TypeCurrencyDto ga7c = type(PilotController.buildQualifications(world, 1, now), "GA7C");
+
+        assertEquals(12, ga7c.getRecentFlights());
+        assertEquals(6.0f, ga7c.getRecentFlightTime(), 0.001f);
+        assertFalse(ga7c.isTypeCurrent());
+    }
+
+    @Test
+    void twelveHoursAreNotEnoughWithoutTwelveFlights() {
+        for (int i = 1; i <= 11; i++) {
+            flight(1, gulfstream, i * 10 * DAY, 120);   // 11 flights, 22 hours
+        }
+
+        final TypeCurrencyDto ga7c = type(PilotController.buildQualifications(world, 1, now), "GA7C");
+
+        assertEquals(22.0f, ga7c.getRecentFlightTime(), 0.001f);
+        assertFalse(ga7c.isTypeCurrent());
+    }
+
+    @Test
+    void twelveFlightsAndTwelveHoursMeanTypeCurrentAndTheHoursOfAnOldFlightAreNotCounted() {
+        for (int i = 1; i <= 12; i++) {
+            flight(1, gulfstream, i * 10 * DAY, 60);   // 12 flights, 12 hours
+        }
+        flight(1, gulfstream, 400 * DAY, 300);          // older than a year: only the total has it
+
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+        final TypeCurrencyDto ga7c = type(q, "GA7C");
+
+        assertEquals(12, q.getCriteria().getRecentFlightHours());
+        assertEquals(12.0f, ga7c.getRecentFlightTime(), 0.001f);
+        assertEquals(17.0f, ga7c.getFlightTime(), 0.001f);
+        assertTrue(ga7c.isTypeCurrent());
+    }
+
+    // ---- the experience level on a type
+
+    @Test
+    void theExperienceLevelNeedsBothTheFlightsAndTheHours() {
+        assertEquals(0, PilotController.experienceLevel(0, 0));
+        assertEquals(0, PilotController.experienceLevel(24, 500));    // not enough flights
+        assertEquals(0, PilotController.experienceLevel(500, 49.9f)); // not enough hours
+        assertEquals(1, PilotController.experienceLevel(25, 50));
+        assertEquals(1, PilotController.experienceLevel(49, 99.9f));
+        assertEquals(2, PilotController.experienceLevel(50, 100));
+        assertEquals(1, PilotController.experienceLevel(60, 90));     // the hours of the level 2 are not reached
+        assertEquals(3, PilotController.experienceLevel(100, 200));
+        assertEquals(3, PilotController.experienceLevel(249, 499));
+        assertEquals(4, PilotController.experienceLevel(250, 500));
+        assertEquals(4, PilotController.experienceLevel(499, 999));
+        assertEquals(5, PilotController.experienceLevel(500, 1000));
+        assertEquals(5, PilotController.experienceLevel(5000, 10000));
+        // flights of a high level and hours of a low one: the level of the hours
+        assertEquals(2, PilotController.experienceLevel(600, 100));
+    }
+
+    @Test
+    void theExperienceLevelIsCountedOnTheWholeLogbookOfTheType() {
+        for (int i = 1; i <= 25; i++) {
+            flight(1, gulfstream, i * 18 * DAY, 120);      // 25 flights, 50 hours, some of them older than a year
+        }
+        flight(1, citation, 1 * DAY, 60);
+
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+
+        assertEquals(1, type(q, "GA7C").getExperienceLevel());
+        assertEquals(0, type(q, "C25C").getExperienceLevel());
+        assertEquals(5, q.getExperienceLevels().size());
+        assertEquals(25, q.getExperienceLevels().get(0).getFlights());
+        assertEquals(1000, q.getExperienceLevels().get(4).getHours());
+    }
+
+    @Test
+    void aFlightOlderThanAYearDoesNotCountForTheTypeCurrency() {
+        for (int i = 1; i <= 11; i++) {
+            flight(1, gulfstream, i * 10 * DAY, 60);
+        }
+        flight(1, gulfstream, 366 * DAY, 60);
+
+        assertFalse(type(PilotController.buildQualifications(world, 1, now), "GA7C").isTypeCurrent());
     }
 }

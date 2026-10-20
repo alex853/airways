@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,6 +95,29 @@ public class PilotController {
     // The flights of the last 12 months
     static final int RECENT_FLIGHTS_WINDOW_DAYS = 365;
 
+    // The criteria of the currency on a type. Can carry passengers: enough landings in the recent window. Night flying: a night takeoff and a night
+    // landing in the recent window. Type currency: enough flights and enough hours in the last 12 months. The totals of the type are not used in the criteria.
+    static final int CRITERIA_RECENT_LANDINGS = 3;
+    static final int CRITERIA_NIGHT_TAKEOFFS = 1;
+    static final int CRITERIA_NIGHT_LANDINGS = 1;
+    static final int CRITERIA_RECENT_FLIGHTS = 12;
+    static final int CRITERIA_RECENT_FLIGHT_HOURS = 12;
+
+    // The experience level on a type, 0 to 5 (0 is no level, the page shows it as 0, I, II, III, IV, V). A level needs both the flights (segments) and the
+    // hours of all the logbook on the type; the pilot has the highest level whose both numbers are reached. The level does not go down with time.
+    // Row i is the level i + 1: { flights, hours }.
+    static final int[][] EXPERIENCE_LEVELS = {{25, 50}, {50, 100}, {100, 200}, {250, 500}, {500, 1000}};
+
+    static int experienceLevel(final int flights, final float hours) {
+        int level = 0;
+        for (int i = 0; i < EXPERIENCE_LEVELS.length; i++) {
+            if (flights >= EXPERIENCE_LEVELS[i][0] && hours >= EXPERIENCE_LEVELS[i][1]) {
+                level = i + 1;
+            }
+        }
+        return level;
+    }
+
     static QualificationsDto buildQualifications(final World world, final int personId, final int worldTime) {
         final int recentLandingsFrom = worldTime - RECENT_LANDINGS_WINDOW_HOURS * 60 * 60;
         final int recentFlightsFrom = worldTime - RECENT_FLIGHTS_WINDOW_DAYS * 24 * 60 * 60;
@@ -119,19 +143,36 @@ public class PilotController {
                     // a flight counts for the time of its landing, that is the blocks on
                     if (e.getBlocksOnTime() >= recentLandingsFrom) {
                         acc.recentLandings += landings;
+                        acc.recentNightTakeoffs += e.getNightTakeoffs();
+                        acc.recentNightLandings += e.getNightLandings();
                     }
                     if (e.getBlocksOnTime() >= recentFlightsFrom) {
                         acc.recentFlights++;
+                        acc.recentFlightTime += e.getFlightTime();
                     }
                 });
 
         final List<TypeCurrencyDto> types = byType.values().stream()
                 .sorted(Comparator.comparingDouble((TypeAccumulator a) -> a.flightTime).reversed().thenComparing(a -> a.type))
-                .map(a -> new TypeCurrencyDto(a.type, a.recentLandings, a.landings, a.nightTakeoffs, a.nightLandings,
-                        a.recentFlights, a.flights, round1(a.flightTime)))
+                .map(a -> new TypeCurrencyDto(a.type, a.recentLandings, a.landings, a.recentNightTakeoffs, a.recentNightLandings,
+                        a.nightTakeoffs, a.nightLandings, a.recentFlights, round1(a.recentFlightTime), a.flights, round1(a.flightTime),
+                        a.recentLandings >= CRITERIA_RECENT_LANDINGS,
+                        a.recentNightTakeoffs >= CRITERIA_NIGHT_TAKEOFFS && a.recentNightLandings >= CRITERIA_NIGHT_LANDINGS,
+                        a.recentFlights >= CRITERIA_RECENT_FLIGHTS && round1(a.recentFlightTime) >= CRITERIA_RECENT_FLIGHT_HOURS,
+                        experienceLevel(a.flights, round1(a.flightTime))))
                 .toList();
 
-        return new QualificationsDto(buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS, types);
+        return new QualificationsDto(buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
+                new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
+                        CRITERIA_RECENT_FLIGHT_HOURS), experienceLevelDtos(), types);
+    }
+
+    private static List<ExperienceLevelDto> experienceLevelDtos() {
+        final List<ExperienceLevelDto> levels = new ArrayList<>();
+        for (int i = 0; i < EXPERIENCE_LEVELS.length; i++) {
+            levels.add(new ExperienceLevelDto(i + 1, EXPERIENCE_LEVELS[i][0], EXPERIENCE_LEVELS[i][1]));
+        }
+        return levels;
     }
 
     private static class TypeAccumulator {
@@ -142,7 +183,10 @@ public class PilotController {
         int recentLandings;
         int nightTakeoffs;
         int nightLandings;
+        int recentNightTakeoffs;
+        int recentNightLandings;
         float flightTime;
+        float recentFlightTime;
 
         TypeAccumulator(final String type) {
             this.type = type;
@@ -226,7 +270,33 @@ public class PilotController {
         // the windows of the "recent" numbers of the types: landings (hours) and flights (days)
         private int recentLandingsWindowHours;
         private int recentFlightsWindowDays;
+        // what the criteria of the types need
+        private CriteriaDto criteria;
+        // what the experience levels 1 to 5 need
+        private List<ExperienceLevelDto> experienceLevels;
         private List<TypeCurrencyDto> types;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class ExperienceLevelDto {
+        private int level;
+        // flights (segments) and hours on the type, both are needed
+        private int flights;
+        private int hours;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class CriteriaDto {
+        // landings in the recent window: can carry passengers
+        private int recentLandings;
+        // night takeoffs and night landings in the recent window: night flying
+        private int nightTakeoffs;
+        private int nightLandings;
+        // flights and hours in the last 12 months: type currency (both are needed)
+        private int recentFlights;
+        private int recentFlightHours;
     }
 
     /**
@@ -239,13 +309,24 @@ public class PilotController {
         // landings in the recent window (recentLandingsWindowHours)
         private int recentLandings;
         private int landings;
+        // night takeoffs and landings in the recent window
+        private int recentNightTakeoffs;
+        private int recentNightLandings;
+        // night takeoffs and landings, all of them
         private int nightTakeoffs;
         private int nightLandings;
-        // flights (segments) in the last 12 months
+        // flights (segments) and hours in the last 12 months
         private int recentFlights;
+        private float recentFlightTime;
         private int flights;
         // hours
         private float flightTime;
+        // the criteria: the totals of the type do not take part in them
+        private boolean canCarryPassengers;
+        private boolean nightFlying;
+        private boolean typeCurrent;
+        // the experience level on the type, 0 to 5, by the flights and hours of all the logbook on the type
+        private int experienceLevel;
     }
 
     @Data
