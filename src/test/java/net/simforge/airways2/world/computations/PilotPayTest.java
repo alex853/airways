@@ -1,196 +1,195 @@
 package net.simforge.airways2.world.computations;
 
 import net.simforge.airways2.world.datamodel.PilotContracts;
-import net.simforge.airways2.world.datamodel.PilotContracts.Penalty;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * What the pilot gets for a flight: the flight pay (base flight pay with the penalties) and the income share (the base percent of the income with the
- * penalties). The penalties are added up and the result is not lower than 10% of the base.
+ * The actual pays in different situations: the base flight pay and the base income of a contract and its parameters give the flight pay and the income share.
  */
 class PilotPayTest {
-    private PilotContracts contracts;
-    private int nextMissionId;
+    private static int missionId = 0;
 
-    @BeforeEach
-    void beforeEach() {
-        contracts = new PilotContracts();
-        nextMissionId = 1;
+    private static PilotContracts.Contract contract(final int baseFlightPay, final int baseIncome, final int level,
+                                                    final boolean type, final boolean night, final boolean pax, final boolean manual) {
+        final PilotPayParams params = PilotPayParams.none();
+        params.setExperienceLevel(level);
+        params.setTypeCurrency(type);
+        params.setNightCurrency(night);
+        params.setCanCarryPassengers(pax);
+        params.setManual(manual);
+        return new PilotContracts().create(++missionId, 1, 1, baseFlightPay, baseIncome, params);
     }
 
-    private PilotContracts.Contract contract(final int baseFlightPay, final float baseIncomeSharePercent, final Penalty... penalties) {
-        final PilotContracts.Contract contract = contracts.create(nextMissionId++, 3, 7, baseFlightPay, baseIncomeSharePercent);
-        for (final Penalty penalty : penalties) {
-            contract.setPenalty(penalty, true);
-        }
-        return contract;
+    private static PilotContracts.Contract allOk(final int baseFlightPay, final int baseIncome, final int level) {
+        return contract(baseFlightPay, baseIncome, level, true, true, true, false);
     }
 
     // ---- the flight pay
 
     @Test
-    void withoutPenaltiesThePilotGetsTheWholeFlightPay() {
-        final PilotContracts.Contract contract = contract(400, 3.0f);
-
-        assertEquals(100, PilotPay.flightPayCoefficientPercent(contract));
-        assertEquals(400, PilotPay.flightPay(contract));
+    void aPilotWithEverythingGetsTheBaseFlightPay() {
+        assertEquals(400, PilotPay.flightPay(allOk(400, 0, 3)));
     }
 
     @Test
-    void everyCurrencyPenaltyTakesAQuarterOfTheFlightPay() {
-        assertEquals(300, PilotPay.flightPay(contract(400, 3.0f, Penalty.NoTypeCurrency)));
-        assertEquals(300, PilotPay.flightPay(contract(400, 3.0f, Penalty.NoNightCurrency)));
-        assertEquals(300, PilotPay.flightPay(contract(400, 3.0f, Penalty.NoCarryPassengers)));
+    void everyMissingCurrencyTakesAQuarter() {
+        assertEquals(300, PilotPay.flightPay(contract(400, 0, 3, false, true, true, false)));
+        assertEquals(300, PilotPay.flightPay(contract(400, 0, 3, true, false, true, false)));
+        assertEquals(300, PilotPay.flightPay(contract(400, 0, 3, true, true, false, false)));
     }
 
     @Test
-    void thePenaltiesAreAddedUpNotMultiplied() {
-        assertEquals(200, PilotPay.flightPay(contract(400, 3.0f, Penalty.NoTypeCurrency, Penalty.NoNightCurrency)));
-        // three penalties: 100 - 75 = 25%, not 0.75 * 0.75 * 0.75 = 42%
-        final PilotContracts.Contract three = contract(400, 3.0f, Penalty.NoTypeCurrency, Penalty.NoNightCurrency, Penalty.NoCarryPassengers);
-        assertEquals(25, PilotPay.flightPayCoefficientPercent(three));
-        assertEquals(100, PilotPay.flightPay(three));
+    void theReductionsAreAddedUpNotMultiplied() {
+        assertEquals(200, PilotPay.flightPay(contract(400, 0, 3, false, false, true, false)));
+        assertEquals(100, PilotPay.flightPay(contract(400, 0, 3, false, false, false, false)));
     }
 
     @Test
-    void theManualFlightTakesTwoThirdsOfTheFlightPay() {
-        final PilotContracts.Contract contract = contract(400, 3.0f, Penalty.Manual);
-
-        assertEquals(33, PilotPay.flightPayCoefficientPercent(contract));
-        assertEquals(132, PilotPay.flightPay(contract));
+    void aManualFlightPaysAThird() {
+        assertEquals(132, PilotPay.flightPay(contract(400, 0, 3, true, true, true, true)));
     }
 
     @Test
-    void theManualFlightWithAnyCurrencyPenaltyDropsToTheMinimum() {
-        // 100 - 67 - 25 = 8%, the minimum is 10%
-        final PilotContracts.Contract one = contract(400, 3.0f, Penalty.Manual, Penalty.NoTypeCurrency);
-        assertEquals(10, PilotPay.flightPayCoefficientPercent(one));
-        assertEquals(40, PilotPay.flightPay(one));
-
-        // the minimum is the floor, more penalties do not go lower
-        final PilotContracts.Contract all = contract(400, 3.0f, Penalty.Manual, Penalty.NoTypeCurrency, Penalty.NoNightCurrency, Penalty.NoCarryPassengers);
-        assertEquals(10, PilotPay.flightPayCoefficientPercent(all));
-        assertEquals(40, PilotPay.flightPay(all));
+    void theFlightPayIsNotLessThanTenPercent() {
+        // manual 67 + one miss 25 = 92 off, 8% is left, but 10% is the floor
+        assertEquals(40, PilotPay.flightPay(contract(400, 0, 3, false, true, true, true)));
+        assertEquals(40, PilotPay.flightPay(contract(400, 0, 0, false, false, false, true)));
     }
 
     @Test
     void theFlightPayIsRoundedHalfUp() {
-        assertEquals(250, PilotPay.flightPay(contract(333, 1.0f, Penalty.NoTypeCurrency)));   // 249.75
-        assertEquals(1, PilotPay.flightPay(contract(5, 1.0f, Penalty.Manual, Penalty.NoTypeCurrency))); // 0.5
-        assertEquals(0, PilotPay.flightPay(contract(1, 1.0f, Penalty.Manual)));                  // 0.33
-        assertEquals(0, PilotPay.flightPay(contract(0, 1.0f)));
+        // 75% of 10 is 7.5
+        assertEquals(8, PilotPay.flightPay(contract(10, 0, 0, false, true, true, false)));
+        // 75% of 1 is 0.75
+        assertEquals(1, PilotPay.flightPay(contract(1, 0, 0, false, true, true, false)));
+        // 75% of 2 is 1.5
+        assertEquals(2, PilotPay.flightPay(contract(2, 0, 0, false, true, true, false)));
+        // 75% of 5 is 3.75
+        assertEquals(4, PilotPay.flightPay(contract(5, 0, 0, false, true, true, false)));
+        assertEquals(0, PilotPay.flightPay(allOk(0, 0, 0)));
     }
 
     @Test
-    void aBigFlightPayDoesNotOverflow() {
-        assertEquals(PilotContracts.MAX_FLIGHT_PAY, PilotPay.flightPay(contract(PilotContracts.MAX_FLIGHT_PAY, 1.0f)));
-        assertEquals(5_536_481, PilotPay.flightPay(contract(PilotContracts.MAX_FLIGHT_PAY, 1.0f, Penalty.Manual)));
+    void theExperienceLevelDoesNotChangeTheFlightPay() {
+        for (int level = 0; level <= 5; level++) {
+            assertEquals(400, PilotPay.flightPay(allOk(400, 0, level)), "level " + level);
+        }
     }
 
     // ---- the income share
 
     @Test
-    void theIncomeShareIsThePercentOfTheIncome() {
-        assertEquals(600, PilotPay.incomeShare(contract(400, 3.0f), 20_000));
-        assertEquals(100, PilotPay.incomeShare(contract(400, 0.5f), 20_000));
-        assertEquals(1_400, PilotPay.incomeShare(contract(400, 7.0f), 20_000));
-        // the biggest base share
-        assertEquals(255, PilotPay.incomeShare(contract(400, 25.5f), 1_000));
-        assertEquals(7, PilotPay.incomeShare(contract(400, 0.7f), 1_000));
+    void theIncomeShareIsTheLevelPercentOfTheBaseIncome() {
+        // level III is 3%
+        assertEquals(600, PilotPay.incomeShare(allOk(0, 20_000, 3)));
     }
 
     @Test
-    void onlyTheTypeCurrencyAndTheManualFlightChangeTheIncomeShare() {
-        assertEquals(600, PilotPay.incomeShare(contract(400, 3.0f), 20_000));
-        assertEquals(450, PilotPay.incomeShare(contract(400, 3.0f, Penalty.NoTypeCurrency), 20_000));
-        assertEquals(198, PilotPay.incomeShare(contract(400, 3.0f, Penalty.Manual), 20_000));
-        // the night currency and the passengers do not touch it
-        assertEquals(600, PilotPay.incomeShare(contract(400, 3.0f, Penalty.NoNightCurrency), 20_000));
-        assertEquals(600, PilotPay.incomeShare(contract(400, 3.0f, Penalty.NoCarryPassengers), 20_000));
-        assertEquals(600, PilotPay.incomeShare(contract(400, 3.0f, Penalty.NoNightCurrency, Penalty.NoCarryPassengers), 20_000));
-
-        assertEquals(100, PilotPay.incomeShareCoefficientPercent(contract(400, 3.0f, Penalty.NoNightCurrency, Penalty.NoCarryPassengers)));
-        assertEquals(75, PilotPay.incomeShareCoefficientPercent(contract(400, 3.0f, Penalty.NoTypeCurrency)));
-        assertEquals(33, PilotPay.incomeShareCoefficientPercent(contract(400, 3.0f, Penalty.Manual)));
-    }
-
-    @Test
-    void theManualFlightWithoutTheTypeCurrencyDropsTheIncomeShareToTheMinimum() {
-        final PilotContracts.Contract contract = contract(400, 3.0f, Penalty.Manual, Penalty.NoTypeCurrency);
-
-        assertEquals(10, PilotPay.incomeShareCoefficientPercent(contract));
-        assertEquals(60, PilotPay.incomeShare(contract, 20_000));
-    }
-
-    @Test
-    void aFlightWithoutIncomeHasNoIncomeShare() {
-        // a ferry leg carries nobody
-        assertEquals(0, PilotPay.incomeShare(contract(400, 3.0f), 0));
-        assertEquals(0, PilotPay.incomeShare(contract(400, 3.0f), -5));
-        assertEquals(0, PilotPay.incomeShare(contract(400, 0.0f), 20_000));
-    }
-
-    @Test
-    void theIncomeShareIsRoundedHalfUp() {
-        assertEquals(6, PilotPay.incomeShare(contract(0, 0.5f), 1_234));                              // 6.17
-        assertEquals(7, PilotPay.incomeShare(contract(0, 0.5f), 1_300));                              // 6.5
-        assertEquals(5, PilotPay.incomeShare(contract(0, 0.5f, Penalty.NoTypeCurrency), 1_234));      // 4.63
-        assertEquals(0, PilotPay.incomeShare(contract(0, 0.5f), 99));                                 // 0.495
-    }
-
-    @Test
-    void theBaseSharesOfTheLevelsAre_half_1_2_3_5_7_percents() {
-        assertEquals(0.5f, PilotPay.baseIncomeSharePercent(0), 0.0f);
-        assertEquals(1.0f, PilotPay.baseIncomeSharePercent(1), 0.0f);
-        assertEquals(2.0f, PilotPay.baseIncomeSharePercent(2), 0.0f);
-        assertEquals(3.0f, PilotPay.baseIncomeSharePercent(3), 0.0f);
-        assertEquals(5.0f, PilotPay.baseIncomeSharePercent(4), 0.0f);
-        assertEquals(7.0f, PilotPay.baseIncomeSharePercent(5), 0.0f);
+    void theTableOfTheBasePercentsByLevel() {
+        final int[] expected = {50, 100, 200, 300, 500, 700};
+        for (int level = 0; level <= 5; level++) {
+            assertEquals(expected[level], PilotPay.incomeShare(allOk(0, 10_000, level)), "level " + level);
+        }
+        assertEquals(0.5f, PilotPay.baseIncomeSharePercent(0));
+        assertEquals(7.0f, PilotPay.baseIncomeSharePercent(5));
         assertThrows(IllegalArgumentException.class, () -> PilotPay.baseIncomeSharePercent(6));
         assertThrows(IllegalArgumentException.class, () -> PilotPay.baseIncomeSharePercent(-1));
     }
 
     @Test
-    void theIncomeShareByTheLevelOfAnIncomeOf10000() {
-        final int[] expected = {50, 100, 200, 300, 500, 700};
-        for (int level = 0; level <= 5; level++) {
-            final PilotContracts.Contract contract = contract(0, PilotPay.baseIncomeSharePercent(level));
-            assertEquals(expected[level], PilotPay.incomeShare(contract, 10_000), "level " + level);
-        }
-    }
-
-    // ---- everything the pilot gets, and the events which change it
-
-    @Test
-    void theTotalIsTheFlightPayAndTheIncomeShare() {
-        assertEquals(1_000, PilotPay.total(contract(400, 3.0f), 20_000));                                                      // 400 + 600
-        assertEquals(100, PilotPay.total(contract(400, 3.0f, Penalty.Manual, Penalty.NoTypeCurrency), 20_000));              // 40 + 60
-        assertEquals(400, PilotPay.total(contract(400, 3.0f), 0));                                                             // a ferry leg
+    void noTypeCurrencyTakesAQuarterOfTheShare() {
+        assertEquals(450, PilotPay.incomeShare(contract(0, 20_000, 3, false, true, true, false)));
     }
 
     @Test
-    void theManualStartChangesWhatThePilotGetsWithoutChangingTheBaseNumbers() {
-        final PilotContracts.Contract contract = contract(400, 3.0f, Penalty.NoNightCurrency);
-        assertEquals(300 + 600, PilotPay.total(contract, 20_000));
+    void aManualFlightGetsAThirdOfTheShare() {
+        assertEquals(198, PilotPay.incomeShare(contract(0, 20_000, 3, true, true, true, true)));
+    }
 
-        // the event: the pilot starts the flight manually
-        contract.setPenalty(Penalty.Manual, true);
+    @Test
+    void manualAndNoTypeCurrencyGoToTheFloor() {
+        // 67 + 25 off: 8%, the floor is 10% of 600
+        assertEquals(60, PilotPay.incomeShare(contract(0, 20_000, 3, false, true, true, true)));
+    }
 
+    @Test
+    void nightAndPassengerCurrenciesDoNotTouchTheShare() {
+        assertEquals(600, PilotPay.incomeShare(contract(0, 20_000, 3, true, false, false, false)));
+    }
+
+    @Test
+    void noIncomeNoShare() {
+        assertEquals(0, PilotPay.incomeShare(allOk(400, 0, 5)));
+    }
+
+    @Test
+    void theShareFollowsTheIncomeWhenItBecomesKnown() {
+        // a ShadowJet flight: the income is set at blocks off
+        final PilotContracts.Contract contract = allOk(400, 0, 2);
+        assertEquals(0, PilotPay.incomeShare(contract));
+
+        contract.setBaseIncome(50_000);
+
+        assertEquals(1000, PilotPay.incomeShare(contract));
+    }
+
+    @Test
+    void theShareIsRoundedHalfUp() {
+        // 0.5% of 150 is 0.75, 1% of 150 is 1.5, 1% of 149 is 1.49
+        assertEquals(1, PilotPay.incomeShare(allOk(0, 150, 0)));
+        assertEquals(2, PilotPay.incomeShare(allOk(0, 150, 1)));
+        assertEquals(1, PilotPay.incomeShare(allOk(0, 149, 1)));
+    }
+
+    // ---- the total and the changes of the parameters
+
+    @Test
+    void theTotalIsTheFlightPayAndTheShare() {
+        // everything is fine, level III: 400 + 3% of 20000
+        assertEquals(1000, PilotPay.total(allOk(400, 20_000, 3)));
+        // no type currency: 300 + 450
+        assertEquals(750, PilotPay.total(contract(400, 20_000, 3, false, true, true, false)));
+        // manual: 132 + 198
+        assertEquals(330, PilotPay.total(contract(400, 20_000, 3, true, true, true, true)));
+        // a ferry leg without passengers, the base income is zero: only the flight pay
+        assertEquals(400, PilotPay.total(allOk(400, 0, 3)));
+        // a pilot without anything, level 0, a manual flight: 10% of 400 and 10% of 0.5% of 20000
+        assertEquals(40 + 10, PilotPay.total(contract(400, 20_000, 0, false, false, false, true)));
+    }
+
+    @Test
+    void theManualStartChangesThePayOfTheSameContract() {
+        final PilotContracts.Contract contract = allOk(400, 20_000, 3);
+        assertEquals(1000, PilotPay.total(contract));
+
+        final PilotPayParams params = contract.getPayParams();
+        params.setManual(true);
+        contract.setPayParams(params);
+
+        assertEquals(330, PilotPay.total(contract));
+        // the base numbers and the level stay
         assertEquals(400, contract.getBaseFlightPay());
-        assertEquals(3.0f, contract.getBaseIncomeSharePercent(), 0.0f);
-        assertEquals(40 + 198, PilotPay.total(contract, 20_000)); // 100 - 25 - 67 = 8% -> 10% of 400, and 33% of 600
+        assertEquals(20_000, contract.getBaseIncome());
+        assertEquals(3, contract.getPayParams().getExperienceLevel());
     }
 
     @Test
-    void theIncomeOfAShadowJetFlightIsKnownLaterAndTheShareFollowsIt() {
-        final PilotContracts.Contract contract = contract(400, 1.0f);
+    void theCoefficientsAreExposed() {
+        final PilotPayParams params = PilotPayParams.none();
+        assertEquals(25, PilotPay.flightPayCoefficientPercent(params));
+        assertEquals(75, PilotPay.incomeShareCoefficientPercent(params));
 
-        // at the booking there are no journeys yet, at blocks off the journeys on board pay 15 000
-        assertEquals(400, PilotPay.total(contract, 0));
-        assertEquals(400 + 150, PilotPay.total(contract, 15_000));
+        params.setTypeCurrency(true);
+        params.setNightCurrency(true);
+        params.setCanCarryPassengers(true);
+        assertEquals(100, PilotPay.flightPayCoefficientPercent(params));
+        assertEquals(100, PilotPay.incomeShareCoefficientPercent(params));
+
+        params.setManual(true);
+        assertEquals(33, PilotPay.flightPayCoefficientPercent(params));
+        assertEquals(33, PilotPay.incomeShareCoefficientPercent(params));
     }
 }

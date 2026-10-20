@@ -1,9 +1,9 @@
 package net.simforge.airways2.world.datamodel;
 
-import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
+import net.simforge.airways2.world.computations.PilotPayParams;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,16 +18,16 @@ import static com.google.common.base.Preconditions.checkArgument;
  * The contracts of the pilots with the operators: a contract is for one flight mission, it says who flies it for whom and what the pilot gets, see
  * docs/flight-contracts.md. A contract is for a flight of a booked mission (a plan), the flights which are not paid (the free ferry flight) have none.
  * <p>
- * The contract has the base numbers and the parameters, not the final sums: the final flight pay and income share are calculated from them by the
- * formula (the penalties and the minimum are in the code), so a later event (the manual flight, the journeys of the flight) changes a flag or a number
- * and the result changes with it. A contract lives as long as its flight mission and is deleted with it.
+ * The contract has the base numbers and the parameters, not the final sums: the base flight pay (the rate of the type by the planned time of the
+ * flight), the base income (what the journeys of the flight pay, for a flight without passengers it is zero) and the byte of the parameters of the pay
+ * (the currency, the manual flight, the experience level, see PilotPayParams). The final flight pay and income share are calculated from them by
+ * PilotPay, so a later event (the manual flight, the journeys of a flight which are known at blocks off) changes a number or a parameter and the result
+ * changes with it. A contract lives as long as its flight mission and is deleted with it.
  */
 public class PilotContracts {
     private static final int MAX_16BIT = 65535;
-    // the flight pay is kept in three bytes
-    public static final int MAX_FLIGHT_PAY = 16_777_215;
-    // the base share of the income is a percent with one digit after the point (Tenths8bit): 0.0 to 25.5
-    public static final float MAX_SHARE_PERCENT = 25.5f;
+    // the base flight pay and the base income are kept in three bytes
+    public static final int MAX_AMOUNT = 16_777_215;
 
     private final Storage<Contract> storage = Storage.<Contract>builder()
             .name("pilot-contracts")
@@ -38,56 +38,26 @@ public class PilotContracts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // operatorId                     2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // personId                       3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // baseFlightPay                  3 bytes
-            .withDataField(DataField.of(DataType.Tenths8bit)) // baseIncomeSharePercent, 0.0-25.5 step 0.1  1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // penalties, see Penalty          1 byte
-            // ----------------------------------------------------- sum                   14 bytes
-            // -------------------------------------------- reserved 18 bytes to align total size to 32 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // baseIncome                     3 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // the parameters of the pay, see PilotPayParams  1 byte
+            // ----------------------------------------------------- sum                   16 bytes
+            // -------------------------------------------- reserved 16 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .build();
 
     private final DataField flightMissionIdField = storage.getDataField(0);
     private final DataField operatorIdField = storage.getDataField(1);
     private final DataField personIdField = storage.getDataField(2);
     private final DataField baseFlightPayField = storage.getDataField(3);
-    private final DataField baseIncomeSharePercentField = storage.getDataField(4);
-    private final DataField penaltiesRawField = storage.getDataField(5);
-    private final BitAccessField penaltiesBits = BitAccessField.instance(storage, penaltiesRawField);
-    // a one-bit section for every penalty, by the ordinal of the penalty
-    private final BitAccessField.Section[] penaltyBitFields = java.util.Arrays.stream(Penalty.values())
-            .map(p -> penaltiesBits.section(p.bit(), 1))
-            .toArray(BitAccessField.Section[]::new);
+    private final DataField baseIncomeField = storage.getDataField(4);
+    private final DataField payParamsField = storage.getDataField(5);
 
     // Flight mission id to id of its contract. A contract is for one flight mission, flightMissionId of a record never changes, the index is kept in
     // create() and deleteByFlightMissionId() and rebuilt after the loading.
     private final Map<Integer, Integer> contractIdByMissionId = new ConcurrentHashMap<>();
-
-    /**
-     * What reduces the pay of a flight. The values are the bit numbers in the byte of the penalties.
-     */
-    public enum Penalty {
-        NoTypeCurrency(0),
-        NoNightCurrency(1),
-        NoCarryPassengers(2),
-        Manual(3);
-
-        private final int bit;
-
-        Penalty(final int bit) {
-            this.bit = bit;
-        }
-
-        public int bit() {
-            return bit;
-        }
-    }
-
-    private static void checkSharePercent(final float percent) {
-        checkArgument(percent >= 0.0f && percent <= MAX_SHARE_PERCENT, "the base share is from 0.0 to 25.5 percents");
-    }
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -122,20 +92,24 @@ public class PilotContracts {
     }
 
     /**
-     * A contract for a flight mission, without penalties.
+     * A contract for a flight mission.
      *
-     * @param baseIncomeSharePercent the base share of the income in percents, 0.0 to 25.5 with one digit after the point (0.5 is half a percent)
+     * @param baseFlightPay the pay for the flight time before the parameters work, 0 to 16 777 215
+     * @param baseIncome    what the journeys of the flight pay, 0 to 16 777 215 (zero for a flight without passengers or while the journeys are not known)
+     * @param params        the parameters of the pay
      */
     public Contract create(final int flightMissionId,
                            final int operatorId,
                            final int personId,
                            final int baseFlightPay,
-                           final float baseIncomeSharePercent) {
+                           final int baseIncome,
+                           final PilotPayParams params) {
         checkArgument(flightMissionId > 0, "flightMissionId is mandatory");
         checkArgument(operatorId >= 1 && operatorId <= MAX_16BIT, "operatorId is out of 16 bits");
         checkArgument(personId > 0, "personId is mandatory");
-        checkArgument(baseFlightPay >= 0 && baseFlightPay <= MAX_FLIGHT_PAY, "the flight pay is from 0 to 3 bytes");
-        checkSharePercent(baseIncomeSharePercent);
+        checkAmount(baseFlightPay, "the flight pay");
+        checkAmount(baseIncome, "the income");
+        checkArgument(params != null, "the parameters are mandatory");
         checkArgument(!contractIdByMissionId.containsKey(flightMissionId), "the flight mission has a contract already");
 
         final int id = storage.addRecord();
@@ -143,10 +117,14 @@ public class PilotContracts {
         storage.set(id, operatorIdField, operatorId);
         storage.set(id, personIdField, personId);
         storage.set(id, baseFlightPayField, baseFlightPay);
-        storage.set(id, baseIncomeSharePercentField, baseIncomeSharePercent);
-        storage.set(id, penaltiesRawField, 0);
+        storage.set(id, baseIncomeField, baseIncome);
+        storage.set(id, payParamsField, params.toByte());
         contractIdByMissionId.put(flightMissionId, id);
         return new Contract(id);
+    }
+
+    private static void checkAmount(final int amount, final String what) {
+        checkArgument(amount >= 0 && amount <= MAX_AMOUNT, "%s is from 0 to 3 bytes: %s", what, amount);
     }
 
     /**
@@ -191,28 +169,33 @@ public class PilotContracts {
         }
 
         public void setBaseFlightPay(final int baseFlightPay) {
-            checkArgument(baseFlightPay >= 0 && baseFlightPay <= MAX_FLIGHT_PAY, "the flight pay is from 0 to 3 bytes");
+            checkAmount(baseFlightPay, "the flight pay");
             storage.set(id, baseFlightPayField, baseFlightPay);
         }
 
         /**
-         * The base share of the income in percents, with one digit after the point: 0.5 is half a percent.
+         * What the journeys of the flight pay. It is known at the booking for a BusyBirds flight; for a ShadowJet flight it is set when the journeys on
+         * board are known (blocks off).
          */
-        public float getBaseIncomeSharePercent() {
-            return storage.getAsFloat(id, baseIncomeSharePercentField);
+        public int getBaseIncome() {
+            return storage.getAsInt(id, baseIncomeField);
         }
 
-        public void setBaseIncomeSharePercent(final float percent) {
-            checkSharePercent(percent);
-            storage.set(id, baseIncomeSharePercentField, percent);
+        public void setBaseIncome(final int baseIncome) {
+            checkAmount(baseIncome, "the income");
+            storage.set(id, baseIncomeField, baseIncome);
         }
 
-        public boolean hasPenalty(final Penalty penalty) {
-            return penaltyBitFields[penalty.ordinal()].getBoolean(id);
+        /**
+         * The parameters of the pay, a copy: change it and give it back with setPayParams.
+         */
+        public PilotPayParams getPayParams() {
+            return PilotPayParams.of(storage.getAsInt(id, payParamsField));
         }
 
-        public void setPenalty(final Penalty penalty, final boolean on) {
-            penaltyBitFields[penalty.ordinal()].setBoolean(id, on);
+        public void setPayParams(final PilotPayParams params) {
+            checkArgument(params != null, "the parameters are mandatory");
+            storage.set(id, payParamsField, params.toByte());
         }
 
         @Override
