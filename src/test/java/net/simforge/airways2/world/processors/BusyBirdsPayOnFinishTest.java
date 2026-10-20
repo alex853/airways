@@ -116,8 +116,8 @@ class BusyBirdsPayOnFinishTest {
     public void test__revenue_flight_pays_the_flight_hours_and_3_percent_of_the_income() {
         final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, fromCity.getId(), toCity.getId(), 4, CabinLayout.Service.J);
         journey.setLocationCityId(fromCity.getId());
-        final int income = world.busyBirdsMissionControl().getMissionsToBook().stream()
-                .filter(m -> m.getJourney().getId() == journey.getId()).findFirst().orElseThrow().getPay();
+        // the list shows a rough pay, the exact income is the price which the quote sets
+        final int income = world.busyBirdsMissionControl().quote(journey);
 
         final FlightMissions.Mission mission = mission(aircraft, USER_ID, 2 * 3600);
         final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
@@ -132,6 +132,26 @@ class BusyBirdsPayOnFinishTest {
         assertTrue(share > 0);
         assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId() + ", t/f #" + transportFlight.getId()
                 + " - BusyBirds flight, pilot gets paid " + (400 + share) + " (flight pay 400, income share " + share + ")"), paymentLog());
+    }
+
+    @Test
+    public void test__income_share_is_zero_when_the_journey_has_already_paid_its_price() {
+        // a technical limitation until the pilot contract: the journey has arrived and paid, its price went down to zero before the pilot finished the flight
+        final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, fromCity.getId(), toCity.getId(), 4, CabinLayout.Service.J);
+        journey.setLocationCityId(fromCity.getId());
+        world.busyBirdsMissionControl().quote(journey);
+
+        final FlightMissions.Mission mission = mission(aircraft, USER_ID, 2 * 3600);
+        final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+        journey.setTransportFlight1Id(transportFlight.getId());
+        journey.setStatus(Journeys.Status.ItinerariesDone);
+        journey.setLocationCityId(toCity.getId());
+        journey.setPrice(0);
+
+        finish(mission);
+
+        assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId() + ", t/f #" + transportFlight.getId()
+                + " - BusyBirds flight, pilot gets paid 400 (flight pay 400, income share 0)"), paymentLog());
     }
 
     @Test

@@ -6,6 +6,7 @@ import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,6 +151,9 @@ public class JourneyControl {
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.01f);
 
+        // the journey pays for the transport flight it has come with, before the next transport flight (if there is one) becomes the first one
+        payForTransportation(journey);
+
         shiftToNextTransportFlight(journey);
 
         moveToLandingAirportCity(journey, transportFlight1);
@@ -160,6 +164,63 @@ public class JourneyControl {
         } else {
             waitForCheckin(journey);
         }
+    }
+
+    /**
+     * What the journey has paid to an operator.
+     */
+    public record Payout(int operatorId, int amount) {
+    }
+
+    /**
+     * The journey which has just arrived pays the price it has (see Journey.getPrice) for the transport flight it has come with. If the journey has
+     * a next transport flight (a stopover) the price is divided between them in proportion to their distances, the part for the next one stays in the
+     * price and is paid when the journey arrives with it. What is paid is taken off the price, so the price is zero when everything is paid.
+     * <p>
+     * There are no accounts and transactions yet, so for a flight of a user (its flight mission has a user) the payment is only written to the log.
+     *
+     * @return what the journey has paid to the operator of the flight, empty if the journey has no price or the flight is not a flight of a user
+     */
+    public Optional<Payout> payForTransportation(final Journeys.Journey journey) {
+        final int price = journey.getPrice();
+        if (price <= 0) {
+            return Optional.empty();
+        }
+
+        final TransportFlights.Flight transportFlight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(transportFlight.getFlightMissionId());
+
+        int payout = price;
+        if (journey.getTransportFlight2Id() > 0) {
+            final double distance1 = mission.map(m -> distanceOf(m, true)).orElse(0.0);
+            final double distance2 = world.transportFlights().byId(journey.getTransportFlight2Id())
+                    .flatMap(tf -> world.flightMissions().byId(tf.getFlightMissionId()))
+                    .map(m -> distanceOf(m, false))
+                    .orElse(0.0);
+            if (distance1 + distance2 > 0) {
+                payout = (int) Math.round(price * distance1 / (distance1 + distance2));
+            }
+        }
+        // what is paid is taken off the price: the part for the next transport flight (if there is one) stays
+        journey.setPrice(price - payout);
+
+        if (mission.isEmpty() || mission.get().getUserId() <= 0) {
+            return Optional.empty();
+        }
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.get().getAircraftId()).orElseThrow();
+        final int operatorId = aircraft.getAircraftOperatorId();
+        final String operatorName = world.aircraftOperators().byId(operatorId).map(AircraftOperators.AircraftOperator::getName).orElse("?");
+        log.info("j/y #{} - pays {} to operator #{} {} for t/f #{}, f/m #{}", journey.getId(), payout, operatorId, operatorName, transportFlight.getId(), mission.get().getId());
+        return Optional.of(new Payout(operatorId, payout));
+    }
+
+    // The distance of the transport flight of the mission: the airport of departure and the airport where the aircraft has landed (the destination one if it is not known)
+    private double distanceOf(final FlightMissions.Mission mission, final boolean landed) {
+        final int arrivalAirportId = landed && mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId();
+        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(arrivalAirportId).orElseThrow();
+        return Geo.distance(from.getCoords(), to.getCoords());
     }
 
     public void startSpendingTheirTime(final Journeys.Journey journey) {

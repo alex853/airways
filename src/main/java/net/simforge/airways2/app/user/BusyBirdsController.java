@@ -69,7 +69,8 @@ public class BusyBirdsController {
                                 j.getPreferredCabinService().name(),
                                 j.getGroupSize(),
                                 m.getDistance(),
-                                m.getPay());
+                                m.getPay(),
+                                m.isPayExact());
                     }).sorted(Comparator.comparing(MissionDto::getFromCityName)
                             .thenComparing(MissionDto::getToCityName))
                     .toList();
@@ -98,15 +99,18 @@ public class BusyBirdsController {
                                          @RequestParam(name = "aircraftId") String aircraftId,
                                          @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
                                          @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
-        return worldBean.read(world -> {
+        // a quote changes the world: the price of the journey is set
+        return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
             Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
+            final int price = world.busyBirdsMissionControl().quote(journey);
+
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
 
-            return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList());
+            return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList(), price);
         });
     }
 
@@ -247,7 +251,9 @@ public class BusyBirdsController {
         private String pCs;
         private int pax;
         private int distance;
+        // exact if payExact, otherwise a rough number (the exact price appears when a pilot gets a quote)
         private int pay;
+        private boolean payExact;
     }
 
     @Data
@@ -263,6 +269,8 @@ public class BusyBirdsController {
     @AllArgsConstructor
     public static class BuildPlansResponse {
         private List<PlanDto> plans;
+        // the exact price of the journey, set by this quote
+        private int price;
     }
 
     @Data

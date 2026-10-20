@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class BusyBirdsMissionControl {
     @SuppressWarnings("unused")
@@ -46,16 +47,50 @@ public class BusyBirdsMissionControl {
             Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
             int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-            int pay = calcIncome(j, fromCity, toCity, distance);
+            final boolean payExact = j.getPrice() > 0;
+            int pay = payExact ? j.getPrice() : roughPay(calcIncome(j, fromCity, toCity, distance));
 
             return new Mission(
                     j,
                     null,
                     distance,
-                    pay);
+                    pay,
+                    payExact);
 
         }).toList();
     }
+
+    /**
+     * The number for the list of missions when the journey has no price yet: the income made a bit smaller and rough, down to thousands (to hundreds
+     * below a thousand). The exact price appears when a pilot gets a quote.
+     */
+    static int roughPay(final int pay) {
+        return pay >= 1000 ? pay / 1000 * 1000 : pay / 100 * 100;
+    }
+
+    /**
+     * The pilot gets a quote for the journey: if the journey has no price yet, the price which the journey pays is set to the income by the formula
+     * multiplied by a random factor from {@link #PRICE_FACTOR_MIN} to {@link #PRICE_FACTOR_MAX}. The price stays in the journey, the next quotes do not
+     * change it. The plans are built with this price. The price goes back to zero when the trip of the journey is over (JourneyControl.switchToReturnTrip).
+     *
+     * @return the price of the journey
+     */
+    public int quote(final Journeys.Journey journey) {
+        return quote(journey, PRICE_FACTOR_MIN + (PRICE_FACTOR_MAX - PRICE_FACTOR_MIN) * ThreadLocalRandom.current().nextDouble());
+    }
+
+    // the factor is a parameter to check the price in tests
+    int quote(final Journeys.Journey journey, final double factor) {
+        if (journey.getPrice() == 0) {
+            final int price = (int) Math.round(calcIncome(journey) * factor);
+            journey.setPrice(price);
+            log.info("j/y #{} - price {} is set for BusyBirds quote (factor {})", journey.getId(), price, String.format("%.3f", factor));
+        }
+        return journey.getPrice();
+    }
+
+    public static final double PRICE_FACTOR_MIN = 0.95;
+    public static final double PRICE_FACTOR_MAX = 1.05;
 
     // The income of the mission, the formula is a rough one and is going to be reworked.
     private static int calcIncome(final Journeys.Journey journey, final Cities.City fromCity, final Cities.City toCity, final int distance) {
@@ -66,6 +101,9 @@ public class BusyBirdsMissionControl {
     }
 
     private int calcIncome(final Journeys.Journey journey) {
+        if (journey.getPrice() > 0) {
+            return journey.getPrice();
+        }
         final Cities.City fromCity = world.cities().byId(journey.getLocationCityId()).orElseThrow();
         final Cities.City toCity = world.cities().byId(journey.getToCityId()).orElseThrow();
         return calcIncome(journey, fromCity, toCity, (int) Geo.distance(fromCity.getCoords(), toCity.getCoords()));
@@ -73,8 +111,12 @@ public class BusyBirdsMissionControl {
 
     /**
      * The pilot of a finished BusyBirds flight gets paid: the flight pay for the planned duration of the flight and, if the flight carried
-     * the passengers (it has a transport flight), the share of the income of their journeys. There are no accounts and transactions yet,
-     * so the payment is only written to the log.
+     * the passengers (it has a transport flight), the share of the income of their journeys, that is of their prices (Journey.getPrice). There are no
+     * accounts and transactions yet, so the payment is only written to the log.
+     * <p>
+     * A technical limitation for now: a journey pays its price when it arrives (JourneyControl.payForTransportation) and the price goes down to zero,
+     * so if the pilot finishes the flight after that the income share is zero. It is going to be solved by the pilot contract, which has the share
+     * fixed when the flight is booked.
      *
      * @return what the pilot has got, empty if there is nothing to pay: it is not a BusyBirds flight or the flight has no pilot (person)
      */
@@ -96,7 +138,7 @@ public class BusyBirdsMissionControl {
         final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
         final int missionIncome = transportFlight
                 .map(tf -> world.journeys().filter(world.journeys().byTransportFlight1Id(tf.getId()))
-                        .mapToInt(this::calcIncomeOfFinishedJourney)
+                        .mapToInt(Journeys.Journey::getPrice)
                         .sum())
                 .orElse(0);
 
@@ -111,13 +153,6 @@ public class BusyBirdsMissionControl {
                 salary.incomeShare());
 
         return Optional.of(salary);
-    }
-
-    // The journey is already at the destination city, so its income is calculated by the cities of the trip, not by the current location.
-    private int calcIncomeOfFinishedJourney(final Journeys.Journey journey) {
-        final Cities.City fromCity = world.cities().byId(journey.getFromCityId()).orElseThrow();
-        final Cities.City toCity = world.cities().byId(journey.getToCityId()).orElseThrow();
-        return calcIncome(journey, fromCity, toCity, (int) Geo.distance(fromCity.getCoords(), toCity.getCoords()));
     }
 
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {
@@ -304,7 +339,9 @@ public class BusyBirdsMissionControl {
         private final Journeys.Journey journey;
         private final LocalDateTime validTill;
         private final int distance;
+        // the price of the journey if it has one, otherwise the income made rough (see roughPay)
         private final int pay;
+        private final boolean payExact;
     }
 
     @Getter

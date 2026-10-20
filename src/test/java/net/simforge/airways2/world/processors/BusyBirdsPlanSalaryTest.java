@@ -58,13 +58,16 @@ class BusyBirdsPlanSalaryTest {
     }
 
     private int income() {
-        return world.busyBirdsMissionControl().getMissionsToBook().stream()
-                .filter(m -> m.getJourney().getId() == journey.getId())
-                .findFirst().orElseThrow().getPay();
+        // the list shows a rough pay, the exact income is the price which the quote sets
+        return world.busyBirdsMissionControl().quote(journey);
     }
 
     @Test
     public void test__revenue_and_return_legs_have_their_own_salary_and_the_plan_has_the_total() {
+        // the quote comes first: it sets the price of the journey, the plans are built with it
+        final int income = income();
+        assertTrue(income > 0);
+
         final List<BusyBirdsMissionControl.MissionPlan> plans =
                 world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true);
 
@@ -77,9 +80,6 @@ class BusyBirdsPlanSalaryTest {
         final BusyBirdsMissionControl.Leg back = plan.getLegs().get(1);
         assertEquals(BusyBirdsMissionControl.Leg.Type.Revenue, revenue.getType());
         assertEquals(BusyBirdsMissionControl.Leg.Type.Reposition, back.getType());
-
-        final int income = income();
-        assertTrue(income > 0);
 
         final int revenueFlightPay = (int) Math.round(200 * revenue.getPlannedDuration().toSeconds() / 3600.0);
         assertTrue(revenueFlightPay > 0);
