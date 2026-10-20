@@ -44,6 +44,7 @@ public class World {
     private final Journeys journeys = new Journeys();
     private final Persons persons = new Persons();
     private final PilotLogbook pilotLogbook = new PilotLogbook();
+    private final PilotContracts pilotContracts = new PilotContracts();
 
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
@@ -102,6 +103,7 @@ public class World {
             world.journeys.loadIfExists(rootPath);
             world.persons.loadIfExists(rootPath);
             world.pilotLogbook.loadIfExists(rootPath);
+            world.pilotContracts.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -143,6 +145,7 @@ public class World {
             journeys.save(rootPath);
             persons.save(rootPath);
             pilotLogbook.save(rootPath);
+            pilotContracts.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -262,6 +265,10 @@ public class World {
 
     public PilotLogbook pilotLogbook() {
         return pilotLogbook;
+    }
+
+    public PilotContracts pilotContracts() {
+        return pilotContracts;
     }
 
     public JourneyControl journeyControl() {
