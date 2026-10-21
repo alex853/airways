@@ -16,6 +16,9 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
+import net.simforge.airways2.world.datamodel.PilotContracts;
+import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.FlightMissionControl;
@@ -412,6 +415,40 @@ public class FlightDashboardController {
         });
     }
 
+    /**
+     * What the pilot gets for the flight by the contract and what the pilot would get if the flight is started in the manual mode: the dashboard shows it
+     * before a manual start. A flight without a contract has nothing to show.
+     */
+    @GetMapping("/manual-pay")
+    public ManualPayDto getManualPay(@RequestAttribute("userId") int userId,
+                                     @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.read(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            return buildManualPay(world, flight);
+        });
+    }
+
+    static ManualPayDto buildManualPay(final World world, final FlightMissions.Mission flight) {
+        final Optional<PilotContracts.Contract> contractO = world.pilotContracts().byFlightMissionId(flight.getId());
+        if (contractO.isEmpty()) {
+            return new ManualPayDto(false, null, null);
+        }
+        final PilotContracts.Contract contract = contractO.get();
+
+        final PilotPayParams manualParams = contract.getPayParams();
+        manualParams.setManual(true);
+        final int flightPayByContract = PilotPay.flightPay(contract);
+        final int incomeShareByContract = PilotPay.incomeShare(contract);
+        final int manualFlightPay = PilotPay.flightPay(contract.getBaseFlightPay(), manualParams);
+        final int manualIncomeShare = PilotPay.incomeShare(contract.getBaseIncome(), manualParams);
+
+        return new ManualPayDto(true,
+                new PayDto(flightPayByContract, incomeShareByContract, flightPayByContract + incomeShareByContract),
+                new PayDto(manualFlightPay, manualIncomeShare, manualFlightPay + manualIncomeShare));
+    }
+
     @PostMapping("/reschedule")
     public Status2Dto reschedule(@RequestAttribute("userId") int userId,
                                  @RequestParam(name = "flightId") String flightIdStr,
@@ -791,6 +828,24 @@ public class FlightDashboardController {
             case Deboarding -> "on-board";
             default -> null;
         };
+    }
+
+    // The pay of a flight for the pilot and its parts
+    @Data
+    @AllArgsConstructor
+    public static class PayDto {
+        private final int flightPay;
+        private final int incomeShare;
+        private final int total;
+    }
+
+    // What the contract promises (byContract) and what is left if the flight is started manually (ifManual); both are null if the flight has no contract
+    @Data
+    @AllArgsConstructor
+    public static class ManualPayDto {
+        private final boolean hasContract;
+        private final PayDto byContract;
+        private final PayDto ifManual;
     }
 
     @Data
