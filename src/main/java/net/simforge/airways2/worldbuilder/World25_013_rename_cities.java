@@ -74,7 +74,12 @@ public class World25_013_rename_cities {
                 new String[]{"GMMX", "Marrakech Menara"},
                 new String[]{"ZGGG", "Guangzhou Baiyun"},
                 new String[]{"YPAD", "Adelaide"},
-                new String[]{"LXGB", "Gibraltar"}
+                new String[]{"LXGB", "Gibraltar"},
+                new String[]{"LFBO", "Toulouse Blagnac"},
+                new String[]{"WADD", "Denpasar Ngurah Rai"},
+                new String[]{"SKBO", "Bogota El Dorado"},
+                new String[]{"ZSAM", "Xiamen Gaoqi"},
+                new String[]{"VAAH", "Ahmedabad Sardar Vallabhbhai Patel"}
         ));
     }
 }

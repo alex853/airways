@@ -2338,7 +2338,7 @@ Canada,CA,Montreal,3256300,45.52,-73.57
 Canada,CA,Vancouver,2900500,49.28,-123.13
 Canada,CA,Calgary,1600300,51.05,-114.06
 Canada,CA,Ottawa,863000,45.42,-75.71
-Canada,CA,Edmonton,812400,53.57,-113.54
+Canada,CA,Edmonton,1500400,53.57,-113.54
 Canada,CA,Hamilton,645100,43.26,-79.85
 Canada,CA,Quebec,643200,46.82,-71.23
 Canada,CA,Winnipeg,637900,49.88,-97.17
@@ -2883,7 +2883,7 @@ China,CN,Yangzhou,548600,32.4,119.43
 China,CN,Jiamusi,548400,46.83,130.35
 China,CN,Yueyang,542800,29.38,113.1
 China,CN,Maanshan,536700,31.73,118.48
-China,CN,Xiamen,535600,24.45,118.08
+China,CN,Xiamen,5300600,24.45,118.08
 China,CN,Shaoguan,529300,24.8,113.58
 China,CN,Zhangzhou,519700,24.52,117.67
 China,CN,Wuhu,512500,31.35,118.37
@@ -3035,7 +3035,7 @@ China,CN,Yushan,145700,31.64,120.73
 China,CN,Fuyu,145500,45.18,124.82
 China,CN,Huicheng,145300,22.52,113.02
 China,CN,Chizhou,144300,30.65,117.48
-Colombia,CO,Bogota,6981500,4.63,-74.09
+Colombia,CO,Bogota,11981500,4.63,-74.09
 Colombia,CO,Cali,2333000,3.42,-76.51
 Colombia,CO,Medellin,1983300,6.25,-75.59
 Colombia,CO,Barranquilla,1358800,11.0,-74.82
@@ -3052,7 +3052,7 @@ Colombia,CO,Neiva,341800,2.94,-75.27
 Colombia,CO,Soledad,333700,10.92,-74.75
 Colombia,CO,Villavicencio,312400,4.15,-73.64
 Colombia,CO,Armenia,309800,4.53,-75.69
-Colombia,CO,Soacha,304600,4.58,-74.22
+Colombia,CO,del Soacha,304600,4.58,-74.22
 Colombia,CO,Valledupar,299000,10.48,-73.25
 Colombia,CO,Itagui,269300,6.17,-75.62
 Colombia,CO,Monteria,267600,8.75,-75.89
@@ -4262,6 +4262,7 @@ Dominican republic,DO,Bajos de haina,84700,18.42,-70.03
 Dominican republic,DO,Barahona,77500,18.21,-71.1
 Dominican republic,DO,San juan de la maguana,75900,18.81,-71.23
 Dominican republic,DO,Higuey,67100,18.62,-68.71
+Dominican republic,DO,Punta Cana,130000,18.58,-68.40
 Dominican republic,DO,Moca,61700,19.4,-70.53
 Dominican republic,DO,Bani,58300,18.29,-70.33
 Dominican republic,DO,Azua,57100,18.46,-70.74
@@ -5130,7 +5131,7 @@ Finland,FI,Sakyla,5000,61.05,22.37
 France,FR,Paris,11500700,48.86,2.34
 France,FR,Marseille,1900300,43.31,5.37
 France,FR,Lyon,2300600,45.76,4.83
-France,FR,Toulouse,417400,43.62,1.45
+France,FR,Toulouse,1400400,43.62,1.45
 France,FR,Nice,1000800,43.7,7.27
 France,FR,Nantes,285700,47.23,-1.57
 France,FR,Strasbourg,274700,48.58,7.76
@@ -7084,7 +7085,7 @@ India,IN,Delhi,31900900,28.67,77.21
 India,IN,Kolkata,4852800,22.57,88.36
 India,IN,Bengaluru,4547300,12.97,77.56
 India,IN,Chennai,4466900,13.09,80.27
-India,IN,Ahmadabad,3724300,23.03,72.58
+India,IN,Ahmedabad,8024300,23.03,72.58
 India,IN,Haidarabad,3654900,17.4,78.48
 India,IN,Pune,2691000,18.53,73.84
 India,IN,Kanpur,2682600,26.47,80.33
@@ -7235,7 +7236,7 @@ India,IN,Bommanahalli,213200,13.01,77.63
 India,IN,Dhanbad,210800,23.8,86.42
 India,IN,Shrirampur,209700,22.74,88.35
 India,IN,Dindigul,208300,10.36,77.97
-India,IN,Gandhinagar,207500,23.3,72.63
+India,IN,del Gandhinagar,207500,23.3,72.63
 India,IN,Burhanpur,205900,21.33,76.22
 India,IN,Nadiad,204300,22.7,72.85
 India,IN,Eluru,201100,16.72,81.11
@@ -7282,7 +7283,7 @@ Indonesia,ID,Banjarmasin,578800,-3.33,114.59
 Indonesia,ID,Pekan baru,561200,0.56,101.43
 Indonesia,ID,Samarinda,517900,-0.5,117.15
 Indonesia,ID,Pontianak,515300,-0.02,109.34
-Indonesia,ID,Denpasar,511000,-8.65,115.22
+Indonesia,ID,Denpasar,2511000,-8.65,115.22
 Indonesia,ID,Yogyakarta,492800,-7.78,110.37
 Indonesia,ID,del Depok,467500,-6.39,106.83
 Indonesia,ID,Cimahi,441100,-6.83,107.48

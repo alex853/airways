@@ -38,6 +38,7 @@ public class World25_009_create_some_airports {
                 "LTAI", "LTFM",
                 "LXGB",
                 "LYBE",
+                "MDPC",
                 "MMUN",
                 "OBBI",
                 "OMDB", "OMAA", "OMAD", "OMSJ",
@@ -47,12 +48,14 @@ public class World25_009_create_some_airports {
                 "TNCM",
                 "UMKK", "UMMS",
                 "VRMM",
+                "VAAH",
                 "VTBS", "VTSP",
+                "WADD",
                 "WMKK",
                 "WSSS",
                 "YMEN", "YPAD",
                 "ZGGG", "ZHCC",
-                "ZSPD", "ZSSS"
+                "ZSAM", "ZSPD", "ZSSS"
         });
     }
 }
