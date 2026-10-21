@@ -91,6 +91,10 @@ public class BusyBirdsMissionControl {
         return journey.getPrice();
     }
 
+    // The gap between now and the departure of the first leg of a plan, before the departure time is aligned to 5 minutes. It is half an hour for the
+    // tests for now, later the pilot is going to choose (ASAP or later).
+    public static final int FIRST_LEG_DEPARTURE_GAP_MINUTES = 30;
+
     public static final double PRICE_FACTOR_MIN = 0.95;
     public static final double PRICE_FACTOR_MAX = 1.05;
 
@@ -218,7 +222,8 @@ public class BusyBirdsMissionControl {
         final int missionIncome = calcIncome(journey);
         final String aircraftTypeIcao = aircraftType.getIcao();
 
-        int nextDepTime = world.getWorldTime() + Time.ONE_HOUR;
+        // the gap before the first leg does not depend on the turnaround time (it is between the legs only)
+        int nextDepTime = world.getWorldTime() + FIRST_LEG_DEPARTURE_GAP_MINUTES * Time.ONE_MINUTE;
 
         List<Leg> legs = new ArrayList<>();
         Leg leg;
