@@ -278,6 +278,7 @@ public class AdminController {
         return worldBean.modifySync(world -> {
             final FlightMissions.Mission mission = world.flightMissions().byId(flightId).orElseThrow();
             final Aircrafts.Aircraft aircraft = AircraftHelper.releaseAndParkAircraft(world, world.aircrafts().byId(mission.getAircraftId()).orElseThrow());
+            world.pilotContracts().deleteByFlightMissionId(flightId);
             world.flightMissions().deleteById(flightId);
             return "F/M #" + flightId + " removed, A/C #" + aircraft.getId() + " is parked in airport #" + aircraft.getLocationAirportId();
         });

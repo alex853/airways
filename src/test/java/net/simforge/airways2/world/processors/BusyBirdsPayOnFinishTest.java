@@ -109,7 +109,7 @@ class BusyBirdsPayOnFinishTest {
         finish(mission);
 
         assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId()
-                + ", t/f none - BusyBirds flight, pilot gets paid 400 (flight pay 400, income share 0)"), paymentLog());
+                + ", t/f none - BusyBirds flight without a contract, pilot gets paid 400 (flight pay 400, income share 0)"), paymentLog());
     }
 
     @Test
@@ -131,7 +131,7 @@ class BusyBirdsPayOnFinishTest {
         final int share = (int) Math.round(income * 0.03);
         assertTrue(share > 0);
         assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId() + ", t/f #" + transportFlight.getId()
-                + " - BusyBirds flight, pilot gets paid " + (400 + share) + " (flight pay 400, income share " + share + ")"), paymentLog());
+                + " - BusyBirds flight without a contract, pilot gets paid " + (400 + share) + " (flight pay 400, income share " + share + ")"), paymentLog());
     }
 
     @Test
@@ -151,7 +151,7 @@ class BusyBirdsPayOnFinishTest {
         finish(mission);
 
         assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId() + ", t/f #" + transportFlight.getId()
-                + " - BusyBirds flight, pilot gets paid 400 (flight pay 400, income share 0)"), paymentLog());
+                + " - BusyBirds flight without a contract, pilot gets paid 400 (flight pay 400, income share 0)"), paymentLog());
     }
 
     @Test

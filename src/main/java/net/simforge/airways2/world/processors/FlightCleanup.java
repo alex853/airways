@@ -61,6 +61,7 @@ public class FlightCleanup {
 
     private static void deleteFlightMission(World world, FlightMissions.Mission f) {
         deleteTransportFlights(world, f);
+        world.pilotContracts().deleteByFlightMissionId(f.getId());
         world.flightMissions().deleteById(f.getId());
         log.info("f/m #{} removed", f.getId());
     }

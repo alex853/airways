@@ -10,6 +10,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.BusyBirdsPilotPay;
@@ -143,12 +144,21 @@ public class BusyBirdsController {
                 return new BookMissionResponse("failure", plan.get().getMessages());
             }
 
+            // the pilot contracts of the flights: the parameters are the currency and the level of the pilot on the type at the moment of the booking
+            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElseThrow();
+            final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+            final PilotPayParams payParams = PilotController.payParams(world, personId, aircraftTypeIcao);
+
             List<String> messages = new ArrayList<>();
             for (final BusyBirdsMissionControl.Leg leg : plan.get().getLegs()) {
                 FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
                 flight.setCharacterMode(FlightMissions.CharacterMode.PC);
                 flight.setUserId(userId);
                 messages.add("Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime()));
+
+                final boolean revenue = leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue;
+                // the income of the journey is fixed in the contract before the journey is booked to the transport flight
+                world.busyBirdsMissionControl().createContract(flight, personId, revenue ? journey : null, payParams);
 
                 // all busyBirds aircraft are expected to have J-layout only
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {

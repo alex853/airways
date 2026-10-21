@@ -63,10 +63,21 @@
 
 Процент доли в контракте **не хранится**: он берётся из таблицы по уровню опыта (из `params`).
 
-**Хранилище подготовлено (2026-10-21), пока не подключено к Book, отмене и finish:** `PilotContracts` (`World.pilotContracts()`, файл `pilot-contracts`),
+**Хранилище подготовлено (2026-10-21):** `PilotContracts` (`World.pilotContracts()`, файл `pilot-contracts`),
 запись 32 байта (16 занято: `flightMissionId` U24, `operatorId` U16, `personId` U24, `baseFlightPay` U24, `baseIncome` U24, `params` U8, и 16 байт резерва),
 индекс по рейсу в памяти (пересобирается после загрузки), один контракт на рейс. Байтом параметров управляет объект `PilotPayParams` (`world.computations`): берёт
 байт, меняет биты (чужие, в том числе свободный, не трогает) и отдаёт байт.
+
+**Подключено для BusyBirds (2026-10-21):**
+- **Book** (`PUT /busy-birds/mission/book`): на каждый лег плана создаётся рейс и контракт (`BusyBirdsMissionControl.createContract`), включая перегонные плечи плана.
+  `baseFlightPay` = ставка типа × плановая длительность, `baseIncome` = цена журни для платного (revenue) лега и 0 для перегонного, параметры берутся из квалификаций
+  пилота по типу на момент Book (`PilotController.payParams`: currency и уровень, manual не стоит). Free ferry (`PUT /busy-birds/ferry/book`) контракта не получает.
+- **Удаление рейса:** контракт удаляется вместе с рейсом (`FlightCleanup`, админское `/flight/remove`). Отмена рейса сама контракт не трогает, его уберёт очистка вместе с рейсом, а
+  выплаты при отмене нет.
+- **Finish:** `FlightMissionControl.finish` вызывает `payPilot`: есть контракт, платим по нему (`PilotPay`), пока строкой в логе (`pilot contract #…, pilot gets paid …`),
+  счетов и переводов ещё нет. Нет контракта (рейс забронирован до контрактов, free ferry), платим по-старому (`… without a contract, pilot gets paid …`), это запасной путь, его уберём.
+  Доля от дохода теперь берётся из контракта, поэтому не зависит от того, что цена журни после прибытия обнулилась.
+- Ещё не сделано: бит manual на Start Flight, `baseIncome` для ShadowJet на blocks off, перерасчёт при других событиях.
 
 Контракт хранит **базу и параметры**, а итоговые суммы считаются на лету по формуле (раздел 5; код `PilotPay` в `world.computations`, тесты `PilotPayTest`): так ручной старт или другое событие просто ставит флаг, и
 итог пересчитывается. Размеры штрафов и пол живут в формуле в коде, не в данных. Параметры currency и уровень ставятся на Book, бит manual на Start Flight, `baseIncome` ShadowJet на blocks off.

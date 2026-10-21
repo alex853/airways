@@ -7,6 +7,7 @@ import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.datamodel.Persons;
@@ -165,6 +166,24 @@ public class PilotController {
         return new QualificationsDto(buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
                 new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
                         CRITERIA_RECENT_FLIGHT_HOURS), experienceLevelDtos(), types);
+    }
+
+    /**
+     * The parameters of the pay of the pilot on a type of aircraft now: the currencies and the experience level by the logbook. A type which is not in
+     * the logbook gives nothing (no currency, level 0). The flight is not manual, that is set when the flight is started manually.
+     */
+    public static PilotPayParams payParams(final World world, final int personId, final String aircraftTypeIcao) {
+        final PilotPayParams params = PilotPayParams.none();
+        buildQualifications(world, personId, world.getWorldTime()).getTypes().stream()
+                .filter(t -> t.getAircraftType().equals(aircraftTypeIcao))
+                .findFirst()
+                .ifPresent(t -> {
+                    params.setTypeCurrency(t.isTypeCurrent());
+                    params.setNightCurrency(t.isNightFlying());
+                    params.setCanCarryPassengers(t.isCanCarryPassengers());
+                    params.setExperienceLevel(t.getExperienceLevel());
+                });
+        return params;
     }
 
     private static List<ExperienceLevelDto> experienceLevelDtos() {
