@@ -53,23 +53,21 @@ public class AccountControl {
     }
 
     /**
-     * Fixes the balance of an account: writes a balance checkpoint with the balance it has now. Nothing moves.
+     * Fixes the balance of an account: writes a balance checkpoint, the value of the balance it has now. Nothing moves. The checkpoint is the point which
+     * validate starts from.
      */
     public Transactions.Transaction fixBalance(final int accountId) {
         final Accounts.Account account = world.accounts().byId(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + accountId));
 
-        final Transactions.Transaction transaction = world.transactions().create(world.getWorldTime(), accountId, accountId, account.getBalance(), Transactions.Type.BalanceCheckpoint);
+        final Transactions.Transaction transaction = world.transactions().create(world.getWorldTime(), accountId, 0, account.getBalance(), Transactions.Type.BalanceCheckpoint);
 
         log.info("transfer #{} - balance of account #{} is fixed, {}", transaction.getId(), accountId, account.getBalance());
         return transaction;
     }
 
-    /**
-     * The balance of an account by its transactions: the balance of the last checkpoint (zero, if there is none) and what the account has received and paid
-     * after it.
-     */
-    public long calculateBalance(final int accountId) {
+    // The balance of an account by its transactions: the value of the last checkpoint (zero, if there is none) and what the account has received and paid after it.
+    private long calculateBalance(final int accountId) {
         final List<Transactions.Transaction> transactions = world.transactions()
                 .filter(world.transactions().byAccountId(accountId))
                 .sorted(Comparator.comparingInt(Transactions.Transaction::getId))
@@ -78,6 +76,7 @@ public class AccountControl {
         long balance = 0;
         for (final Transactions.Transaction t : transactions) {
             if (t.getType() == Transactions.Type.BalanceCheckpoint) {
+                // the value of the balance, not a change of it
                 balance = t.getAmount();
             } else if (t.getToAccountId() == accountId) {
                 balance += t.getAmount();
@@ -89,7 +88,8 @@ public class AccountControl {
     }
 
     /**
-     * Checks that the balance of an account is the one its transactions give.
+     * Checks the balance of an account: it has to be the one its transactions give, that is the value of the last checkpoint (zero, if there is none) plus
+     * what the account has received and paid after it. A mismatch is written to the log as an error.
      */
     public boolean validate(final int accountId) {
         final Accounts.Account account = world.accounts().byId(accountId)

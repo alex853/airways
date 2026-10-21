@@ -178,8 +178,9 @@ class AccountControlTest {
         final Transactions.Transaction checkpoint = world.accountControl().fixBalance(passengers.getId());
 
         assertEquals(Transactions.Type.BalanceCheckpoint, checkpoint.getType());
+        // the account which is verified is "from", "to" is not used
         assertEquals(passengers.getId(), checkpoint.getFromAccountId());
-        assertEquals(passengers.getId(), checkpoint.getToAccountId());
+        assertEquals(0, checkpoint.getToAccountId());
         // the balance may be negative
         assertEquals(-1_000, checkpoint.getAmount());
         assertEquals(-1_000, passengers.getBalance());
@@ -188,7 +189,7 @@ class AccountControlTest {
     }
 
     @Test
-    public void test__the_balance_is_calculated_from_the_last_checkpoint_and_what_came_after() {
+    public void test__the_balance_is_validated_from_the_last_checkpoint_and_what_came_after() {
         world.accountControl().transfer(passengers.getId(), operator.getId(), 1_000, Transactions.Type.JourneyPayment);
         world.accountControl().transfer(operator.getId(), pilot.getId(), 300, Transactions.Type.PilotFlightPay);
         world.accountControl().fixBalance(operator.getId());
@@ -196,7 +197,6 @@ class AccountControlTest {
         world.accountControl().transfer(passengers.getId(), operator.getId(), 500, Transactions.Type.JourneyPayment);
 
         // 700 at the checkpoint, -40, +500
-        assertEquals(1_160, world.accountControl().calculateBalance(operator.getId()));
         assertEquals(1_160, operator.getBalance());
         assertTrue(world.accountControl().validate(operator.getId()));
         assertTrue(world.accountControl().validate(passengers.getId()));
@@ -204,12 +204,13 @@ class AccountControlTest {
     }
 
     @Test
-    public void test__without_a_checkpoint_the_balance_is_calculated_from_zero() {
+    public void test__without_a_checkpoint_the_balance_is_validated_from_zero() {
         world.accountControl().transfer(passengers.getId(), operator.getId(), 1_000, Transactions.Type.JourneyPayment);
         world.accountControl().transfer(operator.getId(), pilot.getId(), 335, Transactions.Type.PilotFlightPay);
 
-        assertEquals(665, world.accountControl().calculateBalance(operator.getId()));
-        assertEquals(0, world.accountControl().calculateBalance(world.accounts().create(true, world.getWorldTime()).getId()));
+        assertEquals(665, operator.getBalance());
+        assertTrue(world.accountControl().validate(operator.getId()));
+        assertTrue(world.accountControl().validate(world.accounts().create(true, world.getWorldTime()).getId()));
     }
 
     @Test
@@ -246,7 +247,27 @@ class AccountControlTest {
         loaded.transactions().loadIfExists(dir);
 
         assertEquals(2, loaded.transactions().all().count());
-        assertEquals(1_000, loaded.accountControl().calculateBalance(operator.getId()));
+        assertEquals(1_000, loaded.accounts().byId(operator.getId()).orElseThrow().getBalance());
         assertTrue(loaded.accountControl().validate(operator.getId()));
+    }
+
+    @Test
+    public void test__a_checkpoint_is_a_value_and_not_a_change() {
+        world.accountControl().transfer(passengers.getId(), operator.getId(), 1_000, Transactions.Type.JourneyPayment);
+        world.accountControl().fixBalance(operator.getId());
+        world.accountControl().fixBalance(operator.getId());
+        world.accountControl().fixBalance(operator.getId());
+
+        // three checkpoints of 1000 are not 3000
+        assertTrue(world.accountControl().validate(operator.getId()));
+        assertEquals(1_000, operator.getBalance());
+    }
+
+    @Test
+    public void test__a_checkpoint_of_one_account_is_not_in_the_statement_of_another() {
+        world.accountControl().fixBalance(operator.getId());
+
+        assertEquals(1, world.transactions().filter(world.transactions().byAccountId(operator.getId())).count());
+        assertEquals(0, world.transactions().filter(world.transactions().byAccountId(pilot.getId())).count());
     }
 }

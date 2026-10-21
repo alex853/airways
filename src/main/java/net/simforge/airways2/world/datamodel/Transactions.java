@@ -21,8 +21,9 @@ public class Transactions {
      * What the money is for. It is stored as the number of the type (BalanceCheckpoint is 0), the numbers never change: add new types to the end.
      */
     public enum Type {
-        // Not a payment: the balance of the account (from and to are the same account, amount is its balance, it may be zero or negative) which was fixed at the
-        // moment of the transaction. The balance of an account is checked by the last checkpoint and the transactions after it, see AccountControl.
+        // Not a payment: the balance of an account which was verified at the moment of the transaction. The account is fromAccountId (toAccountId is not used,
+        // it is zero), amount is the verified balance (it may be zero or negative), no money moves. It is a value of the balance, not a change of it: the
+        // balance of an account is checked by the last checkpoint and the transactions after it, see AccountControl.validate.
         BalanceCheckpoint,
         // the journey pays for its transportation to the operator of the flight
         JourneyPayment,
@@ -85,15 +86,16 @@ public class Transactions {
     }
 
     /**
-     * Writes a transaction. It is for AccountControl only, nobody else writes them. A payment has an amount more than zero and two different accounts,
-     * a balance checkpoint has one account (as from and as to) and the balance as the amount.
+     * Writes a transaction. It is for AccountControl only, nobody else writes them. A payment has an amount more than zero and two different accounts, a
+     * balance checkpoint has the verified account as fromAccountId, zero as toAccountId and the verified balance as the amount.
      */
     public Transaction create(final int time, final int fromAccountId, final int toAccountId, final long amount, final Type type) {
-        checkArgument(fromAccountId > 0 && toAccountId > 0, "the accounts are mandatory");
         checkArgument(type != null, "the type is mandatory");
+        checkArgument(fromAccountId > 0, "the account is mandatory");
         if (type == Type.BalanceCheckpoint) {
-            checkArgument(fromAccountId == toAccountId, "a checkpoint is of one account");
+            checkArgument(toAccountId == 0, "a checkpoint has no account to");
         } else {
+            checkArgument(toAccountId > 0, "the accounts are mandatory");
             checkArgument(amount > 0, "the amount must be more than zero: %s", amount);
             checkArgument(fromAccountId != toAccountId, "the accounts must be different: %s", fromAccountId);
         }
