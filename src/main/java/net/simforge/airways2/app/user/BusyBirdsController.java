@@ -10,6 +10,8 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
@@ -20,7 +22,9 @@ import net.simforge.commons.misc.JavaTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 
@@ -92,6 +96,53 @@ public class BusyBirdsController {
                             world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao()))
                     .toList();
         });
+    }
+
+    /**
+     * What the pilot of the user gets on an aircraft: the qualifications of the pilot on the type of the aircraft, the hourly rate and the share of the
+     * income with their deductions (see PilotPay). The numbers are calculated here, so the page only shows them.
+     */
+    @GetMapping("/pilot-terms")
+    public PilotTermsDto getPilotTerms(@RequestAttribute("userId") int userId,
+                                       @RequestParam(name = "aircraftId") String aircraftId) {
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+
+            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+            if (personId <= 0 || world.persons().byId(personId).isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
+            }
+            final Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
+            return buildPilotTerms(world, personId, aircraft);
+        });
+    }
+
+    static PilotTermsDto buildPilotTerms(final World world, final int personId, final Aircrafts.Aircraft aircraft) {
+        final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        final PilotPayParams params = PilotController.payParams(world, personId, aircraftType);
+
+        final int hourlyRate = BusyBirdsPilotPay.baseHourlyRate(aircraftType);
+        final List<PilotPay.Deduction> flightPayDeductions = PilotPay.flightPayDeductions(params);
+        final int flightPayCoefficient = PilotPay.flightPayCoefficientPercent(params);
+
+        final float incomeShare = PilotPay.baseIncomeSharePercent(params.getExperienceLevel());
+        final List<PilotPay.Deduction> incomeShareDeductions = PilotPay.incomeShareDeductions(params);
+        final int incomeShareCoefficient = PilotPay.incomeShareCoefficientPercent(params);
+
+        return new PilotTermsDto(
+                aircraftType,
+                params.getExperienceLevel(),
+                params.hasTypeCurrency(),
+                params.hasNightCurrency(),
+                params.canCarryPassengers(),
+                hourlyRate,
+                flightPayDeductions.stream().map(DeductionDto::from).toList(),
+                flightPayCoefficient,
+                hourlyRate * flightPayCoefficient / 100.0,
+                incomeShare,
+                incomeShareDeductions.stream().map(DeductionDto::from).toList(),
+                incomeShareCoefficient,
+                incomeShare * incomeShareCoefficient / 100.0);
     }
 
     @GetMapping("/mission/build-plans")
@@ -241,6 +292,39 @@ public class BusyBirdsController {
             return "Your pilot is at " + pilotAirport + " but the aircraft is at " + aircraftAirport + ", the flight cannot be booked.";
         }
         return null;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class PilotTermsDto {
+        private String aircraftType;
+        // the qualifications of the pilot on the type
+        private int experienceLevel;
+        private boolean typeCurrent;
+        private boolean nightFlying;
+        private boolean canCarryPassengers;
+        // the pay for the flown hours: the base hourly rate of the type, the deductions, the coefficient in percents (10 to 100) and the rate which the pilot gets
+        private int hourlyRate;
+        private List<DeductionDto> flightPayDeductions;
+        private int flightPayCoefficientPercent;
+        private double effectiveHourlyRate;
+        // the share of the income of the mission: the base percent of the experience level, the deductions, the coefficient and the percent which the pilot gets
+        private double incomeSharePercent;
+        private List<DeductionDto> incomeShareDeductions;
+        private int incomeShareCoefficientPercent;
+        private double effectiveIncomeSharePercent;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class DeductionDto {
+        // NoTypeCurrency, NoNightCurrency, CannotCarryPassengers, Manual
+        private String code;
+        private int percent;
+
+        public static DeductionDto from(final PilotPay.Deduction deduction) {
+            return new DeductionDto(deduction.name(), deduction.getPercent());
+        }
     }
 
     @Data

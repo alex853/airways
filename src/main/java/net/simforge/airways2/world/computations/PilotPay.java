@@ -2,6 +2,9 @@ package net.simforge.airways2.world.computations;
 
 import net.simforge.airways2.world.datamodel.PilotContracts;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * What a pilot gets for a flight by the contract: the final flight pay and income share are calculated from the base numbers and the parameters of the
  * contract (PilotPayParams), see docs/flight-contracts.md. Nothing is stored, so when a parameter changes (the manual flight) or the base income becomes
@@ -38,37 +41,75 @@ public final class PilotPay {
     }
 
     /**
+     * What is taken off the pay: the reason and the percents.
+     */
+    public enum Deduction {
+        NoTypeCurrency(NO_TYPE_CURRENCY_PERCENT),
+        NoNightCurrency(NO_NIGHT_CURRENCY_PERCENT),
+        CannotCarryPassengers(CANNOT_CARRY_PASSENGERS_PERCENT),
+        Manual(MANUAL_PERCENT);
+
+        private final int percent;
+
+        Deduction(final int percent) {
+            this.percent = percent;
+        }
+
+        public int getPercent() {
+            return percent;
+        }
+    }
+
+    /**
+     * The deductions from the flight pay: the currencies and the manual flight.
+     */
+    public static List<Deduction> flightPayDeductions(final PilotPayParams params) {
+        final List<Deduction> deductions = new ArrayList<>();
+        if (!params.hasTypeCurrency()) {
+            deductions.add(Deduction.NoTypeCurrency);
+        }
+        if (!params.hasNightCurrency()) {
+            deductions.add(Deduction.NoNightCurrency);
+        }
+        if (!params.canCarryPassengers()) {
+            deductions.add(Deduction.CannotCarryPassengers);
+        }
+        if (params.isManual()) {
+            deductions.add(Deduction.Manual);
+        }
+        return deductions;
+    }
+
+    /**
+     * The deductions from the income share: only the type currency and the manual flight.
+     */
+    public static List<Deduction> incomeShareDeductions(final PilotPayParams params) {
+        final List<Deduction> deductions = new ArrayList<>();
+        if (!params.hasTypeCurrency()) {
+            deductions.add(Deduction.NoTypeCurrency);
+        }
+        if (params.isManual()) {
+            deductions.add(Deduction.Manual);
+        }
+        return deductions;
+    }
+
+    /**
      * The coefficient of the flight pay in percents (10 to 100): the currencies and the manual flight count.
      */
     public static int flightPayCoefficientPercent(final PilotPayParams params) {
-        int reductions = 0;
-        if (!params.hasTypeCurrency()) {
-            reductions += NO_TYPE_CURRENCY_PERCENT;
-        }
-        if (!params.hasNightCurrency()) {
-            reductions += NO_NIGHT_CURRENCY_PERCENT;
-        }
-        if (!params.canCarryPassengers()) {
-            reductions += CANNOT_CARRY_PASSENGERS_PERCENT;
-        }
-        if (params.isManual()) {
-            reductions += MANUAL_PERCENT;
-        }
-        return coefficient(reductions);
+        return coefficient(flightPayDeductions(params));
     }
 
     /**
      * The coefficient of the income share in percents (10 to 100): only the type currency and the manual flight count.
      */
     public static int incomeShareCoefficientPercent(final PilotPayParams params) {
-        int reductions = 0;
-        if (!params.hasTypeCurrency()) {
-            reductions += NO_TYPE_CURRENCY_PERCENT;
-        }
-        if (params.isManual()) {
-            reductions += MANUAL_PERCENT;
-        }
-        return coefficient(reductions);
+        return coefficient(incomeShareDeductions(params));
+    }
+
+    private static int coefficient(final List<Deduction> deductions) {
+        return coefficient(deductions.stream().mapToInt(Deduction::getPercent).sum());
     }
 
     private static int coefficient(final int reductionsPercent) {
