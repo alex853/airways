@@ -45,8 +45,8 @@ public class World {
     private final Persons persons = new Persons();
     private final PilotLogbook pilotLogbook = new PilotLogbook();
     private final PilotContracts pilotContracts = new PilotContracts();
-    private final Accounts accounts = new Accounts();
-    private final Transactions transactions = new Transactions();
+    private final BankAccounts bankAccounts = new BankAccounts();
+    private final BankTransactions bankTransactions = new BankTransactions();
 
     private final Storage<Object> worldTime = Storage.builder()
             .name("world-time")
@@ -62,7 +62,7 @@ public class World {
     private final City2CityFlowControl c2cFlowControl = new City2CityFlowControl(this);
 
     private final BusyBirdsMissionControl busyBirdsMissionControl = new BusyBirdsMissionControl(this);
-    private final AccountControl accountControl = new AccountControl(this);
+    private final BankControl bankControl = new BankControl(this);
 
     private static final int worldTimeStep = 10;
 
@@ -107,8 +107,8 @@ public class World {
             world.persons.loadIfExists(rootPath);
             world.pilotLogbook.loadIfExists(rootPath);
             world.pilotContracts.loadIfExists(rootPath);
-            world.accounts.loadIfExists(rootPath);
-            world.transactions.loadIfExists(rootPath);
+            world.bankAccounts.loadIfExists(rootPath);
+            world.bankTransactions.loadIfExists(rootPath);
 
             world.worldTime.loadIfExists(rootPath);
         });
@@ -151,8 +151,8 @@ public class World {
             persons.save(rootPath);
             pilotLogbook.save(rootPath);
             pilotContracts.save(rootPath);
-            accounts.save(rootPath);
-            transactions.save(rootPath);
+            bankAccounts.save(rootPath);
+            bankTransactions.save(rootPath);
 
             worldTime.save(rootPath);
         });
@@ -278,16 +278,16 @@ public class World {
         return pilotContracts;
     }
 
-    public Accounts accounts() {
-        return accounts;
+    public BankAccounts bankAccounts() {
+        return bankAccounts;
     }
 
-    public Transactions transactions() {
-        return transactions;
+    public BankTransactions bankTransactions() {
+        return bankTransactions;
     }
 
-    public AccountControl accountControl() {
-        return accountControl;
+    public BankControl bankControl() {
+        return bankControl;
     }
 
     public JourneyControl journeyControl() {

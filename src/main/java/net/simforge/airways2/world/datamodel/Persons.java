@@ -33,12 +33,12 @@ public class Persons {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // originCityId            2 bytes
             .withDataField(DataField.of(DataType.PlainString).length(2)) // initials        3 bytes (length byte + 2 chars)
             .withDataField(DataField.of(DataType.Unsigned16bit)) // avatarId                2 bytes
-            // ----------------------------------------------------- sum                   19 bytes
-            // -------------------------------------------- reserved 13 bytes to align total size to 32 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId, 0 is none  3 bytes
+            // ----------------------------------------------------- sum                   22 bytes
+            // -------------------------------------------- reserved 10 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve                  1 byte
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (type=0, state=1, heartbeatTime=2)
             .build();
 
@@ -51,8 +51,10 @@ public class Persons {
     private final DataField originCityIdField = storage.getDataField(6);
     private final DataField initialsField = storage.getDataField(7);
     private final DataField avatarIdField = storage.getDataField(8);
+    private final DataField bankAccountIdField = storage.getDataField(9);
 
     private static final int MAX_16BIT = 65535;
+    private static final int MAX_24BIT = 16_777_215;
     private static final int MAX_INITIALS_LENGTH = 2;
 
     public void loadIfExists(final Path rootPath) throws IOException {
@@ -230,6 +232,19 @@ public class Persons {
         public void setAvatarId(final int avatarId) {
             checkArgument(0 <= avatarId && avatarId <= MAX_16BIT, "avatarId is out of 16 bits");
             storage.set(id, avatarIdField, avatarId);
+        }
+
+        /**
+         * The bank account of the person, zero if it has none yet. The account refers to its owner (BankAccounts, kind Person) and the person refers to its
+         * account, so each of them is found directly, without scanning the other storage.
+         */
+        public int getBankAccountId() {
+            return storage.getAsInt(id, bankAccountIdField);
+        }
+
+        public void setBankAccountId(final int bankAccountId) {
+            checkArgument(0 <= bankAccountId && bankAccountId <= MAX_24BIT, "bankAccountId is out of 24 bits");
+            storage.set(id, bankAccountIdField, bankAccountId);
         }
 
         @Override

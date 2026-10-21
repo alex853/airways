@@ -1,8 +1,8 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.datamodel.Accounts;
-import net.simforge.airways2.world.datamodel.Transactions;
+import net.simforge.airways2.world.datamodel.BankAccounts;
+import net.simforge.airways2.world.datamodel.BankTransactions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,12 +16,12 @@ import static com.google.common.base.Preconditions.checkArgument;
  * balances and the transactions never differ. When all the accounts which have no money of their own can go negative (the bank, the passengers, the
  * operators), the sum of all the balances is always zero.
  */
-public class AccountControl {
-    private static final Logger log = LoggerFactory.getLogger(AccountControl.class);
+public class BankControl {
+    private static final Logger log = LoggerFactory.getLogger(BankControl.class);
 
     private final World world;
 
-    public AccountControl(final World world) {
+    public BankControl(final World world) {
         this.world = world;
     }
 
@@ -32,13 +32,13 @@ public class AccountControl {
      * @throws IllegalArgumentException if an account does not exist, the accounts are the same, the amount is not more than zero or the account which
      *                                  pays has not enough money and is not allowed to go negative; nothing is changed then
      */
-    public Transactions.Transaction transfer(final int fromAccountId, final int toAccountId, final long amount, final Transactions.Type type) {
+    public BankTransactions.BankTransaction transfer(final int fromAccountId, final int toAccountId, final long amount, final BankTransactions.Type type) {
         checkArgument(amount > 0, "the amount must be more than zero: %s", amount);
         checkArgument(fromAccountId != toAccountId, "the accounts must be different: %s", fromAccountId);
         checkArgument(type != null, "the type is mandatory");
-        final Accounts.Account from = world.accounts().byId(fromAccountId)
+        final BankAccounts.BankAccount from = world.bankAccounts().byId(fromAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + fromAccountId));
-        final Accounts.Account to = world.accounts().byId(toAccountId)
+        final BankAccounts.BankAccount to = world.bankAccounts().byId(toAccountId)
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + toAccountId));
         checkArgument(from.canGoNegative() || from.getBalance() >= amount,
                 "the account #%s has %s and cannot pay %s", fromAccountId, from.getBalance(), amount);
@@ -46,7 +46,7 @@ public class AccountControl {
         final int time = world.getWorldTime();
         from.changeBalance(-amount, time);
         to.changeBalance(amount, time);
-        final Transactions.Transaction transaction = world.transactions().create(time, fromAccountId, toAccountId, amount, type);
+        final BankTransactions.BankTransaction transaction = world.bankTransactions().create(time, fromAccountId, toAccountId, amount, type);
 
         log.info("transfer #{} - {} from account #{} to account #{}, {}", transaction.getId(), amount, fromAccountId, toAccountId, type);
         return transaction;
@@ -56,11 +56,11 @@ public class AccountControl {
      * Fixes the balance of an account: writes a balance checkpoint, the value of the balance it has now. Nothing moves. The checkpoint is the point which
      * validate starts from.
      */
-    public Transactions.Transaction fixBalance(final int accountId) {
-        final Accounts.Account account = world.accounts().byId(accountId)
+    public BankTransactions.BankTransaction fixBalance(final int accountId) {
+        final BankAccounts.BankAccount account = world.bankAccounts().byId(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + accountId));
 
-        final Transactions.Transaction transaction = world.transactions().create(world.getWorldTime(), accountId, 0, account.getBalance(), Transactions.Type.BalanceCheckpoint);
+        final BankTransactions.BankTransaction transaction = world.bankTransactions().create(world.getWorldTime(), accountId, 0, account.getBalance(), BankTransactions.Type.BalanceCheckpoint);
 
         log.info("transfer #{} - balance of account #{} is fixed, {}", transaction.getId(), accountId, account.getBalance());
         return transaction;
@@ -68,14 +68,14 @@ public class AccountControl {
 
     // The balance of an account by its transactions: the value of the last checkpoint (zero, if there is none) and what the account has received and paid after it.
     private long calculateBalance(final int accountId) {
-        final List<Transactions.Transaction> transactions = world.transactions()
-                .filter(world.transactions().byAccountId(accountId))
-                .sorted(Comparator.comparingInt(Transactions.Transaction::getId))
+        final List<BankTransactions.BankTransaction> transactions = world.bankTransactions()
+                .filter(world.bankTransactions().byAccountId(accountId))
+                .sorted(Comparator.comparingInt(BankTransactions.BankTransaction::getId))
                 .toList();
 
         long balance = 0;
-        for (final Transactions.Transaction t : transactions) {
-            if (t.getType() == Transactions.Type.BalanceCheckpoint) {
+        for (final BankTransactions.BankTransaction t : transactions) {
+            if (t.getType() == BankTransactions.Type.BalanceCheckpoint) {
                 // the value of the balance, not a change of it
                 balance = t.getAmount();
             } else if (t.getToAccountId() == accountId) {
@@ -92,7 +92,7 @@ public class AccountControl {
      * what the account has received and paid after it. A mismatch is written to the log as an error.
      */
     public boolean validate(final int accountId) {
-        final Accounts.Account account = world.accounts().byId(accountId)
+        final BankAccounts.BankAccount account = world.bankAccounts().byId(accountId)
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + accountId));
 
         final long calculated = calculateBalance(accountId);

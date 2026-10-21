@@ -13,17 +13,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * The transactions: who paid whom, how much and what for (the type), see docs/flight-contracts.md, section 6. A transaction does not refer to a flight
- * mission or a journey, they are deleted with time, and it has no text. A transaction is written only by the transfer of AccountControl, together with
+ * mission or a journey, they are deleted with time, and it has no text. A transaction is written only by the transfer of BankControl, together with
  * the change of the two balances.
  */
-public class Transactions {
+public class BankTransactions {
     /**
      * What the money is for. It is stored as the number of the type (BalanceCheckpoint is 0), the numbers never change: add new types to the end.
      */
     public enum Type {
         // Not a payment: the balance of an account which was verified at the moment of the transaction. The account is fromAccountId (toAccountId is not used,
         // it is zero), amount is the verified balance (it may be zero or negative), no money moves. It is a value of the balance, not a change of it: the
-        // balance of an account is checked by the last checkpoint and the transactions after it, see AccountControl.validate.
+        // balance of an account is checked by the last checkpoint and the transactions after it, see BankControl.validate.
         BalanceCheckpoint,
         // the journey pays for its transportation to the operator of the flight
         JourneyPayment,
@@ -33,9 +33,9 @@ public class Transactions {
         PilotIncomeShare
     }
 
-    private final Storage<Transaction> storage = Storage.<Transaction>builder()
-            .name("transactions")
-            .withInstantiator(Transaction::new)
+    private final Storage<BankTransaction> storage = Storage.<BankTransaction>builder()
+            .name("bank-transactions")
+            .withInstantiator(BankTransaction::new)
             .withIdOf(DataType.Unsigned24bit)
             // -------------------------------------------------- record deletion status    1 byte
             .withDataField(DataField.of(DataType.Signed32bit))   // time                            4 bytes
@@ -64,32 +64,32 @@ public class Transactions {
         storage.save(rootPath);
     }
 
-    public Stream<Transaction> all() {
+    public Stream<BankTransaction> all() {
         return storage.all();
     }
 
-    public Optional<Transaction> byId(final int id) {
+    public Optional<BankTransaction> byId(final int id) {
         return storage.byId(id);
     }
 
     /**
      * The transactions of an account, both the ones it has paid and the ones it has received (a statement).
      */
-    public Storage.Condition<Transaction> byAccountId(final int accountId) {
+    public Storage.Condition<BankTransaction> byAccountId(final int accountId) {
         checkArgument(accountId > 0);
         return recordId -> storage.getAsInt(recordId, fromAccountIdField) == accountId
                 || storage.getAsInt(recordId, toAccountIdField) == accountId;
     }
 
-    public Stream<Transaction> filter(final Storage.Condition<Transaction> condition) {
+    public Stream<BankTransaction> filter(final Storage.Condition<BankTransaction> condition) {
         return storage.filter(condition);
     }
 
     /**
-     * Writes a transaction. It is for AccountControl only, nobody else writes them. A payment has an amount more than zero and two different accounts, a
+     * Writes a transaction. It is for BankControl only, nobody else writes them. A payment has an amount more than zero and two different accounts, a
      * balance checkpoint has the verified account as fromAccountId, zero as toAccountId and the verified balance as the amount.
      */
-    public Transaction create(final int time, final int fromAccountId, final int toAccountId, final long amount, final Type type) {
+    public BankTransaction create(final int time, final int fromAccountId, final int toAccountId, final long amount, final Type type) {
         checkArgument(type != null, "the type is mandatory");
         checkArgument(fromAccountId > 0, "the account is mandatory");
         if (type == Type.BalanceCheckpoint) {
@@ -106,13 +106,13 @@ public class Transactions {
         storage.set(id, toAccountIdField, toAccountId);
         storage.setLong(id, amountField, amount);
         storage.set(id, typeField, type.ordinal());
-        return new Transaction(id);
+        return new BankTransaction(id);
     }
 
-    public class Transaction {
+    public class BankTransaction {
         private final int id;
 
-        private Transaction(final int id) {
+        private BankTransaction(final int id) {
             this.id = id;
         }
 
