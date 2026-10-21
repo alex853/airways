@@ -215,7 +215,7 @@ public class JourneyControl {
         final String operatorName = world.aircraftOperators().byId(operatorId).map(AircraftOperators.AircraftOperator::getName).orElse("?");
         log.info("j/y #{} - pays {} to operator #{} {} for t/f #{}, f/m #{}", journey.getId(), payout, operatorId, operatorName, transportFlight.getId(), mission.get().getId());
 
-        world.bankControl().transferIfAccountsExist(World25.PassengersBankAccountId, world.bankControl().operatorAccountId(operatorId), payout,
+        world.bankControl().transferIfAccountsExist(BankAccounts.SystemPassengersAccountId, world.bankControl().operatorAccountId(operatorId), payout,
                 BankTransactions.Type.JourneyPayment, "j/y #" + journey.getId());
         return Optional.of(new Payout(operatorId, payout));
     }

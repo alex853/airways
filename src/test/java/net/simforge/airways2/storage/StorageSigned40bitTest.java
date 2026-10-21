@@ -34,8 +34,8 @@ class StorageSigned40bitTest {
 
     @Test
     void theRangeIsFromMinus549BillionTo549Billion() {
-        assertEquals(-549_755_813_888L, Storage.MIN_SIGNED_40BIT);
-        assertEquals(549_755_813_887L, Storage.MAX_SIGNED_40BIT);
+        assertEquals(-549_755_813_888L, DataType.Signed40bit.minValue());
+        assertEquals(549_755_813_887L, DataType.Signed40bit.maxValue());
     }
 
     @Test
@@ -55,11 +55,11 @@ class StorageSigned40bitTest {
         storage.set(recordId, byteField, 200);
         storage.set(recordId, intField, -123456);
 
-        storage.setLong(recordId, longField, Storage.MIN_SIGNED_40BIT);
+        storage.setLong(recordId, longField, DataType.Signed40bit.minValue());
         assertEquals(200, storage.getAsInt(recordId, byteField));
         assertEquals(-123456, storage.getAsInt(recordId, intField));
 
-        storage.setLong(recordId, longField, Storage.MAX_SIGNED_40BIT);
+        storage.setLong(recordId, longField, DataType.Signed40bit.maxValue());
         assertEquals(200, storage.getAsInt(recordId, byteField));
         assertEquals(-123456, storage.getAsInt(recordId, intField));
     }

@@ -53,8 +53,6 @@ public class Persons {
     private final DataField avatarIdField = storage.getDataField(8);
     private final DataField bankAccountIdField = storage.getDataField(9);
 
-    private static final int MAX_16BIT = 65535;
-    private static final int MAX_24BIT = 16_777_215;
     private static final int MAX_INITIALS_LENGTH = 2;
 
     public void loadIfExists(final Path rootPath) throws IOException {
@@ -178,7 +176,7 @@ public class Persons {
         }
 
         public void setUserId(final int userId) {
-            checkArgument(0 <= userId && userId <= MAX_16BIT, "userId is out of 16 bits");
+            checkArgument(DataType.Unsigned16bit.contains(userId), "userId is out of 16 bits");
             storage.set(id, userIdField, userId);
         }
 
@@ -196,7 +194,7 @@ public class Persons {
 
         public void setLocation(final LocationType locationType, final int locationId) {
             checkNotNull(locationType);
-            checkArgument(0 <= locationId && locationId <= MAX_16BIT, "locationId is out of 16 bits");
+            checkArgument(DataType.Unsigned16bit.contains(locationId), "locationId is out of 16 bits");
             checkArgument(locationType != LocationType.None || locationId == 0, "a person who is nowhere has no location id");
             storage.set(id, locationTypeField, locationType.code());
             storage.set(id, locationIdField, locationId);
@@ -207,7 +205,7 @@ public class Persons {
         }
 
         public void setOriginCityId(final int originCityId) {
-            checkArgument(0 <= originCityId && originCityId <= MAX_16BIT, "originCityId is out of 16 bits");
+            checkArgument(DataType.Unsigned16bit.contains(originCityId), "originCityId is out of 16 bits");
             storage.set(id, originCityIdField, originCityId);
         }
 
@@ -230,7 +228,7 @@ public class Persons {
         }
 
         public void setAvatarId(final int avatarId) {
-            checkArgument(0 <= avatarId && avatarId <= MAX_16BIT, "avatarId is out of 16 bits");
+            checkArgument(DataType.Unsigned16bit.contains(avatarId), "avatarId is out of 16 bits");
             storage.set(id, avatarIdField, avatarId);
         }
 
@@ -243,7 +241,7 @@ public class Persons {
         }
 
         public void setBankAccountId(final int bankAccountId) {
-            checkArgument(0 <= bankAccountId && bankAccountId <= MAX_24BIT, "bankAccountId is out of 24 bits");
+            checkArgument(DataType.Unsigned24bit.contains(bankAccountId), "bankAccountId is out of 24 bits");
             storage.set(id, bankAccountIdField, bankAccountId);
         }
 

@@ -327,7 +327,7 @@ class BankControlTest {
 
     @Test
     public void test__a_transfer_which_does_not_fit_five_bytes_is_refused_and_nothing_changes() {
-        final long max = net.simforge.airways2.storage.Storage.MAX_SIGNED_40BIT;
+        final long max = net.simforge.airways2.storage.DataType.Signed40bit.maxValue();
         world.bankControl().transfer(passengers.getId(), operator.getId(), max, BankTransactions.Type.JourneyPayment);
 
         // the amount is too big

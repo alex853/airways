@@ -166,10 +166,10 @@
 **Админка (под админским токеном):** `GET /admin/bank/accounts` печатает счета текстом (ID, BALANCE, KIND, OWNER). `GET /admin/bank/create-initial-accounts?dryRun=` (по умолчанию `true`)
 разовое создание первых счетов в таком порядке: 1 System Bank, 2 System Passengers, 3 Operator ShadowJet (`World25.ShadowJetOperatorId`), 4 Operator BusyBirds
 (`World25.BusyBirdsOperatorId`), 5 Person #1 (минус не разрешён, остальным можно); остатки нулевые, имён нет; существующие по владельцу не создаются повторно,
-персона получает `bankAccountId`. Контроллер `BankController` в `app.admin`. Id счетов операторов лежат константами рядом с id операторов: `World25.ShadowJetBankAccountId` (3) и `World25.BusyBirdsBankAccountId` (4); если счёт получил другой id, разовое создание пишет предупреждение.
+персона получает `bankAccountId`. Контроллер `BankController` в `app.admin`. Id счетов, которые знает код, лежат константами в `BankAccounts`: `SystemBankAccountId` (1), `SystemPassengersAccountId` (2), `ShadowJetBankAccountId` (3) и `BusyBirdsBankAccountId` (4); если счёт получил другой id, разовое создание пишет предупреждение.
 
 **Платежи подключены (ветка `accounts`):** в местах, где раньше платёж только писался в лог, теперь есть и перевод (лог остался):
-- журни платит за перевозку (`JourneyControl.payForTransportation`, только рейс пользователя): со счёта «Пассажиры» (`World25.PassengersBankAccountId`, 2) на счёт оператора рейса, тип `JourneyPayment`;
+- журни платит за перевозку (`JourneyControl.payForTransportation`, только рейс пользователя): со счёта «Пассажиры» (`BankAccounts.SystemPassengersAccountId`, 2) на счёт оператора рейса, тип `JourneyPayment`;
 - пилот получает деньги на Finish (`BusyBirdsMissionControl.payPilot`, по контракту): со счёта оператора на счёт персоны (`Person.bankAccountId`), двумя переводами, `PilotFlightPay` и
   `PilotIncomeShare` (нулевая сумма перевода не создаёт).
 Если нужного счёта нет (мир до разового создания счетов, оператор или персона без счёта), перевод не делается, пишется предупреждение, игра идёт дальше (`BankControl.transferIfAccountsExist`).

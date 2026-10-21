@@ -25,9 +25,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * changes with it. A contract lives as long as its flight mission and is deleted with it.
  */
 public class PilotContracts {
-    private static final int MAX_16BIT = 65535;
     // the base flight pay and the base income are kept in three bytes
-    public static final int MAX_AMOUNT = 16_777_215;
+    public static final int MAX_AMOUNT = (int) DataType.Unsigned24bit.maxValue();
 
     private final Storage<Contract> storage = Storage.<Contract>builder()
             .name("pilot-contracts")
@@ -105,7 +104,7 @@ public class PilotContracts {
                            final int baseIncome,
                            final PilotPayParams params) {
         checkArgument(flightMissionId > 0, "flightMissionId is mandatory");
-        checkArgument(operatorId >= 1 && operatorId <= MAX_16BIT, "operatorId is out of 16 bits");
+        checkArgument(operatorId >= 1 && DataType.Unsigned16bit.contains(operatorId), "operatorId is out of 16 bits");
         checkArgument(personId > 0, "personId is mandatory");
         checkAmount(baseFlightPay, "the flight pay");
         checkAmount(baseIncome, "the income");

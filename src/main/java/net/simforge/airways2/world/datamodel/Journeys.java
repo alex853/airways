@@ -60,7 +60,7 @@ public class Journeys {
     private final DataField lastKnownLocationCityIdField = storage.getDataField(9);
     private final DataField priceField = storage.getDataField(10);
 
-    public static final int MAX_PRICE = 16_777_215;
+    public static final int MAX_PRICE = (int) DataType.Unsigned24bit.maxValue();
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);

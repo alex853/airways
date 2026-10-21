@@ -231,10 +231,7 @@ public class Storage<T> {
             return Integer.MAX_VALUE;
         }
         return switch (idDataType) {
-            case Unsigned8bit -> 255;
-            case Unsigned16bit -> 65_535;
-            case Unsigned24bit -> 16_777_215;
-            case Signed32bit -> Integer.MAX_VALUE;
+            case Unsigned8bit, Unsigned16bit, Unsigned24bit, Signed32bit -> idDataType.maxValue();
             default -> throw new IllegalArgumentException("Record id data type must be an integer one, it is " + idDataType);
         };
     }
@@ -425,12 +422,6 @@ public class Storage<T> {
     }
 
     /**
-     * The smallest and the biggest value of a Signed40bit field.
-     */
-    public static final long MIN_SIGNED_40BIT = -(1L << 39);
-    public static final long MAX_SIGNED_40BIT = (1L << 39) - 1;
-
-    /**
      * The value of a Signed40bit field.
      */
     public long getAsLong(final int recordId, final DataField dataField) {
@@ -452,7 +443,7 @@ public class Storage<T> {
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
         checkArgument(dataField.dataType() == DataType.Signed40bit, "the field is not Signed40bit, it is %s", dataField.dataType());
-        checkArgument(MIN_SIGNED_40BIT <= value && value <= MAX_SIGNED_40BIT, "expected range is [%s..%s]: %s", MIN_SIGNED_40BIT, MAX_SIGNED_40BIT, value);
+        checkArgument(DataType.Signed40bit.contains(value), "expected range is [%s..%s]: %s", DataType.Signed40bit.minValue(), DataType.Signed40bit.maxValue(), value);
 
         setLongAtOffset(getFieldOffset(recordId, dataField), value);
 
@@ -536,16 +527,16 @@ public class Storage<T> {
 
         switch (dataField.dataType()) {
             case Unsigned8bit -> {
-                checkArgument(0 <= value && value <= 255, "expected range is [0..255]");
+                checkArgument(DataType.Unsigned8bit.contains(value), "expected range is [0..%s]", DataType.Unsigned8bit.maxValue());
                 data[fieldOffset] = (byte) value;
             }
             case Unsigned16bit -> {
-                checkArgument(0 <= value && value <= 65535, "expected range is [0..65353]");
+                checkArgument(DataType.Unsigned16bit.contains(value), "expected range is [0..%s]", DataType.Unsigned16bit.maxValue());
                 data[fieldOffset] = (byte) (value >> 8);
                 data[fieldOffset + 1] = (byte) value;
             }
             case Unsigned24bit -> {
-                checkArgument(0 <= value && value <= 16777215, "expected range is [0..16777215]");
+                checkArgument(DataType.Unsigned24bit.contains(value), "expected range is [0..%s]", DataType.Unsigned24bit.maxValue());
                 data[fieldOffset] = (byte) (value >> 16);
                 data[fieldOffset + 1] = (byte) (value >> 8);
                 data[fieldOffset + 2] = (byte) value;

@@ -166,7 +166,7 @@ class JourneyPayoutTest {
         accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_BANK, true, now);
         final net.simforge.airways2.world.datamodel.BankAccounts.BankAccount passengers = accounts.create(
                 net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_PASSENGERS, true, now);
-        assertEquals(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId, passengers.getId());
+        assertEquals(net.simforge.airways2.world.datamodel.BankAccounts.SystemPassengersAccountId, passengers.getId());
         return accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.Operator, operator.getId(), true, now);
     }
 
@@ -179,11 +179,11 @@ class JourneyPayoutTest {
         control.payForTransportation(journey);
 
         assertEquals(10_000, operatorAccount.getBalance());
-        assertEquals(-10_000, world.bankAccounts().byId(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId).orElseThrow().getBalance());
+        assertEquals(-10_000, world.bankAccounts().byId(net.simforge.airways2.world.datamodel.BankAccounts.SystemPassengersAccountId).orElseThrow().getBalance());
         final List<net.simforge.airways2.world.datamodel.BankTransactions.BankTransaction> transactions = world.bankTransactions().all().toList();
         assertEquals(1, transactions.size());
         assertEquals(net.simforge.airways2.world.datamodel.BankTransactions.Type.JourneyPayment, transactions.get(0).getType());
-        assertEquals(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId, transactions.get(0).getFromAccountId());
+        assertEquals(net.simforge.airways2.world.datamodel.BankAccounts.SystemPassengersAccountId, transactions.get(0).getFromAccountId());
         assertEquals(operatorAccount.getId(), transactions.get(0).getToAccountId());
         assertEquals(10_000, transactions.get(0).getAmount());
         // the sum of all the balances is zero

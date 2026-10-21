@@ -22,7 +22,6 @@ import static com.google.common.base.Preconditions.checkArgument;
  * not stored, it is the difference of the two times. The type of the aircraft is not stored, the aircraft is not deleted, so the type is read from it.
  */
 public class PilotLogbook {
-    private static final int MAX_16BIT = 65535;
 
     private final Storage<Entry> storage = Storage.<Entry>builder()
             .name("pilot-logbook")
@@ -104,8 +103,8 @@ public class PilotLogbook {
                         final int blocksOnTime) {
         checkArgument(personId > 0, "personId is mandatory");
         checkArgument(aircraftId > 0, "aircraftId is mandatory");
-        checkArgument(1 <= fromAirportId && fromAirportId <= MAX_16BIT, "fromAirportId is out of 16 bits");
-        checkArgument(1 <= toAirportId && toAirportId <= MAX_16BIT, "toAirportId is out of 16 bits");
+        checkArgument(fromAirportId >= 1 && DataType.Unsigned16bit.contains(fromAirportId), "fromAirportId is out of 16 bits");
+        checkArgument(toAirportId >= 1 && DataType.Unsigned16bit.contains(toAirportId), "toAirportId is out of 16 bits");
         final LocalDate dateOfFlight = Time.toLdt(blocksOffTime).toLocalDate();
         final int blocksOffStored = DateMinutes.toStored(dateOfFlight, blocksOffTime);
         final int blocksOnStored = DateMinutes.toStored(dateOfFlight, blocksOnTime);

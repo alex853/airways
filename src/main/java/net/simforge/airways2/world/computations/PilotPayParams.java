@@ -1,5 +1,7 @@
 package net.simforge.airways2.world.computations;
 
+import net.simforge.airways2.storage.DataType;
+
 import static com.google.common.base.Preconditions.checkArgument;
 
 /**
@@ -45,7 +47,7 @@ public final class PilotPayParams {
      * The parameters from the byte (0 to 255, as it is stored in the contract).
      */
     public static PilotPayParams of(final int value) {
-        checkArgument(value >= 0 && value <= 255, "the parameters are one byte: %s", value);
+        checkArgument(DataType.Unsigned8bit.contains(value), "the parameters are one byte: %s", value);
         return new PilotPayParams(value);
     }
 

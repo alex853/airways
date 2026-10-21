@@ -53,8 +53,8 @@ public class BankController {
 
         createInitialAccount(world, dryRun, lines, "System Bank", BankAccounts.Kind.System, BankAccounts.SYSTEM_BANK, true, 0);
         createInitialAccount(world, dryRun, lines, "System Passengers", BankAccounts.Kind.System, BankAccounts.SYSTEM_PASSENGERS, true, 0);
-        createInitialAccount(world, dryRun, lines, "Operator ShadowJet", BankAccounts.Kind.Operator, World25.ShadowJetOperatorId, true, World25.ShadowJetBankAccountId);
-        createInitialAccount(world, dryRun, lines, "Operator BusyBirds", BankAccounts.Kind.Operator, World25.BusyBirdsOperatorId, true, World25.BusyBirdsBankAccountId);
+        createInitialAccount(world, dryRun, lines, "Operator ShadowJet", BankAccounts.Kind.Operator, World25.ShadowJetOperatorId, true, BankAccounts.ShadowJetBankAccountId);
+        createInitialAccount(world, dryRun, lines, "Operator BusyBirds", BankAccounts.Kind.Operator, World25.BusyBirdsOperatorId, true, BankAccounts.BusyBirdsBankAccountId);
         createInitialAccount(world, dryRun, lines, "Person #1", BankAccounts.Kind.Person, 1, false, 0);
 
         return String.join(NEW_LINE, lines) + NEW_LINE;

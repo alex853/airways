@@ -49,10 +49,10 @@ class BankInitialAccountsTest {
         assertEquals(5, world.bankAccounts().all().count());
         assertAccount(1, BankAccounts.Kind.System, BankAccounts.SYSTEM_BANK, true);
         assertAccount(2, BankAccounts.Kind.System, BankAccounts.SYSTEM_PASSENGERS, true);
-        assertAccount(World25.ShadowJetBankAccountId, BankAccounts.Kind.Operator, World25.ShadowJetOperatorId, true);
-        assertAccount(World25.BusyBirdsBankAccountId, BankAccounts.Kind.Operator, World25.BusyBirdsOperatorId, true);
-        assertEquals(3, World25.ShadowJetBankAccountId);
-        assertEquals(4, World25.BusyBirdsBankAccountId);
+        assertAccount(BankAccounts.ShadowJetBankAccountId, BankAccounts.Kind.Operator, World25.ShadowJetOperatorId, true);
+        assertAccount(BankAccounts.BusyBirdsBankAccountId, BankAccounts.Kind.Operator, World25.BusyBirdsOperatorId, true);
+        assertEquals(3, BankAccounts.ShadowJetBankAccountId);
+        assertEquals(4, BankAccounts.BusyBirdsBankAccountId);
         assertAccount(5, BankAccounts.Kind.Person, 1, false);
         // the balances are zero
         assertEquals(0, world.bankAccounts().all().mapToLong(BankAccounts.BankAccount::getBalance).sum());

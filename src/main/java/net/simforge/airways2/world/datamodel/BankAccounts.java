@@ -35,10 +35,14 @@ public class BankAccounts {
     public static final int SYSTEM_BANK = 1;
     public static final int SYSTEM_PASSENGERS = 2;
 
-    private static final int MAX_OWNER_ID = 16_777_215;
-    private static final int MAX_OPERATOR_ID = 65_535;
+    // The ids of the accounts which the code knows: the one-time update (/admin/bank/create-initial-accounts) creates the first accounts in this order.
+    // The owners of the operator accounts are World25.ShadowJetOperatorId and World25.BusyBirdsOperatorId.
+    public static final int SystemBankAccountId = 1;
+    public static final int SystemPassengersAccountId = 2;
+    public static final int ShadowJetBankAccountId = 3;
+    public static final int BusyBirdsBankAccountId = 4;
 
-    // the balance is in whole units, five bytes with the sign (up to 549 billion), see Storage.MAX_SIGNED_40BIT
+    // the balance is in whole units, five bytes with the sign (up to 549 billion), see DataType.Signed40bit
     private final Storage<BankAccount> storage = Storage.<BankAccount>builder()
             .name("bank-accounts")
             .withInstantiator(BankAccount::new)
@@ -102,8 +106,8 @@ public class BankAccounts {
      */
     public BankAccount create(final Kind kind, final int ownerId, final boolean canGoNegative, final int time) {
         checkArgument(kind != null, "the kind is mandatory");
-        checkArgument(ownerId > 0 && ownerId <= MAX_OWNER_ID, "the owner id is from 1 to 3 bytes: %s", ownerId);
-        checkArgument(kind != Kind.Operator || ownerId <= MAX_OPERATOR_ID, "the id of an operator is from 1 to 2 bytes: %s", ownerId);
+        checkArgument(ownerId > 0 && DataType.Unsigned24bit.contains(ownerId), "the owner id is from 1 to 3 bytes: %s", ownerId);
+        checkArgument(kind != Kind.Operator || DataType.Unsigned16bit.contains(ownerId), "the id of an operator is from 1 to 2 bytes: %s", ownerId);
         checkArgument(kind != Kind.System || ownerId == SYSTEM_BANK || ownerId == SYSTEM_PASSENGERS, "unknown system account %s", ownerId);
         checkArgument(byOwner(kind, ownerId).isEmpty(), "the owner has an account already: %s %s", kind, ownerId);
 
