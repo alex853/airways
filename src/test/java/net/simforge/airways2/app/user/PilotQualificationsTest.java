@@ -54,18 +54,18 @@ class PilotQualificationsTest {
 
         assertEquals(0, q.getTypes().size());
         assertEquals(0, q.getTotals().getFlights());
-        assertEquals(24, q.getRecentLandingsWindowHours());
+        assertEquals(90 * 24, q.getRecentLandingsWindowHours());
         assertEquals(365, q.getRecentFlightsWindowDays());
     }
 
     @Test
     void theCurrencyIsCountedForEveryTypeOfTheLogbook() {
-        flight(1, gulfstream, 2 * Time.ONE_HOUR, 60);                    // inside the 24 hours, day
-        final PilotLogbook.Entry night = flight(1, gulfstream, 30 * Time.ONE_HOUR, 90);   // outside the 24 hours, inside the year
+        flight(1, gulfstream, 2 * Time.ONE_HOUR, 60);                    // inside the 90 days, day
+        final PilotLogbook.Entry night = flight(1, gulfstream, 100 * DAY, 90);   // outside the 90 days, inside the year
         night.setNightTakeoff(true);
         night.setNightLanding(true);
         flight(1, gulfstream, 400 * DAY, 60);                           // outside the year
-        flight(1, citation, 10 * DAY, 120);
+        flight(1, citation, 120 * DAY, 120);                           // outside the 90 days, inside the year
         flight(2, gulfstream, 1 * Time.ONE_HOUR, 60);                   // another pilot
 
         final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
@@ -105,8 +105,8 @@ class PilotQualificationsTest {
 
     @Test
     void aLandingExactlyOnTheBorderOfTheWindowIsRecent() {
-        flight(1, gulfstream, 24 * Time.ONE_HOUR, 60);
-        flight(1, gulfstream, 24 * Time.ONE_HOUR + 60, 60);
+        flight(1, gulfstream, 90 * DAY, 60);
+        flight(1, gulfstream, 90 * DAY + 60, 60);
 
         final TypeCurrencyDto ga7c = type(PilotController.buildQualifications(world, 1, now), "GA7C");
 
@@ -123,7 +123,7 @@ class PilotQualificationsTest {
         flight(1, gulfstream, 20 * Time.ONE_HOUR, 60);
         flight(1, citation, 1 * Time.ONE_HOUR, 60);
         flight(1, citation, 5 * Time.ONE_HOUR, 60);
-        flight(1, citation, 30 * Time.ONE_HOUR, 60); // outside the window
+        flight(1, citation, 100 * DAY, 60); // outside the window
 
         final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
 
@@ -150,7 +150,7 @@ class PilotQualificationsTest {
 
     @Test
     void theNightOutsideTheWindowIsNotNightFlying() {
-        final PilotLogbook.Entry old = flight(1, gulfstream, 30 * Time.ONE_HOUR, 60);
+        final PilotLogbook.Entry old = flight(1, gulfstream, 100 * DAY, 60);
         old.setNightTakeoff(true);
         old.setNightLanding(true);
 

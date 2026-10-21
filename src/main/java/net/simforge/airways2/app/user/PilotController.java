@@ -91,8 +91,8 @@ public class PilotController {
         });
     }
 
-    // The window of "recent landings" is 24 hours for the tests, it is going to be 90 days
-    static final int RECENT_LANDINGS_WINDOW_HOURS = 24;
+    // The window of "recent landings" is 90 days
+    static final int RECENT_LANDINGS_WINDOW_HOURS = 90 * 24;
     // The flights of the last 12 months
     static final int RECENT_FLIGHTS_WINDOW_DAYS = 365;
 
