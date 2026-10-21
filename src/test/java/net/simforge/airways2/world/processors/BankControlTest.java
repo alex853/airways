@@ -42,11 +42,10 @@ class BankControlTest {
     }
 
     @Test
-    public void test__a_new_account_is_empty_and_has_a_number() {
+    public void test__a_new_account_is_empty() {
         assertEquals(0, pilot.getBalance());
         assertFalse(pilot.canGoNegative());
         assertTrue(operator.canGoNegative());
-        assertEquals(100000 + pilot.getId(), pilot.getNumber());
         assertEquals(world.getWorldTime(), pilot.getCreatedTime());
         assertEquals(world.getWorldTime(), pilot.getUpdatedTime());
     }

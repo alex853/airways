@@ -130,13 +130,6 @@ public class BankAccounts {
             return id;
         }
 
-        /**
-         * The number of the account for showing, it is not stored.
-         */
-        public int getNumber() {
-            return 100000 + id;
-        }
-
         public Kind getKind() {
             final int stored = storage.getAsInt(id, kindField);
             checkArgument(stored >= 0 && stored < Kind.values().length, "unknown account kind %s", stored);

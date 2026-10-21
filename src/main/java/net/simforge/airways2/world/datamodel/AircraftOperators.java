@@ -13,6 +13,9 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class AircraftOperators {
+    // todo ak3 The record has no reserve (iata, icao and name only). When the record is extended next time, add bankAccountId (24 bits, 0 is none) here, as
+    // Persons has it: the account of an operator is found by BankAccounts.byOwner, a scan of all the accounts, until then. The extension needs a
+    // migration of the storage, see docs/future-plans.md.
     private final Storage<AircraftOperator> storage = Storage.<AircraftOperator>builder()
             .name("aircraft-operators")
             .withInstantiator(AircraftOperator::new)
