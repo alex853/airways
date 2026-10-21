@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
@@ -50,6 +51,32 @@ public class BankControl {
 
         log.info("transfer #{} - {} from account #{} to account #{}, {}", transaction.getId(), amount, fromAccountId, toAccountId, type);
         return transaction;
+    }
+
+    /**
+     * The id of the bank account of an operator, zero if the operator has none.
+     */
+    public int operatorAccountId(final int operatorId) {
+        return world.bankAccounts().byOwner(BankAccounts.Kind.Operator, operatorId).map(BankAccounts.BankAccount::getId).orElse(0);
+    }
+
+    /**
+     * A payment of the game: the transfer if both accounts exist. When an account is missing (the world before the first accounts, an operator without an
+     * account, a person without one) nothing moves, it is written to the log as a warning, and the game goes on. A zero amount is not a transfer.
+     *
+     * @param reason what the payment is for, for the log
+     */
+    public Optional<BankTransactions.BankTransaction> transferIfAccountsExist(final int fromAccountId, final int toAccountId, final long amount,
+                                                                              final BankTransactions.Type type, final String reason) {
+        if (amount <= 0) {
+            return Optional.empty();
+        }
+        if (fromAccountId <= 0 || toAccountId <= 0
+                || world.bankAccounts().byId(fromAccountId).isEmpty() || world.bankAccounts().byId(toAccountId).isEmpty()) {
+            log.warn("{} - no transfer of {}, {}: an account is missing, from #{}, to #{}", reason, amount, type, fromAccountId, toAccountId);
+            return Optional.empty();
+        }
+        return Optional.of(transfer(fromAccountId, toAccountId, amount, type));
     }
 
     /**

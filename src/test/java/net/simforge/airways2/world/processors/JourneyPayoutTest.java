@@ -158,4 +158,87 @@ class JourneyPayoutTest {
         assertEquals(10_000, first + second);
         assertEquals(2, payoutLog().size());
     }
+
+    // the bank: the system accounts (the 2nd is the passengers, as World25 says) and the account of the operator
+    private net.simforge.airways2.world.datamodel.BankAccounts.BankAccount createAccountsAndGetOperatorAccount() {
+        final net.simforge.airways2.world.datamodel.BankAccounts accounts = world.bankAccounts();
+        final int now = world.getWorldTime();
+        accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_BANK, true, now);
+        final net.simforge.airways2.world.datamodel.BankAccounts.BankAccount passengers = accounts.create(
+                net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_PASSENGERS, true, now);
+        assertEquals(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId, passengers.getId());
+        return accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.Operator, operator.getId(), true, now);
+    }
+
+    @Test
+    void theJourneyPaysTheOperatorByATransferFromThePassengers() {
+        final net.simforge.airways2.world.datamodel.BankAccounts.BankAccount operatorAccount = createAccountsAndGetOperatorAccount();
+        final TransportFlights.Flight tf = transportFlight(mission(airportA, airportB, 7));
+        final Journeys.Journey journey = journey(10_000, tf, null);
+
+        control.payForTransportation(journey);
+
+        assertEquals(10_000, operatorAccount.getBalance());
+        assertEquals(-10_000, world.bankAccounts().byId(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId).orElseThrow().getBalance());
+        final List<net.simforge.airways2.world.datamodel.BankTransactions.BankTransaction> transactions = world.bankTransactions().all().toList();
+        assertEquals(1, transactions.size());
+        assertEquals(net.simforge.airways2.world.datamodel.BankTransactions.Type.JourneyPayment, transactions.get(0).getType());
+        assertEquals(net.simforge.airways2.worldbuilder.World25.PassengersBankAccountId, transactions.get(0).getFromAccountId());
+        assertEquals(operatorAccount.getId(), transactions.get(0).getToAccountId());
+        assertEquals(10_000, transactions.get(0).getAmount());
+        // the sum of all the balances is zero
+        assertEquals(0, world.bankAccounts().all().mapToLong(net.simforge.airways2.world.datamodel.BankAccounts.BankAccount::getBalance).sum());
+    }
+
+    @Test
+    void aStopoverPaysEachOperatorItsPartByTransfers() {
+        final net.simforge.airways2.world.datamodel.BankAccounts.BankAccount operatorAccount = createAccountsAndGetOperatorAccount();
+        final TransportFlights.Flight first = transportFlight(mission(airportA, airportB, 7));
+        final TransportFlights.Flight second = transportFlight(mission(airportB, airportC, 7));
+        final Journeys.Journey journey = journey(10_000, first, second);
+
+        final long paid = control.payForTransportation(journey).orElseThrow().amount();
+
+        // only the part for the first flight is paid, the rest stays in the price
+        assertEquals(paid, operatorAccount.getBalance());
+        assertEquals(10_000 - paid, journey.getPrice());
+    }
+
+    @Test
+    void aFlightWhichIsNotAFlightOfAUserMovesNoMoney() {
+        createAccountsAndGetOperatorAccount();
+        final TransportFlights.Flight tf = transportFlight(mission(airportA, airportB, 0));
+        final Journeys.Journey journey = journey(10_000, tf, null);
+
+        control.payForTransportation(journey);
+
+        assertEquals(0, world.bankTransactions().all().count());
+    }
+
+    @Test
+    void withoutAccountsTheJourneyStillPaysInTheLogAndNothingMoves() {
+        final TransportFlights.Flight tf = transportFlight(mission(airportA, airportB, 7));
+        final Journeys.Journey journey = journey(10_000, tf, null);
+
+        control.payForTransportation(journey);
+
+        assertEquals(1, payoutLog().size());
+        assertEquals(0, world.bankTransactions().all().count());
+        assertEquals(0, journey.getPrice());
+    }
+
+    @Test
+    void anOperatorWithoutAnAccountGetsNothingAndTheGameGoesOn() {
+        // the system accounts exist, the account of the operator does not
+        createAccountsAndGetOperatorAccount();
+        final net.simforge.airways2.world.datamodel.AircraftOperators.AircraftOperator other = world.aircraftOperators().create("XX", "XXX", "other");
+        aircraft.setAircraftOperatorId(other.getId());
+        final TransportFlights.Flight tf = transportFlight(mission(airportA, airportB, 7));
+        final Journeys.Journey journey = journey(10_000, tf, null);
+
+        control.payForTransportation(journey);
+
+        assertEquals(0, world.bankTransactions().all().count());
+        assertEquals(0, world.bankAccounts().all().mapToLong(net.simforge.airways2.world.datamodel.BankAccounts.BankAccount::getBalance).sum());
+    }
 }

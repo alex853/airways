@@ -142,7 +142,8 @@ public class BusyBirdsMissionControl {
 
     /**
      * The pilot of a finished BusyBirds flight gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
-     * the base numbers and the parameters of the contract. There are no accounts and transactions yet, so the payment is only written to the log.
+     * the base numbers and the parameters of the contract. The operator pays the pilot by two transfers from its account to the account of the person: the
+     * flight pay and the income share (if an account does not exist, nothing moves, see BankControl.transferIfAccountsExist). It is written to the log too.
      * <p>
      * A flight without a contract (a free ferry flight, a flight booked before the contracts, a manual dispatch) pays nothing.
      *
@@ -165,6 +166,12 @@ public class BusyBirdsMissionControl {
                     salary.flightPay(),
                     salary.incomeShare(),
                     contract.get().getPayParams());
+
+            final int operatorAccountId = world.bankControl().operatorAccountId(contract.get().getOperatorId());
+            final int personAccountId = world.persons().byId(contract.get().getPersonId()).map(Persons.Person::getBankAccountId).orElse(0);
+            final String reason = "f/m #" + mission.getId() + ", pilot contract #" + contract.get().getId();
+            world.bankControl().transferIfAccountsExist(operatorAccountId, personAccountId, salary.flightPay(), BankTransactions.Type.PilotFlightPay, reason);
+            world.bankControl().transferIfAccountsExist(operatorAccountId, personAccountId, salary.incomeShare(), BankTransactions.Type.PilotIncomeShare, reason);
             return Optional.of(salary);
         }
 

@@ -6,6 +6,7 @@ import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -177,7 +178,8 @@ public class JourneyControl {
      * a next transport flight (a stopover) the price is divided between them in proportion to their distances, the part for the next one stays in the
      * price and is paid when the journey arrives with it. What is paid is taken off the price, so the price is zero when everything is paid.
      * <p>
-     * There are no accounts and transactions yet, so for a flight of a user (its flight mission has a user) the payment is only written to the log.
+     * For a flight of a user (its flight mission has a user) the payment is a transfer from the account of the passengers to the account of the operator
+     * of the flight (and it is written to the log). If an account does not exist, nothing moves, see BankControl.transferIfAccountsExist.
      *
      * @return what the journey has paid to the operator of the flight, empty if the journey has no price or the flight is not a flight of a user
      */
@@ -212,6 +214,9 @@ public class JourneyControl {
         final int operatorId = aircraft.getAircraftOperatorId();
         final String operatorName = world.aircraftOperators().byId(operatorId).map(AircraftOperators.AircraftOperator::getName).orElse("?");
         log.info("j/y #{} - pays {} to operator #{} {} for t/f #{}, f/m #{}", journey.getId(), payout, operatorId, operatorName, transportFlight.getId(), mission.get().getId());
+
+        world.bankControl().transferIfAccountsExist(World25.PassengersBankAccountId, world.bankControl().operatorAccountId(operatorId), payout,
+                BankTransactions.Type.JourneyPayment, "j/y #" + journey.getId());
         return Optional.of(new Payout(operatorId, payout));
     }
 

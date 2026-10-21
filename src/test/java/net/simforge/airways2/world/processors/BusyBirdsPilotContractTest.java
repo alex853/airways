@@ -112,6 +112,22 @@ class BusyBirdsPilotContractTest {
         world.flightMissionControl().finish(mission);
     }
 
+    // the bank: the bank and the passengers (the system accounts), the account of the operator busyBirds and the account of the pilot, which the person refers to
+    private net.simforge.airways2.world.datamodel.BankAccounts.BankAccount operatorAccount;
+    private net.simforge.airways2.world.datamodel.BankAccounts.BankAccount pilotAccount;
+
+    private void createAccounts(final boolean personRefersToItsAccount) {
+        final net.simforge.airways2.world.datamodel.BankAccounts accounts = world.bankAccounts();
+        final int now = world.getWorldTime();
+        accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_BANK, true, now);
+        accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.System, net.simforge.airways2.world.datamodel.BankAccounts.SYSTEM_PASSENGERS, true, now);
+        operatorAccount = accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.Operator, busyBirds.getId(), true, now);
+        pilotAccount = accounts.create(net.simforge.airways2.world.datamodel.BankAccounts.Kind.Person, person.getId(), false, now);
+        if (personRefersToItsAccount) {
+            person.setBankAccountId(pilotAccount.getId());
+        }
+    }
+
     private List<String> paymentLog() {
         return appender.list.stream()
                 .map(ILoggingEvent::getFormattedMessage)
@@ -318,5 +334,78 @@ class BusyBirdsPilotContractTest {
         world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
 
         assertEquals(Optional.empty(), world.pilotContracts().byFlightMissionId(mission.getId()));
+    }
+
+    @Test
+    public void test__the_operator_pays_the_pilot_by_two_transfers() {
+        createAccounts(true);
+        final Journeys.Journey journey = journeyWithPrice();
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+
+        finish(mission);
+
+        final int share = (int) Math.round(journey.getPrice() * 0.03);
+        assertEquals(400 + share, pilotAccount.getBalance());
+        assertEquals(-(400 + share), operatorAccount.getBalance());
+        final List<net.simforge.airways2.world.datamodel.BankTransactions.BankTransaction> transactions = world.bankTransactions().all().toList();
+        assertEquals(2, transactions.size());
+        assertEquals(net.simforge.airways2.world.datamodel.BankTransactions.Type.PilotFlightPay, transactions.get(0).getType());
+        assertEquals(400, transactions.get(0).getAmount());
+        assertEquals(net.simforge.airways2.world.datamodel.BankTransactions.Type.PilotIncomeShare, transactions.get(1).getType());
+        assertEquals(share, transactions.get(1).getAmount());
+        assertEquals(operatorAccount.getId(), transactions.get(0).getFromAccountId());
+        assertEquals(pilotAccount.getId(), transactions.get(0).getToAccountId());
+        // the sum of all the balances is zero
+        assertEquals(0, world.bankAccounts().all().mapToLong(net.simforge.airways2.world.datamodel.BankAccounts.BankAccount::getBalance).sum());
+    }
+
+    @Test
+    public void test__a_flight_without_an_income_share_has_one_transfer() {
+        createAccounts(true);
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+
+        finish(mission);
+
+        assertEquals(1, world.bankTransactions().all().count());
+        assertEquals(400, pilotAccount.getBalance());
+    }
+
+    @Test
+    public void test__the_pay_of_a_manual_flight_is_what_moves() {
+        createAccounts(true);
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+        world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
+
+        finish(mission);
+
+        // a third of 400
+        assertEquals(132, pilotAccount.getBalance());
+    }
+
+    @Test
+    public void test__a_person_without_a_reference_to_an_account_gets_nothing_and_the_game_goes_on() {
+        createAccounts(false);
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+
+        finish(mission);
+
+        assertEquals(FlightMissions.Status.Finished, mission.getStatus());
+        assertEquals(0, world.bankTransactions().all().count());
+        assertEquals(1, paymentLog().size());
+    }
+
+    @Test
+    public void test__without_accounts_the_pilot_is_paid_in_the_log_only() {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+
+        finish(mission);
+
+        assertEquals(1, paymentLog().size());
+        assertEquals(0, world.bankTransactions().all().count());
     }
 }
