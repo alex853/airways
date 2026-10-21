@@ -7,6 +7,7 @@ import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -136,6 +137,7 @@ public class PilotController {
                     final TypeAccumulator acc = byType.computeIfAbsent(type, TypeAccumulator::new);
 
                     final int landings = e.getDayLandings() + e.getNightLandings();
+                    acc.lastFlightTime = Math.max(acc.lastFlightTime, e.getBlocksOnTime());
                     acc.flights++;
                     acc.landings += landings;
                     acc.nightTakeoffs += e.getNightTakeoffs();
@@ -154,18 +156,23 @@ public class PilotController {
                 });
 
         final List<TypeCurrencyDto> types = byType.values().stream()
-                .sorted(Comparator.comparingDouble((TypeAccumulator a) -> a.flightTime).reversed().thenComparing(a -> a.type))
+                // the page sorts the types as the pilot chooses, the default is the recent one: the type of the last flight goes first
+                .sorted(Comparator.comparingInt((TypeAccumulator a) -> a.lastFlightTime).reversed().thenComparing(a -> a.type))
                 .map(a -> new TypeCurrencyDto(a.type, a.recentLandings, a.landings, a.recentNightTakeoffs, a.recentNightLandings,
                         a.nightTakeoffs, a.nightLandings, a.recentFlights, round1(a.recentFlightTime), a.flights, round1(a.flightTime),
                         a.recentLandings >= CRITERIA_RECENT_LANDINGS,
                         a.recentNightTakeoffs >= CRITERIA_NIGHT_TAKEOFFS && a.recentNightLandings >= CRITERIA_NIGHT_LANDINGS,
                         a.recentFlights >= CRITERIA_RECENT_FLIGHTS && round1(a.recentFlightTime) >= CRITERIA_RECENT_FLIGHT_HOURS,
-                        experienceLevel(a.flights, round1(a.flightTime))))
+                        experienceLevel(a.flights, round1(a.flightTime)),
+                        PilotPay.baseIncomeSharePercent(experienceLevel(a.flights, round1(a.flightTime))),
+                        a.lastFlightTime))
                 .toList();
 
         return new QualificationsDto(buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
                 new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
-                        CRITERIA_RECENT_FLIGHT_HOURS), experienceLevelDtos(), types);
+                        CRITERIA_RECENT_FLIGHT_HOURS,
+                        PilotPay.NO_TYPE_CURRENCY_PERCENT, PilotPay.NO_NIGHT_CURRENCY_PERCENT, PilotPay.CANNOT_CARRY_PASSENGERS_PERCENT),
+                experienceLevelDtos(), types);
     }
 
     /**
@@ -206,6 +213,8 @@ public class PilotController {
         int recentNightLandings;
         float flightTime;
         float recentFlightTime;
+        // the time of the landing (blocks on) of the last flight on the type
+        int lastFlightTime;
 
         TypeAccumulator(final String type) {
             this.type = type;
@@ -316,6 +325,11 @@ public class PilotController {
         // flights and hours in the last 12 months: type currency (both are needed)
         private int recentFlights;
         private int recentFlightHours;
+        // what is taken off the pay (in percents) when a criterion is not met, see PilotPay: the type currency (the flight pay and the income share), the night
+        // flying and the passengers (the flight pay)
+        private int typeCurrencyPenaltyPercent;
+        private int nightFlyingPenaltyPercent;
+        private int canCarryPassengersPenaltyPercent;
     }
 
     /**
@@ -346,6 +360,10 @@ public class PilotController {
         private boolean typeCurrent;
         // the experience level on the type, 0 to 5, by the flights and hours of all the logbook on the type
         private int experienceLevel;
+        // the base share of the income of a mission (in percents) of this level, before the deductions
+        private float baseIncomeSharePercent;
+        // the time of the landing of the last flight on the type (world time, seconds), the page sorts the types by it
+        private int lastFlightTime;
     }
 
     @Data

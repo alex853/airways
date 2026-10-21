@@ -93,14 +93,15 @@ class PilotQualificationsTest {
     }
 
     @Test
-    void theTypeWithMoreHoursIsFirst() {
+    void typesWithTheSameLastFlightGoByTheTypeCode() {
+        // the default order is by the last flight, the types which landed at the same time go alphabetically
         flight(1, citation, 5 * DAY, 30);
         flight(1, gulfstream, 5 * DAY, 120);
 
         final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
 
-        assertEquals("GA7C", q.getTypes().get(0).getAircraftType());
-        assertEquals("C25C", q.getTypes().get(1).getAircraftType());
+        assertEquals("C25C", q.getTypes().get(0).getAircraftType());
+        assertEquals("GA7C", q.getTypes().get(1).getAircraftType());
     }
 
     @Test
@@ -263,5 +264,44 @@ class PilotQualificationsTest {
         flight(1, gulfstream, 366 * DAY, 60);
 
         assertFalse(type(PilotController.buildQualifications(world, 1, now), "GA7C").isTypeCurrent());
+    }
+
+    @Test
+    void theBaseIncomeShareOfTheLevelAndThePenaltiesAreForThePage() {
+        // 25 flights of two hours: 25 flights and 50 hours are the level 1
+        for (int i = 0; i < 25; i++) {
+            flight(1, gulfstream, (i + 1) * DAY / 4, 120);
+        }
+        flight(1, citation, 2 * Time.ONE_HOUR, 60);
+
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+
+        assertEquals(1, type(q, "GA7C").getExperienceLevel());
+        assertEquals(1.0f, type(q, "GA7C").getBaseIncomeSharePercent(), 0.0001f);
+        // the level 0 is half a percent
+        assertEquals(0, type(q, "C25C").getExperienceLevel());
+        assertEquals(0.5f, type(q, "C25C").getBaseIncomeSharePercent(), 0.0001f);
+        // what is taken off the pay for a criterion which is not met
+        assertEquals(25, q.getCriteria().getTypeCurrencyPenaltyPercent());
+        assertEquals(25, q.getCriteria().getNightFlyingPenaltyPercent());
+        assertEquals(25, q.getCriteria().getCanCarryPassengersPenaltyPercent());
+    }
+
+    @Test
+    void theTypesComeInTheOrderOfTheLastFlightAndKnowItsTime() {
+        // the citation has much more hours, but the gulfstream was flown last
+        flight(1, citation, 5 * DAY, 300);
+        flight(1, citation, 6 * DAY, 300);
+        final PilotLogbook.Entry last = flight(1, gulfstream, 1 * Time.ONE_HOUR, 30);
+        flight(1, gulfstream, 7 * DAY, 30);
+
+        final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
+
+        assertEquals("GA7C", q.getTypes().get(0).getAircraftType());
+        assertEquals("C25C", q.getTypes().get(1).getAircraftType());
+        assertEquals(last.getBlocksOnTime(), q.getTypes().get(0).getLastFlightTime());
+        // the time of the last landing of the type, not of the first one
+        assertEquals(now - 5 * DAY, q.getTypes().get(1).getLastFlightTime());
+        assertTrue(q.getTypes().get(1).getFlightTime() > q.getTypes().get(0).getFlightTime());
     }
 }
