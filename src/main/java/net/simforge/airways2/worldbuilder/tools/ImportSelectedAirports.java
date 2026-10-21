@@ -11,11 +11,16 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
 public class ImportSelectedAirports {
     private static final Logger log = LoggerFactory.getLogger(ImportSelectedAirports.class);
+
+    // The new ICAO codes which the refdata library still knows under the old ones: the data (IATA, coordinates, name) is taken from the old record,
+    // the airport is created with the new code.
+    private static final Map<String, String> OLD_CODES_IN_REFDATA = Map.of("WADD", "WRRR");
 
     public static void main(final String[] args) throws IOException {
         final World world = World25.load();
@@ -41,7 +46,7 @@ public class ImportSelectedAirports {
 
         final Optional<Airports.Airport> airportByIcao = world.airports().byIcao(icao);
         if (airportByIcao.isEmpty()) {
-            final Airport airport = net.simforge.refdata.airports.Airports.get().findByIcao(icao).orElseThrow();
+            final Airport airport = net.simforge.refdata.airports.Airports.get().findByIcao(OLD_CODES_IN_REFDATA.getOrDefault(icao, icao)).orElseThrow();
 
             world.airports().create(
                     airport.getCoords().getLat(),
