@@ -280,4 +280,43 @@ class BusyBirdsPilotContractTest {
         assertTrue(world.pilotContracts().byFlightMissionId(fresh.getId()).isPresent());
         assertEquals(1, world.pilotContracts().all().count());
     }
+
+    @Test
+    public void test__a_manual_start_sets_the_manual_bit_of_the_contract_and_the_pay_falls() {
+        final Journeys.Journey journey = journeyWithPrice();
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+        assertFalse(contract.getPayParams().isManual());
+
+        world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
+
+        assertTrue(contract.getPayParams().isManual());
+        // the other parameters stay
+        assertEquals(3, contract.getPayParams().getExperienceLevel());
+        assertTrue(contract.getPayParams().hasTypeCurrency());
+        finish(mission);
+        // manual: a third of the flight pay, a third of the share (level III, 3%)
+        final int flightPay = (int) Math.round(400 * 0.33);
+        final int share = (int) Math.round(journey.getPrice() * 3 * 33 / 10_000.0);
+        assertTrue(paymentLog().get(0).contains("pilot gets paid " + (flightPay + share) + " (flight pay " + flightPay + ", income share " + share + ")"), paymentLog().get(0));
+    }
+
+    @Test
+    public void test__a_tracked_start_does_not_set_the_manual_bit() {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+
+        world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.SimTracker);
+
+        assertFalse(contract.getPayParams().isManual());
+    }
+
+    @Test
+    public void test__a_manual_start_of_a_flight_without_a_contract_is_fine() {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+
+        world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
+
+        assertEquals(Optional.empty(), world.pilotContracts().byFlightMissionId(mission.getId()));
+    }
 }

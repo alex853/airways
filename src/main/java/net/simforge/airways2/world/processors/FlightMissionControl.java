@@ -3,6 +3,7 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.computations.DayNight;
 import net.simforge.airways2.world.computations.NightTimeMeter;
 import net.simforge.airways2.world.datamodel.*;
@@ -83,10 +84,20 @@ public class FlightMissionControl {
 
     /**
      * Who does the steps of the flight (blocks off, takeoff, landing, blocks on). It is set when the flight is started and is not changed after that.
+     * A manual flight reduces the pay of the pilot: the manual bit is set in the pilot contract of the flight, if it has one.
      */
     public void setTrackingMode(final FlightMissions.Mission mission, final FlightMissions.TrackingMode trackingMode) {
         mission.setTrackingMode(trackingMode);
         log.info("f/m #{} - tracking mode {}", mission.getId(), trackingMode);
+
+        if (trackingMode == FlightMissions.TrackingMode.Manual) {
+            world.pilotContracts().byFlightMissionId(mission.getId()).ifPresent(contract -> {
+                final PilotPayParams params = contract.getPayParams();
+                params.setManual(true);
+                contract.setPayParams(params);
+                log.info("f/m #{} - pilot contract #{}: manual flight, params {}", mission.getId(), contract.getId(), params);
+            });
+        }
     }
 
     public void switchToExternalCoordinatesMode(FlightMissions.Mission mission) {
