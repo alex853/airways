@@ -45,7 +45,8 @@ public class CityFlowsProcessor {
 
             final City2CityFlows.Flow c2cFlow = existingC2CFlows.computeIfAbsent(toCity.getId(),
                     (a) -> world.city2cityFlows().createInactive(thisCity.get().getId(), toCity.getId()));
-            if (!c2cFlow.isActive()) {
+            final boolean wasInactive = !c2cFlow.isActive();
+            if (wasInactive) {
                 c2cFlow.setActive(true);
 
                 c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
@@ -54,7 +55,13 @@ public class CityFlowsProcessor {
             }
 
             c2cFlow.setFlowFraction(flowFraction);
-            c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
+            if (wasInactive) {
+                c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
+            }
+            // The heartbeat of a flow which is active already is not touched: it is "the last generation + the time to accumulate the next group". Moving
+            // it to "now + the time to accumulate" at every redistribution (once per 24 hours) pushed the flows with a long wait further and further, they
+            // never fired, and when they finally did, they generated the journeys of all the missed time in a burst. The new fraction is taken into account
+            // when the heartbeat comes: City2CityFlowsProcessor calculates the time to accumulate again and waits more, if it is needed.
             final String toCityName = world.cities().byId(toCity.getId()).orElseThrow().getName();
             log.info("c2c #{}/{} {}-{} - active, flow units {}, percentage {}, next group size {}, acc flow {}",
                     thisCity.get().getId(), toCity.getId(), city.getName(), toCityName, flowUnits, df3.format(flowFraction*100), c2cFlow.getNextGroupSize(), c2cFlow.getAccumulatedFlow());
