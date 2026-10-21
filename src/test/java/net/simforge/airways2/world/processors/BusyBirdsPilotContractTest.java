@@ -201,14 +201,62 @@ class BusyBirdsPilotContractTest {
     }
 
     @Test
-    public void test__a_flight_without_a_contract_is_paid_in_the_old_way() {
+    public void test__a_flight_without_a_contract_pays_nothing() {
         final FlightMissions.Mission mission = mission(2 * 3600);
 
         finish(mission);
 
-        assertEquals(1, paymentLog().size());
-        assertTrue(paymentLog().get(0).contains("without a contract"), paymentLog().get(0));
+        assertEquals(FlightMissions.Status.Finished, mission.getStatus());
+        assertEquals(List.of(), paymentLog());
+        assertEquals(Optional.empty(), world.busyBirdsMissionControl().payPilot(mission));
+    }
+
+    @Test
+    public void test__a_flight_of_another_operator_pays_nothing_even_with_a_contract() {
+        aircraft.setAircraftOperatorId(1);
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+
+        finish(mission);
+
+        assertEquals(List.of(), paymentLog());
+    }
+
+    @Test
+    public void test__a_cancelled_flight_pays_nothing() {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+        assertTrue(world.flightMissionControl().start(mission).started());
+
+        world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
+
+        assertEquals(List.of(), paymentLog());
+    }
+
+    @Test
+    public void test__the_pay_does_not_depend_on_the_actual_time_of_the_flight() {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(0));
+        mission.setActualDepartureWorldTime(world.getWorldTime());
+        mission.setActualArrivalWorldTime(world.getWorldTime() + 5 * 3600);
+
+        finish(mission);
+
         assertTrue(paymentLog().get(0).contains("pilot gets paid 400"), paymentLog().get(0));
+    }
+
+    @Test
+    public void test__gulfstream_flight_is_paid_by_its_own_rate() {
+        final Aircrafts.Aircraft g700 = world.aircrafts().create(world.aircraftTypes().create("GA7C", "GL7"), "BB-GLA", airportA);
+        g700.setAircraftOperatorId(busyBirds.getId());
+        final int departure = world.getWorldTime() + Time.ONE_HOUR;
+        final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(g700, airportA, airportB, departure, departure + 3600 + 1800);
+        mission.setUserId(USER_ID);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(0));
+
+        finish(mission);
+
+        assertTrue(paymentLog().get(0).contains("pilot gets paid 750 (flight pay 750, income share 0)"), paymentLog().get(0));
     }
 
     @Test

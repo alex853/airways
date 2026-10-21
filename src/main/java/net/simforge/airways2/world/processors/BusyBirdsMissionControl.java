@@ -140,10 +140,9 @@ public class BusyBirdsMissionControl {
      * The pilot of a finished BusyBirds flight gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
      * the base numbers and the parameters of the contract. There are no accounts and transactions yet, so the payment is only written to the log.
      * <p>
-     * A flight without a contract (it was booked before the contracts, or it is a free ferry flight) is paid in the old way, by the planned duration and
-     * the prices of the journeys of the flight. The old way is going to be removed.
+     * A flight without a contract (a free ferry flight, a flight booked before the contracts, a manual dispatch) pays nothing.
      *
-     * @return what the pilot has got, empty if there is nothing to pay: it is not a BusyBirds flight or the flight has no pilot (person)
+     * @return what the pilot has got, empty if there is nothing to pay: it is not a BusyBirds flight or the flight has no contract
      */
     public Optional<BusyBirdsPilotPay.Salary> payPilot(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
@@ -165,37 +164,9 @@ public class BusyBirdsMissionControl {
             return Optional.of(salary);
         }
 
-        return payPilotWithoutContract(mission, aircraft);
-    }
-
-    private Optional<BusyBirdsPilotPay.Salary> payPilotWithoutContract(final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft) {
-        final Optional<Persons.Person> person = mission.getUserId() > 0 ? world.persons().byUserId(mission.getUserId()) : Optional.empty();
-        if (person.isEmpty()) {
-            log.warn("f/m #{} - BusyBirds flight finished, but it has no pilot (user #{}), nobody is paid", mission.getId(), mission.getUserId());
-            return Optional.empty();
-        }
-
-        final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
-        final int plannedDurationSeconds = mission.getPlannedArrivalWorldTime() - mission.getPlannedDepartureWorldTime();
-
-        final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
-        final int missionIncome = transportFlight
-                .map(tf -> world.journeys().filter(world.journeys().byTransportFlight1Id(tf.getId()))
-                        .mapToInt(Journeys.Journey::getPrice)
-                        .sum())
-                .orElse(0);
-
-        final BusyBirdsPilotPay.Salary salary = BusyBirdsPilotPay.calcLegSalary(aircraftTypeIcao, plannedDurationSeconds, transportFlight.isPresent(), missionIncome);
-
-        log.info("p/s #{}, f/m #{}, t/f {} - BusyBirds flight without a contract, pilot gets paid {} (flight pay {}, income share {})",
-                person.get().getId(),
-                mission.getId(),
-                transportFlight.map(tf -> "#" + tf.getId()).orElse("none"),
-                salary.total(),
-                salary.flightPay(),
-                salary.incomeShare());
-
-        return Optional.of(salary);
+        // no contract: a free ferry flight, a flight which was booked before the contracts, a manual dispatch
+        log.info("f/m #{} - BusyBirds flight finished, it has no pilot contract, nobody is paid", mission.getId());
+        return Optional.empty();
     }
 
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {
