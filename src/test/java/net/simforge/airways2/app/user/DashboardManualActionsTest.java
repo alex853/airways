@@ -90,19 +90,20 @@ class DashboardManualActionsTest {
     }
 
     @Test
-    void manualLandingIsNotAllowedBeforeThreeQuartersOfThePlannedDuration() {
+    void manualLandingIsNotAllowedBeforeThreeQuartersOfThePlannedFlyingTime() {
         mission.setStatus(FlightMissions.Status.Flying);
         final int takeoff = world.getWorldTime();
         mission.setActualTakeoffWorldTime(takeoff);
-        // planned duration is 2 hours, so the earliest landing is 1.5 hours after the takeoff
+        // the planned time of the mission is 2 hours block to block, 20 minutes of it are the taxi, the flying time is 100 minutes,
+        // so the earliest landing is 75 minutes after the takeoff
 
-        world.setWorldTime(takeoff + 90 * 60 - 1);
+        world.setWorldTime(takeoff + 75 * 60 - 1);
         final SimTracker.UserAction early = FlightDashboardController.buildManualActions(world, mission, departureId).get(0);
         assertEquals("landing", early.getName());
         assertFalse(early.isAllowed());
         assertFalse(early.getChecks().get(0).isResult());
 
-        world.setWorldTime(takeoff + 90 * 60);
+        world.setWorldTime(takeoff + 75 * 60);
         assertTrue(FlightDashboardController.buildManualActions(world, mission, departureId).get(0).isAllowed());
     }
 

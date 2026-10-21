@@ -9,6 +9,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class FlightTimeline {
 
     public static final int START_TO_BLOCKS_OFF_MINUTES = 30;
+    // the taxi before the takeoff (blocks off to takeoff) and after the landing (landing to blocks on)
+    public static final int BLOCKS_OFF_TO_TAKEOFF_MINUTES = 10;
+    public static final int LANDING_TO_BLOCKS_ON_MINUTES = 10;
 
     public static FlightTimeline byFlyingTime(Duration flyingTime) {
         checkNotNull(flyingTime);
@@ -63,9 +66,9 @@ public class FlightTimeline {
         finish = new Milestone(MilestoneType.Finished);
 
         preFlight = new Stage(start, blocksOff, Duration.ofMinutes(START_TO_BLOCKS_OFF_MINUTES));
-        departure = new Stage(blocksOff, takeoff, Duration.ofMinutes(10));
+        departure = new Stage(blocksOff, takeoff, Duration.ofMinutes(BLOCKS_OFF_TO_TAKEOFF_MINUTES));
         flying = new Stage(takeoff, landing, null);
-        arrival = new Stage(landing, blocksOn, Duration.ofMinutes(10));
+        arrival = new Stage(landing, blocksOn, Duration.ofMinutes(LANDING_TO_BLOCKS_ON_MINUTES));
         postFlight = new Stage(blocksOn, finish, Duration.ofMinutes(20));
     }
 
