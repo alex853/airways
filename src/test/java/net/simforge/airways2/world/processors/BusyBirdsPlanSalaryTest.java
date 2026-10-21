@@ -4,6 +4,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.AircraftTypes;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -57,6 +58,18 @@ class BusyBirdsPlanSalaryTest {
         journey.setLocationCityId(fromCity.getId());
     }
 
+    // A pilot with every currency and the experience level III (3% of the income): nothing is taken off, the numbers are the base ones.
+    private static final PilotPayParams FULL_PAY = fullPay();
+
+    private static PilotPayParams fullPay() {
+        final PilotPayParams params = PilotPayParams.none();
+        params.setTypeCurrency(true);
+        params.setNightCurrency(true);
+        params.setCanCarryPassengers(true);
+        params.setExperienceLevel(3);
+        return params;
+    }
+
     private int income() {
         // the list shows a rough pay, the exact income is the price which the quote sets
         return world.busyBirdsMissionControl().quote(journey);
@@ -69,7 +82,7 @@ class BusyBirdsPlanSalaryTest {
         assertTrue(income > 0);
 
         final List<BusyBirdsMissionControl.MissionPlan> plans =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true);
+                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY);
 
         assertEquals(1, plans.size());
         final BusyBirdsMissionControl.MissionPlan plan = plans.get(0);
@@ -97,7 +110,7 @@ class BusyBirdsPlanSalaryTest {
     @Test
     public void test__plan_without_the_return_leg_has_only_the_revenue_leg_salary() {
         final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false).get(0);
+                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0);
 
         assertEquals(1, plan.getLegs().size());
         assertEquals(plan.getLegs().get(0).getSalary(), plan.getTotalSalary());
@@ -110,7 +123,7 @@ class BusyBirdsPlanSalaryTest {
         aircraft.setLocationAirportId(elsewhere.getId());
 
         final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true).get(0);
+                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
 
         assertEquals(3, plan.getLegs().size());
         final BusyBirdsMissionControl.Leg first = plan.getLegs().get(0);
@@ -126,13 +139,50 @@ class BusyBirdsPlanSalaryTest {
         final Aircrafts.Aircraft glf = world.aircrafts().create(g700, "BB-GLA", base);
         glf.setAircraftOperatorId(aircraft.getAircraftOperatorId());
 
-        final BusyBirdsMissionControl.Leg small = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false).get(0).getLegs().get(0);
-        final BusyBirdsMissionControl.Leg big = world.busyBirdsMissionControl().buildPlans(journey, glf, 1, false).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg small = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg big = world.busyBirdsMissionControl().buildPlans(journey, glf, 1, false, FULL_PAY).get(0).getLegs().get(0);
 
         assertTrue(big.getSalary().flightPay() > 0);
         // the rate is 500 against 200, the Gulfstream also flies faster, so the duration is shorter
         assertEquals(500, BusyBirdsPilotPay.baseHourlyRate("GA7C"));
         assertEquals(Math.round(500 * big.getPlannedDuration().toSeconds() / 3600.0), big.getSalary().flightPay());
         assertEquals(Math.round(200 * small.getPlannedDuration().toSeconds() / 3600.0), small.getSalary().flightPay());
+    }
+
+    @Test
+    public void test__the_quote_has_what_the_pilot_gets_with_the_deductions_of_the_currency() {
+        final int income = income();
+        // the pilot has no currency at all and the level 0: a quarter of the flight pay, 0.5% of the income with a quarter off
+        final PilotPayParams nothing = PilotPayParams.none();
+
+        final BusyBirdsMissionControl.Leg full = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg poor = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, nothing).get(0).getLegs().get(0);
+
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("C25C", (int) full.getPlannedDuration().toSeconds());
+        assertEquals(baseFlightPay, full.getSalary().flightPay());
+        assertEquals((int) Math.round(baseFlightPay * 0.25), poor.getSalary().flightPay());
+        assertEquals((int) Math.round(income * 0.03), full.getSalary().incomeShare());
+        assertEquals((int) Math.round(income * 0.005 * 0.75), poor.getSalary().incomeShare());
+        assertTrue(poor.getSalary().total() < full.getSalary().total());
+    }
+
+    @Test
+    public void test__a_leg_knows_what_its_pay_is_made_of() {
+        final int income = income();
+        final BusyBirdsMissionControl.Leg leg = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
+
+        assertEquals(200, leg.getHourlyRate());
+        assertEquals(income, leg.getBaseIncome());
+        assertEquals(FULL_PAY.toByte(), leg.getPayParams().toByte());
+    }
+
+    @Test
+    public void test__a_reposition_leg_has_no_base_income() {
+        income();
+        final BusyBirdsMissionControl.Leg back = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0).getLegs().get(1);
+
+        assertEquals(BusyBirdsMissionControl.Leg.Type.Reposition, back.getType());
+        assertEquals(0, back.getBaseIncome());
+        assertEquals(0, back.getSalary().incomeShare());
     }
 }

@@ -192,4 +192,30 @@ class PilotPayTest {
         assertEquals(33, PilotPay.flightPayCoefficientPercent(params));
         assertEquals(33, PilotPay.incomeShareCoefficientPercent(params));
     }
+
+    @Test
+    void thePayByTheNumbersIsTheSameAsByTheContract() {
+        final PilotContracts.Contract contract = contract(592, 10_484, 0, false, true, false, false);
+
+        assertEquals(PilotPay.flightPay(contract), PilotPay.flightPay(592, contract.getPayParams()));
+        assertEquals(PilotPay.incomeShare(contract), PilotPay.incomeShare(10_484, contract.getPayParams()));
+        // 592 * 50%, 10484 * 0.5% * 75%
+        assertEquals(296, PilotPay.flightPay(592, contract.getPayParams()));
+        assertEquals(39, PilotPay.incomeShare(10_484, contract.getPayParams()));
+        assertEquals(0, PilotPay.incomeShare(0, contract.getPayParams()));
+    }
+
+    @Test
+    void theEffectiveIncomeSharePercentIsTheBasePercentWithTheCoefficient() {
+        final PilotPayParams params = PilotPayParams.none();
+        params.setExperienceLevel(3);
+        params.setTypeCurrency(true);
+        assertEquals(3.0, PilotPay.effectiveIncomeSharePercent(params), 0.0001);
+
+        params.setTypeCurrency(false);
+        assertEquals(2.25, PilotPay.effectiveIncomeSharePercent(params), 0.0001);
+
+        params.setExperienceLevel(0);
+        assertEquals(0.375, PilotPay.effectiveIncomeSharePercent(params), 0.0001);
+    }
 }

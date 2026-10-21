@@ -130,7 +130,7 @@ public class BusyBirdsMissionControl {
         final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
         final int plannedDurationSeconds = mission.getPlannedArrivalWorldTime() - mission.getPlannedDepartureWorldTime();
 
-        final int baseFlightPay = BusyBirdsPilotPay.calcLegSalary(aircraftTypeIcao, plannedDurationSeconds, false, 0).flightPay();
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, plannedDurationSeconds);
         final int baseIncome = journey != null ? calcIncome(journey) : 0;
 
         final PilotContracts.Contract contract = world.pilotContracts().create(
@@ -180,7 +180,11 @@ public class BusyBirdsMissionControl {
         return Optional.empty();
     }
 
-    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase) {
+    /**
+     * The plans of a mission for an aircraft. The pay of every leg is what the pilot will get: it is calculated by the parameters of the pilot on the type of
+     * the aircraft (the currency and the experience level, see PilotPay), the same as the pilot contract is going to be created with.
+     */
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -207,7 +211,7 @@ public class BusyBirdsMissionControl {
 
         for (Airports.Airport fromAirport : fromAirports) {
             for (Airports.Airport toAirport : toAirports) {
-                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, turnaroundTimeHours, ferryBackToBase));
+                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, turnaroundTimeHours, ferryBackToBase, payParams));
             }
         }
 
@@ -216,7 +220,7 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, int turnaroundTimeHours, boolean ferryBackToBase) {
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, int turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -236,15 +240,15 @@ public class BusyBirdsMissionControl {
         Leg leg;
 
         if (needFerryFlightToDepartureAirport) {
-            leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData, aircraftTypeIcao, 0);
+            leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);
             nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
         }
 
-        leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData, aircraftTypeIcao, missionIncome);
+        leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData, aircraftTypeIcao, missionIncome, payParams);
         nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
 
         if (needFerryFlightToBaseAirport && ferryBackToBase) {
-            addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData, aircraftTypeIcao, 0);
+            addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);
         }
 
         int totalDistance = legs.stream().reduce(0, (total, l) -> total + l.distance, Integer::sum);
@@ -263,14 +267,19 @@ public class BusyBirdsMissionControl {
                        int pax,
                        AircraftPerformanceData performanceData,
                        String aircraftTypeIcao,
-                       int missionIncome) {
+                       int missionIncome,
+                       PilotPayParams payParams) {
         SimpleFlight simpleFlight = SimpleFlight.forRoute(fromAirport.getCoords(), toAirport.getCoords(), performanceData);
 
         int plannedDepTime = Time.alignTo5mins(plannedTime);
         int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
 
-        final BusyBirdsPilotPay.Salary salary = BusyBirdsPilotPay.calcLegSalary(aircraftTypeIcao, plannedArrTime - plannedDepTime, type == Leg.Type.Revenue, missionIncome);
-        Leg leg = new Leg(type, fromAirport, toAirport, (int) Geo.distance(fromAirport.getCoords(), toAirport.getCoords()), pax, plannedDepTime, plannedArrTime, salary);
+        // what the pilot gets: the base numbers with the coefficients of the pilot; a reposition leg carries nobody, so it has no income
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, plannedArrTime - plannedDepTime);
+        final int baseIncome = type == Leg.Type.Revenue ? missionIncome : 0;
+        final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(baseFlightPay, payParams), PilotPay.incomeShare(baseIncome, payParams));
+        Leg leg = new Leg(type, fromAirport, toAirport, (int) Geo.distance(fromAirport.getCoords(), toAirport.getCoords()), pax, plannedDepTime, plannedArrTime, salary,
+                BusyBirdsPilotPay.baseHourlyRate(aircraftTypeIcao), baseIncome, payParams);
         legs.add(leg);
 
         return leg;
@@ -407,8 +416,14 @@ public class BusyBirdsMissionControl {
         private final int plannedArrTime;
         // what the pilot gets for the leg
         private final BusyBirdsPilotPay.Salary salary;
+        // what the pay is made of: the base hourly rate of the type, the income of the mission which the share is taken from (zero for a reposition leg) and
+        // the parameters of the pilot
+        private final int hourlyRate;
+        private final int baseIncome;
+        private final PilotPayParams payParams;
 
-        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, int distance, final int pax, int plannedDepTime, int plannedArrTime, final BusyBirdsPilotPay.Salary salary) {
+        public Leg(final Type type, final Airports.Airport fromAirport, final Airports.Airport toAirport, int distance, final int pax, int plannedDepTime, int plannedArrTime, final BusyBirdsPilotPay.Salary salary,
+                   final int hourlyRate, final int baseIncome, final PilotPayParams payParams) {
             this.type = type;
             this.fromAirport = fromAirport;
             this.toAirport = toAirport;
@@ -417,6 +432,9 @@ public class BusyBirdsMissionControl {
             this.plannedDepTime = plannedDepTime;
             this.plannedArrTime = plannedArrTime;
             this.salary = salary;
+            this.hourlyRate = hourlyRate;
+            this.baseIncome = baseIncome;
+            this.payParams = payParams;
         }
 
         public Duration getPlannedDuration() {

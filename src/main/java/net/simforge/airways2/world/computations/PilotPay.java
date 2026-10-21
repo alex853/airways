@@ -120,7 +120,14 @@ public final class PilotPay {
      * The flight pay: the base flight pay of the contract with the coefficient of its parameters.
      */
     public static int flightPay(final PilotContracts.Contract contract) {
-        return (int) Math.round(contract.getBaseFlightPay() * (double) flightPayCoefficientPercent(contract.getPayParams()) / 100.0);
+        return flightPay(contract.getBaseFlightPay(), contract.getPayParams());
+    }
+
+    /**
+     * The flight pay by the base flight pay and the parameters (the quotation of a plan, before there is a contract).
+     */
+    public static int flightPay(final int baseFlightPay, final PilotPayParams params) {
+        return (int) Math.round(baseFlightPay * (double) flightPayCoefficientPercent(params) / 100.0);
     }
 
     /**
@@ -128,12 +135,24 @@ public final class PilotPay {
      * while the base income is zero (a flight without passengers, or the journeys are not known yet).
      */
     public static int incomeShare(final PilotContracts.Contract contract) {
-        final int income = contract.getBaseIncome();
-        if (income <= 0) {
+        return incomeShare(contract.getBaseIncome(), contract.getPayParams());
+    }
+
+    /**
+     * The income share by the base income and the parameters (the quotation of a plan, before there is a contract). It is zero for a zero income.
+     */
+    public static int incomeShare(final int baseIncome, final PilotPayParams params) {
+        if (baseIncome <= 0) {
             return 0;
         }
-        final PilotPayParams params = contract.getPayParams();
-        return (int) Math.round((double) income * baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 10_000.0);
+        return (int) Math.round((double) baseIncome * baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 10_000.0);
+    }
+
+    /**
+     * The percent of the income of the mission which the pilot gets: the base percent of the experience level with the coefficient of the parameters.
+     */
+    public static double effectiveIncomeSharePercent(final PilotPayParams params) {
+        return baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 100.0;
     }
 
     /**

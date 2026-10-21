@@ -117,6 +117,16 @@ public class BusyBirdsController {
         });
     }
 
+    // The parameters of the pay of the pilot of the user on the type of the aircraft. A user without a pilot gets the parameters of nothing (no currency).
+    static PilotPayParams payParamsOfUser(final World world, final int userId, final Aircrafts.Aircraft aircraft) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        if (personId <= 0 || world.persons().byId(personId).isEmpty()) {
+            return PilotPayParams.none();
+        }
+        final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        return PilotController.payParams(world, personId, aircraftTypeIcao);
+    }
+
     static PilotTermsDto buildPilotTerms(final World world, final int personId, final Aircrafts.Aircraft aircraft) {
         final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
         final PilotPayParams params = PilotController.payParams(world, personId, aircraftType);
@@ -160,7 +170,8 @@ public class BusyBirdsController {
 
             final int price = world.busyBirdsMissionControl().quote(journey);
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase,
+                    payParamsOfUser(world, userId, aircraft));
 
             return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList(), price);
         });
@@ -184,7 +195,9 @@ public class BusyBirdsController {
                 return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
             }
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase);
+            // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
+            final PilotPayParams payParams = payParamsOfUser(world, userId, aircraft);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase, payParams);
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
             if (plan.isEmpty()) {
@@ -195,10 +208,8 @@ public class BusyBirdsController {
                 return new BookMissionResponse("failure", plan.get().getMessages());
             }
 
-            // the pilot contracts of the flights: the parameters are the currency and the level of the pilot on the type at the moment of the booking
+            // the pilot contracts of the flights
             final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElseThrow();
-            final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
-            final PilotPayParams payParams = PilotController.payParams(world, personId, aircraftTypeIcao);
 
             List<String> messages = new ArrayList<>();
             for (final BusyBirdsMissionControl.Leg leg : plan.get().getLegs()) {
@@ -392,7 +403,7 @@ public class BusyBirdsController {
                     JavaTime.toHhmm(Time.toLdt(leg.getPlannedDepTime()).toLocalTime()),
                     JavaTime.toHhmm(Time.toLdt(leg.getPlannedArrTime()).toLocalTime()),
                     JavaTime.toHhmm(leg.getPlannedDuration()),
-                    SalaryDto.from(leg.getSalary())
+                    SalaryDto.forLeg(leg)
             )).toList();
 
             return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, SalaryDto.from(plan.getTotalSalary()), null);
@@ -418,12 +429,29 @@ public class BusyBirdsController {
     @Data
     @AllArgsConstructor
     public static class SalaryDto {
-        private final int flightPay; // base hourly rate of the aircraft type * planned duration
+        private final int flightPay; // the hourly rate of the pilot on the aircraft * planned duration
         private final int incomeShare; // share of the income of the mission, revenue leg only
         private final int total;
+        // What the pay of a leg is made of, for the page to explain it (null in the total of a plan):
+        // the hours of the leg (two decimals) and the hourly rate of the pilot, that is the base rate of the type with the deductions
+        private final Double durationHours;
+        private final Double hourlyRate;
+        // the income of the mission which the share is taken from and the percent of it which the pilot gets, null for a leg without an income
+        private final Integer baseIncome;
+        private final Double incomeSharePercent;
 
         public static SalaryDto from(final BusyBirdsPilotPay.Salary salary) {
-            return new SalaryDto(salary.flightPay(), salary.incomeShare(), salary.total());
+            return new SalaryDto(salary.flightPay(), salary.incomeShare(), salary.total(), null, null, null, null);
+        }
+
+        public static SalaryDto forLeg(final BusyBirdsMissionControl.Leg leg) {
+            final BusyBirdsPilotPay.Salary salary = leg.getSalary();
+            final double durationHours = Math.round(leg.getPlannedDuration().toSeconds() / 3600.0 * 100.0) / 100.0;
+            final double hourlyRate = leg.getHourlyRate() * PilotPay.flightPayCoefficientPercent(leg.getPayParams()) / 100.0;
+            final boolean hasIncome = leg.getBaseIncome() > 0;
+            return new SalaryDto(salary.flightPay(), salary.incomeShare(), salary.total(), durationHours, hourlyRate,
+                    hasIncome ? leg.getBaseIncome() : null,
+                    hasIncome ? PilotPay.effectiveIncomeSharePercent(leg.getPayParams()) : null);
         }
     }
 

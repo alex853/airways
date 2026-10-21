@@ -5,8 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * The pay of a BusyBirds pilot for a leg: the base hourly rate of the type multiplied by the planned duration, plus 3% of the income
- * of the mission on the revenue leg. Money is integer.
+ * The base pay of a BusyBirds pilot for a leg: the base hourly rate of the type multiplied by the planned duration. Money is integer.
  */
 class BusyBirdsPilotPayTest {
     private static final int HOUR = 3600;
@@ -24,53 +23,24 @@ class BusyBirdsPilotPayTest {
     }
 
     @Test
-    public void test__income_share_is_3_percent() {
-        assertEquals(3, BusyBirdsPilotPay.INCOME_SHARE_PERCENT);
+    public void test__base_flight_pay_is_the_rate_multiplied_by_the_hours() {
+        assertEquals(200, BusyBirdsPilotPay.baseFlightPay("C25C", HOUR));
+        assertEquals(400, BusyBirdsPilotPay.baseFlightPay("C25C", 2 * HOUR));
+        assertEquals(750, BusyBirdsPilotPay.baseFlightPay("GA7C", HOUR + HOUR / 2));
+        assertEquals(500, BusyBirdsPilotPay.baseFlightPay("GLF6", HOUR));
     }
 
     @Test
-    public void test__flight_pay_is_the_rate_multiplied_by_the_hours() {
-        assertEquals(200, BusyBirdsPilotPay.calcLegSalary("C25C", HOUR, false, 0).flightPay());
-        assertEquals(400, BusyBirdsPilotPay.calcLegSalary("C25C", 2 * HOUR, false, 0).flightPay());
-        assertEquals(750, BusyBirdsPilotPay.calcLegSalary("GA7C", HOUR + HOUR / 2, false, 0).flightPay());
-        assertEquals(500, BusyBirdsPilotPay.calcLegSalary("GLF6", HOUR, false, 0).flightPay());
-    }
-
-    @Test
-    public void test__flight_pay_is_rounded_to_integer() {
+    public void test__base_flight_pay_is_rounded_to_integer() {
         // 1 h 20 min on 200 per hour is 266.67
-        assertEquals(267, BusyBirdsPilotPay.calcLegSalary("C25C", HOUR + 20 * 60, false, 0).flightPay());
+        assertEquals(267, BusyBirdsPilotPay.baseFlightPay("C25C", HOUR + 20 * 60));
         // 10 minutes on 200 per hour is 33.33
-        assertEquals(33, BusyBirdsPilotPay.calcLegSalary("C25C", 10 * 60, false, 0).flightPay());
+        assertEquals(33, BusyBirdsPilotPay.baseFlightPay("C25C", 10 * 60));
     }
 
     @Test
-    public void test__reposition_leg_has_no_income_share_even_if_the_mission_has_an_income() {
-        final BusyBirdsPilotPay.Salary salary = BusyBirdsPilotPay.calcLegSalary("C25C", HOUR, false, 100_000);
-
-        assertEquals(0, salary.incomeShare());
-        assertEquals(200, salary.total());
-    }
-
-    @Test
-    public void test__revenue_leg_gets_3_percent_of_the_income() {
-        final BusyBirdsPilotPay.Salary salary = BusyBirdsPilotPay.calcLegSalary("C25C", 2 * HOUR, true, 100_000);
-
-        assertEquals(400, salary.flightPay());
-        assertEquals(3000, salary.incomeShare());
-        assertEquals(3400, salary.total());
-    }
-
-    @Test
-    public void test__income_share_is_rounded_to_integer() {
-        assertEquals(2, BusyBirdsPilotPay.calcLegSalary("C25C", HOUR, true, 50).incomeShare()); // 1.5, half up
-        assertEquals(1, BusyBirdsPilotPay.calcLegSalary("C25C", HOUR, true, 49).incomeShare()); // 1.47
-        assertEquals(0, BusyBirdsPilotPay.calcLegSalary("C25C", HOUR, true, 10).incomeShare()); // 0.3
-    }
-
-    @Test
-    public void test__zero_duration_and_zero_income_give_zero() {
-        assertEquals(BusyBirdsPilotPay.Salary.ZERO, BusyBirdsPilotPay.calcLegSalary("GA7C", 0, true, 0));
+    public void test__zero_duration_gives_zero() {
+        assertEquals(0, BusyBirdsPilotPay.baseFlightPay("GA7C", 0));
     }
 
     @Test

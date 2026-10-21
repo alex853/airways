@@ -6,21 +6,12 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- * What a BusyBirds pilot gets for a leg of a mission. Money is integer, there are no fractions.
- * <p>
- * Two parts:
- * <ul>
- *     <li>flight pay: the base hourly rate of the aircraft type multiplied by the planned duration of the leg;</li>
- *     <li>income share: {@link #INCOME_SHARE_PERCENT} percent of the income of the mission, a revenue leg only (a reposition leg carries
- *     nobody, so it has no income).</li>
- * </ul>
- * todo ak3 both parts are going to be multiplied by coefficients which depend on the currency of the pilot (type rating, landings in the
- * last 90 days, night landings, experience), see docs/busy-birds.md. The coefficients are 1 now.
+ * The base pay of a BusyBirds pilot: the base hourly rates of the aircraft types and the flight pay before the coefficients. What the pilot gets for a leg
+ * (the flight pay and the income share by the experience level, with the deductions for the currency) is calculated by PilotPay, see
+ * docs/flight-contracts.md. Money is integer, there are no fractions.
  */
 public final class BusyBirdsPilotPay {
     private static final Logger log = LoggerFactory.getLogger(BusyBirdsPilotPay.class);
-
-    public static final int INCOME_SHARE_PERCENT = 3;
 
     // the base hourly rates by ICAO code of the aircraft type
     private static final Map<String, Integer> BASE_HOURLY_RATES = Map.of(
@@ -44,17 +35,11 @@ public final class BusyBirdsPilotPay {
     }
 
     /**
-     * @param plannedDurationSeconds planned duration of the leg, from blocks off to blocks on
-     * @param revenueLeg             true if the leg carries the passengers of the mission
-     * @param missionIncome          income of the mission, it is shared with the pilot on the revenue leg only
+     * The flight pay before the coefficients of the pilot: the base hourly rate of the type multiplied by the planned duration of the leg, rounded.
+     * What the pilot gets is calculated by PilotPay from it and the parameters of the pilot.
      */
-    public static Salary calcLegSalary(final String aircraftTypeIcao,
-                                       final int plannedDurationSeconds,
-                                       final boolean revenueLeg,
-                                       final int missionIncome) {
-        final int flightPay = (int) Math.round(baseHourlyRate(aircraftTypeIcao) * plannedDurationSeconds / 3600.0);
-        final int incomeShare = revenueLeg ? (int) Math.round(missionIncome * INCOME_SHARE_PERCENT / 100.0) : 0;
-        return new Salary(flightPay, incomeShare);
+    public static int baseFlightPay(final String aircraftTypeIcao, final int plannedDurationSeconds) {
+        return (int) Math.round(baseHourlyRate(aircraftTypeIcao) * plannedDurationSeconds / 3600.0);
     }
 
     public record Salary(int flightPay, int incomeShare) {
