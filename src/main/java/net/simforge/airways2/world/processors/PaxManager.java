@@ -113,6 +113,11 @@ public class PaxManager {
 
         protected abstract String name();
 
+        // the short name and the state for the progress line of the log (it is written at every tick of every flight, so it is short): "board PAX 16 [c16,r115,...]"
+        protected abstract String shortName();
+
+        protected abstract String progress();
+
         protected abstract int ratePaxPerMinute();
 
         protected abstract Set<TransportFlights.Status> startStatuses();
@@ -138,7 +143,7 @@ public class PaxManager {
 
         public void start() {
             checkArgument(startStatuses().contains(transportFlight.getStatus()));
-            log.info("t/f #{} - {} - STARTING", transportFlight.getId(), name());
+            log.info("t/f #{} - {} START", transportFlight.getId(), shortName());
         }
 
         public void proceed() {
@@ -171,7 +176,7 @@ public class PaxManager {
                 transportFlight.setPaxOnBoard(expectedPax);
             }
 
-            log.info("t/f #{} - {} - PAX {}, {}", transportFlight.getId(), name(), transportFlight.getPaxOnBoard(), this);
+            log.info("t/f #{} - {} PAX {} {}", transportFlight.getId(), shortName(), transportFlight.getPaxOnBoard(), progress());
         }
 
         protected final void refresh() {
@@ -220,6 +225,21 @@ public class PaxManager {
         @Override
         protected String name() {
             return "boarding";
+        }
+
+        @Override
+        protected String shortName() {
+            return "board";
+        }
+
+        // c - confirmed on board, r - remaining to board, y - ready to board, f - the estimated finish time, k - the counter
+        @Override
+        protected String progress() {
+            return "[c" + confirmedOnBoard
+                    + ",r" + remainingToBoard
+                    + ",y" + readyToBoard
+                    + ",f" + TimeTools.hhmmOrNull(estimatedBoardingFinishTime)
+                    + ",k" + round2(counterValue) + "]";
         }
 
         @Override
@@ -303,7 +323,7 @@ public class PaxManager {
         public void finish() {
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
-            log.info("t/f #{} - boarding - finish", transportFlight.getId());
+            log.info("t/f #{} - board finish", transportFlight.getId());
 
             // The journey whose boarding has been started but not finished (its PAX are already counted in PAX on board by the
             // boarding counter) boards now, so PAX on board does not jump down. A jump up is better than a jump down.
@@ -312,7 +332,7 @@ public class PaxManager {
                         .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
                         .ifPresent(journey -> {
                             world.journeyControl().board(journey);
-                            log.info("t/f #{} - boarding - j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), counterValue);
+                            log.info("t/f #{} - board j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), counterValue);
                         });
             }
 
@@ -321,7 +341,7 @@ public class PaxManager {
                             Journeys.Status.WaitingForCheckIn,
                             Journeys.Status.WaitingForBoarding))
                     .toList();
-            log.info("t/f #{} - boarding - found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
+            log.info("t/f #{} - board found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
 
             failedToBoardJourneys.forEach(j -> world.journeyControl().tooLateToBoard(j));
 
@@ -365,6 +385,17 @@ public class PaxManager {
         @Override
         protected String name() {
             return "deboarding";
+        }
+
+        @Override
+        protected String shortName() {
+            return "deboard";
+        }
+
+        // r - remaining to deboard, k - the counter
+        @Override
+        protected String progress() {
+            return "[r" + remainingToDeboard + ",k" + round2(counterValue) + "]";
         }
 
         @Override
@@ -429,5 +460,10 @@ public class PaxManager {
         public String toString() {
             return "Deboarding{rem: " + remainingToDeboard + ", cnt: " + counterValue + '}';
         }
+    }
+
+    // The counters are doubles with the noise of the arithmetic (2.674999999999999), the log has two decimals.
+    static double round2(final double value) {
+        return Math.round(value * 100.0) / 100.0;
     }
 }

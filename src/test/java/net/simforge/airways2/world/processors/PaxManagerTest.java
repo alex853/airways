@@ -12,8 +12,13 @@ import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -772,5 +777,57 @@ public class PaxManagerTest {
         tfControl.whenFlightTakeoffs(transportFlight);
         tfControl.whenFlightLands(transportFlight);
         tfControl.whenFlightArrivesToGate(transportFlight);
+    }
+
+    // the lines of the log of the PaxManager while the code runs
+    private List<String> logOf(final Runnable code) {
+        final Logger logger = (Logger) LoggerFactory.getLogger(PaxManager.class);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        final Level oldLevel = logger.getLevel();
+        logger.setLevel(Level.INFO);
+        try {
+            code.run();
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(oldLevel);
+        }
+        return appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+    }
+
+    @Test
+    public void test__the_progress_line_of_the_boarding_is_short_and_keeps_the_id_with_the_hash() {
+        checkedInJourneys(40, 40);
+        tfControl.startBoarding(transportFlight);
+
+        final List<String> lines = logOf(() -> runBoardingFor(30));
+
+        final List<String> progress = lines.stream().filter(l -> l.contains(" PAX ")).toList();
+        assertFalse(progress.isEmpty());
+        // t/f #5037 - board PAX 16 [c16,r115,y25,f17:45,k0.65]
+        final String pattern = "t/f #" + transportFlight.getId() + " - board PAX \\d+ \\[c\\d+,r\\d+,y\\d+,f[0-9:]+,k\\d+(\\.\\d{1,2})?\\]";
+        progress.forEach(l -> assertTrue(l.matches(pattern), l));
+    }
+
+    @Test
+    public void test__the_counter_of_the_progress_line_has_no_noise_of_the_arithmetic() {
+        assertEquals(0.65, PaxManager.round2(0.6500000000000004), 0.0);
+        assertEquals(2.67, PaxManager.round2(2.674999999999999), 0.0);
+        assertEquals(0.0, PaxManager.round2(0.0), 0.0);
+        assertEquals("k0.65", "k" + PaxManager.round2(0.6500000000000004));
+    }
+
+    @Test
+    public void test__the_start_and_the_finish_lines_have_no_ing_endings() {
+        checkedInJourneys(10);
+
+        final List<String> start = logOf(() -> tfControl.startBoarding(transportFlight));
+        runBoardingFor(600);
+        final List<String> finish = logOf(() -> paxManager.boarding(transportFlight).finish());
+
+        assertTrue(start.contains("t/f #" + transportFlight.getId() + " - board START"), start.toString());
+        assertTrue(finish.contains("t/f #" + transportFlight.getId() + " - board finish"), finish.toString());
+        assertTrue(finish.stream().anyMatch(l -> l.startsWith("t/f #" + transportFlight.getId() + " - board found ")), finish.toString());
     }
 }
