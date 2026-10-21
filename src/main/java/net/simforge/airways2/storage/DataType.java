@@ -2,6 +2,7 @@ package net.simforge.airways2.storage;
 
 public enum DataType {
     Signed32bit, // just as usual 'int'
+    Signed64bit, // 8 bytes, just as usual 'long' (money: balances and amounts), read and written by getAsLong and setLong
     Unsigned24bit, // 3 bytes unsigned integer
     Unsigned16bit, // 2 bytes unsigned integer
     Unsigned8bit, // 1 byte unsiged integer, from 0 to 255

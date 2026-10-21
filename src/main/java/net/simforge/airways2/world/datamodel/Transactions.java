@@ -1,0 +1,148 @@
+package net.simforge.airways2.world.datamodel;
+
+import net.simforge.airways2.storage.DataField;
+import net.simforge.airways2.storage.DataType;
+import net.simforge.airways2.storage.Storage;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static com.google.common.base.Preconditions.checkArgument;
+
+/**
+ * The transactions: who paid whom, how much and what for (the type), see docs/flight-contracts.md, section 6. A transaction does not refer to a flight
+ * mission or a journey, they are deleted with time, and it has no text. A transaction is written only by the transfer of AccountControl, together with
+ * the change of the two balances.
+ */
+public class Transactions {
+    /**
+     * What the money is for. It is stored as the number of the type (BalanceCheckpoint is 0), the numbers never change: add new types to the end.
+     */
+    public enum Type {
+        // Not a payment: the balance of the account (from and to are the same account, amount is its balance, it may be zero or negative) which was fixed at the
+        // moment of the transaction. The balance of an account is checked by the last checkpoint and the transactions after it, see AccountControl.
+        BalanceCheckpoint,
+        // the journey pays for its transportation to the operator of the flight
+        JourneyPayment,
+        // the operator pays the pilot for the flown hours
+        PilotFlightPay,
+        // the operator pays the pilot his share of the income of the flight
+        PilotIncomeShare
+    }
+
+    private final Storage<Transaction> storage = Storage.<Transaction>builder()
+            .name("transactions")
+            .withInstantiator(Transaction::new)
+            .withIdOf(DataType.Unsigned24bit)
+            // -------------------------------------------------- record deletion status    1 byte
+            .withDataField(DataField.of(DataType.Signed32bit))   // time                            4 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // fromAccountId                   3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // toAccountId                     3 bytes
+            .withDataField(DataField.of(DataType.Signed64bit))   // amount                          8 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit))  // type, see Type (0 is a checkpoint)  1 byte
+            // ----------------------------------------------------- sum                   20 bytes
+            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
+            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
+            .build();
+
+    private final DataField timeField = storage.getDataField(0);
+    private final DataField fromAccountIdField = storage.getDataField(1);
+    private final DataField toAccountIdField = storage.getDataField(2);
+    private final DataField amountField = storage.getDataField(3);
+    private final DataField typeField = storage.getDataField(4);
+
+    public void loadIfExists(final Path rootPath) throws IOException {
+        this.storage.loadIfExists(rootPath);
+    }
+
+    public void save(final Path rootPath) throws IOException {
+        storage.save(rootPath);
+    }
+
+    public Stream<Transaction> all() {
+        return storage.all();
+    }
+
+    public Optional<Transaction> byId(final int id) {
+        return storage.byId(id);
+    }
+
+    /**
+     * The transactions of an account, both the ones it has paid and the ones it has received (a statement).
+     */
+    public Storage.Condition<Transaction> byAccountId(final int accountId) {
+        checkArgument(accountId > 0);
+        return recordId -> storage.getAsInt(recordId, fromAccountIdField) == accountId
+                || storage.getAsInt(recordId, toAccountIdField) == accountId;
+    }
+
+    public Stream<Transaction> filter(final Storage.Condition<Transaction> condition) {
+        return storage.filter(condition);
+    }
+
+    /**
+     * Writes a transaction. It is for AccountControl only, nobody else writes them. A payment has an amount more than zero and two different accounts,
+     * a balance checkpoint has one account (as from and as to) and the balance as the amount.
+     */
+    public Transaction create(final int time, final int fromAccountId, final int toAccountId, final long amount, final Type type) {
+        checkArgument(fromAccountId > 0 && toAccountId > 0, "the accounts are mandatory");
+        checkArgument(type != null, "the type is mandatory");
+        if (type == Type.BalanceCheckpoint) {
+            checkArgument(fromAccountId == toAccountId, "a checkpoint is of one account");
+        } else {
+            checkArgument(amount > 0, "the amount must be more than zero: %s", amount);
+            checkArgument(fromAccountId != toAccountId, "the accounts must be different: %s", fromAccountId);
+        }
+
+        final int id = storage.addRecord();
+        storage.set(id, timeField, time);
+        storage.set(id, fromAccountIdField, fromAccountId);
+        storage.set(id, toAccountIdField, toAccountId);
+        storage.setLong(id, amountField, amount);
+        storage.set(id, typeField, type.ordinal());
+        return new Transaction(id);
+    }
+
+    public class Transaction {
+        private final int id;
+
+        private Transaction(final int id) {
+            this.id = id;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public int getTime() {
+            return storage.getAsInt(id, timeField);
+        }
+
+        public int getFromAccountId() {
+            return storage.getAsInt(id, fromAccountIdField);
+        }
+
+        public int getToAccountId() {
+            return storage.getAsInt(id, toAccountIdField);
+        }
+
+        public long getAmount() {
+            return storage.getAsLong(id, amountField);
+        }
+
+        public Type getType() {
+            final int stored = storage.getAsInt(id, typeField);
+            checkArgument(stored >= 0 && stored < Type.values().length, "unknown transaction type %s", stored);
+            return Type.values()[stored];
+        }
+
+        @Override
+        public String toString() {
+            return String.format("{ id: %s, %s -> %s, %s, %s }", id, getFromAccountId(), getToAccountId(), getAmount(), getType());
+        }
+    }
+}

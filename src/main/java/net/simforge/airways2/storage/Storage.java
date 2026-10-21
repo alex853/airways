@@ -424,6 +424,34 @@ public class Storage<T> {
         };
     }
 
+    /**
+     * The value of a Signed64bit field.
+     */
+    public long getAsLong(final int recordId, final DataField dataField) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
+        checkArgument(dataField.dataType() == DataType.Signed64bit, "the field is not Signed64bit, it is %s", dataField.dataType());
+
+        return getLongAtOffset(getFieldOffset(recordId, dataField));
+    }
+
+    /**
+     * Sets a Signed64bit field, any long fits.
+     */
+    public void setLong(final int recordId, final DataField dataField, final long value) {
+        checkRecordIdInBounds(recordId);
+        checkRecordIdIsNotDeleted(recordId);
+        checkNotNull(dataField, "dataField should not be null");
+        checkDataFieldIsInStorage(dataField);
+        checkArgument(dataField.dataType() == DataType.Signed64bit, "the field is not Signed64bit, it is %s", dataField.dataType());
+
+        setLongAtOffset(getFieldOffset(recordId, dataField), value);
+
+        markChanged(); // after the data is written: whoever sees the new stamp sees the new data
+    }
+
     public float getAsFloat(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
@@ -602,6 +630,16 @@ public class Storage<T> {
 
     private int getFieldOffset(final int recordId, final DataField dataField) {
         return getRecordHeaderOffset(recordId) + recordHeaderSize + dataField.offset();
+    }
+
+    private long getLongAtOffset(final int fieldOffset) {
+        return ((long) getIntAtOffset(fieldOffset) << 32)
+                + (Integer.toUnsignedLong(getIntAtOffset(fieldOffset + 4)));
+    }
+
+    private void setLongAtOffset(final int fieldOffset, final long value) {
+        setIntAtOffset(fieldOffset, (int) (value >> 32));
+        setIntAtOffset(fieldOffset + 4, (int) value);
     }
 
     private int getIntAtOffset(final int fieldOffset) {
