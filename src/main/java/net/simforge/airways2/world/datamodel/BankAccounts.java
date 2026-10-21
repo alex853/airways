@@ -38,23 +38,22 @@ public class BankAccounts {
     private static final int MAX_OWNER_ID = 16_777_215;
     private static final int MAX_OPERATOR_ID = 65_535;
 
-    // the balance is in whole units, a long (8 bytes)
+    // the balance is in whole units, five bytes with the sign (up to 549 billion), see Storage.MAX_SIGNED_40BIT
     private final Storage<BankAccount> storage = Storage.<BankAccount>builder()
             .name("bank-accounts")
             .withInstantiator(BankAccount::new)
             .withIdOf(DataType.Unsigned24bit)
             // -------------------------------------------------- record deletion status    1 byte
-            .withDataField(DataField.of(DataType.Signed64bit))   // balance                         8 bytes
+            .withDataField(DataField.of(DataType.Signed40bit))   // balance                         5 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit))  // kind, see Kind                  1 byte
             .withDataField(DataField.of(DataType.Unsigned24bit)) // ownerId, by the kind            3 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit))  // flags: bit 0 can go negative   1 byte
             .withDataField(DataField.of(DataType.Signed32bit))   // createdTime                     4 bytes
             .withDataField(DataField.of(DataType.Signed32bit))   // updatedTime                     4 bytes
-            // ----------------------------------------------------- sum                   22 bytes
-            // -------------------------------------------- reserved 10 bytes to align total size to 32 bytes
+            // ----------------------------------------------------- sum                   19 bytes
+            // -------------------------------------------- reserved 5 bytes to align total size to 24 bytes
             .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                   2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit))  // reserve                   1 byte
             .build();
 
     private final DataField balanceField = storage.getDataField(0);

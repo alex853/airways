@@ -324,4 +324,28 @@ class BankControlTest {
         assertEquals(1, world.bankTransactions().filter(world.bankTransactions().byAccountId(operator.getId())).count());
         assertEquals(0, world.bankTransactions().filter(world.bankTransactions().byAccountId(pilot.getId())).count());
     }
+
+    @Test
+    public void test__a_transfer_which_does_not_fit_five_bytes_is_refused_and_nothing_changes() {
+        final long max = net.simforge.airways2.storage.Storage.MAX_SIGNED_40BIT;
+        world.bankControl().transfer(passengers.getId(), operator.getId(), max, BankTransactions.Type.JourneyPayment);
+
+        // the amount is too big
+        assertThrows(IllegalArgumentException.class,
+                () -> world.bankControl().transfer(passengers.getId(), operator.getId(), max + 1, BankTransactions.Type.JourneyPayment));
+        // the account which receives would be over the maximum
+        assertThrows(IllegalArgumentException.class,
+                () -> world.bankControl().transfer(passengers.getId(), operator.getId(), 1, BankTransactions.Type.JourneyPayment));
+        // the account which pays may go down to the minimum, that is -max-1, and not more
+        final BankAccounts.BankAccount other = world.bankAccounts().create(BankAccounts.Kind.Operator, 9, true, world.getWorldTime());
+        world.bankControl().transfer(passengers.getId(), other.getId(), 1, BankTransactions.Type.JourneyPayment);
+        assertEquals(-max - 1, passengers.getBalance());
+        assertThrows(IllegalArgumentException.class,
+                () -> world.bankControl().transfer(passengers.getId(), other.getId(), 1, BankTransactions.Type.JourneyPayment));
+
+        assertEquals(max, operator.getBalance());
+        assertEquals(-max - 1, passengers.getBalance());
+        assertEquals(2, world.bankTransactions().all().count());
+        assertEquals(0, sumOfBalances());
+    }
 }

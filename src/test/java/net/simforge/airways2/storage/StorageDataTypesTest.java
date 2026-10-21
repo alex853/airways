@@ -19,7 +19,7 @@ class StorageDataTypesTest {
             .withDataField(DataField.of(DataType.Tenths8bit))
             .withDataField(DataField.of(DataType.Float16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
-            .withDataField(DataField.of(DataType.Signed64bit))
+            .withDataField(DataField.of(DataType.Signed40bit))
             .build();
 
     private final DataField signed32bitField = storage.getDataField(0);
@@ -32,7 +32,7 @@ class StorageDataTypesTest {
     private final DataField tenths8bitField = storage.getDataField(7);
     private final DataField float16bitField = storage.getDataField(8);
     private final DataField plainString20Field = storage.getDataField(9);
-    private final DataField signed64bitField = storage.getDataField(10);
+    private final DataField signed40bitField = storage.getDataField(10);
 
     private final int recordId = storage.addRecord();
 
@@ -186,18 +186,18 @@ class StorageDataTypesTest {
             case Tenths8bit -> tenths8bitField;
             case Float16bit -> float16bitField;
             case PlainString -> plainString20Field;
-            case Signed64bit -> signed64bitField;
+            case Signed40bit -> signed40bitField;
         };
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString", "Signed64bit"})
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString", "Signed40bit"})
     public void test_getAsInt_is_not_applicable_to_not_integer_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsInt(recordId, fieldOf(dataType)));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "Signed64bit"})
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "Signed40bit"})
     public void test_getAsFloat_is_not_applicable_to_not_float_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsFloat(recordId, fieldOf(dataType)));
     }
@@ -246,7 +246,7 @@ class StorageDataTypesTest {
         final java.util.Set<DataType> covered = new java.util.HashSet<>(INT_TYPES);
         covered.addAll(FLOAT_TYPES);
         covered.add(DataType.PlainString);
-        covered.add(DataType.Signed64bit);
+        covered.add(DataType.Signed40bit);
 
         assertEquals(java.util.Set.of(DataType.values()), covered);
     }

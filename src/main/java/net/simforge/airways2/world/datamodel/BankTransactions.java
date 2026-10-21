@@ -41,13 +41,13 @@ public class BankTransactions {
             .withDataField(DataField.of(DataType.Signed32bit))   // time                            4 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // fromAccountId                   3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // toAccountId                     3 bytes
-            .withDataField(DataField.of(DataType.Signed64bit))   // amount                          8 bytes
+            .withDataField(DataField.of(DataType.Signed40bit))   // amount                          5 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit))  // type, see Type (0 is a checkpoint)  1 byte
-            // ----------------------------------------------------- sum                   20 bytes
-            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
+            // ----------------------------------------------------- sum                   17 bytes
+            // -------------------------------------------- reserved 7 bytes to align total size to 24 bytes
             .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit))   // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                   2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit))  // reserve                   1 byte
             .build();
 
     private final DataField timeField = storage.getDataField(0);

@@ -425,27 +425,34 @@ public class Storage<T> {
     }
 
     /**
-     * The value of a Signed64bit field.
+     * The smallest and the biggest value of a Signed40bit field.
+     */
+    public static final long MIN_SIGNED_40BIT = -(1L << 39);
+    public static final long MAX_SIGNED_40BIT = (1L << 39) - 1;
+
+    /**
+     * The value of a Signed40bit field.
      */
     public long getAsLong(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
-        checkArgument(dataField.dataType() == DataType.Signed64bit, "the field is not Signed64bit, it is %s", dataField.dataType());
+        checkArgument(dataField.dataType() == DataType.Signed40bit, "the field is not Signed40bit, it is %s", dataField.dataType());
 
         return getLongAtOffset(getFieldOffset(recordId, dataField));
     }
 
     /**
-     * Sets a Signed64bit field, any long fits.
+     * Sets a Signed40bit field. A value out of the range of five bytes is an error, it is not cut.
      */
     public void setLong(final int recordId, final DataField dataField, final long value) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
         checkNotNull(dataField, "dataField should not be null");
         checkDataFieldIsInStorage(dataField);
-        checkArgument(dataField.dataType() == DataType.Signed64bit, "the field is not Signed64bit, it is %s", dataField.dataType());
+        checkArgument(dataField.dataType() == DataType.Signed40bit, "the field is not Signed40bit, it is %s", dataField.dataType());
+        checkArgument(MIN_SIGNED_40BIT <= value && value <= MAX_SIGNED_40BIT, "expected range is [%s..%s]: %s", MIN_SIGNED_40BIT, MAX_SIGNED_40BIT, value);
 
         setLongAtOffset(getFieldOffset(recordId, dataField), value);
 
@@ -632,14 +639,15 @@ public class Storage<T> {
         return getRecordHeaderOffset(recordId) + recordHeaderSize + dataField.offset();
     }
 
+    // five bytes, the first one has the sign (it is a signed byte), the other four are the low 32 bits
     private long getLongAtOffset(final int fieldOffset) {
-        return ((long) getIntAtOffset(fieldOffset) << 32)
-                + (Integer.toUnsignedLong(getIntAtOffset(fieldOffset + 4)));
+        return ((long) data[fieldOffset] << 32)
+                + (Integer.toUnsignedLong(getIntAtOffset(fieldOffset + 1)));
     }
 
     private void setLongAtOffset(final int fieldOffset, final long value) {
-        setIntAtOffset(fieldOffset, (int) (value >> 32));
-        setIntAtOffset(fieldOffset + 4, (int) value);
+        data[fieldOffset] = (byte) (value >> 32);
+        setIntAtOffset(fieldOffset + 1, (int) value);
     }
 
     private int getIntAtOffset(final int fieldOffset) {

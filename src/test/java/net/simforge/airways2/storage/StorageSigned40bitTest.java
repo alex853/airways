@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
- * Signed64bit: a long in eight bytes, for the money.
+ * Signed40bit: five bytes with the sign, for the money.
  */
-class StorageSigned64bitTest {
+class StorageSigned40bitTest {
     private final Storage<Object> storage = Storage.builder()
             .withDataField(DataField.of(DataType.Unsigned8bit))
-            .withDataField(DataField.of(DataType.Signed64bit))
+            .withDataField(DataField.of(DataType.Signed40bit))
             .withDataField(DataField.of(DataType.Signed32bit))
             .build();
 
@@ -24,11 +24,30 @@ class StorageSigned64bitTest {
     private final int recordId = storage.addRecord();
 
     @ParameterizedTest
-    @ValueSource(longs = {0, 1, -1, 1_000_000, -1_000_000, 4_294_967_295L, 4_294_967_296L, -4_294_967_296L, 1L << 40, Long.MAX_VALUE, Long.MIN_VALUE})
-    void everyLongIsStoredAsItIs(final long value) {
+    @ValueSource(longs = {0, 1, -1, 255, 256, -256, 1_000_000, -1_000_000, 2_147_483_647L, 2_147_483_648L, 4_294_967_295L, 4_294_967_296L, -4_294_967_296L,
+            5_000_000_000L, -5_000_000_000L, 549_755_813_887L, -549_755_813_888L})
+    void everyValueOfTheRangeIsStoredAsItIs(final long value) {
         storage.setLong(recordId, longField, value);
 
         assertEquals(value, storage.getAsLong(recordId, longField));
+    }
+
+    @Test
+    void theRangeIsFromMinus549BillionTo549Billion() {
+        assertEquals(-549_755_813_888L, Storage.MIN_SIGNED_40BIT);
+        assertEquals(549_755_813_887L, Storage.MAX_SIGNED_40BIT);
+    }
+
+    @Test
+    void aValueOutOfTheRangeIsAnErrorAndNothingIsCut() {
+        storage.setLong(recordId, longField, 12345);
+
+        assertThrows(IllegalArgumentException.class, () -> storage.setLong(recordId, longField, 549_755_813_888L));
+        assertThrows(IllegalArgumentException.class, () -> storage.setLong(recordId, longField, -549_755_813_889L));
+        assertThrows(IllegalArgumentException.class, () -> storage.setLong(recordId, longField, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class, () -> storage.setLong(recordId, longField, Long.MIN_VALUE));
+
+        assertEquals(12345, storage.getAsLong(recordId, longField));
     }
 
     @Test
@@ -36,19 +55,19 @@ class StorageSigned64bitTest {
         storage.set(recordId, byteField, 200);
         storage.set(recordId, intField, -123456);
 
-        storage.setLong(recordId, longField, Long.MIN_VALUE);
+        storage.setLong(recordId, longField, Storage.MIN_SIGNED_40BIT);
         assertEquals(200, storage.getAsInt(recordId, byteField));
         assertEquals(-123456, storage.getAsInt(recordId, intField));
 
-        storage.setLong(recordId, longField, Long.MAX_VALUE);
+        storage.setLong(recordId, longField, Storage.MAX_SIGNED_40BIT);
         assertEquals(200, storage.getAsInt(recordId, byteField));
         assertEquals(-123456, storage.getAsInt(recordId, intField));
     }
 
     @Test
-    void aRecordWithAnEightByteFieldHasTheRightSize() {
-        // the deletion status (1 byte, with the header of the record) is not counted here, the fields are 1 + 8 + 4 bytes
-        assertEquals(13, intField.offsetPlusSize());
+    void aFieldIsFiveBytes() {
+        // the fields are 1 + 5 + 4 bytes
+        assertEquals(10, intField.offsetPlusSize());
     }
 
     @Test

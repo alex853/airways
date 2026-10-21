@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
@@ -43,6 +44,10 @@ public class BankControl {
                 .orElseThrow(() -> new IllegalArgumentException("there is no account #" + toAccountId));
         checkArgument(from.canGoNegative() || from.getBalance() >= amount,
                 "the account #%s has %s and cannot pay %s", fromAccountId, from.getBalance(), amount);
+        // a balance is five bytes: the transfer which does not fit is refused before anything changes
+        checkArgument(amount <= Storage.MAX_SIGNED_40BIT, "the amount does not fit the balance: %s", amount);
+        checkArgument(from.getBalance() - amount >= Storage.MIN_SIGNED_40BIT, "the balance of the account #%s would be out of the range", fromAccountId);
+        checkArgument(to.getBalance() + amount <= Storage.MAX_SIGNED_40BIT, "the balance of the account #%s would be out of the range", toAccountId);
 
         final int time = world.getWorldTime();
         from.changeBalance(-amount, time);
