@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
@@ -30,6 +31,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
  */
 public class PaxManager {
     private static final Logger log = LoggerFactory.getLogger(PaxManager.class);
+
+    /**
+     * The first and the business class passengers board and leave the aircraft not so fast as the economy ones: the rate of the operation is cut by this
+     * factor while such a journey is the one which is processed. (Two times slower: the gentlemen are not in a hurry.)
+     */
+    public static final double PREMIUM_RATE_FACTOR = 0.5;
+
+    /**
+     * A journey of the first or the business class (the cabin service it is booked in).
+     */
+    static boolean isPremium(final Journeys.Journey journey) {
+        final CabinLayout.Service service = journey.getBookedCabinService();
+        return service == CabinLayout.Service.F || service == CabinLayout.Service.J;
+    }
 
     private final World world;
     private final Map<Integer, Boarding> boardings = new TreeMap<>();
@@ -199,8 +214,9 @@ public class PaxManager {
             final int timeElapsed = world.getWorldTime() - counterLastTime;
             counterLastTime = world.getWorldTime();
 
-            // PAX per time with a random factor, the same formula for all the operations
-            counterValue += timeElapsed / (Time.ONE_MINUTE / (double) ratePaxPerMinute()) * (Tools.random(85, 125) / 100.0);
+            // PAX per time with a random factor, the same formula for all the operations; the premium journey which is next in the queue slows it down
+            final double rate = ratePaxPerMinute() * (!ready.isEmpty() && isPremium(ready.get(0)) ? PREMIUM_RATE_FACTOR : 1.0);
+            counterValue += timeElapsed / (Time.ONE_MINUTE / rate) * (Tools.random(85, 125) / 100.0);
             if (counterValue > counterLimit()) {
                 counterValue = counterLimit();
             }
@@ -279,8 +295,12 @@ public class PaxManager {
             ready = remained.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding).toList();
             readyToBoard = ready.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
 
+            // the premium PAX board two times slower, so for the time they count twice
+            final double remainingAtTheRateOfEconomy = remained.stream()
+                    .mapToDouble(j -> j.getGroupSize() / (isPremium(j) ? PREMIUM_RATE_FACTOR : 1.0))
+                    .sum();
             estimatedBoardingFinishTime = world.getWorldTime()
-                    + (int) Math.ceil(remainingToBoard / (double) ratePaxPerMinute * Time.ONE_MINUTE)
+                    + (int) Math.ceil(remainingAtTheRateOfEconomy / ratePaxPerMinute * Time.ONE_MINUTE)
                     + boardingTimeReserve;
         }
 

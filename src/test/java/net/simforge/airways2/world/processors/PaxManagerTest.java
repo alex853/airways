@@ -830,4 +830,109 @@ public class PaxManagerTest {
         assertTrue(finish.contains("t/f #" + transportFlight.getId() + " - board finish"), finish.toString());
         assertTrue(finish.stream().anyMatch(l -> l.startsWith("t/f #" + transportFlight.getId() + " - board found ")), finish.toString());
     }
+
+    // ---- the first and the business class are not in a hurry: the boarding and the deboarding of them are two times slower ----
+
+    private void bookIn(final CabinLayout.Service service, final Journeys.Journey... journeys) {
+        for (final Journeys.Journey journey : journeys) {
+            journey.setBookedCabinService(service);
+        }
+    }
+
+    @Test
+    public void test__economy_boards_at_the_normal_rate_in_a_minute() {
+        checkedInJourneys(40);
+        tfControl.startBoarding(transportFlight);
+
+        runBoardingFor(Time.ONE_MINUTE);
+
+        // 15 PAX a minute with the random factor 0.85 - 1.25: not less than 12
+        assertTrue(transportFlight.getPaxOnBoard() >= 12, "PAX on board " + transportFlight.getPaxOnBoard());
+    }
+
+    @Test
+    public void test__business_and_first_board_two_times_slower() {
+        for (final CabinLayout.Service service : List.of(CabinLayout.Service.J, CabinLayout.Service.F)) {
+            final List<Journeys.Journey> journeys = checkedInJourneys(40);
+            bookIn(service, journeys.get(0));
+            tfControl.startBoarding(transportFlight);
+            final int before = transportFlight.getPaxOnBoard();
+
+            runBoardingFor(Time.ONE_MINUTE);
+
+            // 7.5 PAX a minute with the random factor 0.85 - 1.25: not more than 9 (an economy group would have 12 and more)
+            assertTrue(transportFlight.getPaxOnBoard() - before <= 9, service + ", PAX on board " + transportFlight.getPaxOnBoard());
+            return; // the flight of the test is one, the second class would join the same queue
+        }
+    }
+
+    @Test
+    public void test__premium_economy_is_not_premium() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(40);
+        bookIn(CabinLayout.Service.W, journeys.get(0));
+        tfControl.startBoarding(transportFlight);
+
+        runBoardingFor(Time.ONE_MINUTE);
+
+        assertTrue(transportFlight.getPaxOnBoard() >= 12, "PAX on board " + transportFlight.getPaxOnBoard());
+    }
+
+    @Test
+    public void test__the_estimated_finish_time_counts_the_premium_pax_twice() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(30);
+        bookIn(CabinLayout.Service.J, journeys.get(0));
+
+        tfControl.startBoarding(transportFlight);
+
+        // 30 business PAX are like 60 economy ones: 60 / 15 = 4 minutes
+        assertEquals(startTime + 4 * Time.ONE_MINUTE + RESERVE, paxManager.boarding(transportFlight).getEstimatedFinishTime());
+    }
+
+    @Test
+    public void test__the_estimate_of_a_mixed_queue_counts_only_the_premium_part_twice() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(10, 20);
+        bookIn(CabinLayout.Service.F, journeys.get(0));
+
+        tfControl.startBoarding(transportFlight);
+
+        // 10 first class PAX are like 20 and 20 economy ones: 40 / 15 = 2 minutes 40 seconds
+        assertEquals(startTime + 160 + RESERVE, paxManager.boarding(transportFlight).getEstimatedFinishTime());
+    }
+
+    @Test
+    public void test__the_premium_journey_of_the_head_of_the_queue_slows_the_others_down_while_it_is_the_head() {
+        // the rate is chosen by the journey which is processed now: the economy group after the premium one boards at the normal rate again
+        final List<Journeys.Journey> journeys = checkedInJourneys(8, 60);
+        bookIn(CabinLayout.Service.J, journeys.get(0));
+        tfControl.startBoarding(transportFlight);
+
+        runBoardingFor(10 * Time.ONE_MINUTE);
+
+        assertEquals(Journeys.Status.OnBoard, journeys.get(0).getStatus());
+        assertEquals(Journeys.Status.OnBoard, journeys.get(1).getStatus());
+    }
+
+    @Test
+    public void test__business_passengers_leave_two_times_slower() {
+        final List<Journeys.Journey> journeys = startDeboardingOf(40);
+        bookIn(CabinLayout.Service.J, journeys.get(0));
+
+        for (int i = 0; i < 6; i++) { // a minute
+            deboardingTick();
+        }
+
+        // 12.5 PAX a minute with the random factor 0.85 - 1.25: not more than 15.6 have left, the economy ones would be 21 and more
+        assertTrue(transportFlight.getPaxOnBoard() >= 40 - 16, "PAX on board " + transportFlight.getPaxOnBoard());
+    }
+
+    @Test
+    public void test__economy_passengers_leave_at_the_normal_rate() {
+        startDeboardingOf(40);
+
+        for (int i = 0; i < 6; i++) {
+            deboardingTick();
+        }
+
+        assertTrue(transportFlight.getPaxOnBoard() <= 40 - 20, "PAX on board " + transportFlight.getPaxOnBoard());
+    }
 }
