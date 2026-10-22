@@ -64,19 +64,7 @@ public class FlightDashboardController {
     }
 
     @GetMapping("/status")
-    @Deprecated
-    public StatusDto getStatus(@RequestAttribute("userId") int userId,
-                               @RequestParam(name = "flightId") String flightId) {
-        return worldBean.read(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightId)).orElseThrow();
-            checkIfFlightRelatesToUser(flight, userId);
-
-            return toStatusDto(world, flight);
-        });
-    }
-
-    @GetMapping("/status2")
-    public Status2Dto getStatus2(@RequestAttribute("userId") int userId) {
+    public Status2Dto getStatus(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
             final boolean simTrackerConnected = simStatus != null;
@@ -411,7 +399,7 @@ public class FlightDashboardController {
                 simTrackerBean.refreshContext(userId);
             }
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -477,7 +465,7 @@ public class FlightDashboardController {
                 simTrackerBean.refreshContext(userId);
             }
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -519,7 +507,7 @@ public class FlightDashboardController {
                 simTrackerBean.refreshContext(userId);
             }
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -548,7 +536,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - blocks-off", flightId);
             world.flightMissionControl().blocksOff(flight); // t/f update is inside
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -577,7 +565,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - takeoff", flightId);
             world.flightMissionControl().takeoff(flight); // t/f update is inside
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -611,7 +599,7 @@ public class FlightDashboardController {
             final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -640,7 +628,7 @@ public class FlightDashboardController {
             log.info("f/m #{} - flight-dashboard - blocks-on", flightId);
             world.flightMissionControl().blocksOn(flight); // t/f update is inside
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -682,7 +670,7 @@ public class FlightDashboardController {
                 simTrackerBean.refreshContext(userId);
             }
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 
@@ -717,7 +705,7 @@ public class FlightDashboardController {
                 simTrackerBean.refreshContext(userId);
             }
 
-            return getStatus2(userId);
+            return getStatus(userId);
         });
     }
 

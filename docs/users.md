@@ -31,7 +31,7 @@
 
 `net.simforge.airways2.app.userstorage`: `User` (id, token, personId, vatsimCid), `UserStorage`.
 
-## /flight-dashboard/status2: секция pilot
+## /flight-dashboard/status: секция pilot
 
 В ответе секция `pilot` (раньше называлась `user`): то, что нужно дашбордам про пилота пользователя. Это результат сверки аэропорта, в котором
 пилот загрузился (`sim.airportIcao`), с аэропортом персоны пользователя (`User.personId`): `state`, `expectedAirport`, `currentAirport`. Анкетные данные
