@@ -2,12 +2,15 @@ package net.simforge.airways2.app.admin;
 
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.datamodel.BankAccounts;
+import net.simforge.airways2.world.datamodel.BankTransactions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.worldbuilder.World25;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,7 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * The bank under the admin token: the accounts as a plain text table.
+ * The bank under the admin token: the accounts and the statement of an account as plain text.
  */
 @RestController
 @RequestMapping("/admin/bank")
@@ -32,6 +35,14 @@ public class BankController {
     @GetMapping(value = "/accounts", produces = "text/plain")
     public String getAccounts() {
         return worldBean.read(BankController::formatAccounts);
+    }
+
+    /**
+     * One account with all its details and all its transactions (both the ones it has paid and the ones it has received).
+     */
+    @GetMapping(value = "/account/{id}", produces = "text/plain")
+    public String getAccount(@PathVariable("id") final int id) {
+        return worldBean.read(world -> formatAccount(world, id));
     }
 
     /**
@@ -121,6 +132,44 @@ public class BankController {
         for (final BankAccounts.BankAccount account : accounts) {
             sb.append(String.format("%-8d %18d  %-10s %d%n", account.getId(), account.getBalance(), account.getKind(), account.getOwnerId()));
         }
+        return sb.toString();
+    }
+
+    /**
+     * The details of an account (the same fields as in the list of the accounts and more) and its statement: every transaction of the account in the order of
+     * the ids, with the change of the balance (minus when the account pays). The check of the balance (BankControl.validate) is at the end.
+     */
+    static String formatAccount(final World world, final int accountId) {
+        final java.util.Optional<BankAccounts.BankAccount> found = accountId > 0 ? world.bankAccounts().byId(accountId) : java.util.Optional.empty();
+        if (found.isEmpty()) {
+            return "Account #" + accountId + " not found" + NEW_LINE;
+        }
+        final BankAccounts.BankAccount account = found.get();
+
+        final StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Account #%d%n", account.getId()));
+        sb.append(String.format("Kind:            %s%n", account.getKind()));
+        sb.append(String.format("Owner:           %d%n", account.getOwnerId()));
+        sb.append(String.format("Balance:         %d%n", account.getBalance()));
+        sb.append(String.format("Can go negative: %s%n", account.canGoNegative() ? "yes" : "no"));
+        sb.append(String.format("Created:         %s%n", TimeTools.ts(account.getCreatedTime())));
+        sb.append(String.format("Updated:         %s%n", TimeTools.ts(account.getUpdatedTime())));
+        sb.append(NEW_LINE);
+
+        final List<BankTransactions.BankTransaction> transactions = world.bankTransactions().filter(world.bankTransactions().byAccountId(accountId))
+                .sorted(Comparator.comparingInt(BankTransactions.BankTransaction::getId))
+                .toList();
+        sb.append(String.format("Transactions: %d%n", transactions.size()));
+        sb.append(String.format("%-8s %-19s %-8s %-8s %14s %14s  %s%n", "ID", "TIME", "FROM", "TO", "AMOUNT", "CHANGE", "TYPE"));
+        for (final BankTransactions.BankTransaction t : transactions) {
+            final boolean checkpoint = t.getType() == BankTransactions.Type.BalanceCheckpoint;
+            // a checkpoint moves no money: it is the verified balance
+            final String change = checkpoint ? "=" + t.getAmount() : String.valueOf(t.getToAccountId() == accountId ? t.getAmount() : -t.getAmount());
+            sb.append(String.format("%-8d %-19s %-8d %-8d %14d %14s  %s%n", t.getId(), TimeTools.ts(t.getTime()).replace('T', ' '),
+                    t.getFromAccountId(), t.getToAccountId(), t.getAmount(), change, t.getType()));
+        }
+        sb.append(NEW_LINE);
+        sb.append("Balance check: ").append(world.bankControl().validate(accountId) ? "OK" : "FAILED").append(NEW_LINE);
         return sb.toString();
     }
 }

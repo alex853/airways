@@ -165,7 +165,7 @@
 `BankControl.fixBalance(accountId)` пишет точку с текущим остатком счёта. `BankControl.validate(accountId)` проверяет остаток счёта: он должен совпасть со значением
 последней точки плюс операции после неё (без точки считаем от нуля), расхождение пишется в лог ошибкой.
 
-**Админка (под админским токеном):** `GET /admin/bank/accounts` печатает счета текстом (ID, BALANCE, KIND, OWNER). `GET /admin/bank/create-initial-accounts?dryRun=` (по умолчанию `true`)
+**Админка (под админским токеном):** `GET /admin/bank/accounts` печатает счета текстом (ID, BALANCE, KIND, OWNER). `GET /admin/bank/account/{id}` печатает один счёт: все поля (вид, владелец, остаток, можно ли в минус, время создания и обновления) и все операции счёта (ID, TIME, FROM, TO, AMOUNT, CHANGE со знаком для этого счёта, TYPE), в конце проверка остатка (`BankControl.validate`). `GET /admin/bank/create-initial-accounts?dryRun=` (по умолчанию `true`)
 разовое создание первых счетов в таком порядке: 1 System Bank, 2 System Passengers, 3 Operator ShadowJet (`World25.ShadowJetOperatorId`), 4 Operator BusyBirds
 (`World25.BusyBirdsOperatorId`), 5 Person #1 (минус не разрешён, остальным можно); остатки нулевые, имён нет; существующие по владельцу не создаются повторно,
 персона получает `bankAccountId`. Контроллер `BankController` в `app.admin`. Id счетов, которые знает код, лежат константами в `BankAccounts`: `SystemBankAccountId` (1), `SystemPassengersAccountId` (2), `ShadowJetBankAccountId` (3) и `BusyBirdsBankAccountId` (4); если счёт получил другой id, разовое создание пишет предупреждение.
