@@ -34,6 +34,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * The pilot of the user: what the user sees about the person who flies for the user (token authentication, see AuthFilter).
@@ -90,6 +91,29 @@ public class PilotController {
         final int avatarId = Avatars.idOfAllowedFile(image)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "There is no such picture"));
         world.personControl().setAvatar(person, avatarId, image);
+    }
+
+    /**
+     * The pilot types its initials: up to two characters, only English letters (upper and lower case) and digits, 62 characters in all; empty is allowed.
+     * What does not fit is refused (400), nothing is cut or changed. The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/initials")
+    public PilotDto chooseInitials(@RequestAttribute("userId") final int userId,
+                                   @RequestParam(name = "initials", required = false, defaultValue = "") final String initials) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            chooseInitials(world, person, initials);
+            return buildPilot(world, person);
+        });
+    }
+
+    private static final Pattern INITIALS_PATTERN = Pattern.compile("[A-Za-z0-9]{0,2}");
+
+    static void chooseInitials(final World world, final Persons.Person person, final String initials) {
+        if (initials == null || !INITIALS_PATTERN.matcher(initials).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Initials are up to two English letters or digits");
+        }
+        world.personControl().setInitials(person, initials);
     }
 
     /**

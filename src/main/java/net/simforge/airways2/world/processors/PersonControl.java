@@ -169,6 +169,20 @@ public class PersonControl {
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 
+    // ---- the initials
+
+    /**
+     * The person has typed its initials (the caller has checked them, see PilotController.chooseInitials). The change is logged.
+     */
+    public void setInitials(final Persons.Person person, final String initials) {
+        final String oldInitials = person.getInitials();
+        if (oldInitials.equals(initials)) {
+            return;
+        }
+        person.setInitials(initials);
+        log.info("p/s #{} - initials '{}' -> '{}'", person.getId(), oldInitials, initials);
+    }
+
     // ---- the avatar
 
     /**

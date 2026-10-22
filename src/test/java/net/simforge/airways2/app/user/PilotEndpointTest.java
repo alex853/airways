@@ -235,6 +235,42 @@ class PilotEndpointTest {
     }
 
     @Test
+    void initialsOfOneOrTwoEnglishLettersOrDigitsAreStored() {
+        final Persons.Person person = freshPilot();
+
+        for (final String initials : new String[]{"AK", "ak", "aK", "A", "7", "A7", "c7", "77", "00", "zZ"}) {
+            PilotController.chooseInitials(world, person, initials);
+
+            assertEquals(initials, person.getInitials());
+            assertEquals(initials, PilotController.buildPilot(world, person).getInitials());
+        }
+    }
+
+    @Test
+    void emptyInitialsAreAllowed() {
+        final Persons.Person person = freshPilot();
+
+        PilotController.chooseInitials(world, person, "");
+
+        assertEquals("", person.getInitials());
+        assertEquals("", PilotController.buildPilot(world, person).getInitials());
+    }
+
+    @Test
+    void initialsWhichDoNotFitAreRefusedAndNothingIsChanged() {
+        final Persons.Person person = freshPilot();
+        PilotController.chooseInitials(world, person, "AK");
+
+        // three characters, symbols, spaces, non English letters, a line break, null
+        for (final String initials : new String[]{"ABC", "A-", "_", "A B", " A", "A ", "я", "é1", "A\n", "A\u0000", "١", null}) {
+            final org.springframework.web.server.ResponseStatusException e = org.junit.jupiter.api.Assertions.assertThrows(
+                    org.springframework.web.server.ResponseStatusException.class, () -> PilotController.chooseInitials(world, person, initials));
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatus());
+        }
+        assertEquals("AK", person.getInitials());
+    }
+
+    @Test
     void chosenAvatarIsStoredAndShown() {
         final Persons.Person person = freshPilot();
 
