@@ -117,6 +117,20 @@ class BusyBirdsPlanSalaryTest {
     }
 
     @Test
+    public void test__turnaround_time_can_be_half_an_hour() {
+        final BusyBirdsMissionControl.Leg revenue1 = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.MissionPlan half = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 0.5, true, FULL_PAY).get(0);
+        final BusyBirdsMissionControl.MissionPlan hour = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
+
+        // the gap between the legs is the turnaround (plus the rounding of the departure time): 30 minutes less
+        final int gapHalf = half.getLegs().get(1).getPlannedDepTime() - half.getLegs().get(0).getPlannedArrTime();
+        final int gapHour = hour.getLegs().get(1).getPlannedDepTime() - hour.getLegs().get(0).getPlannedArrTime();
+        assertTrue(gapHalf >= 30 * Time.ONE_MINUTE && gapHalf < Time.ONE_HOUR);
+        assertEquals(30 * Time.ONE_MINUTE, gapHour - gapHalf);
+        assertEquals(revenue1.getPlannedDepTime(), half.getLegs().get(0).getPlannedDepTime());
+    }
+
+    @Test
     public void test__repositioning_to_the_departure_airport_is_paid_by_the_flight_only() {
         // the aircraft is somewhere else, it has to come to the departure airport first
         final Airports.Airport elsewhere = world.airports().create(48.7, 2.4, "ELS", "LFPO", "Orly");

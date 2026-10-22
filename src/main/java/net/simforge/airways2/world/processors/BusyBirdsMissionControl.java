@@ -184,7 +184,7 @@ public class BusyBirdsMissionControl {
      * The plans of a mission for an aircraft. The pay of every leg is what the pilot will get: it is calculated by the parameters of the pilot on the type of
      * the aircraft (the currency and the experience level, see PilotPay), the same as the pilot contract is going to be created with.
      */
-    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, int turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, double turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -220,7 +220,7 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, int turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, double turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -241,11 +241,11 @@ public class BusyBirdsMissionControl {
 
         if (needFerryFlightToDepartureAirport) {
             leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);
-            nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
+            nextDepTime = leg.getPlannedArrTime() + (int) Math.round(turnaroundTimeHours * Time.ONE_HOUR);
         }
 
         leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData, aircraftTypeIcao, missionIncome, payParams);
-        nextDepTime = leg.getPlannedArrTime() + turnaroundTimeHours * Time.ONE_HOUR;
+        nextDepTime = leg.getPlannedArrTime() + (int) Math.round(turnaroundTimeHours * Time.ONE_HOUR);
 
         if (needFerryFlightToBaseAirport && ferryBackToBase) {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);

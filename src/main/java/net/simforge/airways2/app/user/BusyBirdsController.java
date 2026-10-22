@@ -159,7 +159,7 @@ public class BusyBirdsController {
     public BuildPlansResponse buildPlans(@RequestAttribute("userId") int userId,
                                          @RequestParam(name = "missionId") String missionId,
                                          @RequestParam(name = "aircraftId") String aircraftId,
-                                         @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
+                                         @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
                                          @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
         // a quote changes the world: the price of the journey is set
         return worldBean.modifySync(world -> {
@@ -181,7 +181,7 @@ public class BusyBirdsController {
     public BookMissionResponse bookMission(@RequestAttribute("userId") int userId,
                                            @RequestParam(name = "missionId") String missionId,
                                            @RequestParam(name = "aircraftId") String aircraftId,
-                                           @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") int turnaroundTime,
+                                           @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
                                            @RequestParam(name = "planId") String planId) {
         return worldBean.modifySync(world -> {
