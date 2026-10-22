@@ -59,12 +59,12 @@ public class FlightDashboardController {
                     .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                     .toList();
 
-            return new MyFlightsResponse(userFlights.stream().map(f -> toStatusDto(world, f)).toList());
+            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f)).toList());
         });
     }
 
     @GetMapping("/status")
-    public Status2Dto getStatus(@RequestAttribute("userId") int userId) {
+    public StatusDto getStatus(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
             SimTracker.UserStatus simStatus = simTrackerBean.getSimStatus(userId);
             final boolean simTrackerConnected = simStatus != null;
@@ -88,7 +88,7 @@ public class FlightDashboardController {
             // A manual flight is not about the position of the sim, so the sim does not take part in the verdict about the pilot
             final SimTracker.UserStatus verdictSim = mode == TrackingMode.MANUAL ? SimTracker.UserStatus.none() : simStatus;
 
-            return new Status2Dto(
+            return new StatusDto(
                     mode,
                     buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)),
                     simStatus,
@@ -337,7 +337,7 @@ public class FlightDashboardController {
      *             (the tab of G7 does not send it) and manual otherwise.
      */
     @PostMapping("/start-flight")
-    public Status2Dto startFlight(@RequestAttribute("userId") int userId,
+    public StatusDto startFlight(@RequestAttribute("userId") int userId,
                                   @RequestParam(name = "flightId") String flightIdStr,
                                   @RequestParam(name = "mode", required = false) String mode) {
         return worldBean.modifySync(world -> {
@@ -438,7 +438,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/reschedule")
-    public Status2Dto reschedule(@RequestAttribute("userId") int userId,
+    public StatusDto reschedule(@RequestAttribute("userId") int userId,
                                  @RequestParam(name = "flightId") String flightIdStr,
                                  @RequestParam(name = "shiftMinutes") int shiftMinutes) {
         return worldBean.modifySync(world -> {
@@ -470,7 +470,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-boarding")
-    public Status2Dto startBoarding(@RequestAttribute("userId") int userId,
+    public StatusDto startBoarding(@RequestAttribute("userId") int userId,
                                     @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -512,7 +512,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/blocks-off")
-    public Status2Dto blocksOff(@RequestAttribute("userId") int userId,
+    public StatusDto blocksOff(@RequestAttribute("userId") int userId,
                                 @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -541,7 +541,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/takeoff")
-    public Status2Dto takeoff(@RequestAttribute("userId") int userId,
+    public StatusDto takeoff(@RequestAttribute("userId") int userId,
                               @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -570,7 +570,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/landing")
-    public Status2Dto landing(@RequestAttribute("userId") int userId,
+    public StatusDto landing(@RequestAttribute("userId") int userId,
                               @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -604,7 +604,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/blocks-on")
-    public Status2Dto blocksOn(@RequestAttribute("userId") int userId,
+    public StatusDto blocksOn(@RequestAttribute("userId") int userId,
                                @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -633,7 +633,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/start-deboarding")
-    public Status2Dto startDeboarding(@RequestAttribute("userId") int userId,
+    public StatusDto startDeboarding(@RequestAttribute("userId") int userId,
                                       @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -675,7 +675,7 @@ public class FlightDashboardController {
     }
 
     @PostMapping("/finish-flight")
-    public Status2Dto finish(@RequestAttribute("userId") int userId,
+    public StatusDto finish(@RequestAttribute("userId") int userId,
                              @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -719,7 +719,7 @@ public class FlightDashboardController {
     }
 
     @Deprecated
-    private StatusDto toStatusDto(World world, FlightMissions.Mission flight) {
+    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -757,7 +757,7 @@ public class FlightDashboardController {
                 transportFlight.getPaxOnBoard()
         ) : null;
 
-        return new StatusDto(aircraftDto, flightDto, transportFlightDto);
+        return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto);
     }
 
     @Deprecated
@@ -839,13 +839,13 @@ public class FlightDashboardController {
     @Data
     @AllArgsConstructor
     public static class MyFlightsResponse {
-        private List<StatusDto> flights;
+        private List<MyFlightsDto> flights;
     }
 
     @Data
     @AllArgsConstructor
     @Deprecated
-    public static class StatusDto {
+    public static class MyFlightsDto {
         private AircraftDto aircraft;
         private FlightDto flight;
         private TransportFlightDto transportFlight;
@@ -853,7 +853,7 @@ public class FlightDashboardController {
 
     @AllArgsConstructor
     @Data
-    public static class Status2Dto {
+    public static class StatusDto {
         // Who does the steps of the flight (Blocks Off, Takeoff, Landing, Blocks On): the sim tracker or the pilot with buttons (manual). The mode is
         // chosen when the flight is started and does not change after that; null until then (and when there is no flight).
         private final TrackingMode mode;
