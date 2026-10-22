@@ -169,6 +169,20 @@ public class PersonControl {
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 
+    // ---- the avatar
+
+    /**
+     * The person has chosen the avatar: the number of the row of the list of the pictures (see Avatars). The change is logged.
+     */
+    public void setAvatar(final Persons.Person person, final int avatarId, final String file) {
+        final int oldAvatarId = person.getAvatarId();
+        if (oldAvatarId == avatarId) {
+            return;
+        }
+        person.setAvatarId(avatarId);
+        log.info("p/s #{} - avatar {} -> {} ({})", person.getId(), oldAvatarId, avatarId, file);
+    }
+
     // ---- low level, it logs every change
 
     public void setState(final Persons.Person person, final Persons.State state, final String reason) {

@@ -68,4 +68,32 @@ class AvatarsTest {
         }
         assertTrue(seen.size() > 100);
     }
+
+    @Test
+    void allowedFilesAreTheListWithoutTheForbiddenOnes() {
+        final java.util.List<String> allowed = Avatars.allowedFiles();
+
+        // six of the 159 rows are forbidden
+        assertEquals(Avatars.size() - 6, allowed.size());
+        assertTrue(allowed.contains("user_pilot.png"));
+        assertTrue(!allowed.contains("user_add.png"));
+        assertEquals("user.png", allowed.get(0));
+    }
+
+    @Test
+    void theIdOfAnAllowedFileIsItsRowNumber() {
+        assertEquals(Optional.of(1), Avatars.idOfAllowedFile("user.png"));
+        assertEquals(Optional.of(106), Avatars.idOfAllowedFile("user_pilot.png"));
+        assertEquals(Optional.of(Avatars.size()), Avatars.idOfAllowedFile("user_zorro.png"));
+    }
+
+    @Test
+    void aForbiddenUnknownOrStrangeNameIsNotAnId() {
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile("user_add.png"));
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile("apple.png"));
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile("../user.png"));
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile("USER.PNG"));
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile(""));
+        assertEquals(Optional.empty(), Avatars.idOfAllowedFile(null));
+    }
 }

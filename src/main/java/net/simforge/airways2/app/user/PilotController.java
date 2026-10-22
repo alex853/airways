@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -60,6 +61,35 @@ public class PilotController {
             });
         }
         return worldBean.read(world -> buildPilot(world, personOf(world, userId)));
+    }
+
+    /**
+     * The pictures the pilot can choose from, and the one which is shown now. The list is given only to the pilot who asks for it (to choose), the pages
+     * do not have it.
+     */
+    @GetMapping("/avatars")
+    public AvatarsDto getAvatars(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> new AvatarsDto(Avatars.allowedFiles(), shownAvatarImage(personOf(world, userId))));
+    }
+
+    /**
+     * The pilot chooses the picture by its file name from the list. A name which is not in the list, or is forbidden, is refused. The answer is the pilot as
+     * GET /pilot gives it.
+     */
+    @PostMapping("/avatar")
+    public PilotDto chooseAvatar(@RequestAttribute("userId") final int userId,
+                                 @RequestParam("image") final String image) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            chooseAvatar(world, person, image);
+            return buildPilot(world, person);
+        });
+    }
+
+    static void chooseAvatar(final World world, final Persons.Person person, final String image) {
+        final int avatarId = Avatars.idOfAllowedFile(image)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "There is no such picture"));
+        world.personControl().setAvatar(person, avatarId, image);
     }
 
     /**
@@ -482,6 +512,15 @@ public class PilotController {
         private int limitMinutes;
         // true if a flight is in progress and its time up to now is in the number
         private boolean onDuty;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AvatarsDto {
+        // the file names of the pictures which can be chosen, in the order of the list
+        private List<String> images;
+        // the picture which is shown now
+        private String current;
     }
 
     @Data

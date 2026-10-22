@@ -48,6 +48,30 @@ public final class Avatars {
     }
 
     /**
+     * The files of all the pictures which may be chosen (the forbidden ones are not in it), in the order of the list.
+     */
+    public static List<String> allowedFiles() {
+        return rows().stream().filter(row -> !row.forbidden()).map(Row::file).toList();
+    }
+
+    /**
+     * The avatarId of an allowed picture by its file name, empty if there is no such picture or it is forbidden. The name must be exactly the name of the
+     * list, so nothing else (a path, another file) can be chosen.
+     */
+    public static Optional<Integer> idOfAllowedFile(final String file) {
+        if (file == null) {
+            return Optional.empty();
+        }
+        final List<Row> all = rows();
+        for (int i = 0; i < all.size(); i++) {
+            if (all.get(i).file().equals(file)) {
+                return all.get(i).forbidden() ? Optional.empty() : Optional.of(i + 1);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
      * The picture to show for a person: its own if it has one which is allowed, otherwise one of two pilots by the parity of the id of the person.
      */
     public static String shownFile(final int personId, final int avatarId) {

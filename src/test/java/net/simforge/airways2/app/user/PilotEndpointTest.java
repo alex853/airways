@@ -235,6 +235,28 @@ class PilotEndpointTest {
     }
 
     @Test
+    void chosenAvatarIsStoredAndShown() {
+        final Persons.Person person = freshPilot();
+
+        PilotController.chooseAvatar(world, person, "user_zorro.png");
+
+        assertEquals(Avatars.size(), person.getAvatarId());
+        assertEquals("user_zorro.png", PilotController.buildPilot(world, person).getAvatarImage());
+    }
+
+    @Test
+    void aForbiddenOrUnknownPictureCannotBeChosen() {
+        final Persons.Person person = freshPilot();
+
+        for (final String image : new String[]{"user_add.png", "apple.png", "../user.png", "", "nothing"}) {
+            final org.springframework.web.server.ResponseStatusException e = org.junit.jupiter.api.Assertions.assertThrows(
+                    org.springframework.web.server.ResponseStatusException.class, () -> PilotController.chooseAvatar(world, person, image));
+            assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, e.getStatus());
+        }
+        assertEquals(0, person.getAvatarId());
+    }
+
+    @Test
     void pilotWithoutACreditStartedShowsTheInitialOne() {
         assertEquals(16 * 60, PilotController.buildPilot(world, freshPilot()).getAwake().getCreditMinutes());
     }
