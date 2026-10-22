@@ -89,6 +89,65 @@ class PilotEndpointTest {
         assertEquals(8 * 60, awake.getCreditAfterWakeMinutes());
     }
 
+    // ---- the duty of the last 24 hours
+
+    private net.simforge.airways2.world.datamodel.PilotLogbook.Entry logbookEntry(final Persons.Person person, final int blocksOffHoursAgo, final int blocksOnHoursAgo) {
+        final Airports.Airport other = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft =
+                world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        final int now = world.getWorldTime();
+        return world.pilotLogbook().create(person.getId(), aircraft.getId(), oakland.getId(), other.getId(),
+                now - blocksOffHoursAgo * 3600, now - blocksOnHoursAgo * 3600);
+    }
+
+    @Test
+    void dutyOfAnEntryWithoutTheKeptDutyIsTheBlocksWithThePreflightAndThePostflight() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        // two hours from blocks off to blocks on: 30 min of the preflight before and 20 min of the postflight after make 2 h 50 min
+        logbookEntry(person, 6, 4);
+
+        final PilotController.DutyDto duty = PilotController.buildDuty(world, person);
+
+        assertEquals(170, duty.getLast24HoursMinutes());
+        assertEquals(14 * 60, duty.getLimitMinutes());
+        assertFalse(duty.isOnDuty());
+    }
+
+    @Test
+    void dutyOfAnEntryWithTheKeptDutyIsFromTheStartToTheFinish() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        final int now = world.getWorldTime();
+        logbookEntry(person, 6, 4).setDuty(now - 7 * 3600, now - 3 * 3600);
+
+        assertEquals(4 * 60, PilotController.buildDuty(world, person).getLast24HoursMinutes());
+    }
+
+    @Test
+    void flightsOlderThanADayAreNotInTheDuty() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        logbookEntry(person, 50, 48);
+
+        assertEquals(0, PilotController.buildDuty(world, person).getLast24HoursMinutes());
+    }
+
+    @Test
+    void flightInProgressIsCountedFromItsStartUpToNow() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        person.setState(Persons.State.OnDuty);
+        person.setDutyStartTime(world.getWorldTime() - 90 * 60);
+        // and one finished flight before it: 2 h 50 min
+        logbookEntry(person, 12, 10);
+
+        final PilotController.DutyDto duty = PilotController.buildDuty(world, person);
+
+        assertEquals(170 + 90, duty.getLast24HoursMinutes());
+        assertTrue(duty.isOnDuty());
+    }
+
     @Test
     void pilotWithoutACreditStartedShowsTheInitialOne() {
         assertEquals(16 * 60, PilotController.buildPilot(world, freshPilot()).getAwake().getCreditMinutes());

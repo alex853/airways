@@ -12,6 +12,8 @@ public class FlightTimeline {
     // the taxi before the takeoff (blocks off to takeoff) and after the landing (landing to blocks on)
     public static final int BLOCKS_OFF_TO_TAKEOFF_MINUTES = 10;
     public static final int LANDING_TO_BLOCKS_ON_MINUTES = 10;
+    // blocks on to the finish of the flight (the postflight)
+    public static final int POSTFLIGHT_MINUTES = 20;
 
     public static FlightTimeline byFlyingTime(Duration flyingTime) {
         checkNotNull(flyingTime);
@@ -69,7 +71,7 @@ public class FlightTimeline {
         departure = new Stage(blocksOff, takeoff, Duration.ofMinutes(BLOCKS_OFF_TO_TAKEOFF_MINUTES));
         flying = new Stage(takeoff, landing, null);
         arrival = new Stage(landing, blocksOn, Duration.ofMinutes(LANDING_TO_BLOCKS_ON_MINUTES));
-        postFlight = new Stage(blocksOn, finish, Duration.ofMinutes(20));
+        postFlight = new Stage(blocksOn, finish, Duration.ofMinutes(POSTFLIGHT_MINUTES));
     }
 
     public Milestone getStart() {

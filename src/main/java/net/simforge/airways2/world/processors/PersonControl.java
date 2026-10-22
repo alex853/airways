@@ -38,6 +38,8 @@ public class PersonControl {
                 log.warn("p/s #{} - f/m #{} is started while the person is {}, not Idle", person.getId(), mission.getId(), person.getState());
             }
             setState(person, Persons.State.OnDuty, "f/m #" + mission.getId() + " started");
+            // the duty is counted from the start of the flight, the preflight is in it
+            person.setDutyStartTime(world.getWorldTime());
         });
     }
 
@@ -64,6 +66,7 @@ public class PersonControl {
         findPerson(mission).ifPresent(person -> {
             setState(person, Persons.State.Idle, "f/m #" + mission.getId() + " finished");
             writeLogbook(person, mission);
+            person.setDutyStartTime(0);
         });
     }
 
@@ -78,6 +81,7 @@ public class PersonControl {
                     final String reason = "f/m #" + mission.getId() + " cancelled";
                     setState(person, Persons.State.Idle, reason);
                     setLocation(person, Persons.LocationType.Airport, airportId, reason);
+                    person.setDutyStartTime(0);
                 });
     }
 
@@ -102,6 +106,10 @@ public class PersonControl {
         // For now every flight is IFR (all the flight plans are filed in SimBrief), so IFR time is the whole flight time. VFR flights are to come later,
         // the source of the flight rules is not decided yet.
         entry.setIfr(true);
+        // the duty: from the start of the flight to its finish (now), if the start is known (a flight started before the duty was kept has none)
+        if (person.getDutyStartTime() > 0 && world.getWorldTime() >= person.getDutyStartTime()) {
+            entry.setDuty(person.getDutyStartTime(), world.getWorldTime());
+        }
         entry.setNightTakeoff(mission.isNightTakeoff());
         entry.setNightLanding(mission.isNightLanding());
         // seconds to hours, the storage rounds it to a tenth; the night time cannot be longer than the flight time

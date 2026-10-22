@@ -37,9 +37,8 @@ public class Persons {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId, 0 is none  3 bytes
             .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes, see PilotRest  2 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // creditTime, when the credit was fixed (falling asleep or waking up), 0 is not started  4 bytes
-            // ----------------------------------------------------- sum                   28 bytes
-            // -------------------------------------------- reserved 4 bytes to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // dutyStartTime, when the flight in progress was started, 0 is no flight in progress  4 bytes
+            // ----------------------------------------------------- sum                   32 bytes
             .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (type=0, state=1, heartbeatTime=2)
             .build();
 
@@ -55,6 +54,7 @@ public class Persons {
     private final DataField bankAccountIdField = storage.getDataField(9);
     private final DataField awakeCreditMinutesField = storage.getDataField(10);
     private final DataField creditTimeField = storage.getDataField(11);
+    private final DataField dutyStartTimeField = storage.getDataField(12);
 
     private static final int MAX_INITIALS_LENGTH = 2;
 
@@ -258,6 +258,17 @@ public class Persons {
             checkArgument(DataType.Signed16bit.contains(awakeCreditMinutes), "awake credit is out of 16 bits: %s", awakeCreditMinutes);
             storage.set(id, awakeCreditMinutesField, awakeCreditMinutes);
             storage.set(id, creditTimeField, creditTime);
+        }
+
+        /**
+         * The moment (world time) the person went on duty: the flight which is in progress was started. Zero when there is no such flight.
+         */
+        public int getDutyStartTime() {
+            return storage.getAsInt(id, dutyStartTimeField);
+        }
+
+        public void setDutyStartTime(final int dutyStartTime) {
+            storage.set(id, dutyStartTimeField, dutyStartTime);
         }
 
         public int getBankAccountId() {

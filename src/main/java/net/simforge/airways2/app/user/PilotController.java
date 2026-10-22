@@ -7,6 +7,9 @@ import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.computations.FlightTimeline;
+import net.simforge.airways2.world.computations.PilotDuty;
 import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.computations.PilotPayParams;
@@ -100,6 +103,51 @@ public class PilotController {
     }
 
     /**
+     * The duty of the pilot in the last 24 hours: the finished flights of the logbook (from the start of the flight to its finish; an entry written before
+     * the duty was kept has the time of the blocks with the preflight before and the postflight after) and the flight in progress, which counts from its
+     * start up to now. The limit is told with it, nothing is enforced yet.
+     */
+    static DutyDto buildDuty(final World world, final Persons.Person person) {
+        final int now = world.getWorldTime();
+        final int windowStart = now - PilotDuty.WINDOW_SECONDS;
+        final List<int[]> periods = new ArrayList<>();
+
+        world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId())).forEach(entry -> {
+            final int start;
+            final int end;
+            if (entry.getDutyStartTime() > 0 && entry.getDutyEndTime() > 0) {
+                start = entry.getDutyStartTime();
+                end = entry.getDutyEndTime();
+            } else {
+                start = entry.getBlocksOffTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE;
+                end = entry.getBlocksOnTime() + FlightTimeline.POSTFLIGHT_MINUTES * Time.ONE_MINUTE;
+            }
+            if (end > windowStart) {
+                periods.add(new int[]{start, end});
+            }
+        });
+
+        boolean onDuty = false;
+        if (person.getState() == Persons.State.OnDuty) {
+            onDuty = true;
+            int start = person.getDutyStartTime();
+            if (start <= 0) {
+                // the flight was started before the start was kept: the preflight starts before the planned blocks off
+                start = world.flightMissions().allByUserId(person.getUserId())
+                        .filter(fm -> switch (fm.getStatus()) {
+                            case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                            default -> false;
+                        })
+                        .mapToInt(fm -> fm.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE)
+                        .min().orElse(now);
+            }
+            periods.add(new int[]{Math.min(start, now), now});
+        }
+
+        return new DutyDto(PilotDuty.dutyMinutesInWindow(periods, now), PilotDuty.LIMIT_MINUTES, onDuty);
+    }
+
+    /**
      * The awake credit as the page shows it. While the pilot is awake it is the credit now (it falls with the time); while the pilot sleeps it is the credit
      * at the moment of falling asleep, and the credit after waking up now is next to it. A pilot who has no credit started yet shows the initial one.
      */
@@ -134,7 +182,7 @@ public class PilotController {
                 : null;
 
         return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
-                buildAwake(world, person));
+                buildAwake(world, person), buildDuty(world, person));
     }
 
     @GetMapping("/logbook")
@@ -362,6 +410,18 @@ public class PilotController {
         // the balance of the bank account of the pilot, null if the pilot has no account
         private Long bankBalance;
         private AwakeDto awake;
+        private DutyDto duty;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class DutyDto {
+        // minutes of duty in the last 24 hours (the sliding window, not the calendar day)
+        private int last24HoursMinutes;
+        // the most of duty in 24 hours, minutes
+        private int limitMinutes;
+        // true if a flight is in progress and its time up to now is in the number
+        private boolean onDuty;
     }
 
     @Data

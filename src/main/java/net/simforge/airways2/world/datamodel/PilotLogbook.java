@@ -39,9 +39,10 @@ public class PilotLogbook {
             .withDataField(DataField.of(DataType.Tenths8bit)) // nightTime, hours 0.0-25.5            1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // ifrTime, hours 0.0-25.5              1 byte
             // ----------------------------------------------------- sum                   20 bytes
-            // -------------------------------------------- reserved 12 bytes to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // dutyStartTime, world time of the start of the flight, 0 is not known  4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // dutyEndTime, world time of the finish of the flight, 0 is not known  4 bytes
+            // ----------------------------------------------------- sum                   28 bytes
+            // -------------------------------------------- reserved 4 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
             .build();
 
@@ -65,6 +66,8 @@ public class PilotLogbook {
     private final DataField flightTimeField = storage.getDataField(7);
     private final DataField nightTimeField = storage.getDataField(8);
     private final DataField ifrTimeField = storage.getDataField(9);
+    private final DataField dutyStartTimeField = storage.getDataField(10);
+    private final DataField dutyEndTimeField = storage.getDataField(11);
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -192,6 +195,24 @@ public class PilotLogbook {
 
         public int getBlocksOnTime() {
             return DateMinutes.fromStored(getDateOfFlight(), blocksOnBitField.getInt(id));
+        }
+
+        /**
+         * The duty of the flight: from the start of the flight (Start flight) to its finish (Finish flight), world time in seconds, so it includes the
+         * preflight and the postflight. Zero if it is not known (the entries before the duty was written): then PilotDuty takes it from the blocks.
+         */
+        public int getDutyStartTime() {
+            return storage.getAsInt(id, dutyStartTimeField);
+        }
+
+        public int getDutyEndTime() {
+            return storage.getAsInt(id, dutyEndTimeField);
+        }
+
+        public void setDuty(final int dutyStartTime, final int dutyEndTime) {
+            checkArgument(dutyEndTime >= dutyStartTime, "the duty ends before it starts");
+            storage.set(id, dutyStartTimeField, dutyStartTime);
+            storage.set(id, dutyEndTimeField, dutyEndTime);
         }
 
         public int getDurationMinutes() {
