@@ -19,6 +19,7 @@
 - [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
 - [users.md](users.md) — пользователи: временное хранилище на property-файлах, токены, последняя посадка
 - [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
+- [status-and-backlog.md](status-and-backlog.md) — статус и бэклог: брейндамп по пунктам (сделано / частично / не сделано), отложенное и дальние планы, напоминания по проду, тудушки в коде (сверка 2026-10-22)
 - [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано
 - [clients-and-flight-modes.md](clients-and-flight-modes.md) — клиенты (веб, G7 FlightBag), режимы флайт-дашборда (manual, SimTracker, VATSIM), BusyBirds и ShadowJet, стартовый экран (описание и планы)
 - [use-cases.md](use-cases.md) — основные юзкейсы, которые обязана поддерживать система (BusyBirds через G7 автоматически; через веб, ручной режим и варианты), список изменений и оценка
