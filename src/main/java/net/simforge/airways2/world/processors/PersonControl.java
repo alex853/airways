@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -150,22 +151,54 @@ public class PersonControl {
         final int credit = PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now);
         person.setAwakeCredit(credit, now);
         setState(person, Persons.State.Resting, "sleep");
-        log.info("p/s #{} - sleep started, awake credit {} min", person.getId(), credit);
+        // the pilot wakes up by itself at a random moment, the heartbeat is that moment (PersonProcessor)
+        // a pilot in debt sleeps longer, see PilotRest.extraSleepMinutes
+        final int sleepMinutes = Tools.random(PilotRest.AUTO_WAKE_UP_MIN_MINUTES, PilotRest.AUTO_WAKE_UP_MAX_MINUTES) + PilotRest.extraSleepMinutes(credit);
+        person.setHeartbeatTime(now + sleepMinutes * Time.ONE_MINUTE);
+        log.info("p/s #{} - sleep started, awake credit {} min, wakes up by itself in {} min", person.getId(), credit, sleepMinutes);
     }
 
     /**
-     * The pilot wakes up: the sleep (from the moment the credit was fixed) is added to the credit. Only a sleeping pilot can wake up.
+     * The pilot wakes up at the will of the user: the sleep (from the moment the credit was fixed) is added to the credit. Only a sleeping pilot can wake up.
      */
     public void wakeUp(final Persons.Person person) {
+        wakeUp(person, "wake up");
+    }
+
+    /**
+     * The pilot wakes up by itself: the time which was scheduled when the pilot fell asleep has come.
+     */
+    public void wakeUpByItself(final Persons.Person person) {
+        wakeUp(person, "woke up by itself");
+    }
+
+    /**
+     * The sleeping pilots who have no wake up scheduled (they fell asleep before it was scheduled, the application knows nothing about them) get one: the
+     * random moment from 7.5 to 10 hours after the fall asleep, or the next step of the world if that moment has passed already. For the start of the application.
+     */
+    public void scheduleWakeUpOfSleepingPersons() {
+        final int now = world.getWorldTime();
+        world.persons().sleepingWithoutHeartbeat().forEach(person -> {
+            // the credit of a sleeping person is the one it fell asleep with
+            final int sleepMinutes = Tools.random(PilotRest.AUTO_WAKE_UP_MIN_MINUTES, PilotRest.AUTO_WAKE_UP_MAX_MINUTES)
+                    + PilotRest.extraSleepMinutes(person.getAwakeCreditMinutes());
+            final int wakeUpAt = Math.max(now, person.getCreditTime() + sleepMinutes * Time.ONE_MINUTE);
+            person.setHeartbeatTime(wakeUpAt);
+            log.info("p/s #{} - asleep without a wake up, it is scheduled in {} min", person.getId(), (wakeUpAt - now) / Time.ONE_MINUTE);
+        });
+    }
+
+    private void wakeUp(final Persons.Person person, final String reason) {
         if (person.getState() != Persons.State.Resting) {
             throw new IllegalStateException("only a sleeping pilot can wake up, the pilot is " + person.getState());
         }
+        person.setHeartbeatTime(0); // woken by the user: the scheduled wake up is not needed any more
         final int now = world.getWorldTime();
         final int sleepMinutes = PilotRest.minutesBetween(person.getCreditTime(), now);
         final int before = person.getAwakeCreditMinutes();
         final int after = PilotRest.creditAfterSleep(before, sleepMinutes);
         person.setAwakeCredit(after, now);
-        setState(person, Persons.State.Idle, "wake up");
+        setState(person, Persons.State.Idle, reason);
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 

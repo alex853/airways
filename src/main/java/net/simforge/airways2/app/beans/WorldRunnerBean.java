@@ -176,6 +176,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
             world = World25.load();
             worldTime = world.getWorldTime();
             log.info("world loaded, world time {}", LocalDateTime.ofEpochSecond(world.getWorldTime(), 0, ZoneOffset.UTC));
+            // the pilots who were put to sleep before the wake up was scheduled get it
+            world.personControl().scheduleWakeUpOfSleepingPersons();
         } catch (IOException e) {
             log.error("unable to load the world", e);
             throw new RuntimeException("unable to load the world", e);

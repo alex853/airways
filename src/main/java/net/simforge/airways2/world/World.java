@@ -322,6 +322,7 @@ public class World {
             timing("FlightMissionProcessor", () -> FlightMissionProcessor.process(this));
             timing("TransportFlightProcessor", () -> TransportFlightProcessor.process(this));
             timing("JourneyProcessor", () -> JourneyProcessor.process(this));
+            timing("PersonProcessor", () -> PersonProcessor.process(this));
 
 //            timing("RandomFlightMissionGenerator", () -> RandomFlightMissionGenerator.process(this));
             timing("ScheduledFlightMissionGenerator", () -> ScheduledFlightMissionGenerator.process(this));

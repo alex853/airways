@@ -90,6 +90,16 @@ public class Persons {
         return storage.findFirst(recordId -> storage.getAsInt(recordId, userIdField) == userId);
     }
 
+    /**
+     * The persons who sleep (Resting) and have no heartbeat: they were put to sleep before the wake up was scheduled, nothing is going to wake them up.
+     * A scan, it is for the start of the application only.
+     */
+    public Stream<Person> sleepingWithoutHeartbeat() {
+        final Storage.Condition<Person> noHeartbeat = storage.byZeroHeartbeat(heartbeatTimeField);
+        final Storage.Condition<Person> resting = recordId -> storage.getAsInt(recordId, stateField) == State.Resting.code();
+        return storage.filter(Storage.Condition.and(noHeartbeat, resting));
+    }
+
     public Optional<Person> nextForHeartbeat(final int worldTime) {
         return storage.nextForHeartbeat(worldTime);
     }

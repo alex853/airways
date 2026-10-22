@@ -47,9 +47,16 @@ class PilotRestTest {
     }
 
     @Test
-    void creditIsNotMoreThanSixteenHours() {
-        assertEquals(16 * HOUR, PilotRest.creditAfterSleep(10 * HOUR, 8 * HOUR));
-        assertEquals(16 * HOUR, PilotRest.creditAfterSleep(0, 12 * HOUR));
+    void creditHasNoMaximumLongSleepStillGivesTwoForOne() {
+        // 9.5 hours of sleep are 19 hours of the credit, on top of what the pilot had
+        assertEquals(19 * HOUR, PilotRest.creditAfterSleep(0, 9 * HOUR + 30));
+        assertEquals(30 * HOUR, PilotRest.creditAfterSleep(10 * HOUR, 10 * HOUR));
+    }
+
+    @Test
+    void theWakeUpByItselfIsFromSevenAndAHalfToTenHours() {
+        assertEquals(7 * HOUR + 30, PilotRest.AUTO_WAKE_UP_MIN_MINUTES);
+        assertEquals(10 * HOUR, PilotRest.AUTO_WAKE_UP_MAX_MINUTES);
     }
 
     @Test
@@ -62,5 +69,36 @@ class PilotRestTest {
     void theTwoBytesOfTheStorageAreNotExceeded() {
         // two months awake from a spent credit: it is cut at the two bytes, not wrapped around
         assertEquals(Short.MIN_VALUE, PilotRest.creditNow(0, 0, 60 * 60 * 24 * 60));
+    }
+
+    @Test
+    void aDebtOfThreeHoursAddsAnHourOfSleep() {
+        assertEquals(HOUR, PilotRest.extraSleepMinutes(-3 * HOUR));
+    }
+
+    @Test
+    void aDebtOfAnHourAndAHalfAddsHalfAnHour() {
+        assertEquals(30, PilotRest.extraSleepMinutes(-90));
+    }
+
+    @Test
+    void theDebtAboveThreeHoursAddsNothingMore() {
+        assertEquals(HOUR, PilotRest.extraSleepMinutes(-5 * HOUR));
+        assertEquals(HOUR, PilotRest.extraSleepMinutes(-1000));
+        assertEquals(HOUR, PilotRest.extraSleepMinutes(Short.MIN_VALUE));
+    }
+
+    @Test
+    void noDebtAddsNothing() {
+        assertEquals(0, PilotRest.extraSleepMinutes(0));
+        assertEquals(0, PilotRest.extraSleepMinutes(1));
+        assertEquals(0, PilotRest.extraSleepMinutes(16 * HOUR));
+    }
+
+    @Test
+    void theExtraSleepIsAThirdOfTheDebtInMinutes() {
+        assertEquals(1, PilotRest.extraSleepMinutes(-3));
+        assertEquals(0, PilotRest.extraSleepMinutes(-2));
+        assertEquals(20, PilotRest.extraSleepMinutes(-60));
     }
 }
