@@ -197,6 +197,22 @@ metropolitan area), потому что город это зона притяж�
 - Мир сжимать не нужно: удалённые записи Storage 1 сутки не переиспользуются (см. storage-quarantine.md).
 - Если пользователь отложил тему («до завтра»), ничего по ней не делаем.
 
+- **Имена стран в `icaodata.csv` и в `city-population.csv` НЕ совпадают** (важно, это молча портит сопоставление, найдено 2026-10-22).
+  `icaodata.csv` (он же `fseconomy-icaodata.csv` в refdata) пишет страну по-своему: `Netherlands, The` (в CSV городов `Netherlands`),
+  `Bahamas, The` и `Gambia, The`, `Korea` (`South Korea`), `Myanmar` (`Burma`), `Romania` (`Rumania`), `Congo (DRC)` (`Congo zaire`),
+  `Cote d'Ivoire` (`Cote d ivoire`), `Comoros` (`Comores`), `Fiji Islands` (`Fiji`), `Macedonia, Former Yugoslav Republic of` (`Macedonia`),
+  `St. Lucia` (`Saint lucia`) и т.д., всего около 45 несовпадений; а территории (Greenland, Guam, French Polynesia, Bermuda,
+  Hong Kong SAR…) в CSV городов не страна вовсе. Поэтому:
+  1. **Никогда не сопоставлять страну по имени** между этими двумя файлами, только по коду (`CountryCode` в CSV городов,
+     `country-code:XX` в `012`). В `icaodata.csv` кода страны нет (см. `docs/cities.md`, раздел 4).
+  2. `scripts/vatsim_backlog.sh` пробует имя, потом имя без `, The`, потом страну ближайшего города CSV в 150 nm. Для островных
+     территорий колонка «городов в Airways» поэтому приблизительная или `?`. До этой правки Нидерланды показывались как 0 городов
+     при трёх городах в мире (EHEH). Если колонка «страна» выглядит странно, сначала проверить именно это.
+- **Аэропорт может отсутствовать и в `icaodata.csv`, и в refdata** (пример `VOBL`, Kempegowda Intl, Bengaluru, открыт в 2008 году:
+  в `icaodata.csv` есть только старый `VOBG` HAL, а в refdata `added.csv` версии 3.1.3 только LTFM, OTHH, FAOR, VTBS). Строка
+  бэклога «нет в icaodata» в таком случае требует **добавить строку в `icaodata.csv` вручную** (координаты, `civil`, `size`):
+  `ImportSelectedAirports` берёт из `icaodata`, потом из refdata, и если нет нигде, аэропорт не создастся.
+
 ## 11. Где что лежит
 
 | Что | Где |

@@ -11,7 +11,7 @@ curl -sk -m 90 -H "$AUTH" -o vatsim_missing.txt -w "list http=%{http_code} bytes
 curl -sk -m 60 -o cities_w.json "$HOST/geo/cities"
 curl -sk -m 60 -o airports_w.json "$HOST/geo/airports"
 REPO="$REPO" PYTHONIOENCODING=utf-8 python -I - <<'PYEOF'
-import json,csv,math,os,collections,sys
+import json,csv,math,os,collections,sys,re
 sys.stdout.reconfigure(encoding='utf-8')
 repo=os.environ['REPO']
 c=json.load(open('cities_w.json',encoding='utf-8')); a={x['icao'] for x in json.load(open('airports_w.json',encoding='utf-8'))}
@@ -44,8 +44,13 @@ for i,n in lst:
     m=meta.get(i)
     if not m:
         print(f'| {i} | {n} | ? | ? | нет в icaodata (берётся из refdata) | - | - | особый |'); n_sp+=1; continue
-    ctry=m['country']; code=name2code.get(ctry.lower()) or extra.get(ctry,'?')
-    la,lo=float(m['lat']),float(m['lon'])
+    ctry=m['country']; la,lo=float(m['lat']),float(m['lon'])
+    # the country name of icaodata.csv differs from the one of the city CSV ("Netherlands, The", "Bahamas, The", "Fiji Islands"...):
+    # by the name without ", The", then by the country of the nearest city of the CSV (any, 'del' ones too) within 150 nm
+    code=name2code.get(ctry.lower()) or name2code.get(re.sub(r',\s*the$','',ctry,flags=re.I).lower()) or extra.get(ctry)
+    if not code:
+        nearest=min(rows,key=lambda r:d(la,lo,float(r['CityLatitude']),float(r['CityLongitude'])))
+        code=nearest['CountryCode'] if d(la,lo,float(nearest['CityLatitude']),float(nearest['CityLongitude']))<=150 else '?'
     cb=min(c,key=lambda x:d(la,lo,x['latitude'],x['longitude'])); dist=d(la,lo,cb['latitude'],cb['longitude'])
     near=[]
     for r in cs:

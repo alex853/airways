@@ -11,6 +11,7 @@ import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
+import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.Persons;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,20 +51,29 @@ public class PilotController {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
             }
 
-            String airportIcao = null;
-            String airportName = null;
-            String cityName = null;
-            switch (person.getLocationType()) {
-                case Airport -> {
-                    airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
-                    airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
-                }
-                case City -> cityName = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
-                default -> { }
-            }
-
-            return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName);
+            return buildPilot(world, person);
         });
+    }
+
+    static PilotDto buildPilot(final World world, final Persons.Person person) {
+        String airportIcao = null;
+        String airportName = null;
+        String cityName = null;
+        switch (person.getLocationType()) {
+            case Airport -> {
+                airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
+                airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
+            }
+            case City -> cityName = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
+            default -> { }
+        }
+
+        // the money of the pilot: the balance of the bank account the person refers to, null while the person has no account
+        final Long bankBalance = person.getBankAccountId() > 0
+                ? world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(null)
+                : null;
+
+        return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance);
     }
 
     @GetMapping("/logbook")
@@ -288,6 +298,8 @@ public class PilotController {
         private String airportName;
         // the city where the pilot is, null if the pilot is not in a city
         private String cityName;
+        // the balance of the bank account of the pilot, null if the pilot has no account
+        private Long bankBalance;
     }
 
     @Data
