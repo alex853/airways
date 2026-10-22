@@ -64,4 +64,29 @@ class PilotDutyTest {
     void theLimitIsFourteenHours() {
         assertEquals(14 * 60, PilotDuty.LIMIT_MINUTES);
     }
+
+    @Test
+    void flightTimeLimitsAre80HoursIn30DaysAnd800HoursIn365Days() {
+        assertEquals(80 * 60, PilotDuty.LIMIT_30_DAYS_MINUTES);
+        assertEquals(800 * 60, PilotDuty.LIMIT_365_DAYS_MINUTES);
+        assertEquals(30 * 24 * HOUR, PilotDuty.WINDOW_30_DAYS_SECONDS);
+        assertEquals(365 * 24 * HOUR, PilotDuty.WINDOW_365_DAYS_SECONDS);
+    }
+
+    @Test
+    void theSameFlightsAreInTheYearButNotAlwaysInTheMonth() {
+        // 5 hours ten days ago and 6 hours 100 days ago
+        final List<int[]> flights = List.of(period(10 * 24 + 5, 10 * 24), period(100 * 24 + 6, 100 * 24));
+
+        assertEquals(5 * 60, PilotDuty.minutesInWindow(flights, NOW, PilotDuty.WINDOW_30_DAYS_SECONDS));
+        assertEquals(11 * 60, PilotDuty.minutesInWindow(flights, NOW, PilotDuty.WINDOW_365_DAYS_SECONDS));
+    }
+
+    @Test
+    void aFlightWhichBeganBeforeTheMonthCountsFromTheBeginningOfTheWindow() {
+        // from 30 days and 3 hours ago to 30 days ago: three hours are out of the window
+        final List<int[]> flights = List.of(period(30 * 24 + 3, 30 * 24 - 2));
+
+        assertEquals(2 * 60, PilotDuty.minutesInWindow(flights, NOW, PilotDuty.WINDOW_30_DAYS_SECONDS));
+    }
 }

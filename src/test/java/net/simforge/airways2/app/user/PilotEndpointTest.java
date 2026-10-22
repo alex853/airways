@@ -91,10 +91,16 @@ class PilotEndpointTest {
 
     // ---- the duty of the last 24 hours
 
+    private Airports.Airport sanFrancisco;
+    private net.simforge.airways2.world.datamodel.Aircrafts.Aircraft jet;
+
     private net.simforge.airways2.world.datamodel.PilotLogbook.Entry logbookEntry(final Persons.Person person, final int blocksOffHoursAgo, final int blocksOnHoursAgo) {
-        final Airports.Airport other = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
-        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft =
-                world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        if (jet == null) {
+            sanFrancisco = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+            jet = world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        }
+        final Airports.Airport other = sanFrancisco;
+        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft = jet;
         final int now = world.getWorldTime();
         return world.pilotLogbook().create(person.getId(), aircraft.getId(), oakland.getId(), other.getId(),
                 now - blocksOffHoursAgo * 3600, now - blocksOnHoursAgo * 3600);
@@ -146,6 +152,59 @@ class PilotEndpointTest {
 
         assertEquals(170 + 90, duty.getLast24HoursMinutes());
         assertTrue(duty.isOnDuty());
+    }
+
+    // ---- the flight time of the last 30 and 365 days
+
+    @Test
+    void flightTimeIsTheBlocksOfTheLogbookInTheWindows() {
+        world.setWorldTime(world.getWorldTime() + 400 * 24 * 3600);
+        final Persons.Person person = freshPilot();
+        logbookEntry(person, 10 * 24 + 5, 10 * 24);      // 5 h, ten days ago
+        logbookEntry(person, 100 * 24 + 6, 100 * 24);    // 6 h, 100 days ago
+        logbookEntry(person, 380 * 24 + 7, 380 * 24);    // 7 h, more than a year ago
+
+        final PilotController.FlightTimeDto flightTime = PilotController.buildFlightTime(world, person);
+
+        assertEquals(5 * 60, flightTime.getLast30DaysMinutes());
+        assertEquals(11 * 60, flightTime.getLast365DaysMinutes());
+        assertEquals(80 * 60, flightTime.getLimit30DaysMinutes());
+        assertEquals(800 * 60, flightTime.getLimit365DaysMinutes());
+    }
+
+    @Test
+    void flightInProgressIsInTheFlightTimeFromItsBlocksOffUpToNow() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        person.setState(Persons.State.OnDuty);
+        final Airports.Airport other = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft =
+                world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        final int now = world.getWorldTime();
+        final net.simforge.airways2.world.datamodel.FlightMissions.Mission mission =
+                world.flightMissions().createDispatchedMission(aircraft, oakland, other, now - 3 * 3600, now + 3600);
+        mission.setUserId(person.getUserId());
+        mission.setStatus(net.simforge.airways2.world.datamodel.FlightMissions.Status.Flying);
+        mission.setActualDepartureWorldTime(now - 90 * 60);
+
+        assertEquals(90, PilotController.buildFlightTime(world, person).getLast30DaysMinutes());
+    }
+
+    @Test
+    void flightNotYetOffTheBlocksIsNotInTheFlightTime() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        person.setState(Persons.State.OnDuty);
+        final Airports.Airport other = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft =
+                world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        final int now = world.getWorldTime();
+        final net.simforge.airways2.world.datamodel.FlightMissions.Mission mission =
+                world.flightMissions().createDispatchedMission(aircraft, oakland, other, now + 1800, now + 3 * 3600);
+        mission.setUserId(person.getUserId());
+        mission.setStatus(net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight);
+
+        assertEquals(0, PilotController.buildFlightTime(world, person).getLast30DaysMinutes());
     }
 
     @Test

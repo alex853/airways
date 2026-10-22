@@ -148,6 +148,38 @@ public class PilotController {
     }
 
     /**
+     * The flight time of the pilot in the last 30 and 365 days (sliding windows): the flights of the logbook from blocks off to blocks on, and the flight in
+     * progress from its blocks off up to now. The limits are told with it, nothing is enforced yet.
+     */
+    static FlightTimeDto buildFlightTime(final World world, final Persons.Person person) {
+        final int now = world.getWorldTime();
+        final int windowStart = now - PilotDuty.WINDOW_365_DAYS_SECONDS;
+        final List<int[]> periods = new ArrayList<>();
+
+        world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId())).forEach(entry -> {
+            if (entry.getBlocksOnTime() > windowStart) {
+                periods.add(new int[]{entry.getBlocksOffTime(), entry.getBlocksOnTime()});
+            }
+        });
+
+        // the flight in progress: from the actual blocks off (zero until it happens) up to now or to the actual blocks on
+        if (person.getState() == Persons.State.OnDuty) {
+            world.flightMissions().allByUserId(person.getUserId())
+                    .filter(fm -> switch (fm.getStatus()) {
+                        case Departure, Flying, Arrival, Postflight -> true;
+                        default -> false;
+                    })
+                    .filter(fm -> fm.getActualDepartureWorldTime() > 0)
+                    .forEach(fm -> periods.add(new int[]{fm.getActualDepartureWorldTime(),
+                            fm.getActualArrivalWorldTime() > 0 ? fm.getActualArrivalWorldTime() : now}));
+        }
+
+        return new FlightTimeDto(
+                PilotDuty.minutesInWindow(periods, now, PilotDuty.WINDOW_30_DAYS_SECONDS), PilotDuty.LIMIT_30_DAYS_MINUTES,
+                PilotDuty.minutesInWindow(periods, now, PilotDuty.WINDOW_365_DAYS_SECONDS), PilotDuty.LIMIT_365_DAYS_MINUTES);
+    }
+
+    /**
      * The awake credit as the page shows it. While the pilot is awake it is the credit now (it falls with the time); while the pilot sleeps it is the credit
      * at the moment of falling asleep, and the credit after waking up now is next to it. A pilot who has no credit started yet shows the initial one.
      */
@@ -182,7 +214,7 @@ public class PilotController {
                 : null;
 
         return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
-                buildAwake(world, person), buildDuty(world, person));
+                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person));
     }
 
     @GetMapping("/logbook")
@@ -411,6 +443,18 @@ public class PilotController {
         private Long bankBalance;
         private AwakeDto awake;
         private DutyDto duty;
+        private FlightTimeDto flightTime;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class FlightTimeDto {
+        // minutes of flight time (blocks off to blocks on) in the last 30 days and the most of it
+        private int last30DaysMinutes;
+        private int limit30DaysMinutes;
+        // the same for the last 365 days
+        private int last365DaysMinutes;
+        private int limit365DaysMinutes;
     }
 
     @Data
