@@ -20,6 +20,7 @@ class StorageDataTypesTest {
             .withDataField(DataField.of(DataType.Float16bit))
             .withDataField(DataField.of(DataType.PlainString).length(20))
             .withDataField(DataField.of(DataType.Signed40bit))
+            .withDataField(DataField.of(DataType.Signed16bit))
             .build();
 
     private final DataField signed32bitField = storage.getDataField(0);
@@ -33,6 +34,7 @@ class StorageDataTypesTest {
     private final DataField float16bitField = storage.getDataField(8);
     private final DataField plainString20Field = storage.getDataField(9);
     private final DataField signed40bitField = storage.getDataField(10);
+    private final DataField signed16bitField = storage.getDataField(11);
 
     private final int recordId = storage.addRecord();
 
@@ -41,6 +43,19 @@ class StorageDataTypesTest {
     public void test_signed32bit(final int value) {
         storage.set(recordId, signed32bitField, value);
         assertEquals(value, storage.getAsInt(recordId, signed32bitField));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0, 960, -180, 32767, -32768})
+    public void test_signed16bit(final int value) {
+        storage.set(recordId, signed16bitField, value);
+        assertEquals(value, storage.getAsInt(recordId, signed16bitField));
+    }
+
+    @Test
+    public void test_signed16bit_out_of_bounds() {
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, signed16bitField, 32768));
+        assertThrows(IllegalArgumentException.class, () -> storage.set(recordId, signed16bitField, -32769));
     }
 
     @ParameterizedTest
@@ -170,7 +185,7 @@ class StorageDataTypesTest {
     // ---- wrong formats on wrong methods ----
 
     private static final java.util.List<DataType> INT_TYPES = java.util.List.of(
-            DataType.Signed32bit, DataType.Unsigned8bit, DataType.Unsigned16bit, DataType.Unsigned24bit);
+            DataType.Signed32bit, DataType.Signed16bit, DataType.Unsigned8bit, DataType.Unsigned16bit, DataType.Unsigned24bit);
     private static final java.util.List<DataType> FLOAT_TYPES = java.util.List.of(
             DataType.Float, DataType.LatLong24bit, DataType.LatLong16bit, DataType.Tenths8bit, DataType.Float16bit);
 
@@ -187,6 +202,7 @@ class StorageDataTypesTest {
             case Float16bit -> float16bitField;
             case PlainString -> plainString20Field;
             case Signed40bit -> signed40bitField;
+            case Signed16bit -> signed16bitField;
         };
     }
 
@@ -197,7 +213,7 @@ class StorageDataTypesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "Signed40bit"})
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "Signed40bit"})
     public void test_getAsFloat_is_not_applicable_to_not_float_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsFloat(recordId, fieldOf(dataType)));
     }
@@ -215,7 +231,7 @@ class StorageDataTypesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Signed32bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString"})
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString"})
     public void test_set_float_is_not_applicable_to_not_float_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1.5f));
     }

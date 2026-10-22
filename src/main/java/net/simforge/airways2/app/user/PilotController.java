@@ -8,6 +8,7 @@ import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,15 +46,73 @@ public class PilotController {
      */
     @GetMapping
     public PilotDto getPilot(@RequestAttribute("userId") final int userId) {
-        return worldBean.read(world -> {
-            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
-            final Persons.Person person = personId > 0 ? world.persons().byId(personId).orElse(null) : null;
-            if (person == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
-            }
+        // a pilot older than the awake credit gets the credit at the first look, that is a change of the world
+        final boolean needsCredit = worldBean.read(world -> world.personControl().awakeCreditIsNotStarted(personOf(world, userId)));
+        if (needsCredit) {
+            return worldBean.modifySync(world -> {
+                final Persons.Person person = personOf(world, userId);
+                world.personControl().startAwakeCredit(person);
+                return buildPilot(world, person);
+            });
+        }
+        return worldBean.read(world -> buildPilot(world, personOf(world, userId)));
+    }
 
+    /**
+     * The pilot goes to sleep (only a free one can). The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/sleep")
+    public PilotDto sleep(@RequestAttribute("userId") final int userId) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            try {
+                world.personControl().startSleep(person);
+            } catch (final IllegalStateException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            }
             return buildPilot(world, person);
         });
+    }
+
+    /**
+     * The pilot wakes up (only a sleeping one can): the sleep is added to the awake credit.
+     */
+    @PostMapping("/wake")
+    public PilotDto wake(@RequestAttribute("userId") final int userId) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            try {
+                world.personControl().wakeUp(person);
+            } catch (final IllegalStateException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            }
+            return buildPilot(world, person);
+        });
+    }
+
+    private static Persons.Person personOf(final World world, final int userId) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        final Persons.Person person = personId > 0 ? world.persons().byId(personId).orElse(null) : null;
+        if (person == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "The user has no pilot (person)");
+        }
+        return person;
+    }
+
+    /**
+     * The awake credit as the page shows it. While the pilot is awake it is the credit now (it falls with the time); while the pilot sleeps it is the credit
+     * at the moment of falling asleep, and the credit after waking up now is next to it. A pilot who has no credit started yet shows the initial one.
+     */
+    static AwakeDto buildAwake(final World world, final Persons.Person person) {
+        final int now = world.getWorldTime();
+        final boolean started = person.getCreditTime() != 0;
+        final int stored = started ? person.getAwakeCreditMinutes() : PilotRest.INITIAL_CREDIT_MINUTES;
+        if (person.getState() == Persons.State.Resting && started) {
+            final int sleepMinutes = PilotRest.minutesBetween(person.getCreditTime(), now);
+            return new AwakeDto(stored, true, sleepMinutes, PilotRest.creditAfterSleep(stored, sleepMinutes));
+        }
+        final int current = started ? PilotRest.creditNow(stored, person.getCreditTime(), now) : stored;
+        return new AwakeDto(current, false, 0, null);
     }
 
     static PilotDto buildPilot(final World world, final Persons.Person person) {
@@ -73,7 +133,8 @@ public class PilotController {
                 ? world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(null)
                 : null;
 
-        return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance);
+        return new PilotDto(person.getInitials(), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
+                buildAwake(world, person));
     }
 
     @GetMapping("/logbook")
@@ -300,6 +361,19 @@ public class PilotController {
         private String cityName;
         // the balance of the bank account of the pilot, null if the pilot has no account
         private Long bankBalance;
+        private AwakeDto awake;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AwakeDto {
+        // minutes the pilot can stay awake and active; negative when overtired; while the pilot sleeps it is the credit at the moment of falling asleep
+        private int creditMinutes;
+        private boolean sleeping;
+        // minutes of the sleep so far, zero when awake
+        private int sleepMinutes;
+        // the credit if the pilot wakes up now (it is more than creditMinutes only after two hours of sleep), null when awake
+        private Integer creditAfterWakeMinutes;
     }
 
     @Data

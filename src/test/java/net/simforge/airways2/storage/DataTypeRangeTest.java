@@ -17,6 +17,8 @@ class DataTypeRangeTest {
         assertEquals(65_535, DataType.Unsigned16bit.maxValue());
         assertEquals(16_777_215, DataType.Unsigned24bit.maxValue());
         assertEquals(Integer.MAX_VALUE, DataType.Signed32bit.maxValue());
+        assertEquals(32_767, DataType.Signed16bit.maxValue());
+        assertEquals(-32_768, DataType.Signed16bit.minValue());
         assertEquals(549_755_813_887L, DataType.Signed40bit.maxValue());
         assertEquals(0, DataType.Unsigned8bit.minValue());
         assertEquals(0, DataType.Unsigned16bit.minValue());

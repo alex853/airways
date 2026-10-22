@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
@@ -110,6 +111,54 @@ public class PersonControl {
                 world.airports().getIcao(entry.getFromAirportId()).orElse("#" + entry.getFromAirportId()),
                 world.airports().getIcao(entry.getToAirportId()).orElse("#" + entry.getToAirportId()),
                 entry.getDurationMinutes(), mission.getId());
+    }
+
+    // ---- sleep and the awake credit (PilotRest): Idle -> Resting at sleep, Resting -> Idle at wake up
+
+    /**
+     * The credit has not been started for the person yet (the person is older than the credit): it gets the initial credit from this moment.
+     */
+    public boolean awakeCreditIsNotStarted(final Persons.Person person) {
+        return person.getCreditTime() == 0;
+    }
+
+    public void startAwakeCredit(final Persons.Person person) {
+        if (!awakeCreditIsNotStarted(person)) {
+            return;
+        }
+        person.setAwakeCredit(PilotRest.INITIAL_CREDIT_MINUTES, world.getWorldTime());
+        log.info("p/s #{} - awake credit started, {} min", person.getId(), PilotRest.INITIAL_CREDIT_MINUTES);
+    }
+
+    /**
+     * The pilot goes to sleep: the credit is fixed at this moment and stops falling. Only a free (Idle) pilot can go to sleep.
+     */
+    public void startSleep(final Persons.Person person) {
+        if (person.getState() != Persons.State.Idle) {
+            throw new IllegalStateException("only an idle pilot can go to sleep, the pilot is " + person.getState());
+        }
+        startAwakeCredit(person);
+        final int now = world.getWorldTime();
+        final int credit = PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now);
+        person.setAwakeCredit(credit, now);
+        setState(person, Persons.State.Resting, "sleep");
+        log.info("p/s #{} - sleep started, awake credit {} min", person.getId(), credit);
+    }
+
+    /**
+     * The pilot wakes up: the sleep (from the moment the credit was fixed) is added to the credit. Only a sleeping pilot can wake up.
+     */
+    public void wakeUp(final Persons.Person person) {
+        if (person.getState() != Persons.State.Resting) {
+            throw new IllegalStateException("only a sleeping pilot can wake up, the pilot is " + person.getState());
+        }
+        final int now = world.getWorldTime();
+        final int sleepMinutes = PilotRest.minutesBetween(person.getCreditTime(), now);
+        final int before = person.getAwakeCreditMinutes();
+        final int after = PilotRest.creditAfterSleep(before, sleepMinutes);
+        person.setAwakeCredit(after, now);
+        setState(person, Persons.State.Idle, "wake up");
+        log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 
     // ---- low level, it logs every change

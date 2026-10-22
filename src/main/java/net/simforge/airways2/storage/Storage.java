@@ -416,6 +416,7 @@ public class Storage<T> {
             case Unsigned24bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 16)
                     + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 8)
                     + (Byte.toUnsignedInt(data[fieldOffset + 2]));
+            case Signed16bit -> (short) ((Byte.toUnsignedInt(data[fieldOffset]) << 8) | Byte.toUnsignedInt(data[fieldOffset + 1]));
             case Signed32bit -> getIntAtOffset(fieldOffset);
             default -> throw new IllegalStateException("Unexpected dataField dataType: " + dataField.dataType());
         };
@@ -540,6 +541,11 @@ public class Storage<T> {
                 data[fieldOffset] = (byte) (value >> 16);
                 data[fieldOffset + 1] = (byte) (value >> 8);
                 data[fieldOffset + 2] = (byte) value;
+            }
+            case Signed16bit -> {
+                checkArgument(DataType.Signed16bit.contains(value), "expected range is [%s..%s]: %s", DataType.Signed16bit.minValue(), DataType.Signed16bit.maxValue(), value);
+                data[fieldOffset] = (byte) (value >> 8);
+                data[fieldOffset + 1] = (byte) value;
             }
             case Signed32bit -> setIntAtOffset(fieldOffset, value); // no need to check if value is within limits
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());

@@ -31,14 +31,15 @@ public class Persons {
             .withDataField(DataField.of(DataType.Unsigned8bit)) // locationType             1 byte
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationId              2 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // originCityId            2 bytes
+            // todo ak1 initials are exactly two characters: a fixed two-byte field instead of PlainString (it has a length byte, 3 bytes now), and avatarId needs one byte, not two; that frees 2 bytes (the free bytes are in the middle of the record, move the fields)
             .withDataField(DataField.of(DataType.PlainString).length(2)) // initials        3 bytes (length byte + 2 chars)
             .withDataField(DataField.of(DataType.Unsigned16bit)) // avatarId                2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId, 0 is none  3 bytes
-            // ----------------------------------------------------- sum                   22 bytes
-            // -------------------------------------------- reserved 10 bytes to align total size to 32 bytes
+            .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes, see PilotRest  2 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // creditTime, when the credit was fixed (falling asleep or waking up), 0 is not started  4 bytes
+            // ----------------------------------------------------- sum                   28 bytes
+            // -------------------------------------------- reserved 4 bytes to align total size to 32 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserve                 2 bytes
             .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (type=0, state=1, heartbeatTime=2)
             .build();
 
@@ -52,6 +53,8 @@ public class Persons {
     private final DataField initialsField = storage.getDataField(7);
     private final DataField avatarIdField = storage.getDataField(8);
     private final DataField bankAccountIdField = storage.getDataField(9);
+    private final DataField awakeCreditMinutesField = storage.getDataField(10);
+    private final DataField creditTimeField = storage.getDataField(11);
 
     private static final int MAX_INITIALS_LENGTH = 2;
 
@@ -236,6 +239,27 @@ public class Persons {
          * The bank account of the person, zero if it has none yet. The account refers to its owner (BankAccounts, kind Person) and the person refers to its
          * account, so each of them is found directly, without scanning the other storage.
          */
+        /**
+         * The awake credit in minutes at the moment of getCreditTime(): how long the person can stay awake and active. It is negative when the person is
+         * overtired. What it is now (it falls while the person is awake) is told by PilotRest.
+         */
+        public int getAwakeCreditMinutes() {
+            return storage.getAsInt(id, awakeCreditMinutesField);
+        }
+
+        /**
+         * The moment the awake credit was fixed: the person fell asleep or woke up. Zero means that the credit has not been started yet.
+         */
+        public int getCreditTime() {
+            return storage.getAsInt(id, creditTimeField);
+        }
+
+        public void setAwakeCredit(final int awakeCreditMinutes, final int creditTime) {
+            checkArgument(DataType.Signed16bit.contains(awakeCreditMinutes), "awake credit is out of 16 bits: %s", awakeCreditMinutes);
+            storage.set(id, awakeCreditMinutesField, awakeCreditMinutes);
+            storage.set(id, creditTimeField, creditTime);
+        }
+
         public int getBankAccountId() {
             return storage.getAsInt(id, bankAccountIdField);
         }

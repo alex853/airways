@@ -12,6 +12,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
@@ -52,5 +54,43 @@ class PilotEndpointTest {
         assertNull(pilot.getBankBalance());
         assertEquals("None", pilot.getLocationType());
         assertNull(pilot.getAirportIcao());
+    }
+
+    private Persons.Person freshPilot() {
+        return world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "AK", 0);
+    }
+
+    @Test
+    void awakePilotShowsTheCreditNowAndItFallsWithTheTime() {
+        final Persons.Person person = freshPilot();
+        world.personControl().startAwakeCredit(person);
+        world.setWorldTime(world.getWorldTime() + 3 * 3600);
+
+        final PilotController.AwakeDto awake = PilotController.buildPilot(world, person).getAwake();
+
+        assertEquals(13 * 60, awake.getCreditMinutes());
+        assertFalse(awake.isSleeping());
+        assertNull(awake.getCreditAfterWakeMinutes());
+    }
+
+    @Test
+    void sleepingPilotShowsTheCreditAtFallingAsleepAndTheOneAfterWaking() {
+        final Persons.Person person = freshPilot();
+        world.personControl().startAwakeCredit(person);
+        world.setWorldTime(world.getWorldTime() + 14 * 3600);
+        world.personControl().startSleep(person);
+        world.setWorldTime(world.getWorldTime() + 3 * 3600);
+
+        final PilotController.AwakeDto awake = PilotController.buildPilot(world, person).getAwake();
+
+        assertEquals(2 * 60, awake.getCreditMinutes());
+        assertTrue(awake.isSleeping());
+        assertEquals(3 * 60, awake.getSleepMinutes());
+        assertEquals(8 * 60, awake.getCreditAfterWakeMinutes());
+    }
+
+    @Test
+    void pilotWithoutACreditStartedShowsTheInitialOne() {
+        assertEquals(16 * 60, PilotController.buildPilot(world, freshPilot()).getAwake().getCreditMinutes());
     }
 }

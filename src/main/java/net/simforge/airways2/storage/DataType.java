@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkState;
 
 public enum DataType {
     Signed32bit(Integer.MIN_VALUE, Integer.MAX_VALUE), // just as usual 'int'
+    Signed16bit(Short.MIN_VALUE, Short.MAX_VALUE), // 2 bytes signed integer, from -32 768 to 32 767 (minutes of the awake credit of a person)
     Signed40bit(-(1L << 39), (1L << 39) - 1), // 5 bytes signed integer, from -549 755 813 888 to 549 755 813 887 (money: balances and amounts), read and written by getAsLong and setLong
     Unsigned24bit(0, 16_777_215), // 3 bytes unsigned integer
     Unsigned16bit(0, 65_535), // 2 bytes unsigned integer
