@@ -1,6 +1,7 @@
 package net.simforge.airways2.app.user;
 
 import net.simforge.airways2.app.user.PilotController.PilotDto;
+import net.simforge.airways2.tools.Avatars;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -211,9 +212,10 @@ class PilotEndpointTest {
     void theAvatarOfThePersonIsInThePilotAndInTheHeaderOfTheOtherPages() {
         final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "AK", 106);
 
-        assertEquals(106, PilotController.buildPilot(world, person).getAvatarId());
-        assertEquals(106, PilotController.buildLogbook(world, person.getId()).getAvatarId());
-        assertEquals(106, PilotController.buildQualifications(world, person.getId(), world.getWorldTime()).getAvatarId());
+        // row 106 of avatars.csv
+        assertEquals("user_pilot.png", PilotController.buildPilot(world, person).getAvatarImage());
+        assertEquals("user_pilot.png", PilotController.buildLogbook(world, person.getId()).getAvatarImage());
+        assertEquals("user_pilot.png", PilotController.buildQualifications(world, person.getId(), world.getWorldTime()).getAvatarImage());
     }
 
     @Test
@@ -222,14 +224,14 @@ class PilotEndpointTest {
         final Persons.Person second = freshPilot();
 
         assertEquals(0, first.getAvatarId());
-        assertEquals(PilotController.DEFAULT_AVATAR_FOR_ODD_PERSON_ID, PilotController.buildPilot(world, first).getAvatarId());
-        assertEquals(PilotController.DEFAULT_AVATAR_FOR_EVEN_PERSON_ID, PilotController.buildPilot(world, second).getAvatarId());
+        assertEquals(Avatars.DEFAULT_FOR_ODD_PERSON_ID, PilotController.buildPilot(world, first).getAvatarImage());
+        assertEquals(Avatars.DEFAULT_FOR_EVEN_PERSON_ID, PilotController.buildPilot(world, second).getAvatarImage());
         // the stored avatar is not changed by showing it
         assertEquals(0, first.getAvatarId());
         assertEquals(0, second.getAvatarId());
         // the other pages have the same picture
-        assertEquals(PilotController.DEFAULT_AVATAR_FOR_ODD_PERSON_ID, PilotController.buildLogbook(world, first.getId()).getAvatarId());
-        assertEquals(PilotController.DEFAULT_AVATAR_FOR_EVEN_PERSON_ID, PilotController.buildQualifications(world, second.getId(), world.getWorldTime()).getAvatarId());
+        assertEquals(Avatars.DEFAULT_FOR_ODD_PERSON_ID, PilotController.buildLogbook(world, first.getId()).getAvatarImage());
+        assertEquals(Avatars.DEFAULT_FOR_EVEN_PERSON_ID, PilotController.buildQualifications(world, second.getId(), world.getWorldTime()).getAvatarImage());
     }
 
     @Test

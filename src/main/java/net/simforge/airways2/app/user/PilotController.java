@@ -5,6 +5,7 @@ import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
+import net.simforge.airways2.tools.Avatars;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.Time;
@@ -213,7 +214,7 @@ public class PilotController {
                 ? world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(null)
                 : null;
 
-        return new PilotDto(person.getInitials(), shownAvatarId(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
+        return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
                 buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person));
     }
 
@@ -271,23 +272,17 @@ public class PilotController {
         return level;
     }
 
-    // the rows of avatars.csv of simforge-web (user_pilot.png and user_pilot_civil.png); the rows of the file are never moved, so the numbers stay
-    static final int DEFAULT_AVATAR_FOR_ODD_PERSON_ID = 106;
-    static final int DEFAULT_AVATAR_FOR_EVEN_PERSON_ID = 107;
-
     /**
-     * The avatar the pages show. While the person has none (the avatarId of the person is 0, and it is not changed) there is a pilot instead of an empty
-     * square: one picture for an odd id of the person and another for an even one.
+     * The picture the pages show for the person: the file name of the icon (the pages put the address of the icons before it), never the list of the
+     * pictures. While the person has no avatar (avatarId 0, it is not changed) or the picture is forbidden, it is one of two pilots by the parity of the
+     * id of the person, see Avatars.
      */
-    static int shownAvatarId(final Persons.Person person) {
-        if (person.getAvatarId() > 0) {
-            return person.getAvatarId();
-        }
-        return person.getId() % 2 != 0 ? DEFAULT_AVATAR_FOR_ODD_PERSON_ID : DEFAULT_AVATAR_FOR_EVEN_PERSON_ID;
+    static String shownAvatarImage(final Persons.Person person) {
+        return Avatars.shownFile(person.getId(), person.getAvatarId());
     }
 
-    private static int avatarIdOf(final World world, final int personId) {
-        return world.persons().byId(personId).map(PilotController::shownAvatarId).orElse(0);
+    private static String avatarImageOf(final World world, final int personId) {
+        return world.persons().byId(personId).map(PilotController::shownAvatarImage).orElse(null);
     }
 
     static QualificationsDto buildQualifications(final World world, final int personId, final int worldTime) {
@@ -338,7 +333,7 @@ public class PilotController {
                         a.lastFlightTime))
                 .toList();
 
-        return new QualificationsDto(avatarIdOf(world, personId), buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
+        return new QualificationsDto(avatarImageOf(world, personId), buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
                 new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
                         CRITERIA_RECENT_FLIGHT_HOURS,
                         PilotPay.NO_TYPE_CURRENCY_PERCENT, PilotPay.NO_NIGHT_CURRENCY_PERCENT, PilotPay.CANNOT_CARRY_PASSENGERS_PERCENT),
@@ -416,7 +411,7 @@ public class PilotController {
             nightLandings += e.getNightLandings();
         }
 
-        return new LogbookDto(avatarIdOf(world, personId), new LogbookTotalsDto(entries.size(), round1(flightTime), round1(nightTime), round1(ifrTime),
+        return new LogbookDto(avatarImageOf(world, personId), new LogbookTotalsDto(entries.size(), round1(flightTime), round1(nightTime), round1(ifrTime),
                         dayTakeoffs, nightTakeoffs, dayLandings, nightLandings),
                 entries);
     }
@@ -451,8 +446,8 @@ public class PilotController {
     @AllArgsConstructor
     public static class PilotDto {
         private String initials;
-        // the picture of the pilot: the number of the row of avatars.csv of simforge-web (the first picture is 1); a person without an avatar gets one of two pilots by the id of the person
-        private int avatarId;
+        // the picture of the pilot: the file name of the icon, for instance user_pilot.png (a person without an avatar gets one of two pilots by the id of the person)
+        private String avatarImage;
         private String state;
         private String locationType;
         // the airport where the pilot is (ICAO and name), null if the pilot is not at an airport
@@ -505,7 +500,7 @@ public class PilotController {
     @AllArgsConstructor
     public static class QualificationsDto {
         // the picture of the pilot for the header of the page, see PilotDto
-        private int avatarId;
+        private String avatarImage;
         // the totals of the whole logbook
         private LogbookTotalsDto totals;
         // the windows of the "recent" numbers of the types: landings (hours) and flights (days)
@@ -583,7 +578,7 @@ public class PilotController {
     @AllArgsConstructor
     public static class LogbookDto {
         // the picture of the pilot for the header of the page, see PilotDto
-        private int avatarId;
+        private String avatarImage;
         private LogbookTotalsDto totals;
         private List<LogbookEntryDto> entries;
     }
