@@ -31,7 +31,7 @@ class BusyBirdsPlanDtoTest {
     }
 
     private BusyBirdsMissionControl.Leg leg(final BusyBirdsMissionControl.Leg.Type type, final int durationSeconds, final int baseIncome, final PilotPayParams params) {
-        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("GA7C", durationSeconds);
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("GA7C", durationSeconds + 20 * 60); // the pay is for blocks off to blocks on: the flying time and 20 minutes of the taxi
         final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(baseFlightPay, params), PilotPay.incomeShare(baseIncome, params));
         return new BusyBirdsMissionControl.Leg(type, from, to, 400, 4, 0, durationSeconds, salary, BusyBirdsPilotPay.baseHourlyRate("GA7C"), baseIncome, params);
     }
@@ -41,8 +41,8 @@ class BusyBirdsPlanDtoTest {
         final PilotPayParams params = PilotPayParams.none();
         params.setNightCurrency(true);
         params.setExperienceLevel(0);
-        // 51 minutes: 0.85 hours; no type currency and no pax: 50% of 500 is 250 an hour; the share is 0.5% with a quarter off
-        final BusyBirdsMissionControl.Leg leg = leg(BusyBirdsMissionControl.Leg.Type.Revenue, 51 * 60, 10_445, params);
+        // 31 minutes in the air and 20 of the taxi: 51 minutes, 0.85 hours; no type currency and no pax: 50% of 500 is 250 an hour; the share is 0.5% with a quarter off
+        final BusyBirdsMissionControl.Leg leg = leg(BusyBirdsMissionControl.Leg.Type.Revenue, 31 * 60, 10_445, params);
 
         final SalaryDto dto = SalaryDto.forLeg(leg);
 

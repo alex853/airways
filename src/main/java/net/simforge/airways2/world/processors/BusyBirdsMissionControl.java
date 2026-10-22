@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.world.computations.FlightTimeline;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -261,6 +262,14 @@ public class BusyBirdsMissionControl {
                 null);
     }
 
+    /**
+     * The time which is paid for a leg: from blocks off to blocks on, that is the flying time of the leg and the taxi at both ends. It is the same as the
+     * planned time of the flight mission, so the quote of the plan and the pilot contract of the booked flight give the same pay.
+     */
+    static Duration paidDuration(final long flyingSeconds) {
+        return Duration.ofSeconds(flyingSeconds).plusMinutes(FlightTimeline.BLOCKS_OFF_TO_TAKEOFF_MINUTES + FlightTimeline.LANDING_TO_BLOCKS_ON_MINUTES);
+    }
+
     private Leg addLeg(int plannedTime, List<Leg> legs,
                        Leg.Type type,
                        Airports.Airport fromAirport, Airports.Airport toAirport,
@@ -275,7 +284,7 @@ public class BusyBirdsMissionControl {
         int plannedArrTime = plannedDepTime + (int) simpleFlight.getTotalTime().toSeconds();
 
         // what the pilot gets: the base numbers with the coefficients of the pilot; a reposition leg carries nobody, so it has no income
-        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, plannedArrTime - plannedDepTime);
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, (int) paidDuration(plannedArrTime - plannedDepTime).toSeconds());
         final int baseIncome = type == Leg.Type.Revenue ? missionIncome : 0;
         final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(baseFlightPay, payParams), PilotPay.incomeShare(baseIncome, payParams));
         Leg leg = new Leg(type, fromAirport, toAirport, (int) Geo.distance(fromAirport.getCoords(), toAirport.getCoords()), pax, plannedDepTime, plannedArrTime, salary,
@@ -439,6 +448,13 @@ public class BusyBirdsMissionControl {
 
         public Duration getPlannedDuration() {
             return Duration.ofSeconds(plannedArrTime - plannedDepTime);
+        }
+
+        /**
+         * The time the pay is for: blocks off to blocks on (the flying time and the taxi), see paidDuration.
+         */
+        public Duration getPaidDuration() {
+            return paidDuration(plannedArrTime - plannedDepTime);
         }
 
         public enum Type {

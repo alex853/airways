@@ -94,12 +94,12 @@ class BusyBirdsPlanSalaryTest {
         assertEquals(BusyBirdsMissionControl.Leg.Type.Revenue, revenue.getType());
         assertEquals(BusyBirdsMissionControl.Leg.Type.Reposition, back.getType());
 
-        final int revenueFlightPay = (int) Math.round(200 * revenue.getPlannedDuration().toSeconds() / 3600.0);
+        final int revenueFlightPay = (int) Math.round(200 * revenue.getPaidDuration().toSeconds() / 3600.0);
         assertTrue(revenueFlightPay > 0);
         assertEquals(revenueFlightPay, revenue.getSalary().flightPay());
         assertEquals((int) Math.round(income * 0.03), revenue.getSalary().incomeShare());
 
-        assertEquals((int) Math.round(200 * back.getPlannedDuration().toSeconds() / 3600.0), back.getSalary().flightPay());
+        assertEquals((int) Math.round(200 * back.getPaidDuration().toSeconds() / 3600.0), back.getSalary().flightPay());
         assertEquals(0, back.getSalary().incomeShare());
 
         assertEquals(revenue.getSalary().flightPay() + back.getSalary().flightPay(), plan.getTotalSalary().flightPay());
@@ -159,8 +159,8 @@ class BusyBirdsPlanSalaryTest {
         assertTrue(big.getSalary().flightPay() > 0);
         // the rate is 500 against 200, the Gulfstream also flies faster, so the duration is shorter
         assertEquals(500, BusyBirdsPilotPay.baseHourlyRate("GA7C"));
-        assertEquals(Math.round(500 * big.getPlannedDuration().toSeconds() / 3600.0), big.getSalary().flightPay());
-        assertEquals(Math.round(200 * small.getPlannedDuration().toSeconds() / 3600.0), small.getSalary().flightPay());
+        assertEquals(Math.round(500 * big.getPaidDuration().toSeconds() / 3600.0), big.getSalary().flightPay());
+        assertEquals(Math.round(200 * small.getPaidDuration().toSeconds() / 3600.0), small.getSalary().flightPay());
     }
 
     @Test
@@ -172,7 +172,7 @@ class BusyBirdsPlanSalaryTest {
         final BusyBirdsMissionControl.Leg full = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
         final BusyBirdsMissionControl.Leg poor = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, nothing).get(0).getLegs().get(0);
 
-        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("C25C", (int) full.getPlannedDuration().toSeconds());
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("C25C", (int) full.getPaidDuration().toSeconds());
         assertEquals(baseFlightPay, full.getSalary().flightPay());
         assertEquals((int) Math.round(baseFlightPay * 0.25), poor.getSalary().flightPay());
         assertEquals((int) Math.round(income * 0.03), full.getSalary().incomeShare());

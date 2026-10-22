@@ -446,7 +446,7 @@ public class BusyBirdsController {
 
         public static SalaryDto forLeg(final BusyBirdsMissionControl.Leg leg) {
             final BusyBirdsPilotPay.Salary salary = leg.getSalary();
-            final double durationHours = Math.round(leg.getPlannedDuration().toSeconds() / 3600.0 * 100.0) / 100.0;
+            final double durationHours = Math.round(leg.getPaidDuration().toSeconds() / 3600.0 * 100.0) / 100.0;
             final double hourlyRate = leg.getHourlyRate() * PilotPay.flightPayCoefficientPercent(leg.getPayParams()) / 100.0;
             final boolean hasIncome = leg.getBaseIncome() > 0;
             return new SalaryDto(salary.flightPay(), salary.incomeShare(), salary.total(), durationHours, hourlyRate,
