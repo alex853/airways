@@ -9,3 +9,5 @@ hosting-access
 /World25/
 /world-data/
 /vatsim-tracker/
+/admin-requests.http
+/user-token.txt
