@@ -208,6 +208,31 @@ class PilotEndpointTest {
     }
 
     @Test
+    void theAvatarOfThePersonIsInThePilotAndInTheHeaderOfTheOtherPages() {
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "AK", 106);
+
+        assertEquals(106, PilotController.buildPilot(world, person).getAvatarId());
+        assertEquals(106, PilotController.buildLogbook(world, person.getId()).getAvatarId());
+        assertEquals(106, PilotController.buildQualifications(world, person.getId(), world.getWorldTime()).getAvatarId());
+    }
+
+    @Test
+    void personWithoutAnAvatarShowsOneOfTwoPilotsByTheParityOfItsId() {
+        final Persons.Person first = freshPilot();
+        final Persons.Person second = freshPilot();
+
+        assertEquals(0, first.getAvatarId());
+        assertEquals(PilotController.DEFAULT_AVATAR_FOR_ODD_PERSON_ID, PilotController.buildPilot(world, first).getAvatarId());
+        assertEquals(PilotController.DEFAULT_AVATAR_FOR_EVEN_PERSON_ID, PilotController.buildPilot(world, second).getAvatarId());
+        // the stored avatar is not changed by showing it
+        assertEquals(0, first.getAvatarId());
+        assertEquals(0, second.getAvatarId());
+        // the other pages have the same picture
+        assertEquals(PilotController.DEFAULT_AVATAR_FOR_ODD_PERSON_ID, PilotController.buildLogbook(world, first.getId()).getAvatarId());
+        assertEquals(PilotController.DEFAULT_AVATAR_FOR_EVEN_PERSON_ID, PilotController.buildQualifications(world, second.getId(), world.getWorldTime()).getAvatarId());
+    }
+
+    @Test
     void pilotWithoutACreditStartedShowsTheInitialOne() {
         assertEquals(16 * 60, PilotController.buildPilot(world, freshPilot()).getAwake().getCreditMinutes());
     }
