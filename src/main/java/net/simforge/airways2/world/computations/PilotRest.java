@@ -21,6 +21,9 @@ public final class PilotRest {
     // hours of the debt count, the rest of it adds nothing (so the most is an hour).
     public static final int EXTRA_SLEEP_DEBT_LIMIT_MINUTES = 3 * 60;
     public static final int DEBT_MINUTES_PER_EXTRA_SLEEP_MINUTE = 3;
+    // after a wake up the credit above 18 hours is cut to a random value from 18 hours to the credit but not more than 22 hours, see capAfterWakeUp
+    public static final int WAKE_UP_CAP_FROM_MINUTES = 18 * 60;
+    public static final int WAKE_UP_CAP_TO_MINUTES = 22 * 60;
     // minutes of the credit for a minute of sleep
     public static final int CREDIT_PER_SLEEP_MINUTE = 2;
 
@@ -61,6 +64,18 @@ public final class PilotRest {
             return creditAtSleepStart;
         }
         return clamp(creditAtSleepStart + CREDIT_PER_SLEEP_MINUTE * sleepMinutes);
+    }
+
+    /**
+     * The random cap of the credit after a wake up: a credit above 18 hours becomes a random value from 18 hours to the credit but not more than 22 hours.
+     * The credit up to 18 hours stays as it is. The random value is given by the caller (from 0 to 1, exclusive) so the computation stays testable.
+     */
+    public static int capAfterWakeUp(final int credit, final double random) {
+        if (credit <= WAKE_UP_CAP_FROM_MINUTES) {
+            return credit;
+        }
+        final int to = Math.min(credit, WAKE_UP_CAP_TO_MINUTES);
+        return WAKE_UP_CAP_FROM_MINUTES + (int) (random * (to - WAKE_UP_CAP_FROM_MINUTES + 1));
     }
 
     // the credit is stored in two bytes

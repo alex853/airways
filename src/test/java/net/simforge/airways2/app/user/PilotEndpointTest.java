@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * The pilot of the user as the page of the pilot shows it: who, the state, where and how much money.
@@ -87,6 +88,7 @@ class PilotEndpointTest {
         assertEquals(2 * 60, awake.getCreditMinutes());
         assertTrue(awake.isSleeping());
         assertEquals(3 * 60, awake.getSleepMinutes());
+        assertNotNull(awake.getSleepingSince());
         assertEquals(8 * 60, awake.getCreditAfterWakeMinutes());
     }
 

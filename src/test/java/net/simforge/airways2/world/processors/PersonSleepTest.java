@@ -189,7 +189,8 @@ class PersonSleepTest {
         world.setWorldTime(world.getWorldTime() + 30 * Time.ONE_MINUTE);
         world.personControl().wakeUp(person);
 
-        assertEquals(60 + 2 * (9 * 60 + 30), person.getAwakeCreditMinutes());
+        // 20 h 00 min of the credit, above 18 hours: the random cap from 18 hours to the credit
+        assertTrue(person.getAwakeCreditMinutes() >= 18 * 60 && person.getAwakeCreditMinutes() <= 60 + 2 * (9 * 60 + 30));
     }
 
     @Test
@@ -218,8 +219,8 @@ class PersonSleepTest {
         assertEquals(now, person.getHeartbeatTime());
         PersonProcessor.process(world);
         assertEquals(Persons.State.Idle, person.getState());
-        // 20 hours of sleep give 40 hours of the credit
-        assertEquals(120 + 2 * 20 * 60, person.getAwakeCreditMinutes());
+        // the credit is above 18 hours, so the random cap from 18 to 22 hours
+        assertTrue(person.getAwakeCreditMinutes() >= 18 * 60 && person.getAwakeCreditMinutes() <= 22 * 60);
     }
 
     @Test

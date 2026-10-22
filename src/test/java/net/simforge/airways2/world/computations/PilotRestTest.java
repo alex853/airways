@@ -101,4 +101,21 @@ class PilotRestTest {
         assertEquals(0, PilotRest.extraSleepMinutes(-2));
         assertEquals(20, PilotRest.extraSleepMinutes(-60));
     }
+
+    @Test
+    void creditUpToEighteenHoursIsNotCapped() {
+        assertEquals(18 * HOUR, PilotRest.capAfterWakeUp(18 * HOUR, 0.99));
+        assertEquals(5 * HOUR, PilotRest.capAfterWakeUp(5 * HOUR, 0.5));
+        assertEquals(-HOUR, PilotRest.capAfterWakeUp(-HOUR, 0.5));
+    }
+
+    @Test
+    void creditAboveEighteenHoursBecomesRandomFromEighteenToTheCreditNotMoreThanTwentyTwo() {
+        assertEquals(18 * HOUR, PilotRest.capAfterWakeUp(27 * HOUR, 0));
+        assertEquals(22 * HOUR, PilotRest.capAfterWakeUp(27 * HOUR, 0.999999));
+        // a credit just above 18 hours stays within it
+        assertEquals(18 * HOUR, PilotRest.capAfterWakeUp(18 * HOUR + 1, 0));
+        assertEquals(18 * HOUR + 1, PilotRest.capAfterWakeUp(18 * HOUR + 1, 0.999999));
+        assertEquals(20 * HOUR, PilotRest.capAfterWakeUp(20 * HOUR, 0.999999));
+    }
 }

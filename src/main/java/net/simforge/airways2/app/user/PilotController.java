@@ -244,10 +244,10 @@ public class PilotController {
         final int stored = started ? person.getAwakeCreditMinutes() : PilotRest.INITIAL_CREDIT_MINUTES;
         if (person.getState() == Persons.State.Resting && started) {
             final int sleepMinutes = PilotRest.minutesBetween(person.getCreditTime(), now);
-            return new AwakeDto(stored, true, sleepMinutes, PilotRest.creditAfterSleep(stored, sleepMinutes));
+            return new AwakeDto(stored, true, sleepMinutes, person.getCreditTime(), Math.min(PilotRest.creditAfterSleep(stored, sleepMinutes), PilotRest.WAKE_UP_CAP_FROM_MINUTES));
         }
         final int current = started ? PilotRest.creditNow(stored, person.getCreditTime(), now) : stored;
-        return new AwakeDto(current, false, 0, null);
+        return new AwakeDto(current, false, 0, null, null);
     }
 
     static PilotDto buildPilot(final World world, final Persons.Person person) {
@@ -555,6 +555,8 @@ public class PilotController {
         private boolean sleeping;
         // minutes of the sleep so far, zero when awake
         private int sleepMinutes;
+        // when the pilot fell asleep, epoch seconds (UTC), null when awake
+        private Integer sleepingSince;
         // the credit if the pilot wakes up now (it is more than creditMinutes only after two hours of sleep), null when awake
         private Integer creditAfterWakeMinutes;
     }

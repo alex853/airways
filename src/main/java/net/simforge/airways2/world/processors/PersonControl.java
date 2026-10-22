@@ -196,7 +196,7 @@ public class PersonControl {
         final int now = world.getWorldTime();
         final int sleepMinutes = PilotRest.minutesBetween(person.getCreditTime(), now);
         final int before = person.getAwakeCreditMinutes();
-        final int after = PilotRest.creditAfterSleep(before, sleepMinutes);
+        final int after = PilotRest.capAfterWakeUp(PilotRest.creditAfterSleep(before, sleepMinutes), Math.random());
         person.setAwakeCredit(after, now);
         setState(person, Persons.State.Idle, reason);
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
