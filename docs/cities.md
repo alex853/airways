@@ -129,7 +129,7 @@
 | ICAO | Название | Привязан к | Комментарий |
 |---|---|---|---|
 | EGDM | Boscombe Down | Bristol | военная база |
-| KINS | Indian Springs AF Aux | Las Vegas | военная авиабаза |
+| KINS | Indian Springs AF Aux (Creech AFB) | ~~Las Vegas~~ | военная авиабаза; **связь с Las Vegas удалена на проде 2026-10-22** (`/admin/airport/delete-link`), в `icaodata.csv` тип исправлен на `military`; сам аэропорт остался в мире без города |
 | KNZJ | El Toro MCAS | Los Angeles | бывшая база, рейсов нет (size 12170) |
 | KNTD | Point Mugu NAS | Los Angeles | военно-морская база |
 | KSLI | Los Alamitos AAF | Los Angeles | армейский аэродром |
@@ -640,3 +640,10 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   **Ahmedabad:** в CSV `Ahmadabad` переименован в `Ahmedabad`, 3 724 300 → 8 024 300 (аглом. ~8M), `del Gandhinagar` (207 500, 14 nm); Nadiad (204k, граница 25 nm) по решению пользователя **не вливаем**; `009` + `create-links`, имя `Ahmedabad Sardar Vallabhbhai Patel`.
   **Punta Cana:** в 30 nm нет города ≥100k (Higuey 67k, La Romana 171k в 36 nm), добавлен seed `Dominican republic,DO,Punta Cana,130000,18.58,-68.40` (по решению пользователя, Higuey не трогаем); страна DO в мире новая; MDPC size 3103 (`009` + `create-links`), attraction 5; MDLR Casa de Campo не берём.
   Терминалы `BusinessAviationTerminal` не создаём (решение пользователя). Шаги `009`, `012`, `013` включены на деплой. После деплоя: `create-links` для WADD, ZSAM, VAAH, MDPC и attraction Denpasar 8, Punta Cana 5.
+
+- **Партия 2026-10-22 (EGNT, DTTA, GMMN, OOMS, тонкие регионы по VATSIM-бэклогу):**
+  - **Newcastle upon Tyne (GB, EGNT):** CSV 190 600 → 1 100 600 (Tyneside + Wearside). `del Sunderland` (183 800, 13 nm). Gateshead, South Shields (<100k) не трогаем; Middlesbrough (147k, ~32 nm, Teesside EGNV) отдельный рынок. Имя по решению пользователя «Newcastle upon Tyne» (в CSV есть южноафриканский Newcastle 309k, он не импортируется, но при `f1TourFixes` по имени был бы неоднозначен). EGNT size 2326: `009` + `create-links`. Имя аэропорта «Newcastle Intl».
+  - **Tunis (TN, DTTA):** CSV 695 500 → 2 700 500 (Greater Tunis). `del Aryanah` (217 600, 3 nm). Страны Tunisia в мире не было, создаётся импортом. DTTA size 7868 подтянется автоматически. Имя «Tunis Carthage». DTTB (Sidi Ahmed, 32 nm, числится civil, на деле авиабаза) и мелкие DTTI не берём.
+  - **Casablanca (MA, GMMN):** население оставлено как в CSV, 3 672 900 (по решению пользователя «поменьше», агломерацию 4,3M не ставим). Имена в CSV исправлены: `Ad-d#ar-al-bayda` → Casablanca, `H#uribkah` → Khouribga (отдельный рынок, 44 nm). `del Settat` (124 800, граничный случай по расстоянию, по решению пользователя помечен). Rabat/Salé (GMME) не вливаем. GMMN size 3744: `009` + `create-links`. Имя аэропорта «Casablanca Mohammed V». GMMC Anfa и GMMT Tit Mellil (GA) не берём.
+  - **Muscat (OM, OOMS):** в CSV города Muscat не было. Ядром взят `Masqat` (56 400), переименован в Muscat, население 1 400 400 (агломерация ~1,4M, координаты ядра). `del As-sib` (248 200), `del Bawsar` (172 200), `del Ruwi` (116 600). Barka (78k) и Matrah (78k) <100k, не трогаем. Страны Oman в мире не было. OOMS size 4339: `009` + `create-links`. Имя «Muscat Intl». Военные Izki и Firq не берём.
+  - Терминалы бизнес-авиации и attraction не ставим (решение пользователя). Импорты `009`, `012`, `013` в `Application.main` раскомментированы на время деплоя, после деплоя закомментировать обратно.

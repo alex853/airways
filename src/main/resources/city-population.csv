@@ -10571,7 +10571,7 @@ Mongolia,MN,Ondorhaan,15300,47.34,110.65
 Mongolia,MN,Tosoncengel,13100,48.77,98.26
 Mongolia,MN,Nalajh,11700,47.77,107.26
 Mongolia,MN,Cojr,9300,46.36,108.36
-Morocco,MA,Ad-d#ar-al-bayda,3672900,33.6,-7.62
+Morocco,MA,Casablanca,3672900,33.6,-7.62
 Morocco,MA,Ar-ribat,1550100,34.02,-6.84
 Morocco,MA,Fas,1002600,34.05,-5.0
 Morocco,MA,Marrakech,1348000,31.63,-8.0
@@ -10582,11 +10582,11 @@ Morocco,MA,Ujdah,457800,34.69,-1.91
 Morocco,MA,Al-qanitrah,373400,34.27,-6.58
 Morocco,MA,Asfi,344800,32.32,-9.24
 Morocco,MA,Titwan,318800,35.58,-5.37
-Morocco,MA,H#uribkah,206800,32.89,-6.91
+Morocco,MA,Khouribga,206800,32.89,-6.91
 Morocco,MA,Bani mallal,162700,32.35,-6.37
 Morocco,MA,Al-jadidah,138200,33.26,-8.51
 Morocco,MA,An-nadur,130500,35.17,-2.95
-Morocco,MA,Sattat,124800,33.01,-7.62
+Morocco,MA,del Settat,124800,33.01,-7.62
 Morocco,MA,Al-qasr-al-kabir,124200,35.02,-5.91
 Morocco,MA,Al-h#amissat,116400,33.84,-6.07
 Morocco,MA,Al-#ara#is,114700,35.2,-6.16
@@ -11749,13 +11749,13 @@ Norway,NO,Dombas,1200,62.08,9.13
 Norway,NO,Glomfjord,1200,66.82,13.97
 Norway,NO,Hemnesberget,1200,66.23,13.63
 Norway,NO,Isfjorden,1200,62.58,7.79
-Oman,OM,As-sib,248200,23.67,58.19
+Oman,OM,del As-sib,248200,23.67,58.19
 Oman,OM,Salalah,185800,17.02,54.09
-Oman,OM,Bawsar,172200,23.53,58.39
+Oman,OM,del Bawsar,172200,23.53,58.39
 Oman,OM,Suh#ar,134900,24.34,56.7
 Oman,OM,#ibri,121700,23.25,56.5
 Oman,OM,As-suwayq,116700,23.85,57.43
-Oman,OM,Ruwi,116600,23.59,58.53
+Oman,OM,del Ruwi,116600,23.59,58.53
 Oman,OM,Sah#am,102800,24.18,56.88
 Oman,OM,Nizwa,84500,22.92,57.53
 Oman,OM,Ar-rustaq,81400,23.4,57.43
@@ -11766,7 +11766,7 @@ Oman,OM,Al-buraymi,60800,24.25,55.8
 Oman,OM,Bahla',59200,22.97,57.3
 Oman,OM,Sinas,58600,24.73,56.46
 Oman,OM,Al-mud#aybi,57800,22.57,58.12
-Oman,OM,Masqat,56400,23.61,58.54
+Oman,OM,Muscat,1400400,23.61,58.54
 Oman,OM,Qabus,51400,23.63,58.54
 Oman,OM,Al-h#aburah,49500,23.99,57.1
 Oman,OM,Al-masna#ah,48900,23.78,57.63
@@ -15892,9 +15892,9 @@ Trinidad and tobago,TT,Tabaquite,3300,10.38,-61.3
 Trinidad and tobago,TT,Debe,3100,10.2,-61.45
 Trinidad and tobago,TT,Rio claro,3100,10.26,-61.15
 Trinidad and tobago,TT,Biche,2700,10.23,-61.13
-Tunisia,TN,Tunis,695500,36.84,10.22
+Tunisia,TN,Tunis,2700500,36.84,10.22
 Tunisia,TN,Safaqis,273300,34.75,10.72
-Tunisia,TN,Aryanah,217600,36.88,10.18
+Tunisia,TN,del Aryanah,217600,36.88,10.18
 Tunisia,TN,Bu #aradah,12100,36.35,9.62
 Tunisia,TN,Banan bud#ar,12000,35.68,10.83
 Tunisia,TN,Surban,6300,35.29,10.38
@@ -16519,10 +16519,10 @@ United Kingdom,GB,Reading,228800,51.45,-0.98
 United Kingdom,GB,Southampton,215900,50.91,-1.41
 United Kingdom,GB,Dudley,200500,52.5,-2.08
 United Kingdom,GB,Aberdeen,198200,57.15,-2.1
-United Kingdom,GB,Newcastle upon tyne,190600,55.0,-1.6
+United Kingdom,GB,Newcastle upon Tyne,1100600,55.0,-1.6
 United Kingdom,GB,Preston,188100,53.76,-2.73
 United Kingdom,GB,Luton,184700,51.9,-0.44
-United Kingdom,GB,Sunderland,183800,54.91,-1.39
+United Kingdom,GB,del Sunderland,183800,54.91,-1.39
 United Kingdom,GB,Portsmouth,180100,50.81,-1.09
 United Kingdom,GB,Walsall,178600,52.6,-1.97
 United Kingdom,GB,Norwich,177100,52.65,1.28

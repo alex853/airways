@@ -79,7 +79,11 @@ public class World25_013_rename_cities {
                 new String[]{"WADD", "Denpasar Ngurah Rai"},
                 new String[]{"SKBO", "Bogota El Dorado"},
                 new String[]{"ZSAM", "Xiamen Gaoqi"},
-                new String[]{"VAAH", "Ahmedabad Sardar Vallabhbhai Patel"}
+                new String[]{"VAAH", "Ahmedabad Sardar Vallabhbhai Patel"},
+                new String[]{"EGNT", "Newcastle Intl"},
+                new String[]{"DTTA", "Tunis Carthage"},
+                new String[]{"GMMN", "Casablanca Mohammed V"},
+                new String[]{"OOMS", "Muscat Intl"}
         ));
     }
 }
