@@ -190,6 +190,8 @@ public class BusyBirdsMissionControl {
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
 
+        // todo ak2 take into account aircraft max range
+        // todo ak2 check aircraft seats vs journey size
         if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
             messages.add("aircraft is not parked at airport");
         }
@@ -294,35 +296,6 @@ public class BusyBirdsMissionControl {
         return leg;
     }
 
-    private Optional<Airports.Airport> chooseAirport(final AircraftOperators.AircraftOperator aircraftOperator, final List<Airports.Airport> airports) {
-        if (airports.isEmpty()) {
-            return Optional.empty();
-        }
-
-        final Optional<Airports.Airport> baseAirport = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, aircraftOperator, AirportFacilities.Type.BaseAirport))
-                .findFirst();
-        if (baseAirport.isPresent()) {
-            return baseAirport;
-        }
-
-        final List<Airports.Airport> preferredBusinessTerminals = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, aircraftOperator, AirportFacilities.Type.BusinessAviationTerminal))
-                .toList();
-        if (!preferredBusinessTerminals.isEmpty()) {
-            return Optional.of(preferredBusinessTerminals.get((int) (Math.random()*preferredBusinessTerminals.size())));
-        }
-
-        final List<Airports.Airport> anyBusinessTerminals = airports.stream()
-                .filter(a -> world.airportFacilities().hasFacility(a, AirportFacilities.Type.BusinessAviationTerminal))
-                .toList();
-        if (!anyBusinessTerminals.isEmpty()) {
-            return Optional.of(anyBusinessTerminals.get((int) (Math.random()*anyBusinessTerminals.size())));
-        }
-
-        return Optional.of(airports.get((int) (Math.random()*airports.size())));
-    }
-
     private List<Airports.Airport> listAirports(AircraftOperators.AircraftOperator aircraftOperator, int cityId) {
         List<Airports.Airport> airports = world.airport2city().allByCityId(cityId)
                 .map(l -> world.airports().byId(l.getAirportId()).orElseThrow())
@@ -367,15 +340,6 @@ public class BusyBirdsMissionControl {
         // todo ak2 put here some check if user has access to BusyBirds OR throw exception!
     }
 
-
-    // todo ak2 take into account aircraft max range
-    // todo ak2 check aircraft seats vs journey size
-
-    private static Optional<Aircrafts.Aircraft> findNearestSuitableAircraft(final World world, final AircraftOperators.AircraftOperator aircraftOperator, final Airports.Airport airport) {
-        return world.aircrafts()
-                .byAircraftOperatorIdAndIdleAndParkedAtAirport(aircraftOperator.getId())
-                .min(Comparator.comparingDouble(a -> Geo.distance(a.getLocationCoords(), airport.getCoords())));
-    }
 
     @Data
     @AllArgsConstructor

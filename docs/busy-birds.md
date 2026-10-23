@@ -10,7 +10,6 @@
 |---|---|---|
 | `BusyBirdsController` | `app/user/BusyBirdsController.java` | REST API `/busy-birds`, DTO, оркестрация бронирования |
 | `BusyBirdsMissionControl` | `world/processors/BusyBirdsMissionControl.java` | Бизнес-логика: список миссий, оплата, построение планов |
-| `BusyBirdsMissions` | `world/datamodel/BusyBirdsMissions.java` | **Заготовка** хранилища миссий (см. «Состояние / TODO») |
 
 `world.busyBirdsMissionControl()` — доступ к логике из `World`.
 
@@ -138,16 +137,14 @@ Gulfstream G600/G700 примерно $300–370k):
   (на практике защищает только то, что список `/aircraft/available` показывает idle-самолёты).
   Если аэропортов нет, циклы пусты и вернётся пустой список планов.
 - Не учитывается максимальная дальность ВС и вместимость кресел vs размер группы
-  (`todo ak2` в `BusyBirdsMissionControl`).
+  (`todo ak2` в начале `BusyBirdsMissionControl.buildPlans`, перенесены туда 2026-10-23 при удалении неиспользуемого кода).
 - `Mission.validTill` всегда null — срока жизни миссии нет.
 - `pay` (доход миссии) и `salary` (оплата пилота) показываются в планах, при завершении рейса платёж только пишется в лог (`payPilot`), счетов и транзакций нет.
 - Несколько журнеев/миссий можно забронировать на один самолёт подряд без проверки пересечений
   (после первой брони статус самолёта зависит от обработки лётной миссии).
-- Неиспользуемый код: `chooseAirport` (дублирует `listAirports` с random) и `findNearestSuitableAircraft`.
 - `Geo.distance` — прямая; `totalDistance` плана включает reposition-плечи.
-- `BusyBirdsMissions` (datamodel): скопирован из фасилити (поля `airportId/aircraftOperatorId/type`,
-  enum `Type`, методы `hasFacility`, `by`), нигде не используется. В комментариях задуманная схема
-  персистентных миссий: status, journeyId, pilotId, aircraftId, createdAt, assignedAt, до трёх пар
-  flightMission+transportFlight. Это направление развития: хранить миссии вместо вычисления на лету.
+- Хранилище персистентных миссий **не сделано**: миссии вычисляются на лету. Заготовка класса `BusyBirdsMissions` (скопированная из фасилити,
+  нигде не использовалась) удалена 2026-10-23, она осталась в истории git. Задуманная схема: status, journeyId, pilotId, aircraftId, createdAt, assignedAt,
+  до трёх пар flightMission+transportFlight. Это направление развития: хранить миссии вместо вычисления на лету.
 - В `bookMission` вся цепочка внутри `modifySync` не атомарна относительно ошибок посередине
   (исключение на 2-м плече оставит созданным 1-е).
