@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -27,6 +29,19 @@ public class PersonController {
         return worldBean.read(world -> world.persons().byId(id)
                 .map(p -> toDto(world, p))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found")));
+    }
+
+    /**
+     * Switches the feature flag of the warp drive of the person on or off (the pilot who has it moves to any airport at once).
+     */
+    @PostMapping("/{id}/warp-drive")
+    public PersonDto setWarpDrive(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = world.persons().byId(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found"));
+            person.setWarpDrive(enabled);
+            return toDto(world, person);
+        });
     }
 
     private static PersonDto toDto(final World world, final Persons.Person p) {
@@ -51,7 +66,8 @@ public class PersonController {
                 p.getOriginCityId(),
                 p.getOriginCityId() > 0 ? world.cities().byId(p.getOriginCityId()).map(c -> c.getName()).orElse(null) : null,
                 p.getInitials(),
-                p.getAvatarId());
+                p.getAvatarId(),
+                p.isWarpDrive());
     }
 
     @Data
@@ -71,5 +87,6 @@ public class PersonController {
         private String originCityName;
         private String initials;
         private int avatarId;
+        private boolean warpDrive;
     }
 }

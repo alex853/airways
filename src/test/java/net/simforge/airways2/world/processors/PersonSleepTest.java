@@ -334,14 +334,15 @@ class PersonSleepTest {
         PersonProcessor.process(world);
         assertEquals(Persons.State.Idle, person.getState());
 
-        hoursPass(3);
+        // the moment is 5 to 7 hours after (2 hours of the credit and a debt of 3 to 5 hours)
+        world.setWorldTime(person.getHeartbeatTime());
         PersonProcessor.process(world);
         assertEquals(Persons.State.Resting, person.getState());
-        // the credit at the moment of falling asleep is the debt of 3 to 5 hours, the sleep is scheduled
-        assertTrue(person.getAwakeCreditMinutes() <= -2 * 60 && person.getAwakeCreditMinutes() >= -4 * 60 - 1, "credit " + person.getAwakeCreditMinutes());
+        // the credit at the moment of falling asleep is the debt of 3 to 5 hours
+        assertTrue(person.getAwakeCreditMinutes() <= -3 * 60 && person.getAwakeCreditMinutes() >= -5 * 60, "credit " + person.getAwakeCreditMinutes());
         assertTrue(person.getHeartbeatTime() > world.getWorldTime());
 
-        hoursPass(12);
+        world.setWorldTime(person.getHeartbeatTime());
         PersonProcessor.process(world);
         assertEquals(Persons.State.Idle, person.getState());
     }

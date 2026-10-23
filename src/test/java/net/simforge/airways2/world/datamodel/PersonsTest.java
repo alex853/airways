@@ -156,4 +156,58 @@ class PersonsTest {
         assertEquals("MB", loaded.byId(second.getId()).orElseThrow().getInitials());
         assertEquals(Persons.LocationType.Airport, loaded.byId(second.getId()).orElseThrow().getLocationType());
     }
+
+    // ---- the initials are 12 bits of a 16 bit field, the highest bit is the warp drive
+
+    @Test
+    public void test__initials_survive_every_letter_and_digit() {
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "", 0);
+        final String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (final char first : alphabet.toCharArray()) {
+            for (final char second : alphabet.toCharArray()) {
+                person.setInitials("" + first + second);
+                assertEquals("" + first + second, person.getInitials());
+            }
+            person.setInitials("" + first);
+            assertEquals("" + first, person.getInitials());
+        }
+        person.setInitials("");
+        assertEquals("", person.getInitials());
+    }
+
+    @Test
+    public void test__a_letter_which_is_not_english_is_refused() {
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "AK", 0);
+        assertThrows(IllegalArgumentException.class, () -> person.setInitials("\u0410B"));
+        assertThrows(IllegalArgumentException.class, () -> person.setInitials("A B"));
+        assertThrows(IllegalArgumentException.class, () -> person.setInitials(" A"));
+        assertEquals("AK", person.getInitials());
+    }
+
+    @Test
+    public void test__a_number_of_an_old_format_gives_empty_initials() {
+        assertEquals("", Persons.decodeInitials(63 * 63));
+        assertEquals("", Persons.decodeInitials(4095));
+        assertEquals("", Persons.decodeInitials(-1));
+    }
+
+    @Test
+    public void test__the_warp_drive_flag_does_not_touch_the_initials_and_the_other_way_round() {
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.None, 0, 0, "AK", 106);
+        assertFalse(person.isWarpDrive());
+
+        person.setWarpDrive(true);
+        assertTrue(person.isWarpDrive());
+        assertEquals("AK", person.getInitials());
+
+        person.setInitials("zZ");
+        assertTrue(person.isWarpDrive());
+        assertEquals("zZ", person.getInitials());
+
+        person.setWarpDrive(false);
+        assertFalse(person.isWarpDrive());
+        assertEquals("zZ", person.getInitials());
+        // the other fields of the record are where they were
+        assertEquals(106, person.getAvatarId());
+    }
 }

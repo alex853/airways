@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -31,8 +32,10 @@ public class Persons {
             .withDataField(DataField.of(DataType.Unsigned8bit)) // locationType             1 byte
             .withDataField(DataField.of(DataType.Unsigned16bit)) // locationId              2 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // originCityId            2 bytes
-            // todo ak1 initials are exactly two characters: a fixed two-byte field instead of PlainString (it has a length byte, 3 bytes now), and avatarId needs one byte, not two; that frees 2 bytes (the free bytes are in the middle of the record, move the fields)
-            .withDataField(DataField.of(DataType.PlainString).length(2)) // initials        3 bytes (length byte + 2 chars)
+            // two letters of 63 values each (a space and 62 letters and digits) are 12 bits, see INITIALS_ALPHABET; the highest bit is the feature flag of the warp drive.
+            // The reserve byte is the third byte of the old PlainString (length byte + 2 chars): it is kept, so the fields after it stay where they were
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // initials (bits 0-11), warpDrive (bit 15)  2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve                  1 byte
             .withDataField(DataField.of(DataType.Unsigned16bit)) // avatarId                2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId, 0 is none  3 bytes
             .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes, see PilotRest  2 bytes
@@ -50,13 +53,51 @@ public class Persons {
     private final DataField locationIdField = storage.getDataField(5);
     private final DataField originCityIdField = storage.getDataField(6);
     private final DataField initialsField = storage.getDataField(7);
-    private final DataField avatarIdField = storage.getDataField(8);
-    private final DataField bankAccountIdField = storage.getDataField(9);
-    private final DataField awakeCreditMinutesField = storage.getDataField(10);
-    private final DataField creditTimeField = storage.getDataField(11);
-    private final DataField dutyStartTimeField = storage.getDataField(12);
+    // storage.getDataField(8) is the reserve byte
+    private final DataField avatarIdField = storage.getDataField(9);
+    private final DataField bankAccountIdField = storage.getDataField(10);
+    private final DataField awakeCreditMinutesField = storage.getDataField(11);
+    private final DataField creditTimeField = storage.getDataField(12);
+    private final DataField dutyStartTimeField = storage.getDataField(13);
+
+    private final BitAccessField initialsBits = BitAccessField.instance(storage, initialsField);
+    private final BitAccessField.Section initialsSection = initialsBits.section(0, 12);
+    private final BitAccessField.Section warpDriveBit = initialsBits.section(15, 1);
 
     private static final int MAX_INITIALS_LENGTH = 2;
+
+    // The letters of the initials: a space (an empty place, the first one, so no initials are zero) and the 62 letters and digits. Two letters are the number
+    // first * 63 + second, it is less than 63 * 63 = 3969 and fits 12 bits. The order of the alphabet is part of the format: never change it.
+    static final String INITIALS_ALPHABET = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    private static final int INITIALS_BASE = INITIALS_ALPHABET.length();
+
+    /**
+     * The initials as the number which is stored: up to two English letters or digits, a missing letter is a space. The empty initials are zero.
+     */
+    static int encodeInitials(final String initials) {
+        final String value = initials != null ? initials : "";
+        checkArgument(value.length() <= MAX_INITIALS_LENGTH, "initials are two letters at most");
+        int number = 0;
+        for (int i = 0; i < MAX_INITIALS_LENGTH; i++) {
+            final boolean present = i < value.length();
+            final int index = present ? INITIALS_ALPHABET.indexOf(value.charAt(i)) : 0;
+            // a space is only the empty place, it is not a letter of the initials
+            checkArgument(index >= 0 && !(present && value.charAt(i) == ' '), "initials are English letters and digits only");
+            number = number * INITIALS_BASE + index;
+        }
+        return number;
+    }
+
+    /**
+     * The initials of the stored number, empty if the number is not valid (the bytes of an old format, nothing was written yet).
+     */
+    static String decodeInitials(final int number) {
+        if (number < 0 || number >= INITIALS_BASE * INITIALS_BASE) {
+            return "";
+        }
+        final String initials = "" + INITIALS_ALPHABET.charAt(number / INITIALS_BASE) + INITIALS_ALPHABET.charAt(number % INITIALS_BASE);
+        return initials.replace(" ", "");
+    }
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
@@ -235,14 +276,23 @@ public class Persons {
          * Up to two letters, empty if not set.
          */
         public String getInitials() {
-            final String initials = storage.getAsString(id, initialsField);
-            return initials != null ? initials : "";
+            return decodeInitials(initialsSection.getInt(id));
         }
 
         public void setInitials(final String initials) {
-            final String value = initials != null ? initials : "";
-            checkArgument(value.length() <= MAX_INITIALS_LENGTH, "initials are two letters at most");
-            storage.set(id, initialsField, value);
+            initialsSection.setInt(id, encodeInitials(initials));
+        }
+
+        /**
+         * The feature flag of the warp drive (the pilot may move to any airport at once): it is switched by hand for the one who has it, see the admin
+         * endpoint POST /admin/person/{id}/warp-drive.
+         */
+        public boolean isWarpDrive() {
+            return warpDriveBit.getBoolean(id);
+        }
+
+        public void setWarpDrive(final boolean warpDrive) {
+            warpDriveBit.setBoolean(id, warpDrive);
         }
 
         public int getAvatarId() {
