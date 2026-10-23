@@ -143,6 +143,10 @@ public class PersonControl {
      * The pilot goes to sleep: the credit is fixed at this moment and stops falling. Only a free (Idle) pilot can go to sleep.
      */
     public void startSleep(final Persons.Person person) {
+        startSleep(person, "sleep");
+    }
+
+    private void startSleep(final Persons.Person person, final String reason) {
         if (person.getState() != Persons.State.Idle) {
             throw new IllegalStateException("only an idle pilot can go to sleep, the pilot is " + person.getState());
         }
@@ -150,12 +154,43 @@ public class PersonControl {
         final int now = world.getWorldTime();
         final int credit = PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now);
         person.setAwakeCredit(credit, now);
-        setState(person, Persons.State.Resting, "sleep");
+        setState(person, Persons.State.Resting, reason);
         // the pilot wakes up by itself at a random moment, the heartbeat is that moment (PersonProcessor)
         // a pilot in debt sleeps longer, see PilotRest.extraSleepMinutes
         final int sleepMinutes = Tools.random(PilotRest.AUTO_WAKE_UP_MIN_MINUTES, PilotRest.AUTO_WAKE_UP_MAX_MINUTES) + PilotRest.extraSleepMinutes(credit);
         person.setHeartbeatTime(now + sleepMinutes * Time.ONE_MINUTE);
         log.info("p/s #{} - sleep started, awake credit {} min, wakes up by itself in {} min", person.getId(), credit, sleepMinutes);
+    }
+
+    /**
+     * The pilot goes to sleep by itself: the time which was scheduled when the pilot became free has come (see scheduleAutoSleep).
+     */
+    public void fallAsleepByItself(final Persons.Person person) {
+        startSleep(person, "fell asleep by itself");
+    }
+
+    /**
+     * A free pilot goes to sleep by itself at the moment which is set now (the heartbeat of the person): the earlier of a day of 15 to 17 hours and the end of
+     * the credit plus a debt of 3 to 5 hours (PilotRest.autoSleepDelayMinutes). It is set when the pilot becomes free and cleared when the pilot is not free.
+     */
+    private void scheduleAutoSleep(final Persons.Person person) {
+        final int now = world.getWorldTime();
+        final int credit = awakeCreditIsNotStarted(person)
+                ? PilotRest.INITIAL_CREDIT_MINUTES
+                : PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now);
+        final int delay = PilotRest.autoSleepDelayMinutes(credit,
+                Tools.random(PilotRest.AUTO_SLEEP_DAY_MIN_MINUTES, PilotRest.AUTO_SLEEP_DAY_MAX_MINUTES),
+                Tools.random(PilotRest.AUTO_SLEEP_DEBT_MIN_MINUTES, PilotRest.AUTO_SLEEP_DEBT_MAX_MINUTES));
+        person.setHeartbeatTime(now + delay * Time.ONE_MINUTE);
+        log.info("p/s #{} - awake credit {} min, falls asleep by itself in {} min if it stays free", person.getId(), credit, delay);
+    }
+
+    /**
+     * The free pilots who have no falling asleep scheduled (they became free before it existed, or a person was created free) get one. For the start of the
+     * application.
+     */
+    public void scheduleAutoSleepOfIdlePersons() {
+        world.persons().idleWithoutHeartbeat().forEach(this::scheduleAutoSleep);
     }
 
     /**
@@ -239,6 +274,12 @@ public class PersonControl {
         }
         person.setState(state);
         log.info("p/s #{} - state {} -> {} ({})", person.getId(), oldState, state, reason);
+        // a free pilot is going to fall asleep by itself; a pilot who is not free (on duty, asleep) has nothing scheduled here (a sleep sets its own wake up)
+        if (state == Persons.State.Idle) {
+            scheduleAutoSleep(person);
+        } else if (oldState == Persons.State.Idle) {
+            person.setHeartbeatTime(0);
+        }
     }
 
     public void setLocation(final Persons.Person person, final Persons.LocationType type, final int id, final String reason) {

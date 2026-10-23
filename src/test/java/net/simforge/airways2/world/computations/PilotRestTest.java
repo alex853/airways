@@ -133,4 +133,24 @@ class PilotRestTest {
         assertEquals(20 * HOUR, PilotRest.maxAfterWakeUp(20 * HOUR));
         assertEquals(22 * HOUR, PilotRest.maxAfterWakeUp(27 * HOUR));
     }
+
+    @Test
+    void aPilotWithPlentyOfCreditFallsAsleepAfterTheUsualDay() {
+        // 30 hours of the credit, the day of 16 hours is earlier than the credit and the debt
+        assertEquals(16 * HOUR, PilotRest.autoSleepDelayMinutes(30 * HOUR, 16 * HOUR, 4 * HOUR));
+    }
+
+    @Test
+    void aPilotWithLittleCreditFallsAsleepWhenTheCreditHasRunOutPlusTheDebt() {
+        // 2 hours of the credit and a debt of 4 hours: in 6 hours
+        assertEquals(6 * HOUR, PilotRest.autoSleepDelayMinutes(2 * HOUR, 16 * HOUR, 4 * HOUR));
+        // 10 hours of the credit: in 14 hours, earlier than the day of 16
+        assertEquals(14 * HOUR, PilotRest.autoSleepDelayMinutes(10 * HOUR, 16 * HOUR, 4 * HOUR));
+    }
+
+    @Test
+    void aPilotDeepInDebtFallsAsleepAtOnce() {
+        assertEquals(0, PilotRest.autoSleepDelayMinutes(-6 * HOUR, 16 * HOUR, 4 * HOUR));
+        assertEquals(HOUR, PilotRest.autoSleepDelayMinutes(-3 * HOUR, 16 * HOUR, 4 * HOUR));
+    }
 }

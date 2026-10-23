@@ -100,6 +100,15 @@ public class Persons {
         return storage.filter(Storage.Condition.and(noHeartbeat, resting));
     }
 
+    /**
+     * The persons who are free (Idle) and have no heartbeat: nothing is going to put them to sleep. A scan, it is for the start of the application only.
+     */
+    public Stream<Person> idleWithoutHeartbeat() {
+        final Storage.Condition<Person> noHeartbeat = storage.byZeroHeartbeat(heartbeatTimeField);
+        final Storage.Condition<Person> idle = recordId -> storage.getAsInt(recordId, stateField) == State.Idle.code();
+        return storage.filter(Storage.Condition.and(noHeartbeat, idle));
+    }
+
     public Optional<Person> nextForHeartbeat(final int worldTime) {
         return storage.nextForHeartbeat(worldTime);
     }

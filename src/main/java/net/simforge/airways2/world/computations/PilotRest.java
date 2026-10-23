@@ -24,6 +24,13 @@ public final class PilotRest {
     // after a wake up the credit above 18 hours is cut to a random value from 18 hours to the credit but not more than 22 hours, see capAfterWakeUp
     public static final int WAKE_UP_CAP_FROM_MINUTES = 18 * 60;
     public static final int WAKE_UP_CAP_TO_MINUTES = 22 * 60;
+    // The pilot goes to sleep by itself when it has been free (Idle) for a while: at the usual day, 16 hours plus or minus an hour, or, when the credit is
+    // less than that, a bit after the credit has run out (the debt of 3 to 5 hours, about 4), whichever comes first. The user is not told about it:
+    // the awake time just ticks down and one day the pilot is asleep.
+    public static final int AUTO_SLEEP_DAY_MIN_MINUTES = 15 * 60;
+    public static final int AUTO_SLEEP_DAY_MAX_MINUTES = 17 * 60;
+    public static final int AUTO_SLEEP_DEBT_MIN_MINUTES = 3 * 60;
+    public static final int AUTO_SLEEP_DEBT_MAX_MINUTES = 5 * 60;
     // minutes of the credit for a minute of sleep
     public static final int CREDIT_PER_SLEEP_MINUTE = 2;
 
@@ -94,6 +101,15 @@ public final class PilotRest {
      */
     public static int maxAfterWakeUp(final int credit) {
         return credit <= WAKE_UP_CAP_FROM_MINUTES ? credit : Math.min(credit, WAKE_UP_CAP_TO_MINUTES);
+    }
+
+    /**
+     * In how many minutes a free pilot with the credit goes to sleep by itself: the earlier of the day (a random 15 to 17 hours, given as dayMinutes) and the
+     * credit plus the debt it is allowed to get (a random 3 to 5 hours, given as debtMinutes). A pilot already deep in debt goes at once (never below zero).
+     * The randoms are given by the caller, so the computation stays testable.
+     */
+    public static int autoSleepDelayMinutes(final int creditMinutes, final int dayMinutes, final int debtMinutes) {
+        return Math.max(0, Math.min(dayMinutes, creditMinutes + debtMinutes));
     }
 
     // the credit is stored in two bytes

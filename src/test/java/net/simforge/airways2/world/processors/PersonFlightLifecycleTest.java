@@ -219,7 +219,10 @@ class PersonFlightLifecycleTest {
                 "p/s #" + id + " - location None -> Airport BBBB (f/m #" + fm + " landed)",
                 "p/s #" + id + " - state OnDuty -> Idle (f/m #" + fm + " finished)",
                 "p/s #" + id + " - logbook entry #1: AAAA -> BBBB, 0 min, f/m #" + fm
-        ), logged());
+        ), logged().stream()
+                // the time of the falling asleep by itself is random, its line is checked in PersonSleepTest
+                .filter(line -> !line.contains("falls asleep by itself in"))
+                .collect(java.util.stream.Collectors.toList()));
     }
 
     // ---- the logbook of the pilot

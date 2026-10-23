@@ -143,7 +143,8 @@ class PersonSleepTest {
         PersonProcessor.process(world);
 
         assertEquals(Persons.State.Idle, person.getState());
-        assertEquals(0, person.getHeartbeatTime());
+        // the pilot is free again: the falling asleep by itself is scheduled
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime());
         // 2 h left when falling asleep and two for one for the sleep of 7.5 to 10 hours: from 17 to 22 hours
         assertTrue(person.getAwakeCreditMinutes() >= 2 * 60 + 2 * PilotRest.AUTO_WAKE_UP_MIN_MINUTES, "credit " + person.getAwakeCreditMinutes());
         assertTrue(person.getAwakeCreditMinutes() <= 2 * 60 + 2 * PilotRest.AUTO_WAKE_UP_MAX_MINUTES, "credit " + person.getAwakeCreditMinutes());
@@ -156,7 +157,7 @@ class PersonSleepTest {
         world.personControl().startSleep(person);
         hoursPass(3);
         world.personControl().wakeUp(person);
-        assertEquals(0, person.getHeartbeatTime());
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime()); // the pilot is free: the falling asleep by itself is scheduled, not the wake up
         assertTrue(world.persons().checkHeartbeatIndex().isEmpty());
 
         hoursPass(10);
@@ -285,5 +286,73 @@ class PersonSleepTest {
 
         assertTrue(person.getHeartbeatTime() >= fellAsleepAt + (PilotRest.AUTO_WAKE_UP_MIN_MINUTES + 60) * Time.ONE_MINUTE);
         assertTrue(person.getHeartbeatTime() <= fellAsleepAt + (PilotRest.AUTO_WAKE_UP_MAX_MINUTES + 60) * Time.ONE_MINUTE);
+    }
+
+    // ---- a free pilot falls asleep by itself
+
+    @Test
+    void aPilotWhoWokeUpIsScheduledToFallAsleepByItself() {
+        world.personControl().startAwakeCredit(person);
+        world.personControl().startSleep(person);
+        hoursPass(9);
+        world.personControl().wakeUp(person);
+
+        // the credit is 16 + 18 hours or the cap of it (at least 18), so it is the usual day of 15 to 17 hours
+        final int delay = person.getHeartbeatTime() - world.getWorldTime();
+        assertTrue(delay >= PilotRest.AUTO_SLEEP_DAY_MIN_MINUTES * Time.ONE_MINUTE && delay <= PilotRest.AUTO_SLEEP_DAY_MAX_MINUTES * Time.ONE_MINUTE, "delay " + delay);
+        assertTrue(world.persons().checkHeartbeatIndex().isEmpty());
+    }
+
+    @Test
+    void aPilotWithLittleCreditIsScheduledForTheCreditPlusTheDebt() {
+        world.personControl().startAwakeCredit(person);
+        person.setAwakeCredit(2 * 60, world.getWorldTime());
+        world.personControl().setState(person, Persons.State.OnDuty, "test");
+        world.personControl().setState(person, Persons.State.Idle, "test");
+
+        final int delay = person.getHeartbeatTime() - world.getWorldTime();
+        assertTrue(delay >= (2 * 60 + PilotRest.AUTO_SLEEP_DEBT_MIN_MINUTES) * Time.ONE_MINUTE
+                && delay <= (2 * 60 + PilotRest.AUTO_SLEEP_DEBT_MAX_MINUTES) * Time.ONE_MINUTE, "delay " + delay);
+    }
+
+    @Test
+    void aPilotGoesOnDutyAndNothingIsScheduled() {
+        world.personControl().setState(person, Persons.State.Idle, "test");
+        world.personControl().setState(person, Persons.State.OnDuty, "test");
+
+        assertEquals(0, person.getHeartbeatTime());
+    }
+
+    @Test
+    void whenTheTimeComesAFreePilotFallsAsleepAndWakesUpByItselfLater() {
+        world.personControl().startAwakeCredit(person);
+        person.setAwakeCredit(2 * 60, world.getWorldTime());
+        world.personControl().setState(person, Persons.State.OnDuty, "test");
+        world.personControl().setState(person, Persons.State.Idle, "test");
+
+        hoursPass(3);
+        PersonProcessor.process(world);
+        assertEquals(Persons.State.Idle, person.getState());
+
+        hoursPass(3);
+        PersonProcessor.process(world);
+        assertEquals(Persons.State.Resting, person.getState());
+        // the credit at the moment of falling asleep is the debt of 3 to 5 hours, the sleep is scheduled
+        assertTrue(person.getAwakeCreditMinutes() <= -2 * 60 && person.getAwakeCreditMinutes() >= -4 * 60 - 1, "credit " + person.getAwakeCreditMinutes());
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime());
+
+        hoursPass(12);
+        PersonProcessor.process(world);
+        assertEquals(Persons.State.Idle, person.getState());
+    }
+
+    @Test
+    void theFreePilotsWithoutAScheduleGetOneAtTheStart() {
+        // the pilot of the test is free and nothing is scheduled for it (it was created, not made free)
+        assertEquals(0, person.getHeartbeatTime());
+
+        world.personControl().scheduleAutoSleepOfIdlePersons();
+
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime());
     }
 }
