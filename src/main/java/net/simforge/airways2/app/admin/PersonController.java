@@ -35,12 +35,13 @@ public class PersonController {
      * Switches the feature flag of the warp drive of the person on or off (the pilot who has it moves to any airport at once).
      */
     @PostMapping("/{id}/warp-drive")
-    public PersonDto setWarpDrive(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
+    public String setWarpDrive(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
         return worldBean.modifySync(world -> {
             final Persons.Person person = world.persons().byId(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found"));
             person.setWarpDrive(enabled);
-            return toDto(world, person);
+            // the flag is not shown in any answer of the server: it only decides which ways the travel offers
+            return "done";
         });
     }
 
@@ -66,8 +67,7 @@ public class PersonController {
                 p.getOriginCityId(),
                 p.getOriginCityId() > 0 ? world.cities().byId(p.getOriginCityId()).map(c -> c.getName()).orElse(null) : null,
                 p.getInitials(),
-                p.getAvatarId(),
-                p.isWarpDrive());
+                p.getAvatarId());
     }
 
     @Data
@@ -87,6 +87,5 @@ public class PersonController {
         private String originCityName;
         private String initials;
         private int avatarId;
-        private boolean warpDrive;
     }
 }

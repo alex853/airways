@@ -30,7 +30,9 @@ public class BankTransactions {
         // the operator pays the pilot for the flown hours
         PilotFlightPay,
         // the operator pays the pilot his share of the income of the flight
-        PilotIncomeShare
+        PilotIncomeShare,
+        // the pilot pays for a travel to the bank (PersonControl.travel)
+        Travel
     }
 
     private final Storage<BankTransaction> storage = Storage.<BankTransaction>builder()

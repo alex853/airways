@@ -3,7 +3,10 @@ package net.simforge.airways2.world.processors;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.PilotRest;
+import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.BankAccounts;
+import net.simforge.airways2.world.datamodel.BankTransactions;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -237,6 +240,101 @@ public class PersonControl {
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 
+    // ---- travel: a free pilot at an airport moves to another airport by itself (PilotTravel): Idle -> Travelling (the arrival is the heartbeat) -> Idle
+
+    /**
+     * The pilot moves to the airport. The way is paid at once (to the bank), the pilot is on the way for the time of the way and then it is at the airport and
+     * free; the warp drive is at once and free. Only a free pilot at an airport can travel, not to the airport where it is; the warp drive needs the feature
+     * flag of the person. The awake credit goes on while the pilot is on the way.
+     *
+     * @throws IllegalStateException    the pilot cannot travel now, the message says why (the state, the place, the flag, the money)
+     * @throws IllegalArgumentException the pilot is at the airport already
+     */
+    public void travel(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
+        checkTravelAllowed(person, method, destination);
+        final PilotTravel.Quote quote = PilotTravel.quote(method, distanceNm);
+        final long price = quote.price();
+        if (price > 0) {
+            final int bankAccountId = bankAccountIdForTravel(person, price);
+            world.bankControl().transfer(person.getBankAccountId(), bankAccountId, price, BankTransactions.Type.Travel);
+        }
+
+        final String reason = method.title() + " to " + destination.getIcao();
+        if (quote.durationMinutes() == 0) {
+            setLocation(person, Persons.LocationType.Airport, destination.getId(), reason);
+            log.info("p/s #{} - travel {}, {} paid, at once", person.getId(), reason, price);
+            return;
+        }
+        // the state first: leaving Idle clears the heartbeat, then the arrival is set
+        setState(person, Persons.State.Travelling, reason);
+        setLocation(person, Persons.LocationType.Transit, destination.getId(), reason);
+        person.setHeartbeatTime(world.getWorldTime() + quote.durationMinutes() * Time.ONE_MINUTE);
+        log.info("p/s #{} - travel {}, {} paid, arrives in {} min", person.getId(), reason, price, quote.durationMinutes());
+    }
+
+    /**
+     * Whether the pilot can pay the way and who gets the money: the message is the reason when it cannot. For the page which shows the options.
+     *
+     * @return null if everything is fine, otherwise why the travel is not possible
+     */
+    public String travelProblem(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
+        try {
+            checkTravelAllowed(person, method, destination);
+            final long price = PilotTravel.quote(method, distanceNm).price();
+            if (price > 0) {
+                bankAccountIdForTravel(person, price);
+            }
+            return null;
+        } catch (final IllegalStateException | IllegalArgumentException e) {
+            return e.getMessage();
+        }
+    }
+
+    private void checkTravelAllowed(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination) {
+        if (person.getState() != Persons.State.Idle) {
+            throw new IllegalStateException("Only a free pilot can travel, the pilot is " + person.getState());
+        }
+        if (person.getLocationType() != Persons.LocationType.Airport) {
+            throw new IllegalStateException("The pilot is not at an airport");
+        }
+        if (person.getLocationId() == destination.getId()) {
+            throw new IllegalArgumentException("The pilot is at " + destination.getIcao() + " already");
+        }
+        if (method == PilotTravel.Method.WarpDrive && !person.isWarpDrive()) {
+            throw new IllegalStateException("This way is not available");
+        }
+    }
+
+    // the account of the bank which gets the money of a travel, the pilot must have an account and enough money on it
+    private int bankAccountIdForTravel(final Persons.Person person, final long price) {
+        final BankAccounts.BankAccount own = world.bankAccounts().byId(person.getBankAccountId()).orElse(null);
+        if (own == null) {
+            throw new IllegalStateException("The pilot has no bank account");
+        }
+        if (!own.canGoNegative() && own.getBalance() < price) {
+            throw new IllegalStateException("Not enough money");
+        }
+        return world.bankAccounts().byOwner(BankAccounts.Kind.System, BankAccounts.SYSTEM_BANK)
+                .orElseThrow(() -> new IllegalStateException("The bank has no account yet"))
+                .getId();
+    }
+
+    /**
+     * The pilot has arrived (the heartbeat of a travelling pilot): it is at the airport of the arrival and free, so the falling asleep by itself is scheduled.
+     */
+    public void arrive(final Persons.Person person) {
+        if (person.getState() != Persons.State.Travelling) {
+            throw new IllegalStateException("only a travelling pilot can arrive, the pilot is " + person.getState());
+        }
+        if (person.getLocationType() != Persons.LocationType.Transit) {
+            log.warn("p/s #{} - arrives but is not in transit, its location is {}", person.getId(), describeLocation(person.getLocationType(), person.getLocationId()));
+            setState(person, Persons.State.Idle, "arrived");
+            return;
+        }
+        setLocation(person, Persons.LocationType.Airport, person.getLocationId(), "arrived");
+        setState(person, Persons.State.Idle, "arrived");
+    }
+
     // ---- the initials
 
     /**
@@ -312,6 +410,7 @@ public class PersonControl {
             case City -> "City " + world.cities().byId(id).map(c -> c.getName()).orElse("#" + id);
             case Airport -> "Airport " + world.airports().getIcao(id).orElse("#" + id);
             case Hotel -> "Hotel #" + id;
+            case Transit -> "On the way to " + world.airports().getIcao(id).orElse("#" + id);
         };
     }
 }

@@ -286,7 +286,8 @@ class BankControlTest {
         assertEquals(1, BankTransactions.Type.JourneyPayment.ordinal());
         assertEquals(2, BankTransactions.Type.PilotFlightPay.ordinal());
         assertEquals(3, BankTransactions.Type.PilotIncomeShare.ordinal());
-        assertEquals(4, BankTransactions.Type.values().length);
+        assertEquals(4, BankTransactions.Type.Travel.ordinal());
+        assertEquals(5, BankTransactions.Type.values().length);
     }
 
     @Test

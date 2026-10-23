@@ -13,11 +13,14 @@ import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.computations.PilotDuty;
 import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.computations.PilotRest;
+import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.Persons;
+import net.simforge.commons.misc.Geo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -148,6 +151,75 @@ public class PilotController {
         });
     }
 
+    /**
+     * The ways to get from the airport of the pilot to another airport (the travel of the pilot): for each the time and the money, or why it is not possible
+     * now. Only for a free pilot at an airport. The warp drive is among the ways only for the pilot who has it; the other ways are the same for everybody.
+     */
+    @GetMapping("/travel/options")
+    public TravelOptionsDto getTravelOptions(@RequestAttribute("userId") final int userId, @RequestParam("airport") final String airport) {
+        return worldBean.read(world -> buildTravelOptions(world, personOf(world, userId), airport));
+    }
+
+    /**
+     * The pilot goes: the way is paid, the pilot is on the way for its time (or at the airport at once). The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/travel")
+    public PilotDto travel(@RequestAttribute("userId") final int userId,
+                           @RequestParam("airport") final String airport,
+                           @RequestParam("method") final String method) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            startTravel(world, person, airport, method);
+            return buildPilot(world, person);
+        });
+    }
+
+    private static final List<PilotTravel.Method> TRAVEL_METHODS = List.of(PilotTravel.Method.WarpDrive, PilotTravel.Method.Mach3, PilotTravel.Method.Ground);
+
+    static TravelOptionsDto buildTravelOptions(final World world, final Persons.Person person, final String icao) {
+        final Airports.Airport destination = findAirport(world, icao);
+        if (person.getState() != Persons.State.Idle || person.getLocationType() != Persons.LocationType.Airport) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport can travel");
+        }
+        final Airports.Airport from = world.airports().byId(person.getLocationId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "The airport of the pilot is not known"));
+        final double distanceNm = Geo.distance(from.getCoords(), destination.getCoords());
+
+        final List<TravelOptionDto> options = new ArrayList<>();
+        for (final PilotTravel.Method method : TRAVEL_METHODS) {
+            // the warp drive is not offered, not even mentioned, to a pilot who does not have it
+            if (method == PilotTravel.Method.WarpDrive && !person.isWarpDrive()) {
+                continue;
+            }
+            final PilotTravel.Quote quote = PilotTravel.quote(method, distanceNm);
+            final String problem = world.personControl().travelProblem(person, method, destination, distanceNm);
+            options.add(new TravelOptionDto(method.name(), method.title(), quote.durationMinutes(), quote.price(), problem == null, problem));
+        }
+        return new TravelOptionsDto(destination.getIcao(), destination.getName(), (int) Math.round(distanceNm), options);
+    }
+
+    static void startTravel(final World world, final Persons.Person person, final String icao, final String methodName) {
+        final Airports.Airport destination = findAirport(world, icao);
+        final PilotTravel.Method method = TRAVEL_METHODS.stream().filter(m -> m.name().equals(methodName)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown way: " + methodName));
+        if (person.getState() != Persons.State.Idle || person.getLocationType() != Persons.LocationType.Airport) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport can travel");
+        }
+        final Airports.Airport from = world.airports().byId(person.getLocationId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "The airport of the pilot is not known"));
+        try {
+            world.personControl().travel(person, method, destination, Geo.distance(from.getCoords(), destination.getCoords()));
+        } catch (final IllegalStateException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+    }
+
+    private static Airports.Airport findAirport(final World world, final String icao) {
+        final String code = icao == null ? "" : icao.trim().toUpperCase();
+        return world.airports().byIcao(code)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no airport " + code));
+    }
+
     private static Persons.Person personOf(final World world, final int userId) {
         final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
         final Persons.Person person = personId > 0 ? world.persons().byId(personId).orElse(null) : null;
@@ -255,12 +327,15 @@ public class PilotController {
         String airportIcao = null;
         String airportName = null;
         String cityName = null;
+        String destinationIcao = null;
         switch (person.getLocationType()) {
             case Airport -> {
                 airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
                 airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
             }
             case City -> cityName = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
+            // on the way by itself (travel): where to
+            case Transit -> destinationIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
             default -> { }
         }
 
@@ -270,7 +345,7 @@ public class PilotController {
                 : null;
 
         return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
-                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person));
+                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao);
     }
 
     @GetMapping("/logbook")
@@ -515,6 +590,8 @@ public class PilotController {
         private AwakeDto awake;
         private DutyDto duty;
         private FlightTimeDto flightTime;
+        // the airport the pilot is travelling to (by itself, see PilotTravel), null when the pilot is not on such a way
+        private String destinationIcao;
     }
 
     @Data
@@ -562,6 +639,30 @@ public class PilotController {
         private Integer creditAfterWakeMinutes;
         // the most the credit can be after the wake up (the random cap, 22 hours at most), null when awake
         private Integer creditAfterWakeMaxMinutes;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TravelOptionsDto {
+        private String airportIcao;
+        private String airportName;
+        // the straight line from the airport of the pilot, nautical miles
+        private int distanceNm;
+        private List<TravelOptionDto> options;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TravelOptionDto {
+        // the name to send to POST /pilot/travel
+        private String method;
+        private String title;
+        // zero is at once
+        private int durationMinutes;
+        private long price;
+        private boolean available;
+        // why not, null when available
+        private String problem;
     }
 
     @Data

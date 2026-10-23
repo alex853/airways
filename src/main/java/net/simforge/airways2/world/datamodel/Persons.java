@@ -406,7 +406,9 @@ public class Persons {
         None(0),
         City(1),
         Airport(2),
-        Hotel(3);
+        Hotel(3),
+        // on the way to an airport by itself (travel, see PersonControl.travel): the location id is the airport of the arrival
+        Transit(4);
 
         private final int code;
 

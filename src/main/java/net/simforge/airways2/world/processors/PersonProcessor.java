@@ -20,6 +20,7 @@ public class PersonProcessor {
         switch (person.getState()) {
             case Resting -> world.personControl().wakeUpByItself(person);
             case Idle -> world.personControl().fallAsleepByItself(person);
+            case Travelling -> world.personControl().arrive(person);
             default -> { }
         }
     }
