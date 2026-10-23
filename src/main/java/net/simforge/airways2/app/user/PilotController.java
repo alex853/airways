@@ -174,7 +174,7 @@ public class PilotController {
         });
     }
 
-    private static final List<PilotTravel.Method> TRAVEL_METHODS = List.of(PilotTravel.Method.WarpDrive, PilotTravel.Method.Mach3, PilotTravel.Method.Ground);
+    private static final List<PilotTravel.Method> TRAVEL_METHODS = List.of(PilotTravel.Method.WarpDrive, PilotTravel.Method.Mach3, PilotTravel.Method.Airline, PilotTravel.Method.Ground);
 
     static TravelOptionsDto buildTravelOptions(final World world, final Persons.Person person, final String icao) {
         final Airports.Airport destination = findAirport(world, icao);
@@ -657,7 +657,7 @@ public class PilotController {
         // the name to send to POST /pilot/travel
         private String method;
         private String title;
-        // zero is at once
+        // zero is at once, minus one is not known (the way is not made yet)
         private int durationMinutes;
         private long price;
         private boolean available;

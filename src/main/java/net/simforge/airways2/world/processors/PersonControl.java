@@ -251,7 +251,7 @@ public class PersonControl {
      * @throws IllegalArgumentException the pilot is at the airport already
      */
     public void travel(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
-        checkTravelAllowed(person, method, destination);
+        checkTravelAllowed(person, method, destination, distanceNm);
         final PilotTravel.Quote quote = PilotTravel.quote(method, distanceNm);
         final long price = quote.price();
         if (price > 0) {
@@ -279,7 +279,7 @@ public class PersonControl {
      */
     public String travelProblem(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
         try {
-            checkTravelAllowed(person, method, destination);
+            checkTravelAllowed(person, method, destination, distanceNm);
             final long price = PilotTravel.quote(method, distanceNm).price();
             if (price > 0) {
                 bankAccountIdForTravel(person, price);
@@ -290,7 +290,7 @@ public class PersonControl {
         }
     }
 
-    private void checkTravelAllowed(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination) {
+    private void checkTravelAllowed(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
         if (person.getState() != Persons.State.Idle) {
             throw new IllegalStateException("Only a free pilot can travel, the pilot is " + person.getState());
         }
@@ -302,6 +302,10 @@ public class PersonControl {
         }
         if (method == PilotTravel.Method.WarpDrive && !person.isWarpDrive()) {
             throw new IllegalStateException("This way is not available");
+        }
+        final String problem = PilotTravel.problem(method, distanceNm);
+        if (problem != null) {
+            throw new IllegalStateException(problem);
         }
     }
 

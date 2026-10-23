@@ -209,10 +209,13 @@ class PersonTravelTest {
     void theWarpDriveIsNotAmongTheOptionsOfAPilotWhoDoesNotHaveIt() {
         final PilotController.TravelOptionsDto options = PilotController.buildTravelOptions(world, person, "egll");
 
-        assertEquals(List.of("Mach3", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
+        assertEquals(List.of("Mach3", "Airline", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
         assertEquals("EGLL", options.getAirportIcao());
         assertTrue(options.getDistanceNm() > 4000);
-        assertTrue(options.getOptions().stream().allMatch(PilotController.TravelOptionDto::isAvailable));
+        // everything is possible but the airline, which is not made yet
+        assertEquals(List.of(true, false, true), options.getOptions().stream().map(PilotController.TravelOptionDto::isAvailable).collect(Collectors.toList()));
+        assertEquals("Coming soon", options.getOptions().get(1).getProblem());
+        assertEquals(-1, options.getOptions().get(1).getDurationMinutes());
     }
 
     @Test
@@ -221,7 +224,7 @@ class PersonTravelTest {
 
         final PilotController.TravelOptionsDto options = PilotController.buildTravelOptions(world, person, "EGLL");
 
-        assertEquals(List.of("WarpDrive", "Mach3", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
+        assertEquals(List.of("WarpDrive", "Mach3", "Airline", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
         assertEquals(0, options.getOptions().get(0).getDurationMinutes());
         assertEquals(0, options.getOptions().get(0).getPrice());
     }
@@ -232,9 +235,39 @@ class PersonTravelTest {
         poor.setBankAccountId(world.bankAccounts().create(BankAccounts.Kind.Person, poor.getId(), false, world.getWorldTime()).getId());
 
         final PilotController.TravelOptionDto mach3 = PilotController.buildTravelOptions(world, poor, "EGLL").getOptions().get(0);
+        assertEquals("Mach3", mach3.getMethod());
 
         assertFalse(mach3.isAvailable());
         assertEquals("Not enough money", mach3.getProblem());
+    }
+
+    @Test
+    void mach3IsNotForADistanceUnderFiveHundredMilesAndTheAirlineNotUnderOneHundred() {
+        final Airports.Airport sanFrancisco = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final Airports.Airport losAngeles = world.airports().create(33.94, -118.41, "LAX", "KLAX", "Los Angeles");
+
+        final PilotController.TravelOptionsDto near = PilotController.buildTravelOptions(world, person, "KSFO");
+        assertEquals("Too close, from 500 miles", near.getOptions().get(0).getProblem());
+        assertEquals("Too close, from 100 miles", near.getOptions().get(1).getProblem());
+        assertFalse(near.getOptions().get(0).isAvailable());
+        assertTrue(near.getOptions().get(2).isAvailable());
+
+        // about 300 miles: the airline would do (it is not made yet), Mach 3 is still too close
+        final PilotController.TravelOptionsDto middle = PilotController.buildTravelOptions(world, person, "KLAX");
+        assertEquals("Too close, from 500 miles", middle.getOptions().get(0).getProblem());
+        assertEquals("Coming soon", middle.getOptions().get(1).getProblem());
+
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Mach3, losAngeles,
+                net.simforge.commons.misc.Geo.distance(oakland.getCoords(), losAngeles.getCoords())));
+        assertEquals(oakland.getId(), person.getLocationId());
+        assertEquals(1_000_000, pilotAccount.getBalance());
+        assertNotNull(sanFrancisco);
+    }
+
+    @Test
+    void theAirlineIsNotAWayYet() {
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Airline, london, distance()));
+        assertEquals(Persons.State.Idle, person.getState());
     }
 
     @Test
