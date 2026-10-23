@@ -78,6 +78,24 @@ public final class PilotRest {
         return WAKE_UP_CAP_FROM_MINUTES + (int) (random * (to - WAKE_UP_CAP_FROM_MINUTES + 1));
     }
 
+    /**
+     * What the credit after a wake up is expected to be, for a preview: the credit itself up to 18 hours, above it the middle of the range of the random cap
+     * (see capAfterWakeUp).
+     */
+    public static int expectedAfterWakeUp(final int credit) {
+        if (credit <= WAKE_UP_CAP_FROM_MINUTES) {
+            return credit;
+        }
+        return (WAKE_UP_CAP_FROM_MINUTES + Math.min(credit, WAKE_UP_CAP_TO_MINUTES)) / 2;
+    }
+
+    /**
+     * The most the credit can be after a wake up: the credit itself up to 18 hours, above it the upper end of the random cap (22 hours at most).
+     */
+    public static int maxAfterWakeUp(final int credit) {
+        return credit <= WAKE_UP_CAP_FROM_MINUTES ? credit : Math.min(credit, WAKE_UP_CAP_TO_MINUTES);
+    }
+
     // the credit is stored in two bytes
     private static int clamp(final int minutes) {
         return Math.max(Short.MIN_VALUE, Math.min(Short.MAX_VALUE, minutes));

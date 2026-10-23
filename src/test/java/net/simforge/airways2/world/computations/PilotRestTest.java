@@ -118,4 +118,19 @@ class PilotRestTest {
         assertEquals(18 * HOUR + 1, PilotRest.capAfterWakeUp(18 * HOUR + 1, 0.999999));
         assertEquals(20 * HOUR, PilotRest.capAfterWakeUp(20 * HOUR, 0.999999));
     }
+
+    @Test
+    void theExpectedCreditAfterWakeUpIsTheMiddleOfTheCapRange() {
+        assertEquals(10 * HOUR, PilotRest.expectedAfterWakeUp(10 * HOUR));
+        assertEquals(18 * HOUR, PilotRest.expectedAfterWakeUp(18 * HOUR));
+        assertEquals(19 * HOUR, PilotRest.expectedAfterWakeUp(20 * HOUR));
+        assertEquals(20 * HOUR, PilotRest.expectedAfterWakeUp(27 * HOUR));
+    }
+
+    @Test
+    void theMostAfterWakeUpIsTheCapOfTwentyTwoHours() {
+        assertEquals(10 * HOUR, PilotRest.maxAfterWakeUp(10 * HOUR));
+        assertEquals(20 * HOUR, PilotRest.maxAfterWakeUp(20 * HOUR));
+        assertEquals(22 * HOUR, PilotRest.maxAfterWakeUp(27 * HOUR));
+    }
 }
