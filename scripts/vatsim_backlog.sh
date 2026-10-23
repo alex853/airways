@@ -45,8 +45,8 @@ for i,n in lst:
     if not m:
         print(f'| {i} | {n} | ? | ? | нет в icaodata (берётся из refdata) | - | - | особый |'); n_sp+=1; continue
     ctry=m['country']; la,lo=float(m['lat']),float(m['lon'])
-    # the country name of icaodata.csv differs from the one of the city CSV ("Netherlands, The", "Bahamas, The", "Fiji Islands"...):
-    # by the name without ", The", then by the country of the nearest city of the CSV (any, 'del' ones too) within 150 nm
+    # icaodata.csv and the city CSV have the same country names now (2026-10-23, see the playbook); the fallbacks stay for the territories which are not in the CSV:
+    # the name without ", The", then the country of the nearest city of the CSV (any, 'del' ones too) within 150 nm
     code=name2code.get(ctry.lower()) or name2code.get(re.sub(r',\s*the$','',ctry,flags=re.I).lower()) or extra.get(ctry)
     if not code:
         nearest=min(rows,key=lambda r:d(la,lo,float(r['CityLatitude']),float(r['CityLongitude'])))

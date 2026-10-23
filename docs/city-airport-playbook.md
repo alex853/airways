@@ -200,17 +200,18 @@ metropolitan area), потому что город это зона притяж�
 - Мир сжимать не нужно: удалённые записи Storage 1 сутки не переиспользуются (см. storage-quarantine.md).
 - Если пользователь отложил тему («до завтра»), ничего по ней не делаем.
 
-- **Имена стран в `icaodata.csv` и в `city-population.csv` НЕ совпадают** (важно, это молча портит сопоставление, найдено 2026-10-22).
-  `icaodata.csv` (он же `fseconomy-icaodata.csv` в refdata) пишет страну по-своему: `Netherlands, The` (в CSV городов `Netherlands`),
-  `Bahamas, The` и `Gambia, The`, `Korea` (`South Korea`), `Myanmar` (`Burma`), `Romania` (`Rumania`), `Congo (DRC)` (`Congo zaire`),
-  `Cote d'Ivoire` (`Cote d ivoire`), `Comoros` (`Comores`), `Fiji Islands` (`Fiji`), `Macedonia, Former Yugoslav Republic of` (`Macedonia`),
-  `St. Lucia` (`Saint lucia`) и т.д., всего около 45 несовпадений; а территории (Greenland, Guam, French Polynesia, Bermuda,
-  Hong Kong SAR…) в CSV городов не страна вовсе. Поэтому:
-  1. **Никогда не сопоставлять страну по имени** между этими двумя файлами, только по коду (`CountryCode` в CSV городов,
-     `country-code:XX` в `012`). В `icaodata.csv` кода страны нет (см. `docs/cities.md`, раздел 4).
-  2. `scripts/vatsim_backlog.sh` пробует имя, потом имя без `, The`, потом страну ближайшего города CSV в 150 nm. Для островных
-     территорий колонка «городов в Airways» поэтому приблизительная или `?`. До этой правки Нидерланды показывались как 0 городов
-     при трёх городах в мире (EHEH). Если колонка «страна» выглядит странно, сначала проверить именно это.
+- **Имена стран приведены к одним правильным (2026-10-23).** Раньше `icaodata.csv` и `city-population.csv` называли страны по-разному (`Netherlands, The` и
+  `Netherlands`, `Korea` и `South Korea`, `Congo (DRC)` и `Congo zaire`, `Rumania`, `Burma`, `Cote d ivoire`, `Czech republic` с маленькой буквы и т.д.) и в мире у трёх
+  стран имена были неправильные. Теперь везде английские имена по одному правилу: в CSV городов имя задаётся по коду страны (`CountryCode`), в `icaodata.csv` по
+  старому имени (кода там нет). Примеры: `Romania` (было `Rumania`), `Myanmar` (было `Burma`), `Democratic Republic of the Congo` (было `Congo zaire` и
+  `Congo (DRC)`), `Cote d'Ivoire`, `North Macedonia`, `Saint Lucia`, `Czech Republic`, `South Korea`, `Bahamas`, `Netherlands`, `Gambia`, `Fiji`, `Hong Kong`, `Macao`.
+  В мире переименованы `CZ`, `DO`, `RO` (`RenameCountries` в `World25_013`, срабатывает при деплое с включённым `013`). В `icaodata.csv` остались имена
+  территорий, которых в CSV городов нет (Greenland, Guam, French Polynesia, Bermuda, Netherlands Antilles и др.), совпадать им не с чем.
+  Правила на будущее: (1) **сопоставлять страны между файлами по коду**, где он есть (`CountryCode` в CSV городов, `country-code:XX` в `012`); в `icaodata.csv` кода нет,
+  поэтому имя берётся по имени после этого выравнивания; (2) новое имя страны в любом из файлов давать английским официальным без `, The` и без аббревиатур; (3) флаги на сайте
+  (`simforge-web/js/flags.js`) ищут иконку по имени страны, поэтому при новом имени, которого нет среди файлов `flag_<имя_с_подчёркиваниями>.png`, добавить строку в
+  `SIMFORGE_FLAG_NAMES`. `scripts/vatsim_backlog.sh` по-прежнему пробует имя, потом имя без `, The`, потом страну ближайшего города CSV в 150 nm, но теперь почти всегда
+  хватает прямого совпадения имени.
 - **Аэропорт может отсутствовать и в `icaodata.csv`, и в refdata** (пример `VOBL`, Kempegowda Intl, Bengaluru, открыт в 2008 году:
   в `icaodata.csv` есть только старый `VOBG` HAL, а в refdata `added.csv` версии 3.1.3 только LTFM, OTHH, FAOR, VTBS). Строка
   бэклога «нет в icaodata» в таком случае требует **добавить строку в `icaodata.csv` вручную** (координаты, `civil`, `size`):

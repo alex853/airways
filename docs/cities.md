@@ -142,6 +142,7 @@
 | RKSM | Seoul / Domestic (Seoul Air Base, Seongnam) | Seoul | военная база ВВС (K-16), VIP/правительственные рейсы, в мире трафика нет; название в `icaodata` — артефакт |
 | RKSW | Suwon (Suwon Air Base) | Seoul | военная база ВВС (K-13), регулярных гражданских рейсов нет, в мире трафика нет |
 | KFTG | Front Range | Aurora, Denver | гражданский GA, ложное срабатывание |
+| KNQX | Key West NAS | ~~Key West~~ | военно-морская авиабаза; создана автоимпортом при добавлении Key West (партия 2026-10-23), **связь с Key West удалена на проде 2026-10-23** (`/admin/airport/delete-link`), в `icaodata.csv` тип исправлен на `military`; сам аэропорт в мире остался, без города |
 
 **План:** военные удаляем из мира и при необходимости заменяем на реальные гражданские аэродромы города.
 Перед удалением **проанализировать использование** (самолёты, расположенные там; миссии/рейсы, где аэродром
@@ -150,7 +151,7 @@
 
 **Ловушки на будущее** (`civil`, `size >= 5000`, ещё не в мире, импортируются при появлении города рядом):
 KNTU Oceana NAS, KYUM Yuma MCAS/Intl (смешанный), KNKT Cherry Point MCAS, KNJK El Centro NAF, KNFL Fallon NAS,
-KNQI Kingsville NAS, KNBC Beaufort MCAS, KNLC Lemoore NAS, KNQX Key West NAS (смешанный), KNPA Pensacola NAS,
+KNQI Kingsville NAS, KNBC Beaufort MCAS, KNLC Lemoore NAS, KNPA Pensacola NAS,
 KNGP Corpus Christi NAS, KNMM Meridian NAS, KNHZ Brunswick NAS, KFHU Sierra Vista (смешанный), KFTK Godman AAF,
 KGTB Wheeler-Sack AAF, PABI Allen AAF, KNFE Fentress NALF, LIBV Gioia Del Colle Mil, LIED Decimomannu Mil,
 NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, FZSA Kamina Base и др.
@@ -656,3 +657,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **Key West (US, KEYW):** в 60 nm нет городов CSV, добавлен seed `United States,US,Key West,80000,24.56,-81.78` (Флорида-Кис целиком, по аналогии с островами Malta, Sint Maarten). Аэропорт `Key West Intl` (имя из `icaodata`); KNQX Key West NAS (military) и 61FD (гидроплан) не берём. KEYW size 1462, через `009`. **Attraction 5** (решение пользователя): ставится после деплоя через `/admin/flows/set-attraction` (id города из `/geo/cities`).
   - **Gold Coast (AU, YBCG):** CSV `Gold coast` 457 900 → `Gold Coast` 700 900 (метро с Tweed Heads; в CSV имя исправлено, так что переименование города не нужно). Влитых нет. Аэропорт `Gold Coast Coolangatta` (`013`), YBCG size 2630, через `009`. Brisbane в 50 nm (граница радиуса), поэтому `create-links` для YBCG с `maxDistance=30`. **Attraction 7** (решение пользователя).
   - Терминалы бизнес-авиации не создаём (решение пользователя). Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой; после деплоя и `create-links` (ROAH, LJLJ, EETN `maxDistance=20`, YBCG `maxDistance=30`, KEYW) закомментировать обратно и закоммитить без пуша. Блоки вызовов лежат в `admin-requests.http` (не в git).
+
+- **Имена стран приведены к правильным (2026-10-23):** в `city-population.csv` (1689 строк по коду страны) и в `icaodata.csv` (355 строк) названия стран выровнены между собой и с
+  английскими официальными (подробности и список в [city-airport-playbook.md](city-airport-playbook.md), раздел 10). В мире три страны с неправильными именами (`Czech republic`,
+  `Dominican republic`, `Rumania`) получат правильные через `RenameCountries` в `World25_013` при ближайшем деплое с включённым `013` (сейчас `013` закомментирован, как обычно).
+  Флаги на сайте: `simforge-web/js/flags.js` дополнен новыми именами (старые оставлены: сервис аэропортов отдаёт свои имена).

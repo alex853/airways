@@ -14,7 +14,10 @@ public class World25_013_rename_cities {
     public static void main(String[] args) throws IOException {
         RenameCountries.renameCountries(Arrays.asList(
                 new String[]{"ZA", "South Africa"},
-                new String[]{"SA", "Saudi Arabia"}
+                new String[]{"SA", "Saudi Arabia"},
+                new String[]{"CZ", "Czech Republic"},
+                new String[]{"DO", "Dominican Republic"},
+                new String[]{"RO", "Romania"}
         ));
 
         RenameCities.renameCities(Arrays.asList(

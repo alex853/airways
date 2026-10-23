@@ -9908,32 +9908,32 @@ EGYC,52.7549,1.35734,military,2280,Coltishall AB,Coltishall,,United Kingdom
 EGYD,53.0303,-0.483305,military,4267,Cranwell AB,Cranwell,,United Kingdom
 EGYE,52.9623,-0.561667,military,3111,Barkston Heath AB,Barkston Heath,,United Kingdom
 EGYM,52.6484,0.550439,military,6189,Marham AB,Marham,,United Kingdom
-EGYP,-51.8264,-58.4472,civil,4115,Mount Pleasant,Mount Pleasant,,Falkland Islands (Islas Malvinas)
-EHAL,53.4517,5.67722,civil,798,Ameland,Ameland,,"Netherlands, The"
-EHAM,52.3081,4.76417,civil,15635,Schiphol,Amsterdam,,"Netherlands, The"
-EHBD,51.2544,5.60083,civil,1496,Budel,Weert,,"Netherlands, The"
-EHBK,50.9158,5.77694,civil,3576,Maastricht-Aachen,Maastricht,,"Netherlands, The"
-EHDL,52.0597,5.87194,military,2947,Deelen AB,Arnhem,,"Netherlands, The"
-EHDR,53.1181,6.12917,civil,948,Drachten,Drachten,,"Netherlands, The"
-EHEH,51.45,5.37444,military,3607,Eindhoven AB,Eindhoven,,"Netherlands, The"
-EHGG,53.125,6.58333,civil,3294,Eelde,Groningen,,"Netherlands, The"
-EHGR,51.5674,4.93183,military,4425,Gilze-Rijen AB,Gilze-Rijen,,"Netherlands, The"
-EHHO,52.7308,6.51611,civil,1203,Hoogeveen,Hoogeveen,,"Netherlands, The"
-EHHV,52.1919,5.14694,civil,1956,Hilversum,Hilversum,,"Netherlands, The"
-EHKD,52.9244,4.78083,military,1272,De Kooy Navy,De Kooy,,"Netherlands, The"
-EHLE,52.4603,5.52722,civil,1857,Lelystad,Lelystad,,"Netherlands, The"
-EHLW,53.2253,5.75253,military,4385,Leeuwarden AB,Leeuwarden,,"Netherlands, The"
-EHMZ,51.5122,3.73111,civil,998,Midden-Zeeland,Middelburg,,"Netherlands, The"
-EHNP,52.73,5.74667,civil,813,Noordoostpolder,Emmeloord,,"Netherlands, The"
-EHRD,51.9569,4.43722,civil,3207,Rotterdam,Rotterdam,,"Netherlands, The"
-EHSB,52.1273,5.27619,military,2130,Soesterberg AB,Soesterberg,,"Netherlands, The"
-EHSE,51.5547,4.5525,civil,859,Seppe,Hoeven,,"Netherlands, The"
-EHTE,52.2447,6.04667,civil,1430,Teuge,Deventer,,"Netherlands, The"
-EHTW,52.2758,6.88911,military,4961,Twenthe AB,Enschede,,"Netherlands, The"
-EHTX,53.1164,4.83389,civil,1745,Texel,Texel,,"Netherlands, The"
-EHVB,52.1661,4.41806,military,3936,Valkenburg Navy,Leiden,,"Netherlands, The"
-EHVK,51.6572,5.70783,military,5635,Volkel AB,Volkel,,"Netherlands, The"
-EHWO,51.449,4.34214,military,2432,Woensdrecht AB,Woensdrecht,,"Netherlands, The"
+EGYP,-51.8264,-58.4472,civil,4115,Mount Pleasant,Mount Pleasant,,Falkland Islands
+EHAL,53.4517,5.67722,civil,798,Ameland,Ameland,,Netherlands
+EHAM,52.3081,4.76417,civil,15635,Schiphol,Amsterdam,,Netherlands
+EHBD,51.2544,5.60083,civil,1496,Budel,Weert,,Netherlands
+EHBK,50.9158,5.77694,civil,3576,Maastricht-Aachen,Maastricht,,Netherlands
+EHDL,52.0597,5.87194,military,2947,Deelen AB,Arnhem,,Netherlands
+EHDR,53.1181,6.12917,civil,948,Drachten,Drachten,,Netherlands
+EHEH,51.45,5.37444,military,3607,Eindhoven AB,Eindhoven,,Netherlands
+EHGG,53.125,6.58333,civil,3294,Eelde,Groningen,,Netherlands
+EHGR,51.5674,4.93183,military,4425,Gilze-Rijen AB,Gilze-Rijen,,Netherlands
+EHHO,52.7308,6.51611,civil,1203,Hoogeveen,Hoogeveen,,Netherlands
+EHHV,52.1919,5.14694,civil,1956,Hilversum,Hilversum,,Netherlands
+EHKD,52.9244,4.78083,military,1272,De Kooy Navy,De Kooy,,Netherlands
+EHLE,52.4603,5.52722,civil,1857,Lelystad,Lelystad,,Netherlands
+EHLW,53.2253,5.75253,military,4385,Leeuwarden AB,Leeuwarden,,Netherlands
+EHMZ,51.5122,3.73111,civil,998,Midden-Zeeland,Middelburg,,Netherlands
+EHNP,52.73,5.74667,civil,813,Noordoostpolder,Emmeloord,,Netherlands
+EHRD,51.9569,4.43722,civil,3207,Rotterdam,Rotterdam,,Netherlands
+EHSB,52.1273,5.27619,military,2130,Soesterberg AB,Soesterberg,,Netherlands
+EHSE,51.5547,4.5525,civil,859,Seppe,Hoeven,,Netherlands
+EHTE,52.2447,6.04667,civil,1430,Teuge,Deventer,,Netherlands
+EHTW,52.2758,6.88911,military,4961,Twenthe AB,Enschede,,Netherlands
+EHTX,53.1164,4.83389,civil,1745,Texel,Texel,,Netherlands
+EHVB,52.1661,4.41806,military,3936,Valkenburg Navy,Leiden,,Netherlands
+EHVK,51.6572,5.70783,military,5635,Volkel AB,Volkel,,Netherlands
+EHWO,51.449,4.34214,military,2432,Woensdrecht AB,Woensdrecht,,Netherlands
 EIBR,53.0708,-7.89856,civil,811,Birr,Birr,,Ireland
 EICA,53.2305,-9.46778,civil,570,Connemara,Chonamara,,Ireland
 EICK,51.8413,-8.49111,civil,3437,Cork,Cork,,Ireland
@@ -10658,7 +10658,7 @@ FCBS,-3.71667,13.4,civil,1250,Sibiti,Sibiti,,Congo
 FCBT,-4.28333,13.8667,civil,700,Loutete,Loutete,,Congo
 FCBU,-4.26667,13.5333,civil,750,Aubeville,Aubeville,,Congo
 FCBY,-4.21667,13.3,civil,1800,Yokangassi,N'kayi,,Congo
-FCBZ,-2.85,13.8167,civil,1400,Zanaga,Zanaga,,Congo DRC
+FCBZ,-2.85,13.8167,civil,1400,Zanaga,Zanaga,,Democratic Republic of the Congo
 FCMA,-2.45,11.65,civil,950,Mavinza,Mavinza,,Congo
 FCMD,-2.86667,12.8667,civil,700,Sidetra,Vouka,,Congo
 FCMK,-3.31667,12.6167,civil,975,Kibangou,Kele,,Congo
@@ -11206,160 +11206,160 @@ FYWE,-22.6075,17.0792,civil,2986,Eros,Windhoek,,Namibia
 FYWH,-22.48,17.4708,civil,6101,Hosea Kutako Intl,Windhoek,,Namibia
 FZ4,50.3833,-113.667,civil,1311,Green Farms,Nanton,Alberta,Canada
 FZ6,51.0183,-113.633,civil,914,Duke,Strathmore,Alberta,Canada
-FZAA,-4.38559,15.4447,civil,9313,N'djili Intl,Kinshasa,,Congo (DRC)
-FZAB,-4.31667,15.3167,civil,1300,N'dolo,Kinshasa,,Congo (DRC)
-FZAG,-5.93333,12.35,civil,1480,Muanda,Muanda,,Congo (DRC)
-FZAI,-5.91806,12.4464,civil,2400,Kitona Base,Kitona,,Congo (DRC)
-FZAJ,-5.86667,13.0667,civil,1100,Boma,Boma,,Congo (DRC)
-FZAL,-4.95,14.1333,civil,1170,Luozi,Luozi,,Congo (DRC)
-FZAM,-5.8,13.4333,civil,1580,Matadi-Tshimpi,Matadi-Tshimpi,,Congo (DRC)
-FZAN,-5.51667,13.5833,civil,1100,Inga,Inga,,Congo (DRC)
-FZAW,-5.5,14.7,civil,1230,Kwilu-Ngongo,Kwilu-Ngongo,,Congo (DRC)
-FZBA,-1.95,18.2833,civil,1480,Inongo,Inongo,,Congo (DRC)
-FZBB,-3.38333,20,civil,1200,Bongimba,Bongimba,,Congo (DRC)
-FZBD,-3.38333,19.5,civil,970,Oshwe,Oshwe,,Congo (DRC)
-FZBF,-3.1,18.7333,civil,1250,Bonkita,Bonkita,,Congo (DRC)
-FZBG,-2.93333,18.4,civil,970,Kempa,Kempa,,Congo (DRC)
-FZBJ,-3,16.9333,civil,1300,Mushie,Mushie,,Congo (DRC)
-FZBK,-3.06667,18.6417,civil,1100,Boshwe,Bosobe,,Congo (DRC)
-FZBL,-3.05,17.1,civil,1000,Djokele,Djokele,,Congo (DRC)
-FZBO,-3.30127,17.3842,civil,1450,Bandundu,Bandundu,,Congo (DRC)
-FZBP,-2.8,19.9083,civil,1100,Bolongonkele,Bolongonkele,,Congo (DRC)
-FZBQ,-3.38333,19.6597,civil,1000,Bindja,Bindja,,Congo (DRC)
-FZBS,-3.18333,18.0833,civil,1150,Semendua,Semendua,,Congo (DRC)
-FZBT,-1.45,19.0167,civil,1450,Mboliasa,Bosango,,Congo (DRC)
-FZBW,-1.91667,17.9167,civil,1200,Basengele,Bokote,,Congo (DRC)
-FZCA,-5.03333,18.7833,civil,1570,Kikwit,Kikwit,,Congo (DRC)
-FZCB,-5,19.6,civil,1000,Idiofa,Idiofa,,Congo (DRC)
-FZCE,-4.8,18.7167,civil,938,Lusanga,Lusanga,,Congo (DRC)
-FZCF,-7.33333,19.0167,civil,1100,Kahemba,Kahemba,,Congo (DRC)
-FZCK,-7.61667,18.55,civil,1100,Kajiji,Kajiji,,Congo (DRC)
-FZCM,-4.08333,19.5,civil,1000,Mangai Ii,Mangai Ii,,Congo (DRC)
-FZCN,-4.13778,17.58,civil,1000,Lunkuni,Lunkuni,,Congo (DRC)
-FZCP,-5.7,16.5833,civil,1140,Popokabaka,Popokabaka,,Congo (DRC)
-FZCV,-4.78333,17.85,civil,1000,Masi-Manimba,Masi-Manimba,,Congo (DRC)
-FZEA,0.028056,18.2897,civil,2177,Mbandaka,Mbandaka,,Congo (DRC)
-FZEI,0.25,18.9333,civil,1150,Ingende,Ingende,,Congo (DRC)
-FZEN,1.21667,19.8,civil,1480,Basankusu,Basankusu,,Congo (DRC)
-FZEO,1.01667,20.6,civil,1000,Beongo,Beongo,,Congo (DRC)
-FZEP,1.31667,20.7,civil,1200,Mentole,Mentole,,Congo (DRC)
-FZES,1.46667,20.3,civil,950,Ngumu,Ngumu,,Congo (DRC)
-FZFA,3.63333,18.6333,civil,2100,Libenge,Libenge,,Congo (DRC)
-FZFC,2.1,22.6972,civil,1250,Engengele,Engengele,,Congo (DRC)
-FZFD,4.25,20.9667,civil,3201,Gbadolite,Gbadolite,,Congo (DRC)
-FZFE,3.68333,22.15,civil,1200,Abumumbazi,Abumumbazi,,Congo (DRC)
-FZFF,3.73333,19.0833,civil,650,Bau,Bau,,Congo (DRC)
-FZFH,2.11667,23.2833,civil,1200,Mokaria-Yamoleka,Mokaria-Yamoleka,,Congo (DRC)
-FZFK,3.26667,19.7667,civil,2200,Gemena,Gemena,,Congo (DRC)
-FZFN,4.43889,19.5389,civil,1000,Lombo,Lombo,,Congo (DRC)
-FZFP,4.16667,21.75,civil,2000,Kotakoli,Kotakoli,,Congo (DRC)
-FZFQ,4.11667,19.2167,civil,1500,Mpaka,Mpaka,,Congo (DRC)
-FZFR,1.65,23.15,civil,1000,Mombongo,Mombongo,,Congo (DRC)
-FZFU,2.18333,22.55,civil,1600,Bumba,Bumba,,Congo (DRC)
-FZFW,2.46667,20.1,civil,1000,Gwaka,Gwaka,,Congo (DRC)
-FZGA,2.16667,21.4833,civil,1630,Lisala,Lisala,,Congo (DRC)
-FZGB,1.86667,21.7833,civil,1200,Bosondjo,Bosondjo,,Congo (DRC)
-FZGC,1.85,23.1167,civil,1200,Bolila,Bolila,,Congo (DRC)
-FZGE,2.43333,20.5,civil,1180,Binga,Binga,,Congo (DRC)
-FZGF,-0.683333,22.3333,civil,1200,Bokungu,Bokungu,,Congo (DRC)
-FZGI,2.28333,22.85,civil,1040,Yalingimba,Yalingimba,,Congo (DRC)
-FZGN,-0.233333,20.8667,civil,1400,Boende,Boende,,Congo (DRC)
-FZGT,-0.316667,19.0667,civil,930,Boteka,Boteka,,Congo (DRC)
-FZGV,-1.2,23.2833,civil,1100,Ikela,Ikela,,Congo (DRC)
-FZGX,-1.6,20.65,civil,1000,Monkoto,Monkoto,,Congo (DRC)
-FZIA,0.516667,25.1547,civil,2200,Simisimi,Kisangani,,Congo (DRC)
-FZIC,0.480833,25.3331,civil,3520,Bangoka Intl,Kisangani,,Congo (DRC)
-FZIZ,1.11667,23.6167,civil,935,Lokutu,Lokutu,,Congo (DRC)
-FZJA,2.78333,27.6333,civil,1280,Isiro-Ville,Isiro-Ville,,Congo (DRC)
-FZJC,3.6,28.9,civil,1000,Dungu-Uye,Dungu-Uye,,Congo (DRC)
-FZJD,4.73333,27.6833,civil,900,Doruma,Doruma,,Congo (DRC)
-FZJH,2.82667,27.5881,civil,2505,Isiro-Matari,Isiro-Matari,,Congo (DRC)
-FZJI,3,29.55,civil,800,Watsha,Watsha,,Congo (DRC)
-FZJK,3.73333,29.7,civil,1100,Faradje,Faradje,,Congo (DRC)
-FZJN,-8.2,24.7333,civil,1100,Luniemu,Luniemu,,Congo (DRC)
-FZKA,1.56667,30.2167,civil,1850,Bunia,Bunia,,Congo (DRC)
-FZKB,3.65,26.1167,civil,1300,Bambili-Dingila,Bambili-Dingila,,Congo (DRC)
-FZKC,2.16667,31.15,civil,1000,Mahagi,Mahagi,,Congo (DRC)
-FZKI,2.03333,24.8,civil,950,Yedi,Yedi,,Congo (DRC)
-FZKJ,2.81667,24.7833,civil,2101,Buta-Zega,Buta-Zega,,Congo (DRC)
-FZKN,2.7,23.8333,civil,950,Aketi,Aketi,,Congo (DRC)
-FZMA,-2.3,28.8167,civil,2000,Kavumu,Bukavu,,Congo (DRC)
-FZMP,-4.38333,28.35,civil,1000,Kimano Ii,Kimano Ii,,Congo (DRC)
-FZMW,-2.68333,27.3333,civil,1100,Shabunda,Shabunda,,Congo (DRC)
-FZNA,-1.66667,29.2333,civil,3013,Goma Intl,Goma,,Congo (DRC)
-FZNB,-1.30472,29.3739,civil,1100,Katale,Katale,,Congo (DRC)
-FZNC,-1.16667,29.4167,civil,1070,Rutshuru,Rutshuru,,Congo (DRC)
-FZNF,-0.133333,29.25,civil,1530,Lubero,Lubero,,Congo (DRC)
-FZNI,-0.75,29.6333,civil,1100,Ishasha,Ishasha,,Congo (DRC)
-FZNP,0.583333,29.4667,civil,1300,Beni,Beni,,Congo (DRC)
-FZNR,-0.790278,29.275,civil,900,Rwindi,Rwindi,,Congo (DRC)
-FZNS,0.45,29.4167,civil,1750,Wageni,Beni,,Congo (DRC)
-FZOA,-2.93333,25.9,civil,2171,Kindu,Kindu,,Congo (DRC)
-FZOB,-0.7625,26.6097,civil,1000,Tingi-Tingi,Tingi-Tingi,,Congo (DRC)
-FZOC,-2.55,26.6167,civil,1250,Kamisuku,Kalima,,Congo (DRC)
-FZOD,-2.58333,26.7333,civil,1190,Kalima,Kalima,,Congo (DRC)
-FZOK,-4.53333,26.6167,civil,970,Kasongo,Kasongo,,Congo (DRC)
-FZOP,-1.36667,26.3333,civil,1140,Punia,Punia,,Congo (DRC)
-FZOQ,-1.46667,26.4333,civil,950,Punia-Basenge,Punia-Basenge,,Congo (DRC)
-FZQA,-11.5913,27.5309,civil,3156,Lubumbashi Intl,Lubumbashi,,Congo (DRC)
-FZQF,-10.5333,26.325,civil,1860,Fungurume,Fungurume,,Congo (DRC)
-FZQG,-10.35,28.6333,civil,1000,Kasenga,Kasenga,,Congo (DRC)
-FZQH,-10.55,27.85,civil,1250,Katwe,Katwe,,Congo (DRC)
-FZQI,-10.8333,26.75,civil,1200,Kamatanda,Likasi,,Congo (DRC)
-FZQJ,-10.75,27.2,civil,1200,Mwadingusha,Mwadingusha,,Congo (DRC)
-FZQM,-10.7667,25.5,civil,1750,Kolwezi,Kolwezi,,Congo (DRC)
-FZQN,-10.5667,24.4,civil,1000,Mutshatsha,Mutshatsha,,Congo (DRC)
-FZQP,-10.6667,23.1667,civil,1500,Kisenge,Kisenge,,Congo (DRC)
-FZQU,-9.93333,26,civil,1200,Lubudi,Lubudi,,Congo (DRC)
-FZQV,-8.65,27.35,civil,1020,Mitwaba,Mitwaba,,Congo (DRC)
-FZQW,-5.73333,27.7667,civil,1200,Luishi,Luishi,,Congo (DRC)
-FZRA,-7.28333,27.4,civil,1400,Manono,Manono,,Congo (DRC)
-FZRB,-7.1,29.7333,civil,920,Moba,Moba,,Congo (DRC)
-FZRC,-7.53333,28.7,civil,1250,Mukoy,Mukoy,,Congo (DRC)
-FZRD,-7.35,28.0333,civil,1200,Kabombo,Kabombo,,Congo (DRC)
-FZRE,-7.75,27.2,civil,1018,Bukena,Bukena,,Congo (DRC)
-FZRF,-5.87044,29.2463,civil,2750,Kalemie,Kalemie,,Congo (DRC)
-FZRG,-7.41667,27.15,civil,1500,Sominka,Kania,,Congo (DRC)
-FZRJ,-7.71667,29.8,civil,2100,Pepa,Pepa,,Congo (DRC)
-FZRK,-7.31667,29.1667,civil,2000,Kansimba,Kansimba,,Congo (DRC)
-FZRL,-8.93333,27.1833,civil,1350,Lusinga,Lusinga,,Congo (DRC)
-FZRM,-6.08333,26.9167,civil,1400,Kabalo,Kabalo,,Congo (DRC)
-FZRN,-5.93333,28,civil,1000,Nyunzu,Nyunzu,,Congo (DRC)
-FZRO,-7.93333,28.5333,civil,1800,Luvua,Luvua,,Congo (DRC)
-FZRQ,-5.4,27,civil,1900,Kongolo,Kongolo,,Congo (DRC)
-FZSA,-8.62667,25.2481,civil,5423,Kamina Base,Kamina,,Congo (DRC)
-FZSB,-8.73333,24.9833,civil,1450,Kamina,Kamina,,Congo (DRC)
-FZSD,-9.7,22.9333,civil,1200,Sandoa,Sandoa,,Congo (DRC)
-FZSI,-10.7167,22.35,civil,1800,Dilolo,Dilolo,,Congo (DRC)
-FZSK,-8.35,22.65,civil,1100,Kapanga,Kapanga,,Congo (DRC)
-FZTK,-7.58333,24.15,civil,1000,Kaniama,Kaniama,,Congo (DRC)
-FZTL,-9.46667,25.75,civil,980,Luena,Luena,,Congo (DRC)
-FZTS,-7.7,24.05,civil,1280,Kaniama,Kasese,,Congo (DRC)
-FZUA,-5.9,22.4667,civil,2200,Kananga,Kananga,,Congo (DRC)
-FZUG,-7.18333,22.4,civil,1000,Luiza,Luiza,,Congo (DRC)
-FZUK,-6.43315,20.8005,civil,1600,Tshikapa,Tshikapa,,Congo (DRC)
-FZUN,-5.35,21.3333,civil,1121,Luebo,Luebo,,Congo (DRC)
-FZUO,-5.5,21.4333,civil,1000,Musese,Musese,,Congo (DRC)
-FZUP,-7.00361,21.2442,civil,1000,Diboko,Diboko,,Congo (DRC)
-FZUR,-6.93333,22,civil,1000,Tshibala,Tshibala,,Congo (DRC)
-FZUS,-5.96667,22.4167,civil,1000,Tshikaji,Tshikaji,,Congo (DRC)
-FZVA,-3.417,23.4501,civil,1620,Lodja,Lodja,,Congo (DRC)
-FZVG,-3.46667,24.4333,civil,1000,Katako'kombe,Katako'kombe,,Congo (DRC)
-FZVI,-4.96667,23.3833,civil,1100,Lusambo,Lusambo,,Congo (DRC)
-FZVJ,-4.1,24.3667,civil,1300,Tshumbe,Tshumbe,,Congo (DRC)
-FZVO,-4.08333,22.8333,civil,1000,Beni-Dibele,Beni-Dibele,,Congo (DRC)
-FZVP,-4.03333,24.4667,civil,1500,Dikungu,Dikungu,,Congo (DRC)
-FZVR,-4.31667,20.4333,civil,1000,Basongo,Basongo,,Congo (DRC)
-FZVS,-4.31667,20.6,civil,1250,Ilebo,Ilebo,,Congo (DRC)
-FZVT,-3.46667,21.4333,civil,1150,Dekese,Dekese,,Congo (DRC)
-FZVU,-3.91667,21.5833,civil,1300,Idumbe,Idumbe,,Congo (DRC)
-FZVV,-4.175,24.6483,civil,2500,Oduku,Oduku,,Congo (DRC)
-FZWA,-6.11667,23.5667,civil,2009,Mbuji-Mayi,Mbuji-Mayi,,Congo (DRC)
-FZWC,-6.73333,23.95,civil,1100,Gandajika,Gandajika,,Congo (DRC)
-FZWE,-6.98333,23.0833,civil,2000,Mwene-Ditu,Mwene-Ditu,,Congo (DRC)
-FZWR,-6.01667,25.8833,civil,1400,Kisengwa,Kisengwa,,Congo (DRC)
-FZWS,-5.3,25.7333,civil,1000,Lubao,Lubao,,Congo (DRC)
-FZWT,-6.11667,24.3333,civil,1500,Tunta,Kabinda,,Congo DRC
+FZAA,-4.38559,15.4447,civil,9313,N'djili Intl,Kinshasa,,Democratic Republic of the Congo
+FZAB,-4.31667,15.3167,civil,1300,N'dolo,Kinshasa,,Democratic Republic of the Congo
+FZAG,-5.93333,12.35,civil,1480,Muanda,Muanda,,Democratic Republic of the Congo
+FZAI,-5.91806,12.4464,civil,2400,Kitona Base,Kitona,,Democratic Republic of the Congo
+FZAJ,-5.86667,13.0667,civil,1100,Boma,Boma,,Democratic Republic of the Congo
+FZAL,-4.95,14.1333,civil,1170,Luozi,Luozi,,Democratic Republic of the Congo
+FZAM,-5.8,13.4333,civil,1580,Matadi-Tshimpi,Matadi-Tshimpi,,Democratic Republic of the Congo
+FZAN,-5.51667,13.5833,civil,1100,Inga,Inga,,Democratic Republic of the Congo
+FZAW,-5.5,14.7,civil,1230,Kwilu-Ngongo,Kwilu-Ngongo,,Democratic Republic of the Congo
+FZBA,-1.95,18.2833,civil,1480,Inongo,Inongo,,Democratic Republic of the Congo
+FZBB,-3.38333,20,civil,1200,Bongimba,Bongimba,,Democratic Republic of the Congo
+FZBD,-3.38333,19.5,civil,970,Oshwe,Oshwe,,Democratic Republic of the Congo
+FZBF,-3.1,18.7333,civil,1250,Bonkita,Bonkita,,Democratic Republic of the Congo
+FZBG,-2.93333,18.4,civil,970,Kempa,Kempa,,Democratic Republic of the Congo
+FZBJ,-3,16.9333,civil,1300,Mushie,Mushie,,Democratic Republic of the Congo
+FZBK,-3.06667,18.6417,civil,1100,Boshwe,Bosobe,,Democratic Republic of the Congo
+FZBL,-3.05,17.1,civil,1000,Djokele,Djokele,,Democratic Republic of the Congo
+FZBO,-3.30127,17.3842,civil,1450,Bandundu,Bandundu,,Democratic Republic of the Congo
+FZBP,-2.8,19.9083,civil,1100,Bolongonkele,Bolongonkele,,Democratic Republic of the Congo
+FZBQ,-3.38333,19.6597,civil,1000,Bindja,Bindja,,Democratic Republic of the Congo
+FZBS,-3.18333,18.0833,civil,1150,Semendua,Semendua,,Democratic Republic of the Congo
+FZBT,-1.45,19.0167,civil,1450,Mboliasa,Bosango,,Democratic Republic of the Congo
+FZBW,-1.91667,17.9167,civil,1200,Basengele,Bokote,,Democratic Republic of the Congo
+FZCA,-5.03333,18.7833,civil,1570,Kikwit,Kikwit,,Democratic Republic of the Congo
+FZCB,-5,19.6,civil,1000,Idiofa,Idiofa,,Democratic Republic of the Congo
+FZCE,-4.8,18.7167,civil,938,Lusanga,Lusanga,,Democratic Republic of the Congo
+FZCF,-7.33333,19.0167,civil,1100,Kahemba,Kahemba,,Democratic Republic of the Congo
+FZCK,-7.61667,18.55,civil,1100,Kajiji,Kajiji,,Democratic Republic of the Congo
+FZCM,-4.08333,19.5,civil,1000,Mangai Ii,Mangai Ii,,Democratic Republic of the Congo
+FZCN,-4.13778,17.58,civil,1000,Lunkuni,Lunkuni,,Democratic Republic of the Congo
+FZCP,-5.7,16.5833,civil,1140,Popokabaka,Popokabaka,,Democratic Republic of the Congo
+FZCV,-4.78333,17.85,civil,1000,Masi-Manimba,Masi-Manimba,,Democratic Republic of the Congo
+FZEA,0.028056,18.2897,civil,2177,Mbandaka,Mbandaka,,Democratic Republic of the Congo
+FZEI,0.25,18.9333,civil,1150,Ingende,Ingende,,Democratic Republic of the Congo
+FZEN,1.21667,19.8,civil,1480,Basankusu,Basankusu,,Democratic Republic of the Congo
+FZEO,1.01667,20.6,civil,1000,Beongo,Beongo,,Democratic Republic of the Congo
+FZEP,1.31667,20.7,civil,1200,Mentole,Mentole,,Democratic Republic of the Congo
+FZES,1.46667,20.3,civil,950,Ngumu,Ngumu,,Democratic Republic of the Congo
+FZFA,3.63333,18.6333,civil,2100,Libenge,Libenge,,Democratic Republic of the Congo
+FZFC,2.1,22.6972,civil,1250,Engengele,Engengele,,Democratic Republic of the Congo
+FZFD,4.25,20.9667,civil,3201,Gbadolite,Gbadolite,,Democratic Republic of the Congo
+FZFE,3.68333,22.15,civil,1200,Abumumbazi,Abumumbazi,,Democratic Republic of the Congo
+FZFF,3.73333,19.0833,civil,650,Bau,Bau,,Democratic Republic of the Congo
+FZFH,2.11667,23.2833,civil,1200,Mokaria-Yamoleka,Mokaria-Yamoleka,,Democratic Republic of the Congo
+FZFK,3.26667,19.7667,civil,2200,Gemena,Gemena,,Democratic Republic of the Congo
+FZFN,4.43889,19.5389,civil,1000,Lombo,Lombo,,Democratic Republic of the Congo
+FZFP,4.16667,21.75,civil,2000,Kotakoli,Kotakoli,,Democratic Republic of the Congo
+FZFQ,4.11667,19.2167,civil,1500,Mpaka,Mpaka,,Democratic Republic of the Congo
+FZFR,1.65,23.15,civil,1000,Mombongo,Mombongo,,Democratic Republic of the Congo
+FZFU,2.18333,22.55,civil,1600,Bumba,Bumba,,Democratic Republic of the Congo
+FZFW,2.46667,20.1,civil,1000,Gwaka,Gwaka,,Democratic Republic of the Congo
+FZGA,2.16667,21.4833,civil,1630,Lisala,Lisala,,Democratic Republic of the Congo
+FZGB,1.86667,21.7833,civil,1200,Bosondjo,Bosondjo,,Democratic Republic of the Congo
+FZGC,1.85,23.1167,civil,1200,Bolila,Bolila,,Democratic Republic of the Congo
+FZGE,2.43333,20.5,civil,1180,Binga,Binga,,Democratic Republic of the Congo
+FZGF,-0.683333,22.3333,civil,1200,Bokungu,Bokungu,,Democratic Republic of the Congo
+FZGI,2.28333,22.85,civil,1040,Yalingimba,Yalingimba,,Democratic Republic of the Congo
+FZGN,-0.233333,20.8667,civil,1400,Boende,Boende,,Democratic Republic of the Congo
+FZGT,-0.316667,19.0667,civil,930,Boteka,Boteka,,Democratic Republic of the Congo
+FZGV,-1.2,23.2833,civil,1100,Ikela,Ikela,,Democratic Republic of the Congo
+FZGX,-1.6,20.65,civil,1000,Monkoto,Monkoto,,Democratic Republic of the Congo
+FZIA,0.516667,25.1547,civil,2200,Simisimi,Kisangani,,Democratic Republic of the Congo
+FZIC,0.480833,25.3331,civil,3520,Bangoka Intl,Kisangani,,Democratic Republic of the Congo
+FZIZ,1.11667,23.6167,civil,935,Lokutu,Lokutu,,Democratic Republic of the Congo
+FZJA,2.78333,27.6333,civil,1280,Isiro-Ville,Isiro-Ville,,Democratic Republic of the Congo
+FZJC,3.6,28.9,civil,1000,Dungu-Uye,Dungu-Uye,,Democratic Republic of the Congo
+FZJD,4.73333,27.6833,civil,900,Doruma,Doruma,,Democratic Republic of the Congo
+FZJH,2.82667,27.5881,civil,2505,Isiro-Matari,Isiro-Matari,,Democratic Republic of the Congo
+FZJI,3,29.55,civil,800,Watsha,Watsha,,Democratic Republic of the Congo
+FZJK,3.73333,29.7,civil,1100,Faradje,Faradje,,Democratic Republic of the Congo
+FZJN,-8.2,24.7333,civil,1100,Luniemu,Luniemu,,Democratic Republic of the Congo
+FZKA,1.56667,30.2167,civil,1850,Bunia,Bunia,,Democratic Republic of the Congo
+FZKB,3.65,26.1167,civil,1300,Bambili-Dingila,Bambili-Dingila,,Democratic Republic of the Congo
+FZKC,2.16667,31.15,civil,1000,Mahagi,Mahagi,,Democratic Republic of the Congo
+FZKI,2.03333,24.8,civil,950,Yedi,Yedi,,Democratic Republic of the Congo
+FZKJ,2.81667,24.7833,civil,2101,Buta-Zega,Buta-Zega,,Democratic Republic of the Congo
+FZKN,2.7,23.8333,civil,950,Aketi,Aketi,,Democratic Republic of the Congo
+FZMA,-2.3,28.8167,civil,2000,Kavumu,Bukavu,,Democratic Republic of the Congo
+FZMP,-4.38333,28.35,civil,1000,Kimano Ii,Kimano Ii,,Democratic Republic of the Congo
+FZMW,-2.68333,27.3333,civil,1100,Shabunda,Shabunda,,Democratic Republic of the Congo
+FZNA,-1.66667,29.2333,civil,3013,Goma Intl,Goma,,Democratic Republic of the Congo
+FZNB,-1.30472,29.3739,civil,1100,Katale,Katale,,Democratic Republic of the Congo
+FZNC,-1.16667,29.4167,civil,1070,Rutshuru,Rutshuru,,Democratic Republic of the Congo
+FZNF,-0.133333,29.25,civil,1530,Lubero,Lubero,,Democratic Republic of the Congo
+FZNI,-0.75,29.6333,civil,1100,Ishasha,Ishasha,,Democratic Republic of the Congo
+FZNP,0.583333,29.4667,civil,1300,Beni,Beni,,Democratic Republic of the Congo
+FZNR,-0.790278,29.275,civil,900,Rwindi,Rwindi,,Democratic Republic of the Congo
+FZNS,0.45,29.4167,civil,1750,Wageni,Beni,,Democratic Republic of the Congo
+FZOA,-2.93333,25.9,civil,2171,Kindu,Kindu,,Democratic Republic of the Congo
+FZOB,-0.7625,26.6097,civil,1000,Tingi-Tingi,Tingi-Tingi,,Democratic Republic of the Congo
+FZOC,-2.55,26.6167,civil,1250,Kamisuku,Kalima,,Democratic Republic of the Congo
+FZOD,-2.58333,26.7333,civil,1190,Kalima,Kalima,,Democratic Republic of the Congo
+FZOK,-4.53333,26.6167,civil,970,Kasongo,Kasongo,,Democratic Republic of the Congo
+FZOP,-1.36667,26.3333,civil,1140,Punia,Punia,,Democratic Republic of the Congo
+FZOQ,-1.46667,26.4333,civil,950,Punia-Basenge,Punia-Basenge,,Democratic Republic of the Congo
+FZQA,-11.5913,27.5309,civil,3156,Lubumbashi Intl,Lubumbashi,,Democratic Republic of the Congo
+FZQF,-10.5333,26.325,civil,1860,Fungurume,Fungurume,,Democratic Republic of the Congo
+FZQG,-10.35,28.6333,civil,1000,Kasenga,Kasenga,,Democratic Republic of the Congo
+FZQH,-10.55,27.85,civil,1250,Katwe,Katwe,,Democratic Republic of the Congo
+FZQI,-10.8333,26.75,civil,1200,Kamatanda,Likasi,,Democratic Republic of the Congo
+FZQJ,-10.75,27.2,civil,1200,Mwadingusha,Mwadingusha,,Democratic Republic of the Congo
+FZQM,-10.7667,25.5,civil,1750,Kolwezi,Kolwezi,,Democratic Republic of the Congo
+FZQN,-10.5667,24.4,civil,1000,Mutshatsha,Mutshatsha,,Democratic Republic of the Congo
+FZQP,-10.6667,23.1667,civil,1500,Kisenge,Kisenge,,Democratic Republic of the Congo
+FZQU,-9.93333,26,civil,1200,Lubudi,Lubudi,,Democratic Republic of the Congo
+FZQV,-8.65,27.35,civil,1020,Mitwaba,Mitwaba,,Democratic Republic of the Congo
+FZQW,-5.73333,27.7667,civil,1200,Luishi,Luishi,,Democratic Republic of the Congo
+FZRA,-7.28333,27.4,civil,1400,Manono,Manono,,Democratic Republic of the Congo
+FZRB,-7.1,29.7333,civil,920,Moba,Moba,,Democratic Republic of the Congo
+FZRC,-7.53333,28.7,civil,1250,Mukoy,Mukoy,,Democratic Republic of the Congo
+FZRD,-7.35,28.0333,civil,1200,Kabombo,Kabombo,,Democratic Republic of the Congo
+FZRE,-7.75,27.2,civil,1018,Bukena,Bukena,,Democratic Republic of the Congo
+FZRF,-5.87044,29.2463,civil,2750,Kalemie,Kalemie,,Democratic Republic of the Congo
+FZRG,-7.41667,27.15,civil,1500,Sominka,Kania,,Democratic Republic of the Congo
+FZRJ,-7.71667,29.8,civil,2100,Pepa,Pepa,,Democratic Republic of the Congo
+FZRK,-7.31667,29.1667,civil,2000,Kansimba,Kansimba,,Democratic Republic of the Congo
+FZRL,-8.93333,27.1833,civil,1350,Lusinga,Lusinga,,Democratic Republic of the Congo
+FZRM,-6.08333,26.9167,civil,1400,Kabalo,Kabalo,,Democratic Republic of the Congo
+FZRN,-5.93333,28,civil,1000,Nyunzu,Nyunzu,,Democratic Republic of the Congo
+FZRO,-7.93333,28.5333,civil,1800,Luvua,Luvua,,Democratic Republic of the Congo
+FZRQ,-5.4,27,civil,1900,Kongolo,Kongolo,,Democratic Republic of the Congo
+FZSA,-8.62667,25.2481,civil,5423,Kamina Base,Kamina,,Democratic Republic of the Congo
+FZSB,-8.73333,24.9833,civil,1450,Kamina,Kamina,,Democratic Republic of the Congo
+FZSD,-9.7,22.9333,civil,1200,Sandoa,Sandoa,,Democratic Republic of the Congo
+FZSI,-10.7167,22.35,civil,1800,Dilolo,Dilolo,,Democratic Republic of the Congo
+FZSK,-8.35,22.65,civil,1100,Kapanga,Kapanga,,Democratic Republic of the Congo
+FZTK,-7.58333,24.15,civil,1000,Kaniama,Kaniama,,Democratic Republic of the Congo
+FZTL,-9.46667,25.75,civil,980,Luena,Luena,,Democratic Republic of the Congo
+FZTS,-7.7,24.05,civil,1280,Kaniama,Kasese,,Democratic Republic of the Congo
+FZUA,-5.9,22.4667,civil,2200,Kananga,Kananga,,Democratic Republic of the Congo
+FZUG,-7.18333,22.4,civil,1000,Luiza,Luiza,,Democratic Republic of the Congo
+FZUK,-6.43315,20.8005,civil,1600,Tshikapa,Tshikapa,,Democratic Republic of the Congo
+FZUN,-5.35,21.3333,civil,1121,Luebo,Luebo,,Democratic Republic of the Congo
+FZUO,-5.5,21.4333,civil,1000,Musese,Musese,,Democratic Republic of the Congo
+FZUP,-7.00361,21.2442,civil,1000,Diboko,Diboko,,Democratic Republic of the Congo
+FZUR,-6.93333,22,civil,1000,Tshibala,Tshibala,,Democratic Republic of the Congo
+FZUS,-5.96667,22.4167,civil,1000,Tshikaji,Tshikaji,,Democratic Republic of the Congo
+FZVA,-3.417,23.4501,civil,1620,Lodja,Lodja,,Democratic Republic of the Congo
+FZVG,-3.46667,24.4333,civil,1000,Katako'kombe,Katako'kombe,,Democratic Republic of the Congo
+FZVI,-4.96667,23.3833,civil,1100,Lusambo,Lusambo,,Democratic Republic of the Congo
+FZVJ,-4.1,24.3667,civil,1300,Tshumbe,Tshumbe,,Democratic Republic of the Congo
+FZVO,-4.08333,22.8333,civil,1000,Beni-Dibele,Beni-Dibele,,Democratic Republic of the Congo
+FZVP,-4.03333,24.4667,civil,1500,Dikungu,Dikungu,,Democratic Republic of the Congo
+FZVR,-4.31667,20.4333,civil,1000,Basongo,Basongo,,Democratic Republic of the Congo
+FZVS,-4.31667,20.6,civil,1250,Ilebo,Ilebo,,Democratic Republic of the Congo
+FZVT,-3.46667,21.4333,civil,1150,Dekese,Dekese,,Democratic Republic of the Congo
+FZVU,-3.91667,21.5833,civil,1300,Idumbe,Idumbe,,Democratic Republic of the Congo
+FZVV,-4.175,24.6483,civil,2500,Oduku,Oduku,,Democratic Republic of the Congo
+FZWA,-6.11667,23.5667,civil,2009,Mbuji-Mayi,Mbuji-Mayi,,Democratic Republic of the Congo
+FZWC,-6.73333,23.95,civil,1100,Gandajika,Gandajika,,Democratic Republic of the Congo
+FZWE,-6.98333,23.0833,civil,2000,Mwene-Ditu,Mwene-Ditu,,Democratic Republic of the Congo
+FZWR,-6.01667,25.8833,civil,1400,Kisengwa,Kisengwa,,Democratic Republic of the Congo
+FZWS,-5.3,25.7333,civil,1000,Lubao,Lubao,,Democratic Republic of the Congo
+FZWT,-6.11667,24.3333,civil,1500,Tunta,Kabinda,,Democratic Republic of the Congo
 G05,40.2459,-80.0123,civil,764,Finleyville,Finleyville,Pennsylvania,United States
 GA00,33.8256,-83.6397,civil,914,Kintail Farm,Monroe,Georgia,United States
 GA01,33.1978,-84.0844,civil,690,Flying H Ranch Inc,Jackson,Georgia,United States
@@ -11460,7 +11460,7 @@ GATS,20.2461,0.980833,civil,3707,Tessalit,Tessalit,,Mali
 GAYE,15.1333,-10.5667,civil,1600,Yelimane,Yelimane,,Mali
 GBE,-6.87783,143.722,civil,1087,Gobe,Gobe,,Papua New Guinea
 GBN,32.8875,-112.72,civil,2591,Gila Bend AF Aux,Gila Bend,Arizona,United States
-GBYD,13.3425,-16.6578,civil,3595,Banjul Intl,Banjul,,"Gambia, The"
+GBYD,13.3425,-16.6578,civil,3595,Banjul Intl,Banjul,,Gambia
 GCFV,28.4527,-13.8638,civil,2407,Fuerteventura,Fuerteventura,,Spain
 GCGM,28.0296,-17.2146,civil,1499,La Gomera,La Gomera,,Spain
 GCHI,27.8148,-17.8871,civil,1251,Hierro,Hierro,,Spain
@@ -13964,7 +13964,7 @@ KNOW,48.1413,-123.414,civil,1369,Port Angeles Cgas,Port Angeles,Washington,Unite
 KNPA,30.3529,-87.3186,civil,7056,Pensacola NAS,Pensacola,Florida,United States
 KNQA,35.3567,-89.8703,civil,5137,Millington Mun,Millington,Tennessee,United States
 KNQI,27.5003,-97.8169,civil,9772,Kingsville NAS,Kingsville,Texas,United States
-KNQX,24.5739,-81.6861,civil,7322,Key West NAS,Key West,Florida,United States
+KNQX,24.5739,-81.6861,military,7322,Key West NAS,Key West,Florida,United States
 KNRA,48.1998,-122.635,civil,1646,Coupeville NOLF,Coupeville,Washington,United States
 KNRB,30.3919,-81.4231,civil,2435,Mayport NS  Adm David L. Mcdo,Mayport,Florida,United States
 KNRN,39.8504,-99.8947,civil,3084,Norton Mun,Norton,Kansas,United States
@@ -15281,8 +15281,8 @@ LFTH,43.0972,6.14611,military,4041,Le Palyvestre Navy,Hyeres,,France
 LFTR,43.0828,5.93389,military,423,St Mandrier Navy,Toulon,,France
 LFTW,43.7574,4.41634,military,2444,Garons Navy,Nimes,,France
 LFTZ,43.2064,6.482,civil,859,La Mole,La Mole,,France
-LFVM,47.0958,-56.3844,civil,986,Miquelon,Miquelon I,,St. Pierre and Miquelon
-LFVP,46.7631,-56.1742,civil,1800,St Pierre,St Pierre I,,St. Pierre and Miquelon
+LFVM,47.0958,-56.3844,civil,986,Miquelon,Miquelon I,,Saint Pierre and Miquelon
+LFVP,46.7631,-56.1742,civil,1800,St Pierre,St Pierre I,,Saint Pierre and Miquelon
 LFXA,45.9797,5.33778,military,2786,Amberieu AB,Amberieu,,France
 LFXB,45.7019,-0.636905,military,1698,Thenac AB,Saintes,,France
 LFXC,48.2286,5.84306,civil,760,Auzainvilliers,Vittel,,France
@@ -15865,19 +15865,19 @@ LU0A,47.8627,28.2128,civil,2510,Markuleshty,Markuleshty,,Moldova
 LUBL,47.8386,27.7822,civil,2238,Balti,Balti,,Moldova
 LUKK,46.9278,28.9308,civil,3583,Chisinau,Chisinau,,Moldova
 LVGZ,31.2464,34.2761,civil,3278,Gaza Intl,Gaza,,Gaza Strip
-LW0A,41.3331,21.4491,civil,1060,Prilep,Prilep,,"Macedonia, Former Yugoslav Republic of"
-LW0B,42.1541,21.6987,civil,916,Kumanovo,Kumanovo,,"Macedonia, Former Yugoslav Republic of"
-LW0C,41.1507,21.4079,civil,305,Srpci,Srpci,,"Macedonia, Former Yugoslav Republic of"
-LW0D,41.4293,21.4025,civil,303,Dolneni,Dolneni,,"Macedonia, Former Yugoslav Republic of"
-LW0E,41.7593,21.8427,civil,299,Titov Veles,Titov Veles,,"Macedonia, Former Yugoslav Republic of"
-LW0F,41.8277,21.9869,civil,304,Sveti Nikole,Sveti Nikole,,"Macedonia, Former Yugoslav Republic of"
-LW0G,41.5172,22.0871,civil,299,Negotino,Negotino,,"Macedonia, Former Yugoslav Republic of"
-LW0H,41.7987,22.1104,civil,299,Stip,Stip,,"Macedonia, Former Yugoslav Republic of"
-LW0I,41.0235,21.4256,civil,1505,Logovardi,Logovardi,,"Macedonia, Former Yugoslav Republic of"
-LW0J,42.0591,21.391,civil,1205,Brazda,Brazda,,"Macedonia, Former Yugoslav Republic of"
-LW0K,41.9124,21.9554,civil,632,Mavrovica,Mavrovica,,"Macedonia, Former Yugoslav Republic of"
-LWOH,41.18,20.7423,civil,2537,Ohrid,Ohrid,,"Macedonia, Former Yugoslav Republic of"
-LWSK,41.9616,21.6214,civil,2454,Skopje,Skopje,,"Macedonia, Former Yugoslav Republic of"
+LW0A,41.3331,21.4491,civil,1060,Prilep,Prilep,,North Macedonia
+LW0B,42.1541,21.6987,civil,916,Kumanovo,Kumanovo,,North Macedonia
+LW0C,41.1507,21.4079,civil,305,Srpci,Srpci,,North Macedonia
+LW0D,41.4293,21.4025,civil,303,Dolneni,Dolneni,,North Macedonia
+LW0E,41.7593,21.8427,civil,299,Titov Veles,Titov Veles,,North Macedonia
+LW0F,41.8277,21.9869,civil,304,Sveti Nikole,Sveti Nikole,,North Macedonia
+LW0G,41.5172,22.0871,civil,299,Negotino,Negotino,,North Macedonia
+LW0H,41.7987,22.1104,civil,299,Stip,Stip,,North Macedonia
+LW0I,41.0235,21.4256,civil,1505,Logovardi,Logovardi,,North Macedonia
+LW0J,42.0591,21.391,civil,1205,Brazda,Brazda,,North Macedonia
+LW0K,41.9124,21.9554,civil,632,Mavrovica,Mavrovica,,North Macedonia
+LWOH,41.18,20.7423,civil,2537,Ohrid,Ohrid,,North Macedonia
+LWSK,41.9616,21.6214,civil,2454,Skopje,Skopje,,North Macedonia
 LXGB,36.1525,-5.34833,civil,1998,Gibraltar AB,Gibraltar,,Gibraltar
 LY0A,44.7751,20.9616,civil,2184,Kovin,Kovin,,Serbia
 LY0B,44.0182,22.1371,civil,1086,Bor,Bor,,Serbia
@@ -16976,67 +16976,67 @@ MY96,44.4167,-93.3308,water,999,Quist,Faribault,Minnesota,United States
 MY97,44.598,-93.1269,civil,744,Nielsen's,Farmington,Minnesota,United States
 MY98,47.0455,-96.6656,civil,805,Pake,Felton,Minnesota,United States
 MY99,46.8575,-96.2352,civil,1097,Johnston,Hawley,Minnesota,United States
-MYAB,24.2833,-77.6833,civil,1524,Bain,Andros I,,"Bahamas, The"
-MYAF,24.7,-77.8,civil,1219,Andros Town Intl,Andros Island,,"Bahamas, The"
-MYAK,24.15,-77.5833,civil,1615,Congo Town,Andros I,,"Bahamas, The"
-MYAM,26.517,-77.0829,civil,1522,Marsh Harbour,Marsh Harbour,,"Bahamas, The"
-MYAN,25.05,-78.05,civil,1516,San Andros,Andros I,,"Bahamas, The"
-MYAO,26.3167,-77.5667,civil,805,Mores Island,Mores Island,,"Bahamas, The"
-MYAP,22.4444,-73.975,civil,1524,Spring Point,Acklins I,,"Bahamas, The"
-MYAS,26.0004,-77.3996,civil,914,Sandy Point Apt,Abaco Island,,"Bahamas, The"
-MYAT,26.7503,-77.3996,civil,2136,Treasure Cay,Abaco I,,"Bahamas, The"
-MYAW,27.2667,-78.4,civil,1311,Walkers Cay,Walkers Cay,,"Bahamas, The"
-MYAX,26.95,-77.55,civil,1524,Spanish Cay,Spanish Cay,,"Bahamas, The"
-MYBC,25.4167,-77.8833,civil,1524,Chub Cay Intl,Berry Island,,"Bahamas, The"
-MYBG,25.75,-77.85,civil,1383,Great Harbour Cay,Berry Island,,"Bahamas, The"
-MYBS,25.7,-79.2633,civil,1524,South Bimini,Bimini I,,"Bahamas, The"
-MYCA,24.6333,-75.6667,civil,2134,Arthur's Town,Cat Island,,"Bahamas, The"
-MYCB,24.3167,-75.45,civil,1242,New Bight,Cat Island,,"Bahamas, The"
-MYCI,22.75,-74.15,civil,1067,Colonel Hill,Crooked I,,"Bahamas, The"
-MYCX,24.15,-75.4,civil,747,Cutlass Bay,Cutlass Bay,,"Bahamas, The"
-MYE2,24.05,-76.3833,civil,762,Blackpoint,Blackpoint,,"Bahamas, The"
-MYE3,23.9333,-76.3167,civil,610,Farmer's Cay,Farmer's Cay,,"Bahamas, The"
-MYE4,24.15,-75.5167,civil,1402,Hawks Nest,Hawks Nest,,"Bahamas, The"
-MYE5,23.65,-74.8333,civil,732,Rum Cay,Rum Cay,,"Bahamas, The"
-MYEF,23.5611,-75.8744,civil,2150,Exuma Intl,Great Exuma I,,"Bahamas, The"
-MYEG,23.4667,-75.7833,civil,1524,George Town,George Town,,"Bahamas, The"
-MYEH,25.4833,-76.6833,civil,1376,North Eleuthera,Eleuthera I,,"Bahamas, The"
-MYEM,25.285,-76.33,civil,2452,Governors Harbour,Eleuthera I,,"Bahamas, The"
-MYER,24.9003,-76.1661,civil,2188,Rock Sound Intl,Eleuthera I,,"Bahamas, The"
-MYES,24.1667,-76.45,civil,924,Staniel Cay,Exuma Island,,"Bahamas, The"
-MYGF,26.5553,-78.6983,civil,3359,Grand Bahama Intl,Freeport,,"Bahamas, The"
-MYGM,26.6333,-78.3667,civil,2195,Grand Bahama Aux AF,Grand Bahama,,"Bahamas, The"
-MYGW,26.6833,-78.9667,civil,4328,West End,West End,,"Bahamas, The"
-MYIG,20.9833,-73.6667,civil,2134,Inagua,Great Inagua I,,"Bahamas, The"
+MYAB,24.2833,-77.6833,civil,1524,Bain,Andros I,,Bahamas
+MYAF,24.7,-77.8,civil,1219,Andros Town Intl,Andros Island,,Bahamas
+MYAK,24.15,-77.5833,civil,1615,Congo Town,Andros I,,Bahamas
+MYAM,26.517,-77.0829,civil,1522,Marsh Harbour,Marsh Harbour,,Bahamas
+MYAN,25.05,-78.05,civil,1516,San Andros,Andros I,,Bahamas
+MYAO,26.3167,-77.5667,civil,805,Mores Island,Mores Island,,Bahamas
+MYAP,22.4444,-73.975,civil,1524,Spring Point,Acklins I,,Bahamas
+MYAS,26.0004,-77.3996,civil,914,Sandy Point Apt,Abaco Island,,Bahamas
+MYAT,26.7503,-77.3996,civil,2136,Treasure Cay,Abaco I,,Bahamas
+MYAW,27.2667,-78.4,civil,1311,Walkers Cay,Walkers Cay,,Bahamas
+MYAX,26.95,-77.55,civil,1524,Spanish Cay,Spanish Cay,,Bahamas
+MYBC,25.4167,-77.8833,civil,1524,Chub Cay Intl,Berry Island,,Bahamas
+MYBG,25.75,-77.85,civil,1383,Great Harbour Cay,Berry Island,,Bahamas
+MYBS,25.7,-79.2633,civil,1524,South Bimini,Bimini I,,Bahamas
+MYCA,24.6333,-75.6667,civil,2134,Arthur's Town,Cat Island,,Bahamas
+MYCB,24.3167,-75.45,civil,1242,New Bight,Cat Island,,Bahamas
+MYCI,22.75,-74.15,civil,1067,Colonel Hill,Crooked I,,Bahamas
+MYCX,24.15,-75.4,civil,747,Cutlass Bay,Cutlass Bay,,Bahamas
+MYE2,24.05,-76.3833,civil,762,Blackpoint,Blackpoint,,Bahamas
+MYE3,23.9333,-76.3167,civil,610,Farmer's Cay,Farmer's Cay,,Bahamas
+MYE4,24.15,-75.5167,civil,1402,Hawks Nest,Hawks Nest,,Bahamas
+MYE5,23.65,-74.8333,civil,732,Rum Cay,Rum Cay,,Bahamas
+MYEF,23.5611,-75.8744,civil,2150,Exuma Intl,Great Exuma I,,Bahamas
+MYEG,23.4667,-75.7833,civil,1524,George Town,George Town,,Bahamas
+MYEH,25.4833,-76.6833,civil,1376,North Eleuthera,Eleuthera I,,Bahamas
+MYEM,25.285,-76.33,civil,2452,Governors Harbour,Eleuthera I,,Bahamas
+MYER,24.9003,-76.1661,civil,2188,Rock Sound Intl,Eleuthera I,,Bahamas
+MYES,24.1667,-76.45,civil,924,Staniel Cay,Exuma Island,,Bahamas
+MYGF,26.5553,-78.6983,civil,3359,Grand Bahama Intl,Freeport,,Bahamas
+MYGM,26.6333,-78.3667,civil,2195,Grand Bahama Aux AF,Grand Bahama,,Bahamas
+MYGW,26.6833,-78.9667,civil,4328,West End,West End,,Bahamas
+MYIG,20.9833,-73.6667,civil,2134,Inagua,Great Inagua I,,Bahamas
 MYK,61.3357,-142.687,civil,823,May Creek,May Creek,Alaska,United States
-MYLD,23.25,-75.1333,civil,1219,Deadmans Cay,Long Island,,"Bahamas, The"
-MYLM,23.6483,-75.3342,civil,792,Cape Santa Maria,Long Island,,"Bahamas, The"
-MYLS,23.5833,-75.3,civil,1311,Stella Maris,Long Island,,"Bahamas, The"
-MYMM,22.3833,-73.0333,civil,2347,Mayaguana,Mayaguana I,,"Bahamas, The"
-MYNN,25.039,-77.4662,civil,5898,Nassau Intl,Nassau,,"Bahamas, The"
-MYSM,24.0633,-74.524,civil,2438,Cockburn Town,San Salvador I,,"Bahamas, The"
-MYX1,22.8333,-74.35,civil,692,Pittstown Point,Crooked Island,,"Bahamas, The"
-MYX4,25.3833,-77.8,civil,762,Big Whale Cay,Big Whale Cay,,"Bahamas, The"
-MYX5,25.7833,-77.8833,civil,732,Cistern Cay,Cistern Cay,,"Bahamas, The"
-MYX6,25.0407,-77.3514,civil,1935,Oakes Field,Nassau,,"Bahamas, The"
-MYX7,23.8832,-76.2573,civil,640,Rudder Cut Cay,Rudder Cut Cay,,"Bahamas, The"
-MYX8,23.8566,-76.235,civil,762,Darby Island,Darby Island,,"Bahamas, The"
-MYX9,23.0366,-74.9389,civil,914,Diamond Roads,Long Island,,"Bahamas, The"
-MYXA,24.2663,-76.5513,civil,396,Fowl Cay,Fowl Cay,,"Bahamas, The"
-MYXB,26.1179,-77.5624,civil,732,Castaway Cay,Castaway Cay,,"Bahamas, The"
-MYXC,23.5956,-75.3315,civil,549,Hog Cay,Hog Cay,,"Bahamas, The"
-MYXD,24.1493,-76.4664,civil,366,Leaf Cay,Leaf Cay,,"Bahamas, The"
-MYXE,23.7819,-76.0944,civil,914,Lee Stocking Island,Lee Stocking,,"Bahamas, The"
-MYXF,23.8669,-76.2161,civil,305,Little Darby Island,Little Darby Island,,"Bahamas, The"
-MYXG,24.5981,-76.7991,civil,914,Norman Cay,Norman Cay,,"Bahamas, The"
-MYXH,24.2163,-76.4839,civil,701,Sampson Cay,Sampson Cay,,"Bahamas, The"
-MYXI,26.649,-77.023,civil,899,Scotland Cay,Scotland Cay,,"Bahamas, The"
-MYXY,22.1833,-75.7333,civil,762,Duncan Town,Ragged Island,,"Bahamas, The"
-MYXZ,26.6333,-77.9333,civil,762,Deep Water Cay,Deep Water Cay,,"Bahamas, The"
+MYLD,23.25,-75.1333,civil,1219,Deadmans Cay,Long Island,,Bahamas
+MYLM,23.6483,-75.3342,civil,792,Cape Santa Maria,Long Island,,Bahamas
+MYLS,23.5833,-75.3,civil,1311,Stella Maris,Long Island,,Bahamas
+MYMM,22.3833,-73.0333,civil,2347,Mayaguana,Mayaguana I,,Bahamas
+MYNN,25.039,-77.4662,civil,5898,Nassau Intl,Nassau,,Bahamas
+MYSM,24.0633,-74.524,civil,2438,Cockburn Town,San Salvador I,,Bahamas
+MYX1,22.8333,-74.35,civil,692,Pittstown Point,Crooked Island,,Bahamas
+MYX4,25.3833,-77.8,civil,762,Big Whale Cay,Big Whale Cay,,Bahamas
+MYX5,25.7833,-77.8833,civil,732,Cistern Cay,Cistern Cay,,Bahamas
+MYX6,25.0407,-77.3514,civil,1935,Oakes Field,Nassau,,Bahamas
+MYX7,23.8832,-76.2573,civil,640,Rudder Cut Cay,Rudder Cut Cay,,Bahamas
+MYX8,23.8566,-76.235,civil,762,Darby Island,Darby Island,,Bahamas
+MYX9,23.0366,-74.9389,civil,914,Diamond Roads,Long Island,,Bahamas
+MYXA,24.2663,-76.5513,civil,396,Fowl Cay,Fowl Cay,,Bahamas
+MYXB,26.1179,-77.5624,civil,732,Castaway Cay,Castaway Cay,,Bahamas
+MYXC,23.5956,-75.3315,civil,549,Hog Cay,Hog Cay,,Bahamas
+MYXD,24.1493,-76.4664,civil,366,Leaf Cay,Leaf Cay,,Bahamas
+MYXE,23.7819,-76.0944,civil,914,Lee Stocking Island,Lee Stocking,,Bahamas
+MYXF,23.8669,-76.2161,civil,305,Little Darby Island,Little Darby Island,,Bahamas
+MYXG,24.5981,-76.7991,civil,914,Norman Cay,Norman Cay,,Bahamas
+MYXH,24.2163,-76.4839,civil,701,Sampson Cay,Sampson Cay,,Bahamas
+MYXI,26.649,-77.023,civil,899,Scotland Cay,Scotland Cay,,Bahamas
+MYXY,22.1833,-75.7333,civil,762,Duncan Town,Ragged Island,,Bahamas
+MYXZ,26.6333,-77.9333,civil,762,Deep Water Cay,Deep Water Cay,,Bahamas
 MYY,-7.21648,146.02,civil,1090,Menyamya,Menyamya,,Papua New Guinea
-MYZ1,23.4,-75.4833,civil,853,Hog Cay Exuma,Williams town,,"Bahamas, The"
-MYZ2,24.7833,-76.3,civil,610,Cape Eleuthera,Cape Eleuthera,,"Bahamas, The"
-MYZ3,25.4333,-77.75,civil,610,Little Whale Cay,Berry Islands,,"Bahamas, The"
+MYZ1,23.4,-75.4833,civil,853,Hog Cay Exuma,Williams town,,Bahamas
+MYZ2,24.7833,-76.3,civil,610,Cape Eleuthera,Cape Eleuthera,,Bahamas
+MYZ3,25.4333,-77.75,civil,610,Little Whale Cay,Berry Islands,,Bahamas
 MZ0A,17.9161,-87.9661,civil,1067,San Pedro,San Pedro,,Belize
 MZBZ,17.5391,-88.3082,civil,2162,Philip S W Goldson Intl,Belize City,,Belize
 N00,42.2723,-74.394,civil,1219,Maben,Lexington & Prattsville,New York,United States
@@ -17375,12 +17375,12 @@ NE89,42.5433,-97.9687,civil,610,Herberts Farm,Winnetoon,Nebraska,United States
 NE92,40.0494,-96.6661,civil,805,Thomsen,Wymore,Nebraska,United States
 NE99,41.575,-101.818,civil,792,Hawkins Ranch,Arthur,Nebraska,United States
 NFD,30.5077,-87.6455,civil,2606,Summerdale NOLF,Summerdale,Alabama,United States
-NFFN,-17.7564,177.444,civil,5347,Nadi Intl,Nadi,,Fiji Islands
+NFFN,-17.7564,177.444,civil,5347,Nadi Intl,Nadi,,Fiji
 NFJ,30.5002,-86.95,civil,2438,Choctaw NOLF,Milton,Florida,United States
-NFNA,-18.0447,178.563,civil,1870,Nausori Intl,Nausori,,Fiji Islands
-NFNL,-16.4678,179.34,civil,1070,Labasa,Labasa,,Fiji Islands
-NFNM,-16.6895,-179.882,civil,1000,Matei,Matei,,Fiji Islands
-NFNR,-12.4828,177.071,civil,1494,Rotuma,Rotuma,,Fiji Islands
+NFNA,-18.0447,178.563,civil,1870,Nausori Intl,Nausori,,Fiji
+NFNL,-16.4678,179.34,civil,1070,Labasa,Labasa,,Fiji
+NFNM,-16.6895,-179.882,civil,1000,Matei,Matei,,Fiji
+NFNR,-12.4828,177.071,civil,1494,Rotuma,Rotuma,,Fiji
 NFTF,-21.241,-175.14,civil,4193,Fua'amotu Intl,Nuku'alofa,,Tonga
 NFTL,-19.778,-174.341,civil,1200,Ha'apai-Lifuka,Ha'apai-Lifuka Island,,Tonga
 NFTP,-15.9767,-173.755,civil,729,Niuatoputapu,Niuatoputapu,,Tonga
@@ -19178,82 +19178,82 @@ RJTT,35.5533,139.781,civil,8507,Tokyo (Haneda) Intl,Tokyo,,Japan
 RJTU,36.5144,139.871,civil,1705,Utsunomiya Aero,Utsunomiya,,Japan
 RJTX,35.2914,139.676,water,999,Yokosuka Heliport,Yokosuka,,Japan
 RJTY,35.7532,139.347,military,3355,Yokota AB,Tokyo,,Japan
-RK0A,38.0875,127.987,civil,1097,R 404,R 404,,Korea
-RK0B,37.1619,128.22,civil,1094,R 605,R 605,,Korea
-RK0C,38.0264,127.366,civil,732,R 231,R 231,,Korea
-RK0D,38.1534,127.312,civil,1158,R 237,R 237,,Korea
-RK0E,38.0731,127.523,civil,386,R 312,R 312,,Korea
-RK0F,38.1398,128.009,civil,548,R 406,R 406,,Korea
-RK0G,38.0792,127.272,civil,701,R 233,R 233,,Korea
-RK0H,38.1375,127.742,civil,579,R 314,R 314,,Korea
-RK0I,38.3826,128.458,civil,697,R 413,R 413,,Korea
-RK0J,36.1802,127.833,civil,390,R 522,R 522,,Korea
-RK0K,37.7153,126.559,civil,390,R 107,R 107,,Korea
-RK0L,37.9569,126.92,civil,372,R 129,R 129,,Korea
-RK0M,37.8955,126.972,civil,518,R 218,R 218,,Korea
-RK0N,37.9094,127.008,civil,518,R 219,R 219,,Korea
-RK0O,37.6437,127.149,civil,503,R 203,R 203,,Korea
-RK0P,37.5015,127.63,civil,499,R 301,R 301,,Korea
-RK0Q,37.9295,127.757,civil,570,R 307,R 307,,Korea
-RK0R,37.9558,128.314,civil,823,R 420,R 420,,Korea
-RK0S,37.6503,128.57,civil,400,R 417,R 417,,Korea
-RK0T,38.0183,126.975,civil,250,R 225,R 225,,Korea
-RK0U,38.1766,127.103,civil,381,R 238,R 238,,Korea
-RK0V,38.0242,127.107,civil,457,R 227,R 227,,Korea
-RK0W,38.0298,127.141,civil,579,R 228,R 228,,Korea
-RK0X,38.1992,127.222,civil,600,R 239,R 239,,Korea
-RK0Y,38.2489,127.377,civil,527,R 240,R 240,,Korea
-RK0Z,38.2158,127.654,civil,568,R 317,R 317,,Korea
-RK1A,38.0519,127.798,civil,430,R 311,R 311,,Korea
-RK1B,38.1055,128.2,civil,354,R 414,R 414,,Korea
-RK1C,38.2417,128.208,civil,732,R 412,R 412,,Korea
-RK1D,37.7631,126.792,civil,500,R 110,R 110,,Korea
-RK1E,37.7001,127.9,civil,804,R 419,R 419,,Korea
-RK1F,36.756,126.33,civil,407,R 530,R 530,,Korea
-RK1G,36.5838,126.66,civil,467,R 526,R 526,,Korea
-RK1H,37.2868,127.227,civil,816,R 501,R 501,,Korea
-RK1I,37.4749,126.747,civil,448,R 103,R 103,,Korea
-RK1J,37.815,127.35,civil,671,R 213,Pocheon,,Korea
-RK1K,35.3054,126.496,civil,532,R 712,R 712,,Korea
-RK1L,38.1195,128.04,civil,640,R 405,R 405,,Korea
-RK1M,35.345,127.02,civil,366,R 710,R 710,,Korea
-RKGA,37.2,127.472,civil,2033,R-510,Galmi,,Korea
-RKJJ,35.1258,126.81,civil,5676,Gwangju Aero,Gwangju,,Korea
-RKJK,35.9039,126.616,military,4884,Gunsan AB,Gunsan,,Korea
-RKJM,34.7589,126.381,civil,1589,Mokpo,Mokpo,,Korea
-RKJU,35.8783,127.117,civil,1501,Jeonju,Jeonju,,Korea
-RKJY,34.84,127.616,civil,1554,Yeosu,Yeosu,,Korea
-RKNC,37.885,127.715,civil,1236,A-306,Chuncheon,,Korea
-RKND,38.1476,128.6,civil,1602,Sokcho Aero,Sokcho,,Korea
-RKNN,37.7537,128.945,civil,2744,Gangneung Aero,Gangneung,,Korea
-RKNW,37.4381,127.96,civil,2746,Wonju,Wonju,,Korea
-RKNY,38.0614,128.669,civil,2500,Yangyang Intl,Yangyang,,Korea
-RKPC,33.5122,126.493,civil,4907,Jeju Intl,Jeju,,Korea
-RKPD,33.3983,126.713,civil,3812,Jeongseok,Jeju,,Korea
-RKPE,35.1433,128.695,civil,1097,R-813,Jinhae,,Korea
-RKPK,35.1795,128.937,civil,5958,Gimhae Intl,Busan,,Korea
-RKPP,35.1717,129.128,civil,1987,Busan Aero,Busan,,Korea
-RKPS,35.0914,128.076,civil,5477,Sacheon,Sacheon,,Korea
-RKPU,35.5933,129.352,civil,2003,Ulsan,Ulsan,,Korea
-RKRO,37.8633,127.182,civil,1109,R-217 Aero,Pocheon,,Korea
-RKSD,37.8317,126.99,civil,1067,R-222,Ganam-Ri,,Korea
-RKSG,36.96,127.033,civil,2337,A-511 AAF,Pyeongtaek,,Korea
-RKSI,37.4625,126.439,civil,7503,Incheon Intl,Seoul/Incheon,,Korea
-RKSK,37.6,126.867,civil,1128,Susaek Aero,Susaek,,Korea
-RKSM,37.4456,127.113,civil,5707,Seoul / Domestic,Seoul,,Korea
-RKSO,37.09,127.03,military,2740,Osan AB,Osan,,Korea
-RKSS,37.5569,126.798,civil,6801,Gimpo,Seoul,,Korea
-RKSW,37.24,127.007,civil,5486,Suwon,Suwon,,Korea
-RKTE,36.5682,127.5,civil,1219,Seongmu,Seongmu,,Korea
-RKTH,35.9879,129.42,civil,2130,Pohang Aero,Pohang,,Korea
-RKTI,37.025,127.885,civil,5606,Cheongwon Aero,Cheongwon,,Korea
-RKTN,35.8939,128.659,civil,5498,Daegu Aero,Daegu,,Korea
-RKTO,36.1111,127.104,civil,360,R 500,Jeonju,,Korea
-RKTP,36.7017,126.492,civil,4630,Seosan,Seosan,,Korea
-RKTU,36.7178,127.496,civil,5485,Cheongju Intl,Cheongju,,Korea
-RKTY,36.6317,128.355,civil,2740,Yecheon Aero,Yecheon,,Korea
-RKUC,36.5711,127.296,civil,945,R 505,R 505,,Korea
-RKUL,36.2617,127.117,civil,1200,R 536,Jeonju,,Korea
+RK0A,38.0875,127.987,civil,1097,R 404,R 404,,South Korea
+RK0B,37.1619,128.22,civil,1094,R 605,R 605,,South Korea
+RK0C,38.0264,127.366,civil,732,R 231,R 231,,South Korea
+RK0D,38.1534,127.312,civil,1158,R 237,R 237,,South Korea
+RK0E,38.0731,127.523,civil,386,R 312,R 312,,South Korea
+RK0F,38.1398,128.009,civil,548,R 406,R 406,,South Korea
+RK0G,38.0792,127.272,civil,701,R 233,R 233,,South Korea
+RK0H,38.1375,127.742,civil,579,R 314,R 314,,South Korea
+RK0I,38.3826,128.458,civil,697,R 413,R 413,,South Korea
+RK0J,36.1802,127.833,civil,390,R 522,R 522,,South Korea
+RK0K,37.7153,126.559,civil,390,R 107,R 107,,South Korea
+RK0L,37.9569,126.92,civil,372,R 129,R 129,,South Korea
+RK0M,37.8955,126.972,civil,518,R 218,R 218,,South Korea
+RK0N,37.9094,127.008,civil,518,R 219,R 219,,South Korea
+RK0O,37.6437,127.149,civil,503,R 203,R 203,,South Korea
+RK0P,37.5015,127.63,civil,499,R 301,R 301,,South Korea
+RK0Q,37.9295,127.757,civil,570,R 307,R 307,,South Korea
+RK0R,37.9558,128.314,civil,823,R 420,R 420,,South Korea
+RK0S,37.6503,128.57,civil,400,R 417,R 417,,South Korea
+RK0T,38.0183,126.975,civil,250,R 225,R 225,,South Korea
+RK0U,38.1766,127.103,civil,381,R 238,R 238,,South Korea
+RK0V,38.0242,127.107,civil,457,R 227,R 227,,South Korea
+RK0W,38.0298,127.141,civil,579,R 228,R 228,,South Korea
+RK0X,38.1992,127.222,civil,600,R 239,R 239,,South Korea
+RK0Y,38.2489,127.377,civil,527,R 240,R 240,,South Korea
+RK0Z,38.2158,127.654,civil,568,R 317,R 317,,South Korea
+RK1A,38.0519,127.798,civil,430,R 311,R 311,,South Korea
+RK1B,38.1055,128.2,civil,354,R 414,R 414,,South Korea
+RK1C,38.2417,128.208,civil,732,R 412,R 412,,South Korea
+RK1D,37.7631,126.792,civil,500,R 110,R 110,,South Korea
+RK1E,37.7001,127.9,civil,804,R 419,R 419,,South Korea
+RK1F,36.756,126.33,civil,407,R 530,R 530,,South Korea
+RK1G,36.5838,126.66,civil,467,R 526,R 526,,South Korea
+RK1H,37.2868,127.227,civil,816,R 501,R 501,,South Korea
+RK1I,37.4749,126.747,civil,448,R 103,R 103,,South Korea
+RK1J,37.815,127.35,civil,671,R 213,Pocheon,,South Korea
+RK1K,35.3054,126.496,civil,532,R 712,R 712,,South Korea
+RK1L,38.1195,128.04,civil,640,R 405,R 405,,South Korea
+RK1M,35.345,127.02,civil,366,R 710,R 710,,South Korea
+RKGA,37.2,127.472,civil,2033,R-510,Galmi,,South Korea
+RKJJ,35.1258,126.81,civil,5676,Gwangju Aero,Gwangju,,South Korea
+RKJK,35.9039,126.616,military,4884,Gunsan AB,Gunsan,,South Korea
+RKJM,34.7589,126.381,civil,1589,Mokpo,Mokpo,,South Korea
+RKJU,35.8783,127.117,civil,1501,Jeonju,Jeonju,,South Korea
+RKJY,34.84,127.616,civil,1554,Yeosu,Yeosu,,South Korea
+RKNC,37.885,127.715,civil,1236,A-306,Chuncheon,,South Korea
+RKND,38.1476,128.6,civil,1602,Sokcho Aero,Sokcho,,South Korea
+RKNN,37.7537,128.945,civil,2744,Gangneung Aero,Gangneung,,South Korea
+RKNW,37.4381,127.96,civil,2746,Wonju,Wonju,,South Korea
+RKNY,38.0614,128.669,civil,2500,Yangyang Intl,Yangyang,,South Korea
+RKPC,33.5122,126.493,civil,4907,Jeju Intl,Jeju,,South Korea
+RKPD,33.3983,126.713,civil,3812,Jeongseok,Jeju,,South Korea
+RKPE,35.1433,128.695,civil,1097,R-813,Jinhae,,South Korea
+RKPK,35.1795,128.937,civil,5958,Gimhae Intl,Busan,,South Korea
+RKPP,35.1717,129.128,civil,1987,Busan Aero,Busan,,South Korea
+RKPS,35.0914,128.076,civil,5477,Sacheon,Sacheon,,South Korea
+RKPU,35.5933,129.352,civil,2003,Ulsan,Ulsan,,South Korea
+RKRO,37.8633,127.182,civil,1109,R-217 Aero,Pocheon,,South Korea
+RKSD,37.8317,126.99,civil,1067,R-222,Ganam-Ri,,South Korea
+RKSG,36.96,127.033,civil,2337,A-511 AAF,Pyeongtaek,,South Korea
+RKSI,37.4625,126.439,civil,7503,Incheon Intl,Seoul/Incheon,,South Korea
+RKSK,37.6,126.867,civil,1128,Susaek Aero,Susaek,,South Korea
+RKSM,37.4456,127.113,civil,5707,Seoul / Domestic,Seoul,,South Korea
+RKSO,37.09,127.03,military,2740,Osan AB,Osan,,South Korea
+RKSS,37.5569,126.798,civil,6801,Gimpo,Seoul,,South Korea
+RKSW,37.24,127.007,civil,5486,Suwon,Suwon,,South Korea
+RKTE,36.5682,127.5,civil,1219,Seongmu,Seongmu,,South Korea
+RKTH,35.9879,129.42,civil,2130,Pohang Aero,Pohang,,South Korea
+RKTI,37.025,127.885,civil,5606,Cheongwon Aero,Cheongwon,,South Korea
+RKTN,35.8939,128.659,civil,5498,Daegu Aero,Daegu,,South Korea
+RKTO,36.1111,127.104,civil,360,R 500,Jeonju,,South Korea
+RKTP,36.7017,126.492,civil,4630,Seosan,Seosan,,South Korea
+RKTU,36.7178,127.496,civil,5485,Cheongju Intl,Cheongju,,South Korea
+RKTY,36.6317,128.355,civil,2740,Yecheon Aero,Yecheon,,South Korea
+RKUC,36.5711,127.296,civil,945,R 505,R 505,,South Korea
+RKUL,36.2617,127.117,civil,1200,R 536,Jeonju,,South Korea
 RMP,65.5079,-150.141,civil,1063,Rampart,Rampart,Alaska,United States
 ROAH,26.1958,127.646,civil,3009,Naha,Naha,,Japan
 RODE,26.7283,127.762,military,1524,Ie Shima Aux AB,Ie Shima I.,,Japan
@@ -20198,7 +20198,7 @@ SETN,0.978611,-79.6311,civil,2432,General Rivadeneira,Tachina,,Ecuador
 SETR,-0.119722,-76.3347,civil,1669,Tarapoa,Tarapoa,,Ecuador
 SETU,0.809444,-77.7081,civil,2522,El Rosal-Tcrnel Mantilla,Tulcan,,Ecuador
 SFA,-9.59497,148.639,civil,1080,Safia,Safia,,Papua New Guinea
-SFAL,-51.6857,-57.7776,civil,1257,Stanley,Stanley,,Falkland Islands (Islas Malvinas)
+SFAL,-51.6857,-57.7776,civil,1257,Stanley,Stanley,,Falkland Islands
 SG0A,-23.224,-55.9464,civil,1450,Estancia Pai Quara,Estancia Pai Quara,,Paraguay
 SGAS,-25.2397,-57.5189,civil,3363,Silvio Pettirossi Intl,Asuncion,,Paraguay
 SGAY,-27.3706,-56.8539,civil,1850,Juan De Ayolas,Juan De Ayolas,,Paraguay
@@ -21331,12 +21331,12 @@ TJVQ,18.1336,-65.4914,civil,1312,Antonio Rivera Rodriguez,Isla De Vieques,,Puert
 TK3,50.0683,-67.9533,civil,1341,Lac-Ste-Anne,Lac-Ste-Anne,Quebec,Canada
 TKE,57.7797,-135.218,water,3048,Tenakee,Tenakee Springs,Alaska,United States
 TKL,58.4897,-133.943,water,999,Taku Lodge,Taku Lodge,Alaska,United States
-TKPK,17.3111,-62.7186,civil,2319,Robert L Bradshaw Intl,Basseterre,,St. Kitts and Nevis
-TKPN,17.2118,-62.5911,civil,1220,Newcastle,Nevis Is.,,St. Kitts and Nevis
+TKPK,17.3111,-62.7186,civil,2319,Robert L Bradshaw Intl,Basseterre,,Saint Kitts and Nevis
+TKPN,17.2118,-62.5911,civil,1220,Newcastle,Nevis Is.,,Saint Kitts and Nevis
 TLF,-5.12928,141.637,civil,1314,Telefomin,Telefomin,,Papua New Guinea
 TLJ,62.8944,-155.977,civil,1158,Tatalina LRRS,Takotna,Alaska,United States
-TLPC,14.02,-60.9931,civil,1908,George F.L. Charles,Castries,,St. Lucia
-TLPL,13.7333,-60.9528,civil,2739,Hewanorra Intl,Vieuxfort,,St. Lucia
+TLPC,14.02,-60.9931,civil,1908,George F.L. Charles,Castries,,Saint Lucia
+TLPL,13.7333,-60.9528,civil,2739,Hewanorra Intl,Vieuxfort,,Saint Lucia
 TLT,61.0968,-160.969,civil,748,Tuluksak,Tuluksak,Alaska,United States
 TM0A,41.1244,61.4153,civil,1700,Pitnyak,Pitnyak,,Turkmenistan
 TM0B,40.0381,53.3286,civil,2012,Yangadzha,Yangadzha,,Turkmenistan
@@ -21477,14 +21477,14 @@ TT01,18.1244,145.769,civil,457,Pagan Airstrip,Shomu-Shon,,United States
 TT02,10.0167,139.8,civil,1006,Ulithi,Ulithi I,,Micronesia
 TTCP,11.1497,-60.8322,civil,2740,Crown Point,Scarborough,,Trinidad and Tobago
 TTPP,10.5953,-61.3372,civil,3191,Piarco Intl,Port Of Spain,,Trinidad and Tobago
-TUPG,18.7333,-64.3333,civil,762,Capt. Auguste George,Anegada,,"Virgin Islands, British"
-TUPJ,18.4449,-64.5428,civil,1117,Terrance B Lettsome Intl,Roadtown,,"Virgin Islands, British"
+TUPG,18.7333,-64.3333,civil,762,Capt. Auguste George,Anegada,,British Virgin Islands
+TUPJ,18.4449,-64.5428,civil,1117,Terrance B Lettsome Intl,Roadtown,,British Virgin Islands
 TUPW,18.4481,-64.4286,civil,945,Virgin Gorda,Spanish Town,,British Virgin Islands
-TVSB,12.9879,-61.2638,civil,1100,J.F. Mitchell,Bequia,,St. Vincent and the Grenadines
-TVSC,12.7014,-61.3438,civil,1106,Canouan,Canouan,,St. Vincent and the Grenadines
-TVSM,12.8829,-61.1815,civil,1036,Mustique,Mustique,,St. Vincent and the Grenadines
-TVSU,12.5996,-61.4141,civil,762,Union I. Intl,Union I.,,St. Vincent and the Grenadines
-TVSV,13.1444,-61.2108,civil,1431,E T Joshua,Kingstown,,St. Vincent and the Grenadines
+TVSB,12.9879,-61.2638,civil,1100,J.F. Mitchell,Bequia,,Saint Vincent and the Grenadines
+TVSC,12.7014,-61.3438,civil,1106,Canouan,Canouan,,Saint Vincent and the Grenadines
+TVSM,12.8829,-61.1815,civil,1036,Mustique,Mustique,,Saint Vincent and the Grenadines
+TVSU,12.5996,-61.4141,civil,762,Union I. Intl,Union I.,,Saint Vincent and the Grenadines
+TVSV,13.1444,-61.2108,civil,1431,E T Joshua,Kingstown,,Saint Vincent and the Grenadines
 TX00,32.4489,-99.62,civil,830,Abilene Executive Airpark,Abilene,Texas,United States
 TX01,33.3084,-101.91,civil,805,New Home,New Home,Texas,United States
 TX02,32.5265,-99.6129,civil,853,Portlock Airfield,Abilene,Texas,United States
@@ -22120,9 +22120,9 @@ VGSH,24.3988,91.9169,civil,656,Shamshernagar,Shamshernagar,,Bangladesh
 VGSY,24.9613,91.8716,civil,2589,Osmany Intl,Sylhet,,Bangladesh
 VGTJ,23.7784,90.3828,civil,656,Tejgaon,Dhaka,,Bangladesh
 VGZR,23.8433,90.3978,civil,3210,Zia Intl,Dhaka,,Bangladesh
-VHHH,22.3089,113.915,civil,7600,Hong Kong Intl,Hong Kong,,Hong Kong SAR
-VHHX,22.317,114.203,civil,3331,Hong Kong Intl (old),Hong Kong,,Hong Kong SAR
-VHSK,22.4366,114.08,civil,1882,Sek Kong,Sek Kong,,Hong Kong SAR
+VHHH,22.3089,113.915,civil,7600,Hong Kong Intl,Hong Kong,,Hong Kong
+VHHX,22.317,114.203,civil,3331,Hong Kong Intl (old),Hong Kong,,Hong Kong
+VHSK,22.4366,114.08,civil,1882,Sek Kong,Sek Kong,,Hong Kong
 VI0C,28.0763,76.205,civil,1048,Bhilwara,Bhilwara,,India
 VI0P,29.7146,77.037,civil,914,Karnal,Karnal,,India
 VI0S,29.3878,73.9039,civil,2740,Suratgarh New,Suratgarh New,,India
@@ -22200,7 +22200,7 @@ VLVT,17.9883,102.563,civil,3006,Wattay Intl,Vientiane,,Laos
 VLVV,18.9242,102.451,civil,1166,Vang Vieng,Vang Vieng,,Laos
 VLXG,19.454,103.154,civil,2400,Xieng Khouang North,Xieng Khouang,,Laos
 VLXK,19.45,103.158,civil,1500,Xieng Khouang,Xieng Khouang,,Laos
-VMMC,22.1494,113.591,civil,3367,Macau Intl,Macau,,Macao SAR
+VMMC,22.1494,113.591,civil,3367,Macau Intl,Macau,,Macao
 VNBG,29.5389,81.1853,civil,654,Bajhang,Bajhang,,Nepal
 VNBJ,27.1475,87.0508,civil,536,Bhojpur,Bhojpur,,Nepal
 VNBL,28.2128,83.6664,civil,614,Baglung,Baglung,,Nepal
@@ -23600,8 +23600,8 @@ Z17G,31.2508,36.2267,civil,3489,Al Qatranah Highway Strip,Al Ghadaf,,Jordan
 Z17I,31.7844,36.2233,civil,2864,Highway H Highway Strip,Highway H,,Jordan
 Z17K,31.5917,36.9336,civil,3636,Al Ghadaf Highway Strip,Al Al,,Jordan
 Z17N,-0.188333,35.9611,civil,1228,Barclays,Barclays,,Kenya
-Z18G,38.1217,127.687,civil,518,R 313,R 313,,Korea
-Z19B,38.2653,127.564,civil,671,R 321,R 321,,Korea
+Z18G,38.1217,127.687,civil,518,R 313,R 313,,South Korea
+Z19B,38.2653,127.564,civil,671,R 321,R 321,,South Korea
 Z19M,29.0404,47.7878,civil,3155,Al Abdaliyah Highway Strip,Al Abdaliyah,,Kuwait
 Z19N,16.6707,105.009,civil,2995,Seno,Seno,,Laos
 Z19O,34.2814,35.6803,civil,1722,Wujah Al Hajar,Beirut,,Lebanon
