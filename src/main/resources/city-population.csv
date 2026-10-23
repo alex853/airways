@@ -4671,7 +4671,7 @@ Eritrea,ER,Nefasit,8600,15.33,39.07
 Eritrea,ER,Addi kwala,6700,14.64,38.83
 Eritrea,ER,Sen'afe,5900,14.69,39.42
 Eritrea,ER,Teseney,3700,15.12,36.65
-Estonia,EE,Tallinn,396000,59.44,24.74
+Estonia,EE,Tallinn,600000,59.44,24.74
 Estonia,EE,Tartu,101200,58.38,26.71
 Estonia,EE,Narva,67300,59.38,28.19
 Estonia,EE,Kohtla-jarve,46400,59.4,27.25
@@ -8273,7 +8273,7 @@ Japan,JP,Toyama,325200,36.7,137.22
 Japan,JP,Akita,317900,39.71,140.11
 Japan,JP,Koshigaya,315300,35.89,139.79
 Japan,JP,Miyazaki,307900,31.91,131.42
-Japan,JP,Naha,303500,26.21,127.7
+Japan,JP,Naha,1000500,26.21,127.7
 Japan,JP,Aomori,298400,40.83,140.74
 Japan,JP,del Otsu,296800,35.01,135.87
 Japan,JP,del Akashi,296700,34.66,134.98
@@ -8392,7 +8392,7 @@ Japan,JP,Niihama,123800,33.96,133.27
 Japan,JP,del Mino,123500,34.83,135.47
 Japan,JP,Nobeoka,123400,32.58,131.68
 Japan,JP,Kisarazu,123200,35.38,139.93
-Japan,JP,Okinawa,123200,26.34,127.79
+Japan,JP,del Okinawa,123200,26.34,127.79
 Japan,JP,del Kawachinagano,123100,34.48,135.57
 Japan,JP,Ebina,120900,35.47,139.42
 Japan,JP,Fujinomiya,120900,35.22,138.61
@@ -8420,7 +8420,7 @@ Japan,JP,Iwatsuki,109700,35.96,139.7
 Japan,JP,Komatsu,108900,36.41,136.44
 Japan,JP,del Kasuga,108800,33.54,130.47
 Japan,JP,Iida,107600,35.52,137.83
-Japan,JP,Urasoe,107500,26.26,127.73
+Japan,JP,del Urasoe,107500,26.26,127.73
 Japan,JP,Fujimi,107300,35.87,139.54
 Japan,JP,Akishima,107000,35.7,139.36
 Japan,JP,Fukaya,105900,36.21,139.28
@@ -14185,7 +14185,7 @@ Slovakia,SK,Sahy,8100,48.08,18.93
 Slovakia,SK,Stupava,8100,48.29,17.03
 Slovakia,SK,Kral'ovsky chlmec,8000,48.88,21.93
 Slovakia,SK,Krupina,8000,48.35,19.06
-Slovenia,SI,Ljubljana,258700,46.06,14.51
+Slovenia,SI,Ljubljana,560700,46.06,14.51
 Slovenia,SI,Maribor,92600,46.55,15.64
 Slovenia,SI,Celje,37100,46.24,15.27
 Slovenia,SI,Kranj,35100,46.25,14.36
@@ -17647,3 +17647,4 @@ Zimbabwe,ZW,West nicholson,8100,-21.05,29.35
 Zimbabwe,ZW,Mvuma,7300,-19.29,30.52
 Zimbabwe,ZW,Beitbridge,5300,-22.21,29.99
 Sint Maarten,SX,Sint Maarten,75000,18.04,-63.07
+United States,US,Key West,80000,24.56,-81.78
