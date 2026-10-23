@@ -32,6 +32,7 @@ public class World25_013_rename_cities {
 
         RenameAirports.renameAirports(Arrays.asList(
                 new String[]{"LIRN", "Capodichino"},
+                new String[]{"YBCG", "Gold Coast Coolangatta"},
                 new String[]{"LJLJ", "Ljubljana Joze Pucnik"},
                 new String[]{"EETN", "Tallinn Lennart Meri"},
                 new String[]{"LFKJ", "Ajaccio Napoleon Bonaparte"},

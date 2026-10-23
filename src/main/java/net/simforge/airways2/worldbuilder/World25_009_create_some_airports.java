@@ -57,7 +57,7 @@ public class World25_009_create_some_airports {
                 "WADD",
                 "WMKK",
                 "WSSS",
-                "YMEN", "YPAD",
+                "YBCG", "YMEN", "YPAD",
                 "ZGGG", "ZHCC",
                 "ZSAM", "ZSPD", "ZSSS"
         });

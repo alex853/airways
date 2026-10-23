@@ -19,6 +19,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AU", "city-name:Brisbane"},
                 new String[]{"country-code:AU", "city-name:Perth"},
                 new String[]{"country-code:AU", "city-name:Adelaide"},
+                new String[]{"country-code:AU", "city-name:Gold Coast"},
 
                 new String[]{"country-code:BE", "city-name:Brussels"},
 
