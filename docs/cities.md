@@ -662,3 +662,6 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   английскими официальными (подробности и список в [city-airport-playbook.md](city-airport-playbook.md), раздел 10). В мире три страны с неправильными именами (`Czech republic`,
   `Dominican republic`, `Rumania`) получат правильные через `RenameCountries` в `World25_013` при ближайшем деплое с включённым `013` (сейчас `013` закомментирован, как обычно).
   Флаги на сайте: `simforge-web/js/flags.js` дополнен новыми именами (старые оставлены: сервис аэропортов отдаёт свои имена).
+
+- **Партия 2026-10-24 (NZWN, Океания по VATSIM-бэклогу):**
+  - **Wellington (NZ, NZWN):** CSV 167 700 → 440 700 (агломерация с Lower Hutt, Upper Hutt и Porirua; хвост сохранён). `del Lower hutt` (96 200 в CSV, 9 nm; реально около 112 тыс.) по решению пользователя, Porirua (48 200) не трогаем. Страна New Zealand уже в мире (там был Auckland). Аэропорт `Wellington Intl` (имя из `icaodata`), NZWN size 2061, через `009`; NZPP Paraparaumu, NZOM, NZMS мелкие, NZWB Woodbourne (military) не берём. Терминал бизнес-авиации и attraction не ставим (решение пользователя). `create-links?icao=NZWN` по умолчанию (других городов мира рядом нет). Импорты `009`, `012` в `Application.main` раскомментированы на деплой; после деплоя и `create-links` закомментировать обратно и закоммитить без пуша.

@@ -206,6 +206,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:NL", "city-name:The Hague"},
 
                 new String[]{"country-code:NZ", "city-name:Auckland"},
+                new String[]{"country-code:NZ", "city-name:Wellington"},
 
                 new String[]{"country-code:PH", "city-name:Manila"},
                 new String[]{"country-code:PH", "city-name:Cebu"},

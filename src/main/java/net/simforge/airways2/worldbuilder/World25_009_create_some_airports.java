@@ -42,6 +42,7 @@ public class World25_009_create_some_airports {
                 "LYBE",
                 "MDPC",
                 "MMUN",
+                "NZWN",
                 "OBBI",
                 "OMDB", "OMAA", "OMAD", "OMSJ",
                 "OOMS",
