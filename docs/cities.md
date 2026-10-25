@@ -226,7 +226,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 - **`/geo/*`:** готовый JSON кэшируется и пересобирается только при изменении хранилищ
   ([change-tracking-cache.md](change-tracking-cache.md)); после появления `countryId` в `Airports` убрать пересчёт страны.
 - **Бэклог VATSIM:** остаются «тонкие» EETN Tallinn, LIEO Olbia (Сардиния), далее Европа/США по списку; особые KPNS, KJAC.
-- **Особые аэропорты без строки в `icaodata.csv` (отложены пользователем 2026-10-25, один список):** `VOBL` (Kempegowda Intl, Bengaluru, Индия) и `YSWS` (по номеру новый Western Sydney Intl, Австралия, около 1600 упоминаний). Нужно проверить refdata и добавить строку руками (координаты, `civil`, `size`), см. `city-airport-playbook.md`, раздел 10. Пока не делаем.
+- **Особые аэропорты без строки в `icaodata.csv` (отложены пользователем 2026-10-25, один список):** `VOBL` (Kempegowda Intl, Bengaluru, Индия), `YSWS` (по номеру новый Western Sydney Intl, Австралия, около 1600 упоминаний) и `UGTB` (Tbilisi, Грузия, 1647 упоминаний 2026-10-23). Нужно проверить refdata и добавить строку руками (координаты, `civil`, `size`), см. `city-airport-playbook.md`, раздел 10. Пока не делаем.
 
 ## Выполнено
 
