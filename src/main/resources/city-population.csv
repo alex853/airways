@@ -116,8 +116,8 @@ Afghanistan,AF,Tas gozar,3300,37.13,67.19
 Afghanistan,AF,Dahaneh-ye #awri,3200,35.9,68.48
 Afghanistan,AF,Darzi ab,2300,35.98,65.4
 Afghanistan,AF,Jurm,2100,36.85,70.82
-Albania,AL,Tirane,352900,41.33,19.82
-Albania,AL,Durres,113800,41.33,19.45
+Albania,AL,Tirana,1000900,41.33,19.82
+Albania,AL,del Durres,113800,41.33,19.45
 Albania,AL,Elbasan,96800,41.12,20.09
 Albania,AL,Shkoder,85800,42.07,19.51
 Albania,AL,Vlore,84800,40.48,19.49
@@ -7741,7 +7741,7 @@ Iraq,IQ,Al-h#amdaniyah,17600,36.27,43.38
 Iraq,IQ,Ar-rifa#i,17200,31.73,46.11
 Ireland,IE,Dublin,2100900,53.33,-6.25
 Ireland,IE,Cork,195400,51.9,-8.47
-Ireland,IE,Limerick,85700,52.67,-8.63
+Ireland,IE,Limerick,300700,52.67,-8.63
 Ireland,IE,Galway,68600,53.28,-9.06
 Ireland,IE,Waterford,48300,52.26,-7.13
 Ireland,IE,Dundalk,34400,54.02,-6.42
@@ -8185,7 +8185,7 @@ Italy,IT,Comiso,29200,36.95,14.6
 Jamaica,JM,Kingston,588700,17.99,-76.8
 Jamaica,JM,Spanish town,133600,18.0,-76.95
 Jamaica,JM,Portmore,99000,17.95,-76.88
-Jamaica,JM,Montego bay,86600,18.47,-77.92
+Jamaica,JM,Montego Bay,186600,18.47,-77.92
 Jamaica,JM,May pen,48500,17.97,-77.24
 Jamaica,JM,Mandeville,42200,18.05,-77.48
 Jamaica,JM,Half way tree,19000,18.0,-76.79
@@ -9125,7 +9125,7 @@ Liechtenstein,LI,Ruggell,1900,47.24,9.52
 Liechtenstein,LI,Gamprin,1300,47.22,9.5
 Liechtenstein,LI,Schellenberg,998,47.23,9.54
 Liechtenstein,LI,Planken,375,47.18,9.53
-Lithuania,LT,Vilnius,542700,54.7,25.27
+Lithuania,LT,Vilnius,700700,54.7,25.27
 Lithuania,LT,Kaunas,386400,54.9,23.91
 Lithuania,LT,Klaipeda,193900,55.71,21.13
 Lithuania,LT,Siauliai,130500,55.93,23.32
@@ -10178,9 +10178,9 @@ Mauritania,MR,Timbedra,10300,16.26,-8.15
 Mauritania,MR,#ayun-al-#atrus,8000,16.66,-9.62
 Mauritania,MR,Kubanni,6500,15.78,-9.46
 Mauritania,MR,Fdayrik,4300,22.69,-12.71
-Mauritius,MU,Port louis,143600,-20.17,57.51
-Mauritius,MU,Beau bassin-rose hill,110700,-20.23,57.46
-Mauritius,MU,Vascoas-phoenix,104400,-20.3,57.48
+Mauritius,MU,Port Louis,1270600,-20.17,57.51
+Mauritius,MU,del Beau bassin-rose hill,110700,-20.23,57.46
+Mauritius,MU,del Vascoas-phoenix,104400,-20.3,57.48
 Mauritius,MU,Curepipe,79900,-20.31,57.51
 Mauritius,MU,Quatre bornes,76500,-20.26,57.47
 Mauritius,MU,Triolet,22100,-20.05,57.53
@@ -14568,7 +14568,7 @@ South Korea,KR,Pohang,358000,36.03,129.37
 South Korea,KR,del Kunpo,315900,37.35,126.95
 South Korea,KR,Chinju,280000,35.19,128.08
 South Korea,KR,del Py#ngtaek,275700,36.98,127.1
-South Korea,KR,Cheju,264200,33.51,126.52
+South Korea,KR,Jeju,670200,33.51,126.52
 South Korea,KR,del Ch#nan,233200,36.81,127.16
 South Korea,KR,Iksan,232700,35.94,126.95
 South Korea,KR,Kumi,223400,36.13,128.35
@@ -14769,6 +14769,7 @@ Spain,ES,Merida,49900,38.92,-6.34
 Spain,ES,Siero,48900,43.4,-5.66
 Spain,ES,Portugalete,48800,43.32,-3.02
 Spain,ES,Arrecife,48600,28.96,-13.55
+Spain,ES,Lanzarote,156600,28.96,-13.55
 Spain,ES,Cuenca,48000,40.08,-2.14
 Spain,ES,Huesca,47900,42.14,-0.41
 Spain,ES,Paterna,46900,39.5,-0.42
@@ -16800,7 +16801,7 @@ United States,US,New York,19000700,40.67,-73.94
 United States,US,Los Angeles,12847400,34.11,-118.41
 United States,US,Chicago,9500400,41.84,-87.68
 United States,US,Houston,7300100,29.77,-95.39
-United States,US,Philadelphia,1472500,40.01,-75.13
+United States,US,Philadelphia,6200500,40.01,-75.13
 United States,US,Phoenix,5000900,33.54,-112.07
 United States,US,San Diego,3300000,32.81,-117.14
 United States,US,San Antonio,2600900,29.46,-98.51
