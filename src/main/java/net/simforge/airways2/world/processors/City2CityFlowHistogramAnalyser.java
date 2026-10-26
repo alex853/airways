@@ -20,6 +20,8 @@ public class City2CityFlowHistogramAnalyser {
         int worldTime = world.getWorldTime();
 
         int[] counts = new int[100];
+        // overdue flows: [0] count, [1] the oldest heartbeat time
+        final int[] overdue = new int[2];
 
         world.city2cityFlows().all()
                 .filter(City2CityFlows.Flow::isActive)
@@ -30,6 +32,11 @@ public class City2CityFlowHistogramAnalyser {
                     }
 
                     if (heartbeatTime < worldTime) {
+                        // the flows which are waiting for the processor already
+                        overdue[0]++;
+                        if (overdue[1] == 0 || heartbeatTime < overdue[1]) {
+                            overdue[1] = heartbeatTime;
+                        }
                         return;
                     }
 
@@ -44,5 +51,7 @@ public class City2CityFlowHistogramAnalyser {
         for (int row = 0; row < counts.length / 10; row++) {
             log.warn("c2c heartbeat histogram - row {} - data: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}", row, counts[row * 10], counts[row * 10 + 1], counts[row * 10 + 2], counts[row * 10 + 3], counts[row * 10 + 4], counts[row * 10 + 5], counts[row * 10 + 6], counts[row * 10 + 7], counts[row * 10 + 8], counts[row * 10 + 9]);
         }
+
+        log.warn("c2c heartbeat histogram - overdue (h/b < world time): {}, the oldest h/b {}", overdue[0], overdue[1] != 0 ? Time.toLdt(overdue[1]) : "-");
     }
 }
