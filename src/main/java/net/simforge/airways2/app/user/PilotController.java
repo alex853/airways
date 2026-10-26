@@ -240,7 +240,7 @@ public class PilotController {
                     "Very expensive, only to an airport, from " + PilotTravel.MACH3_MIN_DISTANCE_NM + " miles", true));
         }
         methods.add(new TravelMethodDto(PilotTravel.Method.Ground.name(), PilotTravel.Method.Ground.title(),
-                "To anywhere, " + PilotTravel.GROUND_KNOTS + " miles an hour", true));
+                "To anywhere, " + PilotTravel.GROUND_KNOTS + " miles an hour, not more than " + (PilotTravel.GROUND_MAX_MINUTES / 60) + " hours", true));
         if (person.isWarpDrive()) {
             methods.add(new TravelMethodDto(PilotTravel.Method.WarpDrive.name(), PilotTravel.Method.WarpDrive.title(), "To anywhere, at once", true));
         }

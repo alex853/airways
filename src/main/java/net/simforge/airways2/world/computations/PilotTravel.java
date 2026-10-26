@@ -41,6 +41,8 @@ public final class PilotTravel {
     public static final int GROUND_PRICE_PER_MILE = 2;
     // even the shortest trip by ground (an airport and its city) takes a quarter of an hour and costs something
     public static final int GROUND_MIN_MINUTES = 15;
+    // a trip by ground is not more than 48 hours on the road (48 hours and a minute is too much), about 1440 miles at 30 miles an hour
+    public static final int GROUND_MAX_MINUTES = 48 * 60;
     public static final long GROUND_MIN_PRICE = 10;
 
     /**
@@ -56,7 +58,10 @@ public final class PilotTravel {
         return switch (method) {
             case Mach3 -> distanceNm < MACH3_MIN_DISTANCE_NM ? "Too close, from " + MACH3_MIN_DISTANCE_NM + " miles" : null;
             case Airline -> distanceNm < AIRLINE_MIN_DISTANCE_NM ? "Too close, from " + AIRLINE_MIN_DISTANCE_NM + " miles" : "Coming soon";
-            case WarpDrive, Ground -> null;
+            case Ground -> quote(method, distanceNm).durationMinutes() > GROUND_MAX_MINUTES
+                    ? "Too far for a trip by ground: not more than " + (GROUND_MAX_MINUTES / 60) + " hours on the road, about " + (int) (GROUND_KNOTS * GROUND_MAX_MINUTES / 60.0) + " miles"
+                    : null;
+            case WarpDrive -> null;
         };
     }
 

@@ -36,6 +36,8 @@ class PersonTravelTest {
     private Airports.Airport oakland;
     private Airports.Airport london;
     private Airports.Airport sanFrancisco;
+    // about 1300 miles from Oakland: the longest trip by ground is 48 hours, about 1440 miles
+    private Airports.Airport dallas;
     private Cities.City oaklandCity;
     private Cities.City fresno;
     private Persons.Person person;
@@ -48,6 +50,7 @@ class PersonTravelTest {
         oakland = world.airports().create(37.72, -122.22, "OAK", "KOAK", "Oakland");
         london = world.airports().create(51.47, -0.45, "LHR", "EGLL", "Heathrow");
         sanFrancisco = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        dallas = world.airports().create(32.90, -97.04, "DFW", "KDFW", "Dallas Fort Worth");
         final Countries.Country country = world.countries().create("US", "United States");
         oaklandCity = world.cities().create(country.getId(), "Oakland", 37.80, -122.27, 400_000);
         fresno = world.cities().create(country.getId(), "Fresno", 36.74, -119.78, 500_000);
@@ -223,14 +226,41 @@ class PersonTravelTest {
 
     @Test
     void theGroundTakesDaysFromAirportToAirportAndNothingHappensBeforeThat() {
-        world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london));
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(dallas), distance(oakland, dallas));
         final int minutes = (person.getHeartbeatTime() - world.getWorldTime()) / Time.ONE_MINUTE;
 
-        // about 4600 miles at 30 miles an hour: more than six days
-        assertTrue(minutes > 6 * 24 * 60, "minutes " + minutes);
+        // about 1300 miles at 30 miles an hour: more than 40 hours, not more than 48
+        assertTrue(minutes > 40 * 60 && minutes <= 48 * 60, "minutes " + minutes);
         world.setWorldTime(world.getWorldTime() + 24 * 60 * Time.ONE_MINUTE);
         PersonProcessor.process(world);
         assertEquals(Persons.State.Travelling, person.getState());
+    }
+
+    @Test
+    void aTripByGroundOfMoreThanFortyEightHoursIsRefused() {
+        final IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london)));
+
+        assertTrue(e.getMessage().startsWith("Too far for a trip by ground"), e.getMessage());
+        assertTrue(e.getMessage().contains("48 hours"));
+        assertEquals(Persons.State.Idle, person.getState());
+        assertEquals(1_000_000, pilotAccount.getBalance());
+    }
+
+    @Test
+    void fortyEightHoursIsAllowedAndAMinuteMoreIsNot() {
+        // 1440 miles at 30 miles an hour are exactly 48 hours
+        assertEquals(48 * 60, PilotTravel.quote(PilotTravel.Method.Ground, 1440).durationMinutes());
+        assertNull(PilotTravel.problem(PilotTravel.Method.Ground, 1440));
+        // a mile more is 48 hours and two minutes
+        assertEquals(48 * 60 + 2, PilotTravel.quote(PilotTravel.Method.Ground, 1441).durationMinutes());
+        assertTrue(PilotTravel.problem(PilotTravel.Method.Ground, 1441).startsWith("Too far"));
+    }
+
+    @Test
+    void theWarpDriveAndMach3AreNotLimitedByTheHoursOfTheRoad() {
+        assertNull(PilotTravel.problem(PilotTravel.Method.WarpDrive, 9000));
+        assertNull(PilotTravel.problem(PilotTravel.Method.Mach3, 9000));
     }
 
     @Test
@@ -275,9 +305,9 @@ class PersonTravelTest {
     @Test
     void theMoneyLeavesTheAccountAtOnceWhenTheTravelStarts() {
         final long before = pilotAccount.getBalance();
-        final long price = PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, london)).price();
+        final long price = PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, dallas)).price();
 
-        world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london));
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(dallas), distance(oakland, dallas));
 
         // the pilot is still on the way and has paid already
         assertEquals(Persons.State.Travelling, person.getState());
@@ -524,5 +554,69 @@ class PersonTravelTest {
         assertNull(pilot.getCityName());
         assertNull(pilot.getDestinationIcao());
         assertNull(pilot.getAirportIcao());
+    }
+
+    // ---- the awake time on the way: a trip which uses it up gives a random rest, an overtired pilot is not rested by a trip
+
+    private int creditAtArrival() {
+        world.setWorldTime(person.getHeartbeatTime());
+        PersonProcessor.process(world);
+        return person.getAwakeCreditMinutes();
+    }
+
+    @Test
+    void aTripWhichUsesUpTheAwakeTimeGivesARandomRestOfTwoToTenHours() {
+        // 2 hours of the awake time, the trip to Fresno by ground takes more than 5 hours
+        person.setAwakeCredit(2 * 60, world.getWorldTime());
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(fresno), distance(oakland, fresno));
+        assertTrue(PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, fresno)).durationMinutes() > 2 * 60);
+
+        final int credit = creditAtArrival();
+
+        assertEquals(Persons.State.Idle, person.getState());
+        assertTrue(credit >= net.simforge.airways2.world.computations.PilotRest.TRIP_REST_MIN_MINUTES && credit <= net.simforge.airways2.world.computations.PilotRest.TRIP_REST_MAX_MINUTES, "credit " + credit);
+        assertEquals(world.getWorldTime(), person.getCreditTime());
+        // the falling asleep by itself is scheduled again from the new awake time
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime());
+    }
+
+    @Test
+    void aTripWithinTheAwakeTimeJustMakesItSmaller() {
+        person.setAwakeCredit(20 * 60, world.getWorldTime());
+        final int minutes = PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, fresno)).durationMinutes();
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(fresno), distance(oakland, fresno));
+
+        world.setWorldTime(person.getHeartbeatTime());
+        PersonProcessor.process(world);
+
+        final int credit = net.simforge.airways2.world.computations.PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), world.getWorldTime());
+        assertEquals(20 * 60 - minutes, credit);
+        assertEquals(Persons.State.Idle, person.getState());
+        assertTrue(person.getHeartbeatTime() > world.getWorldTime());
+    }
+
+    @Test
+    void anOvertiredPilotIsNotRestedByATrip() {
+        // one hour of the debt at the departure
+        person.setAwakeCredit(-60, world.getWorldTime());
+        final int minutes = PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, fresno)).durationMinutes();
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(fresno), distance(oakland, fresno));
+
+        world.setWorldTime(person.getHeartbeatTime());
+        PersonProcessor.process(world);
+
+        final int credit = net.simforge.airways2.world.computations.PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), world.getWorldTime());
+        assertEquals(-60 - minutes, credit);
+    }
+
+    @Test
+    void theWarpDriveDoesNotTouchTheAwakeTime() {
+        person.setWarpDrive(true);
+        person.setAwakeCredit(30, world.getWorldTime());
+
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(london), distance(oakland, london));
+
+        assertEquals(30, person.getAwakeCreditMinutes());
+        assertEquals(Persons.State.Idle, person.getState());
     }
 }

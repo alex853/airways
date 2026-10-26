@@ -284,6 +284,9 @@ public class PersonControl {
             log.info("p/s #{} - travel {}, {} paid, at once", person.getId(), reason, price);
             return;
         }
+        // the awake credit is fixed at the departure: at the arrival it is known whether the trip has used it up or the pilot was overtired already (see arrive)
+        startAwakeCredit(person);
+        person.setAwakeCredit(PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), world.getWorldTime()), world.getWorldTime());
         // the state first: leaving Idle clears the heartbeat, then the arrival is set
         setState(person, Persons.State.Travelling, reason);
         // while the person is Travelling the location is the place of the arrival (see arrive)
@@ -357,6 +360,17 @@ public class PersonControl {
         if (person.getState() != Persons.State.Travelling) {
             throw new IllegalStateException("only a travelling pilot can arrive, the pilot is " + person.getState());
         }
+        // The awake time goes down on the way. If the pilot had some at the departure and the trip has used it up, the pilot rested on the way: it arrives with a
+        // random awake time of two to ten hours. A pilot who was overtired at the departure is not rested by a trip.
+        final int now = world.getWorldTime();
+        if (!awakeCreditIsNotStarted(person) && person.getAwakeCreditMinutes() >= 0
+                && PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now) < 0) {
+            final int before = PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), now);
+            final int rested = Tools.random(PilotRest.TRIP_REST_MIN_MINUTES, PilotRest.TRIP_REST_MAX_MINUTES);
+            person.setAwakeCredit(rested, now);
+            log.info("p/s #{} - the trip has used up the awake time, the pilot rested on the way, awake credit {} -> {} min", person.getId(), before, rested);
+        }
+        // the falling asleep by itself is scheduled again from the awake time the pilot has now (setState does it)
         setState(person, Persons.State.Idle, "arrived");
     }
 

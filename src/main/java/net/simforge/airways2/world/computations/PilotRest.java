@@ -31,6 +31,10 @@ public final class PilotRest {
     public static final int AUTO_SLEEP_DAY_MAX_MINUTES = 17 * 60;
     public static final int AUTO_SLEEP_DEBT_MIN_MINUTES = 3 * 60;
     public static final int AUTO_SLEEP_DEBT_MAX_MINUTES = 5 * 60;
+    // A trip which has used up the awake time of the pilot (the pilot would arrive overtired): the pilot rested on the way and arrives with a random awake time from
+    // two to ten hours, see PersonControl.arrive. Otherwise the trip just makes the awake time smaller.
+    public static final int TRIP_REST_MIN_MINUTES = 2 * 60;
+    public static final int TRIP_REST_MAX_MINUTES = 10 * 60;
     // minutes of the credit for a minute of sleep
     public static final int CREDIT_PER_SLEEP_MINUTE = 2;
 
