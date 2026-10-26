@@ -298,4 +298,25 @@ class PilotEndpointTest {
     void pilotWithoutACreditStartedShowsTheInitialOne() {
         assertEquals(16 * 60, PilotController.buildPilot(world, freshPilot()).getAwake().getCreditMinutes());
     }
+
+    // ---- the settings which the page of the pilot shows
+
+    @Test
+    void theSettingsShowTheAutoFinishAndTheWarpDriveOnlyWhenThePilotHasIt() throws Exception {
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.Airport, oakland.getId(), 0, "AK", 0);
+        final com.fasterxml.jackson.databind.ObjectMapper json = new com.fasterxml.jackson.databind.ObjectMapper();
+
+        // a pilot who has neither: the auto finish is off and nothing is said about the warp drive, not even a field
+        PilotDto pilot = PilotController.buildPilot(world, person);
+        assertFalse(pilot.getSettings().isAutoFinish());
+        assertNull(pilot.getSettings().getWarpDrive());
+        assertEquals("{\"autoFinish\":false}", json.writeValueAsString(pilot.getSettings()));
+
+        person.setAutoFinish(true);
+        person.setWarpDrive(true);
+        pilot = PilotController.buildPilot(world, person);
+        assertTrue(pilot.getSettings().isAutoFinish());
+        assertEquals(Boolean.TRUE, pilot.getSettings().getWarpDrive());
+        assertEquals("{\"autoFinish\":true,\"warpDrive\":true}", json.writeValueAsString(pilot.getSettings()));
+    }
 }

@@ -29,7 +29,7 @@ public class FlightMissions {
             .withInstantiator(Mission::new)
             .withIdOf(DataType.Unsigned24bit)
             .withDataField(DataField.of(DataType.Unsigned24bit)) // aircraftId
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 1: status 0..15 (bits 0-3), bit 4 is not used, coordinates source (bits 5-6), character mode (bit 7)
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 1: status 0..15 (bits 0-3), auto finish (bit 4), coordinates source (bits 5-6), character mode (bit 7)
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // departureAirportId
             .withDataField(DataField.of(DataType.Unsigned16bit)) // destinationAirportId
@@ -52,7 +52,7 @@ public class FlightMissions {
     private final DataField flags1RawField = storage.getDataField(1);
     private final BitAccessField flags1Bits = BitAccessField.instance(storage, flags1RawField);
     private final BitAccessField.Section statusBitField = flags1Bits.section(0, 4);
-    //private final BitAccessField.Section unusedBitField = flags1Bits.section(4, 1);
+    private final BitAccessField.Section autoFinishBitField = flags1Bits.section(4, 1);
     private final BitAccessField.Section coordinatesSourceBitField = flags1Bits.section(5, 2);
     private final BitAccessField.Section characterModeBitField = flags1Bits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(2);
@@ -189,6 +189,18 @@ public class FlightMissions {
             checkNotNull(status, "status is mandatory");
             checkArgument(status.code() <= 15, "status code should be in [0..15] range");
             statusBitField.setInt(id, status.code());
+        }
+
+        /**
+         * The flight of a pilot is finished by itself when it comes to the end (see FlightMissionProcessor). The setting of the pilot is copied here when the
+         * flight starts, so the change of the setting in the middle of a flight does not change this flight.
+         */
+        public boolean isAutoFinish() {
+            return autoFinishBitField.getBoolean(id);
+        }
+
+        public void setAutoFinish(final boolean autoFinish) {
+            autoFinishBitField.setBoolean(id, autoFinish);
         }
 
         public CharacterMode getCharacterMode() {

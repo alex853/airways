@@ -34,7 +34,7 @@ public class Persons {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // originCityId            2 bytes
             // two letters of 63 values each (a space and 62 letters and digits) are 12 bits, see INITIALS_ALPHABET; the highest bit is the feature flag of the warp drive.
             // The reserve byte is the third byte of the old PlainString (length byte + 2 chars): it is kept, so the fields after it stay where they were
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // initials (bits 0-11), warpDrive (bit 15)  2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // initials (bits 0-11), autoFinish (bit 14), warpDrive (bit 15)  2 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve                  1 byte
             .withDataField(DataField.of(DataType.Unsigned16bit)) // avatarId                2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId, 0 is none  3 bytes
@@ -62,6 +62,7 @@ public class Persons {
 
     private final BitAccessField initialsBits = BitAccessField.instance(storage, initialsField);
     private final BitAccessField.Section initialsSection = initialsBits.section(0, 12);
+    private final BitAccessField.Section autoFinishBit = initialsBits.section(14, 1);
     private final BitAccessField.Section warpDriveBit = initialsBits.section(15, 1);
 
     private static final int MAX_INITIALS_LENGTH = 2;
@@ -287,6 +288,18 @@ public class Persons {
          * The feature flag of the warp drive (the pilot may move to any airport at once): it is switched by hand for the one who has it, see the admin
          * endpoint POST /admin/person/{id}/warp-drive.
          */
+        /**
+         * The setting of the pilot: a flight of the pilot which has come to its end (the aircraft is at the gate and the passengers have got off) is finished
+         * by itself, without the button. It is copied to the flight when the flight starts, see FlightMissions.Mission.isAutoFinish. Off by default.
+         */
+        public boolean isAutoFinish() {
+            return autoFinishBit.getBoolean(id);
+        }
+
+        public void setAutoFinish(final boolean autoFinish) {
+            autoFinishBit.setBoolean(id, autoFinish);
+        }
+
         public boolean isWarpDrive() {
             return warpDriveBit.getBoolean(id);
         }

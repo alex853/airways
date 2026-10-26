@@ -44,6 +44,8 @@ public class PersonControl {
             setState(person, Persons.State.OnDuty, "f/m #" + mission.getId() + " started");
             // the duty is counted from the start of the flight, the preflight is in it
             person.setDutyStartTime(world.getWorldTime());
+            // the setting of the pilot is the setting of this flight from now on
+            mission.setAutoFinish(person.isAutoFinish());
         });
     }
 

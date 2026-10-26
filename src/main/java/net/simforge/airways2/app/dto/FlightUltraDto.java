@@ -48,6 +48,8 @@ public class FlightUltraDto {
     private final String sTkts;
     private final Integer ckdIn;
     private final Integer pOnBrd;
+    // the flight is finished by itself at its end (the setting of the pilot); only true is sent
+    private final Boolean autoFinish;
 
     public static FlightUltraDto from(
             World world,
@@ -97,7 +99,9 @@ public class FlightUltraDto {
                 tf != null ? tf.getRemainedTickets().toString() : null,
                 tf != null ? tf.getTotalTickets().minus(tf.getRemainedTickets()).toString() : null,
                 tf != null ? (tf.getPaxCheckedIn() > 0 ? tf.getPaxCheckedIn() : null) : null,
-                tf != null ? (tf.getPaxOnBoard() > 0 ? tf.getPaxOnBoard() : null) : null
+                tf != null ? (tf.getPaxOnBoard() > 0 ? tf.getPaxOnBoard() : null) : null,
+
+                fm.isAutoFinish() ? Boolean.TRUE : null
         );
     }
 

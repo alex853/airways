@@ -75,6 +75,12 @@ public class FlightMissionProcessor {
             case Postflight -> {
                 if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC  && timeline.getFinish().getEstimatedTime().isBefore(now)) {
                     flightControl.finish(mission);
+                } else if (mission.getCharacterMode() == FlightMissions.CharacterMode.PC && mission.isAutoFinish()
+                        && transportFlight.map(tf -> tf.getStatus() == TransportFlights.Status.Finished).orElse(true)) {
+                    // The flight of a pilot who has the auto finish is at its end: the passengers have got off (or there are none), so the pilot does not have to press
+                    // the button. Not earlier than the deboarding is over, the same condition as of the button (see FlightDashboardController.buildManualActions).
+                    log.info("f/m #{} - the flight is finished by itself (auto finish)", mission.getId());
+                    flightControl.finish(mission);
                 }
             }
             case Finished, Cancelled -> {

@@ -141,12 +141,18 @@ public class FlightDashboardController {
         final List<SimTracker.UserAction> trackerActions = simTrackerConnected && simStatus.getActions() != null ? simStatus.getActions() : List.of();
         final TrackingMode mode = resolveMode(flight, simTrackerConnected);
 
+        final List<SimTracker.UserAction> actions;
         if (mode == null) {
-            final List<SimTracker.UserAction> actions = new ArrayList<>(trackerActions);
+            actions = new ArrayList<>(trackerActions);
             actions.addAll(buildManualActions(world, flight, pilotAirportId));
-            return actions;
+        } else {
+            actions = new ArrayList<>(mode == TrackingMode.MANUAL ? buildManualActions(world, flight, pilotAirportId) : trackerActions);
         }
-        return mode == TrackingMode.MANUAL ? buildManualActions(world, flight, pilotAirportId) : trackerActions;
+        // the flight of a pilot with the auto finish is finished by itself (see FlightMissionProcessor), so the button is not offered
+        if (flight.isAutoFinish()) {
+            actions.removeIf(action -> "finish-flight".equals(action.getName()));
+        }
+        return actions;
     }
 
     // The steps which the pilot does with buttons when nothing tracks the flight. There are no checks of the position of the aircraft here,
@@ -169,7 +175,8 @@ public class FlightDashboardController {
             case Postflight -> {
                 if (tf != null && tf.getStatus() == TransportFlights.Status.WaitingForDeboarding) {
                     actions.add(manualAction("start-deboarding"));
-                } else if (tf == null || tf.getStatus() == TransportFlights.Status.Finished) {
+                } else if ((tf == null || tf.getStatus() == TransportFlights.Status.Finished) && !flight.isAutoFinish()) {
+                    // with the auto finish the flight is finished by itself (see FlightMissionProcessor), no button
                     actions.add(manualAction("finish-flight"));
                 }
             }

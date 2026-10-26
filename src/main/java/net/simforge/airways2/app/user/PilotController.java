@@ -485,7 +485,8 @@ public class PilotController {
                 : null;
 
         return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
-                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao, destinationCity);
+                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao, destinationCity,
+                new SettingsDto(person.isAutoFinish(), person.isWarpDrive() ? Boolean.TRUE : null));
     }
 
     @GetMapping("/logbook")
@@ -734,6 +735,18 @@ public class PilotController {
         private String destinationIcao;
         // the city the pilot is travelling to from an airport (by ground), null when the pilot is not on such a way
         private String destinationCity;
+        // the settings of the pilot (the page of the pilot shows them, the user cannot change them yet)
+        private SettingsDto settings;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+    public static class SettingsDto {
+        // a flight of the pilot is finished by itself when it has come to its end
+        private boolean autoFinish;
+        // true when the pilot has the warp drive; for the others there is no such field at all
+        private Boolean warpDrive;
     }
 
     @Data

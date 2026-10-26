@@ -1,5 +1,6 @@
 package net.simforge.airways2.app.user;
 
+import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
@@ -87,6 +88,35 @@ class DashboardManualActionsTest {
 
         tf.setStatus(TransportFlights.Status.Finished);
         assertEquals(List.of("finish-flight"), names());
+    }
+
+    @Test
+    void aFlightWithTheAutoFinishHasNoFinishButtonButKeepsTheDeboarding() {
+        final TransportFlights.Flight tf = world.transportFlightControl().createTransportFlight(mission);
+        mission.setAutoFinish(true);
+        mission.setStatus(FlightMissions.Status.Postflight);
+
+        tf.setStatus(TransportFlights.Status.WaitingForDeboarding);
+        assertEquals(List.of("start-deboarding"), names());
+
+        tf.setStatus(TransportFlights.Status.Finished);
+        assertEquals(List.of(), names());
+    }
+
+    @Test
+    void theFerryFlightWithTheAutoFinishHasNoFinishButton() {
+        mission.setAutoFinish(true);
+        mission.setStatus(FlightMissions.Status.Postflight);
+
+        assertEquals(List.of(), names());
+    }
+
+    @Test
+    void theFlightDtoTellsTheAutoFinishOnlyWhenItIsOn() {
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getAutoFinish());
+
+        mission.setAutoFinish(true);
+        assertEquals(Boolean.TRUE, FlightUltraDto.from(world, mission, true).getAutoFinish());
     }
 
     @Test

@@ -45,6 +45,19 @@ public class PersonController {
         });
     }
 
+    /**
+     * Switches the auto finish setting of the pilot on or off (the user cannot change the settings of the pilot yet).
+     */
+    @PostMapping("/{id}/auto-finish")
+    public String setAutoFinish(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = world.persons().byId(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found"));
+            person.setAutoFinish(enabled);
+            return "done";
+        });
+    }
+
     private static PersonDto toDto(final World world, final Persons.Person p) {
         final Persons.LocationType locationType = p.getLocationType();
         final String locationName = switch (locationType) {
