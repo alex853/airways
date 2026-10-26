@@ -77,6 +77,21 @@ public class AirportFacilities {
         return new Facility(recordId);
     }
 
+    /**
+     * Removes the facility of the airport itself (not of an operator). Returns false if there was none.
+     */
+    public boolean delete(final Airports.Airport airport, final Type type) {
+        checkNotNull(airport);
+        checkNotNull(type);
+
+        final Optional<Facility> facility = findFacility(airport, null, type);
+        if (facility.isEmpty()) {
+            return false;
+        }
+        storage.deleteRecord(facility.get().id);
+        return true;
+    }
+
     public boolean hasFacility(final Airports.Airport airport, final Type type) {
         checkNotNull(airport);
         checkNotNull(type);

@@ -9,6 +9,7 @@
 - [city-airport-playbook.md](city-airport-playbook.md) — playbook: как добавлять города и аэропорты (анализ, население, имена, острова, терминалы, порядок работы)
 - [airports-record-extension.md](airports-record-extension.md) — план расширения записи аэропорта: `countryId`, `exclusion`, резерв, миграция хранилища (не реализовано)
 - [change-tracking-cache.md](change-tracking-cache.md) — кэш ответов по отметкам изменений хранилищ (`Storage.getLastChangedAtMillis`, `ChangeTrackedCache`, `CachedJson`, gzip)
+- [world-editor.md](world-editor.md) — редактор мира: admin/map.html, админский API /admin/world (город, аэропорт, attraction, население, бизнес-терминал)
 - [cities.md](cities.md) — города и население: CSV, соглашение `del`, операция «актуализировать и укрупнить мажорный сити»
 - [vatsim-backlog.md](vatsim-backlog.md) — VATSIM-бэклог: формат отчёта, как получить, приоритеты регионов
 - [heartbeat-index.md](heartbeat-index.md) — индекс по heartbeat (`HeartbeatIndex`, `Storage.withHeartbeatIndex`) для журни и рейсов, circuit breaker в `Processing`
