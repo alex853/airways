@@ -183,7 +183,7 @@ Albania,AL,Kurbnesh,896,41.78,20.08
 Albania,AL,Fierze,797,42.25,20.0
 Albania,AL,Klos,697,41.49,20.1
 Albania,AL,Ulze,598,41.69,19.9
-Algeria,DZ,Al-jazair,1661000,36.77,3.04
+Algeria,DZ,Algiers,3661000,36.77,3.04
 Algeria,DZ,Wahran,716900,35.7,-0.62
 Algeria,DZ,Qusantinah,505200,36.36,6.6
 Algeria,DZ,Batnah,265100,35.57,6.17
@@ -193,7 +193,7 @@ Algeria,DZ,Sidi bal#abbas,197000,35.19,-0.64
 Algeria,DZ,Biskrah,186900,34.86,5.73
 Algeria,DZ,Al-jilfah,168600,34.68,3.25
 Algeria,DZ,Tibissah,167500,35.41,8.12
-Algeria,DZ,Al-blidah,167300,36.48,2.83
+Algeria,DZ,del Al-blidah,167300,36.48,2.83
 Algeria,DZ,Sakikdah,166500,36.88,6.9
 Algeria,DZ,Bijayah,160800,36.76,5.07
 Algeria,DZ,Tiyarat,158900,35.38,1.32
@@ -722,7 +722,7 @@ Australia,AU,Yulara,2700,-25.23,131.06
 Austria,AT,Vienna,2900100,48.22,16.37
 Austria,AT,Graz,216100,47.08,15.42
 Austria,AT,Linz,184800,48.31,14.29
-Austria,AT,Salzburg,145800,47.81,13.04
+Austria,AT,Salzburg,300800,47.81,13.04
 Austria,AT,Innsbruck,256400,47.28,11.41
 Austria,AT,Klagenfurt,89700,46.62,14.31
 Austria,AT,Villach,57900,46.62,13.85
@@ -1850,7 +1850,7 @@ Brunei,BN,Kuala belait,28400,4.59,114.18
 Brunei,BN,Seria,23500,4.61,114.28
 Brunei,BN,Tutong,17500,4.81,114.64
 Brunei,BN,Bangar,3200,4.71,115.08
-Bulgaria,BG,Sofija,1044200,42.69,23.31
+Bulgaria,BG,Sofia,1544200,42.69,23.31
 Bulgaria,BG,Plovdiv,324400,42.15,24.75
 Bulgaria,BG,Varna,304400,43.21,27.9
 Bulgaria,BG,Burgas,186600,42.51,27.47
@@ -10504,7 +10504,7 @@ Micronesia,FM,Palikir,8000,6.92,158.16
 Micronesia,FM,Kolonia,6000,6.95,158.21
 Micronesia,FM,Colonia,4500,9.52,138.1
 Micronesia,FM,Lelu,3100,5.31,162.99
-Moldova,MD,Chisinau,708000,47.03,28.83
+Moldova,MD,Chisinau,800000,47.03,28.83
 Moldova,MD,Tiraspol',211800,46.85,29.63
 Moldova,MD,Balti,176500,47.76,27.91
 Moldova,MD,Tighina,145900,46.83,29.48
@@ -14640,7 +14640,7 @@ South Korea,KR,Yonggwang,17800,35.27,126.51
 Spain,ES,Madrid,6700000,40.42,-3.71
 Spain,ES,Barcelona,5300400,41.4,2.17
 Spain,ES,Valencia,750100,39.48,-0.39
-Spain,ES,Sevilla,699000,37.4,-5.98
+Spain,ES,Seville,1500000,37.4,-5.98
 Spain,ES,Zaragoza,641500,41.65,-0.89
 Spain,ES,Malaga,1952500,36.72,-4.42
 Spain,ES,Murcia,408700,37.98,-1.13
@@ -14689,7 +14689,7 @@ Spain,ES,Leon,122700,42.59,-5.57
 Spain,ES,Jaen,116500,37.77,-3.8
 Spain,ES,Tarragona,115100,41.12,1.24
 Spain,ES,Lleida,114100,41.62,0.63
-Spain,ES,Dos hermanas,112100,37.28,-5.93
+Spain,ES,del Dos hermanas,112100,37.28,-5.93
 Spain,ES,Mataro,112000,41.54,2.44
 Spain,ES,Santa coloma de gramenet,109600,41.47,2.22
 Spain,ES,Torrejon de ardoz,108200,40.46,-3.48

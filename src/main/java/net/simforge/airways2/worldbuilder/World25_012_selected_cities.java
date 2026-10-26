@@ -15,6 +15,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AL", "city-name:Tirana"},
 
                 new String[]{"country-code:AT", "city-name:Innsbruck"},
+                new String[]{"country-code:AT", "city-name:Salzburg"},
 
                 new String[]{"country-code:AU", "city-name:Sydney"},
                 new String[]{"country-code:AU", "city-name:Melbourne"},
@@ -26,6 +27,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:AZ", "city-name:Baku"},
 
                 new String[]{"country-code:BE", "city-name:Brussels"},
+
+                new String[]{"country-code:BG", "city-name:Sofia"},
 
                 new String[]{"country-code:BH", "city-name:Bahrain"},
 
@@ -88,6 +91,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:DK", "city-name:Copenhagen"},
                 new String[]{"country-code:DK", "city-name:Billund"},
 
+                new String[]{"country-code:DZ", "city-name:Algiers"},
+
                 new String[]{"country-code:EG", "city-name:Cairo"},
                 new String[]{"country-code:EG", "city-name:Giza"},
                 new String[]{"country-code:EG", "city-name:Shubra El Kheima"},
@@ -102,6 +107,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Gran Canaria"},
                 new String[]{"country-code:ES", "city-name:Bilbao"},
                 new String[]{"country-code:ES", "city-name:Lanzarote"},
+                new String[]{"country-code:ES", "city-name:Seville"},
 
                 new String[]{"country-code:ET", "city-name:Addis Ababa"},
 
@@ -195,6 +201,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:GI", "city-name:Gibraltar"},
 
                 new String[]{"country-code:MC", "city-name:Monte Carlo"},
+
+                new String[]{"country-code:MD", "city-name:Chisinau"},
 
                 new String[]{"country-code:MU", "city-name:Port Louis"},
 
