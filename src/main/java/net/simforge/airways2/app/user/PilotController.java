@@ -16,10 +16,13 @@ import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.Persons;
+import net.simforge.airways2.world.processors.PersonControl;
 import net.simforge.commons.misc.Geo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -152,63 +156,187 @@ public class PilotController {
     }
 
     /**
-     * The ways to get from the airport of the pilot to another airport (the travel of the pilot): for each the time and the money, or why it is not possible
-     * now. Only for a free pilot at an airport. The warp drive is among the ways only for the pilot who has it; the other ways are the same for everybody.
+     * The menu of the window of the travel: the ways of the pilot from the place where it is (an airport or a city). From an airport Mach 3 and by ground, from a
+     * city by airline (not made yet, it is shown and cannot be chosen) and by ground, and the warp drive from anywhere to anywhere for the pilot who has it: the
+     * pilot who has not got the warp drive is not told about it at all.
      */
-    @GetMapping("/travel/options")
-    public TravelOptionsDto getTravelOptions(@RequestAttribute("userId") final int userId, @RequestParam("airport") final String airport) {
-        return worldBean.read(world -> buildTravelOptions(world, personOf(world, userId), airport));
+    @GetMapping("/travel/methods")
+    public TravelMethodsDto getTravelMethods(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> buildTravelMethods(world, personOf(world, userId)));
     }
 
     /**
-     * The pilot goes: the way is paid, the pilot is on the way for its time (or at the airport at once). The answer is the pilot as GET /pilot gives it.
+     * The places which the pilot can reach in one click ("commute", it is a trip by ground): from an airport the cities which it serves, from a city the airports
+     * which serve it (sorted by the distance).
      */
-    @PostMapping("/travel")
+    @GetMapping("/travel/places")
+    public TravelPlacesDto getTravelPlaces(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> buildTravelPlaces(world, personOf(world, userId)));
+    }
+
+    /**
+     * Finds where the pilot wants to go: the text is read as the ICAO code of an airport first, and if there is no such airport, as the name of a city (the
+     * cities with that name, then the cities which start with it, then the cities which have it inside). Mach 3 is for airports only, so for it only the code is
+     * read. Each place comes with the distance, the time and the money of the way.
+     */
+    @GetMapping("/travel/find")
+    public TravelFindDto findTravelPlaces(@RequestAttribute("userId") final int userId,
+                                          @RequestParam("method") final String method,
+                                          @RequestParam("query") final String query) {
+        return worldBean.read(world -> findTravelPlaces(world, personOf(world, userId), method, query));
+    }
+
+    /**
+     * The pilot goes to the place (the kind is airport with the ICAO code as the id, or city with the id of the city from the list of the places): the way is paid,
+     * the pilot is on the way for its time (or at the place at once). The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/travel/go")
     public PilotDto travel(@RequestAttribute("userId") final int userId,
-                           @RequestParam("airport") final String airport,
-                           @RequestParam("method") final String method) {
+                           @RequestParam("method") final String method,
+                           @RequestParam("kind") final String kind,
+                           @RequestParam("id") final String id) {
         return worldBean.modifySync(world -> {
             final Persons.Person person = personOf(world, userId);
-            startTravel(world, person, airport, method);
+            startTravel(world, person, method, kind, id);
             return buildPilot(world, person);
         });
     }
 
-    private static final List<PilotTravel.Method> TRAVEL_METHODS = List.of(PilotTravel.Method.WarpDrive, PilotTravel.Method.Mach3, PilotTravel.Method.Airline, PilotTravel.Method.Ground);
-
-    static TravelOptionsDto buildTravelOptions(final World world, final Persons.Person person, final String icao) {
-        final Airports.Airport destination = findAirport(world, icao);
-        if (person.getState() != Persons.State.Idle || person.getLocationType() != Persons.LocationType.Airport) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport can travel");
+    private static PersonControl.Place freePlace(final World world, final Persons.Person person) {
+        if (person.getState() != Persons.State.Idle) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport or in a city can travel");
         }
-        final Airports.Airport from = world.airports().byId(person.getLocationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "The airport of the pilot is not known"));
-        final double distanceNm = Geo.distance(from.getCoords(), destination.getCoords());
-
-        final List<TravelOptionDto> options = new ArrayList<>();
-        for (final PilotTravel.Method method : TRAVEL_METHODS) {
-            // the warp drive is not offered, not even mentioned, to a pilot who does not have it
-            if (method == PilotTravel.Method.WarpDrive && !person.isWarpDrive()) {
-                continue;
-            }
-            final PilotTravel.Quote quote = PilotTravel.quote(method, distanceNm);
-            final String problem = world.personControl().travelProblem(person, method, destination, distanceNm);
-            options.add(new TravelOptionDto(method.name(), method.title(), quote.durationMinutes(), quote.price(), problem == null, problem));
-        }
-        return new TravelOptionsDto(destination.getIcao(), destination.getName(), (int) Math.round(distanceNm), options);
+        return world.personControl().currentPlace(person)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport or in a city can travel"));
     }
 
-    static void startTravel(final World world, final Persons.Person person, final String icao, final String methodName) {
-        final Airports.Airport destination = findAirport(world, icao);
-        final PilotTravel.Method method = TRAVEL_METHODS.stream().filter(m -> m.name().equals(methodName)).findFirst()
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown way: " + methodName));
-        if (person.getState() != Persons.State.Idle || person.getLocationType() != Persons.LocationType.Airport) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Only a free pilot at an airport can travel");
+    private static PilotTravel.Method parseMethod(final String name) {
+        return Arrays.stream(PilotTravel.Method.values()).filter(m -> m.name().equals(name)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unknown way: " + name));
+    }
+
+    private static Geo.Coords coordsOf(final World world, final PersonControl.Place place) {
+        if (place.type() == Persons.LocationType.Airport) {
+            return world.airports().byId(place.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no such airport")).getCoords();
         }
-        final Airports.Airport from = world.airports().byId(person.getLocationId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.CONFLICT, "The airport of the pilot is not known"));
+        return world.cities().byId(place.id()).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no such city")).getCoords();
+    }
+
+    private static double distanceNm(final World world, final PersonControl.Place from, final PersonControl.Place to) {
+        return Geo.distance(coordsOf(world, from), coordsOf(world, to));
+    }
+
+    static TravelMethodsDto buildTravelMethods(final World world, final Persons.Person person) {
+        final PersonControl.Place here = freePlace(world, person);
+        final boolean atAirport = here.type() == Persons.LocationType.Airport;
+        final List<TravelMethodDto> methods = new ArrayList<>();
+        if (!atAirport) {
+            // the journeys go from a city to a city, so the airline is for a city; it is not made yet
+            methods.add(new TravelMethodDto(PilotTravel.Method.Airline.name(), PilotTravel.Method.Airline.title(),
+                    "Coming soon, from " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles, reasonable prices", false));
+        }
+        if (atAirport) {
+            methods.add(new TravelMethodDto(PilotTravel.Method.Mach3.name(), PilotTravel.Method.Mach3.title(),
+                    "Very expensive, only to an airport, from " + PilotTravel.MACH3_MIN_DISTANCE_NM + " miles", true));
+        }
+        methods.add(new TravelMethodDto(PilotTravel.Method.Ground.name(), PilotTravel.Method.Ground.title(),
+                "To anywhere, " + PilotTravel.GROUND_KNOTS + " miles an hour", true));
+        if (person.isWarpDrive()) {
+            methods.add(new TravelMethodDto(PilotTravel.Method.WarpDrive.name(), PilotTravel.Method.WarpDrive.title(), "To anywhere, at once", true));
+        }
+        return new TravelMethodsDto(atAirport ? "airport" : "city", here.name(), methods);
+    }
+
+    static TravelPlacesDto buildTravelPlaces(final World world, final Persons.Person person) {
+        final PersonControl.Place here = freePlace(world, person);
+        final List<TravelPlaceDto> places = new ArrayList<>();
+        if (here.type() == Persons.LocationType.Airport) {
+            world.airport2city().allByAirportId(here.id())
+                    .map(link -> world.cities().byId(link.getCityId()).orElse(null))
+                    .filter(java.util.Objects::nonNull)
+                    .forEach(city -> places.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName()),
+                            PilotTravel.Method.Ground, null)));
+        } else {
+            world.airport2city().allByCityId(here.id())
+                    .map(link -> world.airports().byId(link.getAirportId()).orElse(null))
+                    .filter(a -> a != null && !a.isExcluded())
+                    .forEach(airport -> places.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.Airport, airport.getId(), airport.getIcao()),
+                            PilotTravel.Method.Ground, airport.getName())));
+        }
+        places.sort(java.util.Comparator.comparingDouble(TravelPlaceDto::getDistanceNm));
+        return new TravelPlacesDto(here.type() == Persons.LocationType.Airport ? "city" : "airport", places);
+    }
+
+    // the place with the distance, the time, the money and the reason why the pilot cannot go there this way (null when it can)
+    private static TravelPlaceDto placeDto(final World world, final Persons.Person person, final PersonControl.Place from, final PersonControl.Place to,
+                                           final PilotTravel.Method method, final String subtitle) {
+        final double distance = distanceNm(world, from, to);
+        final PilotTravel.Quote quote = PilotTravel.quote(method, distance);
+        final String problem = world.personControl().travelProblem(person, method, to, distance);
+        final boolean airport = to.type() == Persons.LocationType.Airport;
+        return new TravelPlaceDto(airport ? "airport" : "city", airport ? to.name() : Id.encode(to.id()), to.name(), subtitle, distance,
+                quote.durationMinutes(), quote.price(), problem == null, problem);
+    }
+
+    static TravelFindDto findTravelPlaces(final World world, final Persons.Person person, final String methodName, final String query) {
+        final PilotTravel.Method method = parseMethod(methodName);
+        final PersonControl.Place here = freePlace(world, person);
+        final String text = query == null ? "" : query.trim();
+        final List<TravelPlaceDto> matches = new ArrayList<>();
+        if (text.isEmpty()) {
+            return new TravelFindDto("Type the name of a city or the ICAO code of an airport", matches);
+        }
+
+        // the code of an airport first
+        final Airports.Airport airport = text.length() == 4 ? world.airports().byIcao(text.toUpperCase()).orElse(null) : null;
+        if (airport != null) {
+            matches.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.Airport, airport.getId(), airport.getIcao()), method, airport.getName()));
+            return new TravelFindDto(null, matches);
+        }
+        if (method == PilotTravel.Method.Mach3) {
+            return new TravelFindDto("Mach 3 flights are between airports: there is no airport with the code " + text.toUpperCase(), matches);
+        }
+
+        // then the name of a city: the same name, then the names which start with the text, then the names which have it inside
+        final String lower = text.toLowerCase();
+        List<Cities.City> found = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(text)).toList();
+        if (found.isEmpty()) {
+            found = world.cities().all().filter(c -> c.getName().toLowerCase().startsWith(lower)).toList();
+        }
+        if (found.isEmpty()) {
+            found = world.cities().all().filter(c -> c.getName().toLowerCase().contains(lower)).toList();
+        }
+        found.stream()
+                .sorted(java.util.Comparator.comparingInt(Cities.City::getPopulation).reversed())
+                .limit(8)
+                .forEach(city -> matches.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName()), method,
+                        world.countries().byId(city.getCountryId()).map(c -> c.getName()).orElse(null))));
+        return new TravelFindDto(matches.isEmpty() ? "There is no airport or city like " + text : null, matches);
+    }
+
+    static void startTravel(final World world, final Persons.Person person, final String methodName, final String kind, final String id) {
+        final PilotTravel.Method method = parseMethod(methodName);
+        final PersonControl.Place here = freePlace(world, person);
+        final PersonControl.Place destination;
+        if ("airport".equals(kind)) {
+            final Airports.Airport airport = findAirport(world, id);
+            destination = new PersonControl.Place(Persons.LocationType.Airport, airport.getId(), airport.getIcao());
+        } else if ("city".equals(kind)) {
+            final Cities.City city;
+            try {
+                city = world.cities().byId(Id.decode(id)).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no such city"));
+            } catch (final ResponseStatusException e) {
+                throw e;
+            } catch (final RuntimeException e) {
+                // the text is not an id of a city (Id.decode fails in different ways on a wrong text)
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no such city");
+            }
+            destination = new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The kind of the place is airport or city");
+        }
         try {
-            world.personControl().travel(person, method, destination, Geo.distance(from.getCoords(), destination.getCoords()));
+            world.personControl().travel(person, method, destination, distanceNm(world, here, destination));
         } catch (final IllegalStateException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
@@ -328,14 +456,26 @@ public class PilotController {
         String airportName = null;
         String cityName = null;
         String destinationIcao = null;
+        String destinationCity = null;
+        // a person who is Travelling has the place of the arrival as its location: that is not where the pilot is, it is where the pilot is going
+        final boolean travelling = person.getState() == Persons.State.Travelling;
         switch (person.getLocationType()) {
             case Airport -> {
-                airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
-                airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
+                if (travelling) {
+                    destinationIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
+                } else {
+                    airportIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
+                    airportName = world.airports().byId(person.getLocationId()).map(a -> a.getName()).orElse(null);
+                }
             }
-            case City -> cityName = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
-            // on the way by itself (travel): where to
-            case Transit -> destinationIcao = world.airports().getIcao(person.getLocationId()).orElse(null);
+            case City -> {
+                final String name = world.cities().byId(person.getLocationId()).map(c -> c.getName()).orElse(null);
+                if (travelling) {
+                    destinationCity = name;
+                } else {
+                    cityName = name;
+                }
+            }
             default -> { }
         }
 
@@ -345,7 +485,7 @@ public class PilotController {
                 : null;
 
         return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
-                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao);
+                buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao, destinationCity);
     }
 
     @GetMapping("/logbook")
@@ -592,6 +732,8 @@ public class PilotController {
         private FlightTimeDto flightTime;
         // the airport the pilot is travelling to (by itself, see PilotTravel), null when the pilot is not on such a way
         private String destinationIcao;
+        // the city the pilot is travelling to from an airport (by ground), null when the pilot is not on such a way
+        private String destinationCity;
     }
 
     @Data
@@ -643,21 +785,52 @@ public class PilotController {
 
     @Data
     @AllArgsConstructor
-    public static class TravelOptionsDto {
-        private String airportIcao;
-        private String airportName;
-        // the straight line from the airport of the pilot, nautical miles
-        private int distanceNm;
-        private List<TravelOptionDto> options;
+    public static class TravelMethodsDto {
+        // where the pilot is: airport or city
+        private String location;
+        private String placeName;
+        private List<TravelMethodDto> methods;
     }
 
     @Data
     @AllArgsConstructor
-    public static class TravelOptionDto {
-        // the name to send to POST /pilot/travel
+    public static class TravelMethodDto {
+        // what to send as the method
         private String method;
         private String title;
-        // zero is at once, minus one is not known (the way is not made yet)
+        // the line under the title, what the way is
+        private String note;
+        // false: the way is shown, but cannot be chosen (not made yet)
+        private boolean available;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TravelFindDto {
+        // why there is nothing to show (or what to type), null when there are places
+        private String message;
+        private List<TravelPlaceDto> matches;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TravelPlacesDto {
+        // "city": the places are the cities of the airport where the pilot is; "airport": the airports of the city where the pilot is
+        private String kind;
+        private List<TravelPlaceDto> places;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class TravelPlaceDto {
+        // airport or city
+        private String kind;
+        // what to send to POST /pilot/travel/go: the ICAO of an airport or the id of a city
+        private String id;
+        private String title;
+        // the name of the airport, null for a city
+        private String subtitle;
+        private double distanceNm;
         private int durationMinutes;
         private long price;
         private boolean available;

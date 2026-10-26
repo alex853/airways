@@ -240,17 +240,36 @@ public class PersonControl {
         log.info("p/s #{} - woke up after {} min of sleep, awake credit {} -> {} min", person.getId(), sleepMinutes, before, after);
     }
 
-    // ---- travel: a free pilot at an airport moves to another airport by itself (PilotTravel): Idle -> Travelling (the arrival is the heartbeat) -> Idle
+    // ---- travel: a free pilot at an airport or in a city moves to an airport or to a city by itself (PilotTravel): Idle -> Travelling (the arrival is the
+    // heartbeat) -> Idle. The ways: the warp drive from anywhere to anywhere, Mach 3 from an airport to an airport, by ground from anywhere to anywhere, by airline
+    // from a city to a city (not made yet).
 
     /**
-     * The pilot moves to the airport. The way is paid at once (to the bank), the pilot is on the way for the time of the way and then it is at the airport and
-     * free; the warp drive is at once and free. Only a free pilot at an airport can travel, not to the airport where it is; the warp drive needs the feature
-     * flag of the person. The awake credit goes on while the pilot is on the way.
-     *
-     * @throws IllegalStateException    the pilot cannot travel now, the message says why (the state, the place, the flag, the money)
-     * @throws IllegalArgumentException the pilot is at the airport already
+     * A place where a pilot is or goes: an airport (the type Airport, the id of the airport, the name is its ICAO) or a city.
      */
-    public void travel(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
+    public record Place(Persons.LocationType type, int id, String name) {
+    }
+
+    /**
+     * The place where the pilot is now, empty if it is not at an airport or in a city.
+     */
+    public Optional<Place> currentPlace(final Persons.Person person) {
+        return switch (person.getLocationType()) {
+            case Airport -> world.airports().byId(person.getLocationId()).map(a -> new Place(Persons.LocationType.Airport, a.getId(), a.getIcao()));
+            case City -> world.cities().byId(person.getLocationId()).map(c -> new Place(Persons.LocationType.City, c.getId(), c.getName()));
+            default -> Optional.empty();
+        };
+    }
+
+    /**
+     * The pilot goes to the place. The way is paid at once (to the bank), the pilot is on the way for the time of the way and then it is at the place and
+     * free; the warp drive is at once and free. While the pilot is on the way its location is the place of the arrival (see arrive). The awake credit goes on
+     * while the pilot is on the way.
+     *
+     * @throws IllegalStateException    the pilot cannot travel this way now, the message says why (the state, the place, the flag, the distance, the money)
+     * @throws IllegalArgumentException the pilot is at the place already
+     */
+    public void travel(final Persons.Person person, final PilotTravel.Method method, final Place destination, final double distanceNm) {
         checkTravelAllowed(person, method, destination, distanceNm);
         final PilotTravel.Quote quote = PilotTravel.quote(method, distanceNm);
         final long price = quote.price();
@@ -259,25 +278,24 @@ public class PersonControl {
             world.bankControl().transfer(person.getBankAccountId(), bankAccountId, price, BankTransactions.Type.Travel);
         }
 
-        final String reason = method.title() + " to " + destination.getIcao();
+        final String reason = method.title() + " to " + destination.name();
         if (quote.durationMinutes() == 0) {
-            setLocation(person, Persons.LocationType.Airport, destination.getId(), reason);
+            setLocation(person, destination.type(), destination.id(), reason);
             log.info("p/s #{} - travel {}, {} paid, at once", person.getId(), reason, price);
             return;
         }
         // the state first: leaving Idle clears the heartbeat, then the arrival is set
         setState(person, Persons.State.Travelling, reason);
-        setLocation(person, Persons.LocationType.Transit, destination.getId(), reason);
+        // while the person is Travelling the location is the place of the arrival (see arrive)
+        setLocation(person, destination.type(), destination.id(), reason);
         person.setHeartbeatTime(world.getWorldTime() + quote.durationMinutes() * Time.ONE_MINUTE);
         log.info("p/s #{} - travel {}, {} paid, arrives in {} min", person.getId(), reason, price, quote.durationMinutes());
     }
 
     /**
-     * Whether the pilot can pay the way and who gets the money: the message is the reason when it cannot. For the page which shows the options.
-     *
-     * @return null if everything is fine, otherwise why the travel is not possible
+     * Whether the pilot can go to the place this way now: the message is the reason when it cannot, null when it can. For the page which shows the ways.
      */
-    public String travelProblem(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
+    public String travelProblem(final Persons.Person person, final PilotTravel.Method method, final Place destination, final double distanceNm) {
         try {
             checkTravelAllowed(person, method, destination, distanceNm);
             final long price = PilotTravel.quote(method, distanceNm).price();
@@ -290,18 +308,26 @@ public class PersonControl {
         }
     }
 
-    private void checkTravelAllowed(final Persons.Person person, final PilotTravel.Method method, final Airports.Airport destination, final double distanceNm) {
+    private void checkTravelAllowed(final Persons.Person person, final PilotTravel.Method method, final Place destination, final double distanceNm) {
         if (person.getState() != Persons.State.Idle) {
             throw new IllegalStateException("Only a free pilot can travel, the pilot is " + person.getState());
         }
-        if (person.getLocationType() != Persons.LocationType.Airport) {
-            throw new IllegalStateException("The pilot is not at an airport");
+        final Place from = currentPlace(person).orElseThrow(() -> new IllegalStateException("The pilot is not at an airport or in a city"));
+        if (from.type() == destination.type() && from.id() == destination.id()) {
+            throw new IllegalArgumentException("The pilot is " + (from.type() == Persons.LocationType.Airport ? "at " : "in ") + destination.name() + " already");
         }
-        if (person.getLocationId() == destination.getId()) {
-            throw new IllegalArgumentException("The pilot is at " + destination.getIcao() + " already");
-        }
-        if (method == PilotTravel.Method.WarpDrive && !person.isWarpDrive()) {
-            throw new IllegalStateException("This way is not available");
+        switch (method) {
+            case WarpDrive -> {
+                if (!person.isWarpDrive()) {
+                    throw new IllegalStateException("This way is not available");
+                }
+            }
+            case Mach3 -> {
+                if (from.type() != Persons.LocationType.Airport || destination.type() != Persons.LocationType.Airport) {
+                    throw new IllegalStateException("Mach 3 flights are between airports only");
+                }
+            }
+            case Airline, Ground -> { }
         }
         final String problem = PilotTravel.problem(method, distanceNm);
         if (problem != null) {
@@ -324,18 +350,13 @@ public class PersonControl {
     }
 
     /**
-     * The pilot has arrived (the heartbeat of a travelling pilot): it is at the airport of the arrival and free, so the falling asleep by itself is scheduled.
+     * The pilot has arrived (the heartbeat of a travelling pilot): it is free, so the falling asleep by itself is scheduled. The place of the arrival is its
+     * location already (while the state is Travelling the location says where the pilot is going), so only the state changes.
      */
     public void arrive(final Persons.Person person) {
         if (person.getState() != Persons.State.Travelling) {
             throw new IllegalStateException("only a travelling pilot can arrive, the pilot is " + person.getState());
         }
-        if (person.getLocationType() != Persons.LocationType.Transit) {
-            log.warn("p/s #{} - arrives but is not in transit, its location is {}", person.getId(), describeLocation(person.getLocationType(), person.getLocationId()));
-            setState(person, Persons.State.Idle, "arrived");
-            return;
-        }
-        setLocation(person, Persons.LocationType.Airport, person.getLocationId(), "arrived");
         setState(person, Persons.State.Idle, "arrived");
     }
 
@@ -414,7 +435,6 @@ public class PersonControl {
             case City -> "City " + world.cities().byId(id).map(c -> c.getName()).orElse("#" + id);
             case Airport -> "Airport " + world.airports().getIcao(id).orElse("#" + id);
             case Hotel -> "Hotel #" + id;
-            case Transit -> "On the way to " + world.airports().getIcao(id).orElse("#" + id);
         };
     }
 }

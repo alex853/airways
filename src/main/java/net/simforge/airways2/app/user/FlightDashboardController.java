@@ -200,7 +200,7 @@ public class FlightDashboardController {
             return 0;
         }
         return world.persons().byId(personId)
-                .filter(p -> p.getLocationType() == Persons.LocationType.Airport)
+                .filter(p -> p.getState() != Persons.State.Travelling && p.getLocationType() == Persons.LocationType.Airport)
                 .map(Persons.Person::getLocationId)
                 .orElse(0);
     }
@@ -237,7 +237,7 @@ public class FlightDashboardController {
         // The airport where the pilot is expected to be: the location of the person of the user, null if there is no person or
         // the person is not at an airport.
         final String expectedAirport = person
-                .filter(p -> p.getLocationType() == Persons.LocationType.Airport)
+                .filter(p -> p.getState() != Persons.State.Travelling && p.getLocationType() == Persons.LocationType.Airport)
                 .flatMap(p -> world.airports().getIcao(p.getLocationId()))
                 .orElse(null);
 

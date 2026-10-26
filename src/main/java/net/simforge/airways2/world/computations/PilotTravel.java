@@ -13,11 +13,11 @@ public final class PilotTravel {
         // the feature flag of the person (Person.isWarpDrive): the pilot is there at once and it costs nothing
         WarpDrive("Warp drive"),
         // the personal aircraft of Mach 3, it is very expensive
-        Mach3("Mach 3 flight"),
+        Mach3("Travel at Mach 3"),
         // the tickets of the airlines (the journey of the pilot in the common pool): not made yet, it is only a place in the list
-        Airline("By airline"),
+        Airline("Travel by airline to another city"),
         // trains and cars: cheap and slow
-        Ground("By ground");
+        Ground("Travel by ground");
 
         private final String title;
 
@@ -39,6 +39,9 @@ public final class PilotTravel {
     public static final int AIRLINE_MIN_DISTANCE_NM = 100;
     public static final int GROUND_KNOTS = 30;
     public static final int GROUND_PRICE_PER_MILE = 2;
+    // even the shortest trip by ground (an airport and its city) takes a quarter of an hour and costs something
+    public static final int GROUND_MIN_MINUTES = 15;
+    public static final long GROUND_MIN_PRICE = 10;
 
     /**
      * What the way costs and how long it takes: minutes (zero is at once) and money (a whole number, zero is free).
@@ -63,7 +66,7 @@ public final class PilotTravel {
             // not known: the airline is not made yet
             case Airline -> new Quote(-1, -1);
             case Mach3 -> new Quote(minutes(distanceNm, MACH3_KNOTS), Math.round(distanceNm * MACH3_PRICE_PER_MILE));
-            case Ground -> new Quote(minutes(distanceNm, GROUND_KNOTS), Math.round(distanceNm * GROUND_PRICE_PER_MILE));
+            case Ground -> new Quote(Math.max(GROUND_MIN_MINUTES, minutes(distanceNm, GROUND_KNOTS)), Math.max(GROUND_MIN_PRICE, Math.round(distanceNm * GROUND_PRICE_PER_MILE)));
         };
     }
 

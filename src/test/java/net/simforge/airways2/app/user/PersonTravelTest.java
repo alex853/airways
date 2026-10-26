@@ -1,14 +1,19 @@
 package net.simforge.airways2.app.user;
 
+import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.processors.PersonProcessor;
 import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
+import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.Countries;
 import net.simforge.airways2.world.datamodel.Persons;
+import net.simforge.airways2.world.processors.PersonControl;
+import net.simforge.airways2.world.processors.PersonProcessor;
+import net.simforge.commons.misc.Geo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.server.ResponseStatusException;
@@ -18,17 +23,21 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A free pilot at an airport moves to another airport by itself: the warp drive at once, Mach 3 and the ground take their time and cost money.
+ * A free pilot moves from an airport or a city to an airport or a city: the warp drive from anywhere to anywhere, Mach 3 from an airport to an airport, by ground
+ * from anywhere to anywhere, by airline from a city to a city (not made yet).
  */
 class PersonTravelTest {
     private World world;
     private Airports.Airport oakland;
     private Airports.Airport london;
+    private Airports.Airport sanFrancisco;
+    private Cities.City oaklandCity;
+    private Cities.City fresno;
     private Persons.Person person;
     private BankAccounts.BankAccount pilotAccount;
     private BankAccounts.BankAccount bank;
@@ -38,6 +47,13 @@ class PersonTravelTest {
         world = World.create(new InMemoryStorageStrategy(), Time.START_TIME_EPOCH_SECONDS);
         oakland = world.airports().create(37.72, -122.22, "OAK", "KOAK", "Oakland");
         london = world.airports().create(51.47, -0.45, "LHR", "EGLL", "Heathrow");
+        sanFrancisco = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final Countries.Country country = world.countries().create("US", "United States");
+        oaklandCity = world.cities().create(country.getId(), "Oakland", 37.80, -122.27, 400_000);
+        fresno = world.cities().create(country.getId(), "Fresno", 36.74, -119.78, 500_000);
+        world.airport2city().create(oakland.getId(), oaklandCity.getId());
+        world.airport2city().create(sanFrancisco.getId(), oaklandCity.getId());
+
         person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.Airport, oakland.getId(), 0, "AK", 0);
         bank = world.bankAccounts().create(BankAccounts.Kind.System, BankAccounts.SYSTEM_BANK, true, world.getWorldTime());
         pilotAccount = world.bankAccounts().create(BankAccounts.Kind.Person, person.getId(), false, world.getWorldTime());
@@ -46,12 +62,34 @@ class PersonTravelTest {
         world.bankControl().transfer(operator.getId(), pilotAccount.getId(), 1_000_000, BankTransactions.Type.PilotFlightPay);
     }
 
-    private double distance() {
-        return net.simforge.commons.misc.Geo.distance(oakland.getCoords(), london.getCoords());
+    private static PersonControl.Place place(final Airports.Airport airport) {
+        return new PersonControl.Place(Persons.LocationType.Airport, airport.getId(), airport.getIcao());
     }
 
-    private void minutesPass(final int minutes) {
-        world.setWorldTime(world.getWorldTime() + minutes * Time.ONE_MINUTE);
+    private static PersonControl.Place place(final Cities.City city) {
+        return new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName());
+    }
+
+    private double distance(final Airports.Airport from, final Airports.Airport to) {
+        return Geo.distance(from.getCoords(), to.getCoords());
+    }
+
+    private double distance(final Airports.Airport from, final Cities.City to) {
+        return Geo.distance(from.getCoords(), to.getCoords());
+    }
+
+    private double distance(final Cities.City from, final Cities.City to) {
+        return Geo.distance(from.getCoords(), to.getCoords());
+    }
+
+    // the pilot is in the city now (the place is set by hand: the tests of the ways do not need the trip to it)
+    private void pilotIsIn(final Cities.City city) {
+        person.setLocation(Persons.LocationType.City, city.getId());
+    }
+
+    private void arrive() {
+        world.setWorldTime(person.getHeartbeatTime());
+        PersonProcessor.process(world);
     }
 
     // ---- the quotes
@@ -73,22 +111,25 @@ class PersonTravelTest {
     }
 
     @Test
+    void theShortestTripByGroundTakesAQuarterOfAnHourAndCostsSomething() {
+        final PilotTravel.Quote quote = PilotTravel.quote(PilotTravel.Method.Ground, 2);
+
+        assertEquals(PilotTravel.GROUND_MIN_MINUTES, quote.durationMinutes());
+        assertEquals(PilotTravel.GROUND_MIN_PRICE, quote.price());
+    }
+
+    @Test
     void theWarpDriveIsAtOnceAndFree() {
         assertEquals(new PilotTravel.Quote(0, 0), PilotTravel.quote(PilotTravel.Method.WarpDrive, 8000));
     }
 
-    @Test
-    void aShortWayTakesAMinuteAtLeast() {
-        assertEquals(1, PilotTravel.quote(PilotTravel.Method.Mach3, 1).durationMinutes());
-    }
-
-    // ---- the travel
+    // ---- the warp drive: from anywhere to anywhere
 
     @Test
-    void theWarpDriveMovesAFreePilotAtOnce() {
+    void theWarpDriveMovesAirportToAirportAtOnce() {
         person.setWarpDrive(true);
 
-        world.personControl().travel(person, PilotTravel.Method.WarpDrive, london, distance());
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(london), distance(oakland, london));
 
         assertEquals(Persons.State.Idle, person.getState());
         assertEquals(Persons.LocationType.Airport, person.getLocationType());
@@ -97,23 +138,43 @@ class PersonTravelTest {
     }
 
     @Test
+    void theWarpDriveMovesAirportToCityAndCityToCityAndCityToAirport() {
+        person.setWarpDrive(true);
+
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(fresno), distance(oakland, fresno));
+        assertEquals(Persons.LocationType.City, person.getLocationType());
+        assertEquals(fresno.getId(), person.getLocationId());
+
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(oaklandCity), distance(fresno, oaklandCity));
+        assertEquals(oaklandCity.getId(), person.getLocationId());
+
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(london), distance(oaklandCity, fresno));
+        assertEquals(Persons.LocationType.Airport, person.getLocationType());
+        assertEquals(london.getId(), person.getLocationId());
+        assertEquals(Persons.State.Idle, person.getState());
+    }
+
+    @Test
     void theWarpDriveIsRefusedWithoutTheFlag() {
         final IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> world.personControl().travel(person, PilotTravel.Method.WarpDrive, london, distance()));
+                () -> world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(london), distance(oakland, london)));
 
         assertEquals("This way is not available", e.getMessage());
         assertEquals(oakland.getId(), person.getLocationId());
     }
 
+    // ---- Mach 3: only from an airport to an airport
+
     @Test
     void aFlightOfMach3IsPaidAndTakesTime() {
-        final double distance = distance();
+        final double distance = distance(oakland, london);
         final PilotTravel.Quote quote = PilotTravel.quote(PilotTravel.Method.Mach3, distance);
 
-        world.personControl().travel(person, PilotTravel.Method.Mach3, london, distance);
+        world.personControl().travel(person, PilotTravel.Method.Mach3, place(london), distance);
 
         assertEquals(Persons.State.Travelling, person.getState());
-        assertEquals(Persons.LocationType.Transit, person.getLocationType());
+        // while the person is Travelling the location is the place of the arrival
+        assertEquals(Persons.LocationType.Airport, person.getLocationType());
         assertEquals(london.getId(), person.getLocationId());
         assertEquals(1_000_000 - quote.price(), pilotAccount.getBalance());
         assertEquals(quote.price(), bank.getBalance());
@@ -122,16 +183,15 @@ class PersonTravelTest {
     }
 
     @Test
-    void theClockBringsThePilotToTheAirportAndTheFallingAsleepIsScheduled() {
-        world.personControl().travel(person, PilotTravel.Method.Mach3, london, distance());
+    void theClockBringsThePilotToThePlaceAndTheFallingAsleepIsScheduled() {
+        world.personControl().travel(person, PilotTravel.Method.Mach3, place(london), distance(oakland, london));
         final int arrival = person.getHeartbeatTime();
 
         world.setWorldTime(arrival - Time.ONE_MINUTE);
         PersonProcessor.process(world);
         assertEquals(Persons.State.Travelling, person.getState());
 
-        world.setWorldTime(arrival);
-        PersonProcessor.process(world);
+        arrive();
 
         assertEquals(Persons.State.Idle, person.getState());
         assertEquals(Persons.LocationType.Airport, person.getLocationType());
@@ -141,39 +201,103 @@ class PersonTravelTest {
     }
 
     @Test
-    void theGroundTakesDaysAndNothingHappensBeforeThat() {
-        world.personControl().travel(person, PilotTravel.Method.Ground, london, distance());
+    void mach3IsNotFromACityNorToACity() {
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Mach3, place(fresno), distance(oakland, fresno)));
+        pilotIsIn(oaklandCity);
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Mach3, place(london), 5000));
+        assertEquals(Persons.State.Idle, person.getState());
+        assertEquals(1_000_000, pilotAccount.getBalance());
+    }
+
+    @Test
+    void mach3IsNotForADistanceUnderFiveHundredMiles() {
+        // Oakland and San Francisco are a few miles apart
+        final IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> world.personControl().travel(person, PilotTravel.Method.Mach3, place(sanFrancisco), distance(oakland, sanFrancisco)));
+
+        assertEquals("Too close, from 500 miles", e.getMessage());
+        assertEquals(1_000_000, pilotAccount.getBalance());
+    }
+
+    // ---- by ground: from anywhere to anywhere
+
+    @Test
+    void theGroundTakesDaysFromAirportToAirportAndNothingHappensBeforeThat() {
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london));
         final int minutes = (person.getHeartbeatTime() - world.getWorldTime()) / Time.ONE_MINUTE;
 
         // about 4600 miles at 30 miles an hour: more than six days
-        assertTrue(minutes > 3 * 24 * 60, "minutes " + minutes);
-        minutesPass(24 * 60);
+        assertTrue(minutes > 6 * 24 * 60, "minutes " + minutes);
+        world.setWorldTime(world.getWorldTime() + 24 * 60 * Time.ONE_MINUTE);
         PersonProcessor.process(world);
         assertEquals(Persons.State.Travelling, person.getState());
     }
 
     @Test
-    void thePageKnowsWhereTheTravellingPilotGoes() {
-        world.personControl().travel(person, PilotTravel.Method.Mach3, london, distance());
+    void byGroundFromTheAirportToItsCityAndBackToAnotherAirportOfTheCity() {
+        final double toCity = distance(oakland, oaklandCity);
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(oaklandCity), toCity);
 
-        final PilotController.PilotDto pilot = PilotController.buildPilot(world, person);
+        assertEquals(Persons.State.Travelling, person.getState());
+        assertEquals(Persons.LocationType.City, person.getLocationType());
+        assertEquals(oaklandCity.getId(), person.getLocationId());
+        assertEquals(1_000_000 - PilotTravel.quote(PilotTravel.Method.Ground, toCity).price(), pilotAccount.getBalance());
+        arrive();
+        assertEquals(Persons.State.Idle, person.getState());
+        assertEquals(Persons.LocationType.City, person.getLocationType());
 
-        assertEquals("Travelling", pilot.getState());
-        assertEquals("EGLL", pilot.getDestinationIcao());
-        assertEquals(null, pilot.getAirportIcao());
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(sanFrancisco), Geo.distance(oaklandCity.getCoords(), sanFrancisco.getCoords()));
+        arrive();
+        assertEquals(Persons.LocationType.Airport, person.getLocationType());
+        assertEquals(sanFrancisco.getId(), person.getLocationId());
+    }
+
+    @Test
+    void byGroundFromCityToCity() {
+        pilotIsIn(oaklandCity);
+
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(fresno), distance(oaklandCity, fresno));
+        arrive();
+
+        assertEquals(Persons.State.Idle, person.getState());
+        assertEquals(Persons.LocationType.City, person.getLocationType());
+        assertEquals(fresno.getId(), person.getLocationId());
+    }
+
+    @Test
+    void byGroundToACityWhichTheAirportDoesNotServeIsAllowed() {
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(fresno), distance(oakland, fresno));
+
+        assertEquals(Persons.State.Travelling, person.getState());
+        assertEquals(fresno.getId(), person.getLocationId());
     }
 
     @Test
     void theMoneyLeavesTheAccountAtOnceWhenTheTravelStarts() {
         final long before = pilotAccount.getBalance();
-        final long price = PilotTravel.quote(PilotTravel.Method.Ground, distance()).price();
+        final long price = PilotTravel.quote(PilotTravel.Method.Ground, distance(oakland, london)).price();
 
-        world.personControl().travel(person, PilotTravel.Method.Ground, london, distance());
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london));
 
         // the pilot is still on the way and has paid already
         assertEquals(Persons.State.Travelling, person.getState());
         assertEquals(before - price, pilotAccount.getBalance());
     }
+
+    // ---- the airline is not made yet
+
+    @Test
+    void theAirlineIsNotAWayYet() {
+        pilotIsIn(oaklandCity);
+
+        final IllegalStateException e = assertThrows(IllegalStateException.class,
+                () -> world.personControl().travel(person, PilotTravel.Method.Airline, place(fresno), distance(oaklandCity, fresno)));
+
+        assertEquals("Coming soon", e.getMessage());
+        assertEquals(Persons.State.Idle, person.getState());
+    }
+
+    // ---- who can travel
 
     @Test
     void aPilotWhoHasNotEnoughMoneyDoesNotGo() {
@@ -181,109 +305,224 @@ class PersonTravelTest {
         poor.setBankAccountId(world.bankAccounts().create(BankAccounts.Kind.Person, poor.getId(), false, world.getWorldTime()).getId());
 
         final IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> world.personControl().travel(poor, PilotTravel.Method.Mach3, london, distance()));
+                () -> world.personControl().travel(poor, PilotTravel.Method.Mach3, place(london), distance(oakland, london)));
 
         assertEquals("Not enough money", e.getMessage());
+        assertEquals("Not enough money", world.personControl().travelProblem(poor, PilotTravel.Method.Mach3, place(london), distance(oakland, london)));
         assertEquals(Persons.State.Idle, poor.getState());
         assertEquals(oakland.getId(), poor.getLocationId());
     }
 
     @Test
-    void onlyAFreePilotAtAnAirportCanTravel() {
+    void onlyAFreePilotInAnAirportOrInACityCanTravel() {
         person.setState(Persons.State.Resting);
-        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, london, distance()));
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london)));
 
         person.setState(Persons.State.Idle);
         person.setLocation(Persons.LocationType.None, 0);
-        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, london, distance()));
+        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, place(london), distance(oakland, london)));
     }
 
     @Test
-    void aPilotDoesNotTravelToTheAirportWhereItIs() {
-        assertThrows(IllegalArgumentException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, oakland, 0));
+    void aPilotDoesNotTravelToThePlaceWhereItIs() {
+        assertThrows(IllegalArgumentException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, place(oakland), 0));
+        pilotIsIn(oaklandCity);
+        assertThrows(IllegalArgumentException.class, () -> world.personControl().travel(person, PilotTravel.Method.Ground, place(oaklandCity), 0));
     }
 
-    // ---- the options of the page
+    // ---- the menu: the ways of the place
 
-    @Test
-    void theWarpDriveIsNotAmongTheOptionsOfAPilotWhoDoesNotHaveIt() {
-        final PilotController.TravelOptionsDto options = PilotController.buildTravelOptions(world, person, "egll");
-
-        assertEquals(List.of("Mach3", "Airline", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
-        assertEquals("EGLL", options.getAirportIcao());
-        assertTrue(options.getDistanceNm() > 4000);
-        // everything is possible but the airline, which is not made yet
-        assertEquals(List.of(true, false, true), options.getOptions().stream().map(PilotController.TravelOptionDto::isAvailable).collect(Collectors.toList()));
-        assertEquals("Coming soon", options.getOptions().get(1).getProblem());
-        assertEquals(-1, options.getOptions().get(1).getDurationMinutes());
+    private static List<String> methodNames(final PilotController.TravelMethodsDto menu) {
+        return menu.getMethods().stream().map(PilotController.TravelMethodDto::getMethod).collect(Collectors.toList());
     }
 
     @Test
-    void theWarpDriveIsAmongTheOptionsOfThePilotWhoHasIt() {
+    void theMenuOfAnAirportHasMach3AndGround() {
+        final PilotController.TravelMethodsDto menu = PilotController.buildTravelMethods(world, person);
+
+        assertEquals("airport", menu.getLocation());
+        assertEquals("KOAK", menu.getPlaceName());
+        assertEquals(List.of("Mach3", "Ground"), methodNames(menu));
+        assertTrue(menu.getMethods().stream().allMatch(PilotController.TravelMethodDto::isAvailable));
+    }
+
+    @Test
+    void theMenuOfACityHasTheAirlineWhichCannotBeChosenAndGround() {
+        pilotIsIn(oaklandCity);
+
+        final PilotController.TravelMethodsDto menu = PilotController.buildTravelMethods(world, person);
+
+        assertEquals("city", menu.getLocation());
+        assertEquals(List.of("Airline", "Ground"), methodNames(menu));
+        assertFalse(menu.getMethods().get(0).isAvailable());
+        assertTrue(menu.getMethods().get(1).isAvailable());
+    }
+
+    @Test
+    void theWarpDriveIsInTheMenuOnlyOfThePilotWhoHasIt() {
+        assertFalse(methodNames(PilotController.buildTravelMethods(world, person)).contains("WarpDrive"));
+
         person.setWarpDrive(true);
 
-        final PilotController.TravelOptionsDto options = PilotController.buildTravelOptions(world, person, "EGLL");
-
-        assertEquals(List.of("WarpDrive", "Mach3", "Airline", "Ground"), options.getOptions().stream().map(PilotController.TravelOptionDto::getMethod).collect(Collectors.toList()));
-        assertEquals(0, options.getOptions().get(0).getDurationMinutes());
-        assertEquals(0, options.getOptions().get(0).getPrice());
+        assertEquals(List.of("Mach3", "Ground", "WarpDrive"), methodNames(PilotController.buildTravelMethods(world, person)));
+        pilotIsIn(oaklandCity);
+        assertEquals(List.of("Airline", "Ground", "WarpDrive"), methodNames(PilotController.buildTravelMethods(world, person)));
     }
 
     @Test
-    void anOptionWhichCannotBePaidSaysWhy() {
-        final Persons.Person poor = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 2, Persons.LocationType.Airport, oakland.getId(), 0, "BB", 0);
-        poor.setBankAccountId(world.bankAccounts().create(BankAccounts.Kind.Person, poor.getId(), false, world.getWorldTime()).getId());
+    void theMenuIsRefusedToAPilotWhoCannotTravel() {
+        person.setState(Persons.State.Resting);
 
-        final PilotController.TravelOptionDto mach3 = PilotController.buildTravelOptions(world, poor, "EGLL").getOptions().get(0);
-        assertEquals("Mach3", mach3.getMethod());
+        assertThrows(ResponseStatusException.class, () -> PilotController.buildTravelMethods(world, person));
+    }
 
-        assertFalse(mach3.isAvailable());
-        assertEquals("Not enough money", mach3.getProblem());
+    // ---- the quick places (commute)
+
+    @Test
+    void thePlacesOfAnAirportAreTheCitiesWhichItServes() {
+        final PilotController.TravelPlacesDto places = PilotController.buildTravelPlaces(world, person);
+
+        assertEquals("city", places.getKind());
+        assertEquals(List.of("Oakland"), places.getPlaces().stream().map(PilotController.TravelPlaceDto::getTitle).collect(Collectors.toList()));
+        assertEquals("city", places.getPlaces().get(0).getKind());
+        assertTrue(places.getPlaces().get(0).isAvailable());
+        assertTrue(places.getPlaces().get(0).getPrice() >= PilotTravel.GROUND_MIN_PRICE);
     }
 
     @Test
-    void mach3IsNotForADistanceUnderFiveHundredMilesAndTheAirlineNotUnderOneHundred() {
-        final Airports.Airport sanFrancisco = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
-        final Airports.Airport losAngeles = world.airports().create(33.94, -118.41, "LAX", "KLAX", "Los Angeles");
+    void thePlacesOfACityAreTheAirportsWhichServeItNearestFirst() {
+        pilotIsIn(oaklandCity);
 
-        final PilotController.TravelOptionsDto near = PilotController.buildTravelOptions(world, person, "KSFO");
-        assertEquals("Too close, from 500 miles", near.getOptions().get(0).getProblem());
-        assertEquals("Too close, from 100 miles", near.getOptions().get(1).getProblem());
-        assertFalse(near.getOptions().get(0).isAvailable());
-        assertTrue(near.getOptions().get(2).isAvailable());
+        final PilotController.TravelPlacesDto places = PilotController.buildTravelPlaces(world, person);
 
-        // about 300 miles: the airline would do (it is not made yet), Mach 3 is still too close
-        final PilotController.TravelOptionsDto middle = PilotController.buildTravelOptions(world, person, "KLAX");
-        assertEquals("Too close, from 500 miles", middle.getOptions().get(0).getProblem());
-        assertEquals("Coming soon", middle.getOptions().get(1).getProblem());
+        assertEquals("airport", places.getKind());
+        assertEquals(List.of("KOAK", "KSFO"), places.getPlaces().stream().map(PilotController.TravelPlaceDto::getId).collect(Collectors.toList()));
+        assertEquals("Oakland", places.getPlaces().get(0).getSubtitle());
+    }
 
-        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Mach3, losAngeles,
-                net.simforge.commons.misc.Geo.distance(oakland.getCoords(), losAngeles.getCoords())));
-        assertEquals(oakland.getId(), person.getLocationId());
-        assertEquals(1_000_000, pilotAccount.getBalance());
-        assertNotNull(sanFrancisco);
+    // ---- the search of the place
+
+    @Test
+    void theCodeOfAnAirportIsFoundFirst() {
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Ground", " egll ");
+
+        assertNull(found.getMessage());
+        assertEquals(1, found.getMatches().size());
+        assertEquals("airport", found.getMatches().get(0).getKind());
+        assertEquals("EGLL", found.getMatches().get(0).getId());
+        assertEquals("Heathrow", found.getMatches().get(0).getSubtitle());
+        assertTrue(found.getMatches().get(0).getDistanceNm() > 4000);
     }
 
     @Test
-    void theAirlineIsNotAWayYet() {
-        assertThrows(IllegalStateException.class, () -> world.personControl().travel(person, PilotTravel.Method.Airline, london, distance()));
+    void ifThereIsNoSuchAirportTheNameOfACityIsSearched() {
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Ground", "fresno");
+
+        assertEquals(1, found.getMatches().size());
+        assertEquals("city", found.getMatches().get(0).getKind());
+        assertEquals("Fresno", found.getMatches().get(0).getTitle());
+        assertEquals("United States", found.getMatches().get(0).getSubtitle());
+        assertEquals(Id.encode(fresno.getId()), found.getMatches().get(0).getId());
+    }
+
+    @Test
+    void severalCitiesWithTheSameNameAreAllOffered() {
+        final Countries.Country canada = world.countries().create("CA", "Canada");
+        world.cities().create(canada.getId(), "Fresno", 50.0, -100.0, 1000);
+
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Ground", "Fresno");
+
+        assertEquals(2, found.getMatches().size());
+        // the bigger one first
+        assertEquals("United States", found.getMatches().get(0).getSubtitle());
+        assertEquals("Canada", found.getMatches().get(1).getSubtitle());
+    }
+
+    @Test
+    void theBeginningOfTheNameOfACityIsEnough() {
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Ground", "Fres");
+
+        assertEquals(List.of("Fresno"), found.getMatches().stream().map(PilotController.TravelPlaceDto::getTitle).collect(Collectors.toList()));
+    }
+
+    @Test
+    void mach3ReadsOnlyTheCodeOfAnAirport() {
+        final PilotController.TravelFindDto city = PilotController.findTravelPlaces(world, person, "Mach3", "Fresno");
+        assertTrue(city.getMatches().isEmpty());
+        assertTrue(city.getMessage().contains("between airports"));
+
+        final PilotController.TravelFindDto airport = PilotController.findTravelPlaces(world, person, "Mach3", "EGLL");
+        assertEquals(1, airport.getMatches().size());
+        assertTrue(airport.getMatches().get(0).isAvailable());
+    }
+
+    @Test
+    void aPlaceWhichCannotBeReachedSaysWhy() {
+        // the place where the pilot is, a too close airport for Mach 3, a way which the pilot does not have
+        assertEquals("The pilot is at KOAK already", PilotController.findTravelPlaces(world, person, "Ground", "KOAK").getMatches().get(0).getProblem());
+        assertEquals("Too close, from 500 miles", PilotController.findTravelPlaces(world, person, "Mach3", "KSFO").getMatches().get(0).getProblem());
+        assertEquals("This way is not available", PilotController.findTravelPlaces(world, person, "WarpDrive", "EGLL").getMatches().get(0).getProblem());
+    }
+
+    @Test
+    void nothingFoundAndNothingTypedAreSaidInWords() {
+        assertTrue(PilotController.findTravelPlaces(world, person, "Ground", "Nowhereville").getMessage().contains("Nowhereville"));
+        assertTrue(PilotController.findTravelPlaces(world, person, "Ground", "  ").getMessage().startsWith("Type"));
+    }
+
+    // ---- the start by the kind and the id of the place
+
+    @Test
+    void startingTheTravelToACityByItsId() {
+        PilotController.startTravel(world, person, "Ground", "city", Id.encode(oaklandCity.getId()));
+
+        assertEquals(Persons.State.Travelling, person.getState());
+        assertEquals(Persons.LocationType.City, person.getLocationType());
+        assertEquals(oaklandCity.getId(), person.getLocationId());
+    }
+
+    @Test
+    void startingTheTravelToAnAirportByItsCode() {
+        PilotController.startTravel(world, person, "Mach3", "airport", "egll");
+
+        assertEquals(Persons.State.Travelling, person.getState());
+        assertEquals(london.getId(), person.getLocationId());
+    }
+
+    @Test
+    void aWrongStartIsRefused() {
+        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Teleport", "airport", "EGLL"));
+        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Ground", "planet", "EGLL"));
+        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Ground", "airport", "ZZZZ"));
+        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Ground", "city", "!!!"));
+        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Warp" + "Drive", "airport", "EGLL"));
         assertEquals(Persons.State.Idle, person.getState());
     }
 
-    @Test
-    void anUnknownAirportIsNotFoundAndASleepingPilotCannotAsk() {
-        assertThrows(ResponseStatusException.class, () -> PilotController.buildTravelOptions(world, person, "ZZZZ"));
+    // ---- what the page of the pilot knows
 
-        person.setState(Persons.State.Resting);
-        assertThrows(ResponseStatusException.class, () -> PilotController.buildTravelOptions(world, person, "EGLL"));
+    @Test
+    void thePageKnowsWhereTheTravellingPilotGoes() {
+        world.personControl().travel(person, PilotTravel.Method.Mach3, place(london), distance(oakland, london));
+
+        final PilotController.PilotDto pilot = PilotController.buildPilot(world, person);
+
+        assertEquals("Travelling", pilot.getState());
+        assertEquals("EGLL", pilot.getDestinationIcao());
+        // the place of the arrival is not where the pilot is
+        assertNull(pilot.getAirportIcao());
+        assertNull(pilot.getDestinationCity());
     }
 
     @Test
-    void startingTheTravelByTheNameOfTheWay() {
-        PilotController.startTravel(world, person, "EGLL", "Mach3");
+    void thePageKnowsWhichCityThePilotGoesTo() {
+        world.personControl().travel(person, PilotTravel.Method.Ground, place(oaklandCity), distance(oakland, oaklandCity));
 
-        assertEquals(Persons.State.Travelling, person.getState());
-        assertNotNull(world.persons().byId(person.getId()));
-        assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "EGLL", "Teleport"));
+        final PilotController.PilotDto pilot = PilotController.buildPilot(world, person);
+
+        assertEquals("Oakland", pilot.getDestinationCity());
+        assertNull(pilot.getCityName());
+        assertNull(pilot.getDestinationIcao());
+        assertNull(pilot.getAirportIcao());
     }
 }
