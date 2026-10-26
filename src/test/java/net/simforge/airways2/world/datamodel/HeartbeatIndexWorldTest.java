@@ -110,7 +110,7 @@ class HeartbeatIndexWorldTest {
         final Journeys loaded = new Journeys();
         loaded.loadIfExists(dir);
 
-        assertEquals(due.getId(), loaded.nextForHeartbeat(100).orElseThrow().getId());
+        assertEquals(due.getFromCityId(), loaded.nextForHeartbeat(100).orElseThrow().getFromCityId());
         assertTrue(loaded.nextForHeartbeat(99).isEmpty());
         assertEquals(List.of(), loaded.checkHeartbeatIndex());
     }
@@ -241,6 +241,53 @@ class HeartbeatIndexWorldTest {
         loaded.loadIfExists(dir);
 
         assertEquals(due.getId(), loaded.nextForHeartbeat(100).orElseThrow().getId());
+        assertTrue(loaded.nextForHeartbeat(99).isEmpty());
+        assertEquals(List.of(), loaded.checkHeartbeatIndex());
+    }
+
+    // ---- city to city flows
+
+    private City2CityFlows.Flow c2cFlow(final int fromCityId, final int toCityId, final int heartbeatTime) {
+        final City2CityFlows.Flow flow = world.city2cityFlows().createInactive(fromCityId, toCityId);
+        flow.setActive(true);
+        flow.setHeartbeatTime(heartbeatTime);
+        return flow;
+    }
+
+    @Test
+    public void test__c2c_flows_the_earliest_due_flow_goes_first_whatever_its_id() {
+        // the flows of the later cities (the bigger ids) have the older heartbeat: they have to be served first
+        final City2CityFlows.Flow firstCity = c2cFlow(1, 2, 300);
+        final City2CityFlows.Flow laterCity = c2cFlow(100, 2, 100);
+        final City2CityFlows.Flow future = c2cFlow(200, 2, 9000);
+
+        assertEquals(laterCity.getFromCityId(), world.city2cityFlows().nextForHeartbeat(500).orElseThrow().getFromCityId());
+        laterCity.setHeartbeatTime(0);
+        assertEquals(firstCity.getFromCityId(), world.city2cityFlows().nextForHeartbeat(500).orElseThrow().getFromCityId());
+        firstCity.setHeartbeatTime(0);
+        assertTrue(world.city2cityFlows().nextForHeartbeat(500).isEmpty());
+        assertEquals(future.getFromCityId(), world.city2cityFlows().nextForHeartbeat(9000).orElseThrow().getFromCityId());
+        assertEquals(List.of(), world.city2cityFlows().checkHeartbeatIndex());
+    }
+
+    @Test
+    public void test__c2c_flows_new_flow_has_no_heartbeat() {
+        world.city2cityFlows().createInactive(1, 2);
+
+        assertTrue(world.city2cityFlows().nextForHeartbeat(Integer.MAX_VALUE).isEmpty());
+        assertEquals(List.of(), world.city2cityFlows().checkHeartbeatIndex());
+    }
+
+    @Test
+    public void test__c2c_flows_index_survives_the_save_and_load(@TempDir final Path dir) throws IOException {
+        final City2CityFlows.Flow due = c2cFlow(100, 2, 100);
+        c2cFlow(1, 2, 900);
+        world.city2cityFlows().save(dir);
+
+        final City2CityFlows loaded = new City2CityFlows();
+        loaded.loadIfExists(dir);
+
+        assertEquals(due.getFromCityId(), loaded.nextForHeartbeat(100).orElseThrow().getFromCityId());
         assertTrue(loaded.nextForHeartbeat(99).isEmpty());
         assertEquals(List.of(), loaded.checkHeartbeatIndex());
     }

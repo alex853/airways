@@ -48,10 +48,10 @@ public class City2CityFlowHistogramAnalyser {
                     counts[day]++;
                 });
 
+        log.warn("c2c heartbeat histogram - overdue (h/b < world time): {}, the oldest h/b {}", overdue[0], overdue[1] != 0 ? Time.toLdt(overdue[1]) : "-");
+
         for (int row = 0; row < counts.length / 10; row++) {
             log.warn("c2c heartbeat histogram - row {} - data: {}, {}, {}, {}, {}, {}, {}, {}, {}, {}", row, counts[row * 10], counts[row * 10 + 1], counts[row * 10 + 2], counts[row * 10 + 3], counts[row * 10 + 4], counts[row * 10 + 5], counts[row * 10 + 6], counts[row * 10 + 7], counts[row * 10 + 8], counts[row * 10 + 9]);
         }
-
-        log.warn("c2c heartbeat histogram - overdue (h/b < world time): {}, the oldest h/b {}", overdue[0], overdue[1] != 0 ? Time.toLdt(overdue[1]) : "-");
     }
 }

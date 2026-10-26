@@ -35,6 +35,15 @@ public class City2CityFlowsProcessor {
             return;
         }
 
+        final Optional<CityFlows.Flow> fromCityFlowO = world.cityFlows().byCityId(c2cFlow.getFromCityId());
+        if (fromCityFlowO.isEmpty()) {
+            log.error("c2c #{}/{} {}-{} - unable to find flow for 'from city'",
+                    c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity);
+            // the flow is the first of the due ones until its heartbeat moves, so it would block all the other flows
+            c2cFlow.setHeartbeatTime(worldTime + Time.ONE_HOUR);
+            return;
+        }
+
         if (c2cFlow.getNextGroupSize() == 0) {
             c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
             log.warn("c2c #{}/{} {}-{} - next g/s was 0, set {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, c2cFlow.getNextGroupSize());
@@ -46,13 +55,6 @@ public class City2CityFlowsProcessor {
             c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
             log.warn("c2c #{}/{} {}-{} - acc/t not reached world time, curr acc/t {}, acc/t for next g/s {}, waiting",
                     c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(timeToAccumulateFlow));
-            return;
-        }
-
-        Optional<CityFlows.Flow> fromCityFlowO = world.cityFlows().byCityId(c2cFlow.getFromCityId());
-        if (fromCityFlowO.isEmpty()) {
-            log.error("c2c #{}/{} {}-{} - unable to find flow for 'from city'",
-                    c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity);
             return;
         }
 

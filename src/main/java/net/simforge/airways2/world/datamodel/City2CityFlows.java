@@ -8,6 +8,7 @@ import net.simforge.airways2.world.processors.CityFlowHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -27,6 +28,7 @@ public class City2CityFlows {
             .withDataField(DataField.of(DataType.Unsigned8bit)) // nextGroupSize [1 .. 255]
             .withDataField(DataField.of(DataType.Unsigned16bit)) // accumulatedFlow [0.00 - 255.00], 1st byte - integer part, 2nd byte - fractional
             .withDataField(DataField.of(DataType.Signed32bit)) // accumulatedFlowTime
+            .withHeartbeatIndex(3) // heartbeatField index: position among withDataField calls (fromCityId=0, toCityId=1, status=2, heartbeatTime=3)
             .build();
 
     private final DataField fromCityIdField = storage.getDataField(0);
@@ -78,8 +80,19 @@ public class City2CityFlows {
         return flow;
     }
 
+    /**
+     * The flow with the earliest heartbeat among the due ones (by the heartbeat index, no scan). A scan in the order of ids served the flows of the first cities
+     * only and the flows of the later cities waited for weeks.
+     */
     public Optional<Flow> nextForHeartbeat(final int worldTime) {
-        return storage.findFirst(storage.nextForHeartbeatCondition(heartbeatTimeField, worldTime));
+        return storage.nextForHeartbeat(worldTime);
+    }
+
+    /**
+     * Differences between the heartbeat index and the data, an empty list means they are consistent (a scan, for tests and diagnostics).
+     */
+    public List<String> checkHeartbeatIndex() {
+        return storage.checkHeartbeatIndex();
     }
 
     public class Flow {
