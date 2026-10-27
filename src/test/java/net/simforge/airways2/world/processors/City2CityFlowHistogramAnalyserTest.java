@@ -12,7 +12,7 @@ import java.time.temporal.ChronoUnit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * The hourly line about the heartbeats of the active flows: the overdue ones with min, avg and max, then the buckets of the days, weeks and months.
+ * The hourly line about the heartbeats of the active flows: the overdue ones with min and avg, then the buckets of the days, weeks and months.
  */
 class City2CityFlowHistogramAnalyserTest {
     private World world;
@@ -44,7 +44,7 @@ class City2CityFlowHistogramAnalyserTest {
     }
 
     @Test
-    public void test__overdue_flows_have_min_avg_and_max_and_the_rest_are_in_the_buckets() {
+    public void test__overdue_flows_have_min_and_avg_and_the_rest_are_in_the_buckets() {
         final int now = world.getWorldTime();
         final int day = Time.ONE_DAY;
         flow(true, now - 3 * Time.ONE_HOUR);
@@ -67,7 +67,7 @@ class City2CityFlowHistogramAnalyserTest {
         flow(true, now + 180 * day);                      // L
         flow(true, now + 400 * day);                      // L
 
-        assertEquals("c2c h/b overdue 3 min " + minutes(now - 3 * Time.ONE_HOUR) + " avg " + minutes(now - 2 * Time.ONE_HOUR) + " max " + minutes(now - Time.ONE_HOUR)
+        assertEquals("c2c h/b overdue 3 min " + minutes(now - 3 * Time.ONE_HOUR) + " avg " + minutes(now - 2 * Time.ONE_HOUR)
                         + " | D0-6 1,1,0,0,0,0,1 | W2-4 1,2,1 | M2-6 2,1,0,0,1 | L 2",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }

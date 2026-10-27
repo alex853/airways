@@ -10,7 +10,7 @@ import java.time.temporal.ChronoUnit;
 
 /**
  * Once per hour writes one line about the heartbeats of the active flows of cities: how many are overdue (the heartbeat is before the world time) with the
- * oldest, the average and the newest heartbeat of them, and how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third
+ * oldest and the average heartbeat of them, and how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third
  * and fourth week up to the day 30, M2..M6 the months of 30 days, L is everything after six months.
  */
 public class City2CityFlowHistogramAnalyser {
@@ -39,7 +39,6 @@ public class City2CityFlowHistogramAnalyser {
         final int[] counts = new int[BUCKETS];
         final int[] overdue = new int[1];
         final int[] oldest = {Integer.MAX_VALUE};
-        final int[] newest = {Integer.MIN_VALUE};
         final long[] sum = new long[1];
 
         world.city2cityFlows().all()
@@ -54,7 +53,6 @@ public class City2CityFlowHistogramAnalyser {
                         overdue[0]++;
                         sum[0] += heartbeatTime;
                         oldest[0] = Math.min(oldest[0], heartbeatTime);
-                        newest[0] = Math.max(newest[0], heartbeatTime);
                         return;
                     }
 
@@ -64,8 +62,7 @@ public class City2CityFlowHistogramAnalyser {
         final StringBuilder line = new StringBuilder("c2c h/b overdue ").append(overdue[0]);
         if (overdue[0] > 0) {
             line.append(" min ").append(minutes(oldest[0]))
-                    .append(" avg ").append(minutes((int) (sum[0] / overdue[0])))
-                    .append(" max ").append(minutes(newest[0]));
+                    .append(" avg ").append(minutes((int) (sum[0] / overdue[0])));
         }
         line.append(" | D0-6 ").append(join(counts, 0, DAYS))
                 .append(" | W2-4 ").append(join(counts, DAYS, DAYS + 3))
