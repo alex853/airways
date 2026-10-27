@@ -6,6 +6,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.AirportHubs;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
@@ -27,8 +28,6 @@ public class ShadowJetLogic {
     private static final int ACTIVE_AIRPORTS_LOG_LIMIT = 25;
     private static int activeAirportsLoggedAt = Integer.MIN_VALUE;
 
-    // todo ak1 hubs are hardcoded for the hub test, later should be calculated from flight stats, OR additional flag on Airport entity
-    private static final Set<String> HUB_ICAOS = Set.of("EGLL", "EGKK", "EDDF", "EDDM", "EHAM", "KJFK", "KEWR", "KLGA", "KMIA", "KATL", "KLAX", "KSFO", "LFPG", "LSZH", "LOWW", "LGAV", "OMDB", "OMAA", "RJAA", "WSSS", "YSSY");
 
     // the flight is filled up to a random part of its seats
     private static final int MIN_FILL_PERCENT = 70;
@@ -281,7 +280,7 @@ public class ShadowJetLogic {
     // not null if the flight goes to a hub, then the journeys which getting closer to their destinations are candidates too
     private static HubInfo findHubInfo(final World world, final FlightMissions.Mission mission) {
         final Airports.Airport hubAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-        if (!HUB_ICAOS.contains(hubAirport.getIcao())) {
+        if (!AirportHubs.isHub(hubAirport.getIcao())) {
             return null;
         }
 

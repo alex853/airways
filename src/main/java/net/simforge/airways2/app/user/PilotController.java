@@ -21,6 +21,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.datamodel.BankAccounts;
+import net.simforge.airways2.world.datamodel.BankTransactions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.processors.PersonControl;
 import net.simforge.commons.misc.Geo;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -489,6 +491,51 @@ public class PilotController {
                 new SettingsDto(person.isAutoFinish(), person.isWarpDrive() ? Boolean.TRUE : null));
     }
 
+    /**
+     * The last operations of the bank account of the pilot, the latest first: the time (UTC, to the minute), what for, the amount (minus when the pilot paid,
+     * plus when the pilot got the money) and the balance after the operation.
+     */
+    @GetMapping("/bank")
+    public BankDto getBank(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> buildBank(world, personOf(world, userId)));
+    }
+
+    static final int BANK_OPERATIONS = 10;
+
+    static BankDto buildBank(final World world, final Persons.Person person) {
+        final int accountId = person.getBankAccountId();
+        final BankAccounts.BankAccount account = accountId > 0 ? world.bankAccounts().byId(accountId).orElse(null) : null;
+        if (account == null) {
+            return new BankDto(null, List.of());
+        }
+        // the balance after an operation is not stored: the latest operation ends with the balance of now, every earlier one with the balance before the next one
+        final List<BankTransactions.BankTransaction> latest = world.bankTransactions().filter(world.bankTransactions().byAccountId(accountId))
+                .filter(t -> t.getType() != BankTransactions.Type.BalanceCheckpoint)
+                .sorted(Comparator.comparingInt(BankTransactions.BankTransaction::getId).reversed())
+                .limit(BANK_OPERATIONS)
+                .toList();
+        final List<BankOperationDto> operations = new ArrayList<>();
+        long balance = account.getBalance();
+        for (final BankTransactions.BankTransaction t : latest) {
+            final long amount = t.getToAccountId() == accountId ? t.getAmount() : -t.getAmount();
+            operations.add(new BankOperationDto(Time.toLdt(t.getTime()).truncatedTo(ChronoUnit.MINUTES).toString(), bankOperationTitle(t.getType()), amount, balance));
+            balance -= amount;
+        }
+        return new BankDto(account.getBalance(), operations);
+    }
+
+    private static String bankOperationTitle(final BankTransactions.Type type) {
+        return switch (type) {
+            case Travel -> "Travel";
+            case PilotMeals -> "Meals";
+            case PilotLodging -> "Night";
+            case PilotFlightPay -> "Flight pay";
+            case PilotIncomeShare -> "Income share";
+            case JourneyPayment -> "Journey payment";
+            case BalanceCheckpoint -> "Balance check";
+        };
+    }
+
     @GetMapping("/logbook")
     public LogbookDto getLogbook(@RequestAttribute("userId") final int userId) {
         return worldBean.read(world -> {
@@ -927,6 +974,26 @@ public class PilotController {
         private float baseIncomeSharePercent;
         // the time of the landing of the last flight on the type (world time, seconds), the page sorts the types by it
         private int lastFlightTime;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class BankDto {
+        // the balance now, null while the pilot has no account
+        private Long balance;
+        private List<BankOperationDto> operations;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class BankOperationDto {
+        // UTC to the minute, 2026-10-27T08:35
+        private String time;
+        private String type;
+        // minus when the pilot paid
+        private long amount;
+        // the balance of the account after the operation
+        private long balance;
     }
 
     @Data

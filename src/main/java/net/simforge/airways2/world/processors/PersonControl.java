@@ -2,11 +2,14 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.AirportHubs;
+import net.simforge.airways2.world.computations.PilotLiving;
 import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
+import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -14,6 +17,8 @@ import net.simforge.airways2.world.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -282,7 +287,10 @@ public class PersonControl {
 
         final String reason = method.title() + " to " + destination.name();
         if (quote.durationMinutes() == 0) {
+            // the pilot leaves the place at once, so the meals there are paid now and the count starts again at the new place
+            settleLiving(person, false);
             setLocation(person, destination.type(), destination.id(), reason);
+            markIdle(person);
             log.info("p/s #{} - travel {}, {} paid, at once", person.getId(), reason, price);
             return;
         }
@@ -411,14 +419,92 @@ public class PersonControl {
         if (oldState == state) {
             return;
         }
+        // the pilot stops being free: the meals of the place are paid, and the night if the pilot falls asleep (the location is the old one still)
+        if (oldState == Persons.State.Idle) {
+            settleLiving(person, state == Persons.State.Resting);
+        }
         person.setState(state);
         log.info("p/s #{} - state {} -> {} ({})", person.getId(), oldState, state, reason);
+        if (state == Persons.State.Idle) {
+            markIdle(person);
+        }
         // a free pilot is going to fall asleep by itself; a pilot who is not free (on duty, asleep) has nothing scheduled here (a sleep sets its own wake up)
         if (state == Persons.State.Idle) {
             scheduleAutoSleep(person);
         } else if (oldState == Persons.State.Idle) {
             person.setHeartbeatTime(0);
         }
+    }
+
+    // ---- the meals and the night of a free pilot (PilotLiving). The moment when the pilot became free is taken from the event log (PersonBecameIdle) and kept in
+    // the map, the log is read once. todo ak1 a field of the Person record (4 bytes, a migration of the storage) would replace the log and the map
+
+    private final Map<Integer, Integer> idleSince = new HashMap<>();
+    private boolean idleSinceLoaded;
+
+    private void ensureIdleSinceLoaded() {
+        if (idleSinceLoaded) {
+            return;
+        }
+        idleSinceLoaded = true;
+        final int type = EventLog.EventType.PersonBecameIdle.code();
+        world.eventLog().all()
+                .filter(event -> event.getTypeRaw() == type)
+                .forEach(event -> idleSince.merge(event.getObject1Id(), event.getTime(), Math::max));
+    }
+
+    private void markIdle(final Persons.Person person) {
+        ensureIdleSinceLoaded();
+        final int now = world.getWorldTime();
+        world.eventLog().log(now, EventLog.EventType.PersonBecameIdle, EventLog.id(person), null, null, null);
+        idleSince.put(person.getId(), now);
+    }
+
+    // the pilot stops being free: pays for the meals of the free time in this place and, if it falls asleep, for the night; nothing fails, the pilot pays what it has
+    private void settleLiving(final Persons.Person person, final boolean sleeping) {
+        final Place place = currentPlace(person).orElse(null);
+        if (place == null || person.getBankAccountId() <= 0) {
+            return;
+        }
+        ensureIdleSinceLoaded();
+        final Integer since = idleSince.get(person.getId());
+        if (since != null) {
+            final int minutes = (world.getWorldTime() - since) / Time.ONE_MINUTE;
+            final int dayPrice = livingPrice(place, PilotLiving.MEALS_CITY_BASE, PilotLiving.MEALS_AIRPORT_BASE);
+            payLiving(person, PilotLiving.mealsAmount(dayPrice, minutes), BankTransactions.Type.PilotMeals, "meals", place);
+        }
+        if (sleeping) {
+            payLiving(person, livingPrice(place, PilotLiving.SLEEP_CITY_BASE, PilotLiving.SLEEP_AIRPORT_BASE), BankTransactions.Type.PilotLodging, "night", place);
+        }
+    }
+
+    // the price of the day or of the night in the place
+    private int livingPrice(final Place place, final int cityBase, final int airportBase) {
+        if (place.type() == Persons.LocationType.City) {
+            final float attraction = world.cityFlows().byCityId(place.id()).map(f -> f.getAttractionFactor()).orElse(1.0f);
+            return PilotLiving.cityPrice(cityBase, attraction, place.id());
+        }
+        final boolean hub = AirportHubs.isHub(place.name());
+        return PilotLiving.airportPrice(airportBase, hub, flightsPerWeek(place.id()), place.id());
+    }
+
+    // the flights which took off from the airport or landed there in the days of the flight stats (today and seven days before)
+    private int flightsPerWeek(final int airportId) {
+        return world.airport2airportDailyFlightStats().allByFromAirportId(airportId).mapToInt(s -> s.getTotalCount()).sum()
+                + world.airport2airportDailyFlightStats().allByToAirportId(airportId).mapToInt(s -> s.getTotalCount()).sum();
+    }
+
+    private void payLiving(final Persons.Person person, final int amount, final BankTransactions.Type type, final String what, final Place place) {
+        if (amount <= 0) {
+            return;
+        }
+        final Optional<BankAccounts.BankAccount> bank = world.bankAccounts().byOwner(BankAccounts.Kind.System, BankAccounts.SYSTEM_BANK);
+        if (bank.isEmpty()) {
+            log.warn("p/s #{} - {} {} is not paid, the bank has no account yet", person.getId(), what, amount);
+            return;
+        }
+        final long paid = world.bankControl().transferUpTo(person.getBankAccountId(), bank.get().getId(), amount, type);
+        log.info("p/s #{} - {} {}{} in {}", person.getId(), what, paid, paid < amount ? " of " + amount : "", place.name());
     }
 
     public void setLocation(final Persons.Person person, final Persons.LocationType type, final int id, final String reason) {

@@ -236,6 +236,9 @@ public class EventLog {
         TransportFlightDeparted(506),
         TransportFlightDeboardingStarted(507),
         TransportFlightFinished(508),
+
+        // the person became free (Idle): the moment from which the meals of the person are counted, see PersonControl
+        PersonBecameIdle(600),
         ;
 
         private final int code;
@@ -262,7 +265,8 @@ public class EventLog {
         Aircraft(3),
         Airport(4),
         TransportFlight(5),
-        ScheduledFlight(6);
+        ScheduledFlight(6),
+        Person(7);
 
         private final int code;
 
@@ -292,6 +296,11 @@ public class EventLog {
     public static EventLogId id(final FlightMissions.Mission mission) {
         checkNotNull(mission);
         return new EventLogId(ObjectType.FlightMission, mission.getId());
+    }
+
+    public static EventLogId id(final Persons.Person person) {
+        checkNotNull(person);
+        return new EventLogId(ObjectType.Person, person.getId());
     }
 
     public static EventLogId id(final Aircrafts.Aircraft aircraft) {

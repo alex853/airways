@@ -59,6 +59,24 @@ public class BankControl {
     }
 
     /**
+     * Takes as much of the amount as the account can pay: all of it, or what the account has (nothing if it has nothing or owes). The account does not go
+     * negative and nothing fails, for the payments which must not stop anything (the meals of a pilot). Returns what has been taken.
+     */
+    public long transferUpTo(final int fromAccountId, final int toAccountId, final long amount, final BankTransactions.Type type) {
+        if (amount <= 0) {
+            return 0;
+        }
+        final BankAccounts.BankAccount from = world.bankAccounts().byId(fromAccountId)
+                .orElseThrow(() -> new IllegalArgumentException("there is no account #" + fromAccountId));
+        final long payable = from.canGoNegative() ? amount : Math.min(amount, Math.max(0, from.getBalance()));
+        if (payable <= 0) {
+            return 0;
+        }
+        transfer(fromAccountId, toAccountId, payable, type);
+        return payable;
+    }
+
+    /**
      * The id of the bank account of an operator, zero if the operator has none.
      */
     public int operatorAccountId(final int operatorId) {
