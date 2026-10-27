@@ -14,6 +14,7 @@ import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotContracts;
@@ -143,7 +144,7 @@ public class FlightDashboardController {
 
         final List<SimTracker.UserAction> actions;
         if (mode == null) {
-            actions = new ArrayList<>(trackerActions);
+            actions = new ArrayList<>(trackerActions.stream().map(a -> withPilotAtDeparture(world, flight, pilotAirportId, a)).toList());
             actions.addAll(buildManualActions(world, flight, pilotAirportId));
         } else {
             actions = new ArrayList<>(mode == TrackingMode.MANUAL ? buildManualActions(world, flight, pilotAirportId) : trackerActions);
@@ -183,6 +184,19 @@ public class FlightDashboardController {
             default -> { }
         }
         return actions;
+    }
+
+    // The tracked start needs the pilot at the departure airport as the manual one does: a pilot who booked from a city has to travel to the airport first
+    private static SimTracker.UserAction withPilotAtDeparture(final World world, final FlightMissions.Mission flight, final int pilotAirportId,
+                                                              final SimTracker.UserAction action) {
+        if (!"start-flight".equals(action.getName())) {
+            return action;
+        }
+        final boolean pilotAtDeparture = pilotAirportId == flight.getDepartureAirportId();
+        final String icao = world.airports().getIcao(flight.getDepartureAirportId()).orElse("?");
+        final List<SimTracker.CheckResult> checks = new ArrayList<>(action.getChecks());
+        checks.add(new SimTracker.CheckResult("The pilot is at the departure airport " + icao, pilotAtDeparture));
+        return new SimTracker.UserAction(action.getName(), action.isAllowed() && pilotAtDeparture, checks);
     }
 
     // The pilot starts a flight from the airport where the pilot is: the position of the sim means nothing for a manual flight, the world is what counts
@@ -248,9 +262,18 @@ public class FlightDashboardController {
                 .flatMap(p -> world.airports().getIcao(p.getLocationId()))
                 .orElse(null);
 
+        // The city where the pilot is: a pilot in a city may book an aircraft at the airports of the city and see the dashboard, but cannot start a flight
+        final Optional<Cities.City> pilotCity = person
+                .filter(p -> p.getState() != Persons.State.Travelling && p.getLocationType() == Persons.LocationType.City)
+                .flatMap(p -> world.cities().byId(p.getLocationId()));
+
         final boolean flightInProgress = simStatus.getFlightMissionId() != null || userHasActiveFlight(world, userId);
 
-        return buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress, simStatus);
+        final UserLocationDto dto = buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress,
+                simStatus, pilotCity.isPresent());
+        dto.setExpectedCity(pilotCity.map(Cities.City::getName).orElse(null));
+        dto.setBookingAirports(person.map(p -> world.personControl().bookingAirports(p).stream().map(Airports.Airport::getIcao).toList()).orElse(List.of()));
+        return dto;
     }
 
     // The flight of the user which has been started and is not finished yet, the person is on duty then.
@@ -270,6 +293,15 @@ public class FlightDashboardController {
                                                 final boolean hasPerson,
                                                 final boolean flightInProgress,
                                                 final SimTracker.UserStatus simStatus) {
+        return buildUserLocationDto(expectedAirport, personState, hasPerson, flightInProgress, simStatus, false);
+    }
+
+    static UserLocationDto buildUserLocationDto(final String expectedAirport,
+                                                final Persons.State personState,
+                                                final boolean hasPerson,
+                                                final boolean flightInProgress,
+                                                final SimTracker.UserStatus simStatus,
+                                                final boolean personInCity) {
         final String currentAirport = "At airport".equals(simStatus.getLocationStatus()) ? simStatus.getAirportIcao() : null;
 
         final UserLocationState state;
@@ -282,8 +314,11 @@ public class FlightDashboardController {
         } else if (personState != Persons.State.Idle) {
             // todo ak3 a person who is Resting or Travelling can be 'woken up' or 'brought back' by the user, but it costs something
             state = UserLocationState.PERSON_NOT_IDLE;
+        } else if (expectedAirport == null && personInCity) {
+            // the pilot is Idle in a city: the dashboard and the booking are available, a flight is started after the pilot has travelled to the airport
+            state = UserLocationState.PERSON_IN_CITY;
         } else if (expectedAirport == null) {
-            // the pilot is Idle but is not at an airport (in the air, in a hotel, in a city): something is wrong, nothing can be started from there
+            // the pilot is Idle but is not at an airport (in the air, in a hotel): something is wrong, nothing can be started from there
             state = UserLocationState.PERSON_NOT_AT_AIRPORT;
         } else if (currentAirport == null) {
             // sim tracker is not connected, or pilot is in the air or on the ground out of any airport
@@ -373,7 +408,7 @@ public class FlightDashboardController {
             // the pilot starts from the airport where the pilot is, in any mode
             final int pilotAirportId = pilotAirportId(world, userId);
             if (pilotAirportId != flight.getDepartureAirportId()) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "the pilot is at " + world.airports().getIcao(pilotAirportId).orElse("no airport")
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the pilot is at " + world.airports().getIcao(pilotAirportId).orElse("no airport (travel to the airport first)")
                         + " but the flight departs from " + world.airports().getIcao(flight.getDepartureAirportId()).orElse("?"));
             }
 
@@ -878,6 +913,16 @@ public class FlightDashboardController {
         private final UserLocationState state;
         private final String expectedAirport;
         private final String currentAirport;
+        // the city where the pilot is, null when the pilot is not in a city
+        private String expectedCity;
+        // the airports where the pilot may book an aircraft: its airport, or the airports of its city
+        private List<String> bookingAirports = List.of();
+
+        public UserLocationDto(final UserLocationState state, final String expectedAirport, final String currentAirport) {
+            this.state = state;
+            this.expectedAirport = expectedAirport;
+            this.currentAirport = currentAirport;
+        }
     }
 
     public enum TrackingMode {
@@ -892,8 +937,10 @@ public class FlightDashboardController {
         NO_PERSON,
         // the person is not Idle (Resting, Travelling, OnDuty without a flight)
         PERSON_NOT_IDLE,
-        // the person is Idle but is not at an airport
+        // the person is Idle but is not at an airport and not in a city
         PERSON_NOT_AT_AIRPORT,
+        // the person is Idle in a city: the dashboard works, a flight can be booked and is started after the pilot has travelled to the airport
+        PERSON_IN_CITY,
         // the pilot is loaded at an airport which is not the airport of the person
         WRONG_AIRPORT,
         // the sim tracker does not say where the pilot is: it is not connected, the pilot is in the air or on the ground out of any airport

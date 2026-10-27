@@ -218,6 +218,23 @@ class DashboardManualActionsTest {
     }
 
     @Test
+    void theTrackedStartIsNotAllowedWhenThePilotIsNotAtTheDepartureAirport() {
+        final SimTracker.UserStatus sim = connected(trackerAction("start-flight"));
+
+        final SimTracker.UserAction atDeparture = FlightDashboardController.buildActions(world, mission, sim, true, departureId).get(0);
+        assertEquals("start-flight", atDeparture.getName());
+        assertTrue(atDeparture.isAllowed());
+
+        // a pilot in a city (no airport) or at another airport has to travel to the departure airport first
+        for (final int pilotAirportId : new int[]{0, departureId + 1}) {
+            final SimTracker.UserAction elsewhere = FlightDashboardController.buildActions(world, mission, sim, true, pilotAirportId).get(0);
+            assertEquals("start-flight", elsewhere.getName());
+            assertFalse(elsewhere.isAllowed());
+            assertFalse(elsewhere.getChecks().get(elsewhere.getChecks().size() - 1).isResult());
+        }
+    }
+
+    @Test
     void theManualStartIsNotAllowedWhenThePilotIsNotAtTheDepartureAirport() {
         final SimTracker.UserAction elsewhere = FlightDashboardController.buildManualActions(world, mission, departureId + 1).get(0);
         assertEquals("start-flight-manual", elsewhere.getName());

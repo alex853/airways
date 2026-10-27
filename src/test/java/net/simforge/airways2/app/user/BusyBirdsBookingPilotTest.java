@@ -8,6 +8,8 @@ import net.simforge.airways2.world.datamodel.Persons;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,10 +57,39 @@ class BusyBirdsBookingPilotTest {
     }
 
     @Test
-    void pilotOutOfAirportMayNotBook() {
+    void pilotNowhereMayNotBook() {
+        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.None, 0);
+
+        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("not at an airport or in a city"));
+    }
+
+    @Test
+    void pilotInACityMayBookAnAircraftAtAnAirportLinkedToTheCity() {
+        world.airport2city().create(oakland.getId(), cityId);
+        world.airport2city().create(sanFrancisco.getId(), cityId);
         final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.City, cityId);
 
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("not at an airport"));
+        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()));
+        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), sanFrancisco.getId()));
+        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), 0));
+        assertEquals(List.of("KOAK", "KSFO"), world.personControl().bookingAirports(p).stream().map(Airports.Airport::getIcao).toList());
+    }
+
+    @Test
+    void pilotInACityMayNotBookAnAircraftAtAnAirportWhichIsNotLinkedToTheCity() {
+        world.airport2city().create(oakland.getId(), cityId);
+        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.City, cityId);
+
+        assertEquals("Your pilot is in Oakland, which is not linked to KSFO where the aircraft is, the flight cannot be booked.",
+                BusyBirdsController.pilotBookingProblem(world, p.getId(), sanFrancisco.getId()));
+    }
+
+    @Test
+    void aBusyPilotInACityMayNotBook() {
+        world.airport2city().create(oakland.getId(), cityId);
+        final Persons.Person p = person(Persons.State.Resting, Persons.LocationType.City, cityId);
+
+        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("busy"));
     }
 
     @Test

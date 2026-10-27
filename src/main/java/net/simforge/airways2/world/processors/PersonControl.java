@@ -17,7 +17,9 @@ import net.simforge.airways2.world.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -265,6 +267,25 @@ public class PersonControl {
             case Airport -> world.airports().byId(person.getLocationId()).map(a -> new Place(Persons.LocationType.Airport, a.getId(), a.getIcao()));
             case City -> world.cities().byId(person.getLocationId()).map(c -> new Place(Persons.LocationType.City, c.getId(), c.getName()));
             default -> Optional.empty();
+        };
+    }
+
+    /**
+     * The airports where the pilot may book an aircraft: the airport where the pilot is, or, for a pilot in a city, the airports linked to the city (the pilot
+     * will travel to the airport of the aircraft before the start). Nothing for a pilot who is on the way or nowhere.
+     */
+    public List<Airports.Airport> bookingAirports(final Persons.Person person) {
+        if (person.getState() == Persons.State.Travelling) {
+            return List.of();
+        }
+        return switch (person.getLocationType()) {
+            case Airport -> world.airports().byId(person.getLocationId()).map(List::of).orElse(List.of());
+            case City -> world.airport2city().allByCityId(person.getLocationId())
+                    .map(link -> world.airports().byId(link.getAirportId()))
+                    .flatMap(Optional::stream)
+                    .sorted(Comparator.comparing(Airports.Airport::getIcao))
+                    .toList();
+            default -> List.of();
         };
     }
 

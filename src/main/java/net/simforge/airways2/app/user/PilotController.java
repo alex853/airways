@@ -488,6 +488,7 @@ public class PilotController {
 
         return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
                 buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao, destinationCity,
+                world.personControl().bookingAirports(person).stream().map(Airports.Airport::getIcao).toList(),
                 new SettingsDto(person.isAutoFinish(), person.isWarpDrive() ? Boolean.TRUE : null));
     }
 
@@ -782,6 +783,8 @@ public class PilotController {
         private String destinationIcao;
         // the city the pilot is travelling to from an airport (by ground), null when the pilot is not on such a way
         private String destinationCity;
+        // the airports where the pilot may book an aircraft: the airport of the pilot, or the airports linked to its city; empty when the pilot is on the way or nowhere
+        private List<String> bookingAirports;
         // the settings of the pilot (the page of the pilot shows them, the user cannot change them yet)
         private SettingsDto settings;
     }

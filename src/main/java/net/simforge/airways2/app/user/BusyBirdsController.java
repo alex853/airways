@@ -39,7 +39,7 @@ public class BusyBirdsController {
     private WorldRunnerBean worldBean;
 
     /**
-     * Whether the user may book BusyBirds flights at all: the pilot of the user is Idle at an airport. Whether the pilot stands where the aircraft
+     * Whether the user may book BusyBirds flights at all: the pilot of the user is Idle at an airport or in a city. Whether the pilot stands where the aircraft
      * stands is checked when an aircraft is booked.
      */
     @GetMapping("/booking-status")
@@ -279,8 +279,8 @@ public class BusyBirdsController {
         });
     }
 
-    // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands. Returns the reason of
-    // the refusal, null if the booking is allowed.
+    // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands, or in a city which that airport is
+    // linked to (the pilot travels to the airport before the start). Returns the reason of the refusal, null if the booking is allowed.
     private static String pilotBookingProblem(final World world, final int userId, final Aircrafts.Aircraft aircraft) {
         final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
         return pilotBookingProblem(world, personId, aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport ? aircraft.getLocationAirportId() : 0);
@@ -294,12 +294,17 @@ public class BusyBirdsController {
         if (person.get().getState() != Persons.State.Idle) {
             return "Your pilot is busy now (" + person.get().getState() + "), so no flight can be booked.";
         }
-        if (person.get().getLocationType() != Persons.LocationType.Airport) {
-            return "Your pilot is not at an airport, so no flight can be booked.";
+        final Persons.LocationType locationType = person.get().getLocationType();
+        if (locationType != Persons.LocationType.Airport && locationType != Persons.LocationType.City) {
+            return "Your pilot is not at an airport or in a city, so no flight can be booked.";
         }
-        if (aircraftAirportId > 0 && person.get().getLocationId() != aircraftAirportId) {
-            final String pilotAirport = world.airports().getIcao(person.get().getLocationId()).orElse("?");
+        if (aircraftAirportId > 0 && world.personControl().bookingAirports(person.get()).stream().noneMatch(a -> a.getId() == aircraftAirportId)) {
             final String aircraftAirport = world.airports().getIcao(aircraftAirportId).orElse("?");
+            if (locationType == Persons.LocationType.City) {
+                final String pilotCity = world.cities().byId(person.get().getLocationId()).map(c -> c.getName()).orElse("?");
+                return "Your pilot is in " + pilotCity + ", which is not linked to " + aircraftAirport + " where the aircraft is, the flight cannot be booked.";
+            }
+            final String pilotAirport = world.airports().getIcao(person.get().getLocationId()).orElse("?");
             return "Your pilot is at " + pilotAirport + " but the aircraft is at " + aircraftAirport + ", the flight cannot be booked.";
         }
         return null;

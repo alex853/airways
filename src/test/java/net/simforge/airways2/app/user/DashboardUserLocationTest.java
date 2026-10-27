@@ -9,6 +9,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import org.junit.jupiter.api.Test;
@@ -219,6 +220,42 @@ class DashboardUserLocationTest {
 
         person.setLocation(Persons.LocationType.City, 5);
         assertEquals(UserLocationState.PERSON_NOT_AT_AIRPORT, FlightDashboardController.buildUserLocation(world, user, 1, atAirport("KOAK")).getState());
+    }
+
+    @Test
+    public void test__person_in_a_city_does_not_block_the_dashboard_and_may_book_at_the_airports_of_the_city() {
+        final World world = world();
+        final Airports.Airport koak = airport(world, "KOAK", -122.0);
+        final Airports.Airport ksfo = airport(world, "KSFO", -122.4);
+        final int countryId = world.countries().create("US", "United States").getId();
+        final Cities.City oakland = world.cities().create(countryId, "Oakland", 37.8, -122.3, 400_000);
+        world.airport2city().create(koak.getId(), oakland.getId());
+        world.airport2city().create(ksfo.getId(), oakland.getId());
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1,
+                Persons.LocationType.City, oakland.getId(), 0, "AK", 0);
+        final User user = new User(1, "token-of-user-1", person.getId(), 0);
+
+        final UserLocationDto location = FlightDashboardController.buildUserLocation(world, user, 1, SimTracker.UserStatus.none());
+
+        assertEquals(UserLocationState.PERSON_IN_CITY, location.getState());
+        assertEquals(false, location.getState().blocksDashboard());
+        assertNull(location.getExpectedAirport());
+        assertEquals("Oakland", location.getExpectedCity());
+        assertEquals(java.util.List.of("KOAK", "KSFO"), location.getBookingAirports());
+    }
+
+    @Test
+    public void test__person_at_an_airport_books_at_its_airport_only() {
+        final World world = world();
+        final Airports.Airport koak = airport(world, "KOAK", -122.0);
+        final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1,
+                Persons.LocationType.Airport, koak.getId(), 0, "AK", 0);
+        final User user = new User(1, "token-of-user-1", person.getId(), 0);
+
+        final UserLocationDto location = FlightDashboardController.buildUserLocation(world, user, 1, atAirport("KOAK"));
+
+        assertEquals(java.util.List.of("KOAK"), location.getBookingAirports());
+        assertNull(location.getExpectedCity());
     }
 
     @Test
