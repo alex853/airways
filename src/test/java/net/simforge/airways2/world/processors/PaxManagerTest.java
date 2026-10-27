@@ -781,12 +781,16 @@ public class PaxManagerTest {
 
     // the lines of the log of the PaxManager while the code runs
     private List<String> logOf(final Runnable code) {
+        return logOf(Level.INFO, code);
+    }
+
+    private List<String> logOf(final Level level, final Runnable code) {
         final Logger logger = (Logger) LoggerFactory.getLogger(PaxManager.class);
         final ListAppender<ILoggingEvent> appender = new ListAppender<>();
         appender.start();
         logger.addAppender(appender);
         final Level oldLevel = logger.getLevel();
-        logger.setLevel(Level.INFO);
+        logger.setLevel(level);
         try {
             code.run();
         } finally {
@@ -801,7 +805,10 @@ public class PaxManagerTest {
         checkedInJourneys(40, 40);
         tfControl.startBoarding(transportFlight);
 
-        final List<String> lines = logOf(() -> runBoardingFor(30));
+        // the progress line is at the debug level: nothing of it at the info level
+        assertTrue(logOf(() -> runBoardingFor(5)).stream().noneMatch(l -> l.contains(" PAX ")));
+
+        final List<String> lines = logOf(Level.DEBUG, () -> runBoardingFor(30));
 
         final List<String> progress = lines.stream().filter(l -> l.contains(" PAX ")).toList();
         assertFalse(progress.isEmpty());

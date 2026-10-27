@@ -128,7 +128,7 @@ public class PaxManager {
 
         protected abstract String name();
 
-        // the short name and the state for the progress line of the log (it is written at every tick of every flight, so it is short): "board PAX 16 [c16,r115,...]"
+        // the short name and the state for the progress line of the log (it is written at every tick of every flight, so it is short and goes to the debug level): "board PAX 16 [c16,r115,...]"
         protected abstract String shortName();
 
         protected abstract String progress();
@@ -191,7 +191,8 @@ public class PaxManager {
                 transportFlight.setPaxOnBoard(expectedPax);
             }
 
-            log.info("t/f #{} - {} PAX {} {}", transportFlight.getId(), shortName(), transportFlight.getPaxOnBoard(), progress());
+            // debug: the counter changes at every tick of every flight, the journeys which have boarded or got off are logged by JourneyControl
+            log.debug("t/f #{} - {} PAX {} {}", transportFlight.getId(), shortName(), transportFlight.getPaxOnBoard(), progress());
         }
 
         protected final void refresh() {
@@ -352,7 +353,7 @@ public class PaxManager {
                         .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
                         .ifPresent(journey -> {
                             world.journeyControl().board(journey);
-                            log.info("t/f #{} - board j/y #{} was being boarded (counter {}), boarded at the finish", transportFlight.getId(), journey.getId(), counterValue);
+                            log.info("t/f #{} - board j/y #{} boarded at finish", transportFlight.getId(), journey.getId());
                         });
             }
 
