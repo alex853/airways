@@ -1,12 +1,19 @@
 package net.simforge.airways2.world.processors;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
+import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
+import net.simforge.airways2.world.datamodel.Journeys;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,5 +101,57 @@ class City2CityFlowsProcessorTest {
 
         assertTrue(stuck.getHeartbeatTime() > now);
         assertTrue(other.getHeartbeatTime() != now - Time.ONE_DAY);
+    }
+
+    // the lines of the log of the class while the code runs
+    private static List<String> logOf(final Class<?> clazz, final Runnable code) {
+        final Logger logger = (Logger) LoggerFactory.getLogger(clazz);
+        final ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        final Level oldLevel = logger.getLevel();
+        logger.setLevel(Level.INFO);
+        try {
+            code.run();
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(oldLevel);
+        }
+        return appender.list.stream().map(ILoggingEvent::getFormattedMessage).toList();
+    }
+
+    @Test
+    public void test__the_city_names_of_the_log_are_cut_to_5_characters() {
+        assertEquals("San D", Formatting.shortCity("San Diego"));
+        assertEquals("Los A", Formatting.shortCity("Los Angeles"));
+        assertEquals("Paris", Formatting.shortCity("Paris"));
+        assertEquals("Rome", Formatting.shortCity("Rome"));
+    }
+
+    @Test
+    public void test__the_new_journey_line_is_short_and_has_the_journey_id() {
+        final City2CityFlows.Flow flow = dueFlow(london, berlin, world.getWorldTime() - Time.ONE_HOUR);
+        flow.setAccumulatedFlowTime(world.getWorldTime() - 2 * Time.ONE_DAY);
+
+        final List<String> lines = logOf(City2CityFlowsProcessor.class, () -> City2CityFlowsProcessor.process(world));
+
+        final String prefix = "#" + london.getId() + "/" + berlin.getId() + " Londo-Berli: NEW j/y #";
+        final String line = lines.stream().filter(l -> l.startsWith(prefix)).findFirst().orElseThrow();
+        // the journey id, the service and the group size, next group size, the times without seconds
+        assertTrue(line.matches(java.util.regex.Pattern.quote(prefix) + "\\d+ [A-Z]+\\d+, nxt \\d+, a/t \\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d, h/b \\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d"), line);
+    }
+
+    @Test
+    public void test__the_success_rate_of_both_directions_is_one_line() {
+        final City2CityFlows.Flow forward = dueFlow(london, berlin, world.getWorldTime());
+        final City2CityFlows.Flow backward = dueFlow(berlin, london, world.getWorldTime());
+        forward.setSuccessRate(0.5f);
+        backward.setSuccessRate(0.5f);
+
+        final List<String> lines = logOf(City2CityFlowControl.class, () -> world.c2cFlowControl().updateSuccessRate(
+                world.journeys().create(Journeys.Status.LookingForTickets, london.getId(), berlin.getId(), 2, net.simforge.airways2.tools.CabinLayout.Service.Y), 0.025f));
+
+        assertEquals(1, lines.size(), lines.toString());
+        assertEquals("s/r d0.025%: #" + london.getId() + "/" + berlin.getId() + " Londo-Berli n " + Formatting.df7.format(forward.getSuccessRate()) + ", #" + berlin.getId() + "/" + london.getId() + " Berli-Londo n " + Formatting.df7.format(backward.getSuccessRate()), lines.get(0));
     }
 }

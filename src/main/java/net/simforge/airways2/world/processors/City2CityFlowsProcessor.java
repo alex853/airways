@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.tools.Formatting;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
@@ -8,6 +9,8 @@ import net.simforge.airways2.world.datamodel.CityFlows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class City2CityFlowsProcessor {
@@ -27,8 +30,8 @@ public class City2CityFlowsProcessor {
 
     private static void processFlow(final World world, final City2CityFlows.Flow c2cFlow) {
         final int worldTime = world.getWorldTime();
-        final String fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow().getName();
-        final String toCity = world.cities().byId(c2cFlow.getToCityId()).orElseThrow().getName();
+        final String fromCity = Formatting.shortCity(world.cities().byId(c2cFlow.getFromCityId()).orElseThrow().getName());
+        final String toCity = Formatting.shortCity(world.cities().byId(c2cFlow.getToCityId()).orElseThrow().getName());
 
         if (c2cFlow.getSuccessRate() == 0) {
             c2cFlow.setSuccessRate(CityFlowHelper.STARTING_SUCCESS_RATE);
@@ -68,14 +71,19 @@ public class City2CityFlowsProcessor {
 
         CabinLayout.Service service = CityFlowHelper.randomCabinService(attractionFactor);
         int groupSizeBeingGenerated = c2cFlow.getNextGroupSize();
-        world.journeyControl().create(c2cFlow, service);
+        final int journeyId = world.journeyControl().create(c2cFlow, service).getId();
 
         c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
         c2cFlow.setAccumulatedFlow(0);
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
         c2cFlow.setHeartbeatTime(c2cFlow.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
 
-        log.info("c2c #{}/{} {}-{} - NEW j/y {}{}, next g/s {}, acc/t {}, h/b {}",
-                c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, service.name(), groupSizeBeingGenerated, c2cFlow.getNextGroupSize(),  Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(c2cFlow.getHeartbeatTime()));
+        log.info("#{}/{} {}-{}: NEW j/y #{} {}{}, nxt {}, a/t {}, h/b {}",
+                c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, journeyId, service.name(), groupSizeBeingGenerated, c2cFlow.getNextGroupSize(),
+                minutes(c2cFlow.getAccumulatedFlowTime()), minutes(c2cFlow.getHeartbeatTime()));
+    }
+
+    private static LocalDateTime minutes(final int time) {
+        return Time.toLdt(time).truncatedTo(ChronoUnit.MINUTES);
     }
 }
