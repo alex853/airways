@@ -67,11 +67,22 @@ public class City2CityFlowHistogramAnalyser {
                     .append(" avg ").append(minutes((int) (sum[0] / overdue[0])))
                     .append(" max ").append(minutes(newest[0]));
         }
-        line.append(" |");
-        for (int i = 0; i < BUCKETS; i++) {
-            line.append(' ').append(name(i)).append(' ').append(counts[i]);
-        }
+        line.append(" | D0-6 ").append(join(counts, 0, DAYS))
+                .append(" | W2-4 ").append(join(counts, DAYS, DAYS + 3))
+                .append(" | M2-6 ").append(join(counts, DAYS + 3, BUCKETS - 1))
+                .append(" | L ").append(counts[BUCKETS - 1]);
         return line.toString();
+    }
+
+    private static String join(final int[] counts, final int from, final int to) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = from; i < to; i++) {
+            if (i > from) {
+                sb.append(',');
+            }
+            sb.append(counts[i]);
+        }
+        return sb.toString();
     }
 
     // the bucket of the days from now: 0..6 are the days, then the weeks up to the day 30, then the months of 30 days, the last one is everything later
@@ -90,19 +101,6 @@ public class City2CityFlowHistogramAnalyser {
         }
         final int month = day / MONTH_DAYS + 1; // the days 30..59 are the month 2
         return month <= MONTHS ? DAYS + 3 + (month - 2) : BUCKETS - 1;
-    }
-
-    private static String name(final int bucket) {
-        if (bucket < DAYS) {
-            return "D" + bucket;
-        }
-        if (bucket < DAYS + 3) {
-            return "W" + (bucket - DAYS + 2);
-        }
-        if (bucket < BUCKETS - 1) {
-            return "M" + (bucket - DAYS - 3 + 2);
-        }
-        return "L";
     }
 
     private static String minutes(final int time) {

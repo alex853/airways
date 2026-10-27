@@ -39,7 +39,7 @@ class City2CityFlowHistogramAnalyserTest {
 
     @Test
     public void test__no_flows() {
-        assertEquals("c2c h/b overdue 0 | D0 0 D1 0 D2 0 D3 0 D4 0 D5 0 D6 0 W2 0 W3 0 W4 0 M2 0 M3 0 M4 0 M5 0 M6 0 L 0",
+        assertEquals("c2c h/b overdue 0 | D0-6 0,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 
@@ -68,7 +68,7 @@ class City2CityFlowHistogramAnalyserTest {
         flow(true, now + 400 * day);                      // L
 
         assertEquals("c2c h/b overdue 3 min " + minutes(now - 3 * Time.ONE_HOUR) + " avg " + minutes(now - 2 * Time.ONE_HOUR) + " max " + minutes(now - Time.ONE_HOUR)
-                        + " | D0 1 D1 1 D2 0 D3 0 D4 0 D5 0 D6 1 W2 1 W3 2 W4 1 M2 2 M3 1 M4 0 M5 0 M6 1 L 2",
+                        + " | D0-6 1,1,0,0,0,0,1 | W2-4 1,2,1 | M2-6 2,1,0,0,1 | L 2",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 }
