@@ -13,14 +13,20 @@ import java.util.*;
 public class City2CityFlowsProcessor {
     private static final Logger log = LoggerFactory.getLogger(City2CityFlowsProcessor.class);
 
-    public static void process(final World world) {
-        final int worldTime = world.getWorldTime();
-        final Optional<City2CityFlows.Flow> flowO = world.city2cityFlows().nextForHeartbeat(worldTime);
-        if (flowO.isEmpty()) {
-            return;
-        }
+    /**
+     * How many flows are served in one world step. There are tens of thousands of flows and every served flow gives one group of passengers, so one flow per
+     * step (8640 a day) was less than the flows asked for: the flows of the cities lagged behind the world by days and weeks. The earliest flows go first.
+     */
+    static final int FLOWS_PER_STEP = 10;
 
-        final City2CityFlows.Flow c2cFlow = flowO.get();
+    public static void process(final World world) {
+        Processing.heartbeat(() -> world.city2cityFlows().nextForHeartbeat(world.getWorldTime()),
+                c2cFlow -> processFlow(world, c2cFlow),
+                FLOWS_PER_STEP);
+    }
+
+    private static void processFlow(final World world, final City2CityFlows.Flow c2cFlow) {
+        final int worldTime = world.getWorldTime();
         final String fromCity = world.cities().byId(c2cFlow.getFromCityId()).orElseThrow().getName();
         final String toCity = world.cities().byId(c2cFlow.getToCityId()).orElseThrow().getName();
 

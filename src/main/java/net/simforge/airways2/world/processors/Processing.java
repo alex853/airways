@@ -24,6 +24,23 @@ public class Processing {
 
     public static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
                                      final Consumer<T> processor) {
+        heartbeat(nextForHeartbeat, processor, CIRCUIT_BREAKER_COUNTER_LIMIT, true);
+    }
+
+    /**
+     * The same cycle, but a processor which has to work at a given pace takes at most {@code maxObjectsPerStep} objects in one world step. The rest stays
+     * due and is taken in the next steps; it is not an error (unlike the circuit breaker), so nothing is logged when the limit is reached.
+     */
+    public static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
+                                     final Consumer<T> processor,
+                                     final int maxObjectsPerStep) {
+        heartbeat(nextForHeartbeat, processor, Math.min(maxObjectsPerStep, CIRCUIT_BREAKER_COUNTER_LIMIT), false);
+    }
+
+    private static <T> void heartbeat(final Supplier<Optional<T>> nextForHeartbeat,
+                                      final Consumer<T> processor,
+                                      final int limit,
+                                      final boolean limitIsAnError) {
         String processorName = extractClassName(processor.getClass().getName());
 
         try (Timing.Timer ignored0 = Timing.label("Processing.heartbeat - " + processorName + " - cycle")) {
@@ -35,8 +52,10 @@ public class Processing {
                     break;
                 }
 
-                if (circuitBreakerCounter == CIRCUIT_BREAKER_COUNTER_LIMIT) {
-                    log.error("too many objects to process, the last one is {}", next.get());
+                if (circuitBreakerCounter == limit) {
+                    if (limitIsAnError) {
+                        log.error("too many objects to process, the last one is {}", next.get());
+                    }
                     break;
                 }
                 circuitBreakerCounter++;

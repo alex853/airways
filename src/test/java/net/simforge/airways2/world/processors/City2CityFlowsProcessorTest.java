@@ -8,6 +8,9 @@ import net.simforge.airways2.world.datamodel.City2CityFlows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,17 +44,41 @@ class City2CityFlowsProcessorTest {
     }
 
     @Test
-    public void test__the_flow_of_a_later_city_with_the_older_heartbeat_is_served_first() {
+    public void test__ten_flows_are_served_in_a_step_the_earliest_heartbeats_first() {
         final int now = world.getWorldTime();
-        final City2CityFlows.Flow londonFlow = dueFlow(london, berlin, now - Time.ONE_HOUR);
-        final City2CityFlows.Flow parisFlow = dueFlow(paris, berlin, now - 3 * Time.ONE_DAY);
-        final int londonHeartbeat = londonFlow.getHeartbeatTime();
+        final int countryId = london.getCountryId();
+        final List<Cities.City> all = new ArrayList<>(List.of(london, berlin, paris));
+        for (int i = 0; i < 3; i++) {
+            all.add(world.cities().create(countryId, "City" + i, 40 + i, 10 + i, 1_000_000));
+        }
+        world.cityFlows().createMissingCityFlows();
+
+        // 15 due flows; the bigger the id, the older the heartbeat
+        final List<City2CityFlows.Flow> flows = new ArrayList<>();
+        final List<Integer> heartbeats = new ArrayList<>();
+        outer:
+        for (final Cities.City from : all) {
+            for (final Cities.City to : all) {
+                if (from == to) {
+                    continue;
+                }
+                final int heartbeat = now - (flows.size() + 1) * Time.ONE_HOUR;
+                flows.add(dueFlow(from, to, heartbeat));
+                heartbeats.add(heartbeat);
+                if (flows.size() == 15) {
+                    break outer;
+                }
+            }
+        }
 
         City2CityFlowsProcessor.process(world);
 
-        // the flow of Paris has the older heartbeat although it was created later: it moved, the flow of London did not
-        assertTrue(parisFlow.getHeartbeatTime() != now - 3 * Time.ONE_DAY);
-        assertEquals(londonHeartbeat, londonFlow.getHeartbeatTime());
+        // the oldest flow was served; the 5 newest were not reached: a step has 10 passes, and a flow which is still behind after a pass is taken again,
+        // so the ten passes go to the oldest flows only
+        assertTrue(flows.get(14).getHeartbeatTime() != heartbeats.get(14));
+        for (int i = 0; i < 5; i++) {
+            assertEquals(heartbeats.get(i), flows.get(i).getHeartbeatTime(), "flow #" + i);
+        }
     }
 
     @Test

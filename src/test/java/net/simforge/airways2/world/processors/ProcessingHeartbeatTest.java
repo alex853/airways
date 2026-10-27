@@ -186,4 +186,43 @@ class ProcessingHeartbeatTest {
         assertEquals(List.of(first), processed);
         assertEquals(Optional.of(second), storage.nextForHeartbeat(200)); // the rest waits for the next cycle
     }
+
+    @Test
+    public void test__a_limited_cycle_takes_only_the_given_number_of_records_and_the_rest_is_taken_by_the_next_one() {
+        final int[] ids = new int[25];
+        for (int i = 0; i < ids.length; i++) {
+            ids[i] = record(100 + i);
+        }
+        final List<Integer> processed = new ArrayList<>();
+        final Runnable cycle = () -> Processing.heartbeat(() -> storage.nextForHeartbeat(1000), id -> {
+            processed.add(id);
+            clear(id);
+        }, 10);
+
+        cycle.run();
+        assertEquals(10, processed.size());
+        assertEquals(ids[0], processed.get(0));
+        assertEquals(ids[9], processed.get(9));
+
+        cycle.run();
+        cycle.run();
+        assertEquals(25, processed.size());
+        assertEquals(ids[24], processed.get(24));
+    }
+
+    @Test
+    public void test__a_limited_cycle_is_never_above_the_circuit_breaker() {
+        final int count = LIMIT + 50;
+        for (int i = 0; i < count; i++) {
+            record(100 + i);
+        }
+        final AtomicInteger calls = new AtomicInteger();
+
+        Processing.heartbeat(() -> storage.nextForHeartbeat(100_000), id -> {
+            calls.incrementAndGet();
+            clear(id);
+        }, Integer.MAX_VALUE);
+
+        assertEquals(LIMIT, calls.get());
+    }
 }
