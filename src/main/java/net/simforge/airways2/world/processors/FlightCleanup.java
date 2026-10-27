@@ -6,6 +6,7 @@ import net.simforge.airways2.world.datamodel.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -14,12 +15,24 @@ public class FlightCleanup {
     private static final Logger log = LoggerFactory.getLogger(FlightCleanup.class);
     private static long lastExecution;
 
+    // the removed objects of the current run, they are logged by lines of up to 10 ids: "t/f #10208, f/m #6432, s/f #77 removed"
+    private static final int IDS_PER_LINE = 10;
+    static final List<String> removed = new ArrayList<>();
+
     public static void process(final World world) {
         if (System.currentTimeMillis() - lastExecution < 60000) {
             return;
         }
         lastExecution = System.currentTimeMillis();
 
+        try {
+            cleanup(world);
+        } finally {
+            logRemoved();
+        }
+    }
+
+    private static void cleanup(final World world) {
         long cancelledOnPreflight = findFlightMissions(world, 15 * Time.ONE_MINUTE, FlightMissions.Status.Cancelled)
                 .filter(f -> world.flightMissionControl().checkAndRemoveIfScheduledForQuickRemoval(f))
                 .peek(f -> deleteFlightMission(world, f))
@@ -63,7 +76,7 @@ public class FlightCleanup {
         deleteTransportFlights(world, f);
         world.pilotContracts().deleteByFlightMissionId(f.getId());
         world.flightMissions().deleteById(f.getId());
-        log.info("f/m #{} removed", f.getId());
+        removed.add("f/m #" + f.getId());
     }
 
     private static void deleteTransportFlights(final World world, final FlightMissions.Mission f) {
@@ -80,7 +93,7 @@ public class FlightCleanup {
         world.scheduledFlights().byId(tf1.getScheduledFlightId())
                 .ifPresent(sf -> {
                     world.scheduledFlights().deleteById(sf.getId());
-                    log.info("s/f #{} removed", sf.getId());
+                    removed.add("s/f #" + sf.getId());
                 });
 
         final List<Journeys.Journey> journeys = world.journeys()
@@ -111,6 +124,13 @@ public class FlightCleanup {
         }
 
         world.transportFlights().deleteById(tf1.getId());
-        log.info("t/f #{} removed", tf1.getId());
+        removed.add("t/f #" + tf1.getId());
+    }
+
+    static void logRemoved() {
+        for (int i = 0; i < removed.size(); i += IDS_PER_LINE) {
+            log.info("{} removed", String.join(", ", removed.subList(i, Math.min(i + IDS_PER_LINE, removed.size()))));
+        }
+        removed.clear();
     }
 }
