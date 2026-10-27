@@ -5133,7 +5133,7 @@ France,FR,Marseille,1900300,43.31,5.37
 France,FR,Lyon,2300600,45.76,4.83
 France,FR,Toulouse,1400400,43.62,1.45
 France,FR,Nice,1000800,43.7,7.27
-France,FR,Nantes,285700,47.23,-1.57
+France,FR,Nantes,1000700,47.23,-1.57
 France,FR,Strasbourg,274700,48.58,7.76
 France,FR,Montpellier,231900,43.61,3.87
 France,FR,Bordeaux,217400,44.84,-0.58
@@ -7890,7 +7890,7 @@ Italy,IT,Palermo,1171100,38.12,13.36
 Italy,IT,Genova,594900,44.42,8.93
 Italy,IT,Bologna,375800,44.5,11.34
 Italy,IT,Firenze,356100,43.78,11.24
-Italy,IT,Catania,315100,37.5,15.08
+Italy,IT,Catania,1100100,37.5,15.08
 Italy,IT,Bari,310500,41.12,16.87
 Italy,IT,Venice,850800,45.43,12.33
 Italy,IT,Verona,248600,45.44,10.99
@@ -8212,7 +8212,7 @@ Japan,JP,Tokyo,13500200,35.67,139.77
 Japan,JP,Yokohama,3525600,35.47,139.62
 Japan,JP,Osaka,10000700,34.68,135.5
 Japan,JP,Nagoya,2196400,35.15,136.91
-Japan,JP,Sapporo,1853600,43.06,141.34
+Japan,JP,Sapporo,2600600,43.06,141.34
 Japan,JP,Kobe,2300100,34.68,135.17
 Japan,JP,Kyoto,2500200,35.01,135.75
 Japan,JP,Fukuoka,2600100,33.59,130.41
@@ -8357,7 +8357,7 @@ Japan,JP,Ogaki,150500,35.37,136.61
 Japan,JP,del Moriguchi,149700,34.73,135.57
 Japan,JP,Higashimurayama,147500,35.75,139.47
 Japan,JP,Komaki,147400,35.3,136.91
-Japan,JP,Otaru,147100,43.2,141.0
+Japan,JP,del Otaru,147100,43.2,141.0
 Japan,JP,Tama,145900,35.61,139.46
 Japan,JP,Ome,144900,35.79,139.26
 Japan,JP,Yamaguchi,142400,34.18,131.48
@@ -8381,7 +8381,7 @@ Japan,JP,del Tondabayashi,129200,34.52,135.6
 Japan,JP,del Daito,129000,34.71,135.62
 Japan,JP,Isesaki,129000,36.32,139.2
 Japan,JP,Higashihiroshima,128600,34.44,132.72
-Japan,JP,Ebetsu,128200,43.12,141.55
+Japan,JP,del Ebetsu,128200,43.12,141.55
 Japan,JP,Ueda,126400,36.4,138.25
 Japan,JP,del Kashihara,126300,34.5,135.8
 Japan,JP,Beppu,125400,33.28,131.5
@@ -11452,7 +11452,7 @@ North Korea,KP,Najin,59500,42.25,130.3
 Norway,NO,Oslo,1801000,59.91,10.75
 Norway,NO,Bergen,412600,60.38,5.34
 Norway,NO,Stavanger,331300,58.97,5.71
-Norway,NO,Trondheim,145700,63.44,10.4
+Norway,NO,Trondheim,215700,63.44,10.4
 Norway,NO,Fredrikstad-sarpsborg,96600,59.24,10.94
 Norway,NO,Drammen,90000,59.75,10.2
 Norway,NO,Porsgrunn-skien,84900,59.15,9.66
@@ -16502,13 +16502,13 @@ United Kingdom,GB,Birmingham,2900700,52.48,-1.91
 United Kingdom,GB,Liverpool,900100,53.42,-2.99
 United Kingdom,GB,Edinburgh,900600,55.95,-3.22
 United Kingdom,GB,Sheffield,428300,53.39,-1.48
-United Kingdom,GB,Leeds,427900,53.81,-1.55
+United Kingdom,GB,Leeds,2000900,53.81,-1.55
 United Kingdom,GB,Bristol,717600,51.46,-2.6
 United Kingdom,GB,Manchester,2800500,53.48,-2.25
 United Kingdom,GB,Leicester,325500,52.64,-1.13
 United Kingdom,GB,Kingston upon hull,314900,53.75,-0.36
 United Kingdom,GB,Coventry,300100,52.42,-1.5
-United Kingdom,GB,Bradford,296300,53.8,-1.75
+United Kingdom,GB,del Bradford,296300,53.8,-1.75
 United Kingdom,GB,Cardiff,285300,51.48,-3.18
 United Kingdom,GB,Nottingham,276900,52.97,-1.18
 United Kingdom,GB,Stoke-on-trent,271900,53.01,-2.19
@@ -16538,7 +16538,7 @@ United Kingdom,GB,Peterborough,149600,52.59,-0.25
 United Kingdom,GB,West bromwich,147600,52.53,-1.97
 United Kingdom,GB,Middlesbrough,147200,54.58,-1.23
 United Kingdom,GB,Oldbury-smethwick,146600,52.51,-2.03
-United Kingdom,GB,Huddersfield,146200,53.66,-1.8
+United Kingdom,GB,del Huddersfield,146200,53.66,-1.8
 United Kingdom,GB,Bolton,141000,53.58,-2.43
 United Kingdom,GB,Stockport,135600,53.42,-2.17
 United Kingdom,GB,Ipswich,134300,52.07,1.14

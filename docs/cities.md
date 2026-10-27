@@ -216,7 +216,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 Обычное состояние: `World25_009_create_some_airports`, `World25_012_selected_cities` и `World25_013_rename_cities` **закомментированы**
 и не вызываются, иначе импорты гоняются при каждом старте. Раскомментируем только на время пакета с изменениями мира. Когда мир больше менять не
 нужно, комментируем обратно и **коммитим сами, без вопросов и без пуша** (пуш вызвал бы лишний деплой через CI). Сейчас они закомментированы
-(последний пакет: LOWS, DAAG, LUKK, LBSF, LEZL, 2026-10-26).
+(последний пакет: LFRS, RJCC, EGNM, ENVA, LICC, 2026-10-27).
 
 ### 6. Прочее, обсуждённое и не сделанное
 
@@ -688,3 +688,11 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **Sofia (BG, LBSF):** в CSV `Sofija` переименован в `Sofia`, 1 044 200 → 1 544 200 (с областью). Pernik (82 000, 13 nm, меньше 100 тыс.) не трогаем. Страны Bulgaria в мире не было. Аэропорт остаётся `Sofia`. LBSF size 2795, через `009`.
   - **Seville (ES, LEZL):** в CSV `Sevilla` переименован в `Seville`, 699 000 → 1 500 000 (агломерация). `del Dos hermanas` (112 100, 8 nm); Alcala de guadaira (58 300) не трогаем; Jerez (184 200, 46 nm) отдельный рынок. Аэропорт `San Pablo` → `Seville San Pablo` (`013`). LEZL size 3358, через `009`; LEMO, LEJR, LERT (military) не берём.
   - Терминалы бизнес-авиации и attraction не ставим (решение пользователя). Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой; после деплоя и `create-links` (LOWS, LUKK, LBSF, LEZL; DAAG связывается автоимпортом) закомментировать обратно и закоммитить без пуша.
+
+- **Партия 2026-10-27 (LFRS, RJCC, EGNM, ENVA, LICC по VATSIM-бэклогу):**
+  - **Nantes (FR, LFRS):** 285 700 → 1 000 700 (aire d'attraction). Влитых нет (Saint-herblain 46 500, Saint-nazaire 70 000 меньше 100 тыс.). Аэропорт `Nantes/Atlantique` → `Nantes Atlantique` (`013`). LFRS size 3504, через `009`. Rennes (57 nm, свой LFRN) не берём.
+  - **Sapporo (JP, RJCC):** 1 853 600 → 2 600 600 (метро). `del Ebetsu` (128 200) и `del Otaru` (147 100) влиты в ядро. Tomakomai (173 100, 38 nm от ядра) отдельный рынок, не вливаем. Аэропорт `New Chitose` → `Sapporo New Chitose` (`013`), size 6003, создаётся автоимпортом вместе с городом. **RJCJ Chitose** (база JASDF, 2 nm от RJCC) имел тип `civil` и size 5702 и попал бы в автоимпорт: тип исправлен на `military`.
+  - **Leeds (GB, EGNM):** 427 900 → 2 000 900 (West Yorkshire около 1,8 млн плюс Huddersfield). `del Bradford` (296 300) и `del Huddersfield` (146 200) влиты. York (129 000, 20 nm) отдельный рынок, Halifax (96 700) и Wakefield (75 800) меньше 100 тыс. Аэропорт `Leeds Bradford` оставлен как есть. EGNM size 3360, через `009`. Связь с Manchester (31 nm) оставляем: `create-links` с радиусом по умолчанию 50 nm (решение пользователя).
+  - **Trondheim (NO, ENVA):** 145 700 → 215 700. Аэропорт `Vaernes AB` в `icaodata.csv` имел тип `military`, хотя это гражданский аэропорт с совместным базированием: тип исправлен на `civil`, имя `Trondheim Vaernes` (`013`). ENVA size 3784, через `009`. ENOL Orland AB остаётся военным.
+  - **Catania (IT, LICC):** 315 100 → 1 100 100 (метрогород, решение пользователя). Влитых нет (Misterbianco, Paterno, Acireale меньше 100 тыс.); Siracusa (124 400, 31 nm от ядра) отдельный рынок. Аэропорт `Fontanarossa` → `Catania Fontanarossa`. LICC size 2494, через `009`. LICZ Sigonella Mil (военная база, размер 4841) в автоимпорт не попадает.
+  - Терминалы бизнес-авиации и attraction не ставим (решение пользователя). Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой; после деплоя и `create-links` (LFRS, EGNM, ENVA, LICC; RJCC связывается автоимпортом) закомментировать обратно и закоммитить без пуша.
