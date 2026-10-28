@@ -86,6 +86,39 @@ class WorldEditorControllerTest {
     }
 
     @Test
+    void anAirportIsLinkedByTheCodeAndTheLinkIsRemoved() {
+        final Airports.Airport other = world.airports().create(10.5, 20.5, "BBB", "BBBB", "Beta");
+
+        // the code is trimmed and the case does not matter
+        final WorldEditorController.CityInfoDto linked = WorldEditorController.linkAirport(world, city, " bbbb ");
+
+        assertEquals(java.util.List.of("AAAA", "BBBB"), linked.getAirports().stream().map(WorldEditorController.LinkedAirportDto::getIcao).toList());
+        assertTrue(world.airport2city().byAirportIdAndCityId(other.getId(), city.getId()).isPresent());
+
+        final WorldEditorController.CityInfoDto unlinked = WorldEditorController.unlinkAirport(world, city, "BBBB");
+
+        assertEquals(java.util.List.of("AAAA"), unlinked.getAirports().stream().map(WorldEditorController.LinkedAirportDto::getIcao).toList());
+        assertTrue(world.airport2city().byAirportIdAndCityId(other.getId(), city.getId()).isEmpty());
+    }
+
+    @Test
+    void aLinkWhichExistsAlreadyAnUnknownAirportAndAMissingLinkAreRefused() {
+        world.airports().create(10.5, 20.5, "BBB", "BBBB", "Beta");
+
+        final org.springframework.web.server.ResponseStatusException exists = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, () -> WorldEditorController.linkAirport(world, city, "AAAA"));
+        assertEquals(org.springframework.http.HttpStatus.CONFLICT, exists.getStatus());
+
+        final org.springframework.web.server.ResponseStatusException unknown = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, () -> WorldEditorController.linkAirport(world, city, "EGL"));
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, unknown.getStatus());
+
+        final org.springframework.web.server.ResponseStatusException notLinked = org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, () -> WorldEditorController.unlinkAirport(world, city, "BBBB"));
+        assertEquals(org.springframework.http.HttpStatus.NOT_FOUND, notLinked.getStatus());
+    }
+
+    @Test
     void theFlowCanBeChanged() {
         final CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
         flow.setAttractionFactor(4.5f);

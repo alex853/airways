@@ -105,6 +105,45 @@ public class WorldEditorController {
         });
     }
 
+    /**
+     * Links the city with an airport by hand (the ICAO code).
+     */
+    @PostMapping("/city/airport-link")
+    public CityInfoDto addAirportLink(@RequestParam("id") final String idStr, @RequestParam("icao") final String icao) {
+        return worldBean.modifySync(world -> linkAirport(world, findCity(world, idStr), icao));
+    }
+
+    /**
+     * Removes the link of the city with an airport (the ICAO code).
+     */
+    @PostMapping("/city/airport-unlink")
+    public CityInfoDto removeAirportLink(@RequestParam("id") final String idStr, @RequestParam("icao") final String icao) {
+        return worldBean.modifySync(world -> unlinkAirport(world, findCity(world, idStr), icao));
+    }
+
+    static CityInfoDto linkAirport(final World world, final Cities.City city, final String icao) {
+        final Airports.Airport airport = findAirport(world, normalizeIcao(icao));
+        if (world.airport2city().byAirportIdAndCityId(airport.getId(), city.getId()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Airport " + airport.getIcao() + " is linked with " + city.getName() + " already");
+        }
+        world.airport2city().create(airport.getId(), city.getId());
+        log.info("world editor - airport {} is linked with city {}", airport.getIcao(), city.getName());
+        return toCityInfo(world, city);
+    }
+
+    static CityInfoDto unlinkAirport(final World world, final Cities.City city, final String icao) {
+        final Airports.Airport airport = findAirport(world, normalizeIcao(icao));
+        if (!world.airport2city().delete(airport.getId(), city.getId())) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Airport " + airport.getIcao() + " is not linked with " + city.getName());
+        }
+        log.info("world editor - the link of airport {} with city {} is removed", airport.getIcao(), city.getName());
+        return toCityInfo(world, city);
+    }
+
+    private static String normalizeIcao(final String icao) {
+        return icao == null ? "" : icao.trim().toUpperCase();
+    }
+
     private static Cities.City findCity(final World world, final String idStr) {
         final int id;
         try {
