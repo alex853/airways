@@ -70,7 +70,7 @@ class City2CityFlowHistogramAnalyserTest {
         flow(true, now + 400 * day);                      // L
 
         assertEquals("c2c h/b overdue 3 min " + minutes(now - 3 * Time.ONE_HOUR) + " avg " + minutes(now - 2 * Time.ONE_HOUR)
-                        + " | O0 3 | D0-6 1,1,0,0,0,0,1 | W2-4 1,2,1 | M2-6 2,1,0,0,1 | L 2",
+                        + " | O-0 3 | D0-6 1,1,0,0,0,0,1 | W2-4 1,2,1 | M2-6 2,1,0,0,1 | L 2",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 
@@ -87,7 +87,7 @@ class City2CityFlowHistogramAnalyserTest {
         final String line = City2CityFlowHistogramAnalyser.histogramLine(world);
 
         // the most late day first, no O1, O2, O3
-        assertTrue(line.contains(" | O135 1 O5 2 O4 1 O0 1 | D0-6 "), line);
+        assertTrue(line.contains(" | O-135 1 | O-5 2 | O-4 1 | O-0 1 | D0-6 "), line);
     }
 
     @Test
@@ -102,7 +102,7 @@ class City2CityFlowHistogramAnalyserTest {
         final City2CityFlows.Flow noClock = flow(true, now + Time.ONE_HOUR); // the clock is not started: not counted
 
         assertEquals("c2c a/t overdue 2 min " + minutes(now - 10 * day) + " avg " + minutes(now - 6 * day)
-                        + " | O10 1 O2 1 | D0-6 0,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
+                        + " | O-10 1 | O-2 1 | D0-6 0,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.clockLine(world));
         assertEquals("c2c h/b overdue 0 | D0-6 3,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.histogramLine(world));

@@ -14,7 +14,7 @@ import java.util.function.ToIntFunction;
 /**
  * Once per hour writes two lines about the active flows of cities, the same lines for two times of a flow: the heartbeat (h/b) and the clock of the flow, the
  * accumulated flow time (a/t). Every line: how many flows are overdue (the time is before the world time) with the oldest and the average time of them, then
- * the overdue ones by the whole days of the delay (O135 1 is one flow which is 135 days late, only the days which have flows are shown, the most late first),
+ * the overdue ones by the whole days of the delay (O-135 1 is one flow which is 135 days late, only the days which have flows are shown, the most late first),
  * then how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third and fourth week up to the day 30, M2..M6 the months
  * of 30 days, L is everything after six months.
  */
@@ -82,9 +82,9 @@ public class City2CityFlowHistogramAnalyser {
         if (overdue[0] > 0) {
             line.append(" min ").append(minutes(oldest[0]))
                     .append(" avg ").append(minutes((int) (sum[0] / overdue[0])));
-            line.append(" |");
+            // every day of the delay is a part of the line of its own: " | O-135 1 | O-5 30000"
             for (final Map.Entry<Integer, Integer> entry : late.entrySet()) {
-                line.append(" O").append(entry.getKey()).append(' ').append(entry.getValue());
+                line.append(" | O-").append(entry.getKey()).append(' ').append(entry.getValue());
             }
         }
         line.append(" | D0-6 ").append(join(counts, 0, DAYS))

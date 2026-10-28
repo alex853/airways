@@ -2,6 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Formatting;
+import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.City2CityFlows;
@@ -21,6 +22,10 @@ public class City2CityFlowsProcessor {
      * step (8640 a day) was less than the flows asked for: the flows of the cities lagged behind the world by days and weeks. The earliest flows go first.
      */
     static final int FLOWS_PER_STEP = 10;
+
+    // a flow which is behind the world waits this long (random, 10 minutes plus or minus one) after a pass, see nextHeartbeat: about 144 journeys a day
+    static final int MIN_WAIT_AFTER_PASS_MINUTES = 9;
+    static final int MAX_WAIT_AFTER_PASS_MINUTES = 11;
 
     public static void process(final World world) {
         Processing.heartbeat(() -> world.city2cityFlows().nextForHeartbeat(world.getWorldTime()),
@@ -76,11 +81,23 @@ public class City2CityFlowsProcessor {
         c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
         c2cFlow.setAccumulatedFlow(0);
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
-        c2cFlow.setHeartbeatTime(c2cFlow.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
+        c2cFlow.setHeartbeatTime(nextHeartbeat(worldTime, c2cFlow.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow)));
 
         log.info("#{}/{} {}-{}: NEW j/y #{} {}{}, nxt {}, a/t {}, h/b {}",
                 c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, journeyId, service.name(), groupSizeBeingGenerated, c2cFlow.getNextGroupSize(),
                 minutes(c2cFlow.getAccumulatedFlowTime()), minutes(c2cFlow.getHeartbeatTime()));
+    }
+
+    /**
+     * The heartbeat after a pass: the time when the next group is accumulated, but never in the past. A flow whose clock is far behind the world is not served
+     * again and again until it catches up (it took the places of the others and stayed overdue all the time): it waits from 9 to 11 minutes and gets
+     * the next pass, so the flows are served in turn and the clock goes on one group per pass.
+     */
+    static int nextHeartbeat(final int worldTime, final int nextGroupTime) {
+        if (nextGroupTime > worldTime) {
+            return nextGroupTime;
+        }
+        return worldTime + Tools.random(MIN_WAIT_AFTER_PASS_MINUTES * Time.ONE_MINUTE, MAX_WAIT_AFTER_PASS_MINUTES * Time.ONE_MINUTE);
     }
 
     private static LocalDateTime minutes(final int time) {

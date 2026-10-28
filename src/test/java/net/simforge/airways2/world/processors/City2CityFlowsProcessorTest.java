@@ -80,12 +80,29 @@ class City2CityFlowsProcessorTest {
 
         City2CityFlowsProcessor.process(world);
 
-        // the oldest flow was served; the 5 newest were not reached: a step has 10 passes, and a flow which is still behind after a pass is taken again,
-        // so the ten passes go to the oldest flows only
-        assertTrue(flows.get(14).getHeartbeatTime() != heartbeats.get(14));
+        // the ten oldest flows were served once each and wait 9 to 11 minutes now (a served flow is not taken again in the step, even if its clock is behind);
+        // the 5 newest were not reached
+        for (int i = 5; i < 15; i++) {
+            final int heartbeat = flows.get(i).getHeartbeatTime();
+            assertTrue(heartbeat >= now + 9 * Time.ONE_MINUTE && heartbeat <= now + 11 * Time.ONE_MINUTE, "flow #" + i + " " + (heartbeat - now));
+        }
         for (int i = 0; i < 5; i++) {
             assertEquals(heartbeats.get(i), flows.get(i).getHeartbeatTime(), "flow #" + i);
         }
+    }
+
+    @Test
+    public void test__the_heartbeat_after_a_pass_is_never_in_the_past() {
+        final int now = world.getWorldTime();
+
+        // the next group is in the future: that moment
+        assertEquals(now + 3 * Time.ONE_HOUR, City2CityFlowsProcessor.nextHeartbeat(now, now + 3 * Time.ONE_HOUR));
+        // the next group is in the past (the clock is behind the world): 9 to 11 minutes from now, whatever the delay is
+        for (int i = 0; i < 100; i++) {
+            final int heartbeat = City2CityFlowsProcessor.nextHeartbeat(now, now - 90 * Time.ONE_DAY);
+            assertTrue(heartbeat >= now + 9 * Time.ONE_MINUTE && heartbeat <= now + 11 * Time.ONE_MINUTE, String.valueOf(heartbeat - now));
+        }
+        assertTrue(City2CityFlowsProcessor.nextHeartbeat(now, now) >= now + 9 * Time.ONE_MINUTE);
     }
 
     @Test
