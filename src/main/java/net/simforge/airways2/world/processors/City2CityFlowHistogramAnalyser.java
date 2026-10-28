@@ -40,12 +40,12 @@ public class City2CityFlowHistogramAnalyser {
     }
 
     // by the heartbeat of the flows
-    static String histogramLine(final World world) {
+    public static String histogramLine(final World world) {
         return line(world, "c2c h/b", City2CityFlows.Flow::getHeartbeatTime);
     }
 
     // by the accumulated flow time (the clock) of the flows
-    static String clockLine(final World world) {
+    public static String clockLine(final World world) {
         return line(world, "c2c a/t", City2CityFlows.Flow::getAccumulatedFlowTime);
     }
 

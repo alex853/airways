@@ -14,6 +14,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.AircraftHelper;
+import net.simforge.airways2.world.processors.City2CityFlowHistogramAnalyser;
 import net.simforge.airways2.world.processors.CityFlowHelper;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
@@ -743,6 +744,15 @@ public class AdminController {
 
             return null;
         });
+    }
+
+    /**
+     * The histograms of the flows of cities as they are now, the same two lines which the log gets once an hour: by the heartbeat (c2c h/b) and by the
+     * accumulated flow time (c2c a/t).
+     */
+    @GetMapping(value = "/flows/c2c/histograms", produces = "text/plain")
+    public String getC2CFlowHistograms() {
+        return worldBean.read(world -> City2CityFlowHistogramAnalyser.histogramLine(world) + "\n" + City2CityFlowHistogramAnalyser.clockLine(world) + "\n");
     }
 
     @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")
