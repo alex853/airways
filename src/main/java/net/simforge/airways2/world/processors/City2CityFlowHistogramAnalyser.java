@@ -7,11 +7,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.ToIntFunction;
 
 /**
- * Once per hour writes one line about the heartbeats of the active flows of cities: how many are overdue (the heartbeat is before the world time) with the
- * oldest and the average heartbeat of them, and how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third
- * and fourth week up to the day 30, M2..M6 the months of 30 days, L is everything after six months.
+ * Once per hour writes two lines about the active flows of cities, the same lines for two times of a flow: the heartbeat (h/b) and the clock of the flow, the
+ * accumulated flow time (a/t). Every line: how many flows are overdue (the time is before the world time) with the oldest and the average time of them, then
+ * the overdue ones by the whole days of the delay (O135 1 is one flow which is 135 days late, only the days which have flows are shown, the most late first),
+ * then how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third and fourth week up to the day 30, M2..M6 the months
+ * of 30 days, L is everything after six months.
  */
 public class City2CityFlowHistogramAnalyser {
     private static final Logger log = LoggerFactory.getLogger(City2CityFlowHistogramAnalyser.class);
@@ -31,38 +36,56 @@ public class City2CityFlowHistogramAnalyser {
 
         lastProcessTime = System.currentTimeMillis();
         log.warn(histogramLine(world));
+        log.warn(clockLine(world));
     }
 
+    // by the heartbeat of the flows
     static String histogramLine(final World world) {
+        return line(world, "c2c h/b", City2CityFlows.Flow::getHeartbeatTime);
+    }
+
+    // by the accumulated flow time (the clock) of the flows
+    static String clockLine(final World world) {
+        return line(world, "c2c a/t", City2CityFlows.Flow::getAccumulatedFlowTime);
+    }
+
+    private static String line(final World world, final String tag, final ToIntFunction<City2CityFlows.Flow> timeOf) {
         final int worldTime = world.getWorldTime();
 
         final int[] counts = new int[BUCKETS];
         final int[] overdue = new int[1];
         final int[] oldest = {Integer.MAX_VALUE};
         final long[] sum = new long[1];
+        // the whole days of the delay -> the flows, the most late day first
+        final TreeMap<Integer, Integer> late = new TreeMap<>((a, b) -> Integer.compare(b, a));
 
         world.city2cityFlows().all()
                 .filter(City2CityFlows.Flow::isActive)
                 .forEach(c2c -> {
-                    final int heartbeatTime = c2c.getHeartbeatTime();
-                    if (heartbeatTime == 0) {
+                    final int time = timeOf.applyAsInt(c2c);
+                    if (time == 0) {
                         return;
                     }
 
-                    if (heartbeatTime < worldTime) {
+                    if (time < worldTime) {
                         overdue[0]++;
-                        sum[0] += heartbeatTime;
-                        oldest[0] = Math.min(oldest[0], heartbeatTime);
+                        sum[0] += time;
+                        oldest[0] = Math.min(oldest[0], time);
+                        late.merge((worldTime - time) / Time.ONE_DAY, 1, Integer::sum);
                         return;
                     }
 
-                    counts[bucket((heartbeatTime - worldTime) / Time.ONE_DAY)]++;
+                    counts[bucket((time - worldTime) / Time.ONE_DAY)]++;
                 });
 
-        final StringBuilder line = new StringBuilder("c2c h/b overdue ").append(overdue[0]);
+        final StringBuilder line = new StringBuilder(tag).append(" overdue ").append(overdue[0]);
         if (overdue[0] > 0) {
             line.append(" min ").append(minutes(oldest[0]))
                     .append(" avg ").append(minutes((int) (sum[0] / overdue[0])));
+            line.append(" |");
+            for (final Map.Entry<Integer, Integer> entry : late.entrySet()) {
+                line.append(" O").append(entry.getKey()).append(' ').append(entry.getValue());
+            }
         }
         line.append(" | D0-6 ").append(join(counts, 0, DAYS))
                 .append(" | W2-4 ").append(join(counts, DAYS, DAYS + 3))
