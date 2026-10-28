@@ -117,6 +117,27 @@ class BusyBirdsPlanSalaryTest {
     }
 
     @Test
+    public void test__every_leg_has_its_own_gap_the_first_one_from_now_the_others_from_the_arrival_of_the_previous_leg() {
+        final int now = world.getWorldTime();
+        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(2.0, 3.0), true, FULL_PAY).get(0);
+
+        final int first = plan.getLegs().get(0).getPlannedDepTime() - now;
+        assertTrue(first >= 2 * Time.ONE_HOUR - 5 * Time.ONE_MINUTE && first <= 2 * Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "first gap " + first);
+        final int second = plan.getLegs().get(1).getPlannedDepTime() - plan.getLegs().get(0).getPlannedArrTime();
+        assertTrue(second >= 3 * Time.ONE_HOUR - 5 * Time.ONE_MINUTE && second <= 3 * Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "second gap " + second);
+    }
+
+    @Test
+    public void test__a_leg_without_a_gap_gets_the_default_one_half_an_hour_for_the_first_leg_and_an_hour_for_the_others() {
+        final int now = world.getWorldTime();
+        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.<Double>of(), true, FULL_PAY).get(0);
+
+        assertTrue(plan.getLegs().get(0).getPlannedDepTime() - now <= 30 * Time.ONE_MINUTE + 5 * Time.ONE_MINUTE);
+        final int second = plan.getLegs().get(1).getPlannedDepTime() - plan.getLegs().get(0).getPlannedArrTime();
+        assertTrue(second >= Time.ONE_HOUR - 5 * Time.ONE_MINUTE && second <= Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "second gap " + second);
+    }
+
+    @Test
     public void test__turnaround_time_can_be_half_an_hour() {
         final BusyBirdsMissionControl.Leg revenue1 = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0).getLegs().get(0);
         final BusyBirdsMissionControl.MissionPlan half = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 0.5, true, FULL_PAY).get(0);

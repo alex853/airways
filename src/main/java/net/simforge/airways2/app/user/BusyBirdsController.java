@@ -160,6 +160,7 @@ public class BusyBirdsController {
                                          @RequestParam(name = "missionId") String missionId,
                                          @RequestParam(name = "aircraftId") String aircraftId,
                                          @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
+                                         @RequestParam(name = "intervals", required = false) String intervals,
                                          @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
         // a quote changes the world: the price of the journey is set
         return worldBean.modifySync(world -> {
@@ -170,7 +171,7 @@ public class BusyBirdsController {
 
             final int price = world.busyBirdsMissionControl().quote(journey);
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase,
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase,
                     payParamsOfUser(world, userId, aircraft));
 
             return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList(), price);
@@ -182,6 +183,7 @@ public class BusyBirdsController {
                                            @RequestParam(name = "missionId") String missionId,
                                            @RequestParam(name = "aircraftId") String aircraftId,
                                            @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
+                                           @RequestParam(name = "intervals", required = false) String intervals,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
                                            @RequestParam(name = "planId") String planId) {
         return worldBean.modifySync(world -> {
@@ -197,7 +199,7 @@ public class BusyBirdsController {
 
             // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
             final PilotPayParams payParams = payParamsOfUser(world, userId, aircraft);
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, turnaroundTime, ferryBackToBase, payParams);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase, payParams);
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
             if (plan.isEmpty()) {
@@ -277,6 +279,33 @@ public class BusyBirdsController {
             return new BookMissionResponse("success", Collections.singletonList(
                     "Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime())));
         });
+    }
+
+    static final double MAX_LEG_GAP_HOURS = 48;
+
+    /**
+     * The gaps before the legs of a plan: the parameter "intervals" is the hours before every leg separated by commas ("0.5,1,3": the first leg departs in
+     * half an hour from now, the second one an hour after the arrival of the first one and so on). Without it the first gap is the default one (30 minutes)
+     * and the others are the old "turnaroundTime".
+     */
+    static List<Double> legGaps(final String intervals, final double turnaroundTime) {
+        if (intervals == null || intervals.isBlank()) {
+            return List.of(BusyBirdsMissionControl.FIRST_LEG_DEPARTURE_GAP_MINUTES / 60.0, turnaroundTime, turnaroundTime);
+        }
+        final List<Double> gaps = new ArrayList<>();
+        for (final String part : intervals.split(",")) {
+            final double hours;
+            try {
+                hours = Double.parseDouble(part.trim());
+            } catch (final NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the interval is not a number: '" + part + "'");
+            }
+            if (!(hours >= 0 && hours <= MAX_LEG_GAP_HOURS)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the interval must be from 0 to " + (int) MAX_LEG_GAP_HOURS + " hours: " + hours);
+            }
+            gaps.add(hours);
+        }
+        return gaps;
     }
 
     // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands, or in a city which that airport is

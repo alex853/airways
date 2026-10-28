@@ -186,6 +186,15 @@ public class BusyBirdsMissionControl {
      * the aircraft (the currency and the experience level, see PilotPay), the same as the pilot contract is going to be created with.
      */
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, double turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
+        return buildPlans(journey, aircraft, List.of(FIRST_LEG_DEPARTURE_GAP_MINUTES / 60.0, turnaroundTimeHours, turnaroundTimeHours), ferryBackToBase, payParams);
+    }
+
+    /**
+     * The same with a gap for every leg of the plan: the gap of the first leg is the time from now to its departure, the gap of any other leg is the turnaround
+     * time between the arrival of the previous leg and its departure (hours). A leg which has no gap in the list gets the default: 30 minutes for the first
+     * leg, one hour for the others.
+     */
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -214,7 +223,7 @@ public class BusyBirdsMissionControl {
 
         for (Airports.Airport fromAirport : fromAirports) {
             for (Airports.Airport toAirport : toAirports) {
-                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, turnaroundTimeHours, ferryBackToBase, payParams));
+                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, legGapHours, ferryBackToBase, payParams));
             }
         }
 
@@ -223,7 +232,7 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, double turnaroundTimeHours, boolean ferryBackToBase, PilotPayParams payParams) {
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -236,19 +245,19 @@ public class BusyBirdsMissionControl {
         final int missionIncome = calcIncome(journey);
         final String aircraftTypeIcao = aircraftType.getIcao();
 
-        // the gap before the first leg does not depend on the turnaround time (it is between the legs only)
-        int nextDepTime = world.getWorldTime() + FIRST_LEG_DEPARTURE_GAP_MINUTES * Time.ONE_MINUTE;
-
         List<Leg> legs = new ArrayList<>();
         Leg leg;
 
+        // every leg has its own gap: the first one is counted from now, the others from the arrival of the previous leg
+        int nextDepTime = world.getWorldTime() + legGapSeconds(legGapHours, 0);
+
         if (needFerryFlightToDepartureAirport) {
             leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);
-            nextDepTime = leg.getPlannedArrTime() + (int) Math.round(turnaroundTimeHours * Time.ONE_HOUR);
+            nextDepTime = leg.getPlannedArrTime() + legGapSeconds(legGapHours, legs.size());
         }
 
         leg = addLeg(nextDepTime, legs, Leg.Type.Revenue, fromAirport, toAirport, journey.getGroupSize(), performanceData, aircraftTypeIcao, missionIncome, payParams);
-        nextDepTime = leg.getPlannedArrTime() + (int) Math.round(turnaroundTimeHours * Time.ONE_HOUR);
+        nextDepTime = leg.getPlannedArrTime() + legGapSeconds(legGapHours, legs.size());
 
         if (needFerryFlightToBaseAirport && ferryBackToBase) {
             addLeg(nextDepTime, legs, Leg.Type.Reposition, toAirport, baseAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);
@@ -262,6 +271,14 @@ public class BusyBirdsMissionControl {
                 "From " + fromAirport.getIcao() + " to " + toAirport.getIcao() + ", " + legs.size() + " leg" + (legs.size() > 1 ? "s" : "") + ", " + totalDistance + " nm",
                 legs,
                 null);
+    }
+
+    // the gap before the leg with the index, in seconds; the leg which has no gap in the list gets 30 minutes (the first one) or an hour
+    private static int legGapSeconds(final List<Double> legGapHours, final int legIndex) {
+        if (legGapHours != null && legIndex < legGapHours.size() && legGapHours.get(legIndex) != null) {
+            return (int) Math.round(legGapHours.get(legIndex) * Time.ONE_HOUR);
+        }
+        return legIndex == 0 ? FIRST_LEG_DEPARTURE_GAP_MINUTES * Time.ONE_MINUTE : Time.ONE_HOUR;
     }
 
     /**
