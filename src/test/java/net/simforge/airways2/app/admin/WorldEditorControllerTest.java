@@ -119,6 +119,22 @@ class WorldEditorControllerTest {
     }
 
     @Test
+    void theMobilityOfTheCityCanBeChangedAndTheFlowsAreCountedAgain() {
+        final CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
+        flow.setLastRedistributionTime(12345);
+
+        final WorldEditorController.CityInfoDto info = WorldEditorController.applyMobility(world, city, 2.5f);
+
+        assertEquals(2.5f, info.getMobility());
+        assertEquals(0, info.getLastRedistributionTime());
+        assertEquals(65.5f, WorldEditorController.applyMobility(world, city, 65.5f).getMobility());
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, () -> WorldEditorController.applyMobility(world, city, 66f)).getStatus());
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, org.junit.jupiter.api.Assertions.assertThrows(
+                org.springframework.web.server.ResponseStatusException.class, () -> WorldEditorController.applyMobility(world, city, -1f)).getStatus());
+    }
+
+    @Test
     void theFlowCanBeChanged() {
         final CityFlows.Flow flow = world.cityFlows().byCityId(city.getId()).orElseThrow();
         flow.setAttractionFactor(4.5f);

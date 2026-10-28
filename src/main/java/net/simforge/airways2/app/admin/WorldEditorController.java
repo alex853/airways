@@ -37,7 +37,8 @@ public class WorldEditorController {
     private static final Logger log = LoggerFactory.getLogger(WorldEditorController.class);
 
     private static final int MAX_POPULATION = 100_000_000;
-    private static final float MAX_ATTRACTION = 65f;
+    // the factors of a city are stored as thousandths in two bytes: 65.5 is the most (see DataTypeUtils.floatToU16When1to1000)
+    private static final float MAX_FACTOR = 65.5f;
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -57,8 +58,8 @@ public class WorldEditorController {
      */
     @PostMapping("/city/attraction")
     public CityInfoDto setAttraction(@RequestParam("id") final String idStr, @RequestParam("value") final float value) {
-        if (!(value >= 0f && value <= MAX_ATTRACTION)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attraction should be from 0 to " + MAX_ATTRACTION);
+        if (!(value >= 0f && value <= MAX_FACTOR)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Attraction should be from 0 to " + MAX_FACTOR);
         }
         return worldBean.modifySync(world -> {
             final Cities.City city = findCity(world, idStr);
@@ -69,6 +70,26 @@ public class WorldEditorController {
             log.info("world editor - the attraction of city {} is set to {}", city.getName(), value);
             return toCityInfo(world, city);
         });
+    }
+
+    /**
+     * The mobility of the city (how much of its population travels). The redistribution of the flows of the city is started again.
+     */
+    @PostMapping("/city/mobility")
+    public CityInfoDto setMobility(@RequestParam("id") final String idStr, @RequestParam("value") final float value) {
+        return worldBean.modifySync(world -> applyMobility(world, findCity(world, idStr), value));
+    }
+
+    static CityInfoDto applyMobility(final World world, final Cities.City city, final float value) {
+        if (!(value >= 0f && value <= MAX_FACTOR)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mobility should be from 0 to " + MAX_FACTOR);
+        }
+        final CityFlows.Flow flow = world.cityFlows().byCityId(city.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "City flow of " + city.getName() + " not found"));
+        flow.setMobilityFactor(value);
+        flow.setLastRedistributionTime(0);
+        log.info("world editor - the mobility of city {} is set to {}", city.getName(), value);
+        return toCityInfo(world, city);
     }
 
     /**
