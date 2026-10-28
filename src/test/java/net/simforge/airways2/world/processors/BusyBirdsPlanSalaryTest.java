@@ -117,6 +117,31 @@ class BusyBirdsPlanSalaryTest {
     }
 
     @Test
+    public void test__the_paid_time_is_in_whole_minutes_as_the_planned_times_of_a_flight_mission_are() {
+        // 94 minutes 21 seconds of flying: the mission keeps 94 minutes, the pay is for 94 + 20 minutes of the taxi
+        assertEquals(java.time.Duration.ofMinutes(114), BusyBirdsMissionControl.paidDuration(94 * 60 + 21));
+        assertEquals(java.time.Duration.ofMinutes(114), BusyBirdsMissionControl.paidDuration(94 * 60));
+        assertEquals(java.time.Duration.ofMinutes(20), BusyBirdsMissionControl.paidDuration(59));
+    }
+
+    @Test
+    public void test__the_quote_of_a_leg_and_the_contract_of_its_booked_flight_give_the_same_flight_pay() {
+        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
+        final net.simforge.airways2.world.datamodel.Persons.Person person = world.persons().create(
+                net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, 1,
+                net.simforge.airways2.world.datamodel.Persons.LocationType.None, 0, 0, "AK", 0);
+
+        for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
+            final net.simforge.airways2.world.datamodel.FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
+                    world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
+            final net.simforge.airways2.world.datamodel.PilotContracts.Contract contract =
+                    world.busyBirdsMissionControl().createContract(mission, person.getId(), null, FULL_PAY);
+
+            assertEquals(leg.getSalary().flightPay(), net.simforge.airways2.world.computations.PilotPay.flightPay(contract), leg.getFromAirport().getIcao() + "-" + leg.getToAirport().getIcao());
+        }
+    }
+
+    @Test
     public void test__every_leg_has_its_own_gap_the_first_one_from_now_the_others_from_the_arrival_of_the_previous_leg() {
         final int now = world.getWorldTime();
         final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(2.0, 3.0), true, FULL_PAY).get(0);

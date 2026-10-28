@@ -283,10 +283,12 @@ public class BusyBirdsMissionControl {
 
     /**
      * The time which is paid for a leg: from blocks off to blocks on, that is the flying time of the leg and the taxi at both ends. It is the same as the
-     * planned time of the flight mission, so the quote of the plan and the pilot contract of the booked flight give the same pay.
+     * planned time of the flight mission, so the quote of the plan and the pilot contract of the booked flight give the same pay. The flight mission keeps its
+     * planned times in minutes (the seconds are dropped, see DateMinutes), so the flying time here is cut to whole minutes too: with the seconds the quote
+     * promised a few units more than the contract gave (953 and 950).
      */
     static Duration paidDuration(final long flyingSeconds) {
-        return Duration.ofSeconds(flyingSeconds).plusMinutes(FlightTimeline.BLOCKS_OFF_TO_TAKEOFF_MINUTES + FlightTimeline.LANDING_TO_BLOCKS_ON_MINUTES);
+        return Duration.ofMinutes(flyingSeconds / 60).plusMinutes(FlightTimeline.BLOCKS_OFF_TO_TAKEOFF_MINUTES + FlightTimeline.LANDING_TO_BLOCKS_ON_MINUTES);
     }
 
     private Leg addLeg(int plannedTime, List<Leg> legs,
