@@ -648,14 +648,12 @@ public class PilotController {
                         a.recentNightTakeoffs >= CRITERIA_NIGHT_TAKEOFFS && a.recentNightLandings >= CRITERIA_NIGHT_LANDINGS,
                         a.recentFlights >= CRITERIA_RECENT_FLIGHTS && round1(a.recentFlightTime) >= CRITERIA_RECENT_FLIGHT_HOURS,
                         experienceLevel(a.flights, round1(a.flightTime)),
-                        PilotPay.baseIncomeSharePercent(experienceLevel(a.flights, round1(a.flightTime))),
                         a.lastFlightTime))
                 .toList();
 
         return new QualificationsDto(avatarImageOf(world, personId), buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
                 new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
-                        CRITERIA_RECENT_FLIGHT_HOURS,
-                        PilotPay.NO_TYPE_CURRENCY_PERCENT, PilotPay.NO_NIGHT_CURRENCY_PERCENT, PilotPay.CANNOT_CARRY_PASSENGERS_PERCENT),
+                        CRITERIA_RECENT_FLIGHT_HOURS),
                 experienceLevelDtos(), types);
     }
 
@@ -938,11 +936,6 @@ public class PilotController {
         // flights and hours in the last 12 months: type currency (both are needed)
         private int recentFlights;
         private int recentFlightHours;
-        // what is taken off the pay (in percents) when a criterion is not met, see PilotPay: the type currency (the flight pay and the income share), the night
-        // flying and the passengers (the flight pay)
-        private int typeCurrencyPenaltyPercent;
-        private int nightFlyingPenaltyPercent;
-        private int canCarryPassengersPenaltyPercent;
     }
 
     /**
@@ -973,8 +966,6 @@ public class PilotController {
         private boolean typeCurrent;
         // the experience level on the type, 0 to 5, by the flights and hours of all the logbook on the type
         private int experienceLevel;
-        // the base share of the income of a mission (in percents) of this level, before the deductions
-        private float baseIncomeSharePercent;
         // the time of the landing of the last flight on the type (world time, seconds), the page sorts the types by it
         private int lastFlightTime;
     }

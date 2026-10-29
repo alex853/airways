@@ -11,53 +11,34 @@ import java.util.List;
  * known (the journeys of a ShadowJet flight) the result changes with it.
  * <p>
  * What the pilot lacks (a currency) and the manual flight reduce the pay. The reductions are added up, they are not multiplied: coefficient =
- * max(10%, 100% - the sum). The calculation is in floating point and only the result is rounded (Math.round, half up).
+ * max(the least coefficient, 100% - the sum). How much is taken off and the least coefficient are the rates of the operator (PilotPayRates); the methods without
+ * the rates use those of BusyBirds. The calculation is in floating point and only the result is rounded (Math.round, half up).
  * <p>
  * The income share is the base percent of the experience level of the pilot (the level is in the parameters) of the base income of the contract.
  */
 public final class PilotPay {
-    // what is taken off for a missing currency, in percents
-    public static final int NO_TYPE_CURRENCY_PERCENT = 25;
-    public static final int NO_NIGHT_CURRENCY_PERCENT = 25;
-    public static final int CANNOT_CARRY_PASSENGERS_PERCENT = 25;
-    public static final int MANUAL_PERCENT = 67;
-    // the pay is not less than this part of the base
-    public static final int MIN_COEFFICIENT_PERCENT = 10;
-
-    // the base share of the income by the experience level 0 to 5, in percents
-    private static final float[] BASE_SHARE_BY_LEVEL = {0.5f, 1.0f, 2.0f, 3.0f, 5.0f, 7.0f};
-
     private PilotPay() {
     }
 
     /**
-     * The base share of the income for an experience level of the pilot on the type of the aircraft.
+     * The base share of the income for an experience level of the pilot on the type of the aircraft (the rates of BusyBirds).
      */
     public static float baseIncomeSharePercent(final int experienceLevel) {
-        if (experienceLevel < 0 || experienceLevel >= BASE_SHARE_BY_LEVEL.length) {
-            throw new IllegalArgumentException("experience level is from 0 to " + (BASE_SHARE_BY_LEVEL.length - 1) + ": " + experienceLevel);
-        }
-        return BASE_SHARE_BY_LEVEL[experienceLevel];
+        return baseIncomeSharePercent(experienceLevel, PilotPayRates.BUSY_BIRDS);
+    }
+
+    public static float baseIncomeSharePercent(final int experienceLevel, final PilotPayRates rates) {
+        return rates.baseIncomeSharePercent(experienceLevel);
     }
 
     /**
-     * What is taken off the pay: the reason and the percents.
+     * What is taken off the pay: the reason. How many percents it is, is in the rates of the operator.
      */
     public enum Deduction {
-        NoTypeCurrency(NO_TYPE_CURRENCY_PERCENT),
-        NoNightCurrency(NO_NIGHT_CURRENCY_PERCENT),
-        CannotCarryPassengers(CANNOT_CARRY_PASSENGERS_PERCENT),
-        Manual(MANUAL_PERCENT);
-
-        private final int percent;
-
-        Deduction(final int percent) {
-            this.percent = percent;
-        }
-
-        public int getPercent() {
-            return percent;
-        }
+        NoTypeCurrency,
+        NoNightCurrency,
+        CannotCarryPassengers,
+        Manual
     }
 
     /**
@@ -95,25 +76,30 @@ public final class PilotPay {
     }
 
     /**
-     * The coefficient of the flight pay in percents (10 to 100): the currencies and the manual flight count.
+     * The coefficient of the flight pay in percents (the least to 100): the currencies and the manual flight count.
      */
     public static int flightPayCoefficientPercent(final PilotPayParams params) {
-        return coefficient(flightPayDeductions(params));
+        return flightPayCoefficientPercent(params, PilotPayRates.BUSY_BIRDS);
+    }
+
+    public static int flightPayCoefficientPercent(final PilotPayParams params, final PilotPayRates rates) {
+        return coefficient(flightPayDeductions(params), rates);
     }
 
     /**
-     * The coefficient of the income share in percents (10 to 100): only the type currency and the manual flight count.
+     * The coefficient of the income share in percents (the least to 100): only the type currency and the manual flight count.
      */
     public static int incomeShareCoefficientPercent(final PilotPayParams params) {
-        return coefficient(incomeShareDeductions(params));
+        return incomeShareCoefficientPercent(params, PilotPayRates.BUSY_BIRDS);
     }
 
-    private static int coefficient(final List<Deduction> deductions) {
-        return coefficient(deductions.stream().mapToInt(Deduction::getPercent).sum());
+    public static int incomeShareCoefficientPercent(final PilotPayParams params, final PilotPayRates rates) {
+        return coefficient(incomeShareDeductions(params), rates);
     }
 
-    private static int coefficient(final int reductionsPercent) {
-        return Math.max(MIN_COEFFICIENT_PERCENT, 100 - reductionsPercent);
+    private static int coefficient(final List<Deduction> deductions, final PilotPayRates rates) {
+        final int reductionsPercent = deductions.stream().mapToInt(rates::deductionPercent).sum();
+        return Math.max(rates.minCoefficientPercent(), 100 - reductionsPercent);
     }
 
     /**
@@ -127,7 +113,11 @@ public final class PilotPay {
      * The flight pay by the base flight pay and the parameters (the quotation of a plan, before there is a contract).
      */
     public static int flightPay(final int baseFlightPay, final PilotPayParams params) {
-        return (int) Math.round(baseFlightPay * (double) flightPayCoefficientPercent(params) / 100.0);
+        return flightPay(baseFlightPay, params, PilotPayRates.BUSY_BIRDS);
+    }
+
+    public static int flightPay(final int baseFlightPay, final PilotPayParams params, final PilotPayRates rates) {
+        return (int) Math.round(baseFlightPay * (double) flightPayCoefficientPercent(params, rates) / 100.0);
     }
 
     /**
@@ -142,17 +132,25 @@ public final class PilotPay {
      * The income share by the base income and the parameters (the quotation of a plan, before there is a contract). It is zero for a zero income.
      */
     public static int incomeShare(final int baseIncome, final PilotPayParams params) {
+        return incomeShare(baseIncome, params, PilotPayRates.BUSY_BIRDS);
+    }
+
+    public static int incomeShare(final int baseIncome, final PilotPayParams params, final PilotPayRates rates) {
         if (baseIncome <= 0) {
             return 0;
         }
-        return (int) Math.round((double) baseIncome * baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 10_000.0);
+        return (int) Math.round((double) baseIncome * baseIncomeSharePercent(params.getExperienceLevel(), rates) * incomeShareCoefficientPercent(params, rates) / 10_000.0);
     }
 
     /**
      * The percent of the income of the mission which the pilot gets: the base percent of the experience level with the coefficient of the parameters.
      */
     public static double effectiveIncomeSharePercent(final PilotPayParams params) {
-        return baseIncomeSharePercent(params.getExperienceLevel()) * incomeShareCoefficientPercent(params) / 100.0;
+        return effectiveIncomeSharePercent(params, PilotPayRates.BUSY_BIRDS);
+    }
+
+    public static double effectiveIncomeSharePercent(final PilotPayParams params, final PilotPayRates rates) {
+        return baseIncomeSharePercent(params.getExperienceLevel(), rates) * incomeShareCoefficientPercent(params, rates) / 100.0;
     }
 
     /**

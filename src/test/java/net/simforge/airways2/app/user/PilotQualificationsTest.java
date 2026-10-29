@@ -267,7 +267,7 @@ class PilotQualificationsTest {
     }
 
     @Test
-    void theBaseIncomeShareOfTheLevelAndThePenaltiesAreForThePage() {
+    void theExperienceLevelIsOnTheTypeAndThePageHasNoRates() {
         // 25 flights of two hours: 25 flights and 50 hours are the level 1
         for (int i = 0; i < 25; i++) {
             flight(1, gulfstream, (i + 1) * DAY / 4, 120);
@@ -277,14 +277,8 @@ class PilotQualificationsTest {
         final QualificationsDto q = PilotController.buildQualifications(world, 1, now);
 
         assertEquals(1, type(q, "GA7C").getExperienceLevel());
-        assertEquals(1.0f, type(q, "GA7C").getBaseIncomeSharePercent(), 0.0001f);
-        // the level 0 is half a percent
         assertEquals(0, type(q, "C25C").getExperienceLevel());
-        assertEquals(0.5f, type(q, "C25C").getBaseIncomeSharePercent(), 0.0001f);
-        // what is taken off the pay for a criterion which is not met
-        assertEquals(25, q.getCriteria().getTypeCurrencyPenaltyPercent());
-        assertEquals(25, q.getCriteria().getNightFlyingPenaltyPercent());
-        assertEquals(25, q.getCriteria().getCanCarryPassengersPenaltyPercent());
+        // the rates (the shares of the levels, what is taken off the pay) are the affair of the operator, the qualifications only say whether a criterion is met
     }
 
     @Test

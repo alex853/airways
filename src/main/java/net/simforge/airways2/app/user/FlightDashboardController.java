@@ -12,6 +12,7 @@ import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
@@ -817,7 +818,8 @@ public class FlightDashboardController {
                 world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao(),
                 aircraft.getRegNo(),
                 aircraft.getLocationStatus().name(),
-                aircraft.getOperationalStatus().name()
+                aircraft.getOperationalStatus().name(),
+                world.aircraftOperators().byId(aircraft.getAircraftOperatorId()).map(AircraftOperators.AircraftOperator::getName).orElse(null)
         );
 
         final FlightDto flightDto = new FlightDto(
@@ -841,7 +843,9 @@ public class FlightDashboardController {
                 transportFlight.getSoldTickets(),
                 transportFlight.getRemainedTickets().toString(),
                 transportFlight.getPaxCheckedIn(),
-                transportFlight.getPaxOnBoard()
+                transportFlight.getPaxOnBoard(),
+                // only a finished flight has carried passengers (the ones on board at the takeoff); of a flight which is not over it is not told
+                flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null
         ) : null;
 
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto);
@@ -1013,6 +1017,8 @@ public class FlightDashboardController {
         private String regNo;
         private String locationStatus;
         private String operationalStatus;
+        // the name of the operator of the aircraft (BusyBirds, ShadowJet), null if the aircraft has no operator
+        private String operatorName;
     }
 
     @Data
@@ -1041,5 +1047,7 @@ public class FlightDashboardController {
         private String remainedTickets;
         private int checkedIn;
         private int onBoard;
+        // the passengers carried: the ones on board at the takeoff, told for a finished flight only, otherwise null
+        private Integer carriedPax;
     }
 }

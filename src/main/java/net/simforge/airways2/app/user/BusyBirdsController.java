@@ -12,7 +12,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.computations.PilotPayParams;
-import net.simforge.airways2.world.computations.PilotPayParams;
+import net.simforge.airways2.world.computations.PilotPayRates;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.world.processors.BusyBirdsMissionControl;
 import net.simforge.airways2.world.processors.BusyBirdsPilotPay;
@@ -129,15 +129,22 @@ public class BusyBirdsController {
 
     static PilotTermsDto buildPilotTerms(final World world, final int personId, final Aircrafts.Aircraft aircraft) {
         final String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        return buildPilotTerms(world, personId, aircraftType, BusyBirdsPilotPay.baseHourlyRate(aircraftType), PilotPayRates.BUSY_BIRDS);
+    }
+
+    /**
+     * What the pilot gets on a type of aircraft: the qualifications of the pilot on the type, the base hourly rate, the rates of the operator (the deductions and the
+     * shares), and what comes out of them. BusyBirds asks it by the aircraft, ShadowJet by the type.
+     */
+    static PilotTermsDto buildPilotTerms(final World world, final int personId, final String aircraftType, final int hourlyRate, final PilotPayRates rates) {
         final PilotPayParams params = PilotController.payParams(world, personId, aircraftType);
 
-        final int hourlyRate = BusyBirdsPilotPay.baseHourlyRate(aircraftType);
         final List<PilotPay.Deduction> flightPayDeductions = PilotPay.flightPayDeductions(params);
-        final int flightPayCoefficient = PilotPay.flightPayCoefficientPercent(params);
+        final int flightPayCoefficient = PilotPay.flightPayCoefficientPercent(params, rates);
 
-        final float incomeShare = PilotPay.baseIncomeSharePercent(params.getExperienceLevel());
+        final float incomeShare = PilotPay.baseIncomeSharePercent(params.getExperienceLevel(), rates);
         final List<PilotPay.Deduction> incomeShareDeductions = PilotPay.incomeShareDeductions(params);
-        final int incomeShareCoefficient = PilotPay.incomeShareCoefficientPercent(params);
+        final int incomeShareCoefficient = PilotPay.incomeShareCoefficientPercent(params, rates);
 
         return new PilotTermsDto(
                 aircraftType,
@@ -146,11 +153,11 @@ public class BusyBirdsController {
                 params.hasNightCurrency(),
                 params.canCarryPassengers(),
                 hourlyRate,
-                flightPayDeductions.stream().map(DeductionDto::from).toList(),
+                flightPayDeductions.stream().map(d -> DeductionDto.from(d, rates)).toList(),
                 flightPayCoefficient,
                 hourlyRate * flightPayCoefficient / 100.0,
                 incomeShare,
-                incomeShareDeductions.stream().map(DeductionDto::from).toList(),
+                incomeShareDeductions.stream().map(d -> DeductionDto.from(d, rates)).toList(),
                 incomeShareCoefficient,
                 incomeShare * incomeShareCoefficient / 100.0);
     }
@@ -367,8 +374,8 @@ public class BusyBirdsController {
         private String code;
         private int percent;
 
-        public static DeductionDto from(final PilotPay.Deduction deduction) {
-            return new DeductionDto(deduction.name(), deduction.getPercent());
+        public static DeductionDto from(final PilotPay.Deduction deduction, final PilotPayRates rates) {
+            return new DeductionDto(deduction.name(), rates.deductionPercent(deduction));
         }
     }
 
