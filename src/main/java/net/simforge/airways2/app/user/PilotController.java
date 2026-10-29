@@ -362,7 +362,7 @@ public class PilotController {
     /**
      * The duty of the pilot in the last 24 hours: the finished flights of the logbook (from the start of the flight to its finish; an entry written before
      * the duty was kept has the time of the blocks with the preflight before and the postflight after) and the flight in progress, which counts from its
-     * start up to now. The limit is told with it, nothing is enforced yet.
+     * start up to now. The limit is told with it, the start of a flight over it is refused (FlightDashboardController.pilotLimitChecks).
      */
     static DutyDto buildDuty(final World world, final Persons.Person person) {
         final int now = world.getWorldTime();
@@ -406,7 +406,7 @@ public class PilotController {
 
     /**
      * The flight time of the pilot in the last 30 and 365 days (sliding windows): the flights of the logbook from blocks off to blocks on, and the flight in
-     * progress from its blocks off up to now. The limits are told with it, nothing is enforced yet.
+     * progress from its blocks off up to now. The limits are told with it, the start of a flight over them is refused (FlightDashboardController.pilotLimitChecks).
      */
     static FlightTimeDto buildFlightTime(final World world, final Persons.Person person) {
         final int now = world.getWorldTime();

@@ -91,12 +91,50 @@ public class FlightDashboardController {
 
             return new StatusDto(
                     mode,
-                    buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)),
+                    withPilotLimits(buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)), pilotLimitChecks(world, userId)),
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null),
                     buildPilotDto(world, userId, verdictSim));
         });
+    }
+
+    /**
+     * The limits of the pilot which stop the start of a flight, the same numbers as /pilot shows: the awake time, the duty time in 24 hours, the flight
+     * time in 30 and in 365 days. Each check is true while the pilot is within the limit (the orange zone before the limit does not stop anything).
+     * A user without a pilot has no checks (the verdict about the pilot says that).
+     */
+    static List<SimTracker.CheckResult> pilotLimitChecks(final World world, final int userId) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        final Persons.Person person = personId > 0 ? world.persons().byId(personId).orElse(null) : null;
+        return person == null ? List.of() : pilotLimitChecks(world, person);
+    }
+
+    static List<SimTracker.CheckResult> pilotLimitChecks(final World world, final Persons.Person person) {
+        final PilotController.AwakeDto awake = PilotController.buildAwake(world, person);
+        final PilotController.DutyDto duty = PilotController.buildDuty(world, person);
+        final PilotController.FlightTimeDto flightTime = PilotController.buildFlightTime(world, person);
+        return List.of(
+                new SimTracker.CheckResult("The awake time is within the limit (the pilot is not overtired)", awake.isSleeping() || awake.getCreditMinutes() >= 0),
+                new SimTracker.CheckResult("The duty time in 24 hours is within the limit", duty.getLast24HoursMinutes() <= duty.getLimitMinutes()),
+                new SimTracker.CheckResult("The flight time in 30 days is within the limit", flightTime.getLast30DaysMinutes() <= flightTime.getLimit30DaysMinutes()),
+                new SimTracker.CheckResult("The flight time in 365 days is within the limit", flightTime.getLast365DaysMinutes() <= flightTime.getLimit365DaysMinutes()));
+    }
+
+    // The limits are added to both starts of a flight (the tracked one and the manual one): the start is not allowed over a limit
+    static List<SimTracker.UserAction> withPilotLimits(final List<SimTracker.UserAction> actions, final List<SimTracker.CheckResult> limitChecks) {
+        if (limitChecks.isEmpty()) {
+            return actions;
+        }
+        final boolean withinLimits = limitChecks.stream().allMatch(SimTracker.CheckResult::isResult);
+        return actions.stream().map(action -> {
+            if (!"start-flight".equals(action.getName()) && !"start-flight-manual".equals(action.getName())) {
+                return action;
+            }
+            final List<SimTracker.CheckResult> checks = new ArrayList<>(action.getChecks());
+            checks.addAll(limitChecks);
+            return new SimTracker.UserAction(action.getName(), action.isAllowed() && withinLimits, checks);
+        }).toList();
     }
 
     // The next active flight of the user: the earliest one which is not finished or cancelled.
@@ -411,6 +449,11 @@ public class FlightDashboardController {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "the pilot is at " + world.airports().getIcao(pilotAirportId).orElse("no airport (travel to the airport first)")
                         + " but the flight departs from " + world.airports().getIcao(flight.getDepartureAirportId()).orElse("?"));
             }
+
+            // the limits of the pilot (awake, duty and flight time) are the same for both modes
+            pilotLimitChecks(world, userId).stream().filter(check -> !check.isResult()).findFirst().ifPresent(check -> {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flight can not be started, the check failed: " + check.getName());
+            });
 
             if (tracked) {
                 if (!simTrackerConnected) {
