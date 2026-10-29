@@ -31,6 +31,7 @@ public class AuthFilter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
         if (uri.startsWith("/busy-birds")
+            || uri.startsWith("/shadow-jet")
             || uri.startsWith("/flight-dashboard")
             || uri.startsWith("/pilot")
             || uri.startsWith("/sim")) {
