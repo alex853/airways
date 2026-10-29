@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The bank under the admin token: the accounts and the statement of an account as plain text.
@@ -165,7 +166,9 @@ public class BankController {
             final boolean checkpoint = t.getType() == BankTransactions.Type.BalanceCheckpoint;
             // a checkpoint moves no money: it is the verified balance
             final String change = checkpoint ? "=" + t.getAmount() : String.valueOf(t.getToAccountId() == accountId ? t.getAmount() : -t.getAmount());
-            sb.append(String.format("%-8d %-19s %-8d %-8d %14d %14s  %s%n", t.getId(), TimeTools.ts(t.getTime()).replace('T', ' '),
+            // ts() gives null for the zero time
+            final String time = Optional.ofNullable(TimeTools.ts(t.getTime())).map(s -> s.replace('T', ' ')).orElse("-");
+            sb.append(String.format("%-8d %-19s %-8d %-8d %14d %14s  %s%n", t.getId(), time,
                     t.getFromAccountId(), t.getToAccountId(), t.getAmount(), change, t.getType()));
         }
         sb.append(NEW_LINE);

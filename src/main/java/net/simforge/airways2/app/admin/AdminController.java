@@ -164,6 +164,8 @@ public class AdminController {
 
         return ResponseEntity.ok()
                 .contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8))
+                // the lines of the log may contain user input: the browser must not guess HTML from them
+                .header("X-Content-Type-Options", "nosniff")
                 .body(body);
     }
 
