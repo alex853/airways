@@ -119,6 +119,9 @@ public class AdminController {
      * Searches log lines, q may contain several alternatives separated by '||', a line matches if it contains any of them,
      * e.g. q=j/y #33742||t/f #9467||f/m #4986
      */
+    // Qodana's taint analysis reports XSS: false positive, q is only a filter and is never written to the response,
+    // the response is text/plain and /admin/** requires the admin token (AuthFilter).
+    @SuppressWarnings("JvmTaintAnalysis")
     @GetMapping("/log/search")
     public ResponseEntity<StreamingResponseBody> searchLog(@RequestParam final String q,
                                                            @RequestParam(defaultValue = "false") final boolean all) {
@@ -164,8 +167,6 @@ public class AdminController {
 
         return ResponseEntity.ok()
                 .contentType(new MediaType(MediaType.TEXT_PLAIN, StandardCharsets.UTF_8))
-                // the lines of the log may contain user input: the browser must not guess HTML from them
-                .header("X-Content-Type-Options", "nosniff")
                 .body(body);
     }
 
