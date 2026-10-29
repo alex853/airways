@@ -7,7 +7,10 @@ import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.world.computations.PilotPayRates;
 import net.simforge.airways2.world.datamodel.AircraftTypes;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.ShadowJetPilotPay;
+import net.simforge.commons.misc.Geo;
 import net.simforge.refdata.aircrafts.apd.AircraftPerformanceDatabase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 
@@ -63,6 +67,41 @@ public class ShadowJetController {
             }
             return BusyBirdsController.buildPilotTerms(world, personId, aircraftType, ShadowJetPilotPay.baseHourlyRate(aircraftType), PilotPayRates.SHADOW_JET);
         });
+    }
+
+    /**
+     * How long the flight of the type on the route lasts: from blocks off to blocks on, the same calculation as of the planned arrival of the flight which is booked
+     * (FlightMissionHelper.calculateFlightDuration). The page "Book Flight" adds it to the time of the departure to show the arrival. The distance is in nautical miles.
+     */
+    @GetMapping("/calculate-flight-duration")
+    public FlightDurationDto calculateFlightDuration(@RequestParam("type") final String aircraftType,
+                                                     @RequestParam("from") final String fromIcao,
+                                                     @RequestParam("to") final String toIcao) {
+        return worldBean.read(world -> {
+            if (world.aircraftTypes().byIcao(aircraftType).isEmpty()
+                    || AircraftPerformanceDatabase.getPerformance(aircraftType).isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown aircraft type " + aircraftType);
+            }
+            final Airports.Airport from = world.airports().byIcao(fromIcao)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown airport " + fromIcao));
+            final Airports.Airport to = world.airports().byIcao(toIcao)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Unknown airport " + toIcao));
+            if (from.getId() == to.getId()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The airports of the departure and of the arrival are the same");
+            }
+
+            final Duration duration = FlightMissionHelper.calculateFlightDuration(aircraftType, from, to);
+            return new FlightDurationDto((int) Math.round(Geo.distance(from.getCoords(), to.getCoords())), (int) duration.getSeconds());
+        });
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class FlightDurationDto {
+        // nautical miles
+        private int distance;
+        // from blocks off to blocks on
+        private int durationSeconds;
     }
 
     @Data

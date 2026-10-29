@@ -11,6 +11,8 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.commons.misc.Geo;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static net.simforge.airways2.world.Time.fromLdt;
@@ -43,6 +45,28 @@ public class FlightMissionHelper {
                 mission.getId(),
                 fromLdt(flightTimeline.getStart().getScheduledTime()));
         return mission;
+    }
+
+    /**
+     * The planned duration of a flight on the route: from blocks off to blocks on, that is the flying time by the performance of the type and the taxi
+     * before the takeoff and after the landing. The same calculation as the one which gives the planned arrival of a dispatched mission
+     * ({@link #scheduleDispatchedMission}), so the arrival which is told before the booking is the arrival of the mission.
+     *
+     * @throws java.util.NoSuchElementException if there are no performance data of the type
+     */
+    public static Duration calculateFlightDuration(
+            final String aircraftTypeIcao,
+            final Airports.Airport departureAirport,
+            final Airports.Airport destinationAirport) {
+        final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftTypeIcao);
+        final SimpleFlight simpleFlight = SimpleFlight.forRoute(departureAirport.getCoords(), destinationAirport.getCoords(), performanceData);
+        final FlightTimeline flightTimeline = FlightTimeline.byFlyingTime(simpleFlight.getTotalTime());
+        // the duration does not depend on the time of the day, any time is good as the departure
+        final LocalDateTime departureTime = Time.toLdt(Time.START_TIME_EPOCH_SECONDS);
+        flightTimeline.scheduleDepartureTime(departureTime);
+        // a mission keeps its times in whole minutes (the minutes are cut off), so the duration is in whole minutes too: with a departure on a whole minute it is
+        // the duration of the mission
+        return Duration.ofMinutes(Duration.between(departureTime, flightTimeline.getBlocksOn().getScheduledTime()).toMinutes());
     }
 
     public static FlightMissions.Mission scheduleDispatchedMissionFromCurrentLocationAirport(
