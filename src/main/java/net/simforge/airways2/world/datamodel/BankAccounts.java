@@ -171,7 +171,7 @@ public class BankAccounts {
          */
         public void changeBalance(final long delta, final int time) {
             final long balance = getBalance();
-            checkArgument(!canGoNegative() ? balance + delta >= 0 : true, "the account #%s has %s and cannot pay %s", id, balance, -delta);
+            checkArgument(canGoNegative() || balance + delta >= 0, "the account #%s has %s and cannot pay %s", id, balance, -delta);
             storage.setLong(id, balanceField, balance + delta);
             storage.set(id, updatedTimeField, time);
         }

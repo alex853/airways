@@ -41,7 +41,7 @@ public class BankController {
      * One account with all its details and all its transactions (both the ones it has paid and the ones it has received).
      */
     @GetMapping(value = "/account/{id}", produces = "text/plain")
-    public String getAccount(@PathVariable("id") final int id) {
+    public String getAccount(@PathVariable final int id) {
         return worldBean.read(world -> formatAccount(world, id));
     }
 

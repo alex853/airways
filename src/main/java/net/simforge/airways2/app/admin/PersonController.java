@@ -25,7 +25,7 @@ public class PersonController {
     private WorldRunnerBean worldBean;
 
     @GetMapping("/{id}")
-    public PersonDto getById(@PathVariable("id") final int id) {
+    public PersonDto getById(@PathVariable final int id) {
         return worldBean.read(world -> world.persons().byId(id)
                 .map(p -> toDto(world, p))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found")));
@@ -35,7 +35,7 @@ public class PersonController {
      * Switches the feature flag of the warp drive of the person on or off (the pilot who has it moves to any airport at once).
      */
     @PostMapping("/{id}/warp-drive")
-    public String setWarpDrive(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
+    public String setWarpDrive(@PathVariable final int id, @RequestParam("enabled") final boolean enabled) {
         return worldBean.modifySync(world -> {
             final Persons.Person person = world.persons().byId(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found"));
@@ -49,7 +49,7 @@ public class PersonController {
      * Switches the auto finish setting of the pilot on or off (the user cannot change the settings of the pilot yet).
      */
     @PostMapping("/{id}/auto-finish")
-    public String setAutoFinish(@PathVariable("id") final int id, @RequestParam("enabled") final boolean enabled) {
+    public String setAutoFinish(@PathVariable final int id, @RequestParam("enabled") final boolean enabled) {
         return worldBean.modifySync(world -> {
             final Persons.Person person = world.persons().byId(id)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Person #" + id + " not found"));
@@ -74,7 +74,7 @@ public class PersonController {
                 p.getHeartbeatTime() > 0 ? TimeTools.ts(p.getHeartbeatTime()) : null,
                 p.getUserId(),
                 p.isPlayerCharacter(),
-                locationType != null ? locationType.name() : null,
+                locationType.name(),
                 p.getLocationId(),
                 locationName,
                 p.getOriginCityId(),
