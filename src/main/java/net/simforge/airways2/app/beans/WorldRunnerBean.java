@@ -1,6 +1,7 @@
 package net.simforge.airways2.app.beans;
 
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.app.tools.MemoryReport;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -93,6 +94,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                     flightStatsLastSaved = System.currentTimeMillis();
                     FlightStats.save();
                 }
+
+                MemoryReport.print(); // once in 10 minutes
 
                 try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 9 - sleep")) {
                     if (needToCatchTime) {

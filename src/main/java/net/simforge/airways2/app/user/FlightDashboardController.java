@@ -91,7 +91,9 @@ public class FlightDashboardController {
 
             return new StatusDto(
                     mode,
-                    withPilotLimits(buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)), pilotLimitChecks(world, userId)),
+                    // the limits are checks of the start only, the scans of the logbook and of the missions are not done for the flights in progress
+                    withPilotLimits(buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)),
+                            fm != null && fm.getStatus() == FlightMissions.Status.Dispatched ? pilotLimitChecks(world, userId) : List.of()),
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null),
