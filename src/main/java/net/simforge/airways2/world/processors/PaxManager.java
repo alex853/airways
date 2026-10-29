@@ -11,8 +11,10 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,6 +80,57 @@ public class PaxManager {
         deboardings.remove(transportFlight.getId());
     }
 
+    // The statuses of the journeys which the boarding and the deboarding look at
+    private static final List<Journeys.Status> PASS_STATUSES = List.of(
+            Journeys.Status.WaitingForCheckIn, Journeys.Status.WaitingForBoarding, Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding);
+
+    // The journeys of the flights by transportFlight1Id, the lowest id first; null when no pass is going
+    private Map<Integer, List<Journeys.Journey>> passSnapshot;
+
+    /**
+     * Starts a pass of the processing of the transport flights: the journeys in the statuses of {@link #PASS_STATUSES} are read from the storage once and
+     * grouped by their first transport flight, so the look of every flight at its journeys is a lookup, not a scan of all the journeys of the world.
+     * A journey in the snapshot is a view, its status and its flight are read at the moment of the look, so what the pass itself changes (a journey
+     * boards, leaves, is too late) is seen at once. What the snapshot can not see is a journey which comes into these statuses or to a flight during the
+     * pass; the processing of the transport flights does not do that (the check-in, the tickets and the arrival are done by other processors).
+     * Outside of a pass (an action of the user) the looks go to the storage as before.
+     */
+    public void beginPass() {
+        try (final Timing.Timer ignored = Timing.label("PaxManager - pass snapshot # journeys scan")) {
+            final Map<Integer, List<Journeys.Journey>> snapshot = new HashMap<>();
+            world.journeys().filter(world.journeys().byStatusIn(PASS_STATUSES)).forEach(journey -> {
+                final int transportFlightId = journey.getTransportFlight1Id();
+                if (transportFlightId > 0) {
+                    snapshot.computeIfAbsent(transportFlightId, id -> new ArrayList<>()).add(journey);
+                }
+            });
+            passSnapshot = snapshot;
+        }
+    }
+
+    public void endPass() {
+        passSnapshot = null;
+    }
+
+    /**
+     * The journeys of the flight (as their first transport flight) which are in one of the statuses, the lowest id first.
+     */
+    public List<Journeys.Journey> journeysOf(final TransportFlights.Flight transportFlight, final Journeys.Status... statuses) {
+        checkNotNull(transportFlight);
+        final int transportFlightId = transportFlight.getId();
+        final Set<Journeys.Status> wanted = EnumSet.copyOf(List.of(statuses));
+
+        if (passSnapshot == null) {
+            return world.journeys()
+                    .filter(world.journeys().byTransportFlight1Id(transportFlightId))
+                    .filter(journey -> wanted.contains(journey.getStatus()))
+                    .toList();
+        }
+        return passSnapshot.getOrDefault(transportFlightId, List.of()).stream()
+                .filter(journey -> journey.getTransportFlight1Id() == transportFlightId && wanted.contains(journey.getStatus()))
+                .toList();
+    }
+
     /**
      * True if there are no journeys which are going to board the flight: all of them are on board or are already too late.
      * The journeys which have not checked-in yet are going to board, so the boarding goes on for them.
@@ -85,11 +138,7 @@ public class PaxManager {
     public boolean areAllBoarded(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         try (final Timing.Timer ignored = Timing.label("PaxManager - areAllBoarded # journeys scan")) {
-            return world.journeys()
-                    .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                            Journeys.Status.WaitingForCheckIn,
-                            Journeys.Status.WaitingForBoarding))
-                    .isEmpty();
+            return journeysOf(transportFlight, Journeys.Status.WaitingForCheckIn, Journeys.Status.WaitingForBoarding).isEmpty();
         }
     }
 
@@ -99,8 +148,7 @@ public class PaxManager {
     public int countPaxOnBoard(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         try (final Timing.Timer ignored = Timing.label("PaxManager - countPaxOnBoard # journeys scan")) {
-            return world.journeys()
-                    .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+            return journeysOf(transportFlight, Journeys.Status.OnBoard).stream()
                     .map(Journeys.Journey::getGroupSize)
                     .reduce(0, Integer::sum);
         }
@@ -288,19 +336,14 @@ public class PaxManager {
         @Override
         protected void refreshState() {
             try (final Timing.Timer ignored = Timing.label("PaxManager - Boarding.refresh # scan 1 (on board)")) {
-                confirmedOnBoard = world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                confirmedOnBoard = world.paxManager().journeysOf(transportFlight, Journeys.Status.OnBoard).stream()
                         .map(Journeys.Journey::getGroupSize)
                         .reduce(0, Integer::sum);
             }
 
             final List<Journeys.Journey> remained;
             try (final Timing.Timer ignored = Timing.label("PaxManager - Boarding.refresh # scan 2 (remained)")) {
-                remained = world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                                Journeys.Status.WaitingForBoarding,
-                                Journeys.Status.WaitingForCheckIn))
-                        .toList();
+                remained = world.paxManager().journeysOf(transportFlight, Journeys.Status.WaitingForBoarding, Journeys.Status.WaitingForCheckIn);
             }
             remainingToBoard = remained.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
             ready = remained.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding).toList();
@@ -360,8 +403,8 @@ public class PaxManager {
             // boarding counter) boards now, so PAX on board does not jump down. A jump up is better than a jump down.
             if ((int) counterValue > 0) {
                 try (final Timing.Timer ignored = Timing.label("PaxManager - Boarding.finish # scan 1 (last group)")) {
-                    world.journeys()
-                            .findFirst(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForBoarding))
+                    world.paxManager().journeysOf(transportFlight, Journeys.Status.WaitingForBoarding).stream()
+                            .findFirst()
                             .ifPresent(journey -> {
                                 world.journeyControl().board(journey);
                                 log.info("t/f #{} - board j/y #{} boarded at finish", transportFlight.getId(), journey.getId());
@@ -371,11 +414,7 @@ public class PaxManager {
 
             final Collection<Journeys.Journey> failedToBoardJourneys;
             try (final Timing.Timer ignored = Timing.label("PaxManager - Boarding.finish # scan 2 (failed)")) {
-                failedToBoardJourneys = world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(),
-                                Journeys.Status.WaitingForCheckIn,
-                                Journeys.Status.WaitingForBoarding))
-                        .toList();
+                failedToBoardJourneys = world.paxManager().journeysOf(transportFlight, Journeys.Status.WaitingForCheckIn, Journeys.Status.WaitingForBoarding);
             }
             log.info("t/f #{} - board found {} failed to board journeys", transportFlight.getId(), failedToBoardJourneys.size());
 
@@ -458,9 +497,7 @@ public class PaxManager {
         @Override
         protected void refreshState() {
             try (final Timing.Timer ignored = Timing.label("PaxManager - Deboarding.refresh # journeys scan")) {
-                ready = world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
-                        .toList();
+                ready = world.paxManager().journeysOf(transportFlight, Journeys.Status.WaitingForDeboarding);
             }
             remainingToDeboard = ready.stream().mapToInt(Journeys.Journey::getGroupSize).sum();
         }
@@ -488,8 +525,7 @@ public class PaxManager {
          */
         public void finish() {
             try (final Timing.Timer ignored = Timing.label("PaxManager - Deboarding.finish # journeys scan")) {
-                world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.WaitingForDeboarding))
+                world.paxManager().journeysOf(transportFlight, Journeys.Status.WaitingForDeboarding)
                         .forEach(journey -> journey.setHeartbeatTime(world.getWorldTime()));
             }
 

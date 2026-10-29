@@ -942,4 +942,96 @@ public class PaxManagerTest {
 
         assertTrue(transportFlight.getPaxOnBoard() <= 40 - 20, "PAX on board " + transportFlight.getPaxOnBoard());
     }
+
+    // ---- the snapshot of the journeys for a pass of the processing of the transport flights
+
+    private List<Integer> ids(final List<Journeys.Journey> journeys) {
+        return journeys.stream().map(Journeys.Journey::getId).toList();
+    }
+
+    @Test
+    public void test__the_journeys_of_a_flight_are_the_same_in_a_pass_and_outside_of_it() {
+        checkedInJourneys(10, 20, 30);
+        final Journeys.Journey other = world.journeys().create(
+                Journeys.Status.LookingForTickets, cityA.getId(), cityB.getId(), 5, CabinLayout.Service.Y);
+        final List<Integer> outside = ids(paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding, Journeys.Status.WaitingForCheckIn));
+
+        paxManager.beginPass();
+        try {
+            assertEquals(outside, ids(paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding, Journeys.Status.WaitingForCheckIn)));
+            assertEquals(3, outside.size());
+            assertFalse(ids(paxManager.journeysOf(transportFlight, Journeys.Status.LookingForTickets)).contains(other.getId()));
+        } finally {
+            paxManager.endPass();
+        }
+    }
+
+    @Test
+    public void test__what_changes_inside_a_pass_is_seen_at_once() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(10, 10);
+        tfControl.startBoarding(transportFlight);
+
+        paxManager.beginPass();
+        try {
+            assertEquals(2, paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding).size());
+            assertFalse(paxManager.areAllBoarded(transportFlight));
+
+            world.journeyControl().board(journeys.get(0));
+            assertEquals(1, paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding).size());
+            assertEquals(10, paxManager.countPaxOnBoard(transportFlight));
+
+            world.journeyControl().board(journeys.get(1));
+            assertTrue(paxManager.areAllBoarded(transportFlight));
+            assertEquals(20, paxManager.countPaxOnBoard(transportFlight));
+        } finally {
+            paxManager.endPass();
+        }
+    }
+
+    @Test
+    public void test__a_journey_which_left_the_flight_inside_a_pass_is_not_taken_from_the_snapshot() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(10, 10);
+        tfControl.startBoarding(transportFlight);
+
+        paxManager.beginPass();
+        try {
+            world.journeyControl().tooLateToBoard(journeys.get(0));
+
+            assertEquals(List.of(journeys.get(1).getId()), ids(paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding)));
+        } finally {
+            paxManager.endPass();
+        }
+    }
+
+    @Test
+    public void test__outside_of_a_pass_the_journeys_are_read_from_the_storage_again() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(10);
+        paxManager.beginPass();
+        paxManager.endPass();
+
+        // a journey checked in after the pass is not hidden by an old snapshot
+        final Journeys.Journey late = checkedInJourney(7);
+
+        assertEquals(List.of(journeys.get(0).getId(), late.getId()),
+                ids(paxManager.journeysOf(transportFlight, Journeys.Status.WaitingForBoarding, Journeys.Status.WaitingForCheckIn)));
+    }
+
+    @Test
+    public void test__the_boarding_goes_the_same_way_when_every_tick_is_a_pass() {
+        final List<Journeys.Journey> journeys = checkedInJourneys(20, 20, 20);
+        tfControl.startBoarding(transportFlight);
+
+        for (int i = 0; i < 40 * 6; i++) { // up to 40 minutes: far more than the boarding needs
+            world.setWorldTime(world.getWorldTime() + 10);
+            paxManager.beginPass();
+            try {
+                paxManager.boarding(transportFlight).proceed();
+            } finally {
+                paxManager.endPass();
+            }
+        }
+
+        assertEquals(60, totalOnBoard(journeys));
+        assertEquals(60, transportFlight.getPaxOnBoard());
+    }
 }

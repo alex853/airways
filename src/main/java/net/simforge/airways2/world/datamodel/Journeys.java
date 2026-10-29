@@ -273,6 +273,21 @@ public class Journeys {
         return recordId -> readStatusCode(recordId) == status.code();
     }
 
+    public Storage.Condition<Journey> byStatusIn(final Collection<Status> statuses) {
+        checkNotNull(statuses);
+
+        final int[] codes = statuses.stream().mapToInt(Status::code).toArray();
+        return recordId -> {
+            final int code = readStatusCode(recordId);
+            for (final int c : codes) {
+                if (c == code) {
+                    return true;
+                }
+            }
+            return false;
+        };
+    }
+
     public Storage.Condition<Journey> byLocationCityIdIn(final Collection<Integer> cityIds) {
         checkNotNull(cityIds);
 
