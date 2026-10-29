@@ -1,6 +1,7 @@
 package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.app.tools.FlightStats;
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -324,12 +325,14 @@ public class TransportFlightControl {
 
     // null if there is no start event
     private Integer findDeboardingStartTime(final int transportFlightId) {
-        return world.eventLog()
-                .byObject(EventLog.ObjectType.TransportFlight.code(), transportFlightId)
-                .filter(event -> event.getType() == EventLog.EventType.TransportFlightDeboardingStarted)
-                .map(EventLog.Event::getTime)
-                .max(Integer::compare)
-                .orElse(null);
+        try (final Timing.Timer ignored = Timing.label("TFControl - findDeboardingStartTime # event log scan")) {
+            return world.eventLog()
+                    .byObject(EventLog.ObjectType.TransportFlight.code(), transportFlightId)
+                    .filter(event -> event.getType() == EventLog.EventType.TransportFlightDeboardingStarted)
+                    .map(EventLog.Event::getTime)
+                    .max(Integer::compare)
+                    .orElse(null);
+        }
     }
 
     public void finish(final TransportFlights.Flight transportFlight) {
@@ -372,9 +375,11 @@ public class TransportFlightControl {
 
     // Active flight is expectedly transportFlight1Id for all the journeys
     public void unloadJourneysForcefullyFromActiveFlight(TransportFlights.Flight transportFlight) {
-        world.journeys()
-                .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
-                .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
+        try (final Timing.Timer ignored = Timing.label("TFControl - unloadJourneysForcefully # journeys scan")) {
+            world.journeys()
+                    .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
+                    .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
+        }
 
         transportFlight.setPaxOnBoard(0);
         paxManager().dropState(transportFlight);
