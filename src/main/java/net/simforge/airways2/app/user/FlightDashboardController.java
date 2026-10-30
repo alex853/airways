@@ -211,6 +211,9 @@ public class FlightDashboardController {
                 // are different statuses and exclude each other, but the journeys check in during the boarding too)
                 if (tf != null && TransportFlightHelper.flightStatusAllowsPilotToStartBoarding(tf.getStatus())) {
                     actions.add(manualAction("start-boarding"));
+                } else if (tf != null && tf.getStatus() == TransportFlights.Status.Boarding) {
+                    // the pilot stops the boarding by hand: not everybody may have boarded (finish-boarding)
+                    actions.add(manualAction("finish-boarding"));
                 } else if (tf == null || tf.getStatus() == TransportFlights.Status.WaitingForDeparture) {
                     actions.add(manualAction("blocks-off"));
                 }
@@ -598,6 +601,48 @@ public class FlightDashboardController {
 
             log.info("f/m #{} - flight-dashboard - start-boarding", flightId);
             world.transportFlightControl().startBoarding(transportFlight);
+
+            if (simTrackerConnected) {
+                simTrackerBean.refreshContext(userId);
+            }
+
+            return getStatus(userId);
+        });
+    }
+
+    /**
+     * The pilot stops the boarding right now (decided 2026-10-30): the transport flight goes from Boarding to WaitingForDeparture, the journeys which have not boarded are
+     * too late (they are not carried), the income of the flight is what has boarded. It is not undone, the boarding is not resumed. The step is done by the pilot in both
+     * modes of the flight, the sim tracker does not track it.
+     */
+    @PostMapping("/finish-boarding")
+    public StatusDto finishBoarding(@RequestAttribute("userId") int userId,
+                                     @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+
+            checkNotNull(transportFlight, "transport flight is required for finish-boarding");
+
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding, "transport flight status is not as expected");
+
+            final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
+
+            if (isTrackedBySimTracker(flight, userId)) {
+                SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
+                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
+                checkActionAllowed(simStatus, "finish-boarding");
+            }
+
+            log.info("f/m #{} - flight-dashboard - finish-boarding", flightId);
+            world.transportFlightControl().waitForDeparture(transportFlight);
 
             if (simTrackerConnected) {
                 simTrackerBean.refreshContext(userId);

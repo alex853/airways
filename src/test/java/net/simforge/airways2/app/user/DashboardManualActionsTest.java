@@ -74,8 +74,9 @@ class DashboardManualActionsTest {
         tf.setStatus(TransportFlights.Status.WaitingForBoarding);
         assertEquals(List.of("start-boarding"), names());
 
+        // the boarding goes: the pilot can stop it by hand, blocks off is not offered until the boarding is over
         tf.setStatus(TransportFlights.Status.Boarding);
-        assertEquals(List.of(), names());
+        assertEquals(List.of("finish-boarding"), names());
 
         tf.setStatus(TransportFlights.Status.WaitingForDeparture);
         assertEquals(List.of("blocks-off"), names());

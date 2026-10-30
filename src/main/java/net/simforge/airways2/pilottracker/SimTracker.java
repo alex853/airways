@@ -245,6 +245,9 @@ public class SimTracker {
                                     parkingBrakeSetCheck(context),
                                     enginesShutdownCheck(context),
                                     aircraftStationaryCheck(context)}));
+                        } else if (tf.get().getStatus() == TransportFlights.Status.Boarding) {
+                            // the pilot stops the boarding by hand, the sim has nothing to check here
+                            actions.add(UserAction.build("finish-boarding", new Check[]{}));
                         } else if (tf.get().getStatus() == TransportFlights.Status.WaitingForDeparture) {
                             actions.add(UserAction.build("blocks-off", new Check[]{}));
                         }
