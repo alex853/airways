@@ -229,7 +229,7 @@ public class JourneyProcessor {
                 return;
             }
             journey.setHeartbeatTime(Math.max(
-                    TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION), // todo ak0 consider actual times here
+                    TransportFlightHelper.calcCheckinStartTime(mission.get()) + (int) (0.8 * Math.random() * TransportFlightHelper.CHECKIN_DURATION),
                     world.getWorldTime() + 5 * Time.ONE_MINUTE));
         } else if (TransportFlightHelper.flightStatusAllowsToCheckIn(flight.get().getStatus())) {
             world.journeyControl().checkin(journey);
