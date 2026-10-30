@@ -60,6 +60,8 @@ public class FlightUltraDto {
     // passengers
     private final String cinStart;
     private final String cinEnd;
+    // when the deboarding is going to end (hh:mm, an estimate by the PAX who are still in the aircraft); only while the transport flight is deboarding, otherwise null
+    private final String debEnd;
     // the flight is finished by itself at its end (the setting of the pilot); only true is sent
     private final Boolean autoFinish;
 
@@ -117,6 +119,7 @@ public class FlightUltraDto {
                 tf != null ? TimeTools.hhmmPlusDaysOrNull(PaxManager.Boarding.plannedEndTime(fm)) : null,
                 tf != null ? TimeTools.hhmmPlusDaysOrNull(TransportFlightHelper.calcCheckinStartTime(fm)) : null,
                 tf != null ? TimeTools.hhmmPlusDaysOrNull(TransportFlightHelper.calcCheckinEndTime(fm)) : null,
+                tf != null && tf.getStatus() == TransportFlights.Status.Deboarding ? TimeTools.hhmmPlusDaysOrNull(world.paxManager().deboarding(tf).getEstimatedFinishTime()) : null,
 
                 fm.isAutoFinish() ? Boolean.TRUE : null
         );

@@ -362,6 +362,22 @@ public class PaxManagerTest {
         assertEquals(8 + 12, transportFlight.getPaxCarried());
     }
 
+    @Test
+    public void test__estimated_finish_of_the_deboarding_is_by_the_pax_who_are_still_in_the_aircraft() {
+        startDeboardingOf(25, 25); // 50 PAX at 25 PAX a minute: two minutes
+        final int now = world.getWorldTime();
+
+        assertEquals(now + 2 * Time.ONE_MINUTE, paxManager.deboarding(transportFlight).getEstimatedFinishTime());
+    }
+
+    @Test
+    public void test__estimated_finish_of_the_deboarding_is_refused_before_it_starts() {
+        checkedInJourneys(5);
+        tfControl.startBoarding(transportFlight);
+
+        assertThrows(IllegalArgumentException.class, () -> paxManager.deboarding(transportFlight).getEstimatedFinishTime());
+    }
+
     // ---- the deboarding: the same fractional counter as the boarding, in the opposite direction and a bit faster ----
 
     private static final int DEBOARDING_RATE = PaxManager.Deboarding.RATE_PAX_PER_MINUTE;

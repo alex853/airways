@@ -570,6 +570,20 @@ public class PaxManager {
         }
 
         /**
+         * When the deboarding is going to end: the PAX who are still in the aircraft at the rate of the deboarding, 0 if nobody is left. It is an estimate, the real rate of the
+         * counter is random around the nominal one.
+         */
+        public int getEstimatedFinishTime() {
+            checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
+            ensureRefreshed();
+            final double left = Math.max(0, remainingToDeboard - counterValue);
+            if (left == 0) {
+                return 0;
+            }
+            return world.getWorldTime() + (int) Math.ceil(left / RATE_PAX_PER_MINUTE * Time.ONE_MINUTE);
+        }
+
+        /**
          * The flight is finished (all the PAX have left or the deboarding window is over). The journeys which are still waiting are woken
          * up to look at the finished flight and to deboard at once.
          */
