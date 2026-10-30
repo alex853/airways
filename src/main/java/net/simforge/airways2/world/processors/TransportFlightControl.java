@@ -177,7 +177,7 @@ public class TransportFlightControl {
             return;
         }
         final long income = paxManager().journeysOf(flight, Journeys.Status.OnBoard).stream()
-                .mapToLong(Journeys.Journey::getPrice)
+                .mapToLong(Journeys.Journey::getPrice1)
                 .sum();
         setIncome(flight, income);
         log.info("t/f #{} - the income is {} (the journeys which are on board)", flight.getId(), getIncome(flight));

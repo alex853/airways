@@ -120,6 +120,7 @@ public class FlightCleanup {
             } else {
                 log.warn("t/f #{} - j/y #{} in {} status, t/f2 reference is cleared", tf1.getId(), journey.getId(), status);
                 journey.setTransportFlight2Id(0);
+                journey.setPrice2(0);
             }
         }
 

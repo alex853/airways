@@ -20,7 +20,7 @@ class JourneyPriceTest {
 
     @Test
     void aNewJourneyHasNoPrice() {
-        assertEquals(0, journey(new Journeys()).getPrice());
+        assertEquals(0, journey(new Journeys()).getPrice1());
     }
 
     @Test
@@ -31,9 +31,9 @@ class JourneyPriceTest {
         journey.setTransportFlight1Id(123_456);
         journey.setTransportFlight2Id(654_321);
 
-        journey.setPrice(247_000);
+        journey.setPrice1(247_000);
 
-        assertEquals(247_000, journey.getPrice());
+        assertEquals(247_000, journey.getPrice1());
         assertEquals(3, journey.getFromCityId());
         assertEquals(4, journey.getToCityId());
         assertEquals(5, journey.getGroupSize());
@@ -46,24 +46,64 @@ class JourneyPriceTest {
     void thePriceFitsThreeBytesAndNotMore() {
         final Journeys.Journey journey = journey(new Journeys());
 
-        journey.setPrice(Journeys.MAX_PRICE);
-        assertEquals(16_777_215, journey.getPrice());
+        journey.setPrice1(Journeys.MAX_PRICE);
+        assertEquals(16_777_215, journey.getPrice1());
 
-        assertThrows(IllegalArgumentException.class, () -> journey.setPrice(Journeys.MAX_PRICE + 1));
-        assertThrows(IllegalArgumentException.class, () -> journey.setPrice(-1));
-        assertEquals(16_777_215, journey.getPrice());
+        assertThrows(IllegalArgumentException.class, () -> journey.setPrice1(Journeys.MAX_PRICE + 1));
+        assertThrows(IllegalArgumentException.class, () -> journey.setPrice1(-1));
+        assertEquals(16_777_215, journey.getPrice1());
     }
 
     @Test
     void thePriceSurvivesSaveAndLoad(@TempDir final Path dir) throws IOException {
         final Journeys journeys = new Journeys();
         final Journeys.Journey journey = journey(journeys);
-        journey.setPrice(12_345);
+        journey.setPrice1(12_345);
 
         journeys.save(dir);
         final Journeys loaded = new Journeys();
         loaded.loadIfExists(dir);
 
-        assertEquals(12_345, loaded.byId(journey.getId()).orElseThrow().getPrice());
+        assertEquals(12_345, loaded.byId(journey.getId()).orElseThrow().getPrice1());
+    }
+
+    @Test
+    void price2IsTheSeparateFieldOfTheSecondFlight() {
+        final Journeys.Journey journey = journey(new Journeys());
+        assertEquals(0, journey.getPrice2());
+
+        journey.setPrice1(1_000);
+        journey.setPrice2(2_500);
+
+        assertEquals(1_000, journey.getPrice1());
+        assertEquals(2_500, journey.getPrice2());
+        journey.setPrice1(0);
+        assertEquals(2_500, journey.getPrice2());
+        journey.setPrice2(Journeys.MAX_PRICE);
+        assertEquals(16_777_215, journey.getPrice2());
+        assertEquals(0, journey.getPrice1());
+        assertThrows(IllegalArgumentException.class, () -> journey.setPrice2(Journeys.MAX_PRICE + 1));
+        assertThrows(IllegalArgumentException.class, () -> journey.setPrice2(-1));
+        assertEquals(16_777_215, journey.getPrice2());
+    }
+
+    @Test
+    void price2SurvivesSaveAndLoadAndDoesNotTouchTheOtherFields(@TempDir final Path dir) throws IOException {
+        final Journeys journeys = new Journeys();
+        final Journeys.Journey journey = journey(journeys);
+        journey.setTransportFlight1Id(111);
+        journey.setTransportFlight2Id(222);
+        journey.setPrice1(12_345);
+        journey.setPrice2(54_321);
+
+        journeys.save(dir);
+        final Journeys loaded = new Journeys();
+        loaded.loadIfExists(dir);
+
+        final Journeys.Journey back = loaded.byId(journey.getId()).orElseThrow();
+        assertEquals(12_345, back.getPrice1());
+        assertEquals(54_321, back.getPrice2());
+        assertEquals(111, back.getTransportFlight1Id());
+        assertEquals(222, back.getTransportFlight2Id());
     }
 }

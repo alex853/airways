@@ -65,44 +65,52 @@ public class JourneyControl {
 
         journey.setTransportFlight1Id(flight.getId());
         world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), cabinService);
-        // the flights of the pilots only (the PC flights): the journey gets its price and the price is the income of the flight, the flights of the NPCs skip all of it.
-        // cabinService is the ACTUAL class of the booking (the seats which the journey got, with the upgrade or the downgrade), the price is by it, not by the preferred class
-        if (world.transportFlightControl().isPcFlight(flight)) {
-            if (isShadowJetFlight(flight)) {
-                final int price = shadowJetPrice(flight, journey.getGroupSize(), cabinService);
-                journey.setPrice(price);
-                log.info("j/y #{} - price {} is set for ShadowJet t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), cabinService);
-            }
-            world.transportFlightControl().addIncome(flight, journey.getPrice());
-        }
+        // Every journey gets the price of its flight at the booking, whatever the flight is (decided 2026-10-30): by the distance of the flight, the passengers and the ACTUAL
+        // class of the booking (the seats which the journey got, with the upgrade or the downgrade), not by the preferred one. The price is the income of the flight, if it is
+        // a flight of a pilot (the PC flights, addIncome skips the others).
+        final int price = legPrice(flight, journey.getGroupSize(), cabinService);
+        journey.setPrice1(price);
+        journey.setPrice2(0);
+        logLegPrice(journey, price, flight, cabinService);
+        world.transportFlightControl().addIncome(flight, price);
 
         journey.setTransportFlight2Id(0);
 
         journey.setBookedCabinService(cabinService);
     }
 
-    private boolean isShadowJetFlight(final TransportFlights.Flight flight) {
-        return world.flightMissions().byId(flight.getFlightMissionId())
-                .flatMap(mission -> world.aircrafts().byId(mission.getAircraftId()))
-                .map(aircraft -> aircraft.getAircraftOperatorId() == World25.ShadowJetOperatorId)
-                .orElse(false);
-    }
-
-    // the price of the journey on a ShadowJet flight: by the distance of the flight, the passengers and the class (ShadowJetPricing)
-    private int shadowJetPrice(final TransportFlights.Flight flight, final int groupSize, final CabinLayout.Service service) {
+    // the price of the journey on a flight: by the distance of the flight (so every pair of airports has its own price), the passengers and the class (ShadowJetPricing)
+    private int legPrice(final TransportFlights.Flight flight, final int groupSize, final CabinLayout.Service service) {
         final FlightMissions.Mission mission = world.flightMissions().byId(flight.getFlightMissionId()).orElseThrow();
         final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
         final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
         return ShadowJetPricing.price(Geo.distance(from.getCoords(), to.getCoords()), groupSize, service);
     }
 
-    // The journey leaves a ShadowJet flight of a pilot without boarding it (it is too late to board, the flight is cancelled): the price which the flight has set is cleared,
-    // otherwise the journey would keep the price of a flight it is not on (and a BusyBirds quote would take it as its own). The income of the flight is NOT touched here: it is
-    // calculated again at the end of the boarding from the journeys which are on board (TransportFlightControl.recalculateIncome), so the journey is out of it anyway, and
-    // when a journey is too late after that calculation it is not in the income already, taking its price off once more would count it twice.
-    private void releaseShadowJetPrice(final Journeys.Journey journey, final TransportFlights.Flight flight) {
-        if (journey.getPrice() > 0 && world.transportFlightControl().isPcFlight(flight) && isShadowJetFlight(flight)) {
-            journey.setPrice(0);
+    // the flights of the pilots are logged at the info level, the flights of the AI have a lot of journeys
+    private void logLegPrice(final Journeys.Journey journey, final int price, final TransportFlights.Flight flight, final CabinLayout.Service service) {
+        if (world.transportFlightControl().isPcFlight(flight)) {
+            log.info("j/y #{} - price {} is set for t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), service);
+        } else {
+            log.debug("j/y #{} - price {} is set for t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), service);
+        }
+    }
+
+    // BusyBirds sets the price of its journey itself (the quote), the others have the price of the booking (legPrice)
+    private boolean isBusyBirdsFlight(final TransportFlights.Flight flight) {
+        return world.flightMissions().byId(flight.getFlightMissionId())
+                .flatMap(mission -> world.aircrafts().byId(mission.getAircraftId()))
+                .map(aircraft -> aircraft.getAircraftOperatorId() == World25.BusyBirdsOperatorId)
+                .orElse(false);
+    }
+
+    // The journey leaves a flight without boarding it (it is too late to board, the flight is cancelled): the price which the booking has set is cleared, otherwise the journey
+    // would keep the price of a flight it is not on (and a BusyBirds quote would take it as its own). The income of the flight is NOT touched here: it is calculated again at
+    // the end of the boarding from the journeys which are on board (TransportFlightControl.recalculateIncome), so the journey is out of it anyway, and when a journey is too late
+    // after that calculation it is not in the income already, taking its price off once more would count it twice.
+    private void releaseBookingPrice(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        if (journey.getPrice1() > 0 && !isBusyBirdsFlight(flight)) {
+            journey.setPrice1(0);
         }
     }
 
@@ -112,17 +120,24 @@ public class JourneyControl {
         checkNotNull(flight1);
         checkNotNull(flight2);
 
-        // todo ak3 (a long shelf, 2026-10-30) the price of the journey is for the whole trip and the trip has two flights: how it is split between them is not decided, so no
-        // income is added to either of them (the hub journeys have price 0 now), see the todo of TransportFlightExtras, item 3. The whole code of the stopover routes (this method,
-        // JourneyProcessor.findStopoverRoutes, the second transport flight of a journey) is a rudiment of the network of scheduled flights, it is probably out of date and a
-        // candidate for removal rather than for development.
+        // every flight of the route has its own price, by its own distance: price1 is of the first flight, price2 of the second one (decided 2026-10-30), and each of the
+        // flights gets its price as the income, if it is a flight of a pilot. When the journey comes to the first airport price2 becomes price1 (shiftToNextTransportFlight).
+        final CabinLayout.Service service = journey.getPreferredCabinService();
         journey.setTransportFlight1Id(flight1.getId());
-        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getPreferredCabinService());
+        world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), service);
+        final int price1 = legPrice(flight1, journey.getGroupSize(), service);
+        journey.setPrice1(price1);
+        logLegPrice(journey, price1, flight1, service);
+        world.transportFlightControl().addIncome(flight1, price1);
 
         journey.setTransportFlight2Id(flight2.getId());
-        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), journey.getPreferredCabinService());
+        world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), service);
+        final int price2 = legPrice(flight2, journey.getGroupSize(), service);
+        journey.setPrice2(price2);
+        logLegPrice(journey, price2, flight2, service);
+        world.transportFlightControl().addIncome(flight2, price2);
 
-        journey.setBookedCabinService(journey.getPreferredCabinService());
+        journey.setBookedCabinService(service);
     }
 
     public void waitForCheckin(final Journeys.Journey journey) {
@@ -214,9 +229,9 @@ public class JourneyControl {
     }
 
     /**
-     * The journey which has just arrived pays the price it has (see Journey.getPrice) for the transport flight it has come with. If the journey has
-     * a next transport flight (a stopover) the price is divided between them in proportion to their distances, the part for the next one stays in the
-     * price and is paid when the journey arrives with it. What is paid is taken off the price, so the price is zero when everything is paid.
+     * The journey which has just arrived pays the price it has (price1, see Journey.getPrice1) for the transport flight it has come with. If the journey has a next
+     * transport flight (a stopover), the price of that one is the other field (price2) and it moves to price1 when the next flight becomes the first one
+     * (shiftToNextTransportFlight), so it is paid when the journey arrives with it. What is paid is taken off the price, so the price is zero when everything is paid.
      * <p>
      * For a flight of a user (its flight mission has a user) the payment is a transfer from the account of the passengers to the account of the operator
      * of the flight (and it is written to the log). If an account does not exist, nothing moves, see BankControl.transferIfAccountsExist.
@@ -224,7 +239,7 @@ public class JourneyControl {
      * @return what the journey has paid to the operator of the flight, empty if the journey has no price or the flight is not a flight of a user
      */
     public Optional<Payout> payForTransportation(final Journeys.Journey journey) {
-        final int price = journey.getPrice();
+        final int price = journey.getPrice1();
         if (price <= 0) {
             return Optional.empty();
         }
@@ -232,19 +247,9 @@ public class JourneyControl {
         final TransportFlights.Flight transportFlight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(transportFlight.getFlightMissionId());
 
-        int payout = price;
-        if (journey.getTransportFlight2Id() > 0) {
-            final double distance1 = mission.map(m -> distanceOf(m, true)).orElse(0.0);
-            final double distance2 = world.transportFlights().byId(journey.getTransportFlight2Id())
-                    .flatMap(tf -> world.flightMissions().byId(tf.getFlightMissionId()))
-                    .map(m -> distanceOf(m, false))
-                    .orElse(0.0);
-            if (distance1 + distance2 > 0) {
-                payout = (int) Math.round(price * distance1 / (distance1 + distance2));
-            }
-        }
-        // what is paid is taken off the price: the part for the next transport flight (if there is one) stays
-        journey.setPrice(price - payout);
+        final int payout = price;
+        // what is paid is taken off the price
+        journey.setPrice1(0);
 
         if (mission.isEmpty() || mission.get().getUserId() <= 0) {
             return Optional.empty();
@@ -258,14 +263,6 @@ public class JourneyControl {
         world.bankControl().transferIfAccountsExist(BankAccounts.SystemPassengersAccountId, world.bankControl().operatorAccountId(operatorId), payout,
                 BankTransactions.Type.JourneyPayment, "j/y #" + journey.getId());
         return Optional.of(new Payout(operatorId, payout));
-    }
-
-    // The distance of the transport flight of the mission: the airport of departure and the airport where the aircraft has landed (the destination one if it is not known)
-    private double distanceOf(final FlightMissions.Mission mission, final boolean landed) {
-        final int arrivalAirportId = landed && mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId();
-        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
-        final Airports.Airport to = world.airports().byId(arrivalAirportId).orElseThrow();
-        return Geo.distance(from.getCoords(), to.getCoords());
     }
 
     public void startSpendingTheirTime(final Journeys.Journey journey) {
@@ -352,7 +349,7 @@ public class JourneyControl {
         }
         final TransportFlights.Flight transportFlight1 = transportFlight1O.get();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
-        releaseShadowJetPrice(journey, transportFlight1);
+        releaseBookingPrice(journey, transportFlight1);
 
         // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
         // the short delay gives a good chance that the transport flight still exists, see FlightCleanup
@@ -431,6 +428,9 @@ public class JourneyControl {
     private void shiftToNextTransportFlight(final Journeys.Journey journey) {
         journey.setTransportFlight1Id(journey.getTransportFlight2Id());
         journey.setTransportFlight2Id(0);
+        // the price of the next flight goes with it
+        journey.setPrice1(journey.getPrice2());
+        journey.setPrice2(0);
     }
     
     // The moment of the deboarding is not chosen here: the flight lets the journeys out one after another (PaxManager, deboarding
@@ -449,7 +449,7 @@ public class JourneyControl {
 
         Journeys.Status oldStatus = journey.getStatus();
 
-        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> releaseShadowJetPrice(journey, flight));
+        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> releaseBookingPrice(journey, flight));
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
@@ -470,13 +470,18 @@ public class JourneyControl {
             return;
         }
 
-        // the transport flight could be removed already, then there is nothing to release
+        // the transport flight could be removed already, then there is nothing to release; the journey is not going to board it, so its price is not the income of that flight
+        final int price2 = journey.getPrice2();
         world.transportFlights().byId(journey.getTransportFlight2Id())
-                .ifPresent(transportFlight2 -> world.transportFlightControl().releaseFlightTickets(
-                        transportFlight2,
-                        journey.getGroupSize(),
-                        journey.getBookedCabinService()));
+                .ifPresent(transportFlight2 -> {
+                    world.transportFlightControl().releaseFlightTickets(
+                            transportFlight2,
+                            journey.getGroupSize(),
+                            journey.getBookedCabinService());
+                    world.transportFlightControl().subtractIncome(transportFlight2, price2);
+                });
         journey.setTransportFlight2Id(0);
+        journey.setPrice2(0);
     }
 
     // Returns the journey to the city where it was before the flight. The stored last known location goes first, the transport

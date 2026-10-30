@@ -40,18 +40,19 @@ import static com.google.common.base.Preconditions.checkArgument;
  * to a flight of a pilot (ShadowJetPricing, JourneyControl.bookDirectFlightJourneyNoChecks); a ShadowJet journey which is too late to board loses the price.
  * <p>
  * todo ak1 WHAT IS LEFT FOR THE INCOME:
- * 1. THE NUMBERS OF SHADOWJET PRICING (ShadowJetPricing) ARE A DRAFT: the fixed part, the price of a mile, the factors of the classes. Agree them. The journeys of ShadowJet pay
- * the price to the operator on arrival now for the flights of the pilots (JourneyControl.payForTransportation, from the account of the passengers), check the balance of the
- * account of ShadowJet after the first real flights.
+ * 1. THE PRICES ARE DECIDED (ShadowJetPricing, 2026-10-30). Every journey has the price of its flight at the booking, whatever the flight is (price1, and price2 for the second
+ * flight of a stopover). The journeys pay the price to the operator on arrival now for the flights of the pilots (JourneyControl.payForTransportation, from the account of the
+ * passengers), check the balance of the account of ShadowJet after the first real flights.
  * 2. THE PAY OF A SHADOWJET PILOT is done (2026-10-30): the contract is made at the booking (ShadowJetBooking), the flight is paid at the finish by the rates of its operator
  * (OperatorPay, BusyBirdsMissionControl.payPilot), the income is taken from here. What is left is to look at the real payments after the first flights.
- * 3. THE STOPOVER JOURNEYS (two transport flights, JourneyControl.bookStopoverFlightsJourneyNoChecks): the price of the journey is for the whole trip, how it is split
- * between the two flights is not decided, so the stopover booking adds nothing to either now. Decide it with the price of ShadowJet (hub test journeys have price 0 anyway).
+ * 3. THE STOPOVER JOURNEYS (two transport flights, JourneyControl.bookStopoverFlightsJourneyNoChecks) are done (2026-10-30): every flight of the route has its own price by its
+ * own distance, price1 is of the first one and price2 of the second one, and each flight of a pilot gets its own price as the income. Nothing is split.
  * 4. THE EXPECTED INCOME of the forecast of the sales team (ShadowJetController.ExpectedLoadDto.income) is a rough number (2026-10-30): the seats of the type * the middle of the
  * load * the price of one economy passenger (ShadowJetSalesForecast.approximateIncome); it does not know the classes and the real journeys, it follows ShadowJetPricing (item 1).
- * 5. THE RELEASE of a journey from the flight: a ShadowJet journey which is too late to board or is reset (JourneyControl.tooLateToBoard, resetJourneyForcefully) gets its price
- * cleared (releaseShadowJetPrice) and the income of the flight is NOT touched there: it is calculated again from the journeys on board at the end of the boarding, a
- * journey which is too late is not among them, and taking its price off after that would count it twice. The second flight of a stopover journey has no income (item 3).
+ * 5. THE RELEASE of a journey from the flight: a journey which is too late to board or is reset (JourneyControl.tooLateToBoard, resetJourneyForcefully) gets its price
+ * cleared (releaseBookingPrice) and the income of the flight is NOT touched there: it is calculated again from the journeys on board at the end of the boarding, a
+ * journey which is too late is not among them, and taking its price off after that would count it twice. The second flight of a stopover journey which is reset loses its
+ * price2 and its income at once (releaseTransportFlight2Tickets), it has not boarded yet.
  * If a journey is going to leave a flight before the end of the boarding for good (the booking is cancelled), it must call TransportFlightControl.subtractIncome.
  * 6. THE RESERVE, 25 bytes, is for what comes next to such flights: the booking time (for "the earlier the booking, the more passengers", ShadowJetSalesForecast), the target
  * of the sales team (20-30% at once, 40-50% in the first 4 hours, docs/clients-and-flight-modes.md), the flag of the closed booking (closedBooking, docs/status-and-backlog.md).

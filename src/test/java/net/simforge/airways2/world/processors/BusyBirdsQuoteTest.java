@@ -67,14 +67,14 @@ class BusyBirdsQuoteTest {
     void theQuoteSetsThePriceOnceAndTheListShowsItExactly() {
         final int price = control.quote(journey);
 
-        assertEquals(price, journey.getPrice());
+        assertEquals(price, journey.getPrice1());
         assertTrue(price > 0);
         assertTrue(theMission().isPayExact());
         assertEquals(price, theMission().getPay());
 
         // a second quote gives the same price
         assertEquals(price, control.quote(journey));
-        assertEquals(price, journey.getPrice());
+        assertEquals(price, journey.getPrice1());
     }
 
     @Test
@@ -83,15 +83,15 @@ class BusyBirdsQuoteTest {
         final int income = control.quote(journey, 1.0);
         assertTrue(income > 0);
 
-        journey.setPrice(0);
+        journey.setPrice1(0);
         assertEquals(Math.round(income * 0.95), control.quote(journey, 0.95));
 
-        journey.setPrice(0);
+        journey.setPrice1(0);
         assertEquals(Math.round(income * 1.05), control.quote(journey, 1.05));
 
         // the random factor of the quote itself stays inside the limits
         for (int i = 0; i < 200; i++) {
-            journey.setPrice(0);
+            journey.setPrice1(0);
             final int price = control.quote(journey);
             assertTrue(price >= Math.round(income * 0.95) && price <= Math.round(income * 1.05), "price " + price);
         }
@@ -102,7 +102,7 @@ class BusyBirdsQuoteTest {
         final int first = control.quote(journey, 0.95);
 
         assertEquals(first, control.quote(journey, 1.05));
-        assertEquals(first, journey.getPrice());
+        assertEquals(first, journey.getPrice1());
     }
 
     @Test
@@ -116,7 +116,7 @@ class BusyBirdsQuoteTest {
 
     @Test
     void thePlansAreBuiltWithThePriceOfTheJourney() {
-        journey.setPrice(50_000);
+        journey.setPrice1(50_000);
 
         // the income of the mission is the price, not the income by the formula
         assertEquals(50_000, control.quote(journey));

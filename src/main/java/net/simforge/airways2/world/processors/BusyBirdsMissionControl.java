@@ -51,8 +51,8 @@ public class BusyBirdsMissionControl {
             Cities.City toCity = world.cities().byId(j.getToCityId()).orElseThrow();
 
             int distance = (int) Geo.distance(fromCity.getCoords(), toCity.getCoords());
-            final boolean payExact = j.getPrice() > 0;
-            int pay = payExact ? j.getPrice() : roughPay(calcIncome(j, fromCity, toCity, distance));
+            final boolean payExact = j.getPrice1() > 0;
+            int pay = payExact ? j.getPrice1() : roughPay(calcIncome(j, fromCity, toCity, distance));
 
             return new Mission(
                     j,
@@ -85,12 +85,12 @@ public class BusyBirdsMissionControl {
 
     // the factor is a parameter to check the price in tests
     int quote(final Journeys.Journey journey, final double factor) {
-        if (journey.getPrice() == 0) {
+        if (journey.getPrice1() == 0) {
             final int price = (int) Math.round(calcIncome(journey) * factor);
-            journey.setPrice(price);
+            journey.setPrice1(price);
             log.info("j/y #{} - price {} is set for BusyBirds quote (factor {})", journey.getId(), price, String.format("%.3f", factor));
         }
-        return journey.getPrice();
+        return journey.getPrice1();
     }
 
     // The gap between now and the departure of the first leg of a plan, before the departure time is aligned to 5 minutes. It is half an hour for the
@@ -109,8 +109,8 @@ public class BusyBirdsMissionControl {
     }
 
     private int calcIncome(final Journeys.Journey journey) {
-        if (journey.getPrice() > 0) {
-            return journey.getPrice();
+        if (journey.getPrice1() > 0) {
+            return journey.getPrice1();
         }
         final Cities.City fromCity = world.cities().byId(journey.getLocationCityId()).orElseThrow();
         final Cities.City toCity = world.cities().byId(journey.getToCityId()).orElseThrow();

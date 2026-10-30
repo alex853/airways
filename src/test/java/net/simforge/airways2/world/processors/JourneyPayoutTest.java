@@ -89,7 +89,7 @@ class JourneyPayoutTest {
         if (second != null) {
             journey.setTransportFlight2Id(second.getId());
         }
-        journey.setPrice(price);
+        journey.setPrice1(price);
         return journey;
     }
 
@@ -106,7 +106,7 @@ class JourneyPayoutTest {
 
         assertEquals(Optional.of(new JourneyControl.Payout(operator.getId(), 10_000)), payout);
         // what is paid is taken off the price
-        assertEquals(0, journey.getPrice());
+        assertEquals(0, journey.getPrice1());
         assertEquals(List.of("j/y #" + journey.getId() + " - pays 10000 to operator #" + operator.getId() + " busyBirds for t/f #" + tf.getId()
                 + ", f/m #" + tf.getFlightMissionId()), payoutLog());
     }
@@ -118,7 +118,7 @@ class JourneyPayoutTest {
 
         assertEquals(Optional.empty(), control.payForTransportation(journey));
 
-        assertEquals(0, journey.getPrice());
+        assertEquals(0, journey.getPrice1());
         assertTrue(payoutLog().isEmpty());
     }
 
@@ -129,33 +129,33 @@ class JourneyPayoutTest {
 
         assertEquals(Optional.empty(), control.payForTransportation(journey));
 
-        assertEquals(0, journey.getPrice());
+        assertEquals(0, journey.getPrice1());
         assertTrue(payoutLog().isEmpty());
     }
 
+    // every flight of a stopover route has its own price: the journey pays price1 when it arrives with the first flight, and price2 (which has become price1) with the second
     @Test
-    void withAStopoverThePriceIsDividedInProportionToTheDistances() {
+    void withAStopoverEveryFlightIsPaidByItsOwnPrice() {
         final TransportFlights.Flight tf1 = transportFlight(mission(airportA, airportB, 7));
         final TransportFlights.Flight tf2 = transportFlight(mission(airportB, airportC, 7));
-        final Journeys.Journey journey = journey(10_000, tf1, tf2);
+        final Journeys.Journey journey = journey(6_000, tf1, tf2);
+        journey.setPrice2(4_000);
 
-        final double distance1 = Geo.distance(airportA.getCoords(), airportB.getCoords());
-        final double distance2 = Geo.distance(airportB.getCoords(), airportC.getCoords());
-        final int expectedFirst = (int) Math.round(10_000 * distance1 / (distance1 + distance2));
-
-        // the journey arrives with the first transport flight, the second one is the next
+        // the journey arrives with the first transport flight: its own price is paid, the price of the second one waits
         final int first = control.payForTransportation(journey).orElseThrow().amount();
-        assertEquals(expectedFirst, first);
-        assertEquals(10_000 - expectedFirst, journey.getPrice());
+        assertEquals(6_000, first);
+        assertEquals(0, journey.getPrice1());
+        assertEquals(4_000, journey.getPrice2());
 
-        // the second transport flight becomes the first one, nothing is next: the rest is paid
+        // the second transport flight becomes the first one with its price
         journey.setTransportFlight1Id(tf2.getId());
         journey.setTransportFlight2Id(0);
+        journey.setPrice1(journey.getPrice2());
+        journey.setPrice2(0);
         final int second = control.payForTransportation(journey).orElseThrow().amount();
 
-        assertEquals(10_000 - expectedFirst, second);
-        assertEquals(0, journey.getPrice());
-        assertEquals(10_000, first + second);
+        assertEquals(4_000, second);
+        assertEquals(0, journey.getPrice1());
         assertEquals(2, payoutLog().size());
     }
 
@@ -201,7 +201,7 @@ class JourneyPayoutTest {
 
         // only the part for the first flight is paid, the rest stays in the price
         assertEquals(paid, operatorAccount.getBalance());
-        assertEquals(10_000 - paid, journey.getPrice());
+        assertEquals(10_000 - paid, journey.getPrice1());
     }
 
     @Test
@@ -224,7 +224,7 @@ class JourneyPayoutTest {
 
         assertEquals(1, payoutLog().size());
         assertEquals(0, world.bankTransactions().all().count());
-        assertEquals(0, journey.getPrice());
+        assertEquals(0, journey.getPrice1());
     }
 
     @Test

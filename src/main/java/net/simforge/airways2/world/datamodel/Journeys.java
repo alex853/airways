@@ -35,9 +35,9 @@ public class Journeys {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // lastKnownLocationCityId 2 bytes
             // ----------------------------------------------------- sum                   22 bytes
             // -------------------------------------------- the rest of 10 bytes is to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // price                   3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // price1 (the first flight) 3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // price2 (the second flight) 3 bytes, was the first 3 bytes of a reserve of 4 bytes, they were zero
             .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserve                 3 bytes
             .withHeartbeatIndex(1) // heartbeatField index: position among withDataField calls (status=0, heartbeatTime=1)
             .build();
 
@@ -58,7 +58,8 @@ public class Journeys {
     private final DataField transportFlight2IdField = storage.getDataField(7);
     private final DataField locationCityIdField = storage.getDataField(8);
     private final DataField lastKnownLocationCityIdField = storage.getDataField(9);
-    private final DataField priceField = storage.getDataField(10);
+    private final DataField price1Field = storage.getDataField(10);
+    private final DataField price2Field = storage.getDataField(11);
 
     public static final int MAX_PRICE = (int) DataType.Unsigned24bit.maxValue();
 
@@ -240,17 +241,31 @@ public class Journeys {
          * the place to return to if the flight is lost. Zero when it is not known (old records).
          */
         /**
-         * What the journey is going to pay for the trip it is on: the price which the operator has accepted (BusyBirds sets it when the pilot gets a quote).
-         * Zero when there is no price. The journey pays it when it arrives (JourneyControl) and the price goes back to zero.
+         * What the journey is going to pay for the trip it is on (the price of the first flight, price1): the price which the operator has accepted (BusyBirds sets it when
+         * the pilot gets a quote). Zero when there is no price. The journey pays it when it arrives (JourneyControl) and the price goes back to zero.
          */
-        public int getPrice() {
-            return storage.getAsInt(id, priceField);
+        public int getPrice1() {
+            return storage.getAsInt(id, price1Field);
         }
 
-        public void setPrice(final int price) {
+        public void setPrice1(final int price) {
             checkArgument(price >= 0, "price can not be negative");
             checkArgument(price <= MAX_PRICE, "price does not fit into 3 bytes");
-            storage.set(id, priceField, price);
+            storage.set(id, price1Field, price);
+        }
+
+        /**
+         * The price of the second flight of a journey with a stopover (transportFlight2Id): the same as price1 is for the first one (2026-10-30). Zero when there is no
+         * second flight or no price. Nobody sets it yet: the routes with a stopover are switched off (JourneyProcessor), the field is made for the day they come back.
+         */
+        public int getPrice2() {
+            return storage.getAsInt(id, price2Field);
+        }
+
+        public void setPrice2(final int price) {
+            checkArgument(price >= 0, "price can not be negative");
+            checkArgument(price <= MAX_PRICE, "price does not fit into 3 bytes");
+            storage.set(id, price2Field, price);
         }
 
         public int getLastKnownLocationCityId() {

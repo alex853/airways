@@ -110,7 +110,7 @@ class BusyBirdsPilotContractTest {
     private void bookJourney(final FlightMissions.Mission mission, final Journeys.Journey journey) {
         mission.setCharacterMode(FlightMissions.CharacterMode.PC);
         final net.simforge.airways2.world.datamodel.TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
-        world.transportFlightControl().addIncome(transportFlight, journey.getPrice());
+        world.transportFlightControl().addIncome(transportFlight, journey.getPrice1());
     }
 
     private void finish(final FlightMissions.Mission mission) {
@@ -165,8 +165,8 @@ class BusyBirdsPilotContractTest {
         world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
         bookJourney(mission, journey);
 
-        assertTrue(journey.getPrice() > 0);
-        assertEquals(journey.getPrice(), world.transportFlightControl().getIncomeOfMission(mission));
+        assertTrue(journey.getPrice1() > 0);
+        assertEquals(journey.getPrice1(), world.transportFlightControl().getIncomeOfMission(mission));
     }
 
     @Test
@@ -179,7 +179,7 @@ class BusyBirdsPilotContractTest {
         finish(mission);
 
         // level III is 3% of the income, the flight pay is 400, nothing is taken off
-        final int share = (int) Math.round(journey.getPrice() * 0.03);
+        final int share = (int) Math.round(journey.getPrice1() * 0.03);
         assertEquals(List.of("p/s #" + person.getId() + ", f/m #" + mission.getId() + " - pilot contract #" + contract.getId()
                 + ", pilot gets paid " + (400 + share) + " (flight pay 400, income share " + share + "), params " + contract.getPayParams()), paymentLog());
     }
@@ -188,11 +188,11 @@ class BusyBirdsPilotContractTest {
     public void test__the_income_share_does_not_depend_on_the_price_of_the_journey_after_the_boarding() {
         // the journey has paid and its price is zero, the income of the flight is kept in its transport flight
         final Journeys.Journey journey = journeyWithPrice();
-        final int income = journey.getPrice();
+        final int income = journey.getPrice1();
         final FlightMissions.Mission mission = mission(2 * 3600);
         world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(5));
         bookJourney(mission, journey);
-        journey.setPrice(0);
+        journey.setPrice1(0);
 
         finish(mission);
 
@@ -323,7 +323,7 @@ class BusyBirdsPilotContractTest {
         finish(mission);
         // manual: a third of the flight pay, a third of the share (level III, 3%)
         final int flightPay = (int) Math.round(400 * 0.33);
-        final int share = (int) Math.round(journey.getPrice() * 3 * 33 / 10_000.0);
+        final int share = (int) Math.round(journey.getPrice1() * 3 * 33 / 10_000.0);
         assertTrue(paymentLog().get(0).contains("pilot gets paid " + (flightPay + share) + " (flight pay " + flightPay + ", income share " + share + ")"), paymentLog().get(0));
     }
 
@@ -356,7 +356,7 @@ class BusyBirdsPilotContractTest {
 
         finish(mission);
 
-        final int share = (int) Math.round(journey.getPrice() * 0.03);
+        final int share = (int) Math.round(journey.getPrice1() * 0.03);
         assertEquals(400 + share, pilotAccount.getBalance());
         assertEquals(-(400 + share), operatorAccount.getBalance());
         final List<net.simforge.airways2.world.datamodel.BankTransactions.BankTransaction> transactions = world.bankTransactions().all().toList();

@@ -4,6 +4,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.ShadowJetPricing;
 import net.simforge.airways2.world.datamodel.AircraftTypes;
 import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.world.datamodel.Airports;
@@ -156,27 +157,57 @@ public class JourneyHubSearchTest {
         assertBookedTo(wakeUpJourney(), direct);
     }
 
-    // the routes of two flights with a stopover are switched off (2026-10-30): the legs of such a route took the places of the flights of the pilots and brought no income
+    // the routes of two flights with a stopover work again (2026-10-30): every flight of the route has its own price by its own distance (price1 and price2), and each of
+    // the flights of the pilots gets its price as the income
     @Test
-    public void theStopoverRoutesAreSwitchedOff() {
+    public void aStopoverRouteIsBookedAndEveryFlightHasItsOwnPriceAndIncome() {
         final Airports.Airport stopover = airport("XXXX", city("Stopover", 15), 15); // not a hub: the hub flight is not the way
         final Airports.Airport targetAirport = airport("TTTT", target, 30);
-        flightTo(stopover, 60);
+        final TransportFlights.Flight first = flightTo(stopover, 60);
         final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-7777", stopover);
         final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR; // later than the arrival of the first flight and the reserve of the connection
-        final FlightMissions.Mission second = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
-        world.transportFlightControl().createTransportFlight(second);
+        final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
+        secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
 
-        // the flights of the pilots and the flights of the AI are the same for it
-        assertNotBooked(wakeUpJourney());
-        world.flightMissions().all().forEach(m -> m.setCharacterMode(FlightMissions.CharacterMode.NPC));
-        final Journeys.Journey another = world.journeys().create(Journeys.Status.LookingForTickets, origin.getId(), target.getId(), 2, CabinLayout.Service.Y);
-        another.setLocationCityId(origin.getId());
-        another.setLastKnownLocationCityId(origin.getId());
-        another.setHeartbeatTime(world.getWorldTime());
-        JourneyProcessor.process(world);
-        assertEquals(Journeys.Status.LookingForTickets, another.getStatus());
-        assertEquals(0, another.getTransportFlight2Id());
+        final Journeys.Journey journey = wakeUpJourney(); // 2 passengers, Y
+
+        assertEquals(Journeys.Status.WaitingForCheckIn, journey.getStatus());
+        assertEquals(first.getId(), journey.getTransportFlight1Id());
+        assertEquals(second.getId(), journey.getTransportFlight2Id());
+        // every pair of airports has its own price: OOOO - XXXX is 15 degrees, XXXX - TTTT is 15 degrees too, so the prices are the same here, and not zero
+        final double distance = net.simforge.commons.misc.Geo.distance(originAirport.getCoords(), stopover.getCoords());
+        final int expected = ShadowJetPricing.price(distance, 2, CabinLayout.Service.Y);
+        assertTrue(expected > 0);
+        assertEquals(expected, journey.getPrice1());
+        assertEquals(expected, journey.getPrice2());
+        assertEquals(expected, world.transportFlightControl().getIncome(first));
+        assertEquals(expected, world.transportFlightControl().getIncome(second));
+    }
+
+    // the price goes with the flight: when the journey comes to the stopover, price2 becomes price1 and the first one is paid
+    @Test
+    public void thePriceOfTheSecondFlightBecomesTheFirstWhenTheJourneyArrivesToTheStopover() {
+        final Airports.Airport stopover = airport("XXXX", city("Stopover", 15), 15);
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        final TransportFlights.Flight first = flightTo(stopover, 60);
+        world.flightMissions().byId(first.getFlightMissionId()).orElseThrow().setActualLandingAirportId(stopover.getId());
+        final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-7777", stopover);
+        final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR;
+        final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
+        secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
+        final Journeys.Journey journey = wakeUpJourney();
+        final int price2 = journey.getPrice2();
+        assertTrue(price2 > 0);
+
+        journey.setStatus(Journeys.Status.JustArrived);
+        world.journeyControl().justArrived(journey);
+
+        assertEquals(second.getId(), journey.getTransportFlight1Id());
+        assertEquals(0, journey.getTransportFlight2Id());
+        assertEquals(price2, journey.getPrice1());
+        assertEquals(0, journey.getPrice2());
     }
 
     @Test
@@ -225,5 +256,28 @@ public class JourneyHubSearchTest {
         JourneyProcessor.process(world);
 
         assertBookedTo(journey, flight);
+    }
+
+    // a journey with a stopover is reset: the second flight has not been boarded, so its price is not the income of that flight any more
+    @Test
+    public void aStopoverJourneyWhichIsResetTakesTheIncomeOfTheSecondFlightOff() {
+        final Airports.Airport stopover = airport("XXXX", city("Stopover", 15), 15);
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        flightTo(stopover, 60);
+        final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-7777", stopover);
+        final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR;
+        final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
+        secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
+        final Journeys.Journey journey = wakeUpJourney();
+        assertTrue(world.transportFlightControl().getIncome(second) > 0);
+        final int remainedBefore = second.getRemainedTickets().getTotal();
+
+        world.journeyControl().resetJourneyForcefully(journey);
+
+        assertEquals(0, journey.getTransportFlight2Id());
+        assertEquals(0, journey.getPrice2());
+        assertEquals(0, world.transportFlightControl().getIncome(second));
+        assertEquals(remainedBefore + 2, second.getRemainedTickets().getTotal()); // the 2 seats of the journey are free again
     }
 }
