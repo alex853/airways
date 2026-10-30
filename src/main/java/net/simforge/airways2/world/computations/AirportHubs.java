@@ -3,7 +3,7 @@ package net.simforge.airways2.world.computations;
 import java.util.Set;
 
 /**
- * The hubs of the world. todo ak1 hubs are hardcoded, later they should be calculated from the flight stats OR be an additional flag of the Airport entity.
+ * The hubs of the world. todo ak0 hubs are hardcoded, later they should be calculated from the flight stats OR be an additional flag of the Airport entity.
  */
 public final class AirportHubs {
     private AirportHubs() {

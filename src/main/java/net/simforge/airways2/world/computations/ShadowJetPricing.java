@@ -12,9 +12,8 @@ import net.simforge.airways2.tools.CabinLayout;
  * journey, the one it is seated in (Journeys.Journey.getBookedCabinService, with the upgrade or the downgrade), not the class it prefers (getPreferredCabinService).
  * The factors of the classes (2026-10-30): Y 1, W 1.5, J 4, F 7.
  * <p>
- * todo ak1 THE NUMBERS ARE PARTLY A DRAFT (2026-10-30): the structure (the distance, the passengers, the actual class) and the factors of the classes are decided, the fixed part
- * (30) and the price of a nautical mile (0.12) are not, they are taken to have a plausible income share of the pilot (the shares of ShadowJet are 0.1 to 3%,
- * PilotPayRates.SHADOW_JET) and must be agreed. Nothing is rounded to a "nice" number yet.
+ * The numbers are decided (2026-10-30): the fixed part (30) and the price of a nautical mile (0.12), they give a plausible income share of the pilot (the shares of
+ * ShadowJet are 0.1 to 3%, PilotPayRates.SHADOW_JET). Nothing is rounded to a "nice" number.
  */
 public final class ShadowJetPricing {
     // the fixed part of the price of a passenger of the economy class, in the money of the game

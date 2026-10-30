@@ -7,8 +7,8 @@
 
 | TODO | Где | Что нужно |
 |---|---|---|
-| «add `excluded`, countryId, and some reserve space» | `Airports.java` (todo ak1) | `countryId`, признак исключения, резерв |
-| «rework `isExcluded` into `exclusion` field, or status» | `Airports.Airport.isExcluded` (todo ak1) | сейчас захардкожены LFPY, EDDT, LGAT, CGAS; читают `BusyBirdsMissionControl` и `RandomFlightMissionGenerator` |
+| «add `excluded`, countryId, and some reserve space» | `Airports.java` (todo ak0) | `countryId`, признак исключения, резерв |
+| «rework `isExcluded` into `exclusion` field, or status» | `Airports.Airport.isExcluded` (todo ak0) | сейчас захардкожены LFPY, EDDT, LGAT, CGAS; читают `BusyBirdsMissionControl` и `RandomFlightMissionGenerator` |
 | TODO №4 «Страна аэропорта» | `docs/cities.md` | страна считается на лету по `airport2city` (`GeoController`, кэш + `invalidateAirportCountries`) |
 | TODO №1 «Военные аэродромы с типом `civil`» | `docs/cities.md` | признак «военный» (EGDM, KINS, KNZJ, KNTD, KSLI, KPMD, KNKX, KNHK, KAPG, KFMH, RKSM, RKSW и др.) |
 | `ImportMajorAirportsInVicinityOfCities` (todo ak3) | IATA сейчас `null` | не схема, а заполнение IATA из refdata |

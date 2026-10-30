@@ -16,7 +16,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class Airports {
     private final Strings strings;
 
-    // todo ak1 add 'excluded', countryId, and some reserve space
+    // todo ak0 add 'excluded', countryId, and some reserve space
     private final Storage<Airport> storage = Storage.<Airport>builder()
             .name("airports")
             .withInstantiator(Airport::new)
@@ -124,7 +124,7 @@ public class Airports {
         }
 
         @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-        public boolean isExcluded() { // todo ak1 rework it into 'exclusion' field, or status, or something like that
+        public boolean isExcluded() { // todo ak0 rework it into 'exclusion' field, or status, or something like that
             String icao = getIcao();
             return "LFPY".equals(icao)
                     || "EDDT".equals(icao)
