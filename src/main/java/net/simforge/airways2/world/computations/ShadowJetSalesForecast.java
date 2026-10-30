@@ -38,6 +38,16 @@ public final class ShadowJetSalesForecast {
     }
 
     /**
+     * The approximate income of the expected load: the seats of the aircraft multiplied by the middle of the load of the sales team (20 to 25% is 22.5%) and by the price of
+     * one economy passenger on the distance of the flight (ShadowJetPricing). It is a rough number to show the pilot, not a calculation: all the passengers are taken as
+     * economy ones, the real classes and the real load are not known until the end of the booking.
+     */
+    public static int approximateIncome(final int seats, final ExpectedLoad load, final double distanceNm) {
+        final double middlePercent = (load.loadFromPercent() + load.loadToPercent()) / 2.0;
+        return (int) Math.round(seats * middlePercent / 100.0 * ShadowJetPricing.price(distanceNm, 1, net.simforge.airways2.tools.CabinLayout.Service.Y));
+    }
+
+    /**
      * The expected load of a flight which is booked secondsBeforeDeparture before its departure, the figures between the points are interpolated linearly and rounded.
      */
     public static ExpectedLoad expectedLoad(final long secondsBeforeDeparture) {

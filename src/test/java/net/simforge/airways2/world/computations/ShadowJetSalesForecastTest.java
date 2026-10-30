@@ -44,6 +44,20 @@ class ShadowJetSalesForecastTest {
     }
 
     @Test
+    void theApproximateIncomeIsTheSeatsByTheMiddleOfTheLoadByTheEconomyPrice() {
+        // 156 seats, 20 to 25% is 22.5%: 35.1 passengers, the economy price on 600 nm is 102 (30 + 0.12 * 600)
+        final ShadowJetSalesForecast.ExpectedLoad load = new ShadowJetSalesForecast.ExpectedLoad(20, 25);
+
+        assertEquals(Math.round(156 * 0.225 * 102), ShadowJetSalesForecast.approximateIncome(156, load, 600));
+        // more seats, more income; a farther flight, more income
+        assertEquals(true, ShadowJetSalesForecast.approximateIncome(300, load, 600) > ShadowJetSalesForecast.approximateIncome(156, load, 600));
+        assertEquals(true, ShadowJetSalesForecast.approximateIncome(156, load, 3000) > ShadowJetSalesForecast.approximateIncome(156, load, 600));
+        // a bigger load, more income
+        assertEquals(true, ShadowJetSalesForecast.approximateIncome(156, new ShadowJetSalesForecast.ExpectedLoad(80, 100), 600) > ShadowJetSalesForecast.approximateIncome(156, load, 600));
+        assertEquals(0, ShadowJetSalesForecast.approximateIncome(0, load, 600));
+    }
+
+    @Test
     void theLoadDoesNotFallWhenTheFlightIsBookedEarlier() {
         int from = 0;
         int to = 0;

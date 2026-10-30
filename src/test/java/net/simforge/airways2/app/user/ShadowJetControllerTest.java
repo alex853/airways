@@ -111,8 +111,10 @@ class ShadowJetControllerTest {
         final ShadowJetController.ExpectedLoadDto inHalfAnHour = controller.planFlight(USER_ID, "A320", "EGLL", "EGKK", departureAfterHours(0) + 30 * 60_000L).getExpectedLoad();
         assertEquals(20, inHalfAnHour.getLoadFromPercent());
         assertEquals(25, inHalfAnHour.getLoadToPercent());
-        // the approximate income is not calculated yet
-        assertNull(inHalfAnHour.getIncome());
+        // the approximate income: the seats of the A320 (J12 / Y144 is 156) * 22.5% * the economy price on the distance
+        final double distance = net.simforge.commons.misc.Geo.distance(world.airports().byIcao("EGLL").orElseThrow().getCoords(), world.airports().byIcao("EGKK").orElseThrow().getCoords());
+        final long expectedIncome = Math.round(156 * 0.225 * net.simforge.airways2.world.computations.ShadowJetPricing.price(distance, 1, net.simforge.airways2.tools.CabinLayout.Service.Y));
+        assertEquals(expectedIncome, (long) inHalfAnHour.getIncome());
 
         // three hours before the departure (a bit less, the departure is on a whole minute): the figures between the hour and the six hours
         final ShadowJetController.ExpectedLoadDto inThreeHours = controller.planFlight(USER_ID, "A320", "EGLL", "EGKK", departureAfterHours(3)).getExpectedLoad();

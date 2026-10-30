@@ -47,8 +47,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * (OperatorPay, BusyBirdsMissionControl.payPilot), the income is taken from here. What is left is to look at the real payments after the first flights.
  * 3. THE STOPOVER JOURNEYS (two transport flights, JourneyControl.bookStopoverFlightsJourneyNoChecks): the price of the journey is for the whole trip, how it is split
  * between the two flights is not decided, so the stopover booking adds nothing to either now. Decide it with the price of ShadowJet (hub test journeys have price 0 anyway).
- * 4. THE EXPECTED INCOME of the forecast of the sales team (ShadowJetController.ExpectedLoadDto.income, null now): the seats of the flight * the load percent * the price of
- * a seat; it can use ShadowJetPricing now (item 1: the numbers are a draft).
+ * 4. THE EXPECTED INCOME of the forecast of the sales team (ShadowJetController.ExpectedLoadDto.income) is a rough number (2026-10-30): the seats of the type * the middle of the
+ * load * the price of one economy passenger (ShadowJetSalesForecast.approximateIncome); it does not know the classes and the real journeys, it follows ShadowJetPricing (item 1).
  * 5. THE RELEASE of a journey from the flight: a ShadowJet journey which is too late to board or is reset (JourneyControl.tooLateToBoard, resetJourneyForcefully) gets its price
  * cleared (releaseShadowJetPrice) and the income of the flight is NOT touched there: it is calculated again from the journeys on board at the end of the boarding, a
  * journey which is too late is not among them, and taking its price off after that would count it twice. The second flight of a stopover journey has no income (item 3).

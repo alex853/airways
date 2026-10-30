@@ -81,6 +81,15 @@ public class TransportFlightControl {
         return transportFlight;
     }
 
+    /**
+     * The cabin layout which a transport flight of an aircraft type gets by default, the seats of the type; for a type without a layout it is the same default as the one of
+     * the transport flights (99 economy seats). It is for the estimates before there is a flight (the approximate income of ShadowJet).
+     */
+    public CabinLayout cabinLayoutOfType(final String aircraftTypeIcao) {
+        final CabinLayout cabinLayout = cabinLayouts.get(aircraftTypeIcao);
+        return cabinLayout != null ? cabinLayout : CabinLayout.Y(99);
+    }
+
     private CabinLayout chooseDefaultCabinLayout(FlightMissions.Mission flightMission) {
         Aircrafts.Aircraft aircraft = world.aircrafts().byId(flightMission.getAircraftId()).orElseThrow();
         String aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();

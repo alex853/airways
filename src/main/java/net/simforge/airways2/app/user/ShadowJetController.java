@@ -115,12 +115,14 @@ public class ShadowJetController {
 
             final Duration duration = FlightMissionHelper.calculateFlightDuration(aircraftType, from, to);
             final long arrivalTimeMillis = departureTimeMillis + duration.toMillis();
+            final double distanceNm = Geo.distance(from.getCoords(), to.getCoords());
+            final int seats = world.transportFlightControl().cabinLayoutOfType(aircraftType).getTotal();
             return new FlightPlanDto(
-                    (int) Math.round(Geo.distance(from.getCoords(), to.getCoords())),
+                    (int) Math.round(distanceNm),
                     (int) duration.getSeconds(),
                     arrivalTimeMillis,
                     checkSlot(world, userId, departureTimeMillis, arrivalTimeMillis, world.getWorldTime()),
-                    expectedLoad(departureTimeMillis - millis(world.getWorldTime())));
+                    expectedLoad(departureTimeMillis - millis(world.getWorldTime()), seats, distanceNm));
         });
     }
 
@@ -231,9 +233,9 @@ public class ShadowJetController {
         private String status;
     }
 
-    private static ExpectedLoadDto expectedLoad(final long millisBeforeDeparture) {
+    private static ExpectedLoadDto expectedLoad(final long millisBeforeDeparture, final int seats, final double distanceNm) {
         final ShadowJetSalesForecast.ExpectedLoad load = ShadowJetSalesForecast.expectedLoad(millisBeforeDeparture / 1000);
-        return new ExpectedLoadDto(load.loadFromPercent(), load.loadToPercent(), null);
+        return new ExpectedLoadDto(load.loadFromPercent(), load.loadToPercent(), ShadowJetSalesForecast.approximateIncome(seats, load, distanceNm));
     }
 
     @Data
@@ -242,7 +244,7 @@ public class ShadowJetController {
         // what the sales team hopes to gather, in percents of the seats: from and to
         private int loadFromPercent;
         private int loadToPercent;
-        // TODO the approximate income of such a load; null: it is not calculated yet
+        // the approximate income of such a load: the seats * the middle of the load * the price of an economy passenger on the distance (ShadowJetSalesForecast.approximateIncome)
         private Integer income;
     }
 
