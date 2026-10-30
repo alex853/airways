@@ -251,6 +251,36 @@ class ShadowJetBookingTest {
         assertTrue(world.pilotContracts().byFlightMissionId(second.mission().getId()).isPresent());
     }
 
+    // the pilot books the next flight while the previous one is in progress (the preflight, the flying, the postflight): it is still the flight of the aircraft until it is finished
+    @Test
+    void aFlightGoesOnAfterAFlightWhichIsInProgress() {
+        final FlightMissions.Mission first = book(inHours(6)).mission();
+        final String regNo = world.aircrafts().byId(first.getAircraftId()).orElseThrow().getRegNo();
+        final long departure = first.getPlannedArrivalWorldTime() * 1000L + 40 * 60_000L;
+
+        for (final FlightMissions.Status status : List.of(FlightMissions.Status.Preflight, FlightMissions.Status.Flying, FlightMissions.Status.Postflight)) {
+            first.setStatus(status);
+
+            final ShadowJetBooking.Result second = book(USER_ID, pilot, "EDBB", "EGAA", departure, regNo);
+
+            assertTrue(second.booked(), status + ": " + second.problems());
+            second.mission().setStatus(FlightMissions.Status.Cancelled); // the next round books it again
+        }
+    }
+
+    @Test
+    void aFinishedFlightIsNotAFlightAheadSoTheAircraftCanNotBeContinued() {
+        final FlightMissions.Mission first = book(inHours(6)).mission();
+        final String regNo = world.aircrafts().byId(first.getAircraftId()).orElseThrow().getRegNo();
+        final long departure = first.getPlannedArrivalWorldTime() * 1000L + 40 * 60_000L;
+        first.setStatus(FlightMissions.Status.Finished);
+
+        final ShadowJetBooking.Result result = book(USER_ID, pilot, "EDBB", "EGAA", departure, regNo);
+
+        assertFalse(result.booked());
+        assertTrue(result.problems().get(0).contains("not yours"), result.problems().toString());
+    }
+
     @Test
     void theContinuationMustStartWhereTheLastFlightOfTheAircraftEnds() {
         final FlightMissions.Mission first = book(inHours(6)).mission();

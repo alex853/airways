@@ -184,13 +184,15 @@ public final class ShadowJetBooking {
     }
 
     // The flight goes on after another flight of the pilot on the same aircraft: the aircraft is ShadowJet's, of the same type, all the flights ahead which it has are the pilot's
-    // (there is at least one) and the last of them ends at the airport where this flight starts.
+    // (there is at least one) and the last of them ends at the airport where this flight starts. A flight is ahead until it is finished or cancelled.
     private static String continuationProblem(final World world, final int userId, final Aircrafts.Aircraft aircraft, final AircraftTypes.AircraftType type, final Airports.Airport from) {
         if (aircraft.getAircraftOperatorId() != World25.ShadowJetOperatorId || aircraft.getAircraftTypeId() != type.getId()) {
             return "The aircraft " + aircraft.getRegNo() + " is not a ShadowJet aircraft of the type " + type.getIcao() + ".";
         }
+        // the flights which are not over: the planned and the dispatched ones, and the ones which are in progress (the preflight, the flying, the postflight): the pilot books the
+        // next flight while the previous one is still in the air or at the gate, and the aircraft is still the one of that flight until it is finished
         final List<FlightMissions.Mission> ahead = world.flightMissions().allForAircraft(aircraft)
-                .filter(m -> m.getStatus() == FlightMissions.Status.Dispatched || m.getStatus() == FlightMissions.Status.PlannedManually || m.getStatus() == FlightMissions.Status.PlannedViaSchedule)
+                .filter(m -> !FlightMissionHelper.isFinishedOrCancelled(m))
                 .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                 .toList();
         if (ahead.isEmpty() || ahead.stream().anyMatch(m -> m.getUserId() != userId)) {
