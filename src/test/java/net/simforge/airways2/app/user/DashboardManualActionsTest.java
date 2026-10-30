@@ -120,6 +120,17 @@ class DashboardManualActionsTest {
     }
 
     @Test
+    void theFlightDtoTellsTheCarriedPaxOnlyAfterTheTakeoff() {
+        final TransportFlights.Flight tf = world.transportFlightControl().createTransportFlight(mission);
+        tf.setPaxOnBoard(7);
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getCrdPax()); // they are on board, but the flight has not taken off yet
+
+        tf.setPaxCarried(7);
+        tf.setPaxOnBoard(3); // the deboarding goes on, the carried ones stay the same
+        assertEquals(7, FlightUltraDto.from(world, mission, true).getCrdPax());
+    }
+
+    @Test
     void manualLandingIsNotAllowedBeforeThreeQuartersOfThePlannedFlyingTime() {
         mission.setStatus(FlightMissions.Status.Flying);
         final int takeoff = world.getWorldTime();

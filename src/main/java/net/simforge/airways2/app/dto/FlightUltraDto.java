@@ -48,6 +48,8 @@ public class FlightUltraDto {
     private final String sTkts;
     private final Integer ckdIn;
     private final Integer pOnBrd;
+    // the passengers carried: the ones who were on board at the takeoff (crdPax = carried pax; the name does not start with a lone lowercase letter: Jackson would send getPCrd as pcrd), null until the flight has taken off
+    private final Integer crdPax;
     // the flight is finished by itself at its end (the setting of the pilot); only true is sent
     private final Boolean autoFinish;
 
@@ -100,6 +102,7 @@ public class FlightUltraDto {
                 tf != null ? tf.getTotalTickets().minus(tf.getRemainedTickets()).toString() : null,
                 tf != null ? (tf.getPaxCheckedIn() > 0 ? tf.getPaxCheckedIn() : null) : null,
                 tf != null ? (tf.getPaxOnBoard() > 0 ? tf.getPaxOnBoard() : null) : null,
+                tf != null ? (tf.getPaxCarried() > 0 ? tf.getPaxCarried() : null) : null,
 
                 fm.isAutoFinish() ? Boolean.TRUE : null
         );

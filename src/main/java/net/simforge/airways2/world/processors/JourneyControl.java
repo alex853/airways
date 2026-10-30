@@ -112,8 +112,10 @@ public class JourneyControl {
         checkNotNull(flight1);
         checkNotNull(flight2);
 
-        // todo ak0 the price of the journey is for the whole trip and the trip has two flights: how it is split between them is not decided, so no income is added to
-        // either of them (the hub journeys have price 0 now), see the todo of TransportFlightExtras, item 3
+        // todo ak3 (a long shelf, 2026-10-30) the price of the journey is for the whole trip and the trip has two flights: how it is split between them is not decided, so no
+        // income is added to either of them (the hub journeys have price 0 now), see the todo of TransportFlightExtras, item 3. The whole code of the stopover routes (this method,
+        // JourneyProcessor.findStopoverRoutes, the second transport flight of a journey) is a rudiment of the network of scheduled flights, it is probably out of date and a
+        // candidate for removal rather than for development.
         journey.setTransportFlight1Id(flight1.getId());
         world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getPreferredCabinService());
 
