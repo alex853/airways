@@ -29,6 +29,43 @@ class PilotDutyTest {
     }
 
     @Test
+    void aGapOfLessThanTwoHoursBetweenFlightsIsDuty() {
+        // 3 hours of duty, a gap of 30 minutes, 2 hours of duty: the pilot did not go off duty, it is 5.5 hours
+        assertEquals(5 * 60 + 30, PilotDuty.dutyMinutesInWindow(List.of(period(10, 7), new int[]{NOW - 7 * HOUR + 30 * 60, NOW - 5 * HOUR + 30 * 60}), NOW));
+        // the same just under two hours
+        assertEquals(3 * 60 + 119 + 2 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(10, 7), new int[]{NOW - 7 * HOUR + 119 * 60, NOW - 5 * HOUR + 119 * 60}), NOW));
+    }
+
+    @Test
+    void aGapOfTwoHoursOrMoreIsNotDuty() {
+        // exactly two hours: not less than two, so they are two periods (3 + 2 hours)
+        assertEquals(5 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(10, 7), period(5, 3)), NOW));
+        // three hours
+        assertEquals(5 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(10, 7), period(4, 2)), NOW));
+    }
+
+    @Test
+    void periodsWhichOverlapAreCountedOnce() {
+        // the second flight starts before the first one is finished: 10 to 6 hours ago and 8 to 3 hours ago make one period of 7 hours
+        assertEquals(7 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(10, 6), period(8, 3)), NOW));
+        // a period inside another one adds nothing
+        assertEquals(4 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(10, 6), period(9, 7)), NOW));
+    }
+
+    @Test
+    void theOrderOfThePeriodsDoesNotMatter() {
+        assertEquals(5 * 60 + 30, PilotDuty.dutyMinutesInWindow(List.of(new int[]{NOW - 7 * HOUR + 30 * 60, NOW - 5 * HOUR + 30 * 60}, period(10, 7)), NOW));
+    }
+
+    @Test
+    void aChainWhichBeganBeforeTheWindowIsCountedFromTheBeginningOfTheWindow() {
+        // two flights with a gap of one hour: 28 to 25 hours ago and 24 to 22 hours ago: the whole chain from 28 to 22, the window takes the last 2 hours
+        assertEquals(2 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(28, 25), period(24, 22)), NOW));
+        // the gap before the window start counts too: 26 to 25.5 and 24.5 to 22: one chain from 26 to 22, the window (24 hours) takes 2 hours
+        assertEquals(2 * 60, PilotDuty.dutyMinutesInWindow(List.of(new int[]{NOW - 26 * HOUR, NOW - 25 * HOUR - 1800}, new int[]{NOW - 24 * HOUR - 1800, NOW - 22 * HOUR}), NOW));
+    }
+
+    @Test
     void aPeriodWhichBeganBeforeTheWindowCountsFromTheBeginningOfTheWindow() {
         // from 26 hours ago to 22 hours ago: only the last two hours are in the window
         assertEquals(2 * 60, PilotDuty.dutyMinutesInWindow(List.of(period(26, 22)), NOW));
