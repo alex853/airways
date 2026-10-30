@@ -90,7 +90,7 @@ public class ShadowJetController {
      * <li>the slot: whether the flight can be at this time: it starts not earlier than 30 minutes from now, and there are not less than 30 minutes between it and every
      * other planned flight of the pilot (before and after it); if it is too close to a flight, which flight it is;</li>
      * <li>the expected load: what the sales team hopes to gather by how long before the departure the flight is booked (ShadowJetSalesForecast). It is a hope, the real
-     * load is not known until the end of the booking. The approximate income is not calculated yet, it is null.</li>
+     * load is not known until the end of the booking. The approximate income is a rough number: the seats by the middle of the load by the price of an economy ticket.</li>
      * </ol>
      * The distance is in nautical miles, the times are UTC milliseconds.
      */
