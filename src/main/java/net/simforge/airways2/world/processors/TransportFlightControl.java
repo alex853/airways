@@ -104,6 +104,90 @@ public class TransportFlightControl {
         flight.setRemainedTickets(remainedTickets.occupySeats(tickets, service));
     }
 
+    // ---- the income of a transport flight: the sum of the price of its journeys, in TransportFlightExtras. Only the flights of the pilots have it (the PC flights);
+    // the flights of the NPCs skip all of it. A flight without income has no record.
+
+    boolean isPcFlight(final TransportFlights.Flight flight) {
+        return world.flightMissions().byId(flight.getFlightMissionId())
+                .map(mission -> mission.getCharacterMode() == FlightMissions.CharacterMode.PC)
+                .orElse(false);
+    }
+
+    /**
+     * The income of the transport flight, zero for a flight which has none (and for a flight of an NPC).
+     */
+    public int getIncome(final TransportFlights.Flight flight) {
+        checkNotNull(flight);
+        return world.transportFlightExtras().byTransportFlightId(flight.getId())
+                .map(TransportFlightExtras.Extra::getIncome)
+                .orElse(0);
+    }
+
+    /**
+     * The income of the flight of a mission: the income of its transport flight, zero if the mission has no transport flight (a ferry flight). It is what the pay of the
+     * pilot is taken from (PilotPay.incomeShare).
+     */
+    public int getIncomeOfMission(final FlightMissions.Mission mission) {
+        checkNotNull(mission);
+        return world.transportFlights().byFlightMissionId(mission.getId())
+                .map(this::getIncome)
+                .orElse(0);
+    }
+
+    /**
+     * A journey is booked to the flight: its price is added to the income of the flight. Nothing for a flight of an NPC and for a journey without a price.
+     */
+    public void addIncome(final TransportFlights.Flight flight, final int price) {
+        checkNotNull(flight);
+        checkArgument(price >= 0);
+        if (price == 0 || !isPcFlight(flight)) {
+            return;
+        }
+        setIncome(flight, (long) getIncome(flight) + price);
+    }
+
+    /**
+     * A journey leaves the flight: its price is taken off the income of the flight. The income does not go below zero.
+     */
+    public void subtractIncome(final TransportFlights.Flight flight, final int price) {
+        checkNotNull(flight);
+        checkArgument(price >= 0);
+        if (price == 0 || !isPcFlight(flight)) {
+            return;
+        }
+        setIncome(flight, Math.max(0L, (long) getIncome(flight) - price));
+    }
+
+    /**
+     * The boarding is over: the income is the sum of the price of the journeys which are on board, what really boarded. It overwrites what the bookings have added.
+     * Nothing for a flight of an NPC.
+     */
+    public void recalculateIncome(final TransportFlights.Flight flight) {
+        checkNotNull(flight);
+        if (!isPcFlight(flight)) {
+            return;
+        }
+        final long income = paxManager().journeysOf(flight, Journeys.Status.OnBoard).stream()
+                .mapToLong(Journeys.Journey::getPrice)
+                .sum();
+        setIncome(flight, income);
+        log.info("t/f #{} - the income is {} (the journeys which are on board)", flight.getId(), getIncome(flight));
+    }
+
+    // a record is made when the income is more than zero; the income which does not fit into three bytes is the biggest one which fits
+    private void setIncome(final TransportFlights.Flight flight, final long income) {
+        final int value = (int) Math.min(income, TransportFlightExtras.MAX_INCOME);
+        if (value < income) {
+            log.warn("t/f #{} - the income {} does not fit into 3 bytes, {} is kept", flight.getId(), income, value);
+        }
+        final Optional<TransportFlightExtras.Extra> extra = world.transportFlightExtras().byTransportFlightId(flight.getId());
+        if (extra.isPresent()) {
+            extra.get().setIncome(value);
+        } else if (value > 0) {
+            world.transportFlightExtras().create(flight.getId()).setIncome(value);
+        }
+    }
+
     public void releaseFlightTickets(final TransportFlights.Flight flight, final int tickets, final CabinLayout.Service service) {
         checkNotNull(flight);
         checkArgument(tickets >= 0);

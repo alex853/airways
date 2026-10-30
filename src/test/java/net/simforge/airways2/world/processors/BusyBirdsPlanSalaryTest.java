@@ -135,7 +135,7 @@ class BusyBirdsPlanSalaryTest {
             final net.simforge.airways2.world.datamodel.FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
                     world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
             final net.simforge.airways2.world.datamodel.PilotContracts.Contract contract =
-                    world.busyBirdsMissionControl().createContract(mission, person.getId(), null, FULL_PAY);
+                    world.busyBirdsMissionControl().createContract(mission, person.getId(), FULL_PAY);
 
             assertEquals(leg.getSalary().flightPay(), net.simforge.airways2.world.computations.PilotPay.flightPay(contract), leg.getFromAirport().getIcao() + "-" + leg.getToAirport().getIcao());
         }

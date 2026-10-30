@@ -110,6 +110,13 @@ public final class PilotPay {
     }
 
     /**
+     * The flight pay of the contract by the rates of its operator.
+     */
+    public static int flightPay(final PilotContracts.Contract contract, final PilotPayRates rates) {
+        return flightPay(contract.getBaseFlightPay(), contract.getPayParams(), rates);
+    }
+
+    /**
      * The flight pay by the base flight pay and the parameters (the quotation of a plan, before there is a contract).
      */
     public static int flightPay(final int baseFlightPay, final PilotPayParams params) {
@@ -121,11 +128,18 @@ public final class PilotPay {
     }
 
     /**
-     * The income share: the base percent of the experience level of the base income of the contract, with the coefficient of its parameters. It is zero
-     * while the base income is zero (a flight without passengers, or the journeys are not known yet).
+     * The income share of a flight with the contract: the base percent of the experience level of the income of the flight (the income of its transport flight,
+     * TransportFlightControl.getIncomeOfMission), with the coefficient of the parameters of the contract. It is zero while the income is zero (a flight without passengers).
      */
-    public static int incomeShare(final PilotContracts.Contract contract) {
-        return incomeShare(contract.getBaseIncome(), contract.getPayParams());
+    public static int incomeShare(final int income, final PilotContracts.Contract contract) {
+        return incomeShare(income, contract.getPayParams());
+    }
+
+    /**
+     * The income share of the contract by the rates of its operator.
+     */
+    public static int incomeShare(final int income, final PilotContracts.Contract contract, final PilotPayRates rates) {
+        return incomeShare(income, contract.getPayParams(), rates);
     }
 
     /**
@@ -154,9 +168,9 @@ public final class PilotPay {
     }
 
     /**
-     * Everything the pilot gets for the flight.
+     * Everything the pilot gets for the flight with the income of the flight.
      */
-    public static int total(final PilotContracts.Contract contract) {
-        return flightPay(contract) + incomeShare(contract);
+    public static int total(final int income, final PilotContracts.Contract contract) {
+        return flightPay(contract) + incomeShare(income, contract);
     }
 }

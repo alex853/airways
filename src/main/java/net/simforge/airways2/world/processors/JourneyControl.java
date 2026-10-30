@@ -5,6 +5,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.ShadowJetPricing;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
@@ -64,10 +65,45 @@ public class JourneyControl {
 
         journey.setTransportFlight1Id(flight.getId());
         world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), cabinService);
+        // the flights of the pilots only (the PC flights): the journey gets its price and the price is the income of the flight, the flights of the NPCs skip all of it.
+        // cabinService is the ACTUAL class of the booking (the seats which the journey got, with the upgrade or the downgrade), the price is by it, not by the preferred class
+        if (world.transportFlightControl().isPcFlight(flight)) {
+            if (isShadowJetFlight(flight)) {
+                final int price = shadowJetPrice(flight, journey.getGroupSize(), cabinService);
+                journey.setPrice(price);
+                log.info("j/y #{} - price {} is set for ShadowJet t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), cabinService);
+            }
+            world.transportFlightControl().addIncome(flight, journey.getPrice());
+        }
 
         journey.setTransportFlight2Id(0);
 
         journey.setBookedCabinService(cabinService);
+    }
+
+    private boolean isShadowJetFlight(final TransportFlights.Flight flight) {
+        return world.flightMissions().byId(flight.getFlightMissionId())
+                .flatMap(mission -> world.aircrafts().byId(mission.getAircraftId()))
+                .map(aircraft -> aircraft.getAircraftOperatorId() == World25.ShadowJetOperatorId)
+                .orElse(false);
+    }
+
+    // the price of the journey on a ShadowJet flight: by the distance of the flight, the passengers and the class (ShadowJetPricing)
+    private int shadowJetPrice(final TransportFlights.Flight flight, final int groupSize, final CabinLayout.Service service) {
+        final FlightMissions.Mission mission = world.flightMissions().byId(flight.getFlightMissionId()).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getDepartureAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        return ShadowJetPricing.price(Geo.distance(from.getCoords(), to.getCoords()), groupSize, service);
+    }
+
+    // The journey leaves a ShadowJet flight of a pilot without boarding it (it is too late to board, the flight is cancelled): the price which the flight has set is cleared,
+    // otherwise the journey would keep the price of a flight it is not on (and a BusyBirds quote would take it as its own). The income of the flight is NOT touched here: it is
+    // calculated again at the end of the boarding from the journeys which are on board (TransportFlightControl.recalculateIncome), so the journey is out of it anyway, and
+    // when a journey is too late after that calculation it is not in the income already, taking its price off once more would count it twice.
+    private void releaseShadowJetPrice(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        if (journey.getPrice() > 0 && world.transportFlightControl().isPcFlight(flight) && isShadowJetFlight(flight)) {
+            journey.setPrice(0);
+        }
     }
 
     // 'No checks' means that the method does not check if the operation is valid with all those parameters
@@ -76,6 +112,8 @@ public class JourneyControl {
         checkNotNull(flight1);
         checkNotNull(flight2);
 
+        // todo ak0 the price of the journey is for the whole trip and the trip has two flights: how it is split between them is not decided, so no income is added to
+        // either of them (the hub journeys have price 0 now), see the todo of TransportFlightExtras, item 3
         journey.setTransportFlight1Id(flight1.getId());
         world.transportFlightControl().obtainFlightTickets(flight1, journey.getGroupSize(), journey.getPreferredCabinService());
 
@@ -312,6 +350,7 @@ public class JourneyControl {
         }
         final TransportFlights.Flight transportFlight1 = transportFlight1O.get();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
+        releaseShadowJetPrice(journey, transportFlight1);
 
         // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
         // the short delay gives a good chance that the transport flight still exists, see FlightCleanup
@@ -407,6 +446,8 @@ public class JourneyControl {
         // Any status accepted
 
         Journeys.Status oldStatus = journey.getStatus();
+
+        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> releaseShadowJetPrice(journey, flight));
 
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);

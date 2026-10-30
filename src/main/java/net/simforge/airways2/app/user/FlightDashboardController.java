@@ -20,6 +20,8 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotContracts;
 import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.processors.OperatorPay;
+import net.simforge.airways2.world.computations.PilotPayRates;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
@@ -515,10 +517,14 @@ public class FlightDashboardController {
 
         final PilotPayParams manualParams = contract.getPayParams();
         manualParams.setManual(true);
-        final int flightPayByContract = PilotPay.flightPay(contract);
-        final int incomeShareByContract = PilotPay.incomeShare(contract);
-        final int manualFlightPay = PilotPay.flightPay(contract.getBaseFlightPay(), manualParams);
-        final int manualIncomeShare = PilotPay.incomeShare(contract.getBaseIncome(), manualParams);
+        // the income share is by the income of the transport flight of the flight (before the end of the boarding it is the sum of the bookings)
+        final int income = world.transportFlightControl().getIncomeOfMission(flight);
+        // the rates are of the operator of the contract (BusyBirds or ShadowJet)
+        final PilotPayRates rates = OperatorPay.ratesOf(contract.getOperatorId()).orElse(PilotPayRates.BUSY_BIRDS);
+        final int flightPayByContract = PilotPay.flightPay(contract, rates);
+        final int incomeShareByContract = PilotPay.incomeShare(income, contract, rates);
+        final int manualFlightPay = PilotPay.flightPay(contract.getBaseFlightPay(), manualParams, rates);
+        final int manualIncomeShare = PilotPay.incomeShare(income, manualParams, rates);
 
         return new ManualPayDto(true,
                 new PayDto(flightPayByContract, incomeShareByContract, flightPayByContract + incomeShareByContract),
@@ -845,7 +851,8 @@ public class FlightDashboardController {
                 transportFlight.getPaxCheckedIn(),
                 transportFlight.getPaxOnBoard(),
                 // only a finished flight has carried passengers (the ones on board at the takeoff); of a flight which is not over it is not told
-                flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null
+                flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null,
+                world.transportFlightControl().getIncome(transportFlight)
         ) : null;
 
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto);
@@ -1049,5 +1056,8 @@ public class FlightDashboardController {
         private int onBoard;
         // the passengers carried: the ones on board at the takeoff, told for a finished flight only, otherwise null
         private Integer carriedPax;
+        // the income of the flight: the sum of the price of its journeys (TransportFlightExtras), while the boarding goes it is what the bookings have added, after the
+        // boarding it is what boarded; 0 for a flight which has none (and for the flights which were before this field, they are 0 and it is fine)
+        private int income;
     }
 }

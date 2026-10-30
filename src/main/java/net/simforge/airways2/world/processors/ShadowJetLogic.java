@@ -51,9 +51,12 @@ public class ShadowJetLogic {
             final World world,
             final AircraftTypes.AircraftType aircraftType,
             final Airports.Airport locationAirport) {
+        // an aircraft which has a flight ahead (a flight booked by a pilot, it is dispatched and the aircraft becomes active only at its start) is not free: it is reserved
+        final Set<Integer> reservedAircraftIds = aircraftIdsWithFlightsAhead(world);
         final Optional<Aircrafts.Aircraft> existingAircraft = world.aircrafts()
                 .byAircraftOperatorIdAndIdleAndParkedAtAirport(World25.ShadowJetOperatorId)
                 .filter(a -> a.getAircraftTypeId() == aircraftType.getId())
+                .filter(a -> !reservedAircraftIds.contains(a.getId()))
                 .min(Comparator.comparing(a -> Geo.distance(locationAirport.getCoords(), a.getLocationCoords())));
 
         if (existingAircraft.isPresent()) {
@@ -94,6 +97,18 @@ public class ShadowJetLogic {
         log.info("Fleet - creating a/c #{}, {}, reg no {} at {}", newAircraft.getId(), aircraftType.getIcao(), newRegNo, locationAirport.getIcao());
         FlightStats.event("shadowJet creating");
         return newAircraft;
+    }
+
+    /**
+     * The aircraft which have a flight ahead: a flight mission which is planned or dispatched, not started yet (the aircraft becomes active at the start of the flight, so
+     * a dispatched flight does not hold it by itself). It is how a booked flight reserves its aircraft.
+     */
+    public static Set<Integer> aircraftIdsWithFlightsAhead(final World world) {
+        return world.flightMissions()
+                .filter(world.flightMissions().anyStatus(
+                        FlightMissions.Status.PlannedManually, FlightMissions.Status.PlannedViaSchedule, FlightMissions.Status.Dispatched))
+                .map(FlightMissions.Mission::getAircraftId)
+                .collect(Collectors.toSet());
     }
 
     private static String generateRandomShadowJetRegNo() {
@@ -138,7 +153,30 @@ public class ShadowJetLogic {
         }
     }
 
+    // todo ak0 THE PROVISION OF THE TRANSPORT FLIGHT STAYS AS IT IS FOR NOW, IT IS GOING TO BE REWORKED (decided 2026-10-30, not done; the flight which a pilot books ahead uses the
+    // same selection and booking of the journeys, provideTransportFlightForBookedFlight, only the check-in and the boarding come in their own time): the flight is filled up to a random
+    // MIN_FILL_PERCENT..MAX_FILL_PERCENT (70..100%) in one go, the journeys check in at once or within 20 minutes (CHECKIN_GROUPS). It is deliberate for now, it was made to test the
+    // transport capacity, the growth of the flows and the hubs. It does not match what the sales team says to the pilot (ShadowJetSalesForecast: the earlier the flight is
+    // booked, the more passengers). What it should be: for a flight of a pilot (PC) the pool of the journeys is gathered the same way, but only 20..30% (a random number) board
+    // at once, and the rest is spread in time so that 40..50% of the capacity is booked in the first 4 hours of the flight; the NPC flights get other thresholds (they appear
+    // unexpectedly and leave in 20 minutes, a lot of their journeys are "too late to board" now). See docs/clients-and-flight-modes.md.
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
+        provideTransportFlight(world, mission, false);
+    }
+
+    /**
+     * The transport flight of a flight which a pilot has booked ahead (ShadowJetBooking). The same journeys are booked to it at once, but the check-in and the boarding
+     * come in their own time: if the check-in of the flight is not open yet (the departure is more than two hours away), the transport flight stays scheduled, it opens the
+     * check-in by itself, and every journey gets a random time of its check-in in the window of the check-in (JourneyProcessor.waitingForCheckin). If the check-in is open
+     * already (the departure is near), it is as for a flight of an NPC: the journeys check in at once or later by the groups (CHECKIN_GROUPS). The boarding is not started
+     * here, the pilot starts it.
+     */
+    public static void provideTransportFlightForBookedFlight(World world, FlightMissions.Mission mission) {
+        provideTransportFlight(world, mission, true);
+    }
+
+    // booked: the flight of a pilot is booked ahead, the pilot starts the boarding; otherwise the flight is started now and the boarding starts at once
+    private static void provideTransportFlight(World world, FlightMissions.Mission mission, boolean booked) {
         logMostActiveAirportsRegularly(world);
 
         String from = world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow();
@@ -162,7 +200,11 @@ public class ShadowJetLogic {
         final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         world.c2cFlowControl().updateSuccessRate(transportFlight, 0.1f);
 
-        world.transportFlightControl().startCheckIn(transportFlight);
+        // the flight which is booked ahead opens its check-in by itself when the time comes, the other ones open it now
+        final boolean checkInOpen = !booked || world.getWorldTime() >= TransportFlightHelper.calcCheckinStartTime(mission);
+        if (checkInOpen) {
+            world.transportFlightControl().startCheckIn(transportFlight);
+        }
 
         // The flight is filled up to a random part of its seats. Direct journeys and journeys of the hub test live in one
         // pool: a random sample of the candidates is taken, then the journeys are seated in the random order.
@@ -206,6 +248,18 @@ public class ShadowJetLogic {
         // all the selected journeys are booked, but they check-in at different times, see CHECKIN_GROUPS
         Collections.shuffle(selected, random);
 
+        if (!checkInOpen) {
+            // the check-in is later: the journeys wait for it, every one gets its time in the window of the check-in (JourneyProcessor.waitingForCheckin)
+            for (final Candidate candidate : selected) {
+                final Journeys.Journey journey = candidate.journey();
+                world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
+                world.journeyControl().waitForCheckin(journey);
+            }
+            log.info("T/f prov - f/m #{}, t/f #{} - {} journeys booked, the check-in opens at {}, DONE",
+                    mission.getId(), transportFlight.getId(), selected.size(), Time.toLdt(TransportFlightHelper.calcCheckinStartTime(mission)));
+            return;
+        }
+
         int journeyCheckedIn = 0;
         int paxCheckedIn = 0;
         int journeyDelayed = 0;
@@ -241,9 +295,11 @@ public class ShadowJetLogic {
             }
         }
 
-        world.transportFlightControl().startBoarding(transportFlight);
-        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, {} journeys / {} PAX booked and will check-in later, boarding started, DONE",
-                mission.getId(), transportFlight.getId(), journeyCheckedIn, paxCheckedIn, journeyDelayed, paxDelayed);
+        if (!booked) {
+            world.transportFlightControl().startBoarding(transportFlight);
+        }
+        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, {} journeys / {} PAX booked and will check-in later, boarding {}, DONE",
+                mission.getId(), transportFlight.getId(), journeyCheckedIn, paxCheckedIn, journeyDelayed, paxDelayed, booked ? "is for the pilot to start" : "started");
     }
 
     private record Seating(CabinLayout remained, CabinLayout.Service service) {

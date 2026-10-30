@@ -106,6 +106,13 @@ class BusyBirdsPilotContractTest {
         return journey;
     }
 
+    // the journey is booked to the transport flight of the mission of the pilot: its price is the income of the flight, the pay takes the income from there
+    private void bookJourney(final FlightMissions.Mission mission, final Journeys.Journey journey) {
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        final net.simforge.airways2.world.datamodel.TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+        world.transportFlightControl().addIncome(transportFlight, journey.getPrice());
+    }
+
     private void finish(final FlightMissions.Mission mission) {
         mission.setActualLandingAirportId(airportB.getId());
         mission.setStatus(FlightMissions.Status.Postflight);
@@ -139,34 +146,35 @@ class BusyBirdsPilotContractTest {
     public void test__contract_of_a_reposition_leg_has_the_flight_pay_and_no_income() {
         final FlightMissions.Mission mission = mission(2 * 3600);
 
-        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(2));
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(2));
 
         assertEquals(mission.getId(), contract.getFlightMissionId());
         assertEquals(busyBirds.getId(), contract.getOperatorId());
         assertEquals(person.getId(), contract.getPersonId());
         // C25C: 200 per hour, two hours
         assertEquals(400, contract.getBaseFlightPay());
-        assertEquals(0, contract.getBaseIncome());
         assertEquals(2, contract.getPayParams().getExperienceLevel());
         assertTrue(world.pilotContracts().byFlightMissionId(mission.getId()).isPresent());
     }
 
     @Test
-    public void test__contract_of_a_revenue_leg_has_the_price_of_the_journey_as_the_base_income() {
+    public void test__the_income_of_a_revenue_flight_is_the_price_of_its_journey_in_the_transport_flight_not_in_the_contract() {
         final Journeys.Journey journey = journeyWithPrice();
         final FlightMissions.Mission mission = mission(2 * 3600);
 
-        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+        bookJourney(mission, journey);
 
-        assertEquals(journey.getPrice(), contract.getBaseIncome());
-        assertTrue(contract.getBaseIncome() > 0);
+        assertTrue(journey.getPrice() > 0);
+        assertEquals(journey.getPrice(), world.transportFlightControl().getIncomeOfMission(mission));
     }
 
     @Test
     public void test__a_flight_with_a_contract_is_paid_by_the_contract_when_it_is_finished() {
         final Journeys.Journey journey = journeyWithPrice();
         final FlightMissions.Mission mission = mission(2 * 3600);
-        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+        bookJourney(mission, journey);
 
         finish(mission);
 
@@ -177,12 +185,13 @@ class BusyBirdsPilotContractTest {
     }
 
     @Test
-    public void test__the_income_share_does_not_depend_on_the_price_of_the_journey_after_the_booking() {
-        // the technical limitation of the old way is gone: the journey has paid and its price is zero, the contract has the income of the booking
+    public void test__the_income_share_does_not_depend_on_the_price_of_the_journey_after_the_boarding() {
+        // the journey has paid and its price is zero, the income of the flight is kept in its transport flight
         final Journeys.Journey journey = journeyWithPrice();
         final int income = journey.getPrice();
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(5));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(5));
+        bookJourney(mission, journey);
         journey.setPrice(0);
 
         finish(mission);
@@ -197,7 +206,7 @@ class BusyBirdsPilotContractTest {
     public void test__the_currency_of_the_pilot_at_the_booking_reduces_the_pay() {
         // no currency at all: three quarters off, a quarter of the flight pay is left
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, PilotPayParams.none());
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), PilotPayParams.none());
 
         finish(mission);
 
@@ -231,7 +240,7 @@ class BusyBirdsPilotContractTest {
     public void test__a_flight_of_another_operator_pays_nothing_even_with_a_contract() {
         aircraft.setAircraftOperatorId(1);
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(1));
 
         finish(mission);
 
@@ -241,7 +250,7 @@ class BusyBirdsPilotContractTest {
     @Test
     public void test__a_cancelled_flight_pays_nothing() {
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(1));
         assertTrue(world.flightMissionControl().start(mission).started());
 
         world.flightMissionControl().cancelFlightAndReturnAircraftToDepartureAirport(mission);
@@ -252,7 +261,7 @@ class BusyBirdsPilotContractTest {
     @Test
     public void test__the_pay_does_not_depend_on_the_actual_time_of_the_flight() {
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(0));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(0));
         mission.setActualDepartureWorldTime(world.getWorldTime());
         mission.setActualArrivalWorldTime(world.getWorldTime() + 5 * 3600);
 
@@ -268,7 +277,7 @@ class BusyBirdsPilotContractTest {
         final int departure = world.getWorldTime() + Time.ONE_HOUR;
         final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(g700, airportA, airportB, departure, departure + 3600 + 1800);
         mission.setUserId(USER_ID);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(0));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(0));
 
         finish(mission);
 
@@ -282,8 +291,8 @@ class BusyBirdsPilotContractTest {
         // eleven days later: the finished flight is old enough for the cleanup, the new one is not
         world.setWorldTime(world.getWorldTime() + 11 * Time.ONE_DAY);
         final FlightMissions.Mission fresh = mission(3600);
-        world.busyBirdsMissionControl().createContract(finished, person.getId(), null, allGood(1));
-        world.busyBirdsMissionControl().createContract(fresh, person.getId(), null, allGood(1));
+        world.busyBirdsMissionControl().createContract(finished, person.getId(), allGood(1));
+        world.busyBirdsMissionControl().createContract(fresh, person.getId(), allGood(1));
 
         // the cleanup runs not more often than once a minute, the test lets it run
         final Field lastExecution = FlightCleanup.class.getDeclaredField("lastExecution");
@@ -301,7 +310,8 @@ class BusyBirdsPilotContractTest {
     public void test__a_manual_start_sets_the_manual_bit_of_the_contract_and_the_pay_falls() {
         final Journeys.Journey journey = journeyWithPrice();
         final FlightMissions.Mission mission = mission(2 * 3600);
-        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+        bookJourney(mission, journey);
         assertFalse(contract.getPayParams().isManual());
 
         world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
@@ -320,7 +330,7 @@ class BusyBirdsPilotContractTest {
     @Test
     public void test__a_tracked_start_does_not_set_the_manual_bit() {
         final FlightMissions.Mission mission = mission(2 * 3600);
-        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(1));
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(1));
 
         world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.SimTracker);
 
@@ -341,7 +351,8 @@ class BusyBirdsPilotContractTest {
         createAccounts(true);
         final Journeys.Journey journey = journeyWithPrice();
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), journey, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+        bookJourney(mission, journey);
 
         finish(mission);
 
@@ -364,7 +375,7 @@ class BusyBirdsPilotContractTest {
     public void test__a_flight_without_an_income_share_has_one_transfer() {
         createAccounts(true);
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
 
         finish(mission);
 
@@ -376,7 +387,7 @@ class BusyBirdsPilotContractTest {
     public void test__the_pay_of_a_manual_flight_is_what_moves() {
         createAccounts(true);
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
         world.flightMissionControl().setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
 
         finish(mission);
@@ -389,7 +400,7 @@ class BusyBirdsPilotContractTest {
     public void test__a_person_without_a_reference_to_an_account_gets_nothing_and_the_game_goes_on() {
         createAccounts(false);
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
 
         finish(mission);
 
@@ -401,7 +412,7 @@ class BusyBirdsPilotContractTest {
     @Test
     public void test__without_accounts_the_pilot_is_paid_in_the_log_only() {
         final FlightMissions.Mission mission = mission(2 * 3600);
-        world.busyBirdsMissionControl().createContract(mission, person.getId(), null, allGood(3));
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
 
         finish(mission);
 

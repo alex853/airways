@@ -422,6 +422,8 @@ public class PaxManager {
 
             // the boarding counter may hold PAX of the group which has not boarded yet, they are nobody's PAX
             transportFlight.setPaxOnBoard(world.paxManager().countPaxOnBoard(transportFlight));
+            // the boarding is over: the income of the flight is what really boarded (the flights of the pilots only)
+            world.transportFlightControl().recalculateIncome(transportFlight);
 
             drop();
         }

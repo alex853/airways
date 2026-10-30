@@ -123,6 +123,7 @@ public class FlightCleanup {
             }
         }
 
+        world.transportFlightExtras().deleteByTransportFlightId(tf1.getId());
         world.transportFlights().deleteById(tf1.getId());
         removed.add("t/f #" + tf1.getId());
     }

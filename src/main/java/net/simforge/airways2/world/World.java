@@ -36,6 +36,7 @@ public class World {
     private final ScheduledFlights scheduledFlights = new ScheduledFlights();
 
     private final TransportFlights transportFlights = new TransportFlights();
+    private final TransportFlightExtras transportFlightExtras = new TransportFlightExtras();
 
     private final Airport2AirportDailyFlightStat airport2airportDailyFlightStats = new Airport2AirportDailyFlightStat();
 
@@ -98,6 +99,7 @@ public class World {
             world.scheduledFlights.loadIfExists(rootPath);
 
             world.transportFlights.loadIfExists(rootPath);
+            world.transportFlightExtras.loadIfExists(rootPath);
 
             world.airport2airportDailyFlightStats.loadIfExists(rootPath);
 
@@ -142,6 +144,7 @@ public class World {
             scheduledFlights.save(rootPath);
 
             transportFlights.save(rootPath);
+            transportFlightExtras.save(rootPath);
 
             airport2airportDailyFlightStats.save(rootPath);
 
@@ -244,6 +247,13 @@ public class World {
 
     public TransportFlights transportFlights() {
         return transportFlights;
+    }
+
+    /**
+     * The extra data of the transport flights which need it (see TransportFlightExtras), a record is deleted with its transport flight.
+     */
+    public TransportFlightExtras transportFlightExtras() {
+        return transportFlightExtras;
     }
 
     public TransportFlightControl transportFlightControl() {

@@ -40,7 +40,12 @@ class DashboardManualPayTest {
         params.setCanCarryPassengers(true);
         params.setTypeCurrency(typeCurrency);
         params.setExperienceLevel(level);
-        world.pilotContracts().create(mission.getId(), 1, 1, baseFlightPay, baseIncome, params);
+        world.pilotContracts().create(mission.getId(), 1, 1, baseFlightPay, params);
+        // the income is not in the contract, it is the income of the transport flight of the flight
+        if (baseIncome > 0) {
+            final net.simforge.airways2.world.datamodel.TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+            world.transportFlightExtras().create(transportFlight.getId()).setIncome(baseIncome);
+        }
     }
 
     @Test

@@ -344,6 +344,7 @@ public class AdminController {
             final TransportFlights.Flight transportFlight = world.transportFlights().byId(tfId).orElseThrow();
             final int flightId = transportFlight.getFlightMissionId();
             final int scheduledFlightId = transportFlight.getScheduledFlightId();
+            world.transportFlightExtras().deleteByTransportFlightId(tfId);
             world.transportFlights().deleteById(tfId);
             results.add("T/F #" + tfId + " removed");
 
@@ -387,6 +388,7 @@ public class AdminController {
                 TransportFlights.Flight tf = brokenTfs.get(i);
                 int scheduledFlightId = tf.getScheduledFlightId();
 
+                world.transportFlightExtras().deleteByTransportFlightId(tf.getId());
                 world.transportFlights().deleteById(tf.getId());
                 results.add("T/F #" + tf.getId() + " removed");
                 tfCount++;

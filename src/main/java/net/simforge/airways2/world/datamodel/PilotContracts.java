@@ -18,14 +18,15 @@ import static com.google.common.base.Preconditions.checkArgument;
  * The contracts of the pilots with the operators: a contract is for one flight mission, it says who flies it for whom and what the pilot gets, see
  * docs/flight-contracts.md. A contract is for a flight of a booked mission (a plan), the flights which are not paid (the free ferry flight) have none.
  * <p>
- * The contract has the base numbers and the parameters, not the final sums: the base flight pay (the rate of the type by the planned time of the
- * flight), the base income (what the journeys of the flight pay, for a flight without passengers it is zero) and the byte of the parameters of the pay
- * (the currency, the manual flight, the experience level, see PilotPayParams). The final flight pay and income share are calculated from them by
- * PilotPay, so a later event (the manual flight, the journeys of a flight which are known at blocks off) changes a number or a parameter and the result
- * changes with it. A contract lives as long as its flight mission and is deleted with it.
+ * The contract has the base flight pay (the rate of the type by the planned time of the flight) and the byte of the parameters of the pay (the currency, the
+ * manual flight, the experience level, see PilotPayParams), not the final sums. The income of the flight is NOT in the contract: it is the income of the transport flight
+ * of the mission (TransportFlightExtras), which the bookings of the journeys add up and the end of the boarding calculates again by who really boarded; the pay takes it
+ * from there (TransportFlightControl.getIncomeOfMission). The final flight pay and income share are calculated by PilotPay from the base flight pay, the income and the
+ * parameters, so a later event (the manual flight, the passengers who boarded) changes a number or a parameter and the result changes with it. A contract lives as long
+ * as its flight mission and is deleted with it.
  */
 public class PilotContracts {
-    // the base flight pay and the base income are kept in three bytes
+    // the base flight pay is kept in three bytes
     public static final int MAX_AMOUNT = (int) DataType.Unsigned24bit.maxValue();
 
     private final Storage<Contract> storage = Storage.<Contract>builder()
@@ -37,7 +38,7 @@ public class PilotContracts {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // operatorId                     2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // personId                       3 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // baseFlightPay                  3 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // baseIncome                     3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserve (it was the base income, the income is in TransportFlightExtras now)  3 bytes
             .withDataField(DataField.of(DataType.Unsigned8bit)) // the parameters of the pay, see PilotPayParams  1 byte
             // ----------------------------------------------------- sum                   16 bytes
             // -------------------------------------------- reserved 16 bytes to align total size to 32 bytes
@@ -51,7 +52,6 @@ public class PilotContracts {
     private final DataField operatorIdField = storage.getDataField(1);
     private final DataField personIdField = storage.getDataField(2);
     private final DataField baseFlightPayField = storage.getDataField(3);
-    private final DataField baseIncomeField = storage.getDataField(4);
     private final DataField payParamsField = storage.getDataField(5);
 
     // Flight mission id to id of its contract. A contract is for one flight mission, flightMissionId of a record never changes, the index is kept in
@@ -94,20 +94,17 @@ public class PilotContracts {
      * A contract for a flight mission.
      *
      * @param baseFlightPay the pay for the flight time before the parameters work, 0 to 16 777 215
-     * @param baseIncome    what the journeys of the flight pay, 0 to 16 777 215 (zero for a flight without passengers or while the journeys are not known)
      * @param params        the parameters of the pay
      */
     public Contract create(final int flightMissionId,
                            final int operatorId,
                            final int personId,
                            final int baseFlightPay,
-                           final int baseIncome,
                            final PilotPayParams params) {
         checkArgument(flightMissionId > 0, "flightMissionId is mandatory");
         checkArgument(operatorId >= 1 && DataType.Unsigned16bit.contains(operatorId), "operatorId is out of 16 bits");
         checkArgument(personId > 0, "personId is mandatory");
         checkAmount(baseFlightPay, "the flight pay");
-        checkAmount(baseIncome, "the income");
         checkArgument(params != null, "the parameters are mandatory");
         checkArgument(!contractIdByMissionId.containsKey(flightMissionId), "the flight mission has a contract already");
 
@@ -116,7 +113,6 @@ public class PilotContracts {
         storage.set(id, operatorIdField, operatorId);
         storage.set(id, personIdField, personId);
         storage.set(id, baseFlightPayField, baseFlightPay);
-        storage.set(id, baseIncomeField, baseIncome);
         storage.set(id, payParamsField, params.toByte());
         contractIdByMissionId.put(flightMissionId, id);
         return new Contract(id);
@@ -170,19 +166,6 @@ public class PilotContracts {
         public void setBaseFlightPay(final int baseFlightPay) {
             checkAmount(baseFlightPay, "the flight pay");
             storage.set(id, baseFlightPayField, baseFlightPay);
-        }
-
-        /**
-         * What the journeys of the flight pay. It is known at the booking for a BusyBirds flight; for a ShadowJet flight it is set when the journeys on
-         * board are known (blocks off).
-         */
-        public int getBaseIncome() {
-            return storage.getAsInt(id, baseIncomeField);
-        }
-
-        public void setBaseIncome(final int baseIncome) {
-            checkAmount(baseIncome, "the income");
-            storage.set(id, baseIncomeField, baseIncome);
         }
 
         /**

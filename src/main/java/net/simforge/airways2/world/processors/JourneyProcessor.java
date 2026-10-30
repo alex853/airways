@@ -38,6 +38,10 @@ public class JourneyProcessor {
         }
     }
 
+    // todo ak0 THE LOOKING FOR TICKETS MUST SUPPORT THE HUBS. Now it looks for a direct flight and for a route of two flights with a stopover (findStopoverRoutes) between
+    // the airports of the two cities, and that is all: a journey does not go through a hub (a big airport which connects the flights of the region). The hub mode is planned
+    // and postponed, see docs/journeys-hub-mode.md, ShadowJetLogic.findHubTestJourney is only a test of it (AirportHubs, the log lines "hub test - "). When it is made, this
+    // method is the place: a journey which finds no direct flight and no stopover route looks for a route through the hubs of its region before it counts the attempt.
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getLocationCityId())

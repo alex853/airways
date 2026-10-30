@@ -84,6 +84,19 @@ class DashboardMyFlightsTest {
     }
 
     @Test
+    void theIncomeOfTheTransportFlightIsInTheFlightAndZeroWhenThereIsNone() {
+        final FlightMissions.Mission mission = mission(world.getWorldTime() + 3600);
+        final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
+
+        // the flights which were before the income (the production) have no record: 0
+        assertEquals(0, controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight().getIncome());
+
+        world.transportFlightExtras().create(transportFlight.getId()).setIncome(45_000);
+
+        assertEquals(45_000, controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight().getIncome());
+    }
+
+    @Test
     void aFlightWithoutTransportFlightHasNoTransportFlightDto() {
         mission(world.getWorldTime() + 3600);
 

@@ -10,6 +10,7 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.AircraftPerformanceData;
 import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.computations.PilotPayRates;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.computations.SimpleFlight;
 import net.simforge.airways2.world.datamodel.*;
@@ -117,48 +118,47 @@ public class BusyBirdsMissionControl {
     }
 
     /**
-     * The contract of the pilot for a flight of a booked plan, see docs/flight-contracts.md. It keeps the base numbers: the flight pay for the planned
-     * duration by the hourly rate of the type and, for the revenue leg, the income of the journey as it is at the booking (the price of the journey). The
-     * parameters (the currency and the experience level of the pilot) are taken by the caller at the booking. A reposition leg has no income.
-     *
-     * @param journey the journey of the revenue leg, null for a reposition leg
+     * The contract of the pilot for a flight of a booked plan, see docs/flight-contracts.md. It keeps the base flight pay for the planned duration by the hourly
+     * rate of the type and the parameters (the currency and the experience level of the pilot), which the caller takes at the booking. The income of the flight is not in
+     * the contract: it is the income of the transport flight of the mission (the revenue leg has the price of its journey there, a reposition leg has none).
      */
     public PilotContracts.Contract createContract(final FlightMissions.Mission mission,
                                                   final int personId,
-                                                  final Journeys.Journey journey,
                                                   final PilotPayParams params) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
         final int plannedDurationSeconds = mission.getPlannedArrivalWorldTime() - mission.getPlannedDepartureWorldTime();
 
         final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, plannedDurationSeconds);
-        final int baseIncome = journey != null ? calcIncome(journey) : 0;
 
         final PilotContracts.Contract contract = world.pilotContracts().create(
-                mission.getId(), aircraft.getAircraftOperatorId(), personId, baseFlightPay, baseIncome, params);
-        log.info("p/s #{}, f/m #{} - pilot contract #{}: base flight pay {}, base income {}, params {}",
-                personId, mission.getId(), contract.getId(), baseFlightPay, baseIncome, params);
+                mission.getId(), aircraft.getAircraftOperatorId(), personId, baseFlightPay, params);
+        log.info("p/s #{}, f/m #{} - pilot contract #{}: base flight pay {}, params {}",
+                personId, mission.getId(), contract.getId(), baseFlightPay, params);
         return contract;
     }
 
     /**
-     * The pilot of a finished BusyBirds flight gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
+     * The pilot of a finished flight of BusyBirds or of ShadowJet (the rates of each, OperatorPay) gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
      * the base numbers and the parameters of the contract. The operator pays the pilot by two transfers from its account to the account of the person: the
      * flight pay and the income share (if an account does not exist, nothing moves, see BankControl.transferIfAccountsExist). It is written to the log too.
      * <p>
      * A flight without a contract (a free ferry flight, a flight booked before the contracts, a manual dispatch) pays nothing.
      *
-     * @return what the pilot has got, empty if there is nothing to pay: it is not a BusyBirds flight or the flight has no contract
+     * @return what the pilot has got, empty if there is nothing to pay: the operator of the flight does not pay (it is neither BusyBirds nor ShadowJet) or the flight has no contract
      */
     public Optional<BusyBirdsPilotPay.Salary> payPilot(final FlightMissions.Mission mission) {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
-        if (aircraft.getAircraftOperatorId() != World25.BusyBirdsOperatorId) {
+        final Optional<PilotPayRates> rates = OperatorPay.ratesOf(aircraft.getAircraftOperatorId());
+        if (rates.isEmpty()) {
             return Optional.empty();
         }
 
         final Optional<PilotContracts.Contract> contract = world.pilotContracts().byFlightMissionId(mission.getId());
         if (contract.isPresent()) {
-            final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(contract.get()), PilotPay.incomeShare(contract.get()));
+            // the income share is by the income of the transport flight of the mission: what the journeys really paid who boarded (TransportFlightExtras)
+            final int income = world.transportFlightControl().getIncomeOfMission(mission);
+            final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(contract.get(), rates.get()), PilotPay.incomeShare(income, contract.get(), rates.get()));
             log.info("p/s #{}, f/m #{} - pilot contract #{}, pilot gets paid {} (flight pay {}, income share {}), params {}",
                     contract.get().getPersonId(),
                     mission.getId(),
@@ -177,7 +177,7 @@ public class BusyBirdsMissionControl {
         }
 
         // no contract: a free ferry flight, a flight which was booked before the contracts, a manual dispatch
-        log.info("f/m #{} - BusyBirds flight finished, it has no pilot contract, nobody is paid", mission.getId());
+        log.info("f/m #{} - flight finished, it has no pilot contract, nobody is paid", mission.getId());
         return Optional.empty();
     }
 

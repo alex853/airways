@@ -229,13 +229,15 @@ public class BusyBirdsController {
 
                 final boolean revenue = leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue;
                 // the income of the journey is fixed in the contract before the journey is booked to the transport flight
-                world.busyBirdsMissionControl().createContract(flight, personId, revenue ? journey : null, payParams);
+                world.busyBirdsMissionControl().createContract(flight, personId, payParams);
 
                 // all busyBirds aircraft are expected to have J-layout only
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
                     TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight);
                     journey.setTransportFlight1Id(transportFlight.getId());
                     world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), CabinLayout.Service.J);
+                    // the price of the journey is the income of the flight: the price of the business charter, the quote sets it if the pilot has booked without one
+                    world.transportFlightControl().addIncome(transportFlight, world.busyBirdsMissionControl().quote(journey));
                     journey.setBookedCabinService(CabinLayout.Service.J);
                     world.journeyControl().waitForCheckin(journey);
                     messages.add("Transport flight # " + transportFlight.getId() + " created, journey # " + journey.getId() + " booked to the transport flight");

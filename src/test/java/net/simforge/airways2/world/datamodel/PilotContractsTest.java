@@ -36,13 +36,12 @@ class PilotContractsTest {
     void aNewContractHasTheBaseNumbersAndTheParameters() {
         final PilotContracts contracts = new PilotContracts();
 
-        final PilotContracts.Contract contract = contracts.create(1234, 3, 7, 650, 20_000, params(2, true, false, true, false));
+        final PilotContracts.Contract contract = contracts.create(1234, 3, 7, 650, params(2, true, false, true, false));
 
         assertEquals(1234, contract.getFlightMissionId());
         assertEquals(3, contract.getOperatorId());
         assertEquals(7, contract.getPersonId());
         assertEquals(650, contract.getBaseFlightPay());
-        assertEquals(20_000, contract.getBaseIncome());
         final PilotPayParams stored = contract.getPayParams();
         assertEquals(2, stored.getExperienceLevel());
         assertTrue(stored.hasTypeCurrency());
@@ -52,37 +51,30 @@ class PilotContractsTest {
     }
 
     @Test
-    void anEventChangesTheParametersAndTheIncomeButNotTheOtherNumbers() {
-        final PilotContracts.Contract contract = new PilotContracts().create(1, 3, 7, 100, 0, params(1, true, true, true, false));
+    void anEventChangesTheParametersButNotTheOtherNumbers() {
+        final PilotContracts.Contract contract = new PilotContracts().create(1, 3, 7, 100, params(1, true, true, true, false));
 
         // the manual start
         final PilotPayParams params = contract.getPayParams();
         params.setManual(true);
         contract.setPayParams(params);
-        // the journeys of the flight are known (a ShadowJet flight at blocks off)
-        contract.setBaseIncome(15_000);
 
         assertTrue(contract.getPayParams().isManual());
         assertEquals(1, contract.getPayParams().getExperienceLevel());
         assertTrue(contract.getPayParams().hasTypeCurrency());
-        assertEquals(15_000, contract.getBaseIncome());
         assertEquals(100, contract.getBaseFlightPay());
         assertEquals(7, contract.getPersonId());
     }
 
     @Test
-    void theFlightPayAndTheIncomeFitThreeBytesAndNotMore() {
-        final PilotContracts.Contract contract = new PilotContracts().create(1, 3, 7, 100, 100, anyParams());
+    void theFlightPayFitsThreeBytesAndNotMore() {
+        final PilotContracts.Contract contract = new PilotContracts().create(1, 3, 7, 100, anyParams());
 
         contract.setBaseFlightPay(PilotContracts.MAX_AMOUNT);
-        contract.setBaseIncome(PilotContracts.MAX_AMOUNT);
         assertEquals(16_777_215, contract.getBaseFlightPay());
-        assertEquals(16_777_215, contract.getBaseIncome());
 
         assertThrows(IllegalArgumentException.class, () -> contract.setBaseFlightPay(PilotContracts.MAX_AMOUNT + 1));
         assertThrows(IllegalArgumentException.class, () -> contract.setBaseFlightPay(-1));
-        assertThrows(IllegalArgumentException.class, () -> contract.setBaseIncome(PilotContracts.MAX_AMOUNT + 1));
-        assertThrows(IllegalArgumentException.class, () -> contract.setBaseIncome(-1));
         // the neighbours do not suffer
         assertEquals(7, contract.getPersonId());
         assertEquals(3, contract.getPayParams().getExperienceLevel());
@@ -91,8 +83,8 @@ class PilotContractsTest {
     @Test
     void theContractIsFoundByTheFlightMission() {
         final PilotContracts contracts = new PilotContracts();
-        final PilotContracts.Contract first = contracts.create(10, 3, 7, 100, 1_000, anyParams());
-        final PilotContracts.Contract second = contracts.create(20, 3, 8, 200, 2_000, anyParams());
+        final PilotContracts.Contract first = contracts.create(10, 3, 7, 100, anyParams());
+        final PilotContracts.Contract second = contracts.create(20, 3, 8, 200, anyParams());
 
         assertEquals(first.getId(), contracts.byFlightMissionId(10).orElseThrow().getId());
         assertEquals(second.getId(), contracts.byFlightMissionId(20).orElseThrow().getId());
@@ -103,16 +95,16 @@ class PilotContractsTest {
     @Test
     void aFlightMissionHasOneContract() {
         final PilotContracts contracts = new PilotContracts();
-        contracts.create(10, 3, 7, 100, 1_000, anyParams());
+        contracts.create(10, 3, 7, 100, anyParams());
 
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(10, 3, 7, 100, 1_000, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(10, 3, 7, 100, anyParams()));
     }
 
     @Test
     void theContractIsDeletedWithItsFlightMission() {
         final PilotContracts contracts = new PilotContracts();
-        contracts.create(10, 3, 7, 100, 1_000, anyParams());
-        contracts.create(20, 3, 7, 200, 2_000, anyParams());
+        contracts.create(10, 3, 7, 100, anyParams());
+        contracts.create(20, 3, 7, 200, anyParams());
 
         assertTrue(contracts.deleteByFlightMissionId(10));
 
@@ -121,7 +113,7 @@ class PilotContractsTest {
         assertEquals(1, contracts.all().count());
         assertFalse(contracts.deleteByFlightMissionId(10));
         // the flight mission can get a new contract, for instance after a rebooking
-        contracts.create(10, 3, 7, 300, 3_000, anyParams());
+        contracts.create(10, 3, 7, 300, anyParams());
         assertEquals(300, contracts.byFlightMissionId(10).orElseThrow().getBaseFlightPay());
     }
 
@@ -129,22 +121,20 @@ class PilotContractsTest {
     void theNumbersAreChecked() {
         final PilotContracts contracts = new PilotContracts();
 
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(0, 3, 7, 100, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 0, 7, 100, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 65536, 7, 100, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 0, 100, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, -1, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, PilotContracts.MAX_AMOUNT + 1, 10, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, 100, -1, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, 100, PilotContracts.MAX_AMOUNT + 1, anyParams()));
-        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, 100, 10, null));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(0, 3, 7, 100, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 0, 7, 100, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 65536, 7, 100, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 0, 100, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, -1, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, PilotContracts.MAX_AMOUNT + 1, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> contracts.create(1, 3, 7, 100, null));
         assertEquals(0, contracts.all().count());
     }
 
     @Test
     void aRecordIs32BytesAndTheContractsSurviveSaveAndLoad(@TempDir final Path dir) throws IOException {
         final PilotContracts contracts = new PilotContracts();
-        final PilotContracts.Contract contract = contracts.create(10, 3, 7, 650, 20_000, params(4, true, false, true, true));
+        final PilotContracts.Contract contract = contracts.create(10, 3, 7, 650, params(4, true, false, true, true));
 
         contracts.save(dir);
         assertEquals(32, Files.readAllBytes(dir.resolve("pilot-contracts")).length);
@@ -157,7 +147,6 @@ class PilotContractsTest {
         assertEquals(3, restored.getOperatorId());
         assertEquals(7, restored.getPersonId());
         assertEquals(650, restored.getBaseFlightPay());
-        assertEquals(20_000, restored.getBaseIncome());
         final PilotPayParams params = restored.getPayParams();
         assertEquals(4, params.getExperienceLevel());
         assertTrue(params.hasTypeCurrency());
@@ -165,7 +154,7 @@ class PilotContractsTest {
         assertTrue(params.canCarryPassengers());
         assertTrue(params.isManual());
         // the index by the flight mission is rebuilt after the loading
-        assertThrows(IllegalArgumentException.class, () -> loaded.create(10, 3, 7, 1, 1, anyParams()));
+        assertThrows(IllegalArgumentException.class, () -> loaded.create(10, 3, 7, 1, anyParams()));
     }
 
     @Test
@@ -173,7 +162,7 @@ class PilotContractsTest {
         final net.simforge.airways2.world.World world = net.simforge.airways2.world.World.create(
                 new net.simforge.airways2.world.InMemoryStorageStrategy(), net.simforge.airways2.world.Time.START_TIME_EPOCH_SECONDS);
 
-        world.pilotContracts().create(5, 3, 1, 100, 1_000, anyParams());
+        world.pilotContracts().create(5, 3, 1, 100, anyParams());
 
         assertTrue(world.pilotContracts().byFlightMissionId(5).isPresent());
     }
