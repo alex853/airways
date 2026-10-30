@@ -70,13 +70,19 @@ class DashboardMyFlightsTest {
     }
 
     @Test
-    void theCarriedPassengersAreToldOnlyForAFinishedFlight() {
+    void theCarriedPassengersAreToldAfterTheLandingOnly() {
         final FlightMissions.Mission mission = mission(world.getWorldTime() + 3600);
         final TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(mission);
         transportFlight.setPaxCarried(7);
 
-        // the flight is not over: the carried passengers are not told
+        // the flight is not over and has not landed: the carried passengers are not told, the roster shows the ones on board
         assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight().getCarriedPax());
+        mission.setStatus(FlightMissions.Status.Flying);
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight().getCarriedPax());
+
+        // after the landing the passengers on board go down in the deboarding, so the carried ones are told
+        mission.setStatus(FlightMissions.Status.Postflight);
+        assertEquals(7, controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight().getCarriedPax());
 
         mission.setStatus(FlightMissions.Status.Finished);
 

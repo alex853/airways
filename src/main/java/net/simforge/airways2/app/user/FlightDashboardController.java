@@ -852,8 +852,9 @@ public class FlightDashboardController {
                 transportFlight.getRemainedTickets().toString(),
                 transportFlight.getPaxCheckedIn(),
                 transportFlight.getPaxOnBoard(),
-                // only a finished flight has carried passengers (the ones on board at the takeoff); of a flight which is not over it is not told
-                flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null,
+                // the carried passengers (the ones on board at the takeoff) are told after the landing, in the postflight and for a finished flight; before it the roster shows the
+                // passengers on board (onBoard), which go down in the deboarding
+                flight.getStatus() == FlightMissions.Status.Postflight || flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null,
                 world.transportFlightControl().getIncome(transportFlight)
         ) : null;
 
@@ -1055,7 +1056,7 @@ public class FlightDashboardController {
         private String remainedTickets;
         private int checkedIn;
         private int onBoard;
-        // the passengers carried: the ones on board at the takeoff, told for a finished flight only, otherwise null
+        // the passengers carried: the ones on board at the takeoff, told in the postflight and for a finished flight, otherwise null
         private Integer carriedPax;
         // the income of the flight: the sum of the price of its journeys (TransportFlightExtras), while the boarding goes it is what the bookings have added, after the
         // boarding it is what boarded; 0 for a flight which has none (and for the flights which were before this field, they are 0 and it is fine)
