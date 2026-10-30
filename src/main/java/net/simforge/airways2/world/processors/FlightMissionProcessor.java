@@ -42,7 +42,7 @@ public class FlightMissionProcessor {
             case Preflight -> {
                 if (mission.getCharacterMode() == FlightMissions.CharacterMode.NPC) {
                     transportFlight.ifPresent(tf -> {
-                        if (TransportFlightHelper.calcBoardingStartTime(mission) <= worldTime) {
+                        if (TransportFlightHelper.calcBoardingStartTime(mission, tf.getTotalTickets()) <= worldTime) {
                             if (TransportFlightHelper.flightStatusAllowsToStartBoarding(tf.getStatus())) {
                                 tfControl.startBoarding(tf);
                             }

@@ -591,7 +591,7 @@ public class FlightWorkflowTest {
     private FlightMissions.Mission scheduleNpcMissionWithFlight() {
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         final FlightMissions.Mission npcMission = FlightMissionHelper.scheduleDispatchedMission(
-                world, aircraft, airportA, airportB, world.getWorldTime() + 45 * Time.ONE_MINUTE);
+                world, aircraft, airportA, airportB, world.getWorldTime() + 80 * Time.ONE_MINUTE); // the preflight starts 57 minutes before the departure (the boarding of A320 is 17 minutes, it ends 10 minutes before the departure, the preflight is 30 minutes before its start)
         assertEquals(FlightMissions.CharacterMode.NPC, npcMission.getCharacterMode());
 
         ShadowJetLogic.provideTransportFlightIfRequired(world, npcMission);

@@ -833,7 +833,7 @@ public class FlightDashboardController {
         final FlightDto flightDto = new FlightDto(
                 Id.encode(flight.getId()),
                 flight.getStatus().name(),
-                getNextPlannedFlightMissionStatus(flight),
+                getNextPlannedFlightMissionStatus(flight, world),
                 getFlightMissionShownElements(flight, transportFlight, world),
                 world.airports().getIcao(flight.getDepartureAirportId()).orElseThrow(),
                 world.airports().getIcao(flight.getDestinationAirportId()).orElseThrow(),
@@ -861,9 +861,9 @@ public class FlightDashboardController {
     }
 
     @Deprecated
-    private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight) {
+    private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight, final World world) {
         return switch (flight.getStatus()) {
-            case Dispatched -> FlightMissions.Status.Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(flight));
+            case Dispatched -> FlightMissions.Status.Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(world, flight));
             case Preflight -> FlightMissions.Status.Departure.name() + " when Captain decides";
             case Departure -> FlightMissions.Status.Flying.name() + " when Captain decides";
             case Flying -> FlightMissions.Status.Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
@@ -876,7 +876,7 @@ public class FlightDashboardController {
     @Deprecated
     private String getFlightMissionShownElements(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
-            case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
+            case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(world, flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
             case Departure -> "takeoff";
             case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : "landing-disabled";

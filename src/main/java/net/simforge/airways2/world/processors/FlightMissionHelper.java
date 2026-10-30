@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.processors;
 
+import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.AircraftPerformanceData;
@@ -40,10 +41,12 @@ public class FlightMissionHelper {
                 departureTime,
                 arrivalTime);
 
+        // the preflight starts a fixed time before the planned start of the boarding, which is by the cabin layout of the type (a flight without passengers is not known yet,
+        // it is taken as a flight with them)
         world.eventsToProcess().sendEvent(
                 PilotOnDuty,
                 mission.getId(),
-                fromLdt(flightTimeline.getStart().getScheduledTime()));
+                calcPreflightStartTime(mission, world.transportFlightControl().cabinLayoutOfType(aircraftType.getIcao())));
         return mission;
     }
 
@@ -109,8 +112,28 @@ public class FlightMissionHelper {
         return (float) Geo.bearing(aircraft.getLocationCoords(), to.getCoords());
     }
 
-    public static int calcPreflightStartTime(final FlightMissions.Mission flight) {
-        return flight.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * 60;
+    /**
+     * How long before the planned start of the boarding the preflight starts (the pilot is on duty, the flight can be started): a fixed time (decided 2026-10-30). It was a
+     * fixed time before the planned departure (FlightTimeline.START_TO_BLOCKS_OFF_MINUTES, 30 minutes), which did not fit the aircraft with a long boarding.
+     */
+    public static final int PREFLIGHT_TO_BOARDING_MINUTES = 30;
+
+    /**
+     * The start of the preflight by the cabin layout of the flight: the planned start of the boarding minus 30 minutes. For an A320 with 168 seats the boarding is 17 minutes
+     * and ends 10 minutes before the departure, so the preflight starts 57 minutes before it.
+     */
+    public static int calcPreflightStartTime(final FlightMissions.Mission flight, final CabinLayout cabinLayout) {
+        return TransportFlightHelper.calcBoardingStartTime(flight, cabinLayout) - PREFLIGHT_TO_BOARDING_MINUTES * 60;
+    }
+
+    /**
+     * The start of the preflight of a flight in the world: by the cabin layout of its transport flight; a flight without passengers has no boarding, its preflight starts
+     * 30 minutes before the planned departure as it did before.
+     */
+    public static int calcPreflightStartTime(final World world, final FlightMissions.Mission flight) {
+        return world.transportFlights().byFlightMissionId(flight.getId())
+                .map(tf -> calcPreflightStartTime(flight, tf.getTotalTickets()))
+                .orElseGet(() -> flight.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * 60);
     }
 
     /**

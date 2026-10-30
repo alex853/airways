@@ -45,6 +45,23 @@ public class PaxManagerTest {
         assertEquals(21 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.Y(300)));
     }
 
+    @Test
+    public void test__planned_start_of_the_boarding_and_of_the_preflight_follow_the_cabin_layout() {
+        final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
+        final int departure = mission.getPlannedDepartureWorldTime();
+
+        // A320 of 168 seats: the boarding is 17 minutes and ends 10 minutes before the departure, the preflight is 30 minutes before the start of the boarding
+        assertEquals(departure - (10 + 17) * 60, TransportFlightHelper.calcBoardingStartTime(mission, CabinLayout.Y(168)));
+        assertEquals(departure - (10 + 17 + 30) * 60, FlightMissionHelper.calcPreflightStartTime(mission, CabinLayout.Y(168)));
+        // a big aircraft boards longer: both start earlier
+        assertEquals(departure - (10 + 23) * 60, TransportFlightHelper.calcBoardingStartTime(mission, CabinLayout.Y(400)));
+        assertEquals(departure - (10 + 23 + 30) * 60, FlightMissionHelper.calcPreflightStartTime(mission, CabinLayout.Y(400)));
+        // by the world: the layout of the transport flight; a flight without passengers has no boarding, the preflight is 30 minutes before the departure as it was
+        assertEquals(FlightMissionHelper.calcPreflightStartTime(mission, transportFlight.getTotalTickets()), FlightMissionHelper.calcPreflightStartTime(world, mission));
+        world.transportFlights().deleteById(transportFlight.getId());
+        assertEquals(departure - 30 * 60, FlightMissionHelper.calcPreflightStartTime(world, mission));
+    }
+
     private static final int RATE_PAX_PER_MINUTE = 15; // Boarding.ratePaxPerMinute
     private static final int RESERVE = 3 * Time.ONE_MINUTE; // Boarding.boardingTimeReserve
 
