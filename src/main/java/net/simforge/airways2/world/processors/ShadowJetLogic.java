@@ -7,6 +7,7 @@ import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.AirportHubs;
+import net.simforge.airways2.world.computations.JourneyWakeCurve;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
@@ -29,23 +30,14 @@ public class ShadowJetLogic {
     private static int activeAirportsLoggedAt = Integer.MIN_VALUE;
 
 
-    // the flight is filled up to a random part of its seats
-    private static final int MIN_FILL_PERCENT = 70;
-    private static final int MAX_FILL_PERCENT = 100;
     // journeys are taken from a random sample of the candidates
     private static final int CANDIDATES_SAMPLE_SIZE = 500;
-    // The selected journeys are booked at once, but they check-in at different times: a part checks-in at once (the first
-    // group), the others get a random check-in time inside the interval of their group. The flight gets the planned fill
-    // only if it stays at the gate long enough, all the check-ins happen during CHECKIN_GROUPS_MAX_MINUTES.
-    // percent of the selected journeys, check-in interval start and end in minutes since the provision of the flight
-    private record CheckInGroup(int percent, int fromMinutes, int toMinutes) {
-    }
-
-    private static final List<CheckInGroup> CHECKIN_GROUPS = List.of(
-            new CheckInGroup(30, 0, 0), // checked-in at once
-            new CheckInGroup(30, 0, 5),
-            new CheckInGroup(20, 5, 10),
-            new CheckInGroup(20, 10, 20));
+    // The pack of journeys of a flight is the seats of the flight and a reserve of random 5..10% of the seats: some of the journeys do not find the flight (they choose another
+    // one, or the flight is full by then), the reserve covers it. The reserve journeys wake up at random moments of the curve.
+    private static final int WAKE_RESERVE_MIN_PERCENT = 5;
+    private static final int WAKE_RESERVE_MAX_PERCENT = 10;
+    // the load of a flight is not the same every time: the curve is stretched or squeezed in time by a random factor of 0.9 to 1.1 (plus minus 10%, as the page of the booking says)
+    private static final double WAKE_SPREAD = 0.1;
 
     public static Aircrafts.Aircraft findAvailableAircraftOrCreateNew(
             final World world,
@@ -153,23 +145,21 @@ public class ShadowJetLogic {
         }
     }
 
-    // todo ak0 THE PROVISION OF THE TRANSPORT FLIGHT STAYS AS IT IS FOR NOW, IT IS GOING TO BE REWORKED (decided 2026-10-30, not done; the flight which a pilot books ahead uses the
-    // same selection and booking of the journeys, provideTransportFlightForBookedFlight, only the check-in and the boarding come in their own time): the flight is filled up to a random
-    // MIN_FILL_PERCENT..MAX_FILL_PERCENT (70..100%) in one go, the journeys check in at once or within 20 minutes (CHECKIN_GROUPS). It is deliberate for now, it was made to test the
-    // transport capacity, the growth of the flows and the hubs. It does not match what the sales team says to the pilot (ShadowJetSalesForecast: the earlier the flight is
-    // booked, the more passengers). What it should be: for a flight of a pilot (PC) the pool of the journeys is gathered the same way, but only 20..30% (a random number) board
-    // at once, and the rest is spread in time so that 40..50% of the capacity is booked in the first 4 hours of the flight; the NPC flights get other thresholds (they appear
-    // unexpectedly and leave in 20 minutes, a lot of their journeys are "too late to board" now). See docs/clients-and-flight-modes.md.
+    // The provision of a transport flight (reworked 2026-10-30, see docs/clients-and-flight-modes.md and JourneyWakeCurve): the flight is not filled at once. A pack of journeys is
+    // chosen for it (the seats of the flight and a reserve, the journeys are shuffled), and every journey of the pack gets a heartbeat at the minute when the curve reaches its
+    // place in the pack, and stays in LookingForTickets. When it wakes up, it looks for tickets by itself (JourneyProcessor.lookingForTickets), finds the flight and books it,
+    // the check-in and the boarding go by the usual workflow. The longer the flight is open for the tickets, the more passengers it has. All the flights go this way: the flights
+    // of the pilots which are booked ahead, the flights which are started at once, and the NPC flights (they have only a planned time, the real boarding ends when the aircraft
+    // moves, so nothing is cut: what is not booked by then is not booked).
     public static void provideTransportFlightIfRequired(World world, FlightMissions.Mission mission) {
         provideTransportFlight(world, mission, false);
     }
 
     /**
-     * The transport flight of a flight which a pilot has booked ahead (ShadowJetBooking). The same journeys are booked to it at once, but the check-in and the boarding
-     * come in their own time: if the check-in of the flight is not open yet (the departure is more than two hours away), the transport flight stays scheduled, it opens the
-     * check-in by itself, and every journey gets a random time of its check-in in the window of the check-in (JourneyProcessor.waitingForCheckin). If the check-in is open
-     * already (the departure is near), it is as for a flight of an NPC: the journeys check in at once or later by the groups (CHECKIN_GROUPS). The boarding is not started
-     * here, the pilot starts it.
+     * The transport flight of a flight which a pilot has booked ahead (ShadowJetBooking). The pack of the journeys is chosen and woken by the curve (JourneyWakeCurve) as for any
+     * flight, the journeys book the flight by themselves: if the check-in of the flight is not open yet (the departure is more than two hours away), the transport flight stays
+     * scheduled, it opens the check-in by itself, and a journey which has booked it gets a random time of its check-in in the window of the check-in
+     * (JourneyProcessor.waitingForCheckin). If the check-in is open already, the journeys check in as they book. The boarding is not started here, the pilot starts it.
      */
     public static void provideTransportFlightForBookedFlight(World world, FlightMissions.Mission mission) {
         provideTransportFlight(world, mission, true);
@@ -206,21 +196,20 @@ public class ShadowJetLogic {
             world.transportFlightControl().startCheckIn(transportFlight);
         }
 
-        // The flight is filled up to a random part of its seats. Direct journeys and journeys of the hub test live in one
-        // pool: a random sample of the candidates is taken, then the journeys are seated in the random order.
-        final int fillPercent = Tools.random(MIN_FILL_PERCENT, MAX_FILL_PERCENT);
-        final int targetPax = transportFlight.getTotalTickets().getTotal() * fillPercent / 100;
+        // Direct journeys and journeys of the hub test live in one pool: a random sample of the candidates is taken, then the journeys are taken in the random order.
+        final int seats = transportFlight.getTotalTickets().getTotal();
 
         final HubInfo hub = findHubInfo(world, mission);
         final CandidatePool pool = collectCandidates(world, fromCitiesId, toCitiesId, hub);
 
+        // the first part of the pack is the seats of the flight (the classes are looked at)
         final List<Candidate> selected = new ArrayList<>();
         final Map<Integer, CabinLayout.Service> actualCabinServices = new HashMap<>();
         CabinLayout remained = transportFlight.getRemainedTickets();
         int paxPlanned = 0;
         for (final Candidate candidate : pool.sample()) {
             final Journeys.Journey journey = candidate.journey();
-            if (paxPlanned + journey.getGroupSize() > targetPax) {
+            if (paxPlanned + journey.getGroupSize() > seats) {
                 continue;
             }
 
@@ -234,89 +223,84 @@ public class ShadowJetLogic {
             remained = seating.remained();
             paxPlanned += journey.getGroupSize();
         }
-        log.info("T/f prov - f/m #{}, t/f #{} - Selected fill {}%, target PAX {}, planned PAX {}, Remained seats {}, candidates {} (direct {}, hub {}), sample {}, selected {} (direct {}, hub {}): {}",
-                mission.getId(), transportFlight.getId(), fillPercent, targetPax, paxPlanned, remained,
+
+        // the second part is the reserve: journeys which would not fit, they wake up at random moments of the curve
+        final int reservePercent = Tools.random(WAKE_RESERVE_MIN_PERCENT, WAKE_RESERVE_MAX_PERCENT);
+        final int reservePax = seats * reservePercent / 100;
+        final List<Candidate> reserve = new ArrayList<>();
+        int paxReserve = 0;
+        for (final Candidate candidate : pool.sample()) {
+            if (paxReserve >= reservePax) {
+                break;
+            }
+            if (selected.contains(candidate) || trySeat(transportFlight.getTotalTickets(), candidate.journey()) == null) {
+                continue; // the journey which cannot take a seat in the empty flight at all is not woken
+            }
+            reserve.add(candidate);
+            paxReserve += candidate.journey().getGroupSize();
+        }
+
+        // the moments of the wake-up: the n-th journey of the pack wakes up when the curve reaches the share of the seats which the journeys before it and it take up
+        final double spread = 1.0 + WAKE_SPREAD * (2 * random.nextDouble() - 1);
+        final int now = world.getWorldTime();
+        int paxBefore = 0;
+        final int[] wokenBy = new int[WAKE_REPORT_MINUTES.length]; // how many journeys wake up by each of the report minutes
+        for (final Candidate candidate : selected) {
+            paxBefore += candidate.journey().getGroupSize();
+            wakeUp(candidate.journey(), now, JourneyWakeCurve.minutesToReach(paxBefore / (double) seats / spread), wokenBy);
+        }
+        for (final Candidate candidate : reserve) {
+            wakeUp(candidate.journey(), now, JourneyWakeCurve.minutesToReach(random.nextDouble()), wokenBy);
+        }
+
+        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX of {} seats + {} reserve journeys / {} PAX, spread {}, candidates {} (direct {}, hub {}), sample {}, selected (direct {}, hub {}), woken by minute {}, DONE {}: {}",
+                mission.getId(), transportFlight.getId(), selected.size(), paxPlanned, seats, reserve.size(), paxReserve, String.format("%.2f", spread),
                 pool.candidatesCount(), pool.directCount(), pool.hubCount(), pool.sample().size(),
-                selected.size(), selected.stream().filter(c -> c.kind() == CandidateKind.DIRECT).count(),
+                selected.stream().filter(c -> c.kind() == CandidateKind.DIRECT).count(),
                 selected.stream().filter(c -> c.kind() == CandidateKind.HUB).count(),
+                reportMinutes(wokenBy), booked ? "(booked ahead, the pilot starts the boarding)" : "(boarding started)",
                 selected.stream().map(c -> "j/y #" + c.journey().getId()).toList());
 
         if (hub != null) {
             logHubSelection(world, mission, transportFlight, hub, pool, selected, actualCabinServices);
         }
 
-        // all the selected journeys are booked, but they check-in at different times, see CHECKIN_GROUPS
-        Collections.shuffle(selected, random);
-
-        if (!checkInOpen) {
-            // the check-in is later: the journeys wait for it, every one gets its time in the window of the check-in (JourneyProcessor.waitingForCheckin)
-            for (final Candidate candidate : selected) {
-                final Journeys.Journey journey = candidate.journey();
-                world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
-                world.journeyControl().waitForCheckin(journey);
-            }
-            log.info("T/f prov - f/m #{}, t/f #{} - {} journeys booked, the check-in opens at {}, DONE",
-                    mission.getId(), transportFlight.getId(), selected.size(), Time.toLdt(TransportFlightHelper.calcCheckinStartTime(mission)));
-            return;
-        }
-
-        int journeyCheckedIn = 0;
-        int paxCheckedIn = 0;
-        int journeyDelayed = 0;
-        int paxDelayed = 0;
-        int percentFrom = 0;
-        for (final CheckInGroup group : CHECKIN_GROUPS) {
-            final int percentTo = percentFrom + group.percent();
-            // the borders are rounded the same way for the neighbour groups, so all the selected journeys get to a group
-            final int firstIndex = (int) Math.round(selected.size() * percentFrom / 100.0);
-            final int lastIndex = (int) Math.round(selected.size() * percentTo / 100.0);
-            percentFrom = percentTo;
-
-            for (int i = firstIndex; i < lastIndex; i++) {
-                final Journeys.Journey journey = selected.get(i).journey();
-                final boolean hubJourney = selected.get(i).kind() == CandidateKind.HUB;
-
-                world.journeyControl().bookDirectFlightJourneyNoChecks(journey, actualCabinServices.get(journey.getId()), transportFlight);
-                world.journeyControl().waitForCheckin(journey);
-
-                if (group.toMinutes() == 0) {
-                    world.journeyControl().checkin(journey);
-                    journeyCheckedIn++;
-                    paxCheckedIn += journey.getGroupSize();
-
-                    log.info("T/f prov - f/m #{}, t/f #{} - j/y #{} ({}) booked to the flight and checked-in", mission.getId(), transportFlight.getId(), journey.getId(), hubJourney ? "hub test" : "direct");
-                } else {
-                    journey.setHeartbeatTime(world.getWorldTime() + Tools.random(group.fromMinutes() * Time.ONE_MINUTE, group.toMinutes() * Time.ONE_MINUTE));
-                    journeyDelayed++;
-                    paxDelayed += journey.getGroupSize();
-
-                    log.info("T/f prov - f/m #{}, t/f #{} - j/y #{} ({}) booked to the flight, check-in later at {}", mission.getId(), transportFlight.getId(), journey.getId(), Time.toLdt(journey.getHeartbeatTime()), hubJourney ? "hub test" : "direct");
-                }
-            }
-        }
-
         if (!booked) {
             world.transportFlightControl().startBoarding(transportFlight);
         }
-        log.info("T/f prov - f/m #{}, t/f #{} - {} journeys / {} PAX booked and checked-in, {} journeys / {} PAX booked and will check-in later, boarding {}, DONE",
-                mission.getId(), transportFlight.getId(), journeyCheckedIn, paxCheckedIn, journeyDelayed, paxDelayed, booked ? "is for the pilot to start" : "started");
+    }
+
+    // the minutes of the report in the log: how many journeys wake up by each of them
+    private static final int[] WAKE_REPORT_MINUTES = {1, 5, 30, 60, 150, 330, 1410};
+
+    // the journey stays in LookingForTickets and wakes up in the given minutes from now (at least in a second), the search of tickets finds the flight by itself
+    private static void wakeUp(final Journeys.Journey journey, final int now, final double minutes, final int[] wokenBy) {
+        journey.setHeartbeatTime(now + Math.max(1, (int) Math.round(minutes * Time.ONE_MINUTE)));
+        // The wake-up is not an attempt of the search of the journey: if it does not find the flight, JourneyProcessor.lookingForTickets counts an attempt, so the counter is
+        // taken down by one beforehand (not below zero), otherwise the journeys which are woken by the flights would burn all their attempts very fast (decided 2026-10-30).
+        journey.setAttemptCounter(Math.max(0, journey.getAttemptCounter() - 1));
+        for (int i = 0; i < WAKE_REPORT_MINUTES.length; i++) {
+            if (minutes <= WAKE_REPORT_MINUTES[i]) {
+                wokenBy[i]++;
+            }
+        }
+    }
+
+    private static String reportMinutes(final int[] wokenBy) {
+        final StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < WAKE_REPORT_MINUTES.length; i++) {
+            sb.append(i == 0 ? "" : ", ").append(WAKE_REPORT_MINUTES[i]).append("m:").append(wokenBy[i]);
+        }
+        return sb.toString();
     }
 
     private record Seating(CabinLayout remained, CabinLayout.Service service) {
     }
 
-    // returns null if there are no seats for the journey even with one class upgrade/downgrade
+    // returns null if there are no seats for the journey even with one class upgrade/downgrade (CabinLayout.chooseService, the same rule as of the search of the tickets)
     private static Seating trySeat(final CabinLayout remained, final Journeys.Journey journey) {
-        final CabinLayout.Service cabinService = journey.getPreferredCabinService();
-        final int groupSize = journey.getGroupSize();
-        if (remained.hasEnoughSeats(groupSize, cabinService)) {
-            return new Seating(remained.occupySeats(groupSize, cabinService), cabinService);
-        } else if (cabinService.upgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.upgradedService())) {
-            return new Seating(remained.occupySeats(groupSize, cabinService.upgradedService()), cabinService.upgradedService());
-        } else if (cabinService.downgradeAvailable() && remained.hasEnoughSeats(groupSize, cabinService.downgradedService())) {
-            return new Seating(remained.occupySeats(groupSize, cabinService.downgradedService()), cabinService.downgradedService());
-        }
-        return null;
+        final CabinLayout.Service cabinService = remained.chooseService(journey.getGroupSize(), journey.getPreferredCabinService());
+        return cabinService == null ? null : new Seating(remained.occupySeats(journey.getGroupSize(), cabinService), cabinService);
     }
 
     private enum CandidateKind {

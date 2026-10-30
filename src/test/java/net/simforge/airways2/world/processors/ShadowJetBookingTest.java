@@ -129,6 +129,14 @@ class ShadowJetBookingTest {
         final TransportFlights.Flight flight = transportFlightOf(mission).orElseThrow();
         // the check-in opens two hours before the departure, it is not open yet
         assertEquals(TransportFlights.Status.Scheduled, flight.getStatus());
+        // the passengers are not booked at once: a pack of journeys is woken by the heartbeat by the curve (JourneyWakeCurve), they find the flight and book it by themselves
+        assertTrue(world.journeys().all().noneMatch(j -> j.getTransportFlight1Id() == flight.getId()));
+        final List<Journeys.Journey> pack = world.journeys().all().filter(j -> j.getHeartbeatTime() > 0).toList();
+        assertFalse(pack.isEmpty());
+
+        pack.forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+        JourneyProcessor.process(world);
+
         final List<Journeys.Journey> booked = world.journeys().all().filter(j -> j.getTransportFlight1Id() == flight.getId()).toList();
         assertFalse(booked.isEmpty());
         assertTrue(booked.stream().allMatch(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn), "everybody waits for the check-in");
@@ -143,8 +151,13 @@ class ShadowJetBookingTest {
 
         final TransportFlights.Flight flight = transportFlightOf(mission).orElseThrow();
         assertEquals(TransportFlights.Status.CheckIn, flight.getStatus());
+
+        // the journeys of the pack wake up and check in at once, the check-in is open
+        world.journeys().all().filter(j -> j.getHeartbeatTime() > 0).toList().forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+        JourneyProcessor.process(world);
+
         assertTrue(world.journeys().all().anyMatch(j -> j.getTransportFlight1Id() == flight.getId() && j.getStatus() == Journeys.Status.WaitingForBoarding),
-                "a part of the journeys is checked in at once");
+                "the journeys which have woken up are checked in");
     }
 
     @Test

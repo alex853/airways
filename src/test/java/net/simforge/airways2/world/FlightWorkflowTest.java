@@ -12,6 +12,7 @@ import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.FlightMissionControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.world.processors.JourneyProcessor;
 import net.simforge.airways2.world.processors.PaxManager;
 import net.simforge.airways2.world.processors.ShadowJetLogic;
 import net.simforge.airways2.world.processors.TransportFlightControl;
@@ -72,6 +73,7 @@ public class FlightWorkflowTest {
         mission = world.flightMissions().createDispatchedMission(
                 aircraft, airportA, airportB, departureTime, departureTime + 2 * Time.ONE_HOUR);
         mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        mission.setUserId(1); // the flight of a user of the game: the boarding ends by the usual rules (the flight which is tracked via VATSIM has no user, see the tests of it)
 
         tfControl = world.transportFlightControl();
 
@@ -177,16 +179,71 @@ public class FlightWorkflowTest {
         journeys.forEach(j -> assertTrue(j.getTransportFlight1Id() > 0, "j/y #" + j.getId() + " is not booked"));
     }
 
+    // ---- the end of the boarding ----
+
+    private boolean everybodyIsOnBoard() {
+        return journeys.stream().allMatch(j -> j.getStatus() == Journeys.Status.OnBoard);
+    }
+
+    private Journeys.Journey lateJourney() {
+        final Journeys.Journey late = world.journeys().create(
+                Journeys.Status.LookingForTickets, cityA.getId(), cityB.getId(), 2, CabinLayout.Service.Y);
+        late.setLocationCityId(cityA.getId());
+        late.setLastKnownLocationCityId(cityA.getId());
+        late.setHeartbeatTime(world.getWorldTime());
+        JourneyProcessor.process(world);
+        return late;
+    }
+
+    @Test
+    public void test__boarding__user_flight__stays_open_a_few_minutes_after_everybody_is_on_board_and_takes_a_late_journey() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, this::everybodyIsOnBoard);
+        assertTrue(everybodyIsOnBoard());
+
+        // everybody is on board, the boarding stays open for a while more: a journey which wakes up now is checked in and boarded
+        runFor(2 * Time.ONE_MINUTE);
+        assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
+        final Journeys.Journey late = lateJourney();
+        assertEquals(transportFlight.getId(), late.getTransportFlight1Id());
+        runUntil(10 * Time.ONE_MINUTE, () -> late.getStatus() == Journeys.Status.OnBoard);
+        assertEquals(Journeys.Status.OnBoard, late.getStatus());
+
+        // then the boarding is over by itself
+        runUntil(15 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
+    }
+
+    @Test
+    public void test__boarding__flight_tracked_via_vatsim__is_open_until_the_aircraft_moves() {
+        mission.setUserId(0); // the pilot is not a user of the game: PC and no user is a flight which is tracked via VATSIM
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, this::everybodyIsOnBoard);
+        assertTrue(everybodyIsOnBoard());
+
+        // the aircraft stands at the gate for 50 minutes, the boarding does not end by the time or by the boarding of everybody
+        runFor(50 * Time.ONE_MINUTE);
+        assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
+        final Journeys.Journey late = lateJourney();
+        assertEquals(transportFlight.getId(), late.getTransportFlight1Id());
+        runUntil(10 * Time.ONE_MINUTE, () -> late.getStatus() == Journeys.Status.OnBoard);
+        assertEquals(Journeys.Status.OnBoard, late.getStatus());
+
+        // the movement interrupts the boarding
+        startFlightAndDepart();
+        assertEquals(TransportFlights.Status.Departure, transportFlight.getStatus());
+    }
+
     // ---- deviations ----
 
     @Test
     public void test__deviation__transport_flight_is_lost_while_journeys_wait_for_boarding__they_return_to_the_departure_city() {
         provideFlight();
-        // a part of the journeys is checked-in and waits for boarding, the others wait for their check-in time
-        assertTrue(!journeysIn(Journeys.Status.WaitingForBoarding).isEmpty() && !journeysIn(Journeys.Status.WaitingForCheckIn).isEmpty());
+        // the journeys have booked the flight and checked in, the flight is boarding and they wait for it
+        assertTrue(!journeysIn(Journeys.Status.WaitingForBoarding).isEmpty());
 
         world.transportFlights().deleteById(transportFlight.getId());
-        runFor(21 * Time.ONE_MINUTE); // the last check-in time is in 20 minutes
+        runFor(21 * Time.ONE_MINUTE);
 
         assertJourneysAreReturnedTo(cityA);
     }
@@ -539,6 +596,9 @@ public class FlightWorkflowTest {
 
         ShadowJetLogic.provideTransportFlightIfRequired(world, npcMission);
         transportFlight = world.transportFlights().byFlightMissionId(npcMission.getId()).orElseThrow();
+        // the journeys of the pack wake up by the curve in the course of hours, the test does not wait for it
+        journeys.forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+        JourneyProcessor.process(world);
         return npcMission;
     }
 
@@ -607,6 +667,9 @@ public class FlightWorkflowTest {
     private void provideFlight() {
         ShadowJetLogic.provideTransportFlightIfRequired(world, mission);
         transportFlight = world.transportFlights().byFlightMissionId(mission.getId()).orElseThrow();
+        // the journeys of the pack wake up by the curve in the course of hours (JourneyWakeCurve), the test does not wait for it: all of them wake up now and look for tickets
+        journeys.forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+        JourneyProcessor.process(world);
     }
 
     private void startFlightAndDepart() {

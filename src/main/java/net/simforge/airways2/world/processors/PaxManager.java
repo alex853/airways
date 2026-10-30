@@ -279,6 +279,8 @@ public class PaxManager {
 
     public static final class Boarding extends Operation {
         private static final int boardingTimeReserve = 3 * Time.ONE_MINUTE;
+        // everybody who had a ticket is on board: the boarding stays open this long more, a journey which knocks in this time checks in and boards, the time starts again after it
+        private static final int boardingIdleReserve = 3 * Time.ONE_MINUTE;
         private static final int ratePaxPerMinute = 15;
 
         private int confirmedOnBoard;
@@ -287,6 +289,8 @@ public class PaxManager {
         // the journeys which have checked-in and are able to board now, the boarding counter can not go beyond them
         private int readyToBoard;
         private int estimatedBoardingFinishTime;
+        // since when nobody waits for the boarding, 0 if somebody does
+        private int idleSince;
 
         private Boarding(final World world, final TransportFlights.Flight transportFlight, final Map<Integer, Boarding> registry) {
             super(world, transportFlight, registry);
@@ -389,8 +393,16 @@ public class PaxManager {
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
             ensureRefreshed();
             if (remainingToBoard == 0) {
-                return true;
+                // nobody waits for the boarding: a few minutes more for the journeys which knock late, a flight which is sold out and boarded is over at once
+                if (transportFlight.getRemainedTickets().getTotal() == 0) {
+                    return true;
+                }
+                if (idleSince == 0) {
+                    idleSince = world.getWorldTime();
+                }
+                return world.getWorldTime() - idleSince >= boardingIdleReserve;
             }
+            idleSince = 0;
             return estimatedBoardingFinishTime <= world.getWorldTime();
         }
 

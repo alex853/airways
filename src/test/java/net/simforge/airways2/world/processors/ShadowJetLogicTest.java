@@ -23,14 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * How ShadowJetLogic provides a transport flight for a (VATSIM) flight mission: which journeys it books and checks in,
- * how many, in which cabin class, and when it does not provide the flight at all.
+ * How ShadowJetLogic provides a transport flight for a flight mission: which journeys get into the pack of the flight and when they wake up (JourneyWakeCurve), and when
+ * it does not provide the flight at all. The journeys do not book the flight at once, they wake up by the heartbeat and book it by themselves (JourneyProcessor), the tests
+ * which look at the booking wake the journeys up by hand.
  * The aircraft is A320, the cabin layout is J12/Y144.
  */
 public class ShadowJetLogicTest {
     private static final int SEATS = 12 + 144;
-    // the fill is random from 70% to 100% of seats
-    private static final int MIN_BOOKED_PAX = (int) (SEATS * 0.70);
 
     private World world;
     private Cities.City cityA;
@@ -83,100 +82,112 @@ public class ShadowJetLogicTest {
         return world.transportFlights().byFlightMissionId(mission.getId());
     }
 
-    // booked journeys are either checked-in at once (WaitingForBoarding) or check-in later at a random time (WaitingForCheckIn)
+    // the journey is in the pack of the flight: it is woken by a heartbeat which is set by the provision, the others have none
+    private static boolean isInPack(final Journeys.Journey journey) {
+        return journey.getHeartbeatTime() > 0;
+    }
+
     private static boolean isBooked(final Journeys.Journey journey) {
         return (journey.getStatus() == Journeys.Status.WaitingForBoarding || journey.getStatus() == Journeys.Status.WaitingForCheckIn)
                 && journey.getTransportFlight1Id() > 0;
     }
 
+    // all the journeys wake up now and look for tickets
+    private void wakeUp(final List<Journeys.Journey> journeys) {
+        journeys.forEach(j -> j.setHeartbeatTime(world.getWorldTime()));
+        JourneyProcessor.process(world);
+    }
+
     @Test
-    public void test__books_only_journeys_from_the_departure_city_to_the_destination_city() {
+    public void test__pack_has_only_journeys_from_the_departure_city_to_the_destination_city() {
         final Journeys.Journey suitable = journey(4);
         final Journeys.Journey otherDestination = journey(cityA, cityC, 4, CabinLayout.Service.Y);
         final Journeys.Journey otherLocation = journey(cityC, cityB, 4, CabinLayout.Service.Y);
 
         provideFlight();
 
-        assertTrue(isBooked(suitable));
-        assertEquals(Journeys.Status.LookingForTickets, otherDestination.getStatus());
+        assertTrue(isInPack(suitable));
+        assertEquals(Journeys.Status.LookingForTickets, suitable.getStatus()); // it books the flight when it wakes up, not now
+        assertEquals(0, suitable.getTransportFlight1Id());
+        assertTrue(!isInPack(otherDestination));
+        assertTrue(!isInPack(otherLocation));
         assertEquals(0, otherDestination.getTransportFlight1Id());
-        assertEquals(Journeys.Status.LookingForTickets, otherLocation.getStatus());
         assertEquals(0, otherLocation.getTransportFlight1Id());
     }
 
     @Test
-    public void test__booked_journeys_are_checked_in_at_once_or_later_and_the_boarding_starts() {
+    public void test__woken_journeys_book_the_flight_and_check_in_while_it_is_boarding() {
         final List<Journeys.Journey> journeys = List.of(journey(3), journey(5), journey(2));
-        final int now = world.getWorldTime();
 
         final TransportFlights.Flight transportFlight = provideFlight().orElseThrow();
 
         assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
-        int checkedInPax = 0;
+        assertEquals(0, transportFlight.getSoldTickets());
+
+        wakeUp(journeys);
+
         for (final Journeys.Journey j : journeys) {
-            assertTrue(isBooked(j), "unexpected status " + j.getStatus());
+            assertEquals(Journeys.Status.WaitingForBoarding, j.getStatus());
             assertEquals(transportFlight.getId(), j.getTransportFlight1Id());
             assertEquals(CabinLayout.Service.Y, j.getBookedCabinService());
             assertEquals(cityA.getId(), j.getLastKnownLocationCityId());
-            if (j.getStatus() == Journeys.Status.WaitingForBoarding) {
-                assertEquals(0, j.getLocationCityId()); // is in the flight
-                checkedInPax += j.getGroupSize();
-            } else {
-                assertEquals(cityA.getId(), j.getLocationCityId()); // is still in the city and will check-in later
-                assertTrue(j.getHeartbeatTime() >= now && j.getHeartbeatTime() <= now + 20 * Time.ONE_MINUTE,
-                        "check-in time is out of the window");
-            }
+            assertEquals(0, j.getLocationCityId()); // is in the flight
         }
-        assertEquals(checkedInPax, transportFlight.getPaxCheckedIn());
-        assertEquals(SEATS - 10, transportFlight.getRemainedTickets().getTotal()); // all the tickets are sold
+        assertEquals(10, transportFlight.getPaxCheckedIn());
+        assertEquals(SEATS - 10, transportFlight.getRemainedTickets().getTotal());
     }
 
     @Test
-    public void test__booked_journeys_are_split_to_check_in_groups_30_30_20_20() {
+    public void test__pack_wakes_up_by_the_curve() {
         final List<Journeys.Journey> journeys = new ArrayList<>();
-        for (int i = 0; i < 20; i++) {
-            journeys.add(journey(2)); // 40 PAX are less than the fill of the flight, all are booked
+        for (int i = 0; i < 40; i++) {
+            journeys.add(journey(2)); // 80 PAX of 156 seats
         }
         final int now = world.getWorldTime();
 
         provideFlight();
 
-        final List<Journeys.Journey> atOnce = journeys.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForBoarding).toList();
-        final List<Journeys.Journey> later = journeys.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn).toList();
-        assertEquals(6, atOnce.size()); // 30%
-        assertEquals(14, later.size());
-
-        // 6 journeys in 0..5 minutes (30%), 4 in 5..10 (20%), 4 in 10..20 (20%), the borders may be shared by the neighbours
-        assertTrue(later.stream().allMatch(j -> j.getHeartbeatTime() >= now && j.getHeartbeatTime() <= now + 20 * Time.ONE_MINUTE));
-        assertTrue(later.stream().filter(j -> j.getHeartbeatTime() <= now + 5 * Time.ONE_MINUTE).count() >= 6, "group 0..5");
-        assertTrue(later.stream().filter(j -> j.getHeartbeatTime() <= now + 10 * Time.ONE_MINUTE).count() >= 10, "groups 0..10");
-        assertTrue(later.stream().filter(j -> j.getHeartbeatTime() >= now + 10 * Time.ONE_MINUTE).count() >= 4, "group 10..20");
-        assertTrue(later.stream().filter(j -> j.getHeartbeatTime() > now + 10 * Time.ONE_MINUTE).count() <= 4, "group 10..20");
+        assertTrue(journeys.stream().allMatch(ShadowJetLogicTest::isInPack));
+        assertTrue(journeys.stream().allMatch(j -> j.getHeartbeatTime() > now && j.getHeartbeatTime() <= now + 2400 * Time.ONE_MINUTE));
+        // the curve: about 14% of the seats (22 PAX, plus minus the spread and the reserve) are woken by the fifth minute, about 36% (56 PAX) by 150 minutes
+        final int paxBy5 = journeys.stream().filter(j -> j.getHeartbeatTime() <= now + 5 * Time.ONE_MINUTE).mapToInt(Journeys.Journey::getGroupSize).sum();
+        final int paxBy150 = journeys.stream().filter(j -> j.getHeartbeatTime() <= now + 150 * Time.ONE_MINUTE).mapToInt(Journeys.Journey::getGroupSize).sum();
+        assertTrue(paxBy5 >= 15 && paxBy5 <= 32, "woken by 5 minutes: " + paxBy5);
+        assertTrue(paxBy150 >= 45 && paxBy150 <= 70, "woken by 150 minutes: " + paxBy150);
     }
 
     @Test
-    public void test__delayed_check_in_works_while_the_flight_is_boarding() {
+    public void test__waking_up_takes_one_attempt_down_but_not_below_zero() {
+        final Journeys.Journey withAttempts = journey(2);
+        withAttempts.setAttemptCounter(2);
+        final Journeys.Journey withoutAttempts = journey(2);
+        withoutAttempts.setAttemptCounter(0);
+
+        provideFlight();
+
+        assertEquals(1, withAttempts.getAttemptCounter());
+        assertEquals(0, withoutAttempts.getAttemptCounter());
+    }
+
+    @Test
+    public void test__a_journey_which_wakes_up_later_still_checks_in_while_the_flight_is_boarding() {
         final List<Journeys.Journey> journeys = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             journeys.add(journey(2));
         }
         final TransportFlights.Flight transportFlight = provideFlight().orElseThrow();
-        final Journeys.Journey delayed = journeys.stream()
-                .filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn)
-                .min(java.util.Comparator.comparingInt(Journeys.Journey::getHeartbeatTime))
-                .orElseThrow();
-        final int paxCheckedInBefore = transportFlight.getPaxCheckedIn();
+        final Journeys.Journey last = journeys.stream().max(java.util.Comparator.comparingInt(Journeys.Journey::getHeartbeatTime)).orElseThrow();
 
-        world.setWorldTime(delayed.getHeartbeatTime()); // the earliest check-in time
+        world.setWorldTime(last.getHeartbeatTime()); // its moment comes, the flight is still open
         JourneyProcessor.process(world);
 
-        assertEquals(Journeys.Status.WaitingForBoarding, delayed.getStatus());
-        assertEquals(0, delayed.getLocationCityId());
-        assertTrue(transportFlight.getPaxCheckedIn() >= paxCheckedInBefore + 2);
+        assertEquals(Journeys.Status.WaitingForBoarding, last.getStatus());
+        assertEquals(0, last.getLocationCityId());
+        assertTrue(transportFlight.getPaxCheckedIn() >= 2);
     }
 
     @Test
-    public void test__flight_to_a_hub_takes_journeys_getting_closer_to_their_destination_together_with_direct_ones() {
+    public void test__flight_to_a_hub_has_journeys_getting_closer_to_their_destination_together_with_direct_ones() {
         // the flight goes to the hub EGLL which is located at the city B
         final Airports.Airport hub = world.airports().create(0, 10, "LHR", "EGLL", "Heathrow");
         world.airport2city().create(hub.getId(), cityB.getId());
@@ -190,8 +201,14 @@ public class ShadowJetLogicTest {
 
         provideFlight();
 
+        assertTrue(isInPack(direct));
+        assertTrue(isInPack(viaHub), "the journey which gets closer via the hub should be in the pack");
+        assertTrue(!isInPack(notCloser));
+
+        // the journey which gets closer via the hub finds the flight by itself (JourneyProcessor.findHubFlight)
+        wakeUp(List.of(direct, viaHub, notCloser));
         assertTrue(isBooked(direct));
-        assertTrue(isBooked(viaHub), "the journey which gets closer via the hub should be booked");
+        assertTrue(isBooked(viaHub));
         assertEquals(Journeys.Status.LookingForTickets, notCloser.getStatus());
     }
 
@@ -203,12 +220,12 @@ public class ShadowJetLogicTest {
 
         provideFlight(); // airport BBBB is not a hub
 
-        assertTrue(isBooked(direct));
-        assertEquals(Journeys.Status.LookingForTickets, otherDestination.getStatus());
+        assertTrue(isInPack(direct));
+        assertTrue(!isInPack(otherDestination));
     }
 
     @Test
-    public void test__fill_percent_limits_the_booked_pax() {
+    public void test__pack_is_the_seats_of_the_flight_and_a_reserve() {
         final List<Journeys.Journey> journeys = new ArrayList<>();
         for (int i = 0; i < 60; i++) {
             journeys.add(journey(5)); // 300 PAX are waiting, the flight has 156 seats
@@ -216,29 +233,31 @@ public class ShadowJetLogicTest {
 
         provideFlight();
 
-        final int bookedPax = journeys.stream().filter(ShadowJetLogicTest::isBooked).mapToInt(Journeys.Journey::getGroupSize).sum();
-        // the fill is random from 70% to 100% of seats, a group is not booked if it does not fit the target
-        assertTrue(bookedPax >= MIN_BOOKED_PAX - 4 && bookedPax <= SEATS, "booked PAX " + bookedPax);
+        final int packPax = journeys.stream().filter(ShadowJetLogicTest::isInPack).mapToInt(Journeys.Journey::getGroupSize).sum();
+        // the economy seats (a group of five is not taken if it does not fit: 28 groups, 140 PAX of 144 seats) and the reserve of 5 to 10% of the seats (7 to 15 PAX, whole groups)
+        assertTrue(packPax >= 140 + 10 && packPax <= 140 + 20, "pack PAX " + packPax);
     }
 
     @Test
-    public void test__group_which_does_not_fit_the_cabin_is_not_booked() {
+    public void test__group_which_does_not_fit_the_cabin_is_not_in_the_pack() {
         final Journeys.Journey tooBig = journey(250);
         final Journeys.Journey fits = journey(4);
 
         provideFlight();
 
-        assertEquals(Journeys.Status.LookingForTickets, tooBig.getStatus());
+        assertTrue(!isInPack(tooBig));
         assertEquals(0, tooBig.getTransportFlight1Id());
-        assertTrue(isBooked(fits));
+        assertTrue(isInPack(fits));
     }
 
     @Test
     public void test__preferred_class_without_seats_is_upgraded_when_possible() {
-        // there is no premium economy in J12/Y144, so W is upgraded to J
+        // there is no premium economy in J12/Y144, so W is upgraded to J: the pack takes the journey, and it books the flight in the upgraded class when it wakes up
         final Journeys.Journey journey = journey(cityA, cityB, 2, CabinLayout.Service.W);
 
         final TransportFlights.Flight transportFlight = provideFlight().orElseThrow();
+        assertTrue(isInPack(journey));
+        wakeUp(List.of(journey));
 
         assertTrue(isBooked(journey));
         assertEquals(CabinLayout.Service.J, journey.getBookedCabinService());
@@ -253,6 +272,8 @@ public class ShadowJetLogicTest {
         final Journeys.Journey journey = journey(cityA, cityB, 2, CabinLayout.Service.F);
 
         provideFlight();
+        assertTrue(isInPack(journey));
+        wakeUp(List.of(journey));
 
         assertTrue(isBooked(journey));
         assertEquals(CabinLayout.Service.J, journey.getBookedCabinService());

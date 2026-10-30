@@ -137,6 +137,21 @@ public class CabinLayout {
         };
     }
 
+    /**
+     * The class in which a group can fly: the preferred one if it has the seats, otherwise one class up (Y to W, J to F), otherwise one class down (see Service), null if there
+     * are no seats even so. The same rule is used to look for the flights (TransportFlights), to book a flight (JourneyProcessor) and to choose the pack of a flight (ShadowJetLogic).
+     */
+    public Service chooseService(final int groupSize, final Service preferred) {
+        if (hasEnoughSeats(groupSize, preferred)) {
+            return preferred;
+        } else if (preferred.upgradeAvailable() && hasEnoughSeats(groupSize, preferred.upgradedService())) {
+            return preferred.upgradedService();
+        } else if (preferred.downgradeAvailable() && hasEnoughSeats(groupSize, preferred.downgradedService())) {
+            return preferred.downgradedService();
+        }
+        return null;
+    }
+
     public CabinLayout releaseSeats(final int seats, final Service service) {
         checkArgument(seats >= 0);
         checkNotNull(service);

@@ -138,7 +138,8 @@ public class TransportFlights {
     }
 
     private Storage.Condition<Flight> enoughSeatsAvailable(Journeys.Journey journey) {
-        return recordId -> readRemainedTickets(recordId).get(journey.getPreferredCabinService()) >= journey.getGroupSize();
+        // the preferred class, or one class up, or one class down (CabinLayout.chooseService)
+        return recordId -> readRemainedTickets(recordId).chooseService(journey.getGroupSize(), journey.getPreferredCabinService()) != null;
     }
 
     @SuppressWarnings("LombokGetterMayBeUsed")

@@ -295,14 +295,35 @@ public class TransportFlightControl {
 
     public boolean areAllPaxBoarded(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
-        // by the journeys, not by PAX on board: the counter of the boarding is not a reliable sign of the end of the boarding
-        return paxManager().areAllBoarded(transportFlight);
+        // the flight which is tracked via VATSIM starts moving whenever it likes, the boarding does not end by itself (see staysOpenUntilDeparture)
+        if (staysOpenUntilDeparture(transportFlight)) {
+            return false;
+        }
+        // by the journeys, not by PAX on board: the counter of the boarding is not a reliable sign of the end of the boarding. Everybody is on board, but the boarding stays
+        // open for a few minutes more for the journeys which knock late (PaxManager.Boarding.wasFinishTimePassed)
+        return paxManager().areAllBoarded(transportFlight) && paxManager().boarding(transportFlight).wasFinishTimePassed();
+    }
+
+    /**
+     * The flights which are tracked via VATSIM (the flights of the pilots who are not users of the game: PC mode and no user) start moving independently of the state of the
+     * flight in the game, the movement interrupts the boarding (whenFlightDepartsFromGate). The boarding of such a flight starts when it is provided, and it does not end by the
+     * time or by the boarding of everybody who has a ticket: if the aircraft stands at the gate for 40 or 50 minutes, the journeys check in and board during all that time
+     * (decided 2026-10-30; the journeys come one after another, see ShadowJetLogic and JourneyWakeCurve). The flights of the users and the AI ones end the boarding by the usual rules.
+     */
+    public boolean staysOpenUntilDeparture(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+        return world.flightMissions().byId(transportFlight.getFlightMissionId())
+                .map(mission -> mission.getCharacterMode() == FlightMissions.CharacterMode.PC && mission.getUserId() == 0)
+                .orElse(false);
     }
 
     public boolean isBoardingFinishTimePassed(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Boarding);
 
+        if (staysOpenUntilDeparture(transportFlight)) {
+            return false;
+        }
         return paxManager().boarding(transportFlight).wasFinishTimePassed();
     }
 
