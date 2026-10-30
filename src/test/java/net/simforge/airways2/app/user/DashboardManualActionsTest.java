@@ -2,6 +2,7 @@ package net.simforge.airways2.app.user;
 
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.pilottracker.SimTracker;
+import net.simforge.airways2.world.processors.PaxManager;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
@@ -79,6 +80,15 @@ class DashboardManualActionsTest {
         tf.setStatus(TransportFlights.Status.WaitingForDeparture);
         assertEquals(List.of("blocks-off"), names());
 
+        // the check-in is going: the pilot can start the boarding at once, the transport flight goes from CheckIn to Boarding without WaitingForBoarding
+        tf.setStatus(TransportFlights.Status.CheckIn);
+        assertEquals(List.of("start-boarding"), names());
+
+        // the check-in has not started yet: nothing to board, no button
+        tf.setStatus(TransportFlights.Status.Scheduled);
+        assertEquals(List.of(), names());
+        tf.setStatus(TransportFlights.Status.WaitingForDeparture);
+
         mission.setStatus(FlightMissions.Status.Postflight);
         tf.setStatus(TransportFlights.Status.WaitingForDeboarding);
         assertEquals(List.of("start-deboarding"), names());
@@ -128,6 +138,34 @@ class DashboardManualActionsTest {
         tf.setPaxCarried(7);
         tf.setPaxOnBoard(3); // the deboarding goes on, the carried ones stay the same
         assertEquals(7, FlightUltraDto.from(world, mission, true).getCrdPax());
+    }
+
+    @Test
+    void theFlightDtoHasThePlannedTimesOfTheBoardingOfAFlightWithPassengers() {
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getBrdEnd()); // a ferry flight has no boarding
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getBrdStart());
+
+        final TransportFlights.Flight tf = world.transportFlightControl().createTransportFlight(mission);
+        final FlightUltraDto dto = FlightUltraDto.from(world, mission, true);
+
+        // the end is 10 minutes before the planned departure, the start is the end minus the duration by the layout
+        final int end = mission.getPlannedDepartureWorldTime() - 10 * 60;
+        assertEquals(net.simforge.airways2.tools.TimeTools.hhmmPlusDaysOrNull(end), dto.getBrdEnd());
+        assertEquals(net.simforge.airways2.tools.TimeTools.hhmmPlusDaysOrNull(end - PaxManager.Boarding.estimatePlannedDuration(tf.getTotalTickets())), dto.getBrdStart());
+    }
+
+    @Test
+    void theFlightDtoHasTheFixedTimesOfTheCheckIn() {
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getCinStart()); // a ferry flight has no check-in
+        assertEquals(null, FlightUltraDto.from(world, mission, true).getCinEnd());
+
+        world.transportFlightControl().createTransportFlight(mission);
+        final FlightUltraDto dto = FlightUltraDto.from(world, mission, true);
+
+        // the check-in starts 120 minutes before the planned departure and ends 30 minutes before it, it does not depend on the aircraft
+        final int departure = mission.getPlannedDepartureWorldTime();
+        assertEquals(net.simforge.airways2.tools.TimeTools.hhmmPlusDaysOrNull(departure - 120 * 60), dto.getCinStart());
+        assertEquals(net.simforge.airways2.tools.TimeTools.hhmmPlusDaysOrNull(departure - 30 * 60), dto.getCinEnd());
     }
 
     @Test

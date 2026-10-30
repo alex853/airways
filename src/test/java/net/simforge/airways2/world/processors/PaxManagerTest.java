@@ -29,6 +29,22 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PaxManagerTest {
+
+    // the planned duration of the boarding by the cabin layout: the seats by the rate (the premium seats count twice) and 5 minutes of the reserve
+    @Test
+    public void test__planned_duration_of_the_boarding_by_the_cabin_layout() {
+        // 168 economy seats at 15 PAX a minute: 11.2 minutes, rounded up to 12, and 5 minutes of the reserve
+        assertEquals(17 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.Y(168)));
+        // J12/Y144: the 12 premium seats count twice, 144 + 24 = 168, the same
+        assertEquals(17 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.JY(12, 144)));
+        // a regional aircraft of 50 seats: 4 minutes and the reserve
+        assertEquals(9 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.Y(50)));
+        // 400 seats: the rate is 1.5 times faster, 22.5 PAX a minute: 17.8 minutes, rounded up to 18, and the reserve
+        assertEquals(23 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.Y(400)));
+        // between 200 and 400 seats the rate grows linearly: 300 seats at 18.75 PAX a minute, 16 minutes and the reserve
+        assertEquals(21 * 60, PaxManager.Boarding.estimatePlannedDuration(CabinLayout.Y(300)));
+    }
+
     private static final int RATE_PAX_PER_MINUTE = 15; // Boarding.ratePaxPerMinute
     private static final int RESERVE = 3 * Time.ONE_MINUTE; // Boarding.boardingTimeReserve
 

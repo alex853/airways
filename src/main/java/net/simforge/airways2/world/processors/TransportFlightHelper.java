@@ -13,7 +13,7 @@ public class TransportFlightHelper {
     public static final int CHECKIN_DURATION = 90 * Time.ONE_MINUTE;
     private static final int CHECKIN_ENDS_BEFORE_DEPARTURE = 30 * Time.ONE_MINUTE;
     public static final int BOARDING_DURATION = 10 * Time.ONE_MINUTE; // todo ak0 obsolete, it should be replaced by some estimation based on cabin layout or actual sold tickets
-    private static final int BOARDING_ENDS_BEFORE_DEPARTURE = 10 * Time.ONE_MINUTE;
+    public static final int BOARDING_ENDS_BEFORE_DEPARTURE = 10 * Time.ONE_MINUTE;
     public static final int AUTOMATIC_DEBOARDING_DELAY = 3 * Time.ONE_MINUTE;
 
     public static final Set<TransportFlights.Status> VALID_STATUSES_FOR_TICKET_PURCHASE = Set.of(
@@ -51,6 +51,15 @@ public class TransportFlightHelper {
     public static boolean flightStatusAllowsToStartBoarding(final TransportFlights.Status status) {
         return status == TransportFlights.Status.Scheduled
                 || status == TransportFlights.Status.CheckIn
+                || status == TransportFlights.Status.WaitingForBoarding;
+    }
+
+    /**
+     * The pilot of a user starts the boarding by the button: while the check-in is going (the transport flight goes from CheckIn to Boarding directly, the pilot does not wait
+     * until the check-in is over) and after it (WaitingForBoarding). Not from Scheduled: the check-in has not even started then.
+     */
+    public static boolean flightStatusAllowsPilotToStartBoarding(final TransportFlights.Status status) {
+        return status == TransportFlights.Status.CheckIn
                 || status == TransportFlights.Status.WaitingForBoarding;
     }
 

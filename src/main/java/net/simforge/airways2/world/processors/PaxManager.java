@@ -2,6 +2,7 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
@@ -291,6 +292,41 @@ public class PaxManager {
         private int estimatedBoardingFinishTime;
         // since when nobody waits for the boarding, 0 if somebody does
         private int idleSince;
+
+        // the plan of the boarding of a flight by its cabin layout (not by the sold tickets: they grow up to the departure and the plan would float after them)
+        private static final int PLANNED_TIME_RESERVE = 5 * Time.ONE_MINUTE;
+        // the seats of the aircraft up to which the rate of the boarding is the usual one, and from which it is 1.5 times faster (two doors), between them it grows linearly
+        private static final int PLANNED_RATE_SEATS_FROM = 200;
+        private static final int PLANNED_RATE_SEATS_TO = 400;
+        private static final double PLANNED_RATE_FACTOR_MAX = 1.5;
+
+        /**
+         * The planned duration of the boarding of a flight by its cabin layout, in seconds: the seats divided by the rate of the boarding (the premium seats count twice, as in
+         * the real boarding) and the reserve of 5 minutes. The rate is 15 PAX a minute up to 200 seats and grows to 22.5 at 400 seats (docs/boarding-planning.md).
+         */
+        public static int estimatePlannedDuration(final CabinLayout layout) {
+            final double seatsAtTheRateOfEconomy = layout.get(CabinLayout.Service.Y) + layout.get(CabinLayout.Service.W)
+                    + (layout.get(CabinLayout.Service.J) + layout.get(CabinLayout.Service.F)) / PREMIUM_RATE_FACTOR;
+            final int total = layout.getTotal();
+            final double share = Math.max(0, Math.min(1, (total - PLANNED_RATE_SEATS_FROM) / (double) (PLANNED_RATE_SEATS_TO - PLANNED_RATE_SEATS_FROM)));
+            final double rate = ratePaxPerMinute * (1 + (PLANNED_RATE_FACTOR_MAX - 1) * share);
+            return (int) Math.ceil(seatsAtTheRateOfEconomy / rate) * Time.ONE_MINUTE + PLANNED_TIME_RESERVE;
+        }
+
+        /**
+         * The planned end of the boarding: 10 minutes before the planned departure. It is only a plan, nothing ends the boarding by it (the pilot of a user starts the boarding
+         * when he likes, see docs/status-and-backlog.md).
+         */
+        public static int plannedEndTime(final FlightMissions.Mission mission) {
+            return mission.getPlannedDepartureWorldTime() - TransportFlightHelper.BOARDING_ENDS_BEFORE_DEPARTURE;
+        }
+
+        /**
+         * The planned start of the boarding: the planned end minus the planned duration by the cabin layout.
+         */
+        public static int plannedStartTime(final FlightMissions.Mission mission, final CabinLayout layout) {
+            return plannedEndTime(mission) - estimatePlannedDuration(layout);
+        }
 
         private Boarding(final World world, final TransportFlights.Flight transportFlight, final Map<Integer, Boarding> registry) {
             super(world, transportFlight, registry);

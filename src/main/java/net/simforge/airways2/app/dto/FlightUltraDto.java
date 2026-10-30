@@ -10,6 +10,8 @@ import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.world.processors.PaxManager;
+import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
 import net.simforge.commons.misc.JavaTime;
 import net.simforge.networkview.core.report.ReportUtils;
@@ -50,6 +52,14 @@ public class FlightUltraDto {
     private final Integer pOnBrd;
     // the passengers carried: the ones who were on board at the takeoff (crdPax = carried pax; the name does not start with a lone lowercase letter: Jackson would send getPCrd as pcrd), null until the flight has taken off
     private final Integer crdPax;
+    // the planned start and the planned end of the boarding (hh:mm, the same form as the other times): the end is 10 minutes before the planned departure, the start is the end
+    // minus the duration by the cabin layout (PaxManager.Boarding); null for a flight without passengers
+    private final String brdStart;
+    private final String brdEnd;
+    // the fixed times of the check-in (hh:mm): it starts 120 minutes before the planned departure and ends 30 minutes before it (TransportFlightHelper); null for a flight without
+    // passengers
+    private final String cinStart;
+    private final String cinEnd;
     // the flight is finished by itself at its end (the setting of the pilot); only true is sent
     private final Boolean autoFinish;
 
@@ -103,6 +113,10 @@ public class FlightUltraDto {
                 tf != null ? (tf.getPaxCheckedIn() > 0 ? tf.getPaxCheckedIn() : null) : null,
                 tf != null ? (tf.getPaxOnBoard() > 0 ? tf.getPaxOnBoard() : null) : null,
                 tf != null ? (tf.getPaxCarried() > 0 ? tf.getPaxCarried() : null) : null,
+                tf != null ? TimeTools.hhmmPlusDaysOrNull(PaxManager.Boarding.plannedStartTime(fm, tf.getTotalTickets())) : null,
+                tf != null ? TimeTools.hhmmPlusDaysOrNull(PaxManager.Boarding.plannedEndTime(fm)) : null,
+                tf != null ? TimeTools.hhmmPlusDaysOrNull(TransportFlightHelper.calcCheckinStartTime(fm)) : null,
+                tf != null ? TimeTools.hhmmPlusDaysOrNull(TransportFlightHelper.calcCheckinEndTime(fm)) : null,
 
                 fm.isAutoFinish() ? Boolean.TRUE : null
         );

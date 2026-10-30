@@ -207,7 +207,9 @@ public class FlightDashboardController {
         switch (flight.getStatus()) {
             case Dispatched -> actions.add(manualStartAction(world, flight, pilotAirportId));
             case Preflight -> {
-                if (tf != null && tf.getStatus() == TransportFlights.Status.WaitingForBoarding) {
+                // the boarding can be started while the check-in is still going: the transport flight goes from CheckIn to Boarding directly (the check-in and the boarding
+                // are different statuses and exclude each other, but the journeys check in during the boarding too)
+                if (tf != null && TransportFlightHelper.flightStatusAllowsPilotToStartBoarding(tf.getStatus())) {
                     actions.add(manualAction("start-boarding"));
                 } else if (tf == null || tf.getStatus() == TransportFlights.Status.WaitingForDeparture) {
                     actions.add(manualAction("blocks-off"));
@@ -579,7 +581,7 @@ public class FlightDashboardController {
 
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Preflight, "flight status is not as expected");
-            checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForBoarding, "transport flight status is not as expected");
+            checkArgument(TransportFlightHelper.flightStatusAllowsPilotToStartBoarding(transportFlight.getStatus()), "transport flight status is not as expected");
 
             final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 
@@ -905,8 +907,7 @@ public class FlightDashboardController {
     private String getTransportFlightShownElements(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> "sold";
-            case CheckIn -> "sold,check-in,start-boarding-disabled";
-            case WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == FlightMissions.Status.Preflight ? "start-boarding" : "start-boarding-disabled");
+            case CheckIn, WaitingForBoarding -> "sold,check-in," + (flight.getStatus() == FlightMissions.Status.Preflight ? "start-boarding" : "start-boarding-disabled");
             case Boarding -> "sold,check-in,on-board";
             case WaitingForDeparture, Departure, Flying -> "on-board";
             case Arrival -> "on-board,start-deboarding-disabled";

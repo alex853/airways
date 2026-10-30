@@ -13,6 +13,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,7 +239,7 @@ public class SimTracker {
                 }
                 case Preflight -> {
                     if (tf.isPresent()) {
-                        if (tf.get().getStatus() == TransportFlights.Status.WaitingForBoarding) {
+                        if (TransportFlightHelper.flightStatusAllowsPilotToStartBoarding(tf.get().getStatus())) {
                             actions.add(UserAction.build("start-boarding", new Check[]{
                                     departureLocationCheck(context, world, fm.get()),
                                     parkingBrakeSetCheck(context),
