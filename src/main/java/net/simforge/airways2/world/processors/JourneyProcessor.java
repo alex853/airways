@@ -51,8 +51,9 @@ public class JourneyProcessor {
 
     // The search of tickets of a journey, in this order (decided 2026-10-30): a flight to a hub which brings the journey closer to its destination (findHubFlight: the journey goes
     // to the hub, lands there, is not at its destination and starts the search again from the hub, see itinerariesDone and docs/journeys-hub-mode.md; a flight which goes right to
-    // the destination, if it is a hub, is the best of them), then a direct flight, then a route of two flights with a stopover (findStopoverRoutes) between the airports of the two
-    // cities; only if there is nothing the attempt is counted.
+    // the destination, if it is a hub, is the best of them), then a direct flight; only if there is nothing the attempt is counted. The routes of two flights with a stopover
+    // (findStopoverRoutes) are SWITCHED OFF, the code is commented out (decided 2026-10-30): the second leg of such a route took the places of the flight of a pilot and brought
+    // no income, see docs/journeys-hub-mode.md. We may come back to it later.
     private static void lookingForTickets(final World world, final Journeys.Journey journey) {
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getLocationCityId())
@@ -79,6 +80,8 @@ public class JourneyProcessor {
             return;
         }
 
+        // the stopover routes are switched off (see above)
+        /*
         final Collection<List<TransportFlights.Flight>> stopoverRoutes = findStopoverRoutes(world, journey, fromAirportIds, toAirportIds);
         if (!stopoverRoutes.isEmpty()) {
             final List<TransportFlights.Flight> stopoverRoute = stopoverRoutes.iterator().next();
@@ -90,6 +93,7 @@ public class JourneyProcessor {
                 return;
             }
         }
+        */
 
         if (journey.getAttemptCounter() < 3) {
             journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY));
@@ -108,13 +112,19 @@ public class JourneyProcessor {
                 .toList();
     }
 
+    // SWITCHED OFF (2026-10-30), see lookingForTickets and docs/journeys-hub-mode.md. The routes of two flights with a stopover; the flights of the pilots (PC) were taken out of
+    // them before the whole thing was commented out.
+    /*
     private static Collection<List<TransportFlights.Flight>> findStopoverRoutes(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
         final Collection<List<TransportFlights.Flight>> result = new ArrayList<>();
 
+        // The flights of the pilots (PC) are not the legs of a stopover route (2026-10-30): the price of such a journey is not split between its two flights (todo ak3 in
+        // JourneyControl), so a leg of it brings no income to the flight of the pilot, and the journeys of a stopover fill the flight booked ahead with the passengers who pay nothing
         final Collection<TFM> allFlight1s = world.transportFlights()
                 .allSuitableForRouteFinding(journey)
                 .filter(tf -> isThereEnoughTickets(journey, tf))
                 .map(tf -> toTfm(world, tf))
+                .filter(tfm -> tfm.fm.getCharacterMode() != FlightMissions.CharacterMode.PC)
                 .filter(tfm -> flightDepartsFrom(tfm, fromAirportIds))
                 .toList();
 
@@ -123,6 +133,7 @@ public class JourneyProcessor {
                     .allSuitableForRouteFinding(journey)
                     .filter(tf -> isThereEnoughTickets(journey, tf))
                     .map(tf -> toTfm(world, tf))
+                    .filter(tfm -> tfm.fm.getCharacterMode() != FlightMissions.CharacterMode.PC)
                     .filter(tfm -> flightDepartsFrom(tfm, Collections.singleton(flight1.fm.getDestinationAirportId()))
                             && flightArrivesTo(tfm, toAirportIds)
                             && flightDepartsLaterThan(tfm, flight1.fm.getPlannedArrivalWorldTime() + STOPOVER_CONNECTION_RESERVE)
@@ -132,6 +143,7 @@ public class JourneyProcessor {
 
         return result;
     }
+    */
 
     /**
      * The flight to a hub for a journey which has no direct flight and no stopover route: a flight from the airports of the city where the journey is now, which has seats of the class of the journey, and goes to a hub (AirportHubs) which is closer to the destination of the journey than the

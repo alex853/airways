@@ -156,6 +156,29 @@ public class JourneyHubSearchTest {
         assertBookedTo(wakeUpJourney(), direct);
     }
 
+    // the routes of two flights with a stopover are switched off (2026-10-30): the legs of such a route took the places of the flights of the pilots and brought no income
+    @Test
+    public void theStopoverRoutesAreSwitchedOff() {
+        final Airports.Airport stopover = airport("XXXX", city("Stopover", 15), 15); // not a hub: the hub flight is not the way
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        flightTo(stopover, 60);
+        final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-7777", stopover);
+        final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR; // later than the arrival of the first flight and the reserve of the connection
+        final FlightMissions.Mission second = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
+        world.transportFlightControl().createTransportFlight(second);
+
+        // the flights of the pilots and the flights of the AI are the same for it
+        assertNotBooked(wakeUpJourney());
+        world.flightMissions().all().forEach(m -> m.setCharacterMode(FlightMissions.CharacterMode.NPC));
+        final Journeys.Journey another = world.journeys().create(Journeys.Status.LookingForTickets, origin.getId(), target.getId(), 2, CabinLayout.Service.Y);
+        another.setLocationCityId(origin.getId());
+        another.setLastKnownLocationCityId(origin.getId());
+        another.setHeartbeatTime(world.getWorldTime());
+        JourneyProcessor.process(world);
+        assertEquals(Journeys.Status.LookingForTickets, another.getStatus());
+        assertEquals(0, another.getTransportFlight2Id());
+    }
+
     @Test
     public void aFlightWithoutSeatsOfTheClassIsNotTaken() {
         final Airports.Airport hub = airport("EGLL", city("Hub", 10), 10);
