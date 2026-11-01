@@ -65,6 +65,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:CO", "city-name:Bogota"},
 
+                new String[]{"country-code:CR", "city-name:San Jose"},
+
                 new String[]{"country-code:CY", "city-name:Nicosia"},
                 new String[]{"country-code:CY", "city-name:Limassol"},
                 new String[]{"country-code:CY", "city-name:Larnaca"},
@@ -97,6 +99,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:EG", "city-name:Giza"},
                 new String[]{"country-code:EG", "city-name:Shubra El Kheima"},
                 new String[]{"country-code:EG", "city-name:Hurghada"},
+                new String[]{"country-code:EG", "city-name:Sharm El Sheikh"},
 
                 new String[]{"country-code:ES", "city-name:Mallorca"},
                 new String[]{"country-code:ES", "city-name:Menorca"},
@@ -107,6 +110,7 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:ES", "city-name:Gran Canaria"},
                 new String[]{"country-code:ES", "city-name:Bilbao"},
                 new String[]{"country-code:ES", "city-name:Lanzarote"},
+                new String[]{"country-code:ES", "city-name:Fuerteventura"},
                 new String[]{"country-code:ES", "city-name:Seville"},
 
                 new String[]{"country-code:ET", "city-name:Addis Ababa"},
@@ -147,6 +151,10 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:GR", "city-name:Samos"},
                 new String[]{"country-code:GR", "city-name:Skiathos"},
 
+                new String[]{"country-code:GL", "city-name:Nuuk"},
+
+                new String[]{"country-code:HN", "city-name:Tegucigalpa"},
+
                 new String[]{"country-code:HR", "city-name:Split"},
                 new String[]{"country-code:HR", "city-name:Dubrovnik"},
 
@@ -176,6 +184,7 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:ID", "city-name:Jakarta"},
                 new String[]{"country-code:ID", "city-name:Denpasar"},
+                new String[]{"country-code:ID", "city-name:Makassar"},
 
                 new String[]{"country-code:IT", "city-name:Venice"},
                 new String[]{"country-code:IT", "city-name:Palermo"},
@@ -234,6 +243,8 @@ public class World25_012_selected_cities {
 
                 new String[]{"country-code:NZ", "city-name:Auckland"},
                 new String[]{"country-code:NZ", "city-name:Wellington"},
+                new String[]{"country-code:NZ", "city-name:Christchurch"},
+                new String[]{"country-code:NZ", "city-name:Queenstown"},
 
                 new String[]{"country-code:PA", "city-name:Panama City"},
 
@@ -263,6 +274,8 @@ public class World25_012_selected_cities {
                 new String[]{"country-code:RU", "city-name:Sochi"},
                 new String[]{"country-code:RU", "city-name:Kazan"},
                 new String[]{"country-code:RU", "city-name:Kaliningrad"},
+                new String[]{"country-code:RU", "city-name:Samara"},
+                new String[]{"country-code:RU", "city-name:Tolyatti"},
 
                 new String[]{"country-code:SA", "city-name:Riyadh"},
                 new String[]{"country-code:SA", "city-name:Jeddah"},

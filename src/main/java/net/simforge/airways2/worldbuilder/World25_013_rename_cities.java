@@ -103,7 +103,12 @@ public class World25_013_rename_cities {
                 new String[]{"EGNT", "Newcastle Intl"},
                 new String[]{"DTTA", "Tunis Carthage"},
                 new String[]{"GMMN", "Casablanca Mohammed V"},
-                new String[]{"OOMS", "Muscat Intl"}
+                new String[]{"OOMS", "Muscat Intl"},
+                new String[]{"WAAA", "Makassar Hasanuddin"},
+                new String[]{"UWWW", "Samara Kurumoch"},
+                new String[]{"MHTG", "Tegucigalpa Toncontin"},
+                new String[]{"MROC", "San Jose Juan Santamaria"},
+                new String[]{"NZWG", "Christchurch Wigram"}
         ));
     }
 }

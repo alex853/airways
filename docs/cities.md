@@ -227,10 +227,22 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 - **`/geo/*`:** готовый JSON кэшируется и пересобирается только при изменении хранилищ
   ([change-tracking-cache.md](change-tracking-cache.md)); после появления `countryId` в `Airports` убрать пересчёт страны.
 - **Бэклог VATSIM:** остаются «тонкие» EETN Tallinn, LIEO Olbia (Сардиния), далее Европа/США по списку; особые KPNS, KJAC.
-- **Особые аэропорты без строки в `icaodata.csv` (отложены пользователем 2026-10-25, один список):** `VOBL` (Kempegowda Intl, Bengaluru, Индия), `YSWS` (по номеру новый Western Sydney Intl, Австралия, около 1600 упоминаний) и `UGTB` (Tbilisi, Грузия, 1647 упоминаний 2026-10-23). Нужно проверить refdata и добавить строку руками (координаты, `civil`, `size`), см. `city-airport-playbook.md`, раздел 10. Пока не делаем.
+- **Особые аэропорты без строки в `icaodata.csv` (отложены пользователем, один список):** `VOBL` (Kempegowda Intl, Bengaluru, Индия), `YSWS` (Western Sydney Intl, Австралия, около 1600 упоминаний), `UGTB` (Tbilisi, Грузия, 1647 упоминаний 2026-10-23) и `MHPR` (Palmerola, Honduras, добавлен 2026-11-01). `VOBL` и `YSWS` уже есть в refdata-airports 3.1.4 (идут через `009` без правки `icaodata.csv`, когда вернёмся), `UGTB` и `MHPR` нет ни в `icaodata.csv`, ни в refdata: нужна строка руками (координаты, `civil`, `size`), см. `city-airport-playbook.md`, раздел 10. Пока не делаем.
 
 ## Выполнено
 
+- **Пакет 2026-11-01 из `1.txt` (10 аэропортов бэклога, решения пользователя):** ни одного в мире не было. Население (оценки приблизительные) и имена в CSV:
+  - **Samara (RU, UWWW, size 5510, авто):** 1 152 200 → 1 600 200; `del Novokujbysevsk` (110 200, около 10 nm от ядра) влит; Toljatti → **Tolyatti**, 685 900, отдельный рынок (около 28 nm от Samara). Аэропорт `Samara Kurumoch` (`013`).
+  - **Christchurch (NZ, NZCH, 5532, авто):** 343 800 → 520 800. Рядом `NZWG Wigram` (5198, `civil`, по решению пользователя создаётся автоимпортом), имя `Christchurch Wigram` (`013`).
+  - **Sharm El Sheikh (EG, HESH, 6169, авто):** в CSV `Sarm-as-sayh#` 19 200 → **Sharm El Sheikh** 75 200, attraction 10.
+  - **Makassar (ID, WAAA, 2504, `009`):** в CSV `Makasar` 1 268 500 → **Makassar** 2 000 500; аэропорт `Makassar Hasanuddin` (`013`).
+  - **Tegucigalpa (HN, MHTG, 2081, `009`):** 279 000 → 1 400 000; аэропорт `Tegucigalpa Toncontin` (`013`). Palmerola (MHPR, заменил Toncontin для коммерческих рейсов в 2021) в `icaodata.csv` и в мире нет, не добавляли.
+  - **San Jose (CR, MROC, 3031, `009`):** `San jose` 340 100 → **San Jose** 2 100 100; аэропорт `San Jose Juan Santamaria` (`013`). В CSV есть второй `San jose` (30 700, тоже CR): при импорте второй пропускается как уже существующий (первый идёт раньше).
+  - **Queenstown (NZ, NZQN, 3632, `009`):** 9 100 → 28 100, attraction 10.
+  - **Fuerteventura (ES, GCFV, 2407, `009`):** остров, городов в CSV нет: добавлена одна строка `Spain,ES,Fuerteventura,120000,28.45,-13.86`, attraction 10; через море с Lanzarote не связываем.
+  - **Nuuk (GL, BGGH, 943, `009`):** в CSV для Greenland не было строки: добавлена `Greenland,GL,Nuuk,19000,64.19,-51.68` (координаты аэропорта).
+  - **YSWS (Western Sydney International, AU) убран из этого пакета** (решение пользователя 2026-11-01, сделаем позже): он добавлен в refdata-airports 3.1.4 (`added/YSWS.properties`, там же `VOBL`), так что пойдёт через `009` без правки `icaodata.csv`, когда вернёмся. Вместе с **MHPR** (Palmerola, Honduras, заменил Toncontin для коммерческих рейсов в 2021; нет ни в `icaodata.csv`, ни в refdata, ни в мире) он в списке особых аэропортов ниже.
+  - Терминалы бизнес-авиации не ставим. Attraction 10: Sharm El Sheikh, Fuerteventura, Queenstown (`/admin/flows/set-attraction` после деплоя, id из `/geo/cities`, блоки в `admin-requests.http`). `create-links` после деплоя: WAAA, MHTG, MROC, NZQN, GCFV, BGGH. Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой, после деплоя и вызовов закомментировать обратно.
 - **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется через `/admin/f1-tour-fixes`.
   Пригородов в CSV нет.
 - **Mexico City (MX, в CSV `Mexico`):** 21 705 100. 17 пригородов ≥100 тыс. помечены `del`

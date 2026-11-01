@@ -2139,6 +2139,7 @@ Burkina Faso,BF,Diapaga,5100,12.08,1.79
 Burkina Faso,BF,Pama,4900,11.24,-0.72
 Burkina Faso,BF,Aribinda,3500,14.23,-0.87
 Burkina Faso,BF,Gayeri,2800,12.63,0.49
+Greenland,GL,Nuuk,19000,64.19,-51.68
 Myanmar,MM,Yangon,4454500,16.79,96.15
 Myanmar,MM,Mandalay,1176900,21.98,96.09
 Myanmar,MM,Mawlamyine,405800,16.49,97.63
@@ -3405,7 +3406,7 @@ Democratic Republic of the Congo,CD,Mulongo,8600,-7.84,26.99
 Democratic Republic of the Congo,CD,Kikondjo,8500,-8.2,26.42
 Democratic Republic of the Congo,CD,Dibaya,4800,-6.51,22.87
 Democratic Republic of the Congo,CD,Bongandanga,4300,1.51,21.05
-Costa Rica,CR,San jose,340100,9.93,-84.08
+Costa Rica,CR,San Jose,2100100,9.93,-84.08
 Costa Rica,CR,Limon,63500,9.99,-83.04
 Costa Rica,CR,Alajuela,47400,10.02,-84.23
 Costa Rica,CR,San francisco,44900,9.99,-84.13
@@ -4540,7 +4541,7 @@ Egypt,EG,Kafr-al-battih#,19600,31.4,31.73
 Egypt,EG,Abu za#bal,19500,30.26,31.35
 Egypt,EG,Bahut,19300,31.17,31.32
 Egypt,EG,Kafr-al-jara#idah,19200,31.22,31.27
-Egypt,EG,Sarm-as-sayh#,19200,27.86,34.28
+Egypt,EG,Sharm El Sheikh,75200,27.86,34.28
 Egypt,EG,Al-ma'sarah,19000,31.22,31.32
 Egypt,EG,Al-burj,18900,31.58,30.98
 Egypt,EG,Al-batanun,18800,30.62,30.98
@@ -6628,7 +6629,7 @@ Haiti,HT,Anse-a-galets,5600,18.84,-72.87
 Haiti,HT,Kenscoff,4000,18.45,-72.29
 Haiti,HT,Derac,2000,19.65,-71.82
 Honduras,HN,San pedro sula,470500,15.47,-88.03
-Honduras,HN,Tegucigalpa,279000,14.09,-87.22
+Honduras,HN,Tegucigalpa,1400000,14.09,-87.22
 Honduras,HN,La ceiba,122800,15.78,-86.79
 Honduras,HN,Choloma,113800,15.61,-87.96
 Honduras,HN,El progreso,97200,15.4,-87.82
@@ -7272,7 +7273,7 @@ Indonesia,ID,Medan,2243200,3.59,98.67
 Indonesia,ID,Palembang,1507100,-2.99,104.75
 Indonesia,ID,del Tangerang,1344400,-6.18,106.63
 Indonesia,ID,Semarang,1289500,-6.97,110.42
-Indonesia,ID,Makasar,1268500,-5.14,119.41
+Indonesia,ID,Makassar,2000500,-5.14,119.41
 Indonesia,ID,Malang,841500,-7.98,112.62
 Indonesia,ID,del Bekasi,824700,-6.22,106.97
 Indonesia,ID,Bandar lampung,703500,-5.44,105.27
@@ -10842,7 +10843,7 @@ Netherlands,NL,Bunschoten,19500,52.24,5.38
 Netherlands,NL,Wisch,19500,51.93,6.31
 New Zealand,NZ,Auckland,1700600,-36.85,174.76
 New Zealand,NZ,del Manukau,344400,-37.0,174.88
-New Zealand,NZ,Christchurch,343800,-43.53,172.64
+New Zealand,NZ,Christchurch,520800,-43.53,172.64
 New Zealand,NZ,del North shore,193000,-36.8,174.75
 New Zealand,NZ,Wellington,440700,-41.28,174.78
 New Zealand,NZ,del Waitakere,154400,-36.85,174.54
@@ -10880,7 +10881,7 @@ New Zealand,NZ,Rangiora,11400,-43.31,172.57
 New Zealand,NZ,Hawera,10800,-39.58,174.28
 New Zealand,NZ,Gore,9700,-46.09,168.92
 New Zealand,NZ,Greymouth,9300,-42.46,171.2
-New Zealand,NZ,Queenstown,9100,-45.04,168.64
+New Zealand,NZ,Queenstown,28100,-45.04,168.64
 New Zealand,NZ,Waiheke,7700,-36.8,175.1
 New Zealand,NZ,Motueka,7200,-41.12,173.0
 New Zealand,NZ,Te puke,7000,-37.78,176.32
@@ -13297,7 +13298,7 @@ Russia,RU,Saint Petersburg,5600400,59.93,30.32
 Russia,RU,Novosibirsk,1434100,55.04,82.93
 Russia,RU,Jekaterinburg,1299700,56.85,60.6
 Russia,RU,Niznij novgorod,1266500,56.33,44.0
-Russia,RU,Samara,1152200,53.2,50.15
+Russia,RU,Samara,1600200,53.2,50.15
 Russia,RU,Omsk,1109800,55.0,73.4
 Russia,RU,Kazan,1600100,55.75,49.13
 Russia,RU,Rostov na donu,1107300,47.24,39.71
@@ -13308,7 +13309,7 @@ Russia,RU,Perm,981200,58.0,56.25
 Russia,RU,Krasnojarsk,922500,56.02,93.06
 Russia,RU,Saratov,867600,51.57,46.03
 Russia,RU,Voronez,805600,51.72,39.26
-Russia,RU,Toljatti,685900,53.48,49.51
+Russia,RU,Tolyatti,685900,53.48,49.51
 Russia,RU,Krasnodar,653300,45.03,38.98
 Russia,RU,Izevsk,611100,56.85,53.23
 Russia,RU,Barnaul,610800,53.36,83.75
@@ -13437,7 +13438,7 @@ Russia,RU,Neftejugansk,115300,61.08,72.7
 Russia,RU,Jelec,114000,52.6,38.51
 Russia,RU,Batajsk,113900,47.14,39.75
 Russia,RU,Cerkessk,113300,44.29,42.06
-Russia,RU,Novokujbysevsk,110200,53.11,49.93
+Russia,RU,del Novokujbysevsk,110200,53.11,49.93
 Russia,RU,Leninsk-kuzneckij,110100,54.66,86.16
 Russia,RU,Derbent,109000,42.06,48.29
 Russia,RU,Arzamas,107300,55.38,43.82
@@ -14942,6 +14943,7 @@ Spain,ES,Catarroja,22100,39.4,-0.39
 Spain,ES,Onda,22100,39.96,-0.27
 Spain,ES,Zarautz,22100,43.29,-2.17
 Spain,ES,Vinaros,22000,40.49,0.46
+Spain,ES,Fuerteventura,120000,28.45,-13.86
 Sri Lanka,LK,Kolamba,669700,6.93,79.85
 Sri Lanka,LK,Dehiwala-mount lavinia,218800,6.85,79.87
 Sri Lanka,LK,Moratuwa,184800,6.81,79.88
