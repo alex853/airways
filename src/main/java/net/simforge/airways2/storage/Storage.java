@@ -58,7 +58,11 @@ public class Storage<T> {
     //   record count 4b
     //   record size 2b
     //   current time millis 8b
+    // data.length is the capacity, the records take the first storedRecordCount * recordSize bytes (the rest is zero reserve, see Builder#growthStep)
     private byte[] data = new byte[0];
+    private int storedRecordCount;
+    // how many records the capacity grows by when a new record does not fit, 1 means 'exactly as much as required'
+    private final int growthStep;
 
     private long deletedRecordQuarantineMillis;
     private final LongSupplier clock;
@@ -77,10 +81,12 @@ public class Storage<T> {
                     final long deletedRecordQuarantineMillis,
                     final boolean deletedRecordQuarantineIsExplicit,
                     final LongSupplier clock,
-                    final int heartbeatIndexFieldIndex) {
+                    final int heartbeatIndexFieldIndex,
+                    final int growthStep) {
         checkNotNull(dataFields);
 
         this.name = name;
+        this.growthStep = growthStep;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
         this.maxRecordId = maxRecordIdOf(idDataType);
@@ -130,6 +136,7 @@ public class Storage<T> {
             return;
         }
         data = Files.readAllBytes(dataPath);
+        storedRecordCount = data.length / recordSize;
         rebuildDeletedRecords();
         rebuildHeartbeatIndex();
         markChanged();
@@ -152,7 +159,10 @@ public class Storage<T> {
 
     public void save(final Path rootPath) throws IOException {
         final Path dataPath = rootPath.resolve(name);
-        Files.write(dataPath, data,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE);
+        // the reserve of the capacity is not saved, the file holds the records only
+        final int usedLength = storedRecordCount * recordSize;
+        final byte[] toWrite = usedLength == data.length ? data : Arrays.copyOf(data, usedLength);
+        Files.write(dataPath, toWrite,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE);
     }
 
     public DataField getDataField(final int fieldIndex) {
@@ -161,6 +171,7 @@ public class Storage<T> {
 
     public void reset() {
         data = new byte[0];
+        storedRecordCount = 0;
         deletedRecords.clear();
         if (heartbeatIndex != null) {
             heartbeatIndex.clear();
@@ -172,7 +183,7 @@ public class Storage<T> {
      * count of all records - existing and deleted
      */
     private int getTotalStoredRecordCount() {
-        return data.length / recordSize;
+        return storedRecordCount;
     }
 
     // todo ak3 optimization - that counts can be stored in headers or counted somehow else - after loading and any change
@@ -260,9 +271,12 @@ public class Storage<T> {
             throw new IllegalStateException("Storage " + name + " is full: record id " + addedRecordId
                     + " does not fit into " + idDataType + " (max id is " + maxRecordId + ")");
         }
-        final byte[] newData = new byte[data.length + recordSize];
-        System.arraycopy(data, 0, newData, 0, data.length);
-        data = newData;
+        final int requiredLength = addedRecordId * recordSize;
+        if (requiredLength > data.length) {
+            // grows by growthStep records at once, so the whole array is not copied for every new record
+            data = Arrays.copyOf(data, requiredLength + (growthStep - 1) * recordSize);
+        }
+        storedRecordCount = addedRecordId;
         markChanged();
         return addedRecordId;
     }
@@ -703,6 +717,7 @@ public class Storage<T> {
         private boolean deletedRecordQuarantineIsExplicit = false;
         private LongSupplier clock = System::currentTimeMillis;
         private int heartbeatIndexFieldIndex = -1;
+        private int growthStep = 1;
 
         private Builder() {
         }
@@ -738,6 +753,16 @@ public class Storage<T> {
             return this;
         }
 
+        /**
+         * How many records the storage grows by when a new record does not fit (the default is 1: exactly as much as required). A big storage
+         * which gets new records all the time should have a bigger step: every growth copies the whole array.
+         */
+        public Builder<T> growthStep(final int records) {
+            checkArgument(records >= 1, "growth step should be positive");
+            this.growthStep = records;
+            return this;
+        }
+
         public Builder<T> name(final String name) {
             this.name = name;
             return this;
@@ -765,7 +790,7 @@ public class Storage<T> {
                 throw new IllegalStateException("dataFields not set");
             }
             return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]),
-                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock, heartbeatIndexFieldIndex);
+                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock, heartbeatIndexFieldIndex, growthStep);
         }
     }
 

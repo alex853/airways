@@ -22,6 +22,8 @@ public class Journeys {
             .name("journeys")
             .withInstantiator(Journey::new)
             .withIdOf(DataType.Unsigned24bit)
+            // the storage is big and gets new records all the time, a growth copies the whole array: so it grows by 100 records at once
+            .growthStep(100)
             // -------------------------------------------------- record deletion status    1 byte
             .withDataField(DataField.of(DataType.Unsigned8bit)) // status                   1 byte
             .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime             4 bytes
