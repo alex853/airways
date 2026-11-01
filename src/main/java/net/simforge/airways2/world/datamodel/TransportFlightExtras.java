@@ -41,7 +41,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>
  * todo ak1 WHAT IS LEFT FOR THE INCOME:
  * 1. THE PRICES ARE DECIDED (ShadowJetPricing, 2026-10-30). Every journey has the price of its flight at the booking, whatever the flight is (price1, and price2 for the second
- * flight of a stopover). The journeys pay the price to the operator on arrival now for the flights of the pilots (JourneyControl.payForTransportation, from the account of the
+ * flight of a stopover). The flight pays its income to the operator when it is finished, one transfer for the flight of a pilot (TransportFlightControl.payOperator, from the account of the
  * passengers), check the balance of the account of ShadowJet after the first real flights.
  * 2. THE PAY OF A SHADOWJET PILOT is done (2026-10-30): the contract is made at the booking (ShadowJetBooking), the flight is paid at the finish by the rates of its operator
  * (OperatorPay, BusyBirdsMissionControl.payPilot), the income is taken from here. What is left is to look at the real payments after the first flights.

@@ -465,7 +465,41 @@ public class TransportFlightControl {
         paxManager().deboarding(transportFlight).finish();
         deboardingStartTimes.remove(transportFlight.getId());
 
+        payOperator(transportFlight);
+
         log.info("t/f #{} - finished", transportFlight.getId());
+    }
+
+    /**
+     * What the passengers have paid to an operator for a flight.
+     */
+    public record Payout(int operatorId, int amount) {
+    }
+
+    /**
+     * The flight is finished: the passengers pay its income (what really boarded, see recalculateIncome) to the operator of the flight in one transfer from the account of
+     * the passengers to the account of the operator (and it is written to the log). If an account does not exist, nothing moves, see BankControl.transferIfAccountsExist.
+     * The income is kept, the pay of the pilot is taken from it too.
+     *
+     * @return what is paid to the operator, empty if the flight has no income (it is not a flight of a pilot or it had no passengers)
+     */
+    public Optional<Payout> payOperator(final TransportFlights.Flight transportFlight) {
+        checkNotNull(transportFlight);
+
+        final int income = getIncome(transportFlight);
+        if (income <= 0) {
+            return Optional.empty();
+        }
+
+        final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final int operatorId = aircraft.getAircraftOperatorId();
+        final String operatorName = world.aircraftOperators().byId(operatorId).map(AircraftOperators.AircraftOperator::getName).orElse("?");
+        log.info("t/f #{} - passengers pay {} to operator #{} {}, f/m #{}", transportFlight.getId(), income, operatorId, operatorName, mission.getId());
+
+        world.bankControl().transferIfAccountsExist(BankAccounts.SystemPassengersAccountId, world.bankControl().operatorAccountId(operatorId), income,
+                BankTransactions.Type.JourneyPayment, "t/f #" + transportFlight.getId());
+        return Optional.of(new Payout(operatorId, income));
     }
 
     /**

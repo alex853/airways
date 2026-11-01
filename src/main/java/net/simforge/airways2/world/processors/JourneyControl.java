@@ -207,9 +207,7 @@ public class JourneyControl {
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.01f);
 
-        // the journey pays for the transport flight it has come with, before the next transport flight (if there is one) becomes the first one
-        payForTransportation(journey);
-
+        // the transport flight is paid to its operator as a whole when it is finished (TransportFlightControl.payOperator), not by every journey
         shiftToNextTransportFlight(journey);
 
         moveToLandingAirportCity(journey, transportFlight1);
@@ -220,49 +218,6 @@ public class JourneyControl {
         } else {
             waitForCheckin(journey);
         }
-    }
-
-    /**
-     * What the journey has paid to an operator.
-     */
-    public record Payout(int operatorId, int amount) {
-    }
-
-    /**
-     * The journey which has just arrived pays the price it has (price1, see Journey.getPrice1) for the transport flight it has come with. If the journey has a next
-     * transport flight (a stopover), the price of that one is the other field (price2) and it moves to price1 when the next flight becomes the first one
-     * (shiftToNextTransportFlight), so it is paid when the journey arrives with it. What is paid is taken off the price, so the price is zero when everything is paid.
-     * <p>
-     * For a flight of a user (its flight mission has a user) the payment is a transfer from the account of the passengers to the account of the operator
-     * of the flight (and it is written to the log). If an account does not exist, nothing moves, see BankControl.transferIfAccountsExist.
-     *
-     * @return what the journey has paid to the operator of the flight, empty if the journey has no price or the flight is not a flight of a user
-     */
-    public Optional<Payout> payForTransportation(final Journeys.Journey journey) {
-        final int price = journey.getPrice1();
-        if (price <= 0) {
-            return Optional.empty();
-        }
-
-        final TransportFlights.Flight transportFlight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        final Optional<FlightMissions.Mission> mission = world.flightMissions().byId(transportFlight.getFlightMissionId());
-
-        final int payout = price;
-        // what is paid is taken off the price
-        journey.setPrice1(0);
-
-        if (mission.isEmpty() || mission.get().getUserId() <= 0) {
-            return Optional.empty();
-        }
-
-        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.get().getAircraftId()).orElseThrow();
-        final int operatorId = aircraft.getAircraftOperatorId();
-        final String operatorName = world.aircraftOperators().byId(operatorId).map(AircraftOperators.AircraftOperator::getName).orElse("?");
-        log.info("j/y #{} - pays {} to operator #{} {} for t/f #{}, f/m #{}", journey.getId(), payout, operatorId, operatorName, transportFlight.getId(), mission.get().getId());
-
-        world.bankControl().transferIfAccountsExist(BankAccounts.SystemPassengersAccountId, world.bankControl().operatorAccountId(operatorId), payout,
-                BankTransactions.Type.JourneyPayment, "j/y #" + journey.getId());
-        return Optional.of(new Payout(operatorId, payout));
     }
 
     public void startSpendingTheirTime(final Journeys.Journey journey) {
