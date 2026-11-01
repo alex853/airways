@@ -280,4 +280,26 @@ public class JourneyHubSearchTest {
         assertEquals(0, world.transportFlightControl().getIncome(second));
         assertEquals(remainedBefore + 2, second.getRemainedTickets().getTotal()); // the 2 seats of the journey are free again
     }
+
+    // the index of the flights lives for one world step, but the seats are checked at every search: the journeys of one step take the seats one after another
+    @Test
+    public void journeysOfOneStepDoNotOverbookAFlight() {
+        final Airports.Airport hub = airport("EGLL", city("Hub", 10), 10);
+        final TransportFlights.Flight flight = flightTo(hub, 60);
+
+        final java.util.List<Journeys.Journey> journeys = new java.util.ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, origin.getId(), target.getId(), 10, CabinLayout.Service.Y);
+            journey.setLocationCityId(origin.getId());
+            journey.setLastKnownLocationCityId(origin.getId());
+            journey.setHeartbeatTime(world.getWorldTime());
+            journeys.add(journey);
+        }
+        JourneyProcessor.process(world);
+
+        final long booked = journeys.stream().filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn).count();
+        assertTrue(booked > 0, "some journeys take the flight");
+        assertTrue(booked < 100, "the seats of the flight are over, the others stay without tickets");
+        assertEquals(booked, journeys.stream().filter(j -> j.getTransportFlight1Id() == flight.getId()).count());
+    }
 }

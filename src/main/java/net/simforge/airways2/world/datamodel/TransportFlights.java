@@ -127,6 +127,13 @@ public class TransportFlights {
         return id == null ? Optional.empty() : storage.byId(id);
     }
 
+    /**
+     * The flights which are open for a purchase of a ticket by their status, whatever the seats are.
+     */
+    public Stream<Flight> allOpenForTickets() {
+        return storage.filter(statusAllowsTicketPurchase());
+    }
+
     public Stream<Flight> allSuitableForRouteFinding(Journeys.Journey journey) {
         return storage.filter(and(
                 statusAllowsTicketPurchase(),

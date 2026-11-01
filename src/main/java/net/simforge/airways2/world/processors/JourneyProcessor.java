@@ -29,15 +29,56 @@ public class JourneyProcessor {
     private static final int STOPOVER_CONNECTION_RESERVE = 4 * Time.ONE_HOUR;
 
     public static void process(final World world) {
+        // the index of the flights lives for this world step only: the flights do not appear and do not change their status while the journeys are processed
+        final RouteIndex routes = new RouteIndex(world);
         Processing.heartbeat(() -> world.journeys().nextForHeartbeat(world.getWorldTime()),
-                journey -> processJourney(world, journey));
+                journey -> processJourney(world, journey, routes));
     }
 
-    private static void processJourney(final World world, final Journeys.Journey journey) {
+    /**
+     * The flights open for tickets (by their status) grouped by the departure airport, built at the first search of a step: one scan of the flights per step instead of
+     * the scans per journey (and per flight of a stopover route). The seats are not kept here, they change as the journeys book, so they are checked at every search.
+     */
+    static class RouteIndex {
+        private final World world;
+        private Map<Integer, List<TFM>> byDepartureAirportId;
+
+        RouteIndex(final World world) {
+            this.world = world;
+        }
+
+        /**
+         * The flights departing from the airports, which have seats of the journey (the preferred class, or one up or one down), in the order of the storage.
+         */
+        List<TFM> departingFrom(final Collection<Integer> airportIds, final Journeys.Journey journey) {
+            if (byDepartureAirportId == null) {
+                byDepartureAirportId = new HashMap<>();
+                world.transportFlights().allOpenForTickets().forEach(tf -> {
+                    final TFM tfm = toTfm(world, tf);
+                    byDepartureAirportId.computeIfAbsent(tfm.fm.getDepartureAirportId(), id -> new ArrayList<>()).add(tfm);
+                });
+            }
+
+            final List<TFM> result = new ArrayList<>();
+            for (final int airportId : airportIds) {
+                for (final TFM tfm : byDepartureAirportId.getOrDefault(airportId, List.of())) {
+                    if (tfm.tf.getRemainedTickets().chooseService(journey.getGroupSize(), journey.getPreferredCabinService()) != null) {
+                        result.add(tfm);
+                    }
+                }
+            }
+            if (airportIds.size() > 1) {
+                result.sort(Comparator.comparingInt(tfm -> tfm.tf.getId()));
+            }
+            return result;
+        }
+    }
+
+    private static void processJourney(final World world, final Journeys.Journey journey, final RouteIndex routes) {
         journey.setHeartbeatTime(0);
 
         switch (journey.getStatus()) {
-            case LookingForTickets -> lookingForTickets(world, journey);
+            case LookingForTickets -> lookingForTickets(world, journey, routes);
             case WaitingForCheckIn -> waitingForCheckin(world, journey);
             case WaitingForBoarding -> waitingForBoarding(world, journey);
             case WaitingForDeboarding -> waitingForDeboarding(world, journey);
@@ -54,7 +95,7 @@ public class JourneyProcessor {
     // the destination, if it is a hub, is the best of them), then a direct flight, then a route of two flights with a stopover (findStopoverRoutes); only if there is nothing
     // the attempt is counted. The stopover routes were switched off for a day (2026-10-30: the second leg took the places of a flight of a pilot and brought no income) and are
     // back since every flight of such a route has its own price (price1 and price2 of the journey), see docs/journeys-hub-mode.md.
-    private static void lookingForTickets(final World world, final Journeys.Journey journey) {
+    private static void lookingForTickets(final World world, final Journeys.Journey journey, final RouteIndex routes) {
         final Set<Integer> fromAirportIds = world.airport2city()
                 .allByCityId(journey.getLocationCityId())
                 .map(Airport2City.Link::getAirportId)
@@ -64,7 +105,7 @@ public class JourneyProcessor {
                 .map(Airport2City.Link::getAirportId)
                 .collect(Collectors.toSet());
 
-        final Optional<TransportFlights.Flight> hubFlight = findHubFlight(world, journey, fromAirportIds);
+        final Optional<TransportFlights.Flight> hubFlight = findHubFlight(world, journey, fromAirportIds, routes);
         if (hubFlight.isPresent()) {
             log.info("j/y #{} - goes to the hub by t/f #{}", journey.getId(), hubFlight.get().getId());
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, chooseCabinService(journey, hubFlight.get()), hubFlight.get());
@@ -72,7 +113,7 @@ public class JourneyProcessor {
             return;
         }
 
-        final Collection<TransportFlights.Flight> foundDirectFlights = findDirectFlights(world, journey, fromAirportIds, toAirportIds);
+        final Collection<TransportFlights.Flight> foundDirectFlights = findDirectFlights(journey, fromAirportIds, toAirportIds, routes);
         if (!foundDirectFlights.isEmpty()) {
             final TransportFlights.Flight directFlight = foundDirectFlights.iterator().next();
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, chooseCabinService(journey, directFlight), directFlight);
@@ -80,7 +121,7 @@ public class JourneyProcessor {
             return;
         }
 
-        final Collection<List<TransportFlights.Flight>> stopoverRoutes = findStopoverRoutes(world, journey, fromAirportIds, toAirportIds);
+        final Collection<List<TransportFlights.Flight>> stopoverRoutes = findStopoverRoutes(journey, fromAirportIds, toAirportIds, routes);
         if (!stopoverRoutes.isEmpty()) {
             final List<TransportFlights.Flight> stopoverRoute = stopoverRoutes.iterator().next();
             if (stopoverRoute.size() == 2) {
@@ -100,31 +141,23 @@ public class JourneyProcessor {
         }
     }
 
-    private static Collection<TransportFlights.Flight> findDirectFlights(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
-        return world.transportFlights()
-                .allSuitableForRouteFinding(journey)
-                .map(tf -> toTfm(world, tf))
+    private static Collection<TransportFlights.Flight> findDirectFlights(final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds, final RouteIndex routes) {
+        return routes.departingFrom(fromAirportIds, journey).stream()
                 .filter(tfm -> isThereDirectRouteAvailable(tfm, fromAirportIds, toAirportIds))
                 .map(tfm -> tfm.tf)
                 .toList();
     }
 
-    private static Collection<List<TransportFlights.Flight>> findStopoverRoutes(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds) {
+    private static Collection<List<TransportFlights.Flight>> findStopoverRoutes(final Journeys.Journey journey, final Set<Integer> fromAirportIds, final Set<Integer> toAirportIds, final RouteIndex routes) {
         final Collection<List<TransportFlights.Flight>> result = new ArrayList<>();
 
-        final Collection<TFM> allFlight1s = world.transportFlights()
-                .allSuitableForRouteFinding(journey)
-                .filter(tf -> isThereEnoughTickets(journey, tf))
-                .map(tf -> toTfm(world, tf))
-                .filter(tfm -> flightDepartsFrom(tfm, fromAirportIds))
+        final Collection<TFM> allFlight1s = routes.departingFrom(fromAirportIds, journey).stream()
+                .filter(tfm -> isThereEnoughTickets(journey, tfm.tf))
                 .toList();
 
         for (final TFM flight1 : allFlight1s) {
-            final Collection<TFM> allFlight2s = world.transportFlights()
-                    .allSuitableForRouteFinding(journey)
-                    .filter(tf -> isThereEnoughTickets(journey, tf))
-                    .map(tf -> toTfm(world, tf))
-                    .filter(tfm -> flightDepartsFrom(tfm, Collections.singleton(flight1.fm.getDestinationAirportId()))
+            final Collection<TFM> allFlight2s = routes.departingFrom(Collections.singleton(flight1.fm.getDestinationAirportId()), journey).stream()
+                    .filter(tfm -> isThereEnoughTickets(journey, tfm.tf)
                             && flightArrivesTo(tfm, toAirportIds)
                             && flightDepartsLaterThan(tfm, flight1.fm.getPlannedArrivalWorldTime() + STOPOVER_CONNECTION_RESERVE)
                     ).toList();
@@ -139,7 +172,7 @@ public class JourneyProcessor {
      * city where the journey is now. The criterion is the same as of ShadowJetLogic.findHubTestJourney, but from the side of the journey: of all such flights the one which
      * cuts the distance to the destination most is taken, of equal ones the earliest. The distance only gets smaller, so a journey cannot go in circles between the hubs.
      */
-    static Optional<TransportFlights.Flight> findHubFlight(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds) {
+    static Optional<TransportFlights.Flight> findHubFlight(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final RouteIndex routes) {
         final Geo.Coords locationCoords;
         final Geo.Coords targetCoords;
         try {
@@ -154,10 +187,7 @@ public class JourneyProcessor {
         TransportFlights.Flight best = null;
         double bestReduction = 0;
         int bestDepartureTime = 0;
-        for (final TFM tfm : world.transportFlights().allSuitableForRouteFinding(journey).map(tf -> toTfm(world, tf)).toList()) {
-            if (!flightDepartsFrom(tfm, fromAirportIds)) {
-                continue;
-            }
+        for (final TFM tfm : routes.departingFrom(fromAirportIds, journey)) {
             final Optional<Airports.Airport> hub = world.airports().byId(tfm.fm.getDestinationAirportId());
             if (hub.isEmpty() || !AirportHubs.isHub(hub.get().getIcao())) {
                 continue;
@@ -178,10 +208,6 @@ public class JourneyProcessor {
 
     private static boolean flightDepartsLaterThan(TFM tfm, int departureTimeThreshold) {
         return tfm.fm.getPlannedDepartureWorldTime() >= departureTimeThreshold;
-    }
-
-    private static boolean flightDepartsFrom(TFM tfm, Set<Integer> fromAirportIds) {
-        return fromAirportIds.contains(tfm.fm.getDepartureAirportId());
     }
 
     private static boolean flightArrivesTo(TFM tfm, Set<Integer> toAirportIds) {
