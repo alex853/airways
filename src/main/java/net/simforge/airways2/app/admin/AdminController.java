@@ -760,6 +760,14 @@ public class AdminController {
         return worldBean.read(world -> City2CityFlowHistogramAnalyser.histogramLine(world) + "\n" + City2CityFlowHistogramAnalyser.clockLine(world) + "\n");
     }
 
+    /**
+     * The active flows with the oldest clock (a/t), the oldest first (limit lines, 20 by default, 200 at most): what they are and why the clock does not move.
+     */
+    @GetMapping(value = "/flows/c2c/oldest", produces = "text/plain")
+    public String getC2COldestFlows(@RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
+        return worldBean.read(world -> String.join(System.lineSeparator(), City2CityFlowHistogramAnalyser.oldestByClock(world, Math.min(limit, 200))) + System.lineSeparator());
+    }
+
     @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")
     public String updateC2CFlowHeartbeat(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
         return worldBean.modifySync(world -> {

@@ -39,6 +39,45 @@ public class City2CityFlowHistogramAnalyser {
         log.warn(clockLine(world));
     }
 
+    /**
+     * The active flows with the oldest clock (a/t), the oldest first, one line each: what is the flow and why its clock does not move. The clock moves only when a group of
+     * the flow is born: a flow waits until the clock plus the time to accumulate the next group comes, so the flow with a very old clock is a flow with a very long time to
+     * accumulate (a small flow, a low success rate), or something is wrong with it. The time to accumulate and the sum of the clock and it are given in full (days, the sum
+     * as a long number of seconds is not wrapped as an int is, the processor adds them as ints, see City2CityFlowsProcessor) so an overflow can be seen.
+     */
+    public static java.util.List<String> oldestByClock(final World world, final int limit) {
+        final int worldTime = world.getWorldTime();
+        return world.city2cityFlows().all()
+                .filter(City2CityFlows.Flow::isActive)
+                .filter(c2c -> c2c.getAccumulatedFlowTime() != 0)
+                .sorted(java.util.Comparator.comparingInt(City2CityFlows.Flow::getAccumulatedFlowTime))
+                .limit(Math.max(0, limit))
+                .map(c2c -> describeFlow(world, c2c, worldTime))
+                .toList();
+    }
+
+    private static String describeFlow(final World world, final City2CityFlows.Flow c2c, final int worldTime) {
+        final String from = world.cities().byId(c2c.getFromCityId()).map(city -> city.getName()).orElse("?");
+        final String to = world.cities().byId(c2c.getToCityId()).map(city -> city.getName()).orElse("?");
+        String toAccumulate;
+        String sum;
+        try {
+            final int seconds = net.simforge.airways2.world.processors.CityFlowHelper.calcTimeToAccumulateFlow(world, c2c);
+            final long sumSeconds = (long) c2c.getAccumulatedFlowTime() + seconds;
+            toAccumulate = seconds + " s (" + seconds / Time.ONE_DAY + " d)";
+            sum = Time.toLdtOrNull((int) sumSeconds) + (sumSeconds > Integer.MAX_VALUE ? " OVERFLOW of int, the sum is " + sumSeconds : "") + (sumSeconds > worldTime ? ", in the future" : ", already due");
+        } catch (final RuntimeException e) {
+            toAccumulate = "unknown (" + e.getClass().getSimpleName() + ")";
+            sum = "unknown";
+        }
+        return "#" + c2c.getFromCityId() + "/" + c2c.getToCityId() + " " + from + " - " + to
+                + " | a/t " + Time.toLdtOrNull(c2c.getAccumulatedFlowTime()) + " (" + (worldTime - c2c.getAccumulatedFlowTime()) / Time.ONE_DAY + " d behind)"
+                + " | h/b " + Time.toLdtOrNull(c2c.getHeartbeatTime())
+                + " | time to accumulate " + toAccumulate + " | a/t + it = " + sum
+                + " | next g/s " + c2c.getNextGroupSize() + ", accumulated flow " + c2c.getAccumulatedFlow()
+                + " | s/r " + c2c.getSuccessRate() + ", flow fraction " + c2c.getFlowFraction();
+    }
+
     // by the heartbeat of the flows
     public static String histogramLine(final World world) {
         return line(world, "c2c h/b", City2CityFlows.Flow::getHeartbeatTime);

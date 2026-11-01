@@ -107,4 +107,37 @@ class City2CityFlowHistogramAnalyserTest {
         assertEquals("c2c h/b overdue 0 | D0-6 3,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
+
+    private City2CityFlows.Flow flowWithClock(final int clock, final boolean active) {
+        final City2CityFlows.Flow flow = flow(active, world.getWorldTime() + Time.ONE_HOUR);
+        flow.setAccumulatedFlowTime(clock);
+        return flow;
+    }
+
+    @Test
+    public void test__oldest_by_clock_lists_the_active_flows_with_the_oldest_clock_first() {
+        final int now = world.getWorldTime();
+        final City2CityFlows.Flow oldest = flowWithClock(now - 400 * Time.ONE_DAY, true);
+        final City2CityFlows.Flow middle = flowWithClock(now - 10 * Time.ONE_DAY, true);
+        flowWithClock(now - 3 * Time.ONE_DAY, true);
+        flowWithClock(now - 900 * Time.ONE_DAY, false); // inactive: not shown
+        flowWithClock(0, true);                         // no clock yet: not shown
+
+        final java.util.List<String> lines = City2CityFlowHistogramAnalyser.oldestByClock(world, 2);
+
+        assertEquals(2, lines.size());
+        assertTrue(lines.get(0).startsWith("#" + oldest.getFromCityId() + "/" + oldest.getToCityId()), lines.get(0));
+        assertTrue(lines.get(0).contains("400 d behind"), lines.get(0));
+        assertTrue(lines.get(1).startsWith("#" + middle.getFromCityId() + "/"), lines.get(1));
+        // the flow has accumulated everything it needs (no group size yet): the time to accumulate is zero and the clock plus it is already due
+        assertTrue(lines.get(0).contains("time to accumulate 0 s"), lines.get(0));
+        assertTrue(lines.get(0).contains("already due"), lines.get(0));
+    }
+
+    @Test
+    public void test__oldest_by_clock_with_a_zero_limit_is_empty() {
+        flowWithClock(world.getWorldTime() - Time.ONE_DAY, true);
+
+        assertTrue(City2CityFlowHistogramAnalyser.oldestByClock(world, 0).isEmpty());
+    }
 }
