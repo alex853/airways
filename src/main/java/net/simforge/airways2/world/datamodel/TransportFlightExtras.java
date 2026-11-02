@@ -26,7 +26,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * The record is 32 bytes: 1 byte of the deletion status, 3 bytes of the transport flight, 3 bytes of the income and 25 bytes of the reserve.
  * <p>
  * THE INCOME of a transport flight: the sum of the price of the journeys which are booked to the flight (what the passengers pay), in the money of the game, 0 to
- * 16 777 215. It is kept for the flights of the pilots only (the PC flights, FlightMissions.CharacterMode.PC); a flight of an NPC has no record and all the operations
+ * 16 777 215. It is kept for the flights of the users only (PC mode and a user, TransportFlightControl.isUserFlight); a flight of an NPC or a flight tracked via VATSIM (PC, no user) has no record and all the operations
  * with the income skip it (TransportFlightControl). A record is created when the income of a flight becomes more than zero, a flight without income has no record and
  * its income is zero (my-flights tells 0). How it lives (TransportFlightControl):
  * - every booking of a journey to the flight adds the price of the journey (JourneyControl.bookDirectFlightJourneyNoChecks, the booking of BusyBirds);

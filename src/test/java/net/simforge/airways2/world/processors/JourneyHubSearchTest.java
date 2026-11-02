@@ -61,6 +61,7 @@ public class JourneyHubSearchTest {
         final int departureTime = world.getWorldTime() + departureInMinutes * Time.ONE_MINUTE;
         final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, originAirport, to, departureTime, departureTime + 2 * Time.ONE_HOUR);
         mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        mission.setUserId(1);
         return world.transportFlightControl().createTransportFlight(mission);
     }
 
@@ -168,6 +169,7 @@ public class JourneyHubSearchTest {
         final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR; // later than the arrival of the first flight and the reserve of the connection
         final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
         secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        secondMission.setUserId(1);
         final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
 
         final Journeys.Journey journey = wakeUpJourney(); // 2 passengers, Y
@@ -196,6 +198,7 @@ public class JourneyHubSearchTest {
         final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR;
         final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
         secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        secondMission.setUserId(1);
         final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
         final Journeys.Journey journey = wakeUpJourney();
         final int price2 = journey.getPrice2();
@@ -247,6 +250,7 @@ public class JourneyHubSearchTest {
         final int departureTime = world.getWorldTime() + 60 * Time.ONE_MINUTE;
         final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, hubAirport, nextHub, departureTime, departureTime + 2 * Time.ONE_HOUR);
         mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        mission.setUserId(1);
         final TransportFlights.Flight flight = world.transportFlightControl().createTransportFlight(mission);
 
         final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, origin.getId(), target.getId(), 2, CabinLayout.Service.Y);
@@ -268,6 +272,7 @@ public class JourneyHubSearchTest {
         final int departureTime = world.getWorldTime() + 8 * Time.ONE_HOUR;
         final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, stopover, targetAirport, departureTime, departureTime + 2 * Time.ONE_HOUR);
         secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        secondMission.setUserId(1);
         final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
         final Journeys.Journey journey = wakeUpJourney();
         assertTrue(world.transportFlightControl().getIncome(second) > 0);

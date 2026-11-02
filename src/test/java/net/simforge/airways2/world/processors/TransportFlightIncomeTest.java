@@ -55,6 +55,7 @@ class TransportFlightIncomeTest {
         final int departure = Time.START_TIME_EPOCH_SECONDS + 2 * Time.ONE_HOUR;
         final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, airportA, airportB, departure, departure + 2 * Time.ONE_HOUR);
         mission.setCharacterMode(mode);
+        mission.setUserId(mode == FlightMissions.CharacterMode.PC ? 1 : 0);
         final TransportFlights.Flight flight = tfControl.createTransportFlight(mission);
         tfControl.startCheckIn(flight);
         return flight;
@@ -255,7 +256,22 @@ class TransportFlightIncomeTest {
         assertEquals(ShadowJetPricing.price(distanceNm(), 10, CabinLayout.Service.Y) + ShadowJetPricing.price(distanceNm(), 4, CabinLayout.Service.J), income(flight));
     }
 
-    // every journey has the price of its flight at the booking, whatever the flight is; the income is only of the flights of the pilots
+    // every journey has the price of its flight at the booking, whatever the flight is; the income is only of the flights of the users
+    @Test
+    void aJourneyOnAFlightTrackedViaVatsimHasThePriceButTheFlightHasNoIncome() {
+        aircraft.setAircraftOperatorId(SHADOW_JET);
+        final TransportFlights.Flight flight = transportFlight(FlightMissions.CharacterMode.PC);
+        world.flightMissions().byId(flight.getFlightMissionId()).orElseThrow().setUserId(0);
+        final Journeys.Journey journey = freshJourney(10, CabinLayout.Service.Y);
+
+        world.journeyControl().bookDirectFlightJourneyNoChecks(journey, CabinLayout.Service.Y, flight);
+
+        assertEquals(ShadowJetPricing.price(distanceNm(), 10, CabinLayout.Service.Y), journey.getPrice1());
+        assertEquals(0, journey.getPrice2());
+        assertEquals(0, income(flight));
+        assertEquals(0, world.transportFlightExtras().all().count());
+    }
+
     @Test
     void aJourneyOnAFlightOfAnNpcHasThePriceButTheFlightHasNoIncome() {
         aircraft.setAircraftOperatorId(SHADOW_JET);

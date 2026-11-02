@@ -66,6 +66,7 @@ class TransportFlightPayoutTest {
         final int departure = world.getWorldTime() + Time.ONE_HOUR;
         final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, airportA, airportB, departure, departure + 2 * Time.ONE_HOUR);
         mission.setCharacterMode(mode);
+        mission.setUserId(mode == FlightMissions.CharacterMode.PC ? 1 : 0);
         final TransportFlights.Flight flight = control.createTransportFlight(mission);
         control.addIncome(flight, income);
         return flight;
@@ -112,6 +113,35 @@ class TransportFlightPayoutTest {
     void aFlightWhichIsNotAFlightOfAPilotHasNoIncomeAndMovesNoMoney() {
         createAccountsAndGetOperatorAccount();
         final TransportFlights.Flight tf = transportFlight(FlightMissions.CharacterMode.NPC, 10_000);
+
+        assertEquals(Optional.empty(), control.payOperator(tf));
+
+        assertTrue(payoutLog().isEmpty());
+        assertEquals(0, world.bankTransactions().all().count());
+    }
+
+    @Test
+    void aFlightTrackedViaVatsimWithoutAUserHasNoIncomeAndMovesNoMoney() {
+        createAccountsAndGetOperatorAccount();
+        final int departure = world.getWorldTime() + Time.ONE_HOUR;
+        final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, airportA, airportB, departure, departure + 2 * Time.ONE_HOUR);
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        mission.setUserId(0);
+        final TransportFlights.Flight tf = control.createTransportFlight(mission);
+
+        control.addIncome(tf, 10_000);
+
+        assertEquals(0, control.getIncome(tf));
+        assertEquals(Optional.empty(), control.payOperator(tf));
+        assertTrue(payoutLog().isEmpty());
+        assertEquals(0, world.bankTransactions().all().count());
+    }
+
+    @Test
+    void aFlightWithoutAUserWhichHasAnIncomeBookedBeforeTheRuleStillPaysNothing() {
+        createAccountsAndGetOperatorAccount();
+        final TransportFlights.Flight tf = transportFlight(FlightMissions.CharacterMode.PC, 10_000);
+        world.flightMissions().byId(tf.getFlightMissionId()).orElseThrow().setUserId(0);
 
         assertEquals(Optional.empty(), control.payOperator(tf));
 

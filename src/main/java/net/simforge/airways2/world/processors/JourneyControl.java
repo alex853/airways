@@ -89,7 +89,7 @@ public class JourneyControl {
 
     // the flights of the pilots are logged at the info level, the flights of the AI have a lot of journeys
     private void logLegPrice(final Journeys.Journey journey, final int price, final TransportFlights.Flight flight, final CabinLayout.Service service) {
-        if (world.transportFlightControl().isPcFlight(flight)) {
+        if (world.transportFlightControl().isUserFlight(flight)) {
             log.info("j/y #{} - price {} is set for t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), service);
         } else {
             log.debug("j/y #{} - price {} is set for t/f #{} ({} PAX, {})", journey.getId(), price, flight.getId(), journey.getGroupSize(), service);

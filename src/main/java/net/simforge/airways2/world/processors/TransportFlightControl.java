@@ -113,12 +113,12 @@ public class TransportFlightControl {
         flight.setRemainedTickets(remainedTickets.occupySeats(tickets, service));
     }
 
-    // ---- the income of a transport flight: the sum of the price of its journeys, in TransportFlightExtras. Only the flights of the pilots have it (the PC flights);
-    // the flights of the NPCs skip all of it. A flight without income has no record.
+    // ---- the income of a transport flight: the sum of the price of its journeys, in TransportFlightExtras. Only the flights of the users have it (the PC flights with a user);
+    // the flights of the NPCs and the flights tracked via VATSIM (PC mode, no user) skip all of it and move no money. A flight without income has no record.
 
-    boolean isPcFlight(final TransportFlights.Flight flight) {
+    boolean isUserFlight(final TransportFlights.Flight flight) {
         return world.flightMissions().byId(flight.getFlightMissionId())
-                .map(mission -> mission.getCharacterMode() == FlightMissions.CharacterMode.PC)
+                .map(mission -> mission.getCharacterMode() == FlightMissions.CharacterMode.PC && mission.getUserId() != 0)
                 .orElse(false);
     }
 
@@ -174,7 +174,7 @@ public class TransportFlightControl {
     public void addIncome(final TransportFlights.Flight flight, final int price) {
         checkNotNull(flight);
         checkArgument(price >= 0);
-        if (price == 0 || !isPcFlight(flight)) {
+        if (price == 0 || !isUserFlight(flight)) {
             return;
         }
         setIncome(flight, (long) getIncome(flight) + price);
@@ -186,7 +186,7 @@ public class TransportFlightControl {
     public void subtractIncome(final TransportFlights.Flight flight, final int price) {
         checkNotNull(flight);
         checkArgument(price >= 0);
-        if (price == 0 || !isPcFlight(flight)) {
+        if (price == 0 || !isUserFlight(flight)) {
             return;
         }
         setIncome(flight, Math.max(0L, (long) getIncome(flight) - price));
@@ -198,7 +198,7 @@ public class TransportFlightControl {
      */
     public void recalculateIncome(final TransportFlights.Flight flight) {
         checkNotNull(flight);
-        if (!isPcFlight(flight)) {
+        if (!isUserFlight(flight)) {
             return;
         }
         final long income = paxManager().journeysOf(flight, Journeys.Status.OnBoard).stream()
@@ -513,6 +513,11 @@ public class TransportFlightControl {
 
         final int income = getIncome(transportFlight);
         if (income <= 0) {
+            return Optional.empty();
+        }
+        // no money for a flight without a user, even if an income was booked to it before this rule (a flight tracked via VATSIM)
+        if (!isUserFlight(transportFlight)) {
+            log.info("t/f #{} - the flight is not a flight of a user, nothing is paid to the operator", transportFlight.getId());
             return Optional.empty();
         }
         if (!isDelivered(transportFlight)) {
