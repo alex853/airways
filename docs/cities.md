@@ -21,7 +21,7 @@
 (например, RCNN у Kaohsiung, LFKF у Ajaccio и Porto-Vecchio).
 - Автоимпорт линкует гражданские аэропорты с `size >= 5000` в радиусе 50 nm (`ImportMajorAirportsInVicinityOfCities`).
 - `create-links` по умолчанию берёт радиус 50 nm, его можно расширить параметром `maxDistance` (например, 75).
-- Связывать через море/границу (например, Calais с британским аэропортом) сомнительно, такие связи не делаем.
+- Связывать через море/границу (например, Calais с британским аэропортом) сомнительно, такие связи не делаем, **кроме** мест с регулярным судоходным (паромным) сообщением через моря и проливы: там связываем (решение пользователя 2026-11-01, пример Fuerteventura и Lanzarote).
 - Планируется: параметры «предпочтения» у связи (расстояние, качество наземного транспорта), чтобы journey
   выбирала аэропорт.
 
@@ -239,7 +239,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **Tegucigalpa (HN, MHTG, 2081, `009`):** 279 000 → 1 400 000; аэропорт `Tegucigalpa Toncontin` (`013`). Palmerola (MHPR, заменил Toncontin для коммерческих рейсов в 2021) в `icaodata.csv` и в мире нет, не добавляли.
   - **San Jose (CR, MROC, 3031, `009`):** `San jose` 340 100 → **San Jose** 2 100 100; аэропорт `San Jose Juan Santamaria` (`013`). В CSV есть второй `San jose` (30 700, тоже CR): при импорте второй пропускается как уже существующий (первый идёт раньше).
   - **Queenstown (NZ, NZQN, 3632, `009`):** 9 100 → 28 100, attraction 10.
-  - **Fuerteventura (ES, GCFV, 2407, `009`):** остров, городов в CSV нет: добавлена одна строка `Spain,ES,Fuerteventura,120000,28.45,-13.86`, attraction 10; через море с Lanzarote не связываем.
+  - **Fuerteventura (ES, GCFV, 2407, `009`):** остров, городов в CSV нет: добавлена одна строка `Spain,ES,Fuerteventura,120000,28.45,-13.86`, attraction 10; с Lanzarote связываем (GCFV линкуется с обоими, 2026-11-01): где есть регулярное судоходное (паромное) сообщение, города через моря и проливы связываем.
   - **Nuuk (GL, BGGH, 943, `009`):** в CSV для Greenland не было строки: добавлена `Greenland,GL,Nuuk,19000,64.19,-51.68` (координаты аэропорта).
   - **YSWS (Western Sydney International, AU) убран из этого пакета** (решение пользователя 2026-11-01, сделаем позже): он добавлен в refdata-airports 3.1.4 (`added/YSWS.properties`, там же `VOBL`), так что пойдёт через `009` без правки `icaodata.csv`, когда вернёмся. Вместе с **MHPR** (Palmerola, Honduras, заменил Toncontin для коммерческих рейсов в 2021; нет ни в `icaodata.csv`, ни в refdata, ни в мире) он в списке особых аэропортов ниже.
   - Терминалы бизнес-авиации не ставим. Attraction 10: Sharm El Sheikh, Fuerteventura, Queenstown (`/admin/flows/set-attraction` после деплоя, id из `/geo/cities`, блоки в `admin-requests.http`). `create-links` после деплоя: WAAA, MHTG, MROC, NZQN, GCFV, BGGH. Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой, после деплоя и вызовов закомментировать обратно.
