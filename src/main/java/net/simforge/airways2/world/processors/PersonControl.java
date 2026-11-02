@@ -125,6 +125,7 @@ public class PersonControl {
         }
         entry.setNightTakeoff(mission.isNightTakeoff());
         entry.setNightLanding(mission.isNightLanding());
+        writeLandingFlags(entry, mission);
         // seconds to hours, the storage rounds it to a tenth; the night time cannot be longer than the flight time
         entry.setNightTime(Math.min(entry.getFlightTime(), mission.getNightMinutes() / 60.0f));
 
@@ -132,6 +133,40 @@ public class PersonControl {
                 world.airports().getIcao(entry.getFromAirportId()).orElse("#" + entry.getFromAirportId()),
                 world.airports().getIcao(entry.getToAirportId()).orElse("#" + entry.getToAirportId()),
                 entry.getDurationMinutes(), mission.getId());
+    }
+
+    // A landing at a wrong airport (docs/diversions-and-alternates.md, section 7): the airport of the declared divert or any other one. The passengers are cancelled when the transport
+    // flight is still the flight of this mission and has not delivered them: when the pilot flew on, the transport flight was moved to the next mission before this one finished.
+    private void writeLandingFlags(final PilotLogbook.Entry entry, final FlightMissions.Mission mission) {
+        if (!FlightMissionHelper.isLandedAtWrongAirport(mission)) {
+            return;
+        }
+        final boolean declared = mission.isDivertDeclared() && mission.getDivertAirportId() == mission.getActualLandingAirportId();
+        entry.setDivertDeclared(declared);
+        entry.setUnplannedLanding(!declared);
+        final boolean cancelled = world.transportFlights().byFlightMissionId(mission.getId())
+                .map(transportFlight -> !world.transportFlightControl().isDelivered(transportFlight))
+                .orElse(false);
+        entry.setTransportationCancelled(cancelled);
+        log.info("p/s #{} - logbook entry #{}: landed at a wrong airport, divert declared {}, unplanned landing {}, transportation cancelled {}, f/m #{}",
+                entry.getPersonId(), entry.getId(), declared, !declared, cancelled, mission.getId());
+    }
+
+    /**
+     * A mission which went on after a landing at a wrong airport is cancelled: the transportation of the first mission is cancelled in the end, whatever the pilot chose at the gate.
+     * The logbook entry of the first mission is the last entry of the pilot on this aircraft which ends at the airport where the cancelled mission starts and has a landing flag.
+     */
+    public void markTransportationCancelledAfterContinuation(final FlightMissions.Mission cancelled) {
+        findPerson(cancelled).ifPresent(person -> world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId()))
+                .filter(entry -> entry.getAircraftId() == cancelled.getAircraftId()
+                        && entry.getToAirportId() == cancelled.getDepartureAirportId()
+                        && (entry.isDivertDeclared() || entry.isUnplannedLanding())
+                        && !entry.isTransportationCancelled())
+                .max(Comparator.comparingInt(PilotLogbook.Entry::getId))
+                .ifPresent(entry -> {
+                    entry.setTransportationCancelled(true);
+                    log.info("p/s #{} - logbook entry #{}: transportation cancelled, the flight which went on is cancelled, f/m #{}", person.getId(), entry.getId(), cancelled.getId());
+                }));
     }
 
     // ---- sleep and the awake credit (PilotRest): Idle -> Resting at sleep, Resting -> Idle at wake up

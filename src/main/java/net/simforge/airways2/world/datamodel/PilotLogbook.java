@@ -34,7 +34,7 @@ public class PilotLogbook {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // toAirportId             2 bytes
             .withDataField(DataField.of(DataType.Unsigned16bit)) // dateOfFlight, days      2 bytes
             .withDataField(DataField.of(DataType.Unsigned24bit)) // blocksOff + blocksOn, 12 bits of minutes of the date each  3 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags: bit 0 IFR, bit 6 night takeoff, bit 7 night landing, bits 1-5 are free  1 byte
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags: bit 0 IFR, bit 1 divert declared, bit 2 unplanned landing, bit 3 transportation cancelled, bit 6 night takeoff, bit 7 night landing, bits 4-5 are free  1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // flightTime, hours 0.0-25.5 step 0.1  1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // nightTime, hours 0.0-25.5            1 byte
             .withDataField(DataField.of(DataType.Tenths8bit)) // ifrTime, hours 0.0-25.5              1 byte
@@ -61,6 +61,11 @@ public class PilotLogbook {
     // and the bits 1-5 between them are free for other flags. A record is one flight: one takeoff and one landing, each of them is
     // either at day (bit is 0) or at night (bit is 1). Nobody edits them.
     private final BitAccessField.Section ifrBit = flagsBits.section(0, 1); // 1 is IFR, 0 is VFR
+    // The flights which landed not at their destination (docs/diversions-and-alternates.md, section 7): a landing at the airport which the pilot declared as the divert, or
+    // a landing at any other airport; and the flight whose passengers were not delivered because the pilot cancelled the transportation. A normal flight has all three clear.
+    private final BitAccessField.Section divertDeclaredBit = flagsBits.section(1, 1);
+    private final BitAccessField.Section unplannedLandingBit = flagsBits.section(2, 1);
+    private final BitAccessField.Section transportationCancelledBit = flagsBits.section(3, 1);
     private final BitAccessField.Section nightTakeoffBit = flagsBits.section(6, 1);
     private final BitAccessField.Section nightLandingBit = flagsBits.section(7, 1);
     private final DataField flightTimeField = storage.getDataField(7);
@@ -127,6 +132,10 @@ public class PilotLogbook {
         nightLandingBit.setInt(id, 0);
         // the flight rules are not known yet, VFR until the source is connected
         ifrBit.setInt(id, 0);
+        // a normal flight: landed at the destination, the passengers are not cancelled
+        divertDeclaredBit.setInt(id, 0);
+        unplannedLandingBit.setInt(id, 0);
+        transportationCancelledBit.setInt(id, 0);
         // the times are hours with one digit (Tenths8bit). Night time and IFR time are set later, zeros until then
         storage.set(id, flightTimeField, flightTimeHours(blocksOnStored - blocksOffStored));
         storage.set(id, nightTimeField, 0.0f);
@@ -253,6 +262,39 @@ public class PilotLogbook {
             ifrBit.setBoolean(id, ifr);
             // IFR time is the time of the flight under an IFR flight plan (SimBrief), the real time in the clouds (IMC) is another thing
             storage.set(id, ifrTimeField, ifr ? getFlightTime() : 0.0f);
+        }
+
+        /**
+         * The flight landed at the airport which the pilot declared as the divert: statistics, no sanctions.
+         */
+        public boolean isDivertDeclared() {
+            return divertDeclaredBit.getBoolean(id);
+        }
+
+        public void setDivertDeclared(final boolean divertDeclared) {
+            divertDeclaredBit.setBoolean(id, divertDeclared);
+        }
+
+        /**
+         * The flight landed at an airport which is neither the destination nor the declared divert: it leads to sanctions.
+         */
+        public boolean isUnplannedLanding() {
+            return unplannedLandingBit.getBoolean(id);
+        }
+
+        public void setUnplannedLanding(final boolean unplannedLanding) {
+            unplannedLandingBit.setBoolean(id, unplannedLanding);
+        }
+
+        /**
+         * The pilot cancelled the transportation after the landing at a wrong airport: the passengers got off there and were not delivered. It is independent of the two flags above.
+         */
+        public boolean isTransportationCancelled() {
+            return transportationCancelledBit.getBoolean(id);
+        }
+
+        public void setTransportationCancelled(final boolean transportationCancelled) {
+            transportationCancelledBit.setBoolean(id, transportationCancelled);
         }
 
         public int getDayTakeoffs() {

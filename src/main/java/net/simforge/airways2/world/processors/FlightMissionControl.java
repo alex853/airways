@@ -7,6 +7,7 @@ import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.computations.DayNight;
 import net.simforge.airways2.world.computations.NightTimeMeter;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.worldbuilder.World25;
 import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,6 +223,65 @@ public class FlightMissionControl {
         }
         mission.setDivertAirportId(airport.getId());
         log.info("f/m #{} - divert {}", mission.getId(), airport.getIcao());
+    }
+
+    // The flight which goes on after a landing at a wrong airport departs this time after the decision of the pilot (the time of the plan, the pilot does not have to wait for it)
+    public static final int CONTINUE_DEPARTURE_GAP_MINUTES = 30;
+
+    /**
+     * The aircraft has landed not at the destination and the pilot flies on now: the passengers stay on board, the same aircraft goes on to the planned destination in a new
+     * mission of the same pilot, which the same transport flight is moved to (WaitingForDeparture, the boarding is over). The first mission is finished by the ordinary Finish:
+     * the pilot gets the flight pay for it, no income share because the transport flight is not its any more. Two logbook entries come out of it.
+     *
+     * @return the new mission, it is Dispatched and the pilot starts it as any other
+     */
+    public FlightMissions.Mission continueToDestination(final FlightMissions.Mission mission) {
+        checkArgument(mission.getStatus() == FlightMissions.Status.Postflight, "continue - the flight is %s, not Postflight", mission.getStatus());
+        checkArgument(mission.getCharacterMode() == FlightMissions.CharacterMode.PC, "continue - the flight is not a flight of a pilot");
+        checkArgument(FlightMissionHelper.isLandedAtWrongAirport(mission), "continue - the flight has not landed at a wrong airport");
+        final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(mission.getId())
+                .orElseThrow(() -> new IllegalArgumentException("continue - the flight has no transport flight"));
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "continue - the transport flight is %s", transportFlight.getStatus());
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getActualLandingAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        // the mission keeps its times in whole minutes
+        final int departureTime = (world.getWorldTime() + CONTINUE_DEPARTURE_GAP_MINUTES * 60 + 59) / 60 * 60;
+
+        final FlightMissions.Mission next = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, from, to, departureTime);
+        next.setCharacterMode(FlightMissions.CharacterMode.PC);
+        next.setUserId(mission.getUserId());
+        next.setAutoFinish(mission.isAutoFinish());
+        next.setContinuation(true);
+        log.info("f/m #{} - the flight continues to {} in f/m #{}, t/f #{}", mission.getId(), to.getIcao(), next.getId(), transportFlight.getId());
+
+        copyContract(mission, next, aircraft);
+
+        // the transport flight moves to the new mission BEFORE the first one is finished: the pay of the first one takes the income through its transport flight
+        world.transportFlights().relinkToMission(transportFlight, next);
+        transportFlight.setStatus(TransportFlights.Status.WaitingForDeparture);
+        transportFlight.setHeartbeatTime(0);
+        log.info("t/f #{} - moved to f/m #{}, waiting for departure", transportFlight.getId(), next.getId());
+
+        finish(mission);
+        return next;
+    }
+
+    // the contract of the pilot for the new mission: the same operator, person and parameters (the manual bit is set at the start of the flight), the flight pay for the new planned time
+    private void copyContract(final FlightMissions.Mission from, final FlightMissions.Mission to, final Aircrafts.Aircraft aircraft) {
+        world.pilotContracts().byFlightMissionId(from.getId()).ifPresent(contract -> {
+            final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+            final int plannedDurationSeconds = to.getPlannedArrivalWorldTime() - to.getPlannedDepartureWorldTime();
+            final int baseFlightPay = aircraft.getAircraftOperatorId() == World25.ShadowJetOperatorId
+                    ? ShadowJetPilotPay.baseFlightPay(aircraftTypeIcao, plannedDurationSeconds)
+                    : BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, plannedDurationSeconds);
+            final PilotPayParams params = contract.getPayParams();
+            params.setManual(false);
+            final PilotContracts.Contract copy = world.pilotContracts().create(to.getId(), contract.getOperatorId(), contract.getPersonId(), baseFlightPay, params);
+            log.info("p/s #{}, f/m #{} - pilot contract #{}: base flight pay {}, params {} (the flight goes on from f/m #{})",
+                    contract.getPersonId(), to.getId(), copy.getId(), baseFlightPay, params, from.getId());
+        });
     }
 
     public void switchToExternalCoordinatesMode(FlightMissions.Mission mission) {
@@ -496,7 +556,8 @@ public class FlightMissionControl {
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
 
-        final Airports.Airport locationAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        // the aircraft stands at the gate of the airport where it has landed, after a divert it is not the destination
+        final Airports.Airport locationAirport = world.airports().byId(arrivalAirportId(mission)).orElseThrow();
 
         if (isUserFlight(mission)) {
             // the last piece of the night time is at the gate, then the counting is over
@@ -520,8 +581,13 @@ public class FlightMissionControl {
 
         world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(transportFlightControl()::whenFlightArrivesToGate);
 
-        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
-        log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow());
+        world.log(EventLog.EventType.AircraftArrivedToGate, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(locationAirport.getId()));
+        log.info("f/m #{} - aircraft {} arrived to gate at {}", mission.getId(), aircraft.getRegNo(), locationAirport.getIcao());
+    }
+
+    // where the aircraft has landed, the destination while the landing is not known
+    private static int arrivalAirportId(final FlightMissions.Mission mission) {
+        return mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId();
     }
 
     public void finish(final FlightMissions.Mission mission) {
@@ -544,7 +610,7 @@ public class FlightMissionControl {
         world.busyBirdsMissionControl().payPilot(mission);
         // todo ak3 pilot assignements / aircraft assignments?
 
-        world.log(EventLog.EventType.FlightFinished, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(mission.getDestinationAirportId()));
+        world.log(EventLog.EventType.FlightFinished, EventLog.userId(mission.getUserId()), mission, aircraft, EventLog.airportId(arrivalAirportId(mission)));
         log.info("f/m #{} - flight finished", mission.getId());
 
         world.airport2airportDailyFlightStats().incrementTodayCount(mission.getDepartureAirportId(), mission.getActualLandingAirportId());

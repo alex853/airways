@@ -567,6 +567,8 @@ public class PilotController {
     static final int RECENT_LANDINGS_WINDOW_HOURS = 90 * 24;
     // The flights of the last 12 months
     static final int RECENT_FLIGHTS_WINDOW_DAYS = 365;
+    // The window of the landing statistics: the diverts and the cancelled flights, the numbers which the sanctions look at
+    static final int LANDING_STATS_WINDOW_DAYS = 30;
 
     // The criteria of the currency on a type. Can carry passengers: enough landings in the recent window. Night flying: a night takeoff and a night
     // landing in the recent window. Type currency: enough flights and enough hours in the last 12 months. The totals of the type are not used in the criteria.
@@ -654,7 +656,31 @@ public class PilotController {
         return new QualificationsDto(avatarImageOf(world, personId), buildLogbook(world, personId).getTotals(), RECENT_LANDINGS_WINDOW_HOURS, RECENT_FLIGHTS_WINDOW_DAYS,
                 new CriteriaDto(CRITERIA_RECENT_LANDINGS, CRITERIA_NIGHT_TAKEOFFS, CRITERIA_NIGHT_LANDINGS, CRITERIA_RECENT_FLIGHTS,
                         CRITERIA_RECENT_FLIGHT_HOURS),
-                experienceLevelDtos(), types);
+                experienceLevelDtos(), types, buildLandingStats(world, personId, worldTime));
+    }
+
+    // The flags of the logbook entries (docs/diversions-and-alternates.md, section 7) counted over the last days; an entry counts for the time of its landing, that is the blocks on
+    static LandingStatsDto buildLandingStats(final World world, final int personId, final int worldTime) {
+        final int from = worldTime - LANDING_STATS_WINDOW_DAYS * 24 * 60 * 60;
+        int declaredDiverts = 0;
+        int unplannedDiverts = 0;
+        int cancelledFlights = 0;
+        final List<PilotLogbook.Entry> entries = world.pilotLogbook().filter(world.pilotLogbook().byPersonId(personId)).toList();
+        for (final PilotLogbook.Entry entry : entries) {
+            if (entry.getBlocksOnTime() < from) {
+                continue;
+            }
+            if (entry.isDivertDeclared()) {
+                declaredDiverts++;
+            }
+            if (entry.isUnplannedLanding()) {
+                unplannedDiverts++;
+            }
+            if (entry.isTransportationCancelled()) {
+                cancelledFlights++;
+            }
+        }
+        return new LandingStatsDto(LANDING_STATS_WINDOW_DAYS, declaredDiverts, unplannedDiverts, cancelledFlights);
     }
 
     /**
@@ -914,6 +940,20 @@ public class PilotController {
         // what the experience levels 1 to 5 need
         private List<ExperienceLevelDto> experienceLevels;
         private List<TypeCurrencyDto> types;
+        // the diverts and the cancelled flights of the last days
+        private LandingStatsDto landingStats;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class LandingStatsDto {
+        // the window in days
+        private int windowDays;
+        // the landings at the airport which the pilot declared as the divert, and at any other airport which is not the destination
+        private int declaredDiverts;
+        private int unplannedDiverts;
+        // the flights whose transportation the pilot cancelled
+        private int cancelledFlights;
     }
 
     @Data

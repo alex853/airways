@@ -399,6 +399,14 @@ public class JourneyControl {
 
     // The method is intended for returning a journey back to LookingForTickets when a VATSIM flight is cancelled from departing or flying states
     public void resetJourneyForcefully(Journeys.Journey journey) {
+        resetJourneyForcefully(journey, 0);
+    }
+
+    /**
+     * The same, and a journey which is on the aircraft stays where the aircraft is: its location is the city of that airport (decided 2026-11-02: a cancellation leaves the passengers
+     * where they are). The journeys which have not boarded, and airport 0, are the old way: back to the city where the journey was before the flight.
+     */
+    public void resetJourneyForcefully(Journeys.Journey journey, final int locationAirportId) {
         checkNotNull(journey);
         // Any status accepted
 
@@ -409,7 +417,13 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
 
-        moveBackToDepartureCity(journey);
+        // the journey which is on the aircraft is where the aircraft is; the one which has not boarded waits where it was
+        final boolean onTheAircraft = oldStatus == Journeys.Status.OnBoard || oldStatus == Journeys.Status.WaitingForDeboarding;
+        if (locationAirportId > 0 && onTheAircraft) {
+            updateLocationCity(journey, journey.getFromCityId(), locationAirportId);
+        } else {
+            moveBackToDepartureCity(journey);
+        }
 
         // No need to release tickets, they are not used anymore on that the flight
         journey.setTransportFlight1Id(0);

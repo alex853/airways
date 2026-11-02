@@ -139,8 +139,33 @@ public class TransportFlightControl {
     public int getIncomeOfMission(final FlightMissions.Mission mission) {
         checkNotNull(mission);
         return world.transportFlights().byFlightMissionId(mission.getId())
+                .filter(this::isDelivered)
                 .map(this::getIncome)
                 .orElse(0);
+    }
+
+    /**
+     * The passengers are delivered when the mission of the flight has not landed at a wrong airport: a flight which landed not at its destination has not delivered them (the pilot
+     * of such a mission gets no income share and the operator is not paid, whether the passengers fly on in another mission or get off there).
+     */
+    public boolean isDelivered(final TransportFlights.Flight flight) {
+        checkNotNull(flight);
+        return world.flightMissions().byId(flight.getFlightMissionId())
+                .map(mission -> !FlightMissionHelper.isLandedAtWrongAirport(mission))
+                .orElse(true);
+    }
+
+    /**
+     * The pilot cancels the transportation after a landing at a wrong airport: the passengers get off there and go on by themselves (the deboarding is the ordinary one, the
+     * journeys do not reach their city and look for tickets from where they are). Nothing is paid for the flight, see isDelivered.
+     */
+    public void cancelTransportation(final TransportFlights.Flight flight) {
+        checkNotNull(flight);
+        checkArgument(flight.getStatus() == TransportFlights.Status.WaitingForDeboarding);
+        checkArgument(!isDelivered(flight), "the passengers are delivered, there is nothing to cancel");
+
+        log.warn("t/f #{} - the transportation is cancelled by the pilot, the passengers get off at the landing airport", flight.getId());
+        startDeboarding(flight);
     }
 
     /**
@@ -490,6 +515,10 @@ public class TransportFlightControl {
         if (income <= 0) {
             return Optional.empty();
         }
+        if (!isDelivered(transportFlight)) {
+            log.info("t/f #{} - the passengers have not been delivered to the destination, nothing is paid to the operator", transportFlight.getId());
+            return Optional.empty();
+        }
 
         final FlightMissions.Mission mission = world.flightMissions().byId(transportFlight.getFlightMissionId()).orElseThrow();
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
@@ -515,18 +544,32 @@ public class TransportFlightControl {
         }
 
         final TransportFlights.Flight transportFlight = transportFlightO.get();
-        unloadJourneysForcefullyFromActiveFlight(transportFlight);
+        // A cancellation leaves the passengers where they are. The aircraft of a cancelled mission is at its departure airport (a flight which has started is returned there before
+        // this call), where the passengers were too, so they go back to the departure city. The mission which went on after a landing at a wrong airport is the exception: its passengers
+        // are on board at the airport where the aircraft stands, and they stay there.
+        final int stayAtAirportId = mission.isContinuation()
+                ? world.aircrafts().byId(mission.getAircraftId()).map(Aircrafts.Aircraft::getLocationAirportId).orElse(0)
+                : 0;
+        unloadJourneysForcefullyFromActiveFlight(transportFlight, stayAtAirportId);
         transportFlight.setStatus(TransportFlights.Status.Cancelled);
+        if (mission.isContinuation()) {
+            world.personControl().markTransportationCancelledAfterContinuation(mission);
+        }
 
         log.warn("f/m #{}, t/f #{}, PAX {} - flight cancelled, all PAX unloaded", mission.getId(), transportFlight.getId(), transportFlight.getPaxOnBoard());
     }
 
     // Active flight is expectedly transportFlight1Id for all the journeys
     public void unloadJourneysForcefullyFromActiveFlight(TransportFlights.Flight transportFlight) {
+        unloadJourneysForcefullyFromActiveFlight(transportFlight, 0);
+    }
+
+    // The airport is where the journeys stay (0: they go back to the city where they were before the flight)
+    public void unloadJourneysForcefullyFromActiveFlight(TransportFlights.Flight transportFlight, final int locationAirportId) {
         try (final Timing.Timer ignored = Timing.label("TFControl - unloadJourneysForcefully # journeys scan")) {
             world.journeys()
                     .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
-                    .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey));
+                    .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey, locationAirportId));
         }
 
         transportFlight.setPaxOnBoard(0);

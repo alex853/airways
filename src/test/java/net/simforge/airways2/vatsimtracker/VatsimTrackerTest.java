@@ -411,7 +411,7 @@ public class VatsimTrackerTest {
         runWorldMins(10);
 
         assertFlight1Finished(egll, egkk);
-        assertAircraftParkedAtAirportAndIdle(egcc);
+        assertAircraftParkedAtAirportAndIdle(egkk);
     }
 
     @Test

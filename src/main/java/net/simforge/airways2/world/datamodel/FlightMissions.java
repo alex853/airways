@@ -39,7 +39,7 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-3 tracking mode, bit 4 divert declared, bits 5-7 are free
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-3 tracking mode, bit 4 divert declared, bit 5 continuation, bits 6-7 are free
             .withDataField(DataField.of(DataType.Unsigned16bit)) // alternateAirportId: the planned alternate, 0 is none; with the divert bit of flags 2 it holds the airport of the divert instead (docs/diversions-and-alternates.md)
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
@@ -80,6 +80,7 @@ public class FlightMissions {
     private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
     private final BitAccessField.Section trackingModeBitField = flags2Bits.section(2, 2);
     private final BitAccessField.Section divertDeclaredBitField = flags2Bits.section(4, 1);
+    private final BitAccessField.Section continuationBitField = flags2Bits.section(5, 1);
     private final DataField alternateAirportIdField = storage.getDataField(11);
     @SuppressWarnings("unused")
     private final DataField reserved16bitsField2 = storage.getDataField(12);
@@ -315,6 +316,18 @@ public class FlightMissions {
          */
         public boolean isDivertDeclared() {
             return divertDeclaredBitField.getInt(id) != 0;
+        }
+
+        /**
+         * The mission goes on after a landing at a wrong airport: the transport flight of the first mission was moved to it (FlightMissionControl.continueToDestination). When such a
+         * mission is cancelled, the transportation of the first one is cancelled too.
+         */
+        public boolean isContinuation() {
+            return continuationBitField.getInt(id) != 0;
+        }
+
+        public void setContinuation(final boolean continuation) {
+            continuationBitField.setInt(id, continuation ? 1 : 0);
         }
 
         /**

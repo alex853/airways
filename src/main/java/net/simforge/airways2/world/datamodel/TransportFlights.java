@@ -53,7 +53,7 @@ public class TransportFlights {
     private final BitAccessField.Section paxCarriedBitField = paxCheckedInOnBoardFieldBits.section(20, 10);
 
     // Flight mission id to id of its transport flight (the first one if there are several). The records are created only in
-    // create() and deleted only in deleteById(), flightMissionId of a record never changes, so the index is kept in these
+    // create(), deleteById() and relinkToMission() (the only place where flightMissionId of a record changes), so the index is kept in these
     // methods and rebuilt after the loading. It makes byFlightMissionId() O(1) instead of a scan of all the flights.
     private final Map<Integer, Integer> flightIdByMissionId = new ConcurrentHashMap<>();
 
@@ -120,6 +120,19 @@ public class TransportFlights {
 
     public Optional<Flight> byId(final int id) {
         return storage.byId(id);
+    }
+
+    /**
+     * The transport flight goes on in another mission: the passengers who are on board continue the flight with the new mission (the aircraft landed not at the destination and
+     * flies on). The index of the missions is kept.
+     */
+    public void relinkToMission(final Flight flight, final FlightMissions.Mission newMission) {
+        checkNotNull(flight);
+        checkNotNull(newMission);
+        final int oldMissionId = flight.getFlightMissionId();
+        storage.set(flight.getId(), flightMissionIdField, newMission.getId());
+        flightIdByMissionId.remove(oldMissionId, flight.getId());
+        flightIdByMissionId.put(newMission.getId(), flight.getId());
     }
 
     public Optional<Flight> byFlightMissionId(final int flightMissionId) {

@@ -85,6 +85,14 @@ public class FlightMissionHelper {
                 departureTime);
     }
 
+    /**
+     * The aircraft has landed not at the planned destination (a divert, an unplanned landing): the landing airport is known and it is not the destination.
+     */
+    public static boolean isLandedAtWrongAirport(final FlightMissions.Mission mission) {
+        final int landingAirportId = mission.getActualLandingAirportId();
+        return landingAirportId > 0 && landingAirportId != mission.getDestinationAirportId();
+    }
+
     public static boolean isFinishedOrCancelled(FlightMissions.Mission mission) {
         return mission.getStatus() == FlightMissions.Status.Finished
                 || mission.getStatus() == FlightMissions.Status.Cancelled;

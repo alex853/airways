@@ -196,7 +196,24 @@ public class FlightDashboardController {
         if (flight.isAutoFinish()) {
             actions.removeIf(action -> "finish-flight".equals(action.getName()));
         }
+        offerDecisionAfterWrongLanding(world, flight, actions);
         return actions;
+    }
+
+    // The aircraft has landed not at the destination and is at the gate: the passengers do not get off by the ordinary button, the pilot decides what happens to them.
+    // The actions are the same whoever tracks the flight.
+    private static void offerDecisionAfterWrongLanding(final World world, final FlightMissions.Mission flight, final List<SimTracker.UserAction> actions) {
+        if (flight.getStatus() != FlightMissions.Status.Postflight || !FlightMissionHelper.isLandedAtWrongAirport(flight)) {
+            return;
+        }
+        final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
+        if (tf == null || tf.getStatus() != TransportFlights.Status.WaitingForDeboarding) {
+            return;
+        }
+        actions.removeIf(action -> "start-deboarding".equals(action.getName()));
+        actions.add(manualAction("continue-to-destination"));
+        actions.add(new SimTracker.UserAction("continue-later", false, List.of(new SimTracker.CheckResult("It is not available yet", false))));
+        actions.add(manualAction("cancel-transport"));
     }
 
     // The steps which the pilot does with buttons when nothing tracks the flight. There are no checks of the position of the aircraft here,
@@ -863,6 +880,59 @@ public class FlightDashboardController {
         });
     }
 
+    /**
+     * After a landing at a wrong airport: the passengers stay on board and the flight goes on to the destination in a new mission (FlightMissionControl.continueToDestination).
+     */
+    @PostMapping("/continue-to-destination")
+    public StatusDto continueToDestination(@RequestAttribute("userId") int userId,
+                                           @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            log.info("f/m #{} - flight-dashboard - continue-to-destination", flightId);
+            world.flightMissionControl().continueToDestination(flight);
+
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+
+            return getStatus(userId);
+        });
+    }
+
+    /**
+     * After a landing at a wrong airport: the pilot cancels the transportation, the passengers get off there (TransportFlightControl.cancelTransportation).
+     */
+    @PostMapping("/cancel-transport")
+    public StatusDto cancelTransport(@RequestAttribute("userId") int userId,
+                                     @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+            checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
+
+            final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(flightId).orElse(null);
+            checkNotNull(transportFlight, "transport flight is required for cancel-transport");
+
+            log.info("f/m #{} - flight-dashboard - cancel-transport", flightId);
+            world.transportFlightControl().cancelTransportation(transportFlight);
+
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+
+            return getStatus(userId);
+        });
+    }
+
     @PostMapping("/start-deboarding")
     public StatusDto startDeboarding(@RequestAttribute("userId") int userId,
                                       @RequestParam(name = "flightId") String flightIdStr) {
@@ -880,6 +950,7 @@ public class FlightDashboardController {
             checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
             checkArgument(flight.getStatus() == FlightMissions.Status.Postflight, "flight status is not as expected");
             checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "transport flight status is not as expected");
+            checkArgument(!FlightMissionHelper.isLandedAtWrongAirport(flight), "the flight has landed not at the destination: continue to the destination or cancel the transportation");
 
             final boolean simTrackerConnected = simTrackerBean.isUserConnected(userId);
 

@@ -59,6 +59,40 @@ class PilotQualificationsTest {
     }
 
     @Test
+    void theDivertsAndTheCancelledFlightsAreCountedForTheLastThirtyDays() {
+        final PilotLogbook.Entry declared = flight(1, citation, 2 * DAY, 60);
+        declared.setDivertDeclared(true);
+        final PilotLogbook.Entry unplanned = flight(1, citation, 5 * DAY, 60);
+        unplanned.setUnplannedLanding(true);
+        unplanned.setTransportationCancelled(true);
+        final PilotLogbook.Entry declaredCancelled = flight(1, citation, 10 * DAY, 60);
+        declaredCancelled.setDivertDeclared(true);
+        declaredCancelled.setTransportationCancelled(true);
+        flight(1, citation, 20 * DAY, 60);                                       // a normal flight
+        final PilotLogbook.Entry old = flight(1, citation, 40 * DAY, 60);        // outside the 30 days
+        old.setUnplannedLanding(true);
+        old.setTransportationCancelled(true);
+        final PilotLogbook.Entry another = flight(2, citation, 1 * DAY, 60);     // another pilot
+        another.setUnplannedLanding(true);
+
+        final PilotController.LandingStatsDto stats = PilotController.buildQualifications(world, 1, now).getLandingStats();
+
+        assertEquals(30, stats.getWindowDays());
+        assertEquals(2, stats.getDeclaredDiverts());
+        assertEquals(1, stats.getUnplannedDiverts());
+        assertEquals(2, stats.getCancelledFlights());
+    }
+
+    @Test
+    void noFlightsNoDiverts() {
+        final PilotController.LandingStatsDto stats = PilotController.buildQualifications(world, 1, now).getLandingStats();
+
+        assertEquals(0, stats.getDeclaredDiverts());
+        assertEquals(0, stats.getUnplannedDiverts());
+        assertEquals(0, stats.getCancelledFlights());
+    }
+
+    @Test
     void theCurrencyIsCountedForEveryTypeOfTheLogbook() {
         flight(1, gulfstream, 2 * Time.ONE_HOUR, 60);                    // inside the 90 days, day
         final PilotLogbook.Entry night = flight(1, gulfstream, 100 * DAY, 90);   // outside the 90 days, inside the year
