@@ -53,12 +53,38 @@ public class BusyBirdsController {
         });
     }
 
-    @GetMapping("/mission/to-book")
-    public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") int userId) {
+    /**
+     * The cities for the dropdowns of the page (the list of all missions is too big to load): all cities by name. The page preselects the current one.
+     */
+    @GetMapping("/cities")
+    public List<CityDto> getCities(@RequestAttribute("userId") int userId) {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            return world.busyBirdsMissionControl().getMissionsToBook().stream()
+            return world.cities().all()
+                    .map(c -> new CityDto(Id.encode(c.getId()), c.getName()))
+                    .sorted(Comparator.comparing(CityDto::getName))
+                    .toList();
+        });
+    }
+
+    /**
+     * The missions between the given cities; at least one of the cities is required (without any the answer is empty, the list of all missions is too big).
+     */
+    @GetMapping("/mission/to-book")
+    public List<MissionDto> getMissionsToBook(@RequestAttribute("userId") int userId,
+                                              @RequestParam(name = "fromCityId", required = false) String fromCityId,
+                                              @RequestParam(name = "toCityId", required = false) String toCityId) {
+        return worldBean.read(world -> {
+            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
+
+            final int fromId = fromCityId == null || fromCityId.isBlank() ? 0 : Id.decode(fromCityId);
+            final int toId = toCityId == null || toCityId.isBlank() ? 0 : Id.decode(toCityId);
+            if (fromId <= 0 && toId <= 0) {
+                return List.<MissionDto>of();
+            }
+
+            return world.busyBirdsMissionControl().getMissionsToBook(fromId, toId).stream()
                     .map(m -> {
                         Journeys.Journey j = m.getJourney();
 
@@ -379,6 +405,13 @@ public class BusyBirdsController {
         public static DeductionDto from(final PilotPay.Deduction deduction, final PilotPayRates rates) {
             return new DeductionDto(deduction.name(), rates.deductionPercent(deduction));
         }
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class CityDto {
+        private String id;
+        private String name;
     }
 
     @Data

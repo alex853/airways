@@ -122,4 +122,17 @@ class BusyBirdsQuoteTest {
         assertEquals(50_000, control.quote(journey));
         assertEquals(50_000, theMission().getPay());
     }
+
+    @Test
+    void missionsAreFilteredByTheFromAndToCities() {
+        final int fromId = journey.getLocationCityId();
+        final int toId = journey.getToCityId();
+        final int otherId = world.cities().create(world.cities().byId(fromId).orElseThrow().getCountryId(), "Other", 50.0, 8.0, 1000).getId();
+
+        assertEquals(1, control.getMissionsToBook(fromId, 0).size());
+        assertEquals(1, control.getMissionsToBook(0, toId).size());
+        assertEquals(1, control.getMissionsToBook(fromId, toId).size());
+        assertEquals(0, control.getMissionsToBook(otherId, 0).size());
+        assertEquals(0, control.getMissionsToBook(fromId, otherId).size());
+    }
 }

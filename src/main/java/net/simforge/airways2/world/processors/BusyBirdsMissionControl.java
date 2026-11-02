@@ -4,6 +4,7 @@ import net.simforge.airways2.world.computations.FlightTimeline;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
+import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
@@ -39,9 +40,21 @@ public class BusyBirdsMissionControl {
     }
 
     public List<Mission> getMissionsToBook() {
+        return getMissionsToBook(0, 0);
+    }
+
+    /**
+     * The missions to book from the given city and/or to the given city (0 means any). The list of all missions is huge, so the pages ask by cities.
+     */
+    public List<Mission> getMissionsToBook(final int fromCityId, final int toCityId) {
+        final Storage.Condition<Journeys.Journey> lookingForTickets = world.journeys().byStatus(Journeys.Status.LookingForTickets);
+        final Storage.Condition<Journeys.Journey> condition = fromCityId > 0
+                ? Storage.Condition.and(lookingForTickets, world.journeys().byLocationCityIdIn(List.of(fromCityId)))
+                : lookingForTickets;
         List<Journeys.Journey> allJourneys = world.journeys()
-                .filter(world.journeys().byStatus(Journeys.Status.LookingForTickets))
+                .filter(condition)
                 .filter(j -> j.getLocationCityId() > 0) // journey located nowhere is not able to be booked
+                .filter(j -> toCityId <= 0 || j.getToCityId() == toCityId)
                 .filter(j -> j.getPreferredCabinService() == CabinLayout.Service.F
                         || j.getPreferredCabinService() == CabinLayout.Service.J)
                 .toList();
