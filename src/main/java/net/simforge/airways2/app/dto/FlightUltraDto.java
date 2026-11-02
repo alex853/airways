@@ -64,6 +64,8 @@ public class FlightUltraDto {
     private final String debEnd;
     // the flight is finished by itself at its end (the setting of the pilot); only true is sent
     private final Boolean autoFinish;
+    // the alternate airport chosen for the flight (ICAO), null if none
+    private final String alt;
 
     public static FlightUltraDto from(
             World world,
@@ -121,7 +123,9 @@ public class FlightUltraDto {
                 tf != null ? TimeTools.hhmmPlusDaysOrNull(TransportFlightHelper.calcCheckinEndTime(fm)) : null,
                 tf != null && tf.getStatus() == TransportFlights.Status.Deboarding ? TimeTools.hhmmPlusDaysOrNull(world.paxManager().deboarding(tf).getEstimatedFinishTime()) : null,
 
-                fm.isAutoFinish() ? Boolean.TRUE : null
+                fm.isAutoFinish() ? Boolean.TRUE : null,
+
+                world.airports().getIcao(fm.getAlternateAirportId()).orElse(null)
         );
     }
 

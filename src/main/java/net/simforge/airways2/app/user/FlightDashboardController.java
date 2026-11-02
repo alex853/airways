@@ -568,6 +568,50 @@ public class FlightDashboardController {
         });
     }
 
+    /**
+     * The airports which the pilot may choose as the alternate of the flight: the nearest ones to the destination with the distances, and the chosen one (null if none).
+     */
+    @GetMapping("/alternates")
+    public AlternatesDto getAlternates(@RequestAttribute("userId") int userId,
+                                       @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.read(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final List<AlternateDto> candidates = world.flightMissionControl().alternateCandidates(flight).stream()
+                    .map(c -> new AlternateDto(c.airport().getIcao(), c.airport().getName(), Math.round(c.distanceNm())))
+                    .toList();
+            return new AlternatesDto(world.airports().getIcao(flight.getAlternateAirportId()).orElse(null), candidates);
+        });
+    }
+
+    /**
+     * Sets the alternate of the flight, an empty icao clears it. Before blocks off only, see FlightMissionControl.setAlternate.
+     */
+    @PostMapping("/alternate")
+    public StatusDto setAlternate(@RequestAttribute("userId") int userId,
+                                  @RequestParam(name = "flightId") String flightIdStr,
+                                  @RequestParam(name = "icao", required = false) String icao) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+
+            final Airports.Airport alternate = icao == null || icao.isBlank() ? null
+                    : world.airports().byIcao(icao.trim().toUpperCase()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown airport '" + icao + "'"));
+
+            log.info("f/m #{} - flight-dashboard - alternate {}", flightId, alternate != null ? alternate.getIcao() : "cleared");
+            world.flightMissionControl().setAlternate(flight, alternate);
+
+            return getStatus(userId);
+        });
+    }
+
     @PostMapping("/start-boarding")
     public StatusDto startBoarding(@RequestAttribute("userId") int userId,
                                     @RequestParam(name = "flightId") String flightIdStr) {
@@ -961,6 +1005,23 @@ public class FlightDashboardController {
             case Deboarding -> "on-board";
             default -> null;
         };
+    }
+
+    // An airport the pilot may choose as the alternate: its code, name and the distance to the destination of the flight in nautical miles
+    @Data
+    @AllArgsConstructor
+    public static class AlternateDto {
+        private final String icao;
+        private final String name;
+        private final long distanceNm;
+    }
+
+    // The candidates for the alternate of a flight and the chosen one (null if none)
+    @Data
+    @AllArgsConstructor
+    public static class AlternatesDto {
+        private final String chosen;
+        private final List<AlternateDto> candidates;
     }
 
     // The pay of a flight for the pilot and its parts

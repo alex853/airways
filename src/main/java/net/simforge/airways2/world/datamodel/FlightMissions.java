@@ -40,8 +40,9 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // alternateAirportId: the planned alternate, 0 is none (docs/diversions-and-alternates.md, the field is going to hold the chosen one on a divert)
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             .withDataField(DataField.of(DataType.Float16bit)) // nightMinutes, half float: the night time from blocks off to blocks on, measured by the sim tracker, see getNightMinutes
             // ---------------------------------------------------------------------------------------------------------
             .withDataField(DataField.of(DataType.Unsigned16bit)) // userId
@@ -78,12 +79,13 @@ public class FlightMissions {
     private final BitAccessField.Section nightTakeoffBitField = flags2Bits.section(0, 1);
     private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
     private final BitAccessField.Section trackingModeBitField = flags2Bits.section(2, 2);
+    private final DataField alternateAirportIdField = storage.getDataField(11);
     @SuppressWarnings("unused")
-    private final DataField reserved24bitsField3 = storage.getDataField(11);
+    private final DataField reserved16bitsField2 = storage.getDataField(12);
     @SuppressWarnings("unused")
-    private final DataField reserved24bitsField4 = storage.getDataField(12);
-    private final DataField nightMinutesField = storage.getDataField(13);
-    private final DataField userIdField = storage.getDataField(14);
+    private final DataField reserved16bitsField3 = storage.getDataField(13);
+    private final DataField nightMinutesField = storage.getDataField(14);
+    private final DataField userIdField = storage.getDataField(15);
 
 
     public FlightMissions() {
@@ -293,6 +295,17 @@ public class FlightMissions {
 
         public void setActualLandingAirportId(final int actualLandingAirportId) {
             storage.set(id, actualLandingAirportIdField, actualLandingAirportId);
+        }
+
+        /**
+         * The alternate airport of the flight, 0 when there is none (and for the old records).
+         */
+        public int getAlternateAirportId() {
+            return storage.getAsInt(id, alternateAirportIdField);
+        }
+
+        public void setAlternateAirportId(final int alternateAirportId) {
+            storage.set(id, alternateAirportIdField, alternateAirportId);
         }
 
         public int getPlannedDepartureWorldTime() {

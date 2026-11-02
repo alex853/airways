@@ -24,6 +24,7 @@
 - [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано
 - [clients-and-flight-modes.md](clients-and-flight-modes.md) — клиенты (веб, G7 FlightBag), режимы флайт-дашборда (manual, SimTracker, VATSIM), BusyBirds и ShadowJet, стартовый экран (описание и планы)
 - [use-cases.md](use-cases.md) — основные юзкейсы, которые обязана поддерживать система (BusyBirds через G7 автоматически; через веб, ручной режим и варианты), список изменений и оценка
+- [diversions-and-alternates.md](diversions-and-alternates.md) — посадка вне планового аэропорта: принцип «довезти до точки назначения рейса», альтернейты и кнопка Divert, решение на блокс-оне, оплата и статистика (решения 2026-11-01, не реализовано)
 - [flight-contracts.md](flight-contracts.md) — идея: два договора (перевозка = Journey с ценой, найм = PilotContract на рейс), оплата пилота по квалификации, счета и операции (не реализовано)
 - [time-storage-review.md](time-storage-review.md) — ревью: как в дата-модели хранятся времена, даты и длительности (форматы, наблюдения, предложения)
 

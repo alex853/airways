@@ -7,6 +7,7 @@ import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.computations.DayNight;
 import net.simforge.airways2.world.computations.NightTimeMeter;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,6 +87,51 @@ public class FlightMissionControl {
      * Who does the steps of the flight (blocks off, takeoff, landing, blocks on). It is set when the flight is started and is not changed after that.
      * A manual flight reduces the pay of the pilot: the manual bit is set in the pilot contract of the flight, if it has one.
      */
+    /**
+     * How many airports the pilot is offered as the alternate (the nearest ones to the destination).
+     */
+    public static final int ALTERNATE_CANDIDATES_COUNT = 10;
+
+    /**
+     * An airport which can be the alternate of a flight, with the distance to the destination.
+     */
+    public record AlternateCandidate(Airports.Airport airport, double distanceNm) {
+    }
+
+    /**
+     * The airports which can be the alternate of the flight: the nearest ones to its destination, nearest first. The destination and the departure airport are not among them
+     * (the way back to the departure is a choice of the divert itself, see docs/diversions-and-alternates.md), and neither are the airports which are excluded from the world.
+     * There is no limit for the distance: the alternate is legal because it is in this list.
+     */
+    public List<AlternateCandidate> alternateCandidates(final FlightMissions.Mission mission) {
+        final Airports.Airport destination = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        final int departureId = mission.getDepartureAirportId();
+        return world.airports().all()
+                .filter(airport -> airport.getId() != destination.getId() && airport.getId() != departureId && !airport.isExcluded())
+                .map(airport -> new AlternateCandidate(airport, Geo.distance(destination.getCoords(), airport.getCoords())))
+                .sorted(Comparator.comparingDouble(AlternateCandidate::distanceNm))
+                .limit(ALTERNATE_CANDIDATES_COUNT)
+                .toList();
+    }
+
+    /**
+     * Sets the alternate of the flight (null clears it). It is chosen before blocks off only (the flight is Dispatched or in Preflight) and it is one of the
+     * nearest airports to the destination (alternateCandidates).
+     */
+    public void setAlternate(final FlightMissions.Mission mission, final Airports.Airport alternate) {
+        checkArgument(mission.getStatus() == FlightMissions.Status.Dispatched || mission.getStatus() == FlightMissions.Status.Preflight,
+                "alternate - it can be set before blocks off only, the flight is %s", mission.getStatus());
+        if (alternate == null) {
+            mission.setAlternateAirportId(0);
+            log.info("f/m #{} - alternate cleared", mission.getId());
+            return;
+        }
+        checkArgument(alternateCandidates(mission).stream().anyMatch(candidate -> candidate.airport().getId() == alternate.getId()),
+                "alternate - %s is not one of the nearest airports to the destination", alternate.getIcao());
+        mission.setAlternateAirportId(alternate.getId());
+        log.info("f/m #{} - alternate {}", mission.getId(), alternate.getIcao());
+    }
+
     public void setTrackingMode(final FlightMissions.Mission mission, final FlightMissions.TrackingMode trackingMode) {
         mission.setTrackingMode(trackingMode);
         log.info("f/m #{} - tracking mode {}", mission.getId(), trackingMode);
