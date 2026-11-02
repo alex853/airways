@@ -39,8 +39,8 @@ public class FlightMissions {
             .withDataField(DataField.of(DataType.Unsigned24bit)) // actualLandingTime + actualArrivalTime
             .withDataField(DataField.of(DataType.Unsigned16bit)) // actualLandingAirportId
             // ---------------------------------------------------------------------------------------------------------
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-7 are free
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // alternateAirportId: the planned alternate, 0 is none (docs/diversions-and-alternates.md, the field is going to hold the chosen one on a divert)
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // flags 2: bit 0 night takeoff, bit 1 night landing, bits 2-3 tracking mode, bit 4 divert declared, bits 5-7 are free
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // alternateAirportId: the planned alternate, 0 is none; with the divert bit of flags 2 it holds the airport of the divert instead (docs/diversions-and-alternates.md)
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             .withDataField(DataField.of(DataType.Unsigned16bit)) // reserved
             .withDataField(DataField.of(DataType.Float16bit)) // nightMinutes, half float: the night time from blocks off to blocks on, measured by the sim tracker, see getNightMinutes
@@ -79,6 +79,7 @@ public class FlightMissions {
     private final BitAccessField.Section nightTakeoffBitField = flags2Bits.section(0, 1);
     private final BitAccessField.Section nightLandingBitField = flags2Bits.section(1, 1);
     private final BitAccessField.Section trackingModeBitField = flags2Bits.section(2, 2);
+    private final BitAccessField.Section divertDeclaredBitField = flags2Bits.section(4, 1);
     private final DataField alternateAirportIdField = storage.getDataField(11);
     @SuppressWarnings("unused")
     private final DataField reserved16bitsField2 = storage.getDataField(12);
@@ -298,14 +299,44 @@ public class FlightMissions {
         }
 
         /**
-         * The alternate airport of the flight, 0 when there is none (and for the old records).
+         * The alternate airport of the flight, 0 when there is none (and for the old records, and when a divert is declared: the same field holds the divert then).
          */
         public int getAlternateAirportId() {
-            return storage.getAsInt(id, alternateAirportIdField);
+            return isDivertDeclared() ? 0 : storage.getAsInt(id, alternateAirportIdField);
         }
 
         public void setAlternateAirportId(final int alternateAirportId) {
             storage.set(id, alternateAirportIdField, alternateAirportId);
+            divertDeclaredBitField.setInt(id, 0);
+        }
+
+        /**
+         * A divert is declared in the flight: the pilot has chosen an airport to land at instead of the destination (the planned alternate is lost).
+         */
+        public boolean isDivertDeclared() {
+            return divertDeclaredBitField.getInt(id) != 0;
+        }
+
+        /**
+         * The airport of the declared divert, 0 when there is none.
+         */
+        public int getDivertAirportId() {
+            return isDivertDeclared() ? storage.getAsInt(id, alternateAirportIdField) : 0;
+        }
+
+        /**
+         * Declares the divert to the airport (the planned alternate is overwritten), or takes it back with 0 (the field is cleared, otherwise it would read as the planned alternate).
+         */
+        public void setDivertAirportId(final int divertAirportId) {
+            storage.set(id, alternateAirportIdField, divertAirportId);
+            divertDeclaredBitField.setInt(id, divertAirportId > 0 ? 1 : 0);
+        }
+
+        /**
+         * The airport the flight is going to land at: the declared divert or the destination.
+         */
+        public int getTargetAirportId() {
+            return isDivertDeclared() ? getDivertAirportId() : getDestinationAirportId();
         }
 
         public int getPlannedDepartureWorldTime() {
@@ -466,13 +497,15 @@ public class FlightMissions {
     }
 
     public enum CoordinatesSource {
-        AutomaticSimpleFlight, TrackedViaTracker, FlyHeadingMode;
+        // FlyToTarget: the aircraft of a manual flight of a pilot flies step by step to the target airport (the destination or the divert) from where it is
+        AutomaticSimpleFlight, TrackedViaTracker, FlyHeadingMode, FlyToTarget;
 
         public static CoordinatesSource byCode(int code) {
             return switch (code) {
                 case 0 -> AutomaticSimpleFlight;
                 case 1 -> TrackedViaTracker;
                 case 2 -> FlyHeadingMode;
+                case 3 -> FlyToTarget;
                 default -> throw new IllegalArgumentException("Invalid coordinates source code: " + code);
             };
         }

@@ -148,4 +148,41 @@ public class FlightMissionHelper {
         final int minDuration = (int) Math.round(plannedFlyingTime * 0.75);
         return flight.getActualTakeoffWorldTime() + minDuration;
     }
+
+    /**
+     * The earliest time of a manual landing of a flight in the world. A flight with a declared divert is not held by the plan: it can land when its aircraft is over the airport
+     * of the divert, that is after the time the aircraft needs to fly there from where it is now. The other flights see the one-argument method.
+     */
+    public static int calcEarliestAllowedLandingTime(final World world, final FlightMissions.Mission flight) {
+        if (!flight.isDivertDeclared()) {
+            return calcEarliestAllowedLandingTime(flight);
+        }
+        return world.getWorldTime() + calcSecondsToTarget(world, flight);
+    }
+
+    /**
+     * The ground speed in knots of the aircraft which flies to its target airport step by step (CoordinatesSource.FlyToTarget): the average speed of the simple flight of the
+     * planned route, so the aircraft is over the destination about the planned landing time.
+     */
+    public static double calcFlyToTargetSpeedKts(final World world, final FlightMissions.Mission flight) {
+        final Airports.Airport from = world.airports().byId(flight.getDepartureAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
+        final AircraftTypes.AircraftType aircraftType = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow();
+        final AircraftPerformanceData performanceData = AircraftPerformanceData.getData(aircraftType.getIcao());
+
+        final SimpleFlight simpleFlight = SimpleFlight.forRoute(from.getCoords(), to.getCoords(), performanceData);
+        final double hours = simpleFlight.getTotalTime().toSeconds() / 3600.0;
+        return hours > 0 ? simpleFlight.getTotalDistance() / hours : performanceData.getTypicalCruiseSpeed();
+    }
+
+    /**
+     * How many seconds the aircraft needs to fly from where it is to the target airport of the flight (the destination or the divert) at the speed of calcFlyToTargetSpeedKts.
+     */
+    public static int calcSecondsToTarget(final World world, final FlightMissions.Mission flight) {
+        final Airports.Airport target = world.airports().byId(flight.getTargetAirportId()).orElseThrow();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
+        final double distanceNm = Geo.distance(aircraft.getLocationCoords(), target.getCoords());
+        return (int) Math.ceil(distanceNm / calcFlyToTargetSpeedKts(world, flight) * 3600.0);
+    }
 }

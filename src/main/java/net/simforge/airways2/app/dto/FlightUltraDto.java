@@ -66,6 +66,8 @@ public class FlightUltraDto {
     private final Boolean autoFinish;
     // the alternate airport chosen for the flight (ICAO), null if none
     private final String alt;
+    // the airport of the declared divert (ICAO), null if none; the planned alternate (alt) is lost then
+    private final String div;
 
     public static FlightUltraDto from(
             World world,
@@ -125,7 +127,8 @@ public class FlightUltraDto {
 
                 fm.isAutoFinish() ? Boolean.TRUE : null,
 
-                world.airports().getIcao(fm.getAlternateAirportId()).orElse(null)
+                world.airports().getIcao(fm.getAlternateAirportId()).orElse(null),
+                world.airports().getIcao(fm.getDivertAirportId()).orElse(null)
         );
     }
 

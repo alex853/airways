@@ -84,10 +84,6 @@ public class FlightMissionControl {
     }
 
     /**
-     * Who does the steps of the flight (blocks off, takeoff, landing, blocks on). It is set when the flight is started and is not changed after that.
-     * A manual flight reduces the pay of the pilot: the manual bit is set in the pilot contract of the flight, if it has one.
-     */
-    /**
      * How many airports the pilot is offered as the alternate (the nearest ones to the destination).
      */
     public static final int ALTERNATE_CANDIDATES_COUNT = 10;
@@ -132,11 +128,20 @@ public class FlightMissionControl {
         log.info("f/m #{} - alternate {}", mission.getId(), alternate.getIcao());
     }
 
+    /**
+     * Who does the steps of the flight (blocks off, takeoff, landing, blocks on). It is set when the flight is started and is not changed after that.
+     * A manual flight reduces the pay of the pilot: the manual bit is set in the pilot contract of the flight, if it has one. The aircraft of a manual flight flies to its target
+     * airport step by step (CoordinatesSource.FlyToTarget).
+     */
     public void setTrackingMode(final FlightMissions.Mission mission, final FlightMissions.TrackingMode trackingMode) {
         mission.setTrackingMode(trackingMode);
         log.info("f/m #{} - tracking mode {}", mission.getId(), trackingMode);
 
         if (trackingMode == FlightMissions.TrackingMode.Manual) {
+            if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
+                mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyToTarget);
+                log.info("f/m #{} - coordinates source {}", mission.getId(), FlightMissions.CoordinatesSource.FlyToTarget);
+            }
             world.pilotContracts().byFlightMissionId(mission.getId()).ifPresent(contract -> {
                 final PilotPayParams params = contract.getPayParams();
                 params.setManual(true);
@@ -144,6 +149,79 @@ public class FlightMissionControl {
                 log.info("f/m #{} - pilot contract #{}: manual flight, params {}", mission.getId(), contract.getId(), params);
             });
         }
+    }
+
+    /**
+     * How many airports besides the departure and the declared alternate the pilot is offered for a divert (the nearest ones to the aircraft).
+     */
+    public static final int DIVERT_NEAREST_COUNT = 5;
+
+    public enum DivertKind {
+        Departure, DeclaredAlternate, CloseOption
+    }
+
+    /**
+     * An airport which the pilot may divert to, with the distance from the aircraft and why it is offered.
+     */
+    public record DivertCandidate(Airports.Airport airport, double distanceNm, DivertKind kind) {
+    }
+
+    /**
+     * The airports which the pilot may divert to, the nearest to the aircraft first: the departure airport, the declared alternate and the nearest airports to the aircraft
+     * (the destination is not among them, and neither are the excluded airports). This list is legal by construction, there are no other checks (docs/diversions-and-alternates.md).
+     */
+    public List<DivertCandidate> divertCandidates(final FlightMissions.Mission mission) {
+        final Geo.Coords position = world.aircrafts().byId(mission.getAircraftId()).orElseThrow().getLocationCoords();
+        final int destinationId = mission.getDestinationAirportId();
+
+        final Map<Integer, DivertCandidate> byAirportId = new LinkedHashMap<>();
+        world.airports().all()
+                .filter(airport -> airport.getId() != destinationId && !airport.isExcluded())
+                .map(airport -> new DivertCandidate(airport, Geo.distance(position, airport.getCoords()), DivertKind.CloseOption))
+                .sorted(Comparator.comparingDouble(DivertCandidate::distanceNm))
+                .limit(DIVERT_NEAREST_COUNT)
+                .forEach(candidate -> byAirportId.put(candidate.airport().getId(), candidate));
+
+        addDivertCandidate(byAirportId, mission.getDepartureAirportId(), DivertKind.Departure, position);
+        addDivertCandidate(byAirportId, mission.getAlternateAirportId(), DivertKind.DeclaredAlternate, position);
+
+        return byAirportId.values().stream()
+                .sorted(Comparator.comparingDouble(DivertCandidate::distanceNm))
+                .toList();
+    }
+
+    // the departure and the declared alternate are offered whatever the distance is; when one of them is among the nearest airports it keeps its own kind
+    private void addDivertCandidate(final Map<Integer, DivertCandidate> byAirportId, final int airportId, final DivertKind kind, final Geo.Coords position) {
+        if (airportId <= 0) {
+            return;
+        }
+        world.airports().byId(airportId).ifPresent(airport ->
+                byAirportId.put(airportId, new DivertCandidate(airport, Geo.distance(position, airport.getCoords()), kind)));
+    }
+
+    /**
+     * The pilot declares a divert in flight: the flight is going to land at the airport instead of the destination (null takes the divert back). The planned alternate is lost.
+     * The aircraft of a flight which moves by the world flies to the new target from where it is.
+     */
+    public void divert(final FlightMissions.Mission mission, final Airports.Airport airport) {
+        checkArgument(mission.getStatus() == FlightMissions.Status.Flying, "divert - it is possible in flight only, the flight is %s", mission.getStatus());
+        if (airport == null) {
+            if (mission.isDivertDeclared()) {
+                mission.setDivertAirportId(0);
+                log.info("f/m #{} - divert cleared", mission.getId());
+            }
+            return;
+        }
+        checkArgument(divertCandidates(mission).stream().anyMatch(candidate -> candidate.airport().getId() == airport.getId()),
+                "divert - %s is not offered for the divert", airport.getIcao());
+
+        if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
+            // a flight which started before the manual flights moved to the target: its route is the simple flight to the destination, it can not go anywhere else
+            mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyToTarget);
+            log.info("f/m #{} - coordinates source {}", mission.getId(), FlightMissions.CoordinatesSource.FlyToTarget);
+        }
+        mission.setDivertAirportId(airport.getId());
+        log.info("f/m #{} - divert {}", mission.getId(), airport.getIcao());
     }
 
     public void switchToExternalCoordinatesMode(FlightMissions.Mission mission) {

@@ -276,7 +276,7 @@ public class FlightDashboardController {
 
     // A manual landing is allowed not earlier than a part of the planned duration after takeoff, the same rule as the one of the endpoint.
     private static SimTracker.UserAction manualLandingAction(final World world, final FlightMissions.Mission flight) {
-        final int earliest = FlightMissionHelper.calcEarliestAllowedLandingTime(flight);
+        final int earliest = FlightMissionHelper.calcEarliestAllowedLandingTime(world, flight);
         final boolean allowed = earliest <= world.getWorldTime();
         return new SimTracker.UserAction("landing", allowed,
                 List.of(new SimTracker.CheckResult("Landing is not allowed earlier than " + TimeTools.hhmmOrNull(earliest), allowed)));
@@ -612,6 +612,51 @@ public class FlightDashboardController {
         });
     }
 
+    /**
+     * The airports which the pilot may divert to from the position of the aircraft: the departure, the declared alternate and the nearest ones, the nearest first; and the airport
+     * of the divert which is already declared (null if none).
+     */
+    @GetMapping("/divert-candidates")
+    public DivertCandidatesDto getDivertCandidates(@RequestAttribute("userId") int userId,
+                                                   @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.read(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            final List<DivertCandidateDto> candidates = world.flightMissionControl().divertCandidates(flight).stream()
+                    .map(c -> new DivertCandidateDto(c.airport().getIcao(), c.airport().getName(), Math.round(c.distanceNm()), c.kind().name()))
+                    .toList();
+            return new DivertCandidatesDto(world.airports().getIcao(flight.getDivertAirportId()).orElse(null), candidates);
+        });
+    }
+
+    /**
+     * Declares the divert of the flight in flight, an empty icao takes it back. Only the airports of divert-candidates are accepted.
+     */
+    @PostMapping("/divert")
+    public StatusDto divert(@RequestAttribute("userId") int userId,
+                            @RequestParam(name = "flightId") String flightIdStr,
+                            @RequestParam(name = "icao", required = false) String icao) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+
+            final Airports.Airport airport = icao == null || icao.isBlank() ? null
+                    : world.airports().byIcao(icao.trim().toUpperCase()).orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "unknown airport " + icao));
+
+            log.info("f/m #{} - flight-dashboard - divert {}", flightId, airport != null ? airport.getIcao() : "cleared");
+            world.flightMissionControl().divert(flight, airport);
+
+            return getStatus(userId);
+        });
+    }
+
     @PostMapping("/start-boarding")
     public StatusDto startBoarding(@RequestAttribute("userId") int userId,
                                     @RequestParam(name = "flightId") String flightIdStr) {
@@ -776,12 +821,13 @@ public class FlightDashboardController {
                 // todo ak2 vatsim support
             }
 
-            final int earliestLanding = FlightMissionHelper.calcEarliestAllowedLandingTime(flight);
+            final int earliestLanding = FlightMissionHelper.calcEarliestAllowedLandingTime(world, flight);
             if (world.getWorldTime() < earliestLanding) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Manual landing is not allowed earlier than " + TimeTools.hhmmOrNull(earliestLanding));
             }
             log.info("f/m #{} - flight-dashboard - landing", flightId);
-            final Airports.Airport landingAirport = world.airports().byId(flight.getDestinationAirportId()).orElseThrow();
+            // the divert, if the pilot has declared one, otherwise the destination
+            final Airports.Airport landingAirport = world.airports().byId(flight.getTargetAirportId()).orElseThrow();
             world.flightMissionControl().landing(flight, landingAirport); // t/f update is inside
 
             return getStatus(userId);
@@ -956,7 +1002,7 @@ public class FlightDashboardController {
             case Dispatched -> FlightMissions.Status.Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(world, flight));
             case Preflight -> FlightMissions.Status.Departure.name() + " when Captain decides";
             case Departure -> FlightMissions.Status.Flying.name() + " when Captain decides";
-            case Flying -> FlightMissions.Status.Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(flight));
+            case Flying -> FlightMissions.Status.Arrival.name() + " not earlier than " + TimeTools.hhmmOrNull(FlightMissionHelper.calcEarliestAllowedLandingTime(world, flight));
             case Arrival -> FlightMissions.Status.Postflight.name() + " just after Blocks On";
             case Postflight -> FlightMissions.Status.Finished.name() + " after Deboarding";
             default -> null;
@@ -969,7 +1015,7 @@ public class FlightDashboardController {
             case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(world, flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
             case Preflight -> (transportFlight == null || transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture) ? "blocks-off" : "blocks-off-disabled";
             case Departure -> "takeoff";
-            case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(flight) <= world.getWorldTime()) ? "landing" : "landing-disabled";
+            case Flying -> (FlightMissionHelper.calcEarliestAllowedLandingTime(world, flight) <= world.getWorldTime()) ? "landing" : "landing-disabled";
             case Arrival -> "blocks-on";
             case Postflight -> (transportFlight == null || transportFlight.getStatus() == TransportFlights.Status.Finished) ? "finish" : "finish-disabled";
             default -> null;
@@ -1014,6 +1060,24 @@ public class FlightDashboardController {
         private final String icao;
         private final String name;
         private final long distanceNm;
+    }
+
+    // An airport the pilot may divert to: its code, name, the distance from the aircraft in nautical miles and the kind (Departure, DeclaredAlternate or CloseOption)
+    @Data
+    @AllArgsConstructor
+    public static class DivertCandidateDto {
+        private final String icao;
+        private final String name;
+        private final long distanceNm;
+        private final String kind;
+    }
+
+    // The candidates for the divert of a flight and the declared one (null if none)
+    @Data
+    @AllArgsConstructor
+    public static class DivertCandidatesDto {
+        private final String chosen;
+        private final List<DivertCandidateDto> candidates;
     }
 
     // The candidates for the alternate of a flight and the chosen one (null if none)

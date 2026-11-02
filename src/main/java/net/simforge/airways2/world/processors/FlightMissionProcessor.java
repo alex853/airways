@@ -64,6 +64,8 @@ public class FlightMissionProcessor {
                     flySimpleFlight(world, worldTime, mission);
                 } else if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.FlyHeadingMode) {
                     flyHeadingMode(world, worldTime, mission);
+                } else if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.FlyToTarget) {
+                    flyToTarget(world, worldTime, mission);
                 }
             }
             case Arrival -> {
@@ -149,6 +151,27 @@ public class FlightMissionProcessor {
                 // the simple flight is over, the pilot has not pressed Landing yet: the aircraft is over the destination airport and the night time goes on
                 world.flightMissionControl().countNightTime(mission, toAirport.getLatitude(), toAirport.getLongitude());
             }
+        }
+    }
+
+    // The aircraft of a manual flight of a pilot flies from where it is to the target airport (the destination or the declared divert) in a straight line, a step per tick at the
+    // average speed of the planned route. Over the airport it stays and waits for the pilot to land.
+    private static void flyToTarget(final World world, final int worldTime, final FlightMissions.Mission mission) {
+        final Airports.Airport target = world.airports().byId(mission.getTargetAirportId()).orElseThrow();
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+
+        final double timeHrs = Duration.between(Time.toLdt(aircraft.getLastUpdated()), Time.toLdt(worldTime)).getSeconds() / 3600.0;
+        final double stepNm = FlightMissionHelper.calcFlyToTargetSpeedKts(world, mission) * Math.max(timeHrs, 0);
+
+        final Geo.Coords position = aircraft.getLocationCoords();
+        final double distanceNm = Geo.distance(position, target.getCoords());
+        final int heading = (int) Geo.bearing(position, target.getCoords());
+
+        if (stepNm >= distanceNm) {
+            world.flightMissionControl().moveAircraft(mission, target.getLatitude(), target.getLongitude(), heading, aircraft.getLocationAltitude());
+        } else {
+            final Geo.Coords next = Geo.destination(position, heading, stepNm);
+            world.flightMissionControl().moveAircraft(mission, next.getLat(), next.getLon(), heading, aircraft.getLocationAltitude());
         }
     }
 
