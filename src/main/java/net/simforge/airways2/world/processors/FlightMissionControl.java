@@ -139,10 +139,7 @@ public class FlightMissionControl {
         log.info("f/m #{} - tracking mode {}", mission.getId(), trackingMode);
 
         if (trackingMode == FlightMissions.TrackingMode.Manual) {
-            if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
-                mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyToTarget);
-                log.info("f/m #{} - coordinates source {}", mission.getId(), FlightMissions.CoordinatesSource.FlyToTarget);
-            }
+            switchToFlyToTarget(mission);
             world.pilotContracts().byFlightMissionId(mission.getId()).ifPresent(contract -> {
                 final PilotPayParams params = contract.getPayParams();
                 params.setManual(true);
@@ -216,13 +213,17 @@ public class FlightMissionControl {
         checkArgument(divertCandidates(mission).stream().anyMatch(candidate -> candidate.airport().getId() == airport.getId()),
                 "divert - %s is not offered for the divert", airport.getIcao());
 
+        // a flight which started before the manual flights moved to the target: its route is the simple flight to the destination, it can not go anywhere else
+        switchToFlyToTarget(mission);
+        mission.setDivertAirportId(airport.getId());
+        log.info("f/m #{} - divert {}", mission.getId(), airport.getIcao());
+    }
+
+    private void switchToFlyToTarget(final FlightMissions.Mission mission) {
         if (mission.getCoordinatesSource() == FlightMissions.CoordinatesSource.AutomaticSimpleFlight) {
-            // a flight which started before the manual flights moved to the target: its route is the simple flight to the destination, it can not go anywhere else
             mission.setCoordinatesSource(FlightMissions.CoordinatesSource.FlyToTarget);
             log.info("f/m #{} - coordinates source {}", mission.getId(), FlightMissions.CoordinatesSource.FlyToTarget);
         }
-        mission.setDivertAirportId(airport.getId());
-        log.info("f/m #{} - divert {}", mission.getId(), airport.getIcao());
     }
 
     // The flight which goes on after a landing at a wrong airport departs this time after the decision of the pilot (the time of the plan, the pilot does not have to wait for it)
