@@ -151,9 +151,23 @@ public class BusyBirdsMissionControl {
         return contract;
     }
 
+    // The base flight pay for the actual time of the flight, blocks off to blocks on (the same time as in the logbook, PersonControl.writeLogbook), at the rates of the operator and the type.
+    // If the times are not valid (they are not set, or the flight is longer than the logbook takes) the planned pay of the contract is kept, the pilot is not left without it.
+    private int actualBaseFlightPay(final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final PilotContracts.Contract contract) {
+        final int blocksOff = mission.getActualDepartureWorldTime();
+        final int blocksOn = mission.getActualArrivalWorldTime();
+        if (blocksOff < Time.START_TIME_EPOCH_SECONDS || blocksOn < blocksOff || blocksOn - blocksOff > 1530 * Time.ONE_MINUTE) {
+            log.warn("f/m #{} - the blocks off {} and the blocks on {} are not valid, the flight is paid by the planned time", mission.getId(), blocksOff, blocksOn);
+            return contract.getBaseFlightPay();
+        }
+        final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        return OperatorPay.baseFlightPay(aircraft.getAircraftOperatorId(), aircraftTypeIcao, blocksOn - blocksOff);
+    }
+
     /**
      * The pilot of a finished flight of BusyBirds or of ShadowJet (the rates of each, OperatorPay) gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
-     * the base numbers and the parameters of the contract. The operator pays the pilot by two transfers from its account to the account of the person: the
+     * the base numbers and the parameters of the contract. The flight pay is by the actual time from blocks off to blocks on, not by the planned one of the contract
+     * (decided 2026-11-02, every pay is by the actual time). The operator pays the pilot by two transfers from its account to the account of the person: the
      * flight pay and the income share (if an account does not exist, nothing moves, see BankControl.transferIfAccountsExist). It is written to the log too.
      * <p>
      * A flight without a contract (a free ferry flight, a flight booked before the contracts, a manual dispatch) pays nothing.
@@ -171,7 +185,11 @@ public class BusyBirdsMissionControl {
         if (contract.isPresent()) {
             // the income share is by the income of the transport flight of the mission: what the journeys really paid who boarded (TransportFlightExtras)
             final int income = world.transportFlightControl().getIncomeOfMission(mission);
-            final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(contract.get(), rates.get()), PilotPay.incomeShare(income, contract.get(), rates.get()));
+            // the flight pay is by the actual time from blocks off to blocks on, the base pay of the contract is only the estimate of the booking (by the planned time)
+            final int baseFlightPay = actualBaseFlightPay(mission, aircraft, contract.get());
+            final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(baseFlightPay, contract.get().getPayParams(), rates.get()),
+                    PilotPay.incomeShare(income, contract.get(), rates.get()));
+            log.info("p/s #{}, f/m #{} - the base flight pay is {} for the actual time (planned {} in the contract)", contract.get().getPersonId(), mission.getId(), baseFlightPay, contract.get().getBaseFlightPay());
             log.info("p/s #{}, f/m #{} - pilot contract #{}, pilot gets paid {} (flight pay {}, income share {}), params {}",
                     contract.get().getPersonId(),
                     mission.getId(),

@@ -259,7 +259,8 @@ class BusyBirdsPilotContractTest {
     }
 
     @Test
-    public void test__the_pay_does_not_depend_on_the_actual_time_of_the_flight() {
+    public void test__the_pay_depends_on_the_actual_time_of_the_flight() {
+        // planned 2 hours, 400; flown 5 hours from blocks off to blocks on, 1000 (200 per hour)
         final FlightMissions.Mission mission = mission(2 * 3600);
         world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(0));
         mission.setActualDepartureWorldTime(world.getWorldTime());
@@ -267,7 +268,7 @@ class BusyBirdsPilotContractTest {
 
         finish(mission);
 
-        assertTrue(paymentLog().get(0).contains("pilot gets paid 400"), paymentLog().get(0));
+        assertTrue(paymentLog().get(0).contains("pilot gets paid 1000"), paymentLog().get(0));
     }
 
     @Test
@@ -325,6 +326,40 @@ class BusyBirdsPilotContractTest {
         final int flightPay = (int) Math.round(400 * 0.33);
         final int share = (int) Math.round(journey.getPrice1() * 3 * 33 / 10_000.0);
         assertTrue(paymentLog().get(0).contains("pilot gets paid " + (flightPay + share) + " (flight pay " + flightPay + ", income share " + share + ")"), paymentLog().get(0));
+    }
+
+    // the planned time of the mission is 2 hours, 400 base flight pay in the contract (200 per hour); blocks off and blocks on are the actual times
+    private int flightPayForBlockTime(final int blockSeconds) {
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+        assertEquals(400, contract.getBaseFlightPay());
+        mission.setActualDepartureWorldTime(world.getWorldTime());
+        mission.setActualArrivalWorldTime(world.getWorldTime() + blockSeconds);
+
+        final int flightPay = world.busyBirdsMissionControl().payPilot(mission).orElseThrow().flightPay();
+
+        // the contract keeps the estimate of the booking
+        assertEquals(400, contract.getBaseFlightPay());
+        return flightPay;
+    }
+
+    @Test
+    public void test__the_flight_pay_is_by_the_actual_time_from_blocks_off_to_blocks_on() {
+        final int planned = flightPayForBlockTime(2 * 3600);
+
+        // half of the planned time, half of the pay; one and a half times of it, one and a half times of the pay
+        assertEquals(Math.round(planned / 2.0), flightPayForBlockTime(3600));
+        assertEquals(Math.round(planned * 1.5), flightPayForBlockTime(3 * 3600));
+    }
+
+    @Test
+    public void test__a_flight_without_valid_blocks_times_is_paid_by_the_planned_time() {
+        final int planned = flightPayForBlockTime(2 * 3600);
+        final FlightMissions.Mission mission = mission(2 * 3600);
+        world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
+
+        // the times are not set
+        assertEquals(planned, world.busyBirdsMissionControl().payPilot(mission).orElseThrow().flightPay());
     }
 
     @Test

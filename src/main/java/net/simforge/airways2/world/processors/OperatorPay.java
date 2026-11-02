@@ -13,6 +13,16 @@ public final class OperatorPay {
     }
 
     /**
+     * The flight pay before the coefficients of the pilot for a time in the air and on the ground (blocks off to blocks on): the base hourly rate of the type of the operator
+     * multiplied by the time. The contract has it for the planned time (the estimate of the booking), the pay of a finished flight takes it for the actual time.
+     */
+    public static int baseFlightPay(final int aircraftOperatorId, final String aircraftTypeIcao, final int durationSeconds) {
+        return aircraftOperatorId == World25.ShadowJetOperatorId
+                ? ShadowJetPilotPay.baseFlightPay(aircraftTypeIcao, durationSeconds)
+                : BusyBirdsPilotPay.baseFlightPay(aircraftTypeIcao, durationSeconds);
+    }
+
+    /**
      * The rates of the operator, empty for an operator which does not pay its pilots (no contract, no pay).
      */
     public static Optional<PilotPayRates> ratesOf(final int aircraftOperatorId) {
