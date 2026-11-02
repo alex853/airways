@@ -777,6 +777,28 @@ public class AdminController {
         });
     }
 
+    /**
+     * Resets the heartbeat of every active flow to the world time: all of them are looked at in turn (10 per world step) and get their own heartbeat
+     * (a/t + the time to accumulate, 9 to 11 minutes from now at least, 90 days from now at most).
+     */
+    @GetMapping(value = "/flows/c2c/heartbeat-reset-all", produces = "text/plain")
+    public String resetAllC2CFlowHeartbeats() {
+        return worldBean.modifySync(world -> {
+            final int worldTime = world.getWorldTime();
+            final int[] count = new int[1];
+
+            world.city2cityFlows().all()
+                    .filter(City2CityFlows.Flow::isActive)
+                    .forEach(c2c -> {
+                        c2c.setHeartbeatTime(worldTime);
+                        count[0]++;
+                    });
+
+            log.info("c2c heartbeat-reset-all - h/b of {} active flows set to {}", count[0], Time.toLdt(worldTime));
+            return "Done, " + count[0] + " active flows";
+        });
+    }
+
     @GetMapping(value = "/flows/c2c/heartbeat-in-future", produces = "text/plain")
     public String updateC2CFlowHeartbeat() {
         return worldBean.modifySync(world -> {

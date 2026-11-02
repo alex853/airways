@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * The hourly lines about the active flows, by the heartbeat and by the accumulated flow time: the overdue ones with min and avg and by the days of the delay,
- * then the buckets of the days, weeks and months.
+ * then the buckets of the days and weeks (up to the week 12).
  */
 class City2CityFlowHistogramAnalyserTest {
     private World world;
@@ -41,7 +41,7 @@ class City2CityFlowHistogramAnalyserTest {
 
     @Test
     public void test__no_flows() {
-        assertEquals("c2c h/b overdue 0 | D0-6 0,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
+        assertEquals("c2c h/b overdue 0 | D0-6 0,0,0,0,0,0,0 | W2-12 0,0,0,0,0,0,0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 
@@ -61,16 +61,18 @@ class City2CityFlowHistogramAnalyserTest {
         flow(true, now + 7 * day);                        // W2
         flow(true, now + 14 * day);                       // W3
         flow(true, now + 14 * day + 1);                   // W3
-        flow(true, now + 29 * day);                       // W4
-        flow(true, now + 30 * day);                       // M2
-        flow(true, now + 59 * day);                       // M2
-        flow(true, now + 60 * day);                       // M3
-        flow(true, now + 179 * day);                      // M6
+        flow(true, now + 29 * day);                       // W5
+        flow(true, now + 34 * day);                       // W5
+        flow(true, now + 56 * day);                       // W9
+        flow(true, now + 62 * day);                       // W9
+        flow(true, now + 83 * day);                       // W12
+        flow(true, now + 84 * day);                       // L
+        flow(true, now + 91 * day);                       // L
         flow(true, now + 180 * day);                      // L
         flow(true, now + 400 * day);                      // L
 
         assertEquals("c2c h/b overdue 3 min " + minutes(now - 3 * Time.ONE_HOUR) + " avg " + minutes(now - 2 * Time.ONE_HOUR)
-                        + " | O-0 3 | D0-6 1,1,0,0,0,0,1 | W2-4 1,2,1 | M2-6 2,1,0,0,1 | L 2",
+                        + " | O-0 3 | D0-6 1,1,0,0,0,0,1 | W2-12 1,2,0,2,0,0,0,2,0,0,1 | L 4",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 
@@ -102,9 +104,9 @@ class City2CityFlowHistogramAnalyserTest {
         final City2CityFlows.Flow noClock = flow(true, now + Time.ONE_HOUR); // the clock is not started: not counted
 
         assertEquals("c2c a/t overdue 2 min " + minutes(now - 10 * day) + " avg " + minutes(now - 6 * day)
-                        + " | O-10 1 | O-2 1 | D0-6 0,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
+                        + " | O-10 1 | O-2 1 | D0-6 0,0,0,0,0,0,0 | W2-12 0,0,0,0,0,0,0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.clockLine(world));
-        assertEquals("c2c h/b overdue 0 | D0-6 3,0,0,0,0,0,0 | W2-4 0,0,0 | M2-6 0,0,0,0,0 | L 0",
+        assertEquals("c2c h/b overdue 0 | D0-6 3,0,0,0,0,0,0 | W2-12 0,0,0,0,0,0,0,0,0,0,0 | L 0",
                 City2CityFlowHistogramAnalyser.histogramLine(world));
     }
 

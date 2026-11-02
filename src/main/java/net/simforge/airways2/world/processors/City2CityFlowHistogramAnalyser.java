@@ -15,17 +15,17 @@ import java.util.function.ToIntFunction;
  * Once per hour writes two lines about the active flows of cities, the same lines for two times of a flow: the heartbeat (h/b) and the clock of the flow, the
  * accumulated flow time (a/t). Every line: how many flows are overdue (the time is before the world time) with the oldest and the average time of them, then
  * the overdue ones by the whole days of the delay (O-135 1 is one flow which is 135 days late, only the days which have flows are shown, the most late first),
- * then how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W4 the second, third and fourth week up to the day 30, M2..M6 the months
- * of 30 days, L is everything after six months.
+ * then how many are due later: D0..D6 are the days (D0 is the next 24 hours), W2..W12 the weeks (W2 is the days 7..13, W12 the days 77..83), L is everything
+ * after that.
  */
 public class City2CityFlowHistogramAnalyser {
     private static final Logger log = LoggerFactory.getLogger(City2CityFlowHistogramAnalyser.class);
 
     private static final int DAYS = 7;
-    private static final int MONTH_DAYS = 30;
-    private static final int MONTHS = 6;
-    // D0..D6, W2, W3, W4, M2..M6, L
-    private static final int BUCKETS = DAYS + 3 + (MONTHS - 1) + 1;
+    // the last week shown (the days 77..83), everything after it is L
+    private static final int LAST_WEEK = 12;
+    // D0..D6, W2..W12, L
+    private static final int BUCKETS = DAYS + (LAST_WEEK - 1) + 1;
 
     private static long lastProcessTime = 0;
 
@@ -127,8 +127,7 @@ public class City2CityFlowHistogramAnalyser {
             }
         }
         line.append(" | D0-6 ").append(join(counts, 0, DAYS))
-                .append(" | W2-4 ").append(join(counts, DAYS, DAYS + 3))
-                .append(" | M2-6 ").append(join(counts, DAYS + 3, BUCKETS - 1))
+                .append(" | W2-").append(LAST_WEEK).append(' ').append(join(counts, DAYS, BUCKETS - 1))
                 .append(" | L ").append(counts[BUCKETS - 1]);
         return line.toString();
     }
@@ -144,22 +143,13 @@ public class City2CityFlowHistogramAnalyser {
         return sb.toString();
     }
 
-    // the bucket of the days from now: 0..6 are the days, then the weeks up to the day 30, then the months of 30 days, the last one is everything later
+    // the bucket of the days from now: 0..6 are the days, then the weeks (W2 is the days 7..13) up to the week 12, the last one is everything later
     private static int bucket(final int day) {
         if (day < DAYS) {
             return day;
         }
-        if (day < 2 * DAYS) {
-            return DAYS; // W2
-        }
-        if (day < 3 * DAYS) {
-            return DAYS + 1; // W3
-        }
-        if (day < MONTH_DAYS) {
-            return DAYS + 2; // W4
-        }
-        final int month = day / MONTH_DAYS + 1; // the days 30..59 are the month 2
-        return month <= MONTHS ? DAYS + 3 + (month - 2) : BUCKETS - 1;
+        final int week = day / DAYS + 1;
+        return week <= LAST_WEEK ? DAYS + (week - 2) : BUCKETS - 1;
     }
 
     private static String minutes(final int time) {

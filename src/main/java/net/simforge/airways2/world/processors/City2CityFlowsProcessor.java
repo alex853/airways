@@ -27,6 +27,9 @@ public class City2CityFlowsProcessor {
     static final int MIN_WAIT_AFTER_PASS_MINUTES = 9;
     static final int MAX_WAIT_AFTER_PASS_MINUTES = 11;
 
+    // a heartbeat is never further than this from now: a flow with a huge time to accumulate (a small flow) is looked at again at least once per this period
+    static final int MAX_HEARTBEAT_AHEAD = 90 * Time.ONE_DAY;
+
     public static void process(final World world) {
         Processing.heartbeat(() -> world.city2cityFlows().nextForHeartbeat(world.getWorldTime()),
                 c2cFlow -> processFlow(world, c2cFlow),
@@ -66,9 +69,10 @@ public class City2CityFlowsProcessor {
         final int timeToAccumulateFlow = (c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime())
                 + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow);
         if (timeToAccumulateFlow > worldTime) {
-            c2cFlow.setHeartbeatTime(timeToAccumulateFlow);
-            log.warn("c2c #{}/{} {}-{} - acc/t not reached world time, curr acc/t {}, acc/t for next g/s {}, waiting",
-                    c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(timeToAccumulateFlow));
+            c2cFlow.setHeartbeatTime(nextHeartbeat(worldTime, timeToAccumulateFlow));
+            log.warn("c2c #{}/{} {}-{} - acc/t not reached world time, curr acc/t {}, acc/t for next g/s {}, waiting, h/b {}",
+                    c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, Time.toLdt(c2cFlow.getAccumulatedFlowTime()), Time.toLdt(timeToAccumulateFlow),
+                    Time.toLdt(c2cFlow.getHeartbeatTime()));
             return;
         }
 
@@ -91,11 +95,12 @@ public class City2CityFlowsProcessor {
     /**
      * The heartbeat after a pass: the time when the next group is accumulated, but never in the past. A flow whose clock is far behind the world is not served
      * again and again until it catches up (it took the places of the others and stayed overdue all the time): it waits from 9 to 11 minutes and gets
-     * the next pass, so the flows are served in turn and the clock goes on one group per pass.
+     * the next pass, so the flows are served in turn and the clock goes on one group per pass. From above the heartbeat is limited too: not later than
+     * 90 days from now (MAX_HEARTBEAT_AHEAD).
      */
     static int nextHeartbeat(final int worldTime, final int nextGroupTime) {
         if (nextGroupTime > worldTime) {
-            return nextGroupTime;
+            return (int) Math.min(nextGroupTime, (long) worldTime + MAX_HEARTBEAT_AHEAD);
         }
         return worldTime + Tools.random(MIN_WAIT_AFTER_PASS_MINUTES * Time.ONE_MINUTE, MAX_WAIT_AFTER_PASS_MINUTES * Time.ONE_MINUTE);
     }

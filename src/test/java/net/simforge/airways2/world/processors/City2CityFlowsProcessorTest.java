@@ -106,6 +106,16 @@ class City2CityFlowsProcessorTest {
     }
 
     @Test
+    public void test__the_heartbeat_after_a_pass_is_not_later_than_90_days_from_now() {
+        final int now = world.getWorldTime();
+
+        assertEquals(now + 89 * Time.ONE_DAY, City2CityFlowsProcessor.nextHeartbeat(now, now + 89 * Time.ONE_DAY));
+        assertEquals(now + 90 * Time.ONE_DAY, City2CityFlowsProcessor.nextHeartbeat(now, now + 90 * Time.ONE_DAY));
+        assertEquals(now + 90 * Time.ONE_DAY, City2CityFlowsProcessor.nextHeartbeat(now, now + 91 * Time.ONE_DAY));
+        assertEquals(now + 90 * Time.ONE_DAY, City2CityFlowsProcessor.nextHeartbeat(now, now + 400 * Time.ONE_DAY));
+    }
+
+    @Test
     public void test__a_flow_of_a_city_without_its_own_flow_does_not_block_the_others() {
         final int now = world.getWorldTime();
         // a city which was added after the flows of the cities were created has no flow of its own
