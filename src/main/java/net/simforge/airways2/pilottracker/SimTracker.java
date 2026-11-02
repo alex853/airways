@@ -36,6 +36,12 @@ public class SimTracker {
     private static final long STALE_POSITION_MILLIS = 10 * 60 * 1000;
     // saved contexts with a position older than this are dropped on restore, the user is not on the line anymore
     private static final long MAX_RESTORED_CONTEXT_AGE_MILLIS = 30 * 60 * 1000;
+    // A report is believed only if it matches where the aircraft of the user's flight is: within this distance of it, plus what the aircraft can fly since
+    // the last accepted report while it is in the air. Otherwise the sim of the user shows another place (another airport, another continent) and the world
+    // must not follow it.
+    static final double MATCH_RADIUS_NM = 10;
+    static final double MAX_PLAUSIBLE_SPEED_KT = 800;
+
     // The user is connected while the reports come (the client sends one every 10 seconds). Without a report the connection is lost after 3 minutes,
     // and after 10 minutes if the user has a flight which is started (Preflight or further): a pause of the sim or a lost network must not drop it.
     static final long CONNECTED_IDLE_MILLIS = 3 * 60 * 1000;
@@ -76,7 +82,7 @@ public class SimTracker {
         // the old position stays for takeoff/landing detection, but the track trail starts again after a gap
         // (the application was restarted, the client was offline), otherwise the speed would be measured over the gap
         final boolean oldPositionIsStale = oldContext.position != null
-                && position.getTime() - oldContext.position.getTime() > STALE_POSITION_MILLIS;
+                && (position.getTime() - oldContext.position.getTime() > STALE_POSITION_MILLIS || oldContext.positionRejected);
         if (oldPositionIsStale) {
             log.info("SIM TRACKER: user {} - old position is {} s old, track trail is started again",
                     userId, (position.getTime() - oldContext.position.getTime()) / 1000);
@@ -85,22 +91,67 @@ public class SimTracker {
                 ? TrackLeg.buildNewTrackTrail(null, null, position)
                 : TrackLeg.buildNewTrackTrail(oldContext.trackTrail, oldContext.position, position);
 
+        // The report still goes to the context (the user is connected, the dashboard shows where the sim is, the start checks see it), but a report which
+        // does not match the aircraft neither moves the aircraft nor makes flight events
+        final boolean positionRejected = isPositionRejected(newContext, position);
+
         newContext = newContext.toBuilder()
                 .position(position)
+                .positionRejected(positionRejected)
                 .parkingBrake(parsed.isParkingBrake())
                 .numberOfEnginesRunning(parsed.getNumberOfEnginesRunning())
                 .trackTrail(newTrackTrail)
                 .measuredGs(TrackLeg.calculateGroundspeed(newTrackTrail))
                 .build();
 
-        updateAircraftLocation(newContext);
+        if (!positionRejected) {
+            updateAircraftLocation(newContext);
 
-        newContext = processEvents(oldContext, newContext);
+            // the previous report did not match either: the old position says nothing about takeoff or landing
+            if (!oldContext.positionRejected) {
+                newContext = processEvents(oldContext, newContext);
+            }
+        }
 
         newContext = doChecks(newContext);
         newContext = updateActiveFlight(newContext);
 
         userContexts.put(userId, newContext);
+    }
+
+    private boolean isPositionRejected(final Context context, final TrackPosition position) {
+        if (context.getFlightMissionId() == null || isManualFlight(context)) {
+            return false;
+        }
+        return worldAccess.read(world -> {
+            final Optional<FlightMissions.Mission> fm = world.flightMissions().byId(context.getFlightMissionId());
+            if (fm.isEmpty()) {
+                return false;
+            }
+            final Optional<Aircrafts.Aircraft> aircraft = world.aircrafts().byId(fm.get().getAircraftId());
+            if (aircraft.isEmpty()) {
+                return false;
+            }
+            final int ageSecs = world.getWorldTime() - aircraft.get().getLastUpdated();
+            final boolean matches = positionMatchesAircraft(fm.get().getStatus(), aircraft.get().getLocationCoords(), ageSecs, position.getCoords());
+            if (!matches) {
+                log.warn("SIM TRACKER: user {} - f/m #{} - reported position is {} nm from the aircraft, ignored",
+                        context.getUserId(), fm.get().getId(), df1.format(Geo.distance(aircraft.get().getLocationCoords(), position.getCoords())));
+            }
+            return !matches;
+        });
+    }
+
+    /**
+     * Whether the reported position can be the aircraft of the flight. Until takeoff and after landing the aircraft stands, so the sim must show the same
+     * place. In the air (Flying) and while it rolls out after landing (Arrival) it may have flown since the last accepted report, as far as an aircraft can.
+     */
+    static boolean positionMatchesAircraft(final FlightMissions.Status status, final Geo.Coords aircraft, final int aircraftAgeSecs, final Geo.Coords reported) {
+        double allowedNm = MATCH_RADIUS_NM;
+        if (status == FlightMissions.Status.Flying || status == FlightMissions.Status.Arrival) {
+            allowedNm += MAX_PLAUSIBLE_SPEED_KT * Math.max(0, aircraftAgeSecs) / 3600.0;
+        }
+        return Geo.distance(aircraft, reported) <= allowedNm;
     }
 
     // A flight which the pilot started manually is not followed by the tracker: its steps are done with the buttons of the dashboard and the position of
@@ -403,6 +454,8 @@ public class SimTracker {
         private final List<UserAction> actions;
         // the user has a started flight (Preflight or further), see CONNECTED_ACTIVE_FLIGHT_MILLIS
         private final boolean activeFlight;
+        // the last report did not match the aircraft of the flight, see positionMatchesAircraft; not saved, a restored context starts with a believed position
+        private final boolean positionRejected;
 
         public static Context forUser(int userId) {
             return Context.builder()
@@ -435,6 +488,13 @@ public class SimTracker {
         private final Boolean engineRunning;
         private final String measuredGs;
         private final List<UserAction> actions;
+        // the last report of the sim does not match the aircraft of the flight, so it moves nothing (see positionMatchesAircraft); the client shows it
+        private final boolean positionRejected;
+
+        public UserStatus(final String status, final String flightMissionId, final String locationStatus, final String airportIcao,
+                          final Boolean parkingBrake, final Boolean engineRunning, final String measuredGs, final List<UserAction> actions) {
+            this(status, flightMissionId, locationStatus, airportIcao, parkingBrake, engineRunning, measuredGs, actions, false);
+        }
 
         public static UserStatus none() {
             return new UserStatus(
@@ -470,7 +530,8 @@ public class SimTracker {
                     context.position != null ? context.parkingBrake : null,
                     context.position != null ? context.numberOfEnginesRunning > 0 : null,
                     context.measuredGs < 10 ? df1.format(context.measuredGs) : String.valueOf(Math.round(context.measuredGs)),
-                    context.actions);
+                    context.actions,
+                    context.positionRejected);
         }
     }
 
