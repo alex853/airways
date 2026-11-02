@@ -575,7 +575,7 @@ public class FlightDashboardController {
     public AlternatesDto getAlternates(@RequestAttribute("userId") int userId,
                                        @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.read(world -> {
-            checkUserMayUseDashboard(world, userId);
+            // no check of the dashboard: the alternate is a part of the planning, like the booking it does not depend on the state or place of the pilot
             final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
@@ -594,7 +594,7 @@ public class FlightDashboardController {
                                   @RequestParam(name = "flightId") String flightIdStr,
                                   @RequestParam(name = "icao", required = false) String icao) {
         return worldBean.modifySync(world -> {
-            checkUserMayUseDashboard(world, userId);
+            // no check of the dashboard, see getAlternates
             final int flightId = Id.decode(flightIdStr);
 
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
