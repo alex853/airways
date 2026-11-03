@@ -5,6 +5,8 @@ import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
 import net.simforge.airways2.tools.CabinLayout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,28 +20,30 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Journeys {
+    private static final Logger log = LoggerFactory.getLogger(Journeys.class);
+
     private final Storage<Journey> storage = Storage.<Journey>builder()
             .name("journeys")
             .withInstantiator(Journey::new)
             .withIdOf(DataType.Unsigned24bit)
-            // the storage is big and gets new records all the time, a growth copies the whole array: so it grows by 100 records at once
-            .growthStep(100)
-            // -------------------------------------------------- record deletion status    1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // status                   1 byte
-            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime             4 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // fromCityId              2 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // toCityId                2 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // groupSize                1 byte
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // type/mode                1 byte
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight1Id      3 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight2Id      3 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationCityId          2 bytes
-            .withDataField(DataField.of(DataType.Unsigned16bit)) // lastKnownLocationCityId 2 bytes
-            // ----------------------------------------------------- sum                   22 bytes
-            // -------------------------------------------- the rest of 10 bytes is to align total size to 32 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // price1 (the first flight) 3 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // price2 (the second flight) 3 bytes, was the first 3 bytes of a reserve of 4 bytes, they were zero
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            // the storage is big and gets new records all the time, a growth of one array copies it whole: so it is the pages, nothing is copied (docs/storage-paged.md)
+            .paged()
+            // -------------------------------------------------- record deletion status       1 byte
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // status                      1 byte
+            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime                4 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // fromCityId                 2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // toCityId                   2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // groupSize                   1 byte
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // type/mode                   1 byte
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight1Id         3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // transportFlight2Id         3 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationCityId             2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // lastKnownLocationCityId    2 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // price1 (the first flight)  3 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // price2 (the second flight) 3 bytes
+            // ----------------------------------------------------- used                     28 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                      4 bytes
+            // ----------------------------------------------------- total                    32 bytes
             .withHeartbeatIndex(1) // heartbeatField index: position among withDataField calls (status=0, heartbeatTime=1)
             .build();
 
@@ -71,6 +75,21 @@ public class Journeys {
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
+    }
+
+    /**
+     * Cuts the dead end of the storage (see Storage#tryTrimTail): the journeys die in a wave and the last pages become empty, then they are released. Called before the
+     * world is saved. The ids of the dropped journeys are given to the new ones again.
+     */
+    public void tryTrimTail() {
+        final Storage.TrimResult result = storage.tryTrimTail();
+        log.info("j/y - tail trim of the storage: {} records on {} pages before, dropped {} records and {} pages, {} records on {} pages remain; "
+                        + "the last page holds {} records, {} of them live{}; {} deleted records are known",
+                result.recordsBefore(), result.pagesBefore(), result.droppedRecords(), result.droppedPages(),
+                result.recordsBefore() - result.droppedRecords(), result.pagesAfter(),
+                result.recordsOnLastPage(), result.liveOnLastPage(),
+                result.droppedRecords() == 0 ? ", nothing to drop" : "",
+                result.deletedRecordsKnown());
     }
 
     public Stream<Journey> all() {

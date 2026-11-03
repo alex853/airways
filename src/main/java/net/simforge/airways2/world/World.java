@@ -122,6 +122,8 @@ public class World {
 
     public void save() throws IOException {
         log.error("Logging world save stacktrace", new RuntimeException("Stacktrace for world save"));
+        // the pages at the end of the journeys which have no live journey are released before the world is saved
+        journeys.tryTrimTail();
         worldStorageStrategy.save(rootPath -> {
             //noinspection DuplicatedCode
             strings.save(rootPath);

@@ -5,10 +5,10 @@ package net.simforge.airways2.storage;
  * grows with the value: it is 1/1024 of the power of two below the value, e.g. 0.5 between 512 and 1024, 1 between 1024 and 2048, 32 between
  * 32768 and 65536. The conversion is done by arithmetic, the value is rounded to the nearest representable one (half up).
  */
-final class Half {
+final class HalfPrecisionFloat {
     static final float MAX_VALUE = 65504.0f;
 
-    private Half() {
+    private HalfPrecisionFloat() {
     }
 
     /**

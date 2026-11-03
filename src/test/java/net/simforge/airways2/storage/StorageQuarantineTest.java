@@ -685,21 +685,6 @@ class StorageQuarantineTest {
         assertEquals(3, storage.getReusableDeletedRecordCount());
     }
 
-    @Test
-    public void printing_of_deleted_record_info_does_not_fail() {
-        final Storage<Integer> storage = storage(QUARANTINE);
-        assertDoesNotThrow(storage::printDeletedRecordInfo);
-
-        for (int i = 0; i < 5; i++) {
-            storage.addRecord();
-        }
-        storage.deleteRecord(2);
-        storage.deleteRecord(3);
-        storage.deleteRecord(5);
-
-        assertDoesNotThrow(storage::printDeletedRecordInfo);
-    }
-
     // ---------------------------------------------------------------------------------------------------------------
     // property test against a simple model
 

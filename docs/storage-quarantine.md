@@ -79,8 +79,8 @@
 | Airports, Cities, Countries, Airport2City, AirportFacilities, CityFlows, City2CityFlows | 30 суток | теоретически удаляются, ссылок много |
 | AircraftTypes, AircraftOperators | 30 суток | |
 
-Размер роста массива = скорость удаления × карантин. Оценить заранее по `printDeletedRecordInfo`
-(кол-во удалений в сутки по каждому сторадж-у).
+Размер роста массива = скорость удаления × карантин. Оценить заранее по количеству удалений в сутки
+по каждому сторадж-у (`printDeletedRecordInfo` убран как ненужный).
 
 Задаётся в `Storage.Builder`: `.deletedRecordQuarantine(Duration)`. В реализации по умолчанию **1 сутки** для всех
 стораджей (`Storage.DEFAULT_DELETED_RECORD_QUARANTINE`), отдельных значений в сторадж-ах нет. Для записей меньше
@@ -88,8 +88,8 @@
 
 ## Диагностика
 
-- `printDeletedRecordInfo` дополнить: сколько удалённых в карантине / доступно к переиспользованию, возраст самой
-  старой и самой свежей.
+- Есть `getQuarantinedDeletedRecordCount()` и `getReusableDeletedRecordCount()`: сколько удалённых в карантине и доступно к
+  переиспользованию (`printDeletedRecordInfo` убран).
 - Лог при переиспользовании записи (на уровне debug) и `warn`, если очередь упёрлась и мы растём из-за карантина
   заметно быстрее обычного.
 
@@ -121,7 +121,7 @@
 2. Тесты на `Storage`: удаление и немедленное создание не возвращают тот же id, возврат после карантина, перезагрузка
    сохраняет время удаления, обнуление тела при переиспользовании.
 3. Значения карантина для всех стораджей в `world/datamodel`.
-4. Диагностика (`printDeletedRecordInfo`), запись в `docs/README.md`.
+4. Диагностика (счётчики карантина), запись в `docs/README.md`.
 
 ## Реализация
 
@@ -137,8 +137,7 @@
 - Сторадж с записью меньше 4 байт данных и карантином > 0 не создаётся (`IllegalStateException`).
 - Значение: одно для всех, **1 сутки** (`Storage.DEFAULT_DELETED_RECORD_QUARANTINE`), отдельный класс констант
   убран. Если понадобится больше для journeys/t/f, достаточно `deletedRecordQuarantine(...)` в нужном сторадже.
-- Диагностика: `getQuarantinedDeletedRecordCount()`, `getReusableDeletedRecordCount()`, дополнительная строка в
-  `printDeletedRecordInfo`.
+- Диагностика: `getQuarantinedDeletedRecordCount()`, `getReusableDeletedRecordCount()`.
 - Тесты: `StorageQuarantineTest` (42: границы карантина, порядок, сохранение/загрузка, старые файлы, мелкие записи,
   часы, случайные операции против модели), `DeletedRecordQuarantineWorldTest` (журни, самолёты, рейсы, события).
 - Остаётся: утилита `scrub` для отката на старую версию (см. «Риски»), рост массива пачками.

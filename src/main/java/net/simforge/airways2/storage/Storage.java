@@ -21,6 +21,9 @@ import static com.google.common.base.Preconditions.checkState;
 public class Storage<T> {
     private static final Logger log = LoggerFactory.getLogger(Storage.class);
 
+    /** The size of a page of a paged storage if the builder does not say another one. */
+    public static final int DEFAULT_PAGE_SIZE_BYTES = 256 * 1024;
+
     private static final int recordHeaderSize = 1;
 
     // existing or deleted record
@@ -58,11 +61,9 @@ public class Storage<T> {
     //   record count 4b
     //   record size 2b
     //   current time millis 8b
-    // data.length is the capacity, the records take the first storedRecordCount * recordSize bytes (the rest is zero reserve, see Builder#growthStep)
-    private byte[] data = new byte[0];
+    // the bytes of the records: one array or the pages, see Builder#growthStep and Builder#pageSize; the records take the first storedRecordCount * recordSize bytes
+    private final ByteStore data;
     private int storedRecordCount;
-    // how many records the capacity grows by when a new record does not fit, 1 means 'exactly as much as required'
-    private final int growthStep;
 
     private long deletedRecordQuarantineMillis;
     private final LongSupplier clock;
@@ -82,16 +83,17 @@ public class Storage<T> {
                     final boolean deletedRecordQuarantineIsExplicit,
                     final LongSupplier clock,
                     final int heartbeatIndexFieldIndex,
-                    final int growthStep) {
+                    final int growthStep,
+                    final int pageSizeBytes) {
         checkNotNull(dataFields);
 
         this.name = name;
-        this.growthStep = growthStep;
         this.instantiator = instantiator;
         this.idDataType = idDataType;
         this.maxRecordId = maxRecordIdOf(idDataType);
         this.dataFields = dataFields; // todo ak3 check all required fields are initialised correctly
         this.recordSize = recordHeaderSize + dataFields[dataFields.length - 1].offsetPlusSize();
+        this.data = pageSizeBytes > 0 ? new PagedByteStore(recordSize, pageSizeBytes) : new FlatByteStore((growthStep - 1) * recordSize);
 
         this.deletedRecordQuarantineMillis = deletedRecordQuarantineMillis;
         this.clock = clock;
@@ -135,8 +137,7 @@ public class Storage<T> {
             reset();
             return;
         }
-        data = Files.readAllBytes(dataPath);
-        storedRecordCount = data.length / recordSize;
+        storedRecordCount = data.load(dataPath, recordSize);
         rebuildDeletedRecords();
         rebuildHeartbeatIndex();
         markChanged();
@@ -160,9 +161,7 @@ public class Storage<T> {
     public void save(final Path rootPath) throws IOException {
         final Path dataPath = rootPath.resolve(name);
         // the reserve of the capacity is not saved, the file holds the records only
-        final int usedLength = storedRecordCount * recordSize;
-        final byte[] toWrite = usedLength == data.length ? data : Arrays.copyOf(data, usedLength);
-        Files.write(dataPath, toWrite,  StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING,  StandardOpenOption.WRITE);
+        data.save(dataPath, storedRecordCount * recordSize);
     }
 
     public DataField getDataField(final int fieldIndex) {
@@ -170,7 +169,7 @@ public class Storage<T> {
     }
 
     public void reset() {
-        data = new byte[0];
+        data.clear();
         storedRecordCount = 0;
         deletedRecords.clear();
         if (heartbeatIndex != null) {
@@ -259,8 +258,8 @@ public class Storage<T> {
             final int recordId = oldest[0];
             final int headerOffset = getRecordHeaderOffset(recordId);
             // the body keeps the 'deleted at' time, it must be clean for the new record
-            Arrays.fill(data, headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
-            data[headerOffset] = RECORD_EXISTS;
+            data.fill(headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
+            data.set(headerOffset, (byte) RECORD_EXISTS);
             markChanged();
             return recordId;
         }
@@ -272,10 +271,8 @@ public class Storage<T> {
                     + " does not fit into " + idDataType + " (max id is " + maxRecordId + ")");
         }
         final int requiredLength = addedRecordId * recordSize;
-        if (requiredLength > data.length) {
-            // grows by growthStep records at once, so the whole array is not copied for every new record
-            data = Arrays.copyOf(data, requiredLength + (growthStep - 1) * recordSize);
-        }
+        // the array grows by growthStep records at once, the pages are added one by one and nothing is copied
+        data.ensureLength(requiredLength);
         storedRecordCount = addedRecordId;
         markChanged();
         return addedRecordId;
@@ -293,8 +290,8 @@ public class Storage<T> {
         }
 
         final int headerOffset = getRecordHeaderOffset(recordId);
-        data[headerOffset] = RECORD_EMPTY_OR_DELETED;
-        Arrays.fill(data, headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
+        data.set(headerOffset, (byte) RECORD_EMPTY_OR_DELETED);
+        data.fill(headerOffset + recordHeaderSize, headerOffset + recordSize, (byte) 0);
 
         final int deletedAt = currentDeletedAtMinutes();
         if (canStoreDeletedAt) {
@@ -302,6 +299,75 @@ public class Storage<T> {
         }
         deletedRecords.addLast(new int[]{recordId, deletedAt});
         markChanged();
+    }
+
+    /**
+     * Tries to cut the tail of the storage: while the last page has no live record (its records are all deleted, in the quarantine or not, or have not been created yet), the
+     * page is released and the records of it are forgotten, with their places in the queue of the deleted ones. The quarantine does not hold the page: the ids of the dropped
+     * records are given to the new records again (they come after the last record, as the new ids do). The page with at least one live record stays, and so everything before it.
+     * It is for a storage which shrinks, the reuse of the deleted records in the middle does not make the memory smaller. A storage which is one array has the page of one
+     * record, so it drops the dead records of the end one by one (the array stays as it is).
+     *
+     * @return what has been done and what stopped it, see {@link TrimResult}; there is always a result, also when nothing is dropped
+     */
+    public TrimResult tryTrimTail() {
+        final int recordsPerPage = data.recordsPerPage();
+        final int recordsBefore = storedRecordCount;
+        final int pagesBefore = data.pageCount();
+
+        int newTotal = storedRecordCount;
+        while (newTotal > 0) {
+            // the first record of the page of the last record
+            final int pageFirstId = (newTotal - 1) / recordsPerPage * recordsPerPage + 1;
+            boolean hasLiveRecord = false;
+            for (int recordId = pageFirstId; recordId <= newTotal && !hasLiveRecord; recordId++) {
+                hasLiveRecord = !isDeleted(recordId);
+            }
+            if (hasLiveRecord) {
+                break;
+            }
+            newTotal = pageFirstId - 1;
+        }
+
+        final int dropped = storedRecordCount - newTotal;
+        if (dropped > 0) {
+            final int lastId = newTotal;
+            deletedRecords.removeIf(record -> record[0] > lastId);
+            data.truncate(newTotal * recordSize, storedRecordCount * recordSize);
+            storedRecordCount = newTotal;
+
+            markChanged();
+        }
+
+        // the page which has stopped the trimming (or the last one if everything is dropped, then there is none): how many of its records live
+        int liveOnLastPage = 0;
+        int recordsOnLastPage = 0;
+        if (newTotal > 0) {
+            final int pageFirstId = (newTotal - 1) / recordsPerPage * recordsPerPage + 1;
+            recordsOnLastPage = newTotal - pageFirstId + 1;
+            for (int recordId = pageFirstId; recordId <= newTotal; recordId++) {
+                if (!isDeleted(recordId)) {
+                    liveOnLastPage++;
+                }
+            }
+        }
+
+        return new TrimResult(recordsBefore, pagesBefore, dropped, pagesBefore - data.pageCount(), data.pageCount(), recordsOnLastPage, liveOnLastPage, deletedRecords.size());
+    }
+
+    /**
+     * The result of {@link #tryTrimTail()}: the records and the pages before, how many have been dropped, and the last page which remains (how many records it holds and how
+     * many of them live, it is the reason why the trimming has stopped); also how many deleted records are known to the storage after it (the quarantine and the reuse).
+     */
+    public record TrimResult(int recordsBefore, int pagesBefore, int droppedRecords, int droppedPages, int pagesAfter,
+                             int recordsOnLastPage, int liveOnLastPage, int deletedRecordsKnown) {
+    }
+
+    /**
+     * How many pages the storage holds (one for a storage which is one array), for the tests and the diagnostics.
+     */
+    int getPageCount() {
+        return data.pageCount();
     }
 
     /**
@@ -365,48 +431,6 @@ public class Storage<T> {
         deletedRecords.addAll(found);
     }
 
-    public void printDeletedRecordInfo() {
-        final int totalRecords = getTotalStoredRecordCount();
-
-        int deletedRecords = 0;
-        int highestDeletedId = -1;
-
-        int currentSequence = -1;
-
-        int longestDeletedSequence = -1;
-        int highestIdOfLongestDeletedSequence = -1;
-
-        for (int recordId = 1; recordId <= totalRecords; recordId++) {
-            if (isDeleted(recordId)) {
-                deletedRecords++;
-                highestDeletedId = Math.max(highestDeletedId, recordId);
-
-                if (currentSequence == -1) {
-                    currentSequence = 1;
-                } else {
-                    currentSequence++;
-                }
-            } else {
-                if ((currentSequence != -1) && (currentSequence >= longestDeletedSequence)) {
-                    longestDeletedSequence = currentSequence;
-                    highestIdOfLongestDeletedSequence = recordId - 1;
-
-                    currentSequence = -1;
-                }
-            }
-        }
-
-        if ((currentSequence != -1) && (currentSequence >= longestDeletedSequence)) {
-            longestDeletedSequence = currentSequence;
-            highestIdOfLongestDeletedSequence = totalRecords;
-        }
-
-        log.info("deleted record info for {} storage - total stored {}, deleted {}, highest deleted id {}, longest deleted sequence {}, highest id of longest deleted sequence {}",
-                name, totalRecords, deletedRecords, highestDeletedId, longestDeletedSequence, highestIdOfLongestDeletedSequence);
-        log.info("deleted record quarantine for {} storage - quarantine {}, in quarantine {}, ready to be reused {}",
-                name, Duration.ofMillis(deletedRecordQuarantineMillis), getQuarantinedDeletedRecordCount(), getReusableDeletedRecordCount());
-    }
-
     public int getAsInt(final int recordId, final DataField dataField) {
         checkRecordIdInBounds(recordId);
         checkRecordIdIsNotDeleted(recordId);
@@ -424,13 +448,13 @@ public class Storage<T> {
         final int fieldOffset = getFieldOffset(recordId, dataField);
 
         return switch (dataField.dataType()) {
-            case Unsigned8bit -> Byte.toUnsignedInt(data[fieldOffset]);
-            case Unsigned16bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 8)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 1]));
-            case Unsigned24bit -> (Byte.toUnsignedInt(data[fieldOffset]) << 16)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 8)
-                    + (Byte.toUnsignedInt(data[fieldOffset + 2]));
-            case Signed16bit -> (short) ((Byte.toUnsignedInt(data[fieldOffset]) << 8) | Byte.toUnsignedInt(data[fieldOffset + 1]));
+            case Unsigned8bit -> Byte.toUnsignedInt(data.get(fieldOffset));
+            case Unsigned16bit -> (Byte.toUnsignedInt(data.get(fieldOffset)) << 8)
+                    + (Byte.toUnsignedInt(data.get(fieldOffset + 1)));
+            case Unsigned24bit -> (Byte.toUnsignedInt(data.get(fieldOffset)) << 16)
+                    + (Byte.toUnsignedInt(data.get(fieldOffset + 1)) << 8)
+                    + (Byte.toUnsignedInt(data.get(fieldOffset + 2)));
+            case Signed16bit -> (short) ((Byte.toUnsignedInt(data.get(fieldOffset)) << 8) | Byte.toUnsignedInt(data.get(fieldOffset + 1)));
             case Signed32bit -> getIntAtOffset(fieldOffset);
             default -> throw new IllegalStateException("Unexpected dataField dataType: " + dataField.dataType());
         };
@@ -446,7 +470,7 @@ public class Storage<T> {
         checkDataFieldIsInStorage(dataField);
         checkArgument(dataField.dataType() == DataType.Signed40bit, "the field is not Signed40bit, it is %s", dataField.dataType());
 
-        return getLongAtOffset(getFieldOffset(recordId, dataField));
+        return get40BitLongAtOffset(getFieldOffset(recordId, dataField));
     }
 
     /**
@@ -460,7 +484,7 @@ public class Storage<T> {
         checkArgument(dataField.dataType() == DataType.Signed40bit, "the field is not Signed40bit, it is %s", dataField.dataType());
         checkArgument(DataType.Signed40bit.contains(value), "expected range is [%s..%s]: %s", DataType.Signed40bit.minValue(), DataType.Signed40bit.maxValue(), value);
 
-        setLongAtOffset(getFieldOffset(recordId, dataField), value);
+        set40BitLongAtOffset(getFieldOffset(recordId, dataField), value);
 
         markChanged(); // after the data is written: whoever sees the new stamp sees the new data
     }
@@ -480,22 +504,22 @@ public class Storage<T> {
             }
             case LatLong24bit -> {
                 final int maxValue = 128 * 256 * 256 - 1;
-                final int intValue = (data[fieldOffset] << 16)
-                        + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 8)
-                        + (Byte.toUnsignedInt(data[fieldOffset + 2]));
+                final int intValue = (data.get(fieldOffset) << 16)
+                        + (Byte.toUnsignedInt(data.get(fieldOffset + 1)) << 8)
+                        + (Byte.toUnsignedInt(data.get(fieldOffset + 2)));
                 return (180.0f * intValue) / maxValue;
             }
             case LatLong16bit -> {
                 final int maxValue = 128 * 256 - 1;
-                final int intValue = (data[fieldOffset] << 8)
-                        + (Byte.toUnsignedInt(data[fieldOffset + 1]));
+                final int intValue = (data.get(fieldOffset) << 8)
+                        + (Byte.toUnsignedInt(data.get(fieldOffset + 1)));
                 return (180.0f * intValue) / maxValue;
             }
             case Tenths8bit -> {
-                return Byte.toUnsignedInt(data[fieldOffset]) / 10.0f;
+                return Byte.toUnsignedInt(data.get(fieldOffset)) / 10.0f;
             }
             case Float16bit -> {
-                return Half.fromBits((Byte.toUnsignedInt(data[fieldOffset]) << 8) + Byte.toUnsignedInt(data[fieldOffset + 1]));
+                return HalfPrecisionFloat.fromBits((Byte.toUnsignedInt(data.get(fieldOffset)) << 8) + Byte.toUnsignedInt(data.get(fieldOffset + 1)));
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
@@ -512,11 +536,11 @@ public class Storage<T> {
         //noinspection SwitchStatementWithTooFewBranches
         switch (dataField.dataType()) {
             case PlainString -> {
-                final int len = data[fieldOffset] & 0xFF;
+                final int len = data.get(fieldOffset) & 0xFF;
                 if (len == 255) {
                     return null;
                 }
-                return new String(data, fieldOffset + 1, len);
+                return data.readString(fieldOffset + 1, len);
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
@@ -543,23 +567,23 @@ public class Storage<T> {
         switch (dataField.dataType()) {
             case Unsigned8bit -> {
                 checkArgument(DataType.Unsigned8bit.contains(value), "expected range is [0..%s]", DataType.Unsigned8bit.maxValue());
-                data[fieldOffset] = (byte) value;
+                data.set(fieldOffset, (byte) value);
             }
             case Unsigned16bit -> {
                 checkArgument(DataType.Unsigned16bit.contains(value), "expected range is [0..%s]", DataType.Unsigned16bit.maxValue());
-                data[fieldOffset] = (byte) (value >> 8);
-                data[fieldOffset + 1] = (byte) value;
+                data.set(fieldOffset, (byte) (value >> 8));
+                data.set(fieldOffset + 1, (byte) value);
             }
             case Unsigned24bit -> {
                 checkArgument(DataType.Unsigned24bit.contains(value), "expected range is [0..%s]", DataType.Unsigned24bit.maxValue());
-                data[fieldOffset] = (byte) (value >> 16);
-                data[fieldOffset + 1] = (byte) (value >> 8);
-                data[fieldOffset + 2] = (byte) value;
+                data.set(fieldOffset, (byte) (value >> 16));
+                data.set(fieldOffset + 1, (byte) (value >> 8));
+                data.set(fieldOffset + 2, (byte) value);
             }
             case Signed16bit -> {
                 checkArgument(DataType.Signed16bit.contains(value), "expected range is [%s..%s]: %s", DataType.Signed16bit.minValue(), DataType.Signed16bit.maxValue(), value);
-                data[fieldOffset] = (byte) (value >> 8);
-                data[fieldOffset + 1] = (byte) value;
+                data.set(fieldOffset, (byte) (value >> 8));
+                data.set(fieldOffset + 1, (byte) value);
             }
             case Signed32bit -> setIntAtOffset(fieldOffset, value); // no need to check if value is within limits
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
@@ -589,27 +613,27 @@ public class Storage<T> {
                 checkArgument(-180 <= value && value <= 180, "Lat/Long Value out of range: " + value);
                 final int maxValue = 128 * 256 * 256 - 1;
                 final int intValue = (int) (value / 180.0 * maxValue);
-                data[fieldOffset] = (byte) (intValue >> 16);
-                data[fieldOffset + 1] = (byte) (intValue >> 8);
-                data[fieldOffset + 2] = (byte) intValue;
+                data.set(fieldOffset, (byte) (intValue >> 16));
+                data.set(fieldOffset + 1, (byte) (intValue >> 8));
+                data.set(fieldOffset + 2, (byte) intValue);
             }
             case LatLong16bit -> {
                 checkArgument(-180 <= value && value <= 180, "Lat/Long Value out of range: " + value);
                 final int maxValue = 128 * 256 - 1;
                 final int intValue = (int) (value / 180.0 * maxValue);
-                data[fieldOffset] = (byte) (intValue >> 8);
-                data[fieldOffset + 1] = (byte) intValue;
+                data.set(fieldOffset, (byte) (intValue >> 8));
+                data.set(fieldOffset + 1, (byte) intValue);
             }
             case Tenths8bit -> {
                 // 3.42 is rounded to 3.4 and is stored as 34, the value out of [0.0 .. 25.5] is an error, it is not cut
                 checkArgument(!Float.isNaN(value) && 0.0f <= value && value <= 25.5f, "Tenths value out of range [0.0 .. 25.5]: " + value);
-                data[fieldOffset] = (byte) Math.round(value * 10.0);
+                data.set(fieldOffset, (byte) Math.round(value * 10.0));
             }
             case Float16bit -> {
                 // the value out of the half float range is an error, the accuracy of the stored value depends on its size
-                final int bits = Half.toBits(value);
-                data[fieldOffset] = (byte) (bits >> 8);
-                data[fieldOffset + 1] = (byte) bits;
+                final int bits = HalfPrecisionFloat.toBits(value);
+                data.set(fieldOffset, (byte) (bits >> 8));
+                data.set(fieldOffset + 1, (byte) bits);
             }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
@@ -629,12 +653,12 @@ public class Storage<T> {
             if (value != null && value.length() > dataField.length()) {
                 throw new IllegalArgumentException("Value is too long, actual length " + value.length() + " while max length is " + dataField.length());
             }
-            Arrays.fill(data, fieldOffset, fieldOffset + dataField.size(), (byte) 0);
+            data.fill(fieldOffset, fieldOffset + dataField.size(), (byte) 0);
             if (value == null) {
-                data[fieldOffset] = (byte) 255;
+                data.set(fieldOffset, (byte) 255);
             } else {
-                data[fieldOffset] = (byte) value.length();
-                System.arraycopy(value.getBytes(), 0, data, fieldOffset + 1, value.length());
+                data.set(fieldOffset, (byte) value.length());
+                data.write(fieldOffset + 1, value.getBytes(), value.length());
             }
             markChanged();
         } else {
@@ -651,28 +675,22 @@ public class Storage<T> {
     }
 
     // five bytes, the first one has the sign (it is a signed byte), the other four are the low 32 bits
-    private long getLongAtOffset(final int fieldOffset) {
-        return ((long) data[fieldOffset] << 32)
+    private long get40BitLongAtOffset(final int fieldOffset) {
+        return ((long) data.get(fieldOffset) << 32)
                 + (Integer.toUnsignedLong(getIntAtOffset(fieldOffset + 1)));
     }
 
-    private void setLongAtOffset(final int fieldOffset, final long value) {
-        data[fieldOffset] = (byte) (value >> 32);
+    private void set40BitLongAtOffset(final int fieldOffset, final long value) {
+        data.set(fieldOffset, (byte) (value >> 32));
         setIntAtOffset(fieldOffset + 1, (int) value);
     }
 
     private int getIntAtOffset(final int fieldOffset) {
-        return (data[fieldOffset] << 24)
-                + (Byte.toUnsignedInt(data[fieldOffset + 1]) << 16)
-                + (Byte.toUnsignedInt(data[fieldOffset + 2]) << 8)
-                + (Byte.toUnsignedInt(data[fieldOffset + 3]));
+        return data.getInt(fieldOffset);
     }
 
     private void setIntAtOffset(final int fieldOffset, final int value) {
-        data[fieldOffset] = (byte) (value >> 24);
-        data[fieldOffset + 1] = (byte) (value >> 16);
-        data[fieldOffset + 2] = (byte) (value >> 8);
-        data[fieldOffset + 3] = (byte) value;
+        data.setInt(fieldOffset, value);
     }
 
     private void checkDataFieldIsInStorage(final DataField dataField) {
@@ -704,7 +722,7 @@ public class Storage<T> {
     }
 
     private boolean isDeleted(final int recordId) {
-        final int recordHeader = data[getRecordHeaderOffset(recordId)];
+        final int recordHeader = data.get(getRecordHeaderOffset(recordId));
         return recordHeader == RECORD_EMPTY_OR_DELETED;
     }
 
@@ -718,6 +736,9 @@ public class Storage<T> {
         private LongSupplier clock = System::currentTimeMillis;
         private int heartbeatIndexFieldIndex = -1;
         private int growthStep = 1;
+        private boolean growthStepIsSet = false;
+        // zero means one array
+        private int pageSizeBytes = 0;
 
         private Builder() {
         }
@@ -760,6 +781,25 @@ public class Storage<T> {
         public Builder<T> growthStep(final int records) {
             checkArgument(records >= 1, "growth step should be positive");
             this.growthStep = records;
+            this.growthStepIsSet = true;
+            return this;
+        }
+
+        /**
+         * The bytes of the storage are the pages of the default size ({@link Storage#DEFAULT_PAGE_SIZE_BYTES}), not one array, see {@link #paged(int)}.
+         */
+        public Builder<T> paged() {
+            return paged(DEFAULT_PAGE_SIZE_BYTES);
+        }
+
+        /**
+         * The bytes of the storage are the pages of this size in bytes, not one array: a new record which does not fit adds a page, nothing is copied, and the loading and the
+         * saving go page by page. A page holds a whole number of records, so it has to be not smaller than a record. For a big storage which gets new records all the time.
+         * The file is the same as of a storage which is one array (the default). It does not go with {@link #growthStep(int)}, which is for the one array.
+         */
+        public Builder<T> paged(final int pageSizeBytes) {
+            checkArgument(pageSizeBytes >= 1, "page size should be positive");
+            this.pageSizeBytes = pageSizeBytes;
             return this;
         }
 
@@ -789,8 +829,9 @@ public class Storage<T> {
             if (dataFields.isEmpty()) {
                 throw new IllegalStateException("dataFields not set");
             }
+            checkState(!(growthStepIsSet && pageSizeBytes > 0), "the growth step is for the storage which is one array, it does not go with paged");
             return new Storage<>(name, instantiator, idDataType, dataFields.toArray(new DataField[0]),
-                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock, heartbeatIndexFieldIndex, growthStep);
+                    deletedRecordQuarantineMillis, deletedRecordQuarantineIsExplicit, clock, heartbeatIndexFieldIndex, growthStep, pageSizeBytes);
         }
     }
 

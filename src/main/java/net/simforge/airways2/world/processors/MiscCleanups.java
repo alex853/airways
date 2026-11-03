@@ -28,7 +28,6 @@ public class MiscCleanups {
         final Collection<EventLog.Event> outdated = storage.allOlderThan(world.getWorldTime() - 7 * Time.ONE_DAY).toList();
         outdated.forEach(f -> storage.deleteById(f.getId()));
         log.info("event log cleaned up - {} removed", outdated.size());
-        storage.printDeletedRecordInfo();
     }
 
     private static void cleanupEventsToProcess(final World world) {
@@ -36,6 +35,5 @@ public class MiscCleanups {
         Collection<EventsToProcess.Event> outdated = storage.processedOlderThan(world.getWorldTime() - 7 * Time.ONE_DAY).toList();
         outdated.forEach(f -> storage.deleteById(f.getId()));
         log.info("events-to-process cleaned up - {} removed", outdated.size());
-        storage.printDeletedRecordInfo();
     }
 }

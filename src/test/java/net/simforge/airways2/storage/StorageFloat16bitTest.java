@@ -122,16 +122,16 @@ class StorageFloat16bitTest {
     @Test
     public void test_bits_of_known_values() {
         // 1.0 is 0x3C00, -2.0 is 0xC000, 65504 is 0x7BFF, the smallest normal number 2^-14 is 0x0400, the smallest subnormal one is 0x0001
-        assertEquals(0x3C00, Half.toBits(1.0f));
-        assertEquals(0xC000, Half.toBits(-2.0f));
-        assertEquals(0x7BFF, Half.toBits(65504.0f));
-        assertEquals(0x0400, Half.toBits((float) Math.pow(2, -14)));
-        assertEquals(0x0001, Half.toBits((float) Math.pow(2, -24)));
-        assertEquals(0x0000, Half.toBits(0.0f));
-        assertEquals(0x8000, Half.toBits(-0.0f));
-        assertEquals(1.0f, Half.fromBits(0x3C00), 0.0f);
-        assertEquals(-2.0f, Half.fromBits(0xC000), 0.0f);
-        assertEquals(65504.0f, Half.fromBits(0x7BFF), 0.0f);
+        assertEquals(0x3C00, HalfPrecisionFloat.toBits(1.0f));
+        assertEquals(0xC000, HalfPrecisionFloat.toBits(-2.0f));
+        assertEquals(0x7BFF, HalfPrecisionFloat.toBits(65504.0f));
+        assertEquals(0x0400, HalfPrecisionFloat.toBits((float) Math.pow(2, -14)));
+        assertEquals(0x0001, HalfPrecisionFloat.toBits((float) Math.pow(2, -24)));
+        assertEquals(0x0000, HalfPrecisionFloat.toBits(0.0f));
+        assertEquals(0x8000, HalfPrecisionFloat.toBits(-0.0f));
+        assertEquals(1.0f, HalfPrecisionFloat.fromBits(0x3C00), 0.0f);
+        assertEquals(-2.0f, HalfPrecisionFloat.fromBits(0xC000), 0.0f);
+        assertEquals(65504.0f, HalfPrecisionFloat.fromBits(0x7BFF), 0.0f);
     }
 
     @Test
@@ -141,8 +141,8 @@ class StorageFloat16bitTest {
             if (exponent == 31) {
                 continue; // infinity and NaN, they are not stored
             }
-            final float value = Half.fromBits(bits);
-            final int back = Half.toBits(value);
+            final float value = HalfPrecisionFloat.fromBits(bits);
+            final int back = HalfPrecisionFloat.toBits(value);
             // minus zero and zero are two codes of the same number, everything else must be the same code
             if (value == 0.0f) {
                 assertEquals(bits & 0x8000, back, "bits " + bits);

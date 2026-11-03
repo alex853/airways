@@ -72,10 +72,6 @@ public class EventsToProcess {
         storage.deleteRecord(id);
     }
 
-    public void printDeletedRecordInfo() {
-        storage.printDeletedRecordInfo();
-    }
-
     public class Event {
         private final int id;
 
