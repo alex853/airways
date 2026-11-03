@@ -1029,7 +1029,6 @@ public class FlightDashboardController {
         checkArgument(actionAllowed, "'" + actionName + "' should be allowed");
     }
 
-    @Deprecated
     private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
@@ -1077,7 +1076,6 @@ public class FlightDashboardController {
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null);
     }
 
-    @Deprecated
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight, final World world) {
         return switch (flight.getStatus()) {
             case Dispatched -> FlightMissions.Status.Preflight.name() + " at " + TimeTools.hhmmOrNull(FlightMissionHelper.calcPreflightStartTime(world, flight));
@@ -1090,7 +1088,6 @@ public class FlightDashboardController {
         };
     }
 
-    @Deprecated
     private String getFlightMissionShownElements(final FlightMissions.Mission flight, final TransportFlights.Flight transportFlight, final World world) {
         return switch (flight.getStatus()) {
             case Dispatched -> (FlightMissionHelper.calcPreflightStartTime(world, flight) <= world.getWorldTime()) ? "start" : "start-early-with-caution";
@@ -1103,7 +1100,6 @@ public class FlightDashboardController {
         };
     }
 
-    @Deprecated
     private String getNextPlannedTransportFlightStatus(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight, World world) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> TransportFlights.Status.CheckIn.name() + " at " + TimeTools.hhmmOrNull(TransportFlightHelper.calcCheckinStartTime(flight));
@@ -1120,7 +1116,6 @@ public class FlightDashboardController {
         };
     }
 
-    @Deprecated
     private String getTransportFlightShownElements(final TransportFlights.Flight transportFlight, final FlightMissions.Mission flight) {
         return switch (transportFlight.getStatus()) {
             case Scheduled -> "sold";
@@ -1195,7 +1190,6 @@ public class FlightDashboardController {
 
     @Data
     @AllArgsConstructor
-    @Deprecated
     public static class MyFlightsDto {
         private AircraftDto aircraft;
         private FlightDto flight;
