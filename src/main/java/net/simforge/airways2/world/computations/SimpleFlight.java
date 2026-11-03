@@ -85,6 +85,89 @@ public class SimpleFlight {
         return result;
     }
 
+    /**
+     * The flight from a point in the air (or on the ground) to the target: how long it takes from where the aircraft is now, at the altitude it is at now. The same
+     * profile as forRoute but it starts in the middle: the speed depends on the altitude and grows linearly with it, from the speed of the takeoff on the ground to the
+     * typical cruise speed at the typical cruise altitude (it is how the climb of forRoute goes, the climb rate is constant). Then:
+     * <ul>
+     * <li>if the aircraft is below the altitude which a flight of this length reaches (the cruise altitude of forRoute), it climbs to it first;</li>
+     * <li>the cruise at that altitude;</li>
+     * <li>the descent from that altitude to the landing speed, at the descent rate of the type.</li>
+     * </ul>
+     * When the target is too close for the whole profile the aircraft does not climb, and when it is closer than the descent from the current altitude needs, it is one
+     * descent at the average speed of it. The result is for the times and the distances only: getAircraftPosition is of the flights which start on the ground.
+     *
+     * @param altitudeFeet the altitude of the aircraft now, 0 on the ground
+     */
+    public static SimpleFlight fromPosition(final Geo.Coords from, final double altitudeFeet, final Geo.Coords to, final AircraftPerformanceData performanceData) {
+        final SimpleFlight result = new SimpleFlight();
+        result.fromCoords = from;
+        result.toCoords = to;
+        result.performanceData = performanceData;
+        result.totalDistance = Geo.distance(from, to);
+
+        final double D = Geo.nmToKm(result.totalDistance);
+        final double altTypical = performanceData.getTypicalCruiseAltitude();
+        final double vCruiseTypical = Geo.nmToKm(performanceData.getTypicalCruiseSpeed());
+        final double vsClimb = performanceData.getClimbVerticalSpeed();
+        final double vsDescent = performanceData.getDescentVerticalSpeed();
+        final double vTakeoff = Geo.nmToKm(performanceData.getTakeoffSpeed());
+        final double vLanding = Geo.nmToKm(performanceData.getLandingSpeed());
+
+        final double altNow = Math.max(0, Math.min(altitudeFeet, altTypical));
+        final double vNow = speedAt(altNow, altTypical, vTakeoff, vCruiseTypical);
+
+        // the altitude which a flight of this length gets to
+        final double altPlanned = Math.max(altNow, forRoute(from, to, performanceData).getCruiseAltitude());
+        final double vPlanned = speedAt(altPlanned, altTypical, vTakeoff, vCruiseTypical);
+
+        double altCruise = altPlanned;
+        double vCruise = vPlanned;
+        double tClimb = (altCruise - altNow) / vsClimb / 60.0;
+        double dClimb = (vNow + vCruise) / 2 * tClimb;
+        double tDescent = altCruise / vsDescent / 60.0;
+        double dDescent = (vCruise + vLanding) / 2 * tDescent;
+
+        if (dClimb + dDescent > D) {
+            // no room for the climb: the cruise at the altitude of now
+            altCruise = altNow;
+            vCruise = vNow;
+            tClimb = 0;
+            dClimb = 0;
+            tDescent = altCruise / vsDescent / 60.0;
+            dDescent = (vCruise + vLanding) / 2 * tDescent;
+        }
+
+        final double tCruise;
+        final double dCruise;
+        if (dDescent > D) {
+            // closer than the descent needs: one descent, the average speed of it
+            dCruise = 0;
+            tCruise = 0;
+            tDescent = D / ((vCruise + vLanding) / 2);
+            dDescent = D;
+        } else {
+            dCruise = D - dClimb - dDescent;
+            tCruise = dCruise / vCruise;
+        }
+
+        result.totalTime = toDuration(tClimb + tCruise + tDescent);
+        result.climbDistance = Geo.kmToNm(dClimb);
+        result.climbTime = toDuration(tClimb);
+        result.cruiseDistance = Geo.kmToNm(dCruise);
+        result.cruiseTime = toDuration(tCruise);
+        result.cruiseAltitude = altCruise;
+        result.cruiseSpeed = Geo.kmToNm(vCruise);
+        result.descentDistance = Geo.kmToNm(dDescent);
+        result.descentTime = toDuration(tDescent);
+        return result;
+    }
+
+    // the speed (km/h) at the altitude: from the speed of the takeoff on the ground to the typical cruise speed at the typical cruise altitude, linearly
+    private static double speedAt(final double altitude, final double typicalAltitude, final double takeoffSpeed, final double typicalCruiseSpeed) {
+        return takeoffSpeed + (typicalCruiseSpeed - takeoffSpeed) * Math.min(1.0, altitude / typicalAltitude);
+    }
+
     private static void calc25PercentCase(SimpleFlight result, AircraftPerformanceData performanceData) {
         double D = Geo.nmToKm(result.totalDistance);
 

@@ -434,6 +434,20 @@ public class JourneyControl {
         FlightStats.event("journey - reset journey forcefully");
     }
 
+    /**
+     * The connection of a journey with two flights is lost (one of the flights has been moved): the second flight is released (its seats and its part of the income), the journey
+     * goes on with the first flight only and, when it lands, looks for tickets from where it is (toCityNotReached). It is easier than to take the journey off the first flight:
+     * the airport of the connection is closer to the destination than the city of the departure.
+     */
+    public void dropSecondFlight(final Journeys.Journey journey, final String reason) {
+        checkNotNull(journey);
+        checkArgument(journey.getTransportFlight2Id() != 0);
+
+        log.info("j/y #{} - the second flight t/f #{} is released, {}", journey.getId(), journey.getTransportFlight2Id(), reason);
+        FlightStats.event("journey - second flight released");
+        releaseTransportFlight2Tickets(journey);
+    }
+
     private void releaseTransportFlight2Tickets(Journeys.Journey journey) {
         if (journey.getTransportFlight2Id() == 0) {
             return;

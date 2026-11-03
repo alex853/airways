@@ -113,9 +113,9 @@ public class FlightTimeline {
             if (curr.previousStage != null) {
                 LocalDateTime previousActualTime = curr.previousStage.from.actualTime;
                 if (previousActualTime != null) {
-                    curr.estimatedTime = previousActualTime.plus(curr.previousStage.scheduledDuration);
+                    curr.estimatedTime = previousActualTime.plus(curr.previousStage.estimatedOrScheduledDuration());
                 } else {
-                    curr.estimatedTime = curr.previousStage.from.estimatedTime.plus(curr.previousStage.scheduledDuration);
+                    curr.estimatedTime = curr.previousStage.from.estimatedTime.plus(curr.previousStage.estimatedOrScheduledDuration());
                 }
             } else {
                 curr.estimatedTime = curr.scheduledTime;
@@ -194,6 +194,24 @@ public class FlightTimeline {
             updateEstimatedTimes();
         }
 
+        /**
+         * Sets the estimated time of the milestone when it is known better than the plan says (a flight in the air counted from the position of the aircraft): the stage before
+         * the milestone gets an estimated duration, the time from the previous milestone (its actual time, or its estimate) to this one, and the estimates of the milestones
+         * after it follow. The estimated duration stays on the stage, so the estimates are kept when an actual time is set later.
+         */
+        public void setEstimatedTime(final LocalDateTime estimatedTime) {
+            if (previousStage == null) {
+                throw new IllegalStateException("The milestone " + type + " has no stage before it, its estimate comes from the schedule");
+            }
+            final Milestone from = previousStage.from;
+            final Duration duration = Duration.between(from.actualTime != null ? from.actualTime : from.estimatedTime, estimatedTime);
+            checkArgument(!duration.isNegative(), "The estimate " + estimatedTime + " of " + type + " is earlier than the time of " + from.type);
+
+            previousStage.estimatedDuration = duration;
+
+            updateEstimatedTimes();
+        }
+
         @Override
         public String toString() {
             return "Milestone{" +
@@ -229,6 +247,8 @@ public class FlightTimeline {
         private Milestone from;
         private Milestone to;
         private Duration scheduledDuration;
+        // the duration which is expected when it is known better than the plan (see Milestone.setEstimatedTime), null when there is none
+        private Duration estimatedDuration;
 
         private Stage(Milestone from, Milestone to, Duration scheduledDuration) {
             this.from = from;
@@ -237,6 +257,10 @@ public class FlightTimeline {
 
             from.nextStage = this;
             to.previousStage = this;
+        }
+
+        private Duration estimatedOrScheduledDuration() {
+            return estimatedDuration != null ? estimatedDuration : scheduledDuration;
         }
 
         @Override

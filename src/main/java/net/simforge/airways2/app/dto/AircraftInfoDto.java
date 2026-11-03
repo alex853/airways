@@ -40,7 +40,7 @@ public class AircraftInfoDto {
 
     public static AircraftInfoDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
-        Optional<FlightTimeline> timeline = fm.map(FlightMissionToTimeline::byMission);
+        Optional<FlightTimeline> timeline = fm.map(f -> FlightMissionToTimeline.byMissionAndAircraftPosition(world, f));
         Optional< TransportFlights.Flight> tf = fm.flatMap(f -> world.transportFlights().byFlightMissionId(f.getId()));
 
         return new AircraftInfoDto(

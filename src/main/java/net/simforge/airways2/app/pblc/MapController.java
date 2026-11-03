@@ -206,7 +206,7 @@ public class MapController {
         final int otherAirportId = "out".equals(direction) ? fm.getDestinationAirportId() : fm.getDepartureAirportId();
 
         final LocalDateTime eta = "Flying".equals(status)
-                ? FlightMissionToTimeline.byMission(fm).getBlocksOn().getEstimatedTime()
+                ? FlightMissionToTimeline.byMissionAndAircraftPosition(world, fm).getBlocksOn().getEstimatedTime()
                 : null;
 
         return new AirportFlightDto(

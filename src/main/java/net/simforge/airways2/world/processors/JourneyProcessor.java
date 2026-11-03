@@ -26,7 +26,7 @@ public class JourneyProcessor {
     // is tracked via VATSIM is only an estimate, the longer the flight stands at the gate the more journeys find it. A journey checks in in the statuses CheckIn, WaitingForBoarding
     // and Boarding (flightStatusAllowsToCheckIn).
     // the time between the arrival of the first flight of a stopover route and the departure of the second one
-    private static final int STOPOVER_CONNECTION_RESERVE = 4 * Time.ONE_HOUR;
+    static final int STOPOVER_CONNECTION_RESERVE = 4 * Time.ONE_HOUR;
 
     public static void process(final World world) {
         // the index of the flights lives for this world step only: the flights do not appear and do not change their status while the journeys are processed

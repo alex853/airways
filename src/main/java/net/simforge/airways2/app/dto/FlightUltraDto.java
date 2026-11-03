@@ -73,7 +73,7 @@ public class FlightUltraDto {
             World world,
             FlightMissions.Mission fm,
             boolean encodeIds) {
-        FlightTimeline timeline = FlightMissionToTimeline.byMission(fm);
+        FlightTimeline timeline = FlightMissionToTimeline.byMissionAndAircraftPosition(world, fm);
         TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(fm.getId()).orElse(null);
         ScheduledFlights.Flight sf = tf != null ? world.scheduledFlights().byId(tf.getScheduledFlightId()).orElse(null) : null;
         Aircrafts.Aircraft ac = world.aircrafts().byId(fm.getAircraftId()).orElse(null);

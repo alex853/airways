@@ -11,6 +11,7 @@ import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.SimTracker;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.AircraftOperators;
 import net.simforge.airways2.world.datamodel.Aircrafts;
@@ -21,6 +22,8 @@ import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotContracts;
 import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.processors.OperatorPay;
+import net.simforge.airways2.world.processors.RosterForecast;
+import net.simforge.airways2.world.processors.ScheduleWarnings;
 import net.simforge.airways2.world.computations.PilotPayRates;
 import net.simforge.airways2.world.computations.PilotPayParams;
 import net.simforge.airways2.world.datamodel.TransportFlights;
@@ -36,8 +39,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -63,7 +68,10 @@ public class FlightDashboardController {
                     .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                     .toList();
 
-            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f)).toList());
+            // what the roster is going to be like: the expected times, the divert, the conflicts with the flights before (the dashboard tells the same, ScheduleWarnings)
+            final Map<Integer, RosterForecast.Entry> forecast = RosterForecast.of(world, userId).stream()
+                    .collect(Collectors.toMap(entry -> entry.mission().getId(), entry -> entry));
+            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f, forecast.get(f.getId()))).toList());
         });
     }
 
@@ -100,7 +108,8 @@ public class FlightDashboardController {
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     flight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null),
-                    buildPilotDto(world, userId, verdictSim));
+                    buildPilotDto(world, userId, verdictSim),
+                    ScheduleWarnings.of(world, fm).map(warning -> toScheduleWarningDto(world, warning)).orElse(null));
         });
     }
 
@@ -1021,7 +1030,7 @@ public class FlightDashboardController {
     }
 
     @Deprecated
-    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight) {
+    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -1065,7 +1074,7 @@ public class FlightDashboardController {
                 world.transportFlightControl().getIncome(transportFlight)
         ) : null;
 
-        return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto);
+        return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null);
     }
 
     @Deprecated
@@ -1191,6 +1200,63 @@ public class FlightDashboardController {
         private AircraftDto aircraft;
         private FlightDto flight;
         private TransportFlightDto transportFlight;
+        // the expected times, the divert and the conflict of the flight; null for a flight which has none of them (and for a flight which is over)
+        private ForecastDto forecast;
+    }
+
+    // the expected time is told when it is 5 minutes or more from the planned one: less than that is not a delay, the estimates move by themselves
+    private static final int FORECAST_SHOWN_FROM_SECONDS = 5 * Time.ONE_MINUTE;
+
+    /**
+     * What the roster is going to be like for the flight. The times are UTC milliseconds, null when the expected time is the planned one. conflict: see RosterForecast.
+     */
+    @AllArgsConstructor
+    @Data
+    public static class ForecastDto {
+        private final Long expDep;
+        private final Long expArr;
+        // the arrival is the earliest time, a diverted flight can arrive later
+        private final boolean arrNotBefore;
+        // the airport of the divert (ICAO) of a flight which is diverted with passengers on board
+        private final String divertTo;
+        private final ConflictDto conflict;
+    }
+
+    /**
+     * level: "red" (the flight before it is as it is: late, diverted) or "yellow" (it appears only after the flights before it are moved); shortfallMinutes: how many minutes
+     * short of the gap between the flights; causeRoute: the flight before it; estimate: the time of its arrival is an estimate (a divert); suggestedDep: the earliest departure
+     * without the conflict.
+     */
+    @AllArgsConstructor
+    @Data
+    public static class ConflictDto {
+        private final String level;
+        private final int shortfallMinutes;
+        private final String causeRoute;
+        private final boolean estimate;
+        private final long suggestedDep;
+    }
+
+    private static ForecastDto toForecastDto(final World world, final RosterForecast.Entry entry) {
+        final FlightMissions.Mission mission = entry.mission();
+        final boolean departureMoved = Math.abs(entry.expectedDeparture() - mission.getPlannedDepartureWorldTime()) >= FORECAST_SHOWN_FROM_SECONDS;
+        final boolean arrivalMoved = Math.abs(entry.expectedArrival() - mission.getPlannedArrivalWorldTime()) >= FORECAST_SHOWN_FROM_SECONDS;
+        final RosterForecast.Conflict conflict = entry.conflict();
+        final String divertTo = entry.divertReminder() && entry.divertAirport() != null ? entry.divertAirport().getIcao() : null;
+        if (!departureMoved && !arrivalMoved && !entry.arrivalNotBefore() && divertTo == null && conflict == null) {
+            return null;
+        }
+        return new ForecastDto(
+                departureMoved ? entry.expectedDeparture() * 1000L : null,
+                arrivalMoved || entry.arrivalNotBefore() ? entry.expectedArrival() * 1000L : null,
+                entry.arrivalNotBefore(),
+                divertTo,
+                conflict == null ? null : new ConflictDto(
+                        conflict.level().name().toLowerCase(),
+                        conflict.shortfallMinutes(),
+                        FlightMissionHelper.formatRoute(world, conflict.cause().getId()),
+                        conflict.estimate(),
+                        conflict.suggestedDeparture() * 1000L));
     }
 
     @AllArgsConstructor
@@ -1205,6 +1271,37 @@ public class FlightDashboardController {
         private final VatsimStatusDto vatsim;
         private final FlightUltraDto flight;
         private final UserLocationDto pilot;
+        // What the flight does to the next flights of the pilot (late, or diverted with passengers); null when there is nothing to tell
+        private final ScheduleWarningDto scheduleWarning;
+    }
+
+    /**
+     * kind: "late" (the flight is late so that the next flight of the pilot cannot start by its plan, conflict is always true) or "divert" (the passengers are expected at the
+     * destination all the same; conflict tells whether the next flight is in conflict for sure). The times are HH:MM, with the days from today when it is not today.
+     */
+    @AllArgsConstructor
+    @Data
+    public static class ScheduleWarningDto {
+        private final String kind;
+        private final boolean conflict;
+        private final String destinationIcao;
+        // the estimated blocks on (late), the earliest blocks on at the destination (divert)
+        private final String blocksOn;
+        private final String nextFlightRoute;
+        private final String nextFlightDeparture;
+        private final int shortfallMinutes;
+    }
+
+    private static ScheduleWarningDto toScheduleWarningDto(final World world, final ScheduleWarnings.Warning warning) {
+        final FlightMissions.Mission next = warning.nextFlight();
+        return new ScheduleWarningDto(
+                warning.kind().name().toLowerCase(),
+                warning.conflict(),
+                warning.destination() != null ? warning.destination().getIcao() : null,
+                TimeTools.hhmmPlusDaysOrNull(warning.earliestBlocksOn()),
+                next != null ? FlightMissionHelper.formatRoute(world, next.getId()) : null,
+                next != null ? TimeTools.hhmmPlusDaysOrNull(next.getPlannedDepartureWorldTime()) : null,
+                warning.shortfallMinutes());
     }
 
     @AllArgsConstructor

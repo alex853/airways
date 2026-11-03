@@ -279,4 +279,53 @@ class FlightTimelineTest {
                 timeline.getFinish()
         };
     }
+
+    // ---- the estimate which is known better than the plan
+
+    @Test
+    public void test__estimated_time_set_from_outside__the_following_milestones_follow_it_and_the_schedule_stays() {
+        final FlightTimeline timeline = scheduled();
+        timeline.getBlocksOff().setActualTime(at(12, 5));
+        timeline.getTakeoff().setActualTime(at(12, 15));
+
+        timeline.getLanding().setEstimatedTime(at(15, 30));
+
+        assertEquals(at(15, 30), timeline.getLanding().getEstimatedTime());
+        assertEquals(at(15, 40), timeline.getBlocksOn().getEstimatedTime());
+        assertEquals(at(16, 0), timeline.getFinish().getEstimatedTime());
+        assertEquals(at(14, 50), timeline.getLanding().getScheduledTime());
+    }
+
+    @Test
+    public void test__estimated_time_set_from_outside__is_kept_when_the_actual_time_of_the_previous_milestone_comes_later() {
+        final FlightTimeline timeline = scheduled();
+        timeline.getTakeoff().setActualTime(at(12, 15));
+        timeline.getLanding().setEstimatedTime(at(15, 30));
+
+        // the estimated flying time is 3 hours 15 minutes, a takeoff which is 5 minutes later moves the landing by 5 minutes
+        timeline.getTakeoff().setActualTime(at(12, 20));
+
+        assertEquals(at(15, 35), timeline.getLanding().getEstimatedTime());
+    }
+
+    @Test
+    public void test__estimated_time_set_from_outside__is_not_used_after_the_actual_time_of_the_milestone() {
+        final FlightTimeline timeline = scheduled();
+        timeline.getTakeoff().setActualTime(at(12, 15));
+        timeline.getLanding().setEstimatedTime(at(15, 30));
+
+        timeline.getLanding().setActualTime(at(15, 5));
+
+        // the estimates after the landing go from the actual landing
+        assertEquals(at(15, 15), timeline.getBlocksOn().getEstimatedTime());
+    }
+
+    @Test
+    public void test__estimated_time_set_from_outside__can_not_be_earlier_than_the_previous_milestone_and_the_start_has_no_stage_before() {
+        final FlightTimeline timeline = scheduled();
+        timeline.getTakeoff().setActualTime(at(12, 15));
+
+        assertThrows(IllegalArgumentException.class, () -> timeline.getLanding().setEstimatedTime(at(12, 0)));
+        assertThrows(IllegalStateException.class, () -> timeline.getStart().setEstimatedTime(at(11, 0)));
+    }
 }

@@ -20,7 +20,7 @@ public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
     public static final int RESCHEDULE_SHIFT_STEP_MINUTES = 5;
-    public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 12 * 60;
+    public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 48 * 60;
     // boarding takes 10 mins and ends 10 mins before departure
     public static final int RESCHEDULE_MIN_DEPARTURE_RESERVE = 20 * Time.ONE_MINUTE;
 
@@ -390,6 +390,15 @@ public class FlightMissionControl {
         // back to the departure city. It is covered by FlightWorkflowTest (cancellation and disconnect tests).
     }
 
+    // The transport flight states in which the flight may be moved: all of them before the departure. Nothing in them waits for the planned time but the states before
+    // the boarding (the check-in starts and ends by it); the passengers who are checked in or on board stay where they are, see reschedule.
+    private static final Set<TransportFlights.Status> RESCHEDULE_TRANSPORT_FLIGHT_STATUSES = EnumSet.of(
+            TransportFlights.Status.Scheduled,
+            TransportFlights.Status.CheckIn,
+            TransportFlights.Status.WaitingForBoarding,
+            TransportFlights.Status.Boarding,
+            TransportFlights.Status.WaitingForDeparture);
+
     // Checks are shared between sim tracker 'reschedule' action and the reschedule itself, order matters for UI
     public Map<String, Boolean> rescheduleChecks(final FlightMissions.Mission mission) {
         final Optional<TransportFlights.Flight> transportFlight = world.transportFlights().byFlightMissionId(mission.getId());
@@ -399,21 +408,32 @@ public class FlightMissionControl {
                 mission.getStatus() == FlightMissions.Status.Dispatched
                         || mission.getStatus() == FlightMissions.Status.Preflight);
         checks.put("transport-flight-status-check", transportFlight
-                .map(tf -> tf.getStatus() == TransportFlights.Status.Scheduled
-                        || tf.getStatus() == TransportFlights.Status.CheckIn)
+                .map(tf -> RESCHEDULE_TRANSPORT_FLIGHT_STATUSES.contains(tf.getStatus()))
                 .orElse(true));
+        // the event of the pilot on duty of an AI flight stays at the old time, the flights of the users start by the pilot
+        checks.put("user-flight-check", mission.getCharacterMode() == FlightMissions.CharacterMode.PC && isUserFlight(mission));
         checks.put("not-scheduled-flight-check", transportFlight
                 .map(tf -> tf.getScheduledFlightId() == 0)
-                .orElse(true));
-        checks.put("no-two-leg-journeys-check", transportFlight
-                .map(tf -> world.journeys()
-                        .filter(world.journeys().byAnyTransportFlightId(tf.getId()))
-                        .noneMatch(j -> j.getTransportFlight2Id() != 0))
                 .orElse(true));
         return checks;
     }
 
-    public void reschedule(final FlightMissions.Mission mission, final int shiftMinutes) {
+    /**
+     * Moves the flight in time by the shift (minutes, later or earlier): the planned departure and arrival, and with them everything that is counted from them.
+     * <p>
+     * What happens to the transport flight depends on its state (the passengers stay with the flight in all of them, none is lost or returned):
+     * <ul>
+     * <li>Scheduled: the check-in starts at the new time, the journeys which wait for it are called again at the new check-in window.</li>
+     * <li>CheckIn: stays in check-in, the window ends at the new time; the journeys which have checked in stay checked in, the others are called again.</li>
+     * <li>WaitingForBoarding, Boarding, WaitingForDeparture: nothing is moved back (the check-in is not reopened, the passengers who are checked in or on board wait); they
+     * go on by the boarding, which does not depend on the planned time of a flight of a user. Only the planned times change.</li>
+     * </ul>
+     * The journeys with two flights which lose the connection by the move lose the second flight (JourneyControl.dropSecondFlight), they stay on the first one.
+     * The flights of the pilot which this one now overlaps are not moved here, they are the result (the gap of the pilot between two flights is ShadowJetBooking.MIN_GAP_SECONDS).
+     *
+     * @return the other flights of the pilot which are too close to the moved flight now, from the earliest, empty if there are none
+     */
+    public List<FlightMissions.Mission> reschedule(final FlightMissions.Mission mission, final int shiftMinutes) {
         rescheduleChecks(mission).forEach((name, result) -> checkArgument(result, "reschedule - " + name + " failed"));
         checkArgument(shiftMinutes != 0, "reschedule - shift should not be zero");
         checkArgument(shiftMinutes % RESCHEDULE_SHIFT_STEP_MINUTES == 0, "reschedule - shift should be a multiple of " + RESCHEDULE_SHIFT_STEP_MINUTES + " minutes");
@@ -443,17 +463,74 @@ public class FlightMissionControl {
                     ? Math.max(worldTime, checkinStartTime)
                     : worldTime);
 
-            final int pingFrom = Math.max(worldTime, checkinStartTime);
-            final int pingTo = Math.max(pingFrom, checkinEndTime);
-            final List<String> pingedJourneyIds = world.journeys()
-                    .filter(world.journeys().byTransportFlight1IdAndStatus(tf.getId(), Journeys.Status.WaitingForCheckIn))
-                    .peek(j -> j.setHeartbeatTime(Tools.random(pingFrom, pingTo)))
-                    .map(j -> "j/y #" + j.getId())
-                    .toList();
-
-            log.info("f/m #{}, t/f #{} - rescheduled, t/f heartbeat {}, pinged j/y {}", mission.getId(), tf.getId(),
-                    Time.toLdt(tf.getHeartbeatTime()), pingedJourneyIds);
+            // The journeys are called again only while the check-in window is the thing which moves them (Scheduled, CheckIn). From the boarding on the journeys wait for
+            // the flight and not for the time, a call of all of them at once would only make them check in in one minute.
+            if (tf.getStatus() == TransportFlights.Status.Scheduled || tf.getStatus() == TransportFlights.Status.CheckIn) {
+                final int pingFrom = Math.max(worldTime, checkinStartTime);
+                final int pingTo = Math.max(pingFrom, checkinEndTime);
+                final List<String> pingedJourneyIds = world.journeys()
+                        .filter(world.journeys().byTransportFlight1IdAndStatus(tf.getId(), Journeys.Status.WaitingForCheckIn))
+                        .peek(j -> j.setHeartbeatTime(Tools.random(pingFrom, pingTo)))
+                        .map(j -> "j/y #" + j.getId())
+                        .toList();
+                log.info("f/m #{}, t/f #{} - rescheduled, t/f {}, heartbeat {}, pinged j/y {}", mission.getId(), tf.getId(), tf.getStatus(),
+                        Time.toLdt(tf.getHeartbeatTime()), pingedJourneyIds);
+            } else {
+                log.info("f/m #{}, t/f #{} - rescheduled, t/f {}, the passengers wait where they are", mission.getId(), tf.getId(), tf.getStatus());
+            }
         });
+
+        world.transportFlights().byFlightMissionId(mission.getId()).ifPresent(tf -> releaseLostConnections(tf, mission));
+
+        final List<FlightMissions.Mission> conflicts = rosterConflicts(mission);
+        if (!conflicts.isEmpty()) {
+            log.warn("f/m #{} - rescheduled, too close to the other flights of the pilot {}", mission.getId(),
+                    conflicts.stream().map(m -> "f/m #" + m.getId()).toList());
+        }
+        return conflicts;
+    }
+
+    // A journey with two flights keeps the connection only if the second flight departs later than the first one arrives plus the reserve of the connection (the same rule as
+    // the search of the stopover routes, JourneyProcessor.STOPOVER_CONNECTION_RESERVE). A journey which has lost it stays on the first flight and loses the second one.
+    private void releaseLostConnections(final TransportFlights.Flight movedFlight, final FlightMissions.Mission movedMission) {
+        final List<Journeys.Journey> twoFlightJourneys = world.journeys()
+                .filter(world.journeys().byAnyTransportFlightId(movedFlight.getId()))
+                .filter(j -> j.getTransportFlight2Id() != 0)
+                .toList();
+
+        for (final Journeys.Journey journey : twoFlightJourneys) {
+            final boolean movedIsFirst = journey.getTransportFlight1Id() == movedFlight.getId();
+            final Optional<FlightMissions.Mission> first = movedIsFirst ? Optional.of(movedMission) : missionOfFlight(journey.getTransportFlight1Id());
+            final Optional<FlightMissions.Mission> second = movedIsFirst ? missionOfFlight(journey.getTransportFlight2Id()) : Optional.of(movedMission);
+
+            final boolean kept = first.isPresent() && second.isPresent()
+                    && second.get().getPlannedDepartureWorldTime() > first.get().getPlannedArrivalWorldTime() + JourneyProcessor.STOPOVER_CONNECTION_RESERVE;
+            if (!kept) {
+                world.journeyControl().dropSecondFlight(journey, "f/m #" + movedMission.getId() + " has been rescheduled, the connection is lost");
+            }
+        }
+    }
+
+    private Optional<FlightMissions.Mission> missionOfFlight(final int transportFlightId) {
+        return world.transportFlights().byId(transportFlightId).flatMap(tf -> world.flightMissions().byId(tf.getFlightMissionId()));
+    }
+
+    /**
+     * The other flights of the pilot (not finished, not cancelled) which are closer to the flight than the least gap between two flights of a pilot
+     * (ShadowJetBooking.MIN_GAP_SECONDS), before it or after it, from the earliest.
+     */
+    public List<FlightMissions.Mission> rosterConflicts(final FlightMissions.Mission mission) {
+        if (!isUserFlight(mission)) {
+            return List.of();
+        }
+        final int gap = ShadowJetBooking.MIN_GAP_SECONDS;
+        return world.flightMissions().allByUserId(mission.getUserId())
+                .filter(m -> m.getId() != mission.getId())
+                .filter(m -> m.getStatus() != FlightMissions.Status.Finished && m.getStatus() != FlightMissions.Status.Cancelled)
+                .filter(m -> m.getPlannedDepartureWorldTime() < mission.getPlannedArrivalWorldTime() + gap
+                        && mission.getPlannedDepartureWorldTime() < m.getPlannedArrivalWorldTime() + gap)
+                .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
+                .toList();
     }
 
     public void scheduleQuickRemoval(final FlightMissions.Mission mission) {

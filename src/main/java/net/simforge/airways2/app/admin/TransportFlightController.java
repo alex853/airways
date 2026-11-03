@@ -98,7 +98,7 @@ public class TransportFlightController {
     private static FlightDto from(final World world,
                                   final TransportFlights.Flight flight) {
         Optional<FlightMissions.Mission> mission = world.flightMissions().byId(flight.getFlightMissionId());
-        Optional<FlightTimeline> timeline = mission.map(FlightMissionToTimeline::byMission);
+        Optional<FlightTimeline> timeline = mission.map(m -> FlightMissionToTimeline.byMissionAndAircraftPosition(world, m));
         Optional<ScheduledFlights.Flight> scheduledFlight = world.scheduledFlights().byId(flight.getScheduledFlightId());
 
         Optional<String> scheduledFlightNumber = scheduledFlight.map(sf -> ScheduledFlightMissionGenerator.getFlightNumberById(sf.getScheduleId()));

@@ -1,0 +1,177 @@
+package net.simforge.airways2.world.processors;
+
+import net.simforge.airways2.tools.CabinLayout;
+import net.simforge.airways2.world.InMemoryStorageStrategy;
+import net.simforge.airways2.world.Time;
+import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.Aircrafts;
+import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.TransportFlights;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+/**
+ * The forecast of the roster: the expected times, and the conflicts which go down the roster (red where the flight before is as it is, yellow where the flights before would have
+ * to be moved).
+ */
+class RosterForecastTest {
+    private static final int USER_ID = 7;
+
+    private World world;
+    private Airports.Airport departure;
+    private Airports.Airport destination;
+    private Airports.Airport divertAirport;
+    private Aircrafts.Aircraft aircraft;
+    private int base;
+
+    @BeforeEach
+    void beforeEach() {
+        world = World.create(new InMemoryStorageStrategy(), Time.START_TIME_EPOCH_SECONDS);
+        departure = world.airports().create(51.5, -0.1, "AAA", "AAAA", "Alpha");
+        destination = world.airports().create(51.5, 4.0, "BBB", "BBBB", "Bravo");
+        divertAirport = world.airports().create(51.5, 1.0, "CCC", "CCCC", "Charlie");
+        aircraft = world.aircrafts().create(world.aircraftTypes().create("A320", "320"), "A-BCDE", departure);
+        base = world.getWorldTime() + Time.ONE_HOUR;
+    }
+
+    // a flight of the user which departs the given minutes after the base time and flies the given minutes
+    private FlightMissions.Mission flight(final int departureMinute, final int durationMinutes) {
+        final int departureTime = base + departureMinute * Time.ONE_MINUTE;
+        final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, departure, destination, departureTime, departureTime + durationMinutes * Time.ONE_MINUTE);
+        mission.setUserId(USER_ID);
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        return mission;
+    }
+
+    private List<RosterForecast.Entry> forecast() {
+        return RosterForecast.of(world, USER_ID);
+    }
+
+    @Test
+    void aRosterWithGapsHasNoConflictsAndTheExpectedTimesAreThePlanned() {
+        flight(0, 60);
+        flight(120, 60);
+
+        final List<RosterForecast.Entry> roster = forecast();
+
+        assertEquals(2, roster.size());
+        for (final RosterForecast.Entry entry : roster) {
+            assertNull(entry.conflict());
+            assertEquals(entry.mission().getPlannedDepartureWorldTime(), entry.expectedDeparture());
+            assertEquals(entry.mission().getPlannedArrivalWorldTime(), entry.expectedArrival());
+        }
+    }
+
+    @Test
+    void aLateFlightMakesTheNextOneRedAndTheOneAfterItYellow() {
+        final FlightMissions.Mission first = flight(0, 60);
+        final FlightMissions.Mission second = flight(105, 60);
+        final FlightMissions.Mission third = flight(195, 60);
+        final FlightMissions.Mission fourth = flight(400, 60);
+        // an hour and a half after the planned departure the first flight has not left: it lands at 150 minutes, the next flight needs 30 minutes after that
+        world.setWorldTime(base + 90 * Time.ONE_MINUTE);
+
+        final List<RosterForecast.Entry> roster = forecast();
+
+        assertEquals(List.of(first.getId(), second.getId(), third.getId(), fourth.getId()), roster.stream().map(e -> e.mission().getId()).toList());
+        assertNull(roster.get(0).conflict());
+        assertEquals(base + 150 * Time.ONE_MINUTE, roster.get(0).expectedArrival());
+
+        // the second flight: planned at 105, the least departure is 180, it is short by 75 minutes; red, the flight before it is as it is
+        final RosterForecast.Conflict c2 = roster.get(1).conflict();
+        assertNotNull(c2);
+        assertEquals(RosterForecast.Level.RED, c2.level());
+        assertEquals(75, c2.shortfallMinutes());
+        assertEquals(first.getId(), c2.cause().getId());
+        assertFalse(c2.estimate());
+        assertEquals(base + 180 * Time.ONE_MINUTE, c2.suggestedDeparture());
+        assertEquals(base + 180 * Time.ONE_MINUTE, roster.get(1).expectedDeparture());
+        assertEquals(base + 240 * Time.ONE_MINUTE, roster.get(1).expectedArrival());
+
+        // the third flight: planned at 195, after the move of the second one it lands at 240 and 270 is needed, short by 75; yellow, it comes from the move
+        final RosterForecast.Conflict c3 = roster.get(2).conflict();
+        assertNotNull(c3);
+        assertEquals(RosterForecast.Level.YELLOW, c3.level());
+        assertEquals(75, c3.shortfallMinutes());
+        assertEquals(second.getId(), c3.cause().getId());
+
+        // the fourth one starts late enough
+        assertNull(roster.get(3).conflict());
+    }
+
+    @Test
+    void theSuggestedDepartureIsRoundedUpToFiveMinutes() {
+        flight(0, 60);
+        flight(105, 60);
+        // the first flight lands at 150 minutes plus 20 seconds of the world time: the least departure is not on a five minutes mark
+        world.setWorldTime(base + 90 * Time.ONE_MINUTE + 20);
+
+        final RosterForecast.Conflict conflict = forecast().get(1).conflict();
+
+        assertNotNull(conflict);
+        assertEquals(0, conflict.suggestedDeparture() % (5 * Time.ONE_MINUTE));
+        assertTrue(conflict.suggestedDeparture() >= base + 180 * Time.ONE_MINUTE + 20);
+        assertTrue(conflict.suggestedDeparture() < base + 180 * Time.ONE_MINUTE + 20 + 5 * Time.ONE_MINUTE);
+    }
+
+    @Test
+    void aDivertedFlightWithPassengersMakesTheNextOneRedByTheEstimateAndTheOneAfterItYellow() {
+        final FlightMissions.Mission first = flight(0, 60);
+        flight(30, 60);
+        flight(150, 60);
+        final FlightMissionControl control = world.flightMissionControl();
+        control.start(first);
+        control.setTrackingMode(first, FlightMissions.TrackingMode.Manual);
+        control.blocksOff(first);
+        control.takeoff(first);
+        first.setDivertAirportId(divertAirport.getId());
+        final TransportFlights.Flight tf = world.transportFlightControl().createTransportFlight(first, CabinLayout.Y(99));
+        tf.setStatus(TransportFlights.Status.Flying);
+        tf.setPaxOnBoard(50);
+
+        final List<RosterForecast.Entry> roster = forecast();
+
+        final RosterForecast.Entry entry = roster.get(0);
+        assertTrue(entry.arrivalNotBefore());
+        assertTrue(entry.divertReminder());
+        assertEquals(divertAirport.getId(), entry.divertAirport().getId());
+        // an hour on the ground at the divert airport at least
+        assertTrue(entry.expectedArrival() > world.getWorldTime() + Time.ONE_HOUR);
+
+        final RosterForecast.Conflict c2 = roster.get(1).conflict();
+        assertNotNull(c2);
+        assertEquals(RosterForecast.Level.RED, c2.level());
+        assertTrue(c2.estimate());
+        // the next flight needs an hour after the arrival of a diverted flight
+        assertEquals(entry.expectedArrival() + Time.ONE_HOUR, roster.get(1).expectedDeparture());
+
+        final RosterForecast.Conflict c3 = roster.get(2).conflict();
+        assertNotNull(c3);
+        assertEquals(RosterForecast.Level.YELLOW, c3.level());
+        assertTrue(c3.estimate());
+    }
+
+    @Test
+    void theFlightsWhichAreOverAndTheFlightsOfOthersAreNotInTheRoster() {
+        flight(0, 60);
+        final FlightMissions.Mission finished = flight(105, 60);
+        finished.setStatus(FlightMissions.Status.Finished);
+        final FlightMissions.Mission cancelled = flight(120, 60);
+        cancelled.setStatus(FlightMissions.Status.Cancelled);
+        final FlightMissions.Mission other = flight(110, 60);
+        other.setUserId(USER_ID + 1);
+
+        assertEquals(1, forecast().size());
+        assertEquals(1, RosterForecast.of(world, USER_ID + 1).size());
+        assertTrue(RosterForecast.of(world, 0).isEmpty());
+    }
+}
