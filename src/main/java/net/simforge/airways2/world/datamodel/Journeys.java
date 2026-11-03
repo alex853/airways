@@ -85,7 +85,7 @@ public class Journeys {
     public void tryTrimTail() {
         logPageFill("before tail trim");
         final Storage.TrimResult result = storage.tryTrimTail();
-        log.info("j/y - tail trim of the storage: {} records on {} pages before, dropped {} records and {} pages, {} records on {} pages remain; "
+        log.info("j/y - paged storage tail trim: {} records on {} pages before, dropped {} records and {} pages, {} records on {} pages remain; "
                         + "the last page holds {} records, {} of them live{}; {} deleted records are known",
                 result.recordsBefore(), result.pagesBefore(), result.droppedRecords(), result.droppedPages(),
                 result.recordsBefore() - result.droppedRecords(), result.pagesAfter(),
