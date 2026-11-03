@@ -44,4 +44,7 @@ interface ByteStore {
     void truncate(int newLength, int oldLength);
 
     int pageCount();
+
+    /** The bytes are the pages, not one array. */
+    boolean isPaged();
 }

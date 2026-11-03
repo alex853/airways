@@ -147,6 +147,11 @@ final class PagedByteStore implements ByteStore {
     }
 
     @Override
+    public boolean isPaged() {
+        return true;
+    }
+
+    @Override
     public int pageCount() {
         return pages.length;
     }

@@ -244,6 +244,43 @@ class StoragePagedTest {
     }
 
     @Test
+    public void test__page_fill_percents() {
+        final long[] now = {Instant.parse("2026-11-03T10:00:00Z").toEpochMilli()};
+        final Storage<Integer> paged = pagedWithQuarantine(100, now); // 5 records in a page
+        assertEquals(0, paged.getPageFillPercents().length);
+
+        for (int i = 1; i <= 17; i++) {
+            paged.addRecord();
+        }
+        // page 1: all 5 exist, page 2: 4 of 5, page 3: none, page 4: 2 created of 5
+        paged.deleteRecord(6);
+        for (int i = 11; i <= 15; i++) {
+            paged.deleteRecord(i);
+        }
+        assertArrayEquals(new int[]{100, 80, 0, 40}, paged.getPageFillPercents());
+
+        // one record of a big page lacks: 99 and not 100, one record exists: 1 and not 0
+        final Storage<Integer> big = Storage.<Integer>builder()
+                .name(NAME)
+                .withInstantiator(recordId -> recordId)
+                .withDataField(DataField.of(DataType.Signed32bit))
+                .deletedRecordQuarantine(Duration.ZERO)
+                .paged(5 * 1000) // 5 bytes in a record, 1000 records in a page
+                .build();
+        for (int i = 1; i <= 1000; i++) {
+            big.addRecord();
+        }
+        big.deleteRecord(1);
+        assertArrayEquals(new int[]{99}, big.getPageFillPercents());
+        for (int i = 3; i <= 1000; i++) {
+            big.deleteRecord(i);
+        }
+        assertArrayEquals(new int[]{1}, big.getPageFillPercents());
+        big.deleteRecord(2);
+        assertArrayEquals(new int[]{0}, big.getPageFillPercents());
+    }
+
+    @Test
     public void test__try_trim_tail_drops_everything_when_everything_died() {
         final long[] now = {Instant.parse("2026-11-03T10:00:00Z").toEpochMilli()};
         final Storage<Integer> paged = pagedWithQuarantine(100, now);

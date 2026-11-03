@@ -97,6 +97,11 @@ final class FlatByteStore implements ByteStore {
     }
 
     @Override
+    public boolean isPaged() {
+        return false;
+    }
+
+    @Override
     public int pageCount() {
         return bytes.length == 0 ? 0 : 1;
     }

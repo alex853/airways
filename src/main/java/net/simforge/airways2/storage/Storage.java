@@ -364,6 +364,34 @@ public class Storage<T> {
     }
 
     /**
+     * How full the pages are, one number for every page, in percent of the records which exist (a deleted record, in the quarantine or not, and a record which has not been
+     * created yet do not exist): 0 if there is no existing record on the page, 100 if all the records of the page exist, otherwise from 1 to 99 (a page with at least one
+     * existing record is never 0, a page which lacks at least one record is never 100). A storage which is one array has no pages, the result is empty. For the diagnostics.
+     */
+    public int[] getPageFillPercents() {
+        if (!data.isPaged()) {
+            return new int[0];
+        }
+
+        final int recordsPerPage = data.recordsPerPage();
+        final int[] percents = new int[data.pageCount()];
+        for (int page = 0; page < percents.length; page++) {
+            final int firstId = page * recordsPerPage + 1;
+            final int lastId = Math.min(storedRecordCount, firstId + recordsPerPage - 1);
+            int existing = 0;
+            for (int recordId = firstId; recordId <= lastId; recordId++) {
+                if (!isDeleted(recordId)) {
+                    existing++;
+                }
+            }
+            percents[page] = existing == 0 ? 0
+                    : existing == recordsPerPage ? 100
+                    : Math.max(1, Math.min(99, Math.round(existing * 100.0f / recordsPerPage)));
+        }
+        return percents;
+    }
+
+    /**
      * How many pages the storage holds (one for a storage which is one array), for the tests and the diagnostics.
      */
     int getPageCount() {
