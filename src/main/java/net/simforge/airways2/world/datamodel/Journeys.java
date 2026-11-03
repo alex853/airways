@@ -71,7 +71,7 @@ public class Journeys {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-        logPageFill();
+        logPageFill("after load");
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -83,7 +83,7 @@ public class Journeys {
      * world is saved. The ids of the dropped journeys are given to the new ones again.
      */
     public void tryTrimTail() {
-        logPageFill();
+        logPageFill("before tail trim");
         final Storage.TrimResult result = storage.tryTrimTail();
         log.info("j/y - tail trim of the storage: {} records on {} pages before, dropped {} records and {} pages, {} records on {} pages remain; "
                         + "the last page holds {} records, {} of them live{}; {} deleted records are known",
@@ -95,9 +95,10 @@ public class Journeys {
     }
 
     // how full the pages of the storage are, in percent of the existing journeys, see Storage#getPageFillPercents
-    private void logPageFill() {
+    private void logPageFill(final String when) {
         final int[] percents = storage.getPageFillPercents();
-        log.info("j/y - {} pages, contents: {}", percents.length, String.join(",", Arrays.stream(percents).mapToObj(String::valueOf).toList()));
+        log.info("j/y - paged storage status ({}): {} pages, fill of each page in % of existing records: {}", when, percents.length,
+                String.join(",", Arrays.stream(percents).mapToObj(String::valueOf).toList()));
     }
 
     public Stream<Journey> all() {
