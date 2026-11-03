@@ -109,16 +109,51 @@ public class JourneyHubSearchTest {
         assertBookedTo(journey, better);
     }
 
+    // a lot of journeys of one step look for the flights which are open at the same time: none of the flights has the priority (not by its id, not by its departure time)
+    private java.util.Map<Integer, Long> bookJourneysOfOneStep(final int journeyCount) {
+        final java.util.List<Journeys.Journey> journeys = new java.util.ArrayList<>();
+        for (int i = 0; i < journeyCount; i++) {
+            final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, origin.getId(), target.getId(), 2, CabinLayout.Service.Y);
+            journey.setLocationCityId(origin.getId());
+            journey.setLastKnownLocationCityId(origin.getId());
+            journey.setHeartbeatTime(world.getWorldTime());
+            journeys.add(journey);
+        }
+        JourneyProcessor.process(world);
+        return journeys.stream()
+                .filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn)
+                .collect(java.util.stream.Collectors.groupingBy(Journeys.Journey::getTransportFlight1Id, java.util.stream.Collectors.counting()));
+    }
+
     @Test
-    public void ofEqualHubsTheEarlierFlightIsTaken() {
+    public void ofEqualHubsAllTheFlightsAreFilledEvenly() {
         final Airports.Airport hub = airport("EGLL", city("Hub", 10), 10);
-        flightTo(hub, 120);
-        final TransportFlights.Flight earlier = flightTo(hub, 60);
-        flightTo(hub, 180);
+        final TransportFlights.Flight a = flightTo(hub, 120);
+        final TransportFlights.Flight b = flightTo(hub, 60);
+        final TransportFlights.Flight c = flightTo(hub, 180);
 
-        final Journeys.Journey journey = wakeUpJourney();
+        // 150 journeys of 2 = 300 seats of 3 x 168, about 50 journeys on every flight, none is full
+        final java.util.Map<Integer, Long> perFlight = bookJourneysOfOneStep(150);
 
-        assertBookedTo(journey, earlier);
+        assertEquals(150, perFlight.values().stream().mapToLong(Long::longValue).sum());
+        for (final TransportFlights.Flight flight : java.util.List.of(a, b, c)) {
+            assertTrue(perFlight.getOrDefault(flight.getId(), 0L) >= 20, "flight " + flight.getId() + ": " + perFlight);
+        }
+    }
+
+    @Test
+    public void ofDirectFlightsAllTheFlightsAreFilledEvenly() {
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        final TransportFlights.Flight a = flightTo(targetAirport, 120);
+        final TransportFlights.Flight b = flightTo(targetAirport, 60);
+        final TransportFlights.Flight c = flightTo(targetAirport, 180);
+
+        final java.util.Map<Integer, Long> perFlight = bookJourneysOfOneStep(150);
+
+        assertEquals(150, perFlight.values().stream().mapToLong(Long::longValue).sum());
+        for (final TransportFlights.Flight flight : java.util.List.of(a, b, c)) {
+            assertTrue(perFlight.getOrDefault(flight.getId(), 0L) >= 20, "flight " + flight.getId() + ": " + perFlight);
+        }
     }
 
     @Test

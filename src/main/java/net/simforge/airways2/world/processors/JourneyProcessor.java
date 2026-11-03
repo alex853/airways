@@ -115,7 +115,7 @@ public class JourneyProcessor {
 
         final Collection<TransportFlights.Flight> foundDirectFlights = findDirectFlights(journey, fromAirportIds, toAirportIds, routes);
         if (!foundDirectFlights.isEmpty()) {
-            final TransportFlights.Flight directFlight = foundDirectFlights.iterator().next();
+            final TransportFlights.Flight directFlight = pickRandom(foundDirectFlights);
             world.journeyControl().bookDirectFlightJourneyNoChecks(journey, chooseCabinService(journey, directFlight), directFlight);
             world.journeyControl().waitForCheckin(journey);
             return;
@@ -170,7 +170,7 @@ public class JourneyProcessor {
     /**
      * The flight to a hub for a journey which has no direct flight and no stopover route: a flight from the airports of the city where the journey is now, which has seats of the class of the journey, and goes to a hub (AirportHubs) which is closer to the destination of the journey than the
      * city where the journey is now. The criterion is the same as of ShadowJetLogic.findHubTestJourney, but from the side of the journey: of all such flights the one which
-     * cuts the distance to the destination most is taken, of equal ones the earliest. The distance only gets smaller, so a journey cannot go in circles between the hubs.
+     * cuts the distance to the destination most is taken, of equal ones (to the same hub) a random one. The distance only gets smaller, so a journey cannot go in circles between the hubs.
      */
     static Optional<TransportFlights.Flight> findHubFlight(final World world, final Journeys.Journey journey, final Set<Integer> fromAirportIds, final RouteIndex routes) {
         final Geo.Coords locationCoords;
@@ -184,9 +184,9 @@ public class JourneyProcessor {
         }
         final double distanceNow = Geo.distance(locationCoords, targetCoords);
 
-        TransportFlights.Flight best = null;
+        // the flights which cut the distance most (the flights to the same hub are equal), the journey takes one of them at random
+        final List<TransportFlights.Flight> best = new ArrayList<>();
         double bestReduction = 0;
-        int bestDepartureTime = 0;
         for (final TFM tfm : routes.departingFrom(fromAirportIds, journey)) {
             final Optional<Airports.Airport> hub = world.airports().byId(tfm.fm.getDestinationAirportId());
             if (hub.isEmpty() || !AirportHubs.isHub(hub.get().getIcao())) {
@@ -196,14 +196,22 @@ public class JourneyProcessor {
             if (reduction <= 0) {
                 continue;
             }
-            final int departureTime = tfm.fm.getPlannedDepartureWorldTime();
-            if (best == null || reduction > bestReduction || (reduction == bestReduction && departureTime < bestDepartureTime)) {
-                best = tfm.tf;
+            if (best.isEmpty() || reduction > bestReduction) {
+                best.clear();
+                best.add(tfm.tf);
                 bestReduction = reduction;
-                bestDepartureTime = departureTime;
+            } else if (reduction == bestReduction) {
+                best.add(tfm.tf);
             }
         }
-        return Optional.ofNullable(best);
+        return best.isEmpty() ? Optional.empty() : Optional.of(pickRandom(best));
+    }
+
+    // Uniform choice: the flights found at the same moment (announced together) are filled evenly, no flight has the priority by its id or its departure time
+    // (decided 2026-11-03, before that the first flight in the order of ids took all the journeys until it was full). Tools.random(list) is not used: it gives the first and the last element half of the chance.
+    static <T> T pickRandom(final Collection<T> items) {
+        final int index = java.util.concurrent.ThreadLocalRandom.current().nextInt(items.size());
+        return items instanceof List<T> list ? list.get(index) : items.stream().skip(index).findFirst().orElseThrow();
     }
 
     private static boolean flightDepartsLaterThan(TFM tfm, int departureTimeThreshold) {
