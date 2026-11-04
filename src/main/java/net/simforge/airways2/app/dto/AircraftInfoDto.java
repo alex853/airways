@@ -37,6 +37,8 @@ public class AircraftInfoDto {
     private int fsC;
     private String lU;
     private int pax;
+    // the airport of the declared divert (ICAO), null if none; the dest stays the planned destination
+    private String div;
 
     public static AircraftInfoDto from(World world, Aircrafts.Aircraft a, boolean encodeIds) {
         Optional<FlightMissions.Mission> fm = world.flightMissions().byId(a.getFlightMissionId());
@@ -65,6 +67,7 @@ public class AircraftInfoDto {
                 TimeTools.minutesToHmm(a.getFlightTime()),
                 a.getFlownCycles(),
                 a.getLastUpdated() > 0 ? Time.toLdt(a.getLastUpdated()).toString() : null,
-                tf.map(TransportFlights.Flight::getPaxOnBoard).orElse(0));
+                tf.map(TransportFlights.Flight::getPaxOnBoard).orElse(0),
+                fm.flatMap(m -> world.airports().getIcao(m.getDivertAirportId())).orElse(null));
     }
 }

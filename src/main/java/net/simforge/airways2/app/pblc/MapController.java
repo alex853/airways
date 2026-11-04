@@ -77,7 +77,7 @@ public class MapController {
             final AirportRefs refs = new AirportRefs(world);
             final Map<String, AirportRefDto> airports = new LinkedHashMap<>();
             Stream.concat(
-                            Stream.of(info.getLcApt(), info.getDep(), info.getDest()),
+                            Stream.of(info.getLcApt(), info.getDep(), info.getDest(), info.getDiv()),
                             recentFlights.stream().flatMap(f -> Stream.of(f.getDep(), f.getDest())))
                     .filter(Objects::nonNull)
                     .distinct()
