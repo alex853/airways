@@ -1056,7 +1056,10 @@ public class FlightDashboardController {
                 TimeTools.ymdOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedDepartureWorldTime()),
                 TimeTools.hhmmOrNull(flight.getPlannedArrivalWorldTime()),
-                FlightMissionHelper.isLandedAtWrongAirport(flight)
+                FlightMissionHelper.isLandedAtWrongAirport(flight),
+                flight.getActualDepartureWorldTime() != 0 ? flight.getActualDepartureWorldTime() * 1000L : null,
+                flight.getActualArrivalWorldTime() != 0 ? flight.getActualArrivalWorldTime() * 1000L : null,
+                FlightMissionHelper.isLandedAtWrongAirport(flight) ? world.airports().getIcao(flight.getActualLandingAirportId()).orElse(null) : null
         );
 
         final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
@@ -1380,6 +1383,11 @@ public class FlightDashboardController {
         private String planArrTime;
         // the flight has landed not at its destination (a divert or an unplanned landing)
         private boolean diverted;
+        // the actual blocks off and blocks on (UTC milliseconds), null while they have not happened
+        private Long actualDeparture;
+        private Long actualArrival;
+        // the airport (ICAO) where the flight has landed when it is not its destination, null otherwise
+        private String landedIcao;
     }
 
     @Data

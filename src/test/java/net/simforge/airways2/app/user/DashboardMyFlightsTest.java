@@ -103,6 +103,35 @@ class DashboardMyFlightsTest {
     }
 
     @Test
+    void theActualTimesAreToldWhenTheyHaveHappened() {
+        final FlightMissions.Mission mission = mission(world.getWorldTime() + 3600);
+
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getActualDeparture());
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getActualArrival());
+
+        mission.setActualDepartureWorldTime(world.getWorldTime() + 3480);
+        assertEquals((world.getWorldTime() + 3480) * 1000L, controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getActualDeparture());
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getActualArrival());
+
+        mission.setActualArrivalWorldTime(world.getWorldTime() + 7200);
+        assertEquals((world.getWorldTime() + 7200) * 1000L, controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getActualArrival());
+    }
+
+    @Test
+    void theAirportOfTheLandingIsToldWhenTheFlightHasLandedNotAtItsDestination() {
+        final Airports.Airport oroville = world.airports().create(39.49, -121.62, "OVE", "KOVE", "Oroville");
+        final FlightMissions.Mission mission = mission(world.getWorldTime() + 3600);
+
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getLandedIcao());
+
+        mission.setActualLandingAirportId(sanFrancisco.getId());
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getLandedIcao());
+
+        mission.setActualLandingAirportId(oroville.getId());
+        assertEquals("KOVE", controller.getMyFlights(USER_ID).getFlights().get(0).getFlight().getLandedIcao());
+    }
+
+    @Test
     void aFlightWithoutTransportFlightHasNoTransportFlightDto() {
         mission(world.getWorldTime() + 3600);
 
