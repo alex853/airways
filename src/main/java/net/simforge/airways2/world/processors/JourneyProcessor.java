@@ -5,7 +5,6 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.AirportHubs;
 import net.simforge.airways2.world.datamodel.Airport2City;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.FlightMissions;
@@ -189,7 +188,7 @@ public class JourneyProcessor {
         double bestReduction = 0;
         for (final TFM tfm : routes.departingFrom(fromAirportIds, journey)) {
             final Optional<Airports.Airport> hub = world.airports().byId(tfm.fm.getDestinationAirportId());
-            if (hub.isEmpty() || !AirportHubs.isHub(hub.get().getIcao())) {
+            if (hub.isEmpty() || !hub.get().isHub()) {
                 continue;
             }
             final double reduction = distanceNow - Geo.distance(hub.get().getCoords(), targetCoords);

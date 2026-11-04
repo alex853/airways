@@ -2,7 +2,6 @@ package net.simforge.airways2.world.processors;
 
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.AirportHubs;
 import net.simforge.airways2.world.computations.PilotLiving;
 import net.simforge.airways2.world.computations.PilotRest;
 import net.simforge.airways2.world.computations.PilotTravel;
@@ -541,7 +540,7 @@ public class PersonControl {
             final float attraction = world.cityFlows().byCityId(place.id()).map(f -> f.getAttractionFactor()).orElse(1.0f);
             return PilotLiving.cityPrice(cityBase, attraction, place.id());
         }
-        final boolean hub = AirportHubs.isHub(place.name());
+        final boolean hub = world.airports().byId(place.id()).map(Airports.Airport::isHub).orElse(false);
         return PilotLiving.airportPrice(airportBase, hub, flightsPerWeek(place.id()), place.id());
     }
 

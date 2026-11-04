@@ -118,44 +118,11 @@
 
 ## TODO / известные проблемы
 
-### 1. Военные аэродромы с типом `civil` в `icaodata.csv`
+### 1. Военные аэродромы с типом `civil` в `icaodata.csv` — закрыто
 
-Автоимпорт (`ImportMajorAirportsInVicinityOfCities`: `civil`, `size >= 5000`, радиус 50 nm) тащит их в мир и
-привязывает к городам, хотя регулярных рейсов там нет. Определять по названию ненадёжно (EGDM «Boscombe Down» не
-содержит маркеров), чинить точечно.
+**Закрыто 2026-11-04:** списки (военные в мире, ловушки на будущее) убраны, всё нужное помечено флагом Excluded (часть пользователь пометил сам, остальные пометили через `POST /admin/world/airport/excluded`). KNUQ (Moffett, федеральный аэродром NASA, нужен PPR) и KFTG (Front Range, сейчас код KCFO) решено считать гражданскими и оставить как есть.
 
-**Уже в мире и привязаны к городам:**
-
-| ICAO | Название | Привязан к | Комментарий |
-|---|---|---|---|
-| EGDM | Boscombe Down | Bristol | военная база |
-| KINS | Indian Springs AF Aux (Creech AFB) | ~~Las Vegas~~ | военная авиабаза; **связь с Las Vegas удалена на проде 2026-10-22** (`/admin/airport/delete-link`), в `icaodata.csv` тип исправлен на `military`; сам аэропорт остался в мире без города |
-| KNZJ | El Toro MCAS | Los Angeles | бывшая база, рейсов нет (size 12170) |
-| KNTD | Point Mugu NAS | Los Angeles | военно-морская база |
-| KSLI | Los Alamitos AAF | Los Angeles | армейский аэродром |
-| KPMD | Palmdale AF Plant 42 | Los Angeles | военный завод/испытания |
-| KNKX | Miramar MCAS | San Diego, Tijuana | военная база морской пехоты |
-| KNHK | Patuxent River NAS | Washington | военно-морская испытательная база |
-| KAPG | Phillips AAF | Baltimore | армейский аэродром |
-| KFMH | Otis ANGB | Boston | база нацгвардии |
-| KNUQ | Moffett Federal AFLD | San Francisco | NASA/бизнес-джеты — не обязательно плохой |
-| RKSM | Seoul / Domestic (Seoul Air Base, Seongnam) | Seoul | военная база ВВС (K-16), VIP/правительственные рейсы, в мире трафика нет; название в `icaodata` — артефакт |
-| RKSW | Suwon (Suwon Air Base) | Seoul | военная база ВВС (K-13), регулярных гражданских рейсов нет, в мире трафика нет |
-| KFTG | Front Range | Aurora, Denver | гражданский GA, ложное срабатывание |
-| LAGJ | Gjader (Gjader Air Base) | Tirana | по всей видимости военная авиабаза (Албания, НАТО), в `icaodata.csv` тип `civil`, size 5001; создана автоимпортом при добавлении Tirana (партия 2026-10-25) и привязана к городу; **пока не тронута**, кандидат на то же, что KNQX (удалить связь, тип `military`), ждёт решения пользователя |
-| KNQX | Key West NAS | ~~Key West~~ | военно-морская авиабаза; создана автоимпортом при добавлении Key West (партия 2026-10-23), **связь с Key West удалена на проде 2026-10-23** (`/admin/airport/delete-link`), в `icaodata.csv` тип исправлен на `military`; сам аэропорт в мире остался, без города |
-
-**План:** военные удаляем из мира и при необходимости заменяем на реальные гражданские аэродромы города.
-Перед удалением **проанализировать использование** (самолёты, расположенные там; миссии/рейсы, где аэродром
-вылета/назначения; airport2city-линки; facilities) — убедиться, что удаление не опасно. Отдельного эндпоинта
-удаления аэропорта/линка в админке нет. Одновременно поправить `type` на `military` в `icaodata.csv`.
-
-**Ловушки на будущее** (`civil`, `size >= 5000`, ещё не в мире, импортируются при появлении города рядом):
-KNTU Oceana NAS, KYUM Yuma MCAS/Intl (смешанный), KNKT Cherry Point MCAS, KNJK El Centro NAF, KNFL Fallon NAS,
-KNQI Kingsville NAS, KNBC Beaufort MCAS, KNLC Lemoore NAS, KNPA Pensacola NAS,
-KNGP Corpus Christi NAS, KNMM Meridian NAS, KNHZ Brunswick NAS, KFHU Sierra Vista (смешанный), KFTK Godman AAF,
-KGTB Wheeler-Sack AAF, PABI Allen AAF, KNFE Fentress NALF, LIBV Gioia Del Colle Mil, LIED Decimomannu Mil,
-NZWP Whenuapai (Military), YPEA Pearce (Military), SAZB Comandante Espora NAS, FZSA Kamina Base и др.
+**Правило:** если при импорте или потом обнаруживается аэропорт, которого уже нет (закрыт, код сменился) или который чисто военный, ему ставим флаг Excluded (в мире он остаётся, не удаляется). Автоимпорт берёт только `civil`, так что правило применяется к тем, что в `icaodata.csv` ошибочно `civil`: после импорта пачки городов смотреть на новые аэропорты с военными названиями (NAS, MCAS, AAF, AFB, ANGB и подобные).
 
 ### 2. Аэропорты в мире без привязки к городу — закрыто
 

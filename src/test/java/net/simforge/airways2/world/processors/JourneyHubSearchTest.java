@@ -52,6 +52,8 @@ public class JourneyHubSearchTest {
     private Airports.Airport airport(final String icao, final Cities.City city, final int longitude) {
         final Airports.Airport airport = world.airports().create(0, longitude, icao.substring(1), icao, icao);
         world.airport2city().create(airport.getId(), city.getId());
+        // the airports with the codes of the London ones are the hubs of the tests, XXXX is not a hub
+        airport.setHub(icao.startsWith("EG"));
         return airport;
     }
 

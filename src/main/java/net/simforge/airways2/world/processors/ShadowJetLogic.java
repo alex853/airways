@@ -6,7 +6,6 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
-import net.simforge.airways2.world.computations.AirportHubs;
 import net.simforge.airways2.world.computations.JourneyWakeCurve;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -23,11 +22,6 @@ import static net.simforge.airways2.storage.Storage.Condition.and;
 public class ShadowJetLogic {
     private static final Logger log = LoggerFactory.getLogger(ShadowJetLogic.class);
     private static final Random random = new Random();
-
-    // the most active airports are shown in the log regularly, the stats are the flights of the last 8 days
-    private static final int ACTIVE_AIRPORTS_LOG_PERIOD = Time.ONE_HOUR;
-    private static final int ACTIVE_AIRPORTS_LOG_LIMIT = 25;
-    private static int activeAirportsLoggedAt = Integer.MIN_VALUE;
 
 
     // journeys are taken from a random sample of the candidates
@@ -111,40 +105,6 @@ public class ShadowJetLogic {
         return "SJ-" + suffix;
     }
 
-    /**
-     * Airports with the most flights (departures and arrivals) of the last 8 days, ICAO to the count, the busiest first.
-     */
-    public static Map<String, Integer> mostActiveAirports(final World world, final int limit) {
-        final Map<Integer, Integer> flightsByAirportId = new HashMap<>();
-        world.airport2airportDailyFlightStats().all().forEach(stats -> {
-            final int count = stats.getTotalCount();
-            flightsByAirportId.merge(stats.getFromAirportId(), count, Integer::sum);
-            flightsByAirportId.merge(stats.getToAirportId(), count, Integer::sum);
-        });
-
-        final Map<String, Integer> result = new LinkedHashMap<>();
-        flightsByAirportId.entrySet().stream()
-                .map(e -> Map.entry(world.airports().getIcao(e.getKey()).orElse("#" + e.getKey()), e.getValue()))
-                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed().thenComparing(Map.Entry.comparingByKey()))
-                .limit(limit)
-                .forEach(e -> result.put(e.getKey(), e.getValue()));
-        return result;
-    }
-
-    private static void logMostActiveAirportsRegularly(final World world) {
-        final int now = world.getWorldTime();
-        if (activeAirportsLoggedAt != Integer.MIN_VALUE && now >= activeAirportsLoggedAt && now - activeAirportsLoggedAt < ACTIVE_AIRPORTS_LOG_PERIOD) {
-            return;
-        }
-        activeAirportsLoggedAt = now;
-
-        try {
-            log.info("Stats - most active airports by flights of the last 8 days: {}", mostActiveAirports(world, ACTIVE_AIRPORTS_LOG_LIMIT));
-        } catch (final RuntimeException e) {
-            log.warn("Stats - unable to calculate most active airports", e);
-        }
-    }
-
     // The provision of a transport flight (reworked 2026-10-30, see docs/clients-and-flight-modes.md and JourneyWakeCurve): the flight is not filled at once. A pack of journeys is
     // chosen for it (the seats of the flight and a reserve, the journeys are shuffled), and every journey of the pack gets a heartbeat at the minute when the curve reaches its
     // place in the pack, and stays in LookingForTickets. When it wakes up, it looks for tickets by itself (JourneyProcessor.lookingForTickets), finds the flight and books it,
@@ -167,8 +127,6 @@ public class ShadowJetLogic {
 
     // booked: the flight of a pilot is booked ahead, the pilot starts the boarding; otherwise the flight is started now and the boarding starts at once
     private static void provideTransportFlight(World world, FlightMissions.Mission mission, boolean booked) {
-        logMostActiveAirportsRegularly(world);
-
         String from = world.airports().getIcao(mission.getDepartureAirportId()).orElseThrow();
         String to = world.airports().getIcao(mission.getDestinationAirportId()).orElseThrow();
         String route = from + "-" + to;
@@ -320,7 +278,7 @@ public class ShadowJetLogic {
     // not null if the flight goes to a hub, then the journeys which getting closer to their destinations are candidates too
     private static HubInfo findHubInfo(final World world, final FlightMissions.Mission mission) {
         final Airports.Airport hubAirport = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
-        if (!AirportHubs.isHub(hubAirport.getIcao())) {
+        if (!hubAirport.isHub()) {
             return null;
         }
 
