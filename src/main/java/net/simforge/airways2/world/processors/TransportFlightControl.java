@@ -326,7 +326,18 @@ public class TransportFlightControl {
         }
         // by the journeys, not by PAX on board: the counter of the boarding is not a reliable sign of the end of the boarding. Everybody is on board, but the boarding stays
         // open for a few minutes more for the journeys which knock late (PaxManager.Boarding.wasFinishTimePassed)
-        return paxManager().areAllBoarded(transportFlight) && paxManager().boarding(transportFlight).wasFinishTimePassed();
+        return paxManager().areAllBoarded(transportFlight) && paxManager().boarding(transportFlight).wasFinishTimePassed() && !isBoardingHeldUntilPlannedEnd(transportFlight);
+    }
+
+    /**
+     * A boarding which has begun early is kept open until the planned end of the boarding (10 minutes before the planned departure) or until the pilot finishes it by hand, even if
+     * the progress of the boarding says it would end sooner (few passengers, all of them board in a few minutes): the journeys which knock late check in and board, and the
+     * time of the end which the dashboard shows is the true one. A boarding which has begun late (the planned end has passed) goes by the progress.
+     */
+    boolean isBoardingHeldUntilPlannedEnd(final TransportFlights.Flight transportFlight) {
+        return world.flightMissions().byId(transportFlight.getFlightMissionId())
+                .map(mission -> world.getWorldTime() < PaxManager.Boarding.plannedEndTime(mission))
+                .orElse(false);
     }
 
     /**
@@ -349,7 +360,9 @@ public class TransportFlightControl {
         if (staysOpenUntilDeparture(transportFlight)) {
             return false;
         }
-        return paxManager().boarding(transportFlight).wasFinishTimePassed();
+        // asked first, it counts the time of the idle boarding even while the boarding is held
+        final boolean finishTimePassed = paxManager().boarding(transportFlight).wasFinishTimePassed();
+        return finishTimePassed && !isBoardingHeldUntilPlannedEnd(transportFlight);
     }
 
     public void waitForDeparture(final TransportFlights.Flight transportFlight) {

@@ -196,7 +196,39 @@ public class FlightWorkflowTest {
     }
 
     @Test
-    public void test__boarding__user_flight__stays_open_a_few_minutes_after_everybody_is_on_board_and_takes_a_late_journey() {
+    public void test__boarding__user_flight__stays_open_until_the_planned_end_after_everybody_is_on_board_and_takes_a_late_journey() {
+        provideFlight();
+        runUntil(30 * Time.ONE_MINUTE, this::everybodyIsOnBoard);
+        assertTrue(everybodyIsOnBoard());
+
+        // everybody is on board, the boarding stays open for a while more: a journey which wakes up now is checked in and boarded
+        runFor(2 * Time.ONE_MINUTE);
+        assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
+        final Journeys.Journey late = lateJourney();
+        assertEquals(transportFlight.getId(), late.getTransportFlight1Id());
+        runUntil(10 * Time.ONE_MINUTE, () -> late.getStatus() == Journeys.Status.OnBoard);
+        assertEquals(Journeys.Status.OnBoard, late.getStatus());
+
+        // The boarding has begun early, everybody is on board long before its planned end (10 minutes before the departure): it is held open until that time, the progress of the
+        // boarding does not end it (the pilot could finish it by hand)
+        final int plannedEnd = PaxManager.Boarding.plannedEndTime(mission);
+        assertTrue(world.getWorldTime() < plannedEnd - 2 * Time.ONE_MINUTE);
+        runUntil(2 * Time.ONE_HOUR, () -> world.getWorldTime() >= plannedEnd - Time.ONE_MINUTE);
+        assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
+
+        // and it is over right after the planned end
+        runUntil(5 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
+        assertTrue(world.getWorldTime() >= plannedEnd);
+        assertTrue(world.getWorldTime() <= plannedEnd + 2 * Time.ONE_MINUTE);
+    }
+
+    @Test
+    public void test__boarding__user_flight__after_the_planned_end_stays_open_a_few_minutes_after_everybody_is_on_board_and_takes_a_late_journey() {
+        // the planned end of the boarding (10 minutes before the departure) has passed: the boarding goes by its progress, nothing holds it
+        mission.setPlannedDepartureWorldTime(world.getWorldTime() + 5 * Time.ONE_MINUTE);
+        mission.setPlannedArrivalWorldTime(world.getWorldTime() + 65 * Time.ONE_MINUTE);
+        assertTrue(PaxManager.Boarding.plannedEndTime(mission) < world.getWorldTime());
         provideFlight();
         runUntil(30 * Time.ONE_MINUTE, this::everybodyIsOnBoard);
         assertTrue(everybodyIsOnBoard());
@@ -212,6 +244,27 @@ public class FlightWorkflowTest {
         // then the boarding is over by itself
         runUntil(15 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
         assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
+    }
+
+    @Test
+    public void test__boarding__user_flight__goes_on_after_the_planned_end_while_not_everybody_is_on_board() {
+        // the planned end of the boarding comes a minute after the start, the boarding of the whole flight takes longer: nothing cuts it at the planned end
+        mission.setPlannedDepartureWorldTime(world.getWorldTime() + 11 * Time.ONE_MINUTE);
+        mission.setPlannedArrivalWorldTime(world.getWorldTime() + 71 * Time.ONE_MINUTE);
+        final int plannedEnd = PaxManager.Boarding.plannedEndTime(mission);
+        assertTrue(plannedEnd > world.getWorldTime());
+        provideFlight();
+
+        runUntil(5 * Time.ONE_MINUTE, () -> world.getWorldTime() >= plannedEnd + 10);
+        assertTrue(world.getWorldTime() >= plannedEnd);
+        assertEquals(TransportFlights.Status.Boarding, transportFlight.getStatus());
+        assertTrue(!everybodyIsOnBoard());
+
+        // it is over when everybody is on board (and the usual few minutes have passed), also after the planned end
+        runUntil(30 * Time.ONE_MINUTE, () -> transportFlight.getStatus() == TransportFlights.Status.WaitingForDeparture);
+        assertEquals(TransportFlights.Status.WaitingForDeparture, transportFlight.getStatus());
+        assertTrue(everybodyIsOnBoard());
+        assertEquals(TOTAL_PAX, transportFlight.getPaxOnBoard());
     }
 
     @Test

@@ -314,8 +314,8 @@ public class PaxManager {
         }
 
         /**
-         * The planned end of the boarding: 10 minutes before the planned departure. It is only a plan, nothing ends the boarding by it (the pilot of a user starts the boarding
-         * when he likes, see docs/status-and-backlog.md).
+         * The planned end of the boarding: 10 minutes before the planned departure. A boarding which has begun earlier is not ended by the progress before this time, it is held
+         * open until it (or until the pilot finishes it, see TransportFlightControl.isBoardingHeldUntilPlannedEnd); the pilot of a user starts the boarding when he likes.
          */
         public static int plannedEndTime(final FlightMissions.Mission mission) {
             return mission.getPlannedDepartureWorldTime() - TransportFlightHelper.BOARDING_ENDS_BEFORE_DEPARTURE;
