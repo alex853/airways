@@ -90,11 +90,36 @@ public class FlightMissions {
     private final DataField userIdField = storage.getDataField(15);
 
 
+    // The ids of the missions of every user (the missions of a user are few, the missions are many): it is kept by the methods of this class and rebuilt after the
+    // loading. It makes allByUserId() a lookup instead of a scan of all the missions, the dashboard and the sim tracker ask for it on every request.
+    private final Map<Integer, Set<Integer>> missionIdsByUserId = new java.util.concurrent.ConcurrentHashMap<>();
+
     public FlightMissions() {
     }
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        rebuildMissionIdsByUserId();
+    }
+
+    private void rebuildMissionIdsByUserId() {
+        missionIdsByUserId.clear();
+        storage.all().forEach(mission -> indexUser(mission.getUserId(), mission.getId()));
+    }
+
+    private void indexUser(final int userId, final int missionId) {
+        if (userId > 0) {
+            missionIdsByUserId.computeIfAbsent(userId, id -> java.util.concurrent.ConcurrentHashMap.newKeySet()).add(missionId);
+        }
+    }
+
+    private void unindexUser(final int userId, final int missionId) {
+        if (userId > 0) {
+            missionIdsByUserId.computeIfPresent(userId, (id, ids) -> {
+                ids.remove(missionId);
+                return ids.isEmpty() ? null : ids;
+            });
+        }
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -118,6 +143,7 @@ public class FlightMissions {
     }
 
     public void deleteById(final int id) {
+        storage.byId(id).ifPresent(mission -> unindexUser(mission.getUserId(), id)); // before the record is cleared by the deletion
         storage.deleteRecord(id);
     }
 
@@ -140,7 +166,11 @@ public class FlightMissions {
 
     public Stream<Mission> allByUserId(final int userId) {
         checkArgument(userId > 0, "userId is mandatory");
-        return storage.filter(recordId -> storage.getAsInt(recordId, userIdField) == userId);
+        // in the order of the ids, as the scan of the storage was
+        return missionIdsByUserId.getOrDefault(userId, Set.of()).stream()
+                .sorted()
+                .map(storage::byId)
+                .flatMap(Optional::stream);
     }
 
     public Optional<Mission> theLatestMissionByAircraftId(final Aircrafts.Aircraft aircraft) {
@@ -415,7 +445,9 @@ public class FlightMissions {
         }
 
         public void setUserId(final int userId) {
+            unindexUser(getUserId(), id);
             storage.set(id, userIdField, userId);
+            indexUser(userId, id);
         }
 
         private int getTime(final BitAccessField.Section section) {
