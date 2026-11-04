@@ -1,88 +1,40 @@
-# Airports: расширение записи аэропорта (план, не реализовано)
+# Airports: запись аэропорта (расширение сделано 2026-11-04)
 
-Статус (2026-11-04): **сделан первый шаг**: размер записи не менялся (20 байт), поля `iata` и `icao` стали `FixedLengthString`
-(3 и 4 байта, без байтов длины), освободившиеся два байта это `countryId` (`Unsigned8bit`, 0 = неизвестно) и `flags` (`Unsigned8bit`,
-биты определим позже). Раскладка: широта 3, долгота 3, `countryId` 1, `iata` 3, `flags` 1, `icao` 4, `nameId` 4. Новые байты стоят на
-местах прежних байтов длины, старый файл при первой загрузке на проде (2026-11-04, 348 аэропортов) разово обнулён временным кодом, код удалён.
-`countryId` разово заполнен при старте мира страной самого населённого города из `airport2city` (временный код удалён). `GeoController`
-переключён на поле (`/geo/airports` отдаёт страну из `countryId`, 0 = неизвестно, пересчёт по связям убран; кэш по-прежнему зависит от
-`airport2city`, `Cities` из зависимостей убран). Варианты со вторым хранилищем и сменой размера до 32 байт ниже не нужны, общая инструкция в
-[storage-extension.md](storage-extension.md). **Помнить:** когда в следующий раз будем добавлять аэропорты, надо подумать о заполнении `countryId` у новых (`Airports.create` его не ставит, остаётся 0). `flags` (2026-11-04): бит 0 `excluded` (`Airport.isExcluded/setExcluded`), бит 1 `hub` (`isHub/setHub`, просто пометка, без потоков), остальные биты свободны. `Airport.isExcluded()` читает бит, хардкод убран; хардкод LFPY, EDDT, LGAT, CGAS заменён флагами, всё помечено на проде (2026-11-04). Хабы читаются из флага (`AirportHubs` удалён 2026-11-04, его 22 аэропорта помечены флагом hub на проде); статистика самых активных аэропортов в логе (`ShadowJetLogic.mostActiveAirports`) удалена, хабы определяет админка. **Админская карта** (`airways/admin/map.html`): списки городов и аэропортов идут с `GET /admin/world/cities` и `/admin/world/airports` (в них все аэропорты, в том числе excluded), публичные `/geo/*` excluded не отдают; в деталях аэропорта дропдаун страны (`POST /admin/world/airport/country`) и чекбоксы Excluded и Hub (`POST /admin/world/airport/excluded` и `/hub`). Excluded аэропорты не попадают в выборки: `PersonControl.bookingAirports`, поиск места для путешествия пилота, полёты (`BusyBirdsMissionControl`, `FlightMissionControl`, `RandomFlightMissionGenerator`); списки трекеров (`SimTracker`, `VatsimTracker`) и поиск билетов журни не фильтруются. Дальше: править на карте остальное. Ниже исходный план.
+Статус: **сделано**. Как расширять хранилища вообще: [storage-extension.md](storage-extension.md). Код: `world/datamodel/Airports.java`.
 
-Исходный план: **только план**, в код не вносилось. Основание: несколько TODO в `Airports.java` и
-`docs/cities.md` требуют новых полей в `Airports.Airport`.
+## Раскладка записи
 
-## Что требует новых полей
+Размер не менялся, 20 байт: заголовок 1, широта 3, долгота 3, `countryId` 1, `iata` 3, `flags` 1, `icao` 4, `nameId` 4.
 
-| TODO | Где | Что нужно |
-|---|---|---|
-| «add `excluded`, countryId, and some reserve space» | `Airports.java` (todo ak0) | `countryId`, признак исключения, резерв |
-| «rework `isExcluded` into `exclusion` field, or status» | `Airports.Airport.isExcluded` (todo ak0) | сейчас захардкожены LFPY, EDDT, LGAT, CGAS; читают `BusyBirdsMissionControl` и `RandomFlightMissionGenerator` |
-| TODO №4 «Страна аэропорта» | `docs/cities.md` | страна считается на лету по `airport2city` (`GeoController`, кэш + `invalidateAirportCountries`) |
-| TODO №1 «Военные аэродромы с типом `civil`» | `docs/cities.md` | признак «военный» (EGDM, KINS, KNZJ, KNTD, KSLI, KPMD, KNKX, KNHK, KAPG, KFMH, RKSM, RKSW и др.) |
-| `ImportMajorAirportsInVicinityOfCities` (todo ak3) | IATA сейчас `null` | не схема, а заполнение IATA из refdata |
+- Коды `iata` (3) и `icao` (4) стали `FixedLengthString`: ровно столько байт, без байта длины (`PlainString` тратил на каждый по лишнему байту). Строка кончается на
+  первом нулевом байте, пустая строка и `null` одно и то же (читается как `null`).
+- Два освободившихся байта это `countryId` и `flags`. Они стоят на местах прежних байтов длины, поэтому старый файл переписывать не пришлось: на проде при первой
+  загрузке (348 аэропортов) эти байты разово обнулил временный код, потом он был удалён.
+- `countryId` (`Unsigned8bit`, 0 = неизвестно) разово заполнен при старте мира страной самого населённого города из `airport2city`; временный код удалён.
+- `flags` (`Unsigned8bit`, через `BitAccessField`): бит 0 `excluded` (`Airport.isExcluded/setExcluded`), бит 1 `hub` (`isHub/setHub`, просто пометка, без потоков), биты 2-7
+  свободны. Свободных байтов в записи не осталось.
 
-## Предлагаемая структура записи
+## Что на этом работает
 
-Сейчас запись 20 байт (1 заголовок + latitude 3, longitude 3, iata 4, icao 5, nameId 4). По образцу `Journeys`
-выровнять до 32 байт:
+- **Excluded** (аэропорт не участвует в игре; в мире остаётся, связи и история сохраняются). Хардкод LFPY, EDDT, LGAT, CGAS удалён, военные и закрытые помечены флагом
+  на проде (правило для новых: `cities.md`, TODO №1). Excluded не попадают в: публичные `/geo/airports` и аэропорты города в `/geo/cities`,
+  `PersonControl.bookingAirports`, поиск места для путешествия, полёты (`BusyBirdsMissionControl`, `FlightMissionControl`, `RandomFlightMissionGenerator`), списки
+  трекеров (`SimTracker`, `PilotContext`, `VatsimTrackerBean`: для трекера такого аэропорта нет), публичные `/airport/info` и `/airport/full-info` по прямому коду.
+  Не фильтруются: поиск билетов журни (`JourneyProcessor`, горячий путь, решено не трогать) и история (аэропорты прошлых рейсов в ответах по самолёту).
+- **Hub.** Класс `AirportHubs` удалён, хабы читаются из флага (`JourneyProcessor` поиск хаб-рейса, `ShadowJetLogic`, цена ночлега в `PersonControl`). 22 бывших хардкодных
+  хаба помечены на проде. Статистика самых активных аэропортов в логе удалена: хабы определяет админка, не расчёт.
+- **Страна.** `/geo/airports` и публичная карта (`MapController`) берут страну из `countryId`, пересчёта по связям с городами нет.
 
-- `countryId` — `Unsigned8bit` (как `Cities.countryId`: ссылка на страну 1 байтом, до 255 стран);
-- `exclusion` — `Unsigned8bit`, перечисление: `NONE(0)`, `EXCLUDED(1)`, `MILITARY(2)`, `CLOSED(3)`, остальные значения свободны
-  (альтернатива — набор отдельных битовых флагов);
-- резерв 10 байт: `Signed32bit` + `Signed32bit` + `Unsigned16bit`. Кандидат на первое использование — `size` из
-  `icaodata.csv` (`Unsigned16bit`, длина полосы), чтобы фильтры по размеру не зависели от CSV.
+## Админская карта (`airways/admin/map.html`)
 
-## Главный риск: смена размера записи
+- Списки приходят с `GET /admin/world/cities` и `/admin/world/airports` (все аэропорты, в том числе excluded; своя копия логики `/geo`, без кеша), публичные `/geo/*`
+  excluded не отдают.
+- Маркер: жёлтый обычный, серый excluded (перекрывает hub), морковно-красный hub.
+- В деталях аэропорта: дропдаун страны (`POST /admin/world/airport/country`), чекбоксы Excluded и Hub (`/airport/excluded` и `/airport/hub`); изменение уходит сразу.
 
-`Storage.loadIfExists` читает файл как есть и делит на размер записи, поэтому новая раскладка на старых данных даст
-мусор. Миграций в проекте нет (коммит «migration removed» — это был стартовый шаг world builder). Варианты:
+## Что осталось
 
-- **А (рекомендуется):** новая раскладка пишется в новый файл (`name("airports2")` или версия в имени); при отсутствии
-  нового файла, но наличии старого `airports`, `Airports.loadIfExists` читает старый файл **старой раскладкой**
-  (приватный legacy `Storage`) и копирует запись за записью (id совпадают с позицией, удалений у аэропортов нет). Старый
-  файл остаётся как бэкап. Автоматически, без отдельного запуска.
-- Б: определять формат по длине файла — отвергнуто, неоднозначно (длина кратна и 20, и 32 при 160 байтах).
-- В: офлайн-инструмент или шаг world builder до запуска — надёжно, но руками и с остановкой.
-
-Откат на старую версию после перехода на новый файл потеряет изменения аэропортов с момента перехода (они редки);
-старый файл останется как бэкап.
-
-## Заполнение новых полей
-
-- `countryId` — после загрузки мира (нужны города и связи) идемпотентный шаг «заполнить нулевые»: страна самого
-  населённого города из `airport2city`, то есть то же правило, что сейчас в `GeoController`. Для новых аэропортов
-  (`World25_009`, `ImportMajorAirportsInVicinityOfCities`) проставлять при создании или при `create-links`.
-- `exclusion` — миграцией: LFPY, EDDT, LGAT, CGAS → `EXCLUDED`, известные военные из `docs/cities.md` → `MILITARY`;
-  дальше админ-ручка `set-exclusion?icao=&value=&dryRun=true` (по умолчанию `dryRun=true`).
-- `isExcluded()` оставить как `exclusion != NONE` (или раздельные `isExcluded`/`isMilitary`), хардкод убрать.
-- IATA — отдельный шаг из refdata.
-
-## Что переключить после появления полей
-
-- `GeoController.getAirports`: страна из поля, добавить `countryId` в `AirportDto` (как в `CityDto`), имя страны оставить
-  для совместимости; убрать пересчёт `buildCountryIdByAirportId` (кэш и `invalidateAirportCountries()` уже убраны).
-- `RandomFlightMissionGenerator`, `BusyBirdsMissionControl` — на новый признак; возможно, исключать военные при
-  автоимпорте и `create-links`.
-- Закрыть TODO №4 и №1 в `docs/cities.md`.
-
-## Тесты
-
-`AirportsTest` (создание, диапазон `countryId`, `exclusion`), тест миграции (старый файл → новый, id и поля сохранены,
-повторная загрузка), заполнение `countryId`, `World.load` со старым файлом, обновление существующих тестов
-`GeoController`/ShadowJet, где создаются аэропорты (около 36 мест вызова `airports().create`, нужен перегруженный
-`create` без новых аргументов).
-
-## Порядок работ
-
-1. Раскладка + миграция + тесты → деплой, проверка `/geo/airports` и логов загрузки.
-2. Заполнение `countryId` и `exclusion` (шаг при загрузке + админ-ручка).
-3. Переключение `GeoController`/`AirportDto`, удаление кэша.
-4. Документация и удаление старого файла `airports` (через неделю стабильной работы).
-
-## Открытые вопросы
-
-1. `exclusion` как одно перечисление (EXCLUDED/MILITARY/CLOSED) или набор отдельных флагов?
-2. Военные аэродромы: только пометка, или ещё исключать из автоимпорта и создания рейсов?
-3. Добавить `size` в резерв сразу?
-4. Новый файл с версией в имени (вариант А) или офлайн-миграция?
+- **`countryId` у новых аэропортов:** `Airports.create` его не ставит (0). Решение 2026-11-04: когда в следующий раз будем добавлять аэропорты (импорты, `create-links`),
+  определять страну по слинкованному городу (как делало разовое заполнение: самый населённый город связи).
+- **IATA:** автоимпорт пишет `null`, заполнение из refdata, `todo ak3` в `ImportMajorAirportsInVicinityOfCities` (оставлено висеть).
+- Отдельных тестов на `MapController` и трекеры нет.

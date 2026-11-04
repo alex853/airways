@@ -91,7 +91,7 @@ public class MapController {
     @GetMapping("/airport/info")
     public AirportInfoDto getAirportInfo(@RequestParam("icao") final String icao) {
         try (final Timing.Timer ignored = Timing.label("MapController - getAirportInfo")) {
-            return worldBean.read(world -> buildAirportInfo(world, world.airports().byIcao(icao).orElseThrow(), INFO_TOP_CONNECTIONS));
+            return worldBean.read(world -> buildAirportInfo(world, world.airports().byIcao(icao).filter(a -> !a.isExcluded()).orElseThrow(), INFO_TOP_CONNECTIONS));
         }
     }
 
@@ -99,7 +99,7 @@ public class MapController {
     public AirportFullInfoDto getAirportFullInfo(@RequestParam("icao") final String icao) {
         try (final Timing.Timer ignored = Timing.label("MapController - getAirportFullInfo")) {
             return worldBean.read(world -> {
-                final Airports.Airport airport = world.airports().byIcao(icao).orElseThrow();
+                final Airports.Airport airport = world.airports().byIcao(icao).filter(a -> !a.isExcluded()).orElseThrow();
 
                 final List<ParkedAircraftDto> parkedAircraft = world.aircrafts()
                         .filter(world.aircrafts().byLocationAirportId(airport.getId()))
@@ -334,7 +334,7 @@ public class MapController {
     public static class AirportInfoDto {
         private String icao;
         private String name;
-        /** country of the most populated city the airport is linked to, null if the airport has no city */
+        /** the country of the airport, null if it is unknown */
         private String country;
         private float lat;
         private float lon;
@@ -443,11 +443,8 @@ public class MapController {
             return cache.computeIfAbsent(airport.getId(), id -> new AirportRefDto(
                     airport.getIcao(),
                     airport.getName(),
-                    // country of the most populated city the airport is linked to
-                    world.airport2city().allByAirportId(airport.getId())
-                            .map(l -> world.cities().byId(l.getCityId()).orElseThrow())
-                            .max(Comparator.comparingInt(Cities.City::getPopulation))
-                            .flatMap(c -> world.countries().byId(c.getCountryId()))
+                    // the country of the airport (zero means unknown)
+                    world.countries().byId(airport.getCountryId())
                             .map(Countries.Country::getName)
                             .orElse(null)));
         }

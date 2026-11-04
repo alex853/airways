@@ -57,7 +57,7 @@ public class VatsimTrackerBean implements ApplicationRunner, DisposableBean {
 
         storage = CompactifiedStorage.getStorage(storageRoot, Network.VATSIM);
 
-        worldIcaos = worldBean.read(world -> world.airports().all().map(Airports.Airport::getIcao).collect(Collectors.toSet()));
+        worldIcaos = worldBean.read(world -> world.airports().all().filter(a -> !a.isExcluded()).map(Airports.Airport::getIcao).collect(Collectors.toSet()));
 
         thread = new Thread(() -> {
             log.info("thread started");

@@ -409,7 +409,7 @@ public class SimTracker {
 
     public void setWorldAccess(WorldAccess worldAccess) {
         this.worldAccess = worldAccess;
-        this.airportInfos = worldAccess.read(world -> world.airports().all().map(SimTracker.AirportInfo::from).collect(Collectors.toList()));
+        this.airportInfos = worldAccess.read(world -> world.airports().all().filter(a -> !a.isExcluded()).map(SimTracker.AirportInfo::from).collect(Collectors.toList()));
     }
 
     public void processContexts() {
