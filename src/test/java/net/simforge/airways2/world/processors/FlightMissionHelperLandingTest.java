@@ -44,8 +44,8 @@ class FlightMissionHelperLandingTest {
 
         final int earliest = FlightMissionHelper.calcEarliestAllowedLandingTime(mission);
 
-        // three quarters of 51 minutes after the takeoff, and that is before the planned landing (the takeoff + 51 minutes)
-        assertEquals(takeoff + (int) Math.round(51 * 60 * 0.75), earliest);
+        // 90% of 51 minutes after the takeoff, and that is before the planned landing (the takeoff + 51 minutes)
+        assertEquals(takeoff + (int) Math.round(51 * 60 * 0.9), earliest);
         assertTrue(earliest < takeoff + 51 * 60);
     }
 
@@ -63,6 +63,7 @@ class FlightMissionHelperLandingTest {
         // the takeoff is much later than planned
         mission.setActualTakeoffWorldTime(mission.getPlannedDepartureWorldTime() + 45 * 60);
 
-        assertEquals(mission.getActualTakeoffWorldTime() + 75 * 60, FlightMissionHelper.calcEarliestAllowedLandingTime(mission));
+        // 120 minutes block to block, 100 minutes of flying: 90%
+        assertEquals(mission.getActualTakeoffWorldTime() + 90 * 60, FlightMissionHelper.calcEarliestAllowedLandingTime(mission));
     }
 }

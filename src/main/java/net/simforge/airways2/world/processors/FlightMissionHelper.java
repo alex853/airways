@@ -145,15 +145,20 @@ public class FlightMissionHelper {
     }
 
     /**
-     * The earliest time of a manual landing: three quarters of the planned flying time after the takeoff. The planned time of the mission is from blocks off to
-     * blocks on, it has the taxi before the takeoff and after the landing, so they are taken off: the flying time is what is left. (Three quarters of the whole
-     * block time would be later than the planned landing for a flight shorter than an hour.)
+     * The share of the planned flying time after the takeoff before which a manual landing is not allowed: 90% (it was 75% till 2026-11-04).
+     */
+    public static final double EARLIEST_LANDING_SHARE_OF_FLYING_TIME = 0.9;
+
+    /**
+     * The earliest time of a manual landing: 90% of the planned flying time after the takeoff (EARLIEST_LANDING_SHARE_OF_FLYING_TIME). The planned time of the mission is from
+     * blocks off to blocks on, it has the taxi before the takeoff and after the landing, so they are taken off: the flying time is what is left. (A share of the whole block
+     * time would be later than the planned landing for a short flight.)
      */
     public static int calcEarliestAllowedLandingTime(final FlightMissions.Mission flight) {
         final int plannedBlockTime = flight.getPlannedArrivalWorldTime() - flight.getPlannedDepartureWorldTime();
         final int plannedTaxiTime = (FlightTimeline.BLOCKS_OFF_TO_TAKEOFF_MINUTES + FlightTimeline.LANDING_TO_BLOCKS_ON_MINUTES) * 60;
         final int plannedFlyingTime = Math.max(plannedBlockTime - plannedTaxiTime, 0);
-        final int minDuration = (int) Math.round(plannedFlyingTime * 0.75);
+        final int minDuration = (int) Math.round(plannedFlyingTime * EARLIEST_LANDING_SHARE_OF_FLYING_TIME);
         return flight.getActualTakeoffWorldTime() + minDuration;
     }
 
