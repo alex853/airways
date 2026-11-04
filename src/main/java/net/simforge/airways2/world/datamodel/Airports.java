@@ -11,18 +11,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public class Airports {
-    private static final Logger log = LoggerFactory.getLogger(Airports.class);
-
     private final Strings strings;
 
-    // The record is 20 bytes as it was: the fixed length strings (no length bytes) gave two bytes for countryId and the flags. The place of the bytes is the same as of the
-    // former length bytes of iata and icao, see migrateFormerLengthBytes().
+    // The record is 20 bytes as it was: the fixed length strings (no length bytes) gave two bytes for countryId and the flags.
     private final Storage<Airport> storage = Storage.<Airport>builder()
             .name("airports")
             .withInstantiator(Airport::new)
@@ -50,37 +44,6 @@ public class Airports {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-        migrateFormerLengthBytes();
-    }
-
-    /**
-     * todo remove after the first deploy and the first save of the world (the file is migrated by then).
-     * The file used to hold iata and icao as length-prefixed strings. The new fields countryId and flags are at the places of the length bytes, so an old file shows the lengths
-     * in them. It is the old file when every airport has the length of its iata in countryId and the length of its icao in flags (no length for a null), and at least one
-     * airport has an icao (a migrated file has zeros). Then the two bytes are zeroed. A migrated file never looks like that.
-     */
-    void migrateFormerLengthBytes() {
-        boolean anyIcao = false;
-        for (final Airport airport : (Iterable<Airport>) storage.all()::iterator) {
-            final int id = airport.getId();
-            if (!isFormerLengthByte(storage.getAsInt(id, countryIdField), airport.getIata())
-                    || !isFormerLengthByte(storage.getAsInt(id, flagsField), airport.getIcao())) {
-                return;
-            }
-            anyIcao |= airport.getIcao() != null;
-        }
-        if (!anyIcao) {
-            return;
-        }
-        storage.all().forEach(airport -> {
-            storage.set(airport.getId(), countryIdField, 0);
-            storage.set(airport.getId(), flagsField, 0);
-        });
-        log.info("a/p - the former length bytes of iata and icao are zeroed in {} airports (countryId and flags)", storage.getCount());
-    }
-
-    private static boolean isFormerLengthByte(final int value, final String string) {
-        return string == null ? value == 0 || value == 255 : value == string.length();
     }
 
     public void save(final Path rootPath) throws IOException {

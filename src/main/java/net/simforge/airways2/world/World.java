@@ -11,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class World {
     private static final Logger log = LoggerFactory.getLogger(World.class);
@@ -116,8 +118,37 @@ public class World {
         });
 
         world.cityFlows.createMissingCityFlows();
+        world.fillMissingAirportCountryIds();
 
         return world;
+    }
+
+    /**
+     * todo remove after the first deploy and the first save of the world (the countryId of the airports is filled by then; the airports which are created later get it on creation).
+     * The country of an airport is the country of the most populated city it is linked to. Only the airports without a country (zero) are filled, so it is done once.
+     */
+    private void fillMissingAirportCountryIds() {
+        final Map<Integer, Cities.City> biggestCityByAirportId = new HashMap<>();
+        airport2city.all().forEach(link -> {
+            final Cities.City city = cities.byId(link.getCityId()).orElseThrow();
+            final Cities.City current = biggestCityByAirportId.get(link.getAirportId());
+            if (current == null || city.getPopulation() > current.getPopulation()) {
+                biggestCityByAirportId.put(link.getAirportId(), city);
+            }
+        });
+
+        final int[] filled = {0};
+        final int[] withoutCity = {0};
+        airports.all().filter(airport -> airport.getCountryId() == 0).forEach(airport -> {
+            final Cities.City city = biggestCityByAirportId.get(airport.getId());
+            if (city == null) {
+                withoutCity[0]++;
+                return;
+            }
+            airport.setCountryId(city.getCountryId());
+            filled[0]++;
+        });
+        log.info("a/p - countryId is filled for {} airports by the biggest linked city, {} airports have no city", filled[0], withoutCity[0]);
     }
 
     public void save() throws IOException {
