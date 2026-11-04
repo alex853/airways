@@ -567,7 +567,7 @@ public class FlightDashboardController {
                                  @RequestParam(name = "flightId") String flightIdStr,
                                  @RequestParam(name = "shiftMinutes") int shiftMinutes) {
         return worldBean.modifySync(world -> {
-            checkUserMayUseDashboard(world, userId);
+            // the move of a flight is an action of the roster, not of the dashboard: the state of the pilot does not matter for it, as for the booking
             int flightId = Id.decode(flightIdStr);
 
             FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
@@ -579,8 +579,10 @@ public class FlightDashboardController {
 
             if (isTrackedBySimTracker(flight, userId)) {
                 SimTracker.UserStatus simStatus = requireConnectedSimStatus(userId);
-                checkArgument(Objects.equals(flightIdStr, simStatus.getFlightMissionId()), "sim tracker status is invalid");
-                checkActionAllowed(simStatus, "reschedule");
+                // the tracker checks the flight which it follows; the other flights of the roster are not its business
+                if (Objects.equals(flightIdStr, simStatus.getFlightMissionId())) {
+                    checkActionAllowed(simStatus, "reschedule");
+                }
             }
 
             log.info("f/m #{} - flight-dashboard - reschedule by {} min", flightId, shiftMinutes);
