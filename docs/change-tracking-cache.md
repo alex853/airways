@@ -33,7 +33,7 @@ keep that json in memory»). Так же можно кэшировать люб�
 |---|---|
 | `/geo/countries` | `Countries` |
 | `/geo/cities` | `Cities`, `Airport2City`, `Airports` |
-| `/geo/airports` | `Airports`, `Airport2City`, `Cities`, `Countries` (страна аэропорта это страна самого населённого города связи) |
+| `/geo/airports` | `Airports`, `Airport2City`, `Countries` (страна аэропорта это его `countryId`) |
 
 Запрос с актуальным кэшем **не берёт блокировку мира**. Сборка читает данные под read-lock мира, а сериализация и сжатие идут
 вне блокировки. Кэш мапы `countryIdByAirportId` и `invalidateAirportCountries()` убраны: страна пересчитывается при каждой

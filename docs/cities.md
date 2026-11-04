@@ -191,6 +191,8 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 
 ### 4. Страна аэропорта: нет собственного `countryId`
 
+**Сделано 2026-11-04:** у аэропорта есть `countryId` (заполнен по самому населённому городу), `/geo/airports` читает его, пересчёт убран; осталось заполнять `countryId` у новых аэропортов. Ниже описание до изменения.
+
 Сейчас у аэропорта в `Airports` нет страны. `/geo/airports` вычисляет её на лету как страну самого населённого
 города из `airport2city` (`GeoController.buildCountryIdByAirportId`, при каждой сборке закэшированного ответа), поэтому:
 - аэропорт без городской связи отдаёт `country = null` (так выглядели EKVG, LGTS, UMMS между `009` и `create-links`);

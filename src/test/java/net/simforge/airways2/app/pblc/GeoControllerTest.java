@@ -45,6 +45,7 @@ class GeoControllerTest {
         country = world.countries().create("TT", "Testland");
         city = world.cities().create(country.getId(), "Alpha City", 10, 20, 1_000_000);
         airport = world.airports().create(10, 20, "AAA", "AAAA", "Alpha");
+        airport.setCountryId(country.getId());
         world.airport2city().create(airport.getId(), city.getId());
 
         final WorldRunnerBean worldBean = mock(WorldRunnerBean.class);
@@ -84,10 +85,9 @@ class GeoControllerTest {
     }
 
     @Test
-    public void test__airports_with_the_country_of_the_most_populated_city() throws IOException {
+    public void test__airports_with_the_country_of_the_field() throws IOException {
         final Countries.Country other = world.countries().create("OO", "Otherland");
-        final Cities.City biggerCity = world.cities().create(other.getId(), "Big City", 11, 21, 5_000_000);
-        world.airport2city().create(airport.getId(), biggerCity.getId());
+        airport.setCountryId(other.getId());
 
         final JsonNode airports = json(controller.getAirports(null));
 
@@ -97,7 +97,7 @@ class GeoControllerTest {
     }
 
     @Test
-    public void test__airport_without_a_city_has_no_country() throws IOException {
+    public void test__airport_without_a_country_has_no_country() throws IOException {
         world.airports().create(1, 2, "BBB", "BBBB", "Bravo");
 
         final JsonNode airports = json(controller.getAirports(null));
@@ -155,16 +155,15 @@ class GeoControllerTest {
 
     @Test
     public void test__new_link_rebuilds_the_cities_and_the_airports() throws IOException {
+        final Airports.Airport second = world.airports().create(1, 2, "BBB", "BBBB", "Bravo");
         final byte[] citiesBefore = controller.getCities(null).getBody();
         final byte[] airportsBefore = controller.getAirports(null).getBody();
-        final Airports.Airport second = world.airports().create(1, 2, "BBB", "BBBB", "Bravo");
 
         world.airport2city().create(second.getId(), city.getId());
 
         final JsonNode cities = objectMapper.readTree(controller.getCities(null).getBody());
         assertEquals(2, cities.get(0).get("airports").size());
         assertNotSame(citiesBefore, controller.getCities(null).getBody());
-        assertEquals("Testland", objectMapper.readTree(controller.getAirports(null).getBody()).get(1).get("country").asText());
         assertNotSame(airportsBefore, controller.getAirports(null).getBody());
     }
 

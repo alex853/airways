@@ -59,7 +59,6 @@ public class GeoController {
             () -> stamps(world -> new long[]{
                     world.airports().getLastChangedAtMillis(),
                     world.airport2city().getLastChangedAtMillis(),
-                    world.cities().getLastChangedAtMillis(),
                     world.countries().getLastChangedAtMillis()}),
             () -> buildJson("airports", this::buildAirports));
 
@@ -119,7 +118,6 @@ public class GeoController {
     }
 
     private List<AirportDto> buildAirports(final World world) {
-        final Map<Integer, Integer> countryIdByAirportId = buildCountryIdByAirportId(world);
         final Map<Integer, String> countryNameById = new HashMap<>();
         return world.airports().all()
                 .map(a -> new AirportDto(
@@ -129,32 +127,13 @@ public class GeoController {
                         a.getIata(),
                         a.getIcao(),
                         a.getName(),
-                        countryName(world, countryNameById, countryIdByAirportId.get(a.getId()))))
+                        countryName(world, countryNameById, a.getCountryId())))
                 .sorted(Comparator.comparing(AirportDto::getIcao))
                 .toList();
     }
 
-    /**
-     * Country of the most populated city each airport is linked to; airports without a city are absent.
-     * Built in a single pass over airport2city links instead of scanning the links for every airport.
-     */
-    private static Map<Integer, Integer> buildCountryIdByAirportId(final World world) {
-        final Map<Integer, Cities.City> biggestCityByAirportId = new HashMap<>();
-        world.airport2city().all().forEach(link -> {
-            final Cities.City city = world.cities().byId(link.getCityId()).orElseThrow();
-            final Cities.City current = biggestCityByAirportId.get(link.getAirportId());
-            if (current == null || city.getPopulation() > current.getPopulation()) {
-                biggestCityByAirportId.put(link.getAirportId(), city);
-            }
-        });
-
-        final Map<Integer, Integer> result = new HashMap<>();
-        biggestCityByAirportId.forEach((airportId, city) -> result.put(airportId, city.getCountryId()));
-        return result;
-    }
-
     private static String countryName(final World world, final Map<Integer, String> cache, final Integer countryId) {
-        if (countryId == null) {
+        if (countryId == null || countryId == 0) { // zero means 'unknown'
             return null;
         }
         return cache.computeIfAbsent(countryId,
