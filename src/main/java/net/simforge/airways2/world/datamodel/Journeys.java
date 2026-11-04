@@ -69,9 +69,95 @@ public class Journeys {
 
     public static final int MAX_PRICE = (int) DataType.Unsigned24bit.maxValue();
 
+    // The journeys of every transport flight, by both of its flight fields (transportFlight1Id and transportFlight2Id): the index is an array of arrays, the index in the outer
+    // one is the id of the transport flight, the inner one holds the ids of the journeys, sorted. A change makes a new inner array (the old one stays as it was for whoever
+    // is walking along it), so a journey may be changed while the journeys of its flight are walked. It replaces the scans of all the journeys of the world (about 90 ms each).
+    private static final int[] NO_IDS = new int[0];
+    private int[][] journeyIdsByTransportFlightId = new int[0][];
+
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        rebuildTransportFlightIndex();
         logPageFill("after load");
+    }
+
+    private void rebuildTransportFlightIndex() {
+        journeyIdsByTransportFlightId = new int[0][];
+        storage.all().forEach(journey -> {
+            indexTransportFlight(journey.getTransportFlight1Id(), journey.getId());
+            indexTransportFlight(journey.getTransportFlight2Id(), journey.getId());
+        });
+    }
+
+    // the id of the journey is put to the journeys of the flight (nothing if it is there already)
+    private void indexTransportFlight(final int transportFlightId, final int journeyId) {
+        if (transportFlightId <= 0) {
+            return;
+        }
+        if (transportFlightId >= journeyIdsByTransportFlightId.length) {
+            journeyIdsByTransportFlightId = Arrays.copyOf(journeyIdsByTransportFlightId, Math.max(transportFlightId + 1, journeyIdsByTransportFlightId.length * 2));
+        }
+        final int[] ids = journeyIdsByTransportFlightId[transportFlightId];
+        if (ids == null) {
+            journeyIdsByTransportFlightId[transportFlightId] = new int[]{journeyId};
+            return;
+        }
+        final int position = Arrays.binarySearch(ids, journeyId);
+        if (position >= 0) {
+            return;
+        }
+        final int insertAt = -position - 1;
+        final int[] newIds = new int[ids.length + 1];
+        System.arraycopy(ids, 0, newIds, 0, insertAt);
+        newIds[insertAt] = journeyId;
+        System.arraycopy(ids, insertAt, newIds, insertAt + 1, ids.length - insertAt);
+        journeyIdsByTransportFlightId[transportFlightId] = newIds;
+    }
+
+    private void unindexTransportFlight(final int transportFlightId, final int journeyId) {
+        if (transportFlightId <= 0 || transportFlightId >= journeyIdsByTransportFlightId.length) {
+            return;
+        }
+        final int[] ids = journeyIdsByTransportFlightId[transportFlightId];
+        if (ids == null) {
+            return;
+        }
+        final int position = Arrays.binarySearch(ids, journeyId);
+        if (position < 0) {
+            return;
+        }
+        if (ids.length == 1) {
+            journeyIdsByTransportFlightId[transportFlightId] = null;
+            return;
+        }
+        final int[] newIds = new int[ids.length - 1];
+        System.arraycopy(ids, 0, newIds, 0, position);
+        System.arraycopy(ids, position + 1, newIds, position, ids.length - position - 1);
+        journeyIdsByTransportFlightId[transportFlightId] = newIds;
+    }
+
+    private Stream<Journey> journeysOfTransportFlight(final int transportFlightId) {
+        checkArgument(transportFlightId > 0);
+
+        final int[] ids = transportFlightId < journeyIdsByTransportFlightId.length && journeyIdsByTransportFlightId[transportFlightId] != null
+                ? journeyIdsByTransportFlightId[transportFlightId]
+                : NO_IDS;
+        return Arrays.stream(ids).mapToObj(storage::byId).flatMap(Optional::stream);
+    }
+
+    /**
+     * The journeys which have the transport flight as the first or as the second one, the lowest id first. The journeys are the ones of the moment of the call, a journey
+     * which is changed or deleted while the stream is walked is still in it (check what is needed in the stream).
+     */
+    public Stream<Journey> allByAnyTransportFlightId(final int transportFlightId) {
+        return journeysOfTransportFlight(transportFlightId);
+    }
+
+    /**
+     * The journeys whose first transport flight is the one, the lowest id first (a journey which has been changed before the stream is walked is checked again).
+     */
+    public Stream<Journey> allByTransportFlight1Id(final int transportFlightId) {
+        return journeysOfTransportFlight(transportFlightId).filter(journey -> journey.getTransportFlight1Id() == transportFlightId);
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -154,6 +240,10 @@ public class Journeys {
     }
 
     public void deleteById(final int id) {
+        storage.byId(id).ifPresent(journey -> { // before the record is cleared by the deletion
+            unindexTransportFlight(journey.getTransportFlight1Id(), id);
+            unindexTransportFlight(journey.getTransportFlight2Id(), id);
+        });
         storage.deleteRecord(id);
     }
 
@@ -247,7 +337,12 @@ public class Journeys {
         }
 
         public void setTransportFlight1Id(final int transportFlight1Id) {
+            final int old = readTransportFlight1Id(id);
             storage.set(id, transportFlight1IdField, transportFlight1Id);
+            if (old != readTransportFlight2Id(id)) { // the flight stays in the index while the journey has it as the second one
+                unindexTransportFlight(old, id);
+            }
+            indexTransportFlight(transportFlight1Id, id);
         }
 
         public int getTransportFlight2Id() {
@@ -255,7 +350,12 @@ public class Journeys {
         }
 
         public void setTransportFlight2Id(final int transportFlight2Id) {
+            final int old = readTransportFlight2Id(id);
             storage.set(id, transportFlight2IdField, transportFlight2Id);
+            if (old != readTransportFlight1Id(id)) {
+                unindexTransportFlight(old, id);
+            }
+            indexTransportFlight(transportFlight2Id, id);
         }
 
         public int getLocationCityId() {
@@ -337,37 +437,6 @@ public class Journeys {
         checkNotNull(cityIds);
 
         return recordId -> cityIds.contains(readLocationCityId(recordId));
-    }
-
-    public Storage.Condition<Journey> byTransportFlight1Id(final int transportFlightId) {
-        checkArgument(transportFlightId > 0);
-
-        return recordId -> readTransportFlight1Id(recordId) == transportFlightId;
-    }
-
-    public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status) {
-        checkArgument(transportFlightId > 0);
-        checkNotNull(status);
-
-        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
-                && readStatusCode(recordId) == status.code();
-    }
-
-    public Storage.Condition<Journey> byTransportFlight1IdAndStatus(final int transportFlightId, final Status status1, final Status status2) {
-        checkArgument(transportFlightId > 0);
-        checkNotNull(status1);
-        checkNotNull(status2);
-
-        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
-                && (readStatusCode(recordId) == status1.code()
-                || readStatusCode(recordId) == status2.code());
-    }
-
-    public Storage.Condition<Journey> byAnyTransportFlightId(final int transportFlightId) {
-        checkArgument(transportFlightId > 0);
-
-        return recordId -> readTransportFlight1Id(recordId) == transportFlightId
-                || readTransportFlight2Id(recordId) == transportFlightId;
     }
 
     private int readStatusCode(int recordId) {

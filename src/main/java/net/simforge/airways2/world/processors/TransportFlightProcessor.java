@@ -18,14 +18,8 @@ public class TransportFlightProcessor {
                 .byId(event.getObjectId())
                 .ifPresent(tfControl::startDeboarding));
 
-        // the journeys are read from the storage once for the whole pass (the events above have already moved them), not once for every flight
-        world.paxManager().beginPass();
-        try {
-            Processing.heartbeat(() -> world.transportFlights().nextForHeartbeat(worldTime),
-                    transportFlight -> processTransportFlight(world, transportFlight));
-        } finally {
-            world.paxManager().endPass();
-        }
+        Processing.heartbeat(() -> world.transportFlights().nextForHeartbeat(worldTime),
+                transportFlight -> processTransportFlight(world, transportFlight));
     }
 
     private static void processTransportFlight(final World world, final TransportFlights.Flight transportFlight) {

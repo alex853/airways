@@ -372,7 +372,8 @@ public class JourneyControl {
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.Deboarding);
 
         world.journeys()
-                .filter(world.journeys().byTransportFlight1IdAndStatus(transportFlight.getId(), Journeys.Status.OnBoard))
+                .allByTransportFlight1Id(transportFlight.getId())
+                .filter(journey -> journey.getStatus() == Journeys.Status.OnBoard)
                 .forEach(this::scheduleDeboarding);
     }
 

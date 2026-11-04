@@ -97,7 +97,7 @@ public class FlightCleanup {
                 });
 
         final List<Journeys.Journey> journeys = world.journeys()
-                .filter(world.journeys().byAnyTransportFlightId(tf1.getId()))
+                .allByAnyTransportFlightId(tf1.getId())
                 .toList();
         final boolean missionExists = world.flightMissions().byId(tf1.getFlightMissionId()).isPresent();
         for (final Journeys.Journey journey : journeys) {

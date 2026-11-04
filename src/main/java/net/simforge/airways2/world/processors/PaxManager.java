@@ -12,10 +12,8 @@ import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,54 +79,17 @@ public class PaxManager {
         deboardings.remove(transportFlight.getId());
     }
 
-    // The statuses of the journeys which the boarding and the deboarding look at
-    private static final List<Journeys.Status> PASS_STATUSES = List.of(
-            Journeys.Status.WaitingForCheckIn, Journeys.Status.WaitingForBoarding, Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding);
-
-    // The journeys of the flights by transportFlight1Id, the lowest id first; null when no pass is going
-    private Map<Integer, List<Journeys.Journey>> passSnapshot;
-
     /**
-     * Starts a pass of the processing of the transport flights: the journeys in the statuses of {@link #PASS_STATUSES} are read from the storage once and
-     * grouped by their first transport flight, so the look of every flight at its journeys is a lookup, not a scan of all the journeys of the world.
-     * A journey in the snapshot is a view, its status and its flight are read at the moment of the look, so what the pass itself changes (a journey
-     * boards, leaves, is too late) is seen at once. What the snapshot can not see is a journey which comes into these statuses or to a flight during the
-     * pass; the processing of the transport flights does not do that (the check-in, the tickets and the arrival are done by other processors).
-     * Outside of a pass (an action of the user) the looks go to the storage as before.
-     */
-    public void beginPass() {
-        try (final Timing.Timer ignored = Timing.label("PaxManager - pass snapshot # journeys scan")) {
-            final Map<Integer, List<Journeys.Journey>> snapshot = new HashMap<>();
-            world.journeys().filter(world.journeys().byStatusIn(PASS_STATUSES)).forEach(journey -> {
-                final int transportFlightId = journey.getTransportFlight1Id();
-                if (transportFlightId > 0) {
-                    snapshot.computeIfAbsent(transportFlightId, id -> new ArrayList<>()).add(journey);
-                }
-            });
-            passSnapshot = snapshot;
-        }
-    }
-
-    public void endPass() {
-        passSnapshot = null;
-    }
-
-    /**
-     * The journeys of the flight (as their first transport flight) which are in one of the statuses, the lowest id first.
+     * The journeys of the flight (as their first transport flight) which are in one of the statuses, the lowest id first. They are taken by the index of the journeys
+     * by transport flight (Journeys), so the look at a flight does not depend on the number of the journeys of the world.
      */
     public List<Journeys.Journey> journeysOf(final TransportFlights.Flight transportFlight, final Journeys.Status... statuses) {
         checkNotNull(transportFlight);
-        final int transportFlightId = transportFlight.getId();
         final Set<Journeys.Status> wanted = EnumSet.copyOf(List.of(statuses));
 
-        if (passSnapshot == null) {
-            return world.journeys()
-                    .filter(world.journeys().byTransportFlight1Id(transportFlightId))
-                    .filter(journey -> wanted.contains(journey.getStatus()))
-                    .toList();
-        }
-        return passSnapshot.getOrDefault(transportFlightId, List.of()).stream()
-                .filter(journey -> journey.getTransportFlight1Id() == transportFlightId && wanted.contains(journey.getStatus()))
+        return world.journeys()
+                .allByTransportFlight1Id(transportFlight.getId())
+                .filter(journey -> wanted.contains(journey.getStatus()))
                 .toList();
     }
 

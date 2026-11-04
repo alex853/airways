@@ -66,7 +66,10 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                         try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 04 - action.perform")) {
                             while (!actionQueue.isEmpty()) {
                                 final ActionContext<?> actionContext = actionQueue.poll();
-                                actionContext.perform(world);
+                                // timed by the class which made the action, to see who holds the world thread
+                                try (final Timing.Timer ignoredAction = Timing.label("WorldRunnerBean - action of " + actionContext.ownerName())) {
+                                    actionContext.perform(world);
+                                }
                                 needToCatchTime = true; // if at least one event happens, then probably vatsim tracker or anything else is active
                             }
                         }
@@ -246,6 +249,14 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
             } else {
                 throw thrownException;
             }
+        }
+
+        // the class which made the lambda (the lambda class name is 'Owner$$Lambda...')
+        public String ownerName() {
+            final String name = action.getClass().getName();
+            final int lambda = name.indexOf("$$Lambda");
+            final String owner = lambda >= 0 ? name.substring(0, lambda) : name;
+            return owner.substring(owner.lastIndexOf('.') + 1);
         }
 
         public void perform(final World world) {

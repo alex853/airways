@@ -586,7 +586,7 @@ public class TransportFlightControl {
     public void unloadJourneysForcefullyFromActiveFlight(TransportFlights.Flight transportFlight, final int locationAirportId) {
         try (final Timing.Timer ignored = Timing.label("TFControl - unloadJourneysForcefully # journeys scan")) {
             world.journeys()
-                    .filter(world.journeys().byTransportFlight1Id(transportFlight.getId()))
+                    .allByTransportFlight1Id(transportFlight.getId())
                     .forEach(journey -> world.journeyControl().resetJourneyForcefully(journey, locationAirportId));
         }
 

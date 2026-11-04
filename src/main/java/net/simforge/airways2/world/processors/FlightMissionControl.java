@@ -467,7 +467,8 @@ public class FlightMissionControl {
                 final int pingFrom = Math.max(worldTime, checkinStartTime);
                 final int pingTo = Math.max(pingFrom, checkinEndTime);
                 final List<String> pingedJourneyIds = world.journeys()
-                        .filter(world.journeys().byTransportFlight1IdAndStatus(tf.getId(), Journeys.Status.WaitingForCheckIn))
+                        .allByTransportFlight1Id(tf.getId())
+                        .filter(j -> j.getStatus() == Journeys.Status.WaitingForCheckIn)
                         .peek(j -> j.setHeartbeatTime(Tools.random(pingFrom, pingTo)))
                         .map(j -> "j/y #" + j.getId())
                         .toList();
@@ -492,7 +493,7 @@ public class FlightMissionControl {
     // the search of the stopover routes, JourneyProcessor.STOPOVER_CONNECTION_RESERVE). A journey which has lost it stays on the first flight and loses the second one.
     private void releaseLostConnections(final TransportFlights.Flight movedFlight, final FlightMissions.Mission movedMission) {
         final List<Journeys.Journey> twoFlightJourneys = world.journeys()
-                .filter(world.journeys().byAnyTransportFlightId(movedFlight.getId()))
+                .allByAnyTransportFlightId(movedFlight.getId())
                 .filter(j -> j.getTransportFlight2Id() != 0)
                 .toList();
 
