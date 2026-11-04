@@ -14,9 +14,10 @@ import java.util.Optional;
  * departure and arrival and the conflict with the flight before it. The flight dashboard and the roster show the same numbers.
  * <ul>
  * <li>The expected arrival of a flight which has left is the estimate of its timeline (from the position of the aircraft, FlightMissionToTimeline), of a flight which has not
- * left it is the departure plus the planned time of the flight; the departure of a flight which has not left is not earlier than now.</li>
- * <li>A flight which is diverted with passengers on board is expected to go on to its destination after the divert: its expected arrival is the earliest time the aircraft can be
- * there (ScheduleWarnings), and the next flight needs an hour after it (ScheduleWarnings.DIVERT_TURNAROUND_TIME), not the usual gap between flights.</li>
+ * left it is the departure plus the planned time of the flight; the departure of a flight which has not left is not earlier than now. A diverted flight goes to the airport of the
+ * divert now, so its expected arrival is the arrival there.</li>
+ * <li>A flight which is diverted with passengers on board is expected to go on to the destination of the plan after the divert: the earliest time the aircraft can be there is
+ * the delivery time (ScheduleWarnings), and the next flight needs an hour after it (ScheduleWarnings.DIVERT_TURNAROUND_TIME), not the usual gap between flights.</li>
  * <li>A flight which departs closer to the arrival of the flight before it than the gap needs is in conflict. It is counted that such a flight is moved to the least that
  * solves the conflict (the arrival of the flight before plus the gap), and the flights after it are counted from that. So the conflict goes down the roster: it is RED
  * where the flight before it is as it is (a late flight, a divert), and YELLOW where it appears only because the flights before it would have to be moved.</li>
@@ -43,7 +44,8 @@ public final class RosterForecast {
     }
 
     /**
-     * @param arrivalNotBefore  the arrival is the earliest time of a diverted flight with passengers: it can be later
+     * @param deliveryNotBefore the earliest time a diverted flight with passengers on board can deliver them to the destination of the plan (world time, it can be later), 0 when the
+     *                          flight is not diverted with passengers or has no estimate
      * @param divertReminder    the flight is diverted with passengers on board, the airline expects them to be delivered
      * @param divertAirport     the airport of the divert (declared or landed at), null if the flight is not diverted with passengers
      * @param conflict          null when there is none
@@ -51,7 +53,7 @@ public final class RosterForecast {
     public record Entry(FlightMissions.Mission mission,
                         int expectedDeparture,
                         int expectedArrival,
-                        boolean arrivalNotBefore,
+                        int deliveryNotBefore,
                         boolean divertReminder,
                         Airports.Airport divertAirport,
                         Conflict conflict) {
@@ -74,7 +76,7 @@ public final class RosterForecast {
         Entry previous = null;
         for (final FlightMissions.Mission flight : flights) {
             final Optional<ScheduleWarnings.DivertInfo> divert = ScheduleWarnings.divertInfo(world, flight);
-            final boolean estimated = divert.isPresent() && divert.get().earliestBlocksOn().isPresent();
+            final int deliveryNotBefore = divert.isPresent() && divert.get().earliestBlocksOn().isPresent() ? divert.get().earliestBlocksOn().getAsInt() : 0;
 
             int departure;
             int arrival;
@@ -87,23 +89,23 @@ public final class RosterForecast {
                 final int wanted = Math.max(flight.getPlannedDepartureWorldTime(), now);
                 departure = wanted;
                 if (previous != null) {
-                    final int needed = previous.expectedArrival() + (previous.arrivalNotBefore() ? ScheduleWarnings.DIVERT_TURNAROUND_TIME : ShadowJetBooking.MIN_GAP_SECONDS);
+                    // after a diverted flight the next one starts from the destination of the plan, when the aircraft is delivered there
+                    final int needed = previous.deliveryNotBefore() != 0
+                            ? previous.deliveryNotBefore() + ScheduleWarnings.DIVERT_TURNAROUND_TIME
+                            : previous.expectedArrival() + ShadowJetBooking.MIN_GAP_SECONDS;
                     if (wanted < needed) {
                         conflict = new Conflict(previous.conflict() == null ? Level.RED : Level.YELLOW,
                                 minutesUp(needed - wanted),
                                 previous.mission(),
-                                previous.arrivalNotBefore() || (previous.conflict() != null && previous.conflict().estimate()),
+                                previous.deliveryNotBefore() != 0 || (previous.conflict() != null && previous.conflict().estimate()),
                                 roundUp(needed));
                         departure = needed;
                     }
                 }
                 arrival = departure + plannedDuration;
             }
-            if (estimated) {
-                arrival = divert.get().earliestBlocksOn().getAsInt();
-            }
 
-            result.add(new Entry(flight, departure, arrival, estimated, divert.isPresent(), divert.map(ScheduleWarnings.DivertInfo::divertAirport).orElse(null), conflict));
+            result.add(new Entry(flight, departure, arrival, deliveryNotBefore, divert.isPresent(), divert.map(ScheduleWarnings.DivertInfo::divertAirport).orElse(null), conflict));
             previous = result.get(result.size() - 1);
         }
         return result;

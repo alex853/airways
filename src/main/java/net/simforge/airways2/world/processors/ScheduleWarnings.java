@@ -105,9 +105,9 @@ public final class ScheduleWarnings {
         if (entry.divertReminder()) {
             // the destination of the flight: where the passengers are expected
             final Airports.Airport destination = world.airports().byId(flight.getDestinationAirportId()).orElse(null);
-            final boolean conflict = entry.arrivalNotBefore() && nextConflict != null;
+            final boolean conflict = entry.deliveryNotBefore() != 0 && nextConflict != null;
             return Optional.of(new Warning(Kind.DIVERT, conflict, destination, nextFlight,
-                    entry.arrivalNotBefore() ? entry.expectedArrival() : 0, conflict ? nextConflict.shortfallMinutes() : 0));
+                    entry.deliveryNotBefore(), conflict ? nextConflict.shortfallMinutes() : 0));
         }
         if (isDiverted(flight) || !LATE_STATUSES.contains(flight.getStatus()) || nextConflict == null) {
             return Optional.empty();

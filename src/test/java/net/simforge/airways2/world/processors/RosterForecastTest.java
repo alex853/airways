@@ -141,18 +141,18 @@ class RosterForecastTest {
         final List<RosterForecast.Entry> roster = forecast();
 
         final RosterForecast.Entry entry = roster.get(0);
-        assertTrue(entry.arrivalNotBefore());
         assertTrue(entry.divertReminder());
         assertEquals(divertAirport.getId(), entry.divertAirport().getId());
-        // an hour on the ground at the divert airport at least
-        assertTrue(entry.expectedArrival() > world.getWorldTime() + Time.ONE_HOUR);
+        // the expected arrival of a diverted flight is the arrival at the divert airport, the delivery to the destination of the plan is after an hour on the ground there
+        assertTrue(entry.expectedArrival() > world.getWorldTime());
+        assertTrue(entry.deliveryNotBefore() > entry.expectedArrival() + Time.ONE_HOUR);
 
         final RosterForecast.Conflict c2 = roster.get(1).conflict();
         assertNotNull(c2);
         assertEquals(RosterForecast.Level.RED, c2.level());
         assertTrue(c2.estimate());
         // the next flight needs an hour after the arrival of a diverted flight
-        assertEquals(entry.expectedArrival() + Time.ONE_HOUR, roster.get(1).expectedDeparture());
+        assertEquals(entry.deliveryNotBefore() + Time.ONE_HOUR, roster.get(1).expectedDeparture());
 
         final RosterForecast.Conflict c3 = roster.get(2).conflict();
         assertNotNull(c3);

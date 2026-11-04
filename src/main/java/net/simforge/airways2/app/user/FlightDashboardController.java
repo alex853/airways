@@ -1208,9 +1208,10 @@ public class FlightDashboardController {
     @Data
     public static class ForecastDto {
         private final Long expDep;
+        // the arrival at the airport the flight goes to now: the airport of the divert for a diverted flight
         private final Long expArr;
-        // the arrival is the earliest time, a diverted flight can arrive later
-        private final boolean arrNotBefore;
+        // the earliest time a diverted flight with passengers on board can be at the destination of the plan (it can be later), null without it
+        private final Long destNotBefore;
         // the airport of the divert (ICAO) of a flight which is diverted with passengers on board
         private final String divertTo;
         private final ConflictDto conflict;
@@ -1237,13 +1238,13 @@ public class FlightDashboardController {
         final boolean arrivalMoved = Math.abs(entry.expectedArrival() - mission.getPlannedArrivalWorldTime()) >= FORECAST_SHOWN_FROM_SECONDS;
         final RosterForecast.Conflict conflict = entry.conflict();
         final String divertTo = entry.divertReminder() && entry.divertAirport() != null ? entry.divertAirport().getIcao() : null;
-        if (!departureMoved && !arrivalMoved && !entry.arrivalNotBefore() && divertTo == null && conflict == null) {
+        if (!departureMoved && !arrivalMoved && divertTo == null && conflict == null) {
             return null;
         }
         return new ForecastDto(
                 departureMoved ? entry.expectedDeparture() * 1000L : null,
-                arrivalMoved || entry.arrivalNotBefore() ? entry.expectedArrival() * 1000L : null,
-                entry.arrivalNotBefore(),
+                arrivalMoved || divertTo != null ? entry.expectedArrival() * 1000L : null,
+                entry.deliveryNotBefore() != 0 ? entry.deliveryNotBefore() * 1000L : null,
                 divertTo,
                 conflict == null ? null : new ConflictDto(
                         conflict.level().name().toLowerCase(),
