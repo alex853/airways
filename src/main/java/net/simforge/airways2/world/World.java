@@ -346,6 +346,7 @@ public class World {
             timing("City2CityFlowHistogramAnalyser", () -> City2CityFlowHistogramAnalyser.process(this));
 
             timing("MiscCleanups", () -> MiscCleanups.process(this));
+            timing("JourneyStats", () -> JourneyStats.process(this));
             timing("FlightsCleanup", () -> FlightCleanup.process(this));
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
