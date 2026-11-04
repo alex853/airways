@@ -71,13 +71,13 @@ public class FlightDashboardController {
             // what the roster is going to be like: the expected times, the divert, the conflicts with the flights before (the dashboard tells the same, ScheduleWarnings)
             final List<RosterForecast.Entry> roster = RosterForecast.of(world, userId);
             final Map<Integer, RosterForecast.Entry> forecast = roster.stream().collect(Collectors.toMap(entry -> entry.mission().getId(), entry -> entry));
-            // the times which keep a flight between its neighbours, for the flights which can be moved
-            final Map<Integer, RosterForecast.Window> windows = new java.util.HashMap<>();
+            // the choices of the move, for the flights which can be moved
+            final Map<Integer, RosterForecast.Choices> choices = new java.util.HashMap<>();
             for (int i = 0; i < roster.size(); i++) {
                 final int missionId = roster.get(i).mission().getId();
-                RosterForecast.rescheduleWindow(world, roster, i).ifPresent(window -> windows.put(missionId, window));
+                RosterForecast.rescheduleChoices(world, roster, i).ifPresent(c -> choices.put(missionId, c));
             }
-            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f, forecast.get(f.getId()), windows.get(f.getId()))).toList());
+            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f, forecast.get(f.getId()), choices.get(f.getId()))).toList());
         });
     }
 
@@ -1037,7 +1037,7 @@ public class FlightDashboardController {
         checkArgument(actionAllowed, "'" + actionName + "' should be allowed");
     }
 
-    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast, RosterForecast.Window rescheduleWindow) {
+    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast, RosterForecast.Choices rescheduleChoices) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -1085,7 +1085,7 @@ public class FlightDashboardController {
         ) : null;
 
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null,
-                rescheduleWindow != null ? new RescheduleDto(rescheduleWindow.earliestDeparture() * 1000L, rescheduleWindow.latestDeparture() * 1000L, RosterForecast.RESCHEDULE_OPTION_STEP / Time.ONE_MINUTE) : null);
+                rescheduleChoices != null ? toRescheduleDto(world, rescheduleChoices) : null);
     }
 
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight, final World world) {
@@ -1213,8 +1213,10 @@ public class FlightDashboardController {
     }
 
     /**
-     * The departures to which a flight can be moved without a conflict with its neighbours in the roster: from the earliest to the latest (UTC milliseconds), every stepMinutes
-     * minutes. from is later than to when there is no room between the neighbours.
+     * The choices of the move of a flight in the roster (UTC milliseconds). from, to: the departures without a conflict with the neighbours, every stepMinutes minutes (from is later
+     * than to when there are none). options: the times to choose from with what each of them does to the flight after (the flight after leaves at nextDep and is shortfallMinutes
+     * short of the gap, 0 when there is no conflict; nextDep is null when there is no flight after); the current departure is not among them. before, after: the neighbours
+     * (the arrival of the flight before, the planned departure of the flight after); null when there is none. reason: "earliest" when the flight is already at the earliest time.
      */
     @AllArgsConstructor
     @Data
@@ -1222,6 +1224,41 @@ public class FlightDashboardController {
         private final long from;
         private final long to;
         private final int stepMinutes;
+        private final List<RescheduleOptionDto> options;
+        private final NeighbourDto before;
+        private final NeighbourDto after;
+        private final String reason;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class RescheduleOptionDto {
+        private final long dep;
+        private final Long nextDep;
+        private final int shortfallMinutes;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class NeighbourDto {
+        private final String route;
+        private final long time;
+    }
+
+    private static RescheduleDto toRescheduleDto(final World world, final RosterForecast.Choices choices) {
+        final RosterForecast.Entry before = choices.before();
+        final RosterForecast.Entry after = choices.after();
+        return new RescheduleDto(
+                choices.window().earliestDeparture() * 1000L,
+                choices.window().latestDeparture() * 1000L,
+                RosterForecast.RESCHEDULE_OPTION_STEP / Time.ONE_MINUTE,
+                choices.options().stream()
+                        .map(o -> new RescheduleOptionDto(o.departure() * 1000L, o.nextDeparture() != 0 ? o.nextDeparture() * 1000L : null, o.shortfallMinutes()))
+                        .toList(),
+                before == null ? null : new NeighbourDto(FlightMissionHelper.formatRoute(world, before.mission().getId()),
+                        (before.deliveryNotBefore() != 0 ? before.deliveryNotBefore() : before.expectedArrival()) * 1000L),
+                after == null ? null : new NeighbourDto(FlightMissionHelper.formatRoute(world, after.mission().getId()), after.mission().getPlannedDepartureWorldTime() * 1000L),
+                choices.options().isEmpty() && choices.atEarliest() ? "earliest" : null);
     }
 
     // the expected time is told when it is 5 minutes or more from the planned one: less than that is not a delay, the estimates move by themselves

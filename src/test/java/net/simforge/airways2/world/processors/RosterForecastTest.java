@@ -226,21 +226,70 @@ class RosterForecastTest {
     }
 
     @Test
-    void theWindowOfAFlightUsesTheExpectedDepartureOfTheFlightAfterIt() {
+    void theWindowOfAFlightIsByThePlannedDepartureOfTheFlightAfterItNotByTheExpectedOne() {
         assertEquals(0, base % STEP);
         flight(0, 60);
         flight(90, 60);
-        // the third flight is planned 10 minutes after the landing of the second one: it is in conflict and it would leave at 180, the gap after the second one
-        final FlightMissions.Mission third = flight(160, 60);
+        // the third flight is planned 10 minutes after the landing of the second one: it is in conflict and would leave at 180 (expected), but it is planned at 160
+        flight(160, 60);
 
         final List<RosterForecast.Entry> roster = forecast();
         assertEquals(base + 180 * Time.ONE_MINUTE, roster.get(2).expectedDeparture());
         final RosterForecast.Window window = RosterForecast.rescheduleWindow(world, roster, 1).orElseThrow();
 
-        // the second flight lands the gap before 180: it leaves not later than 90, and not earlier than 90 (the gap after the first one)
+        // the second flight lands the gap before 160 (planned): it leaves not later than 70, and not earlier than 90 (the gap after the first one): there is no time without a conflict
         assertEquals(up(base + 90 * Time.ONE_MINUTE), window.earliestDeparture());
-        assertEquals(down(base + 90 * Time.ONE_MINUTE), window.latestDeparture());
-        assertEquals(third.getId(), roster.get(2).mission().getId());
+        assertEquals(down(base + 70 * Time.ONE_MINUTE), window.latestDeparture());
+        assertTrue(window.isEmpty());
+    }
+
+    @Test
+    void aFlightWhichIsAlreadyAtTheEarliestTimeAndWhoseNextFlightIsInConflictHasNoOptions() {
+        assertEquals(0, base % STEP);
+        flight(0, 60);
+        flight(90, 60);
+        flight(160, 60);
+
+        final RosterForecast.Choices choices = RosterForecast.rescheduleChoices(world, forecast(), 1).orElseThrow();
+
+        assertTrue(choices.options().isEmpty());
+        assertTrue(choices.atEarliest());
+        assertEquals(forecast().get(0).mission().getId(), choices.before().mission().getId());
+        assertEquals(forecast().get(2).mission().getId(), choices.after().mission().getId());
+    }
+
+    @Test
+    void theOptionsTellWhatEachTimeDoesToTheFlightAfterIt() {
+        assertEquals(0, base % STEP);
+        flight(0, 60);
+        flight(150, 60);
+        // the third flight is planned at 190: the second flight lands at 210 and the third one is in conflict
+        flight(190, 60);
+
+        final RosterForecast.Choices choices = RosterForecast.rescheduleChoices(world, forecast(), 1).orElseThrow();
+
+        // from the earliest (90) to the current departure (150, it is not an option): at 90 the second flight lands at 150 and the third one has its gap, later it is short
+        final int minute = Time.ONE_MINUTE;
+        assertEquals(List.of(
+                        new RosterForecast.Option(base + 90 * minute, base + 190 * minute, 0),
+                        new RosterForecast.Option(base + 105 * minute, base + 195 * minute, 5),
+                        new RosterForecast.Option(base + 120 * minute, base + 210 * minute, 20),
+                        new RosterForecast.Option(base + 135 * minute, base + 225 * minute, 35)),
+                choices.options());
+        assertFalse(choices.atEarliest());
+    }
+
+    @Test
+    void aFlightWithoutTheOneAfterItHasOptionsWithoutConflicts() {
+        final FlightMissions.Mission only = flight(0, 60);
+
+        final RosterForecast.Choices choices = RosterForecast.rescheduleChoices(world, forecast(), 0).orElseThrow();
+
+        assertNull(choices.after());
+        assertNull(choices.before());
+        assertFalse(choices.options().isEmpty());
+        assertTrue(choices.options().stream().allMatch(o -> o.nextDeparture() == 0 && o.shortfallMinutes() == 0));
+        assertTrue(choices.options().stream().noneMatch(o -> o.departure() == only.getPlannedDepartureWorldTime()));
     }
 
     @Test

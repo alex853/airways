@@ -145,6 +145,28 @@ class DashboardMyFlightsTest {
     }
 
     @Test
+    void theChoicesOfTheMoveTellTheNeighboursAndWhatEachTimeDoesToTheFlightAfter() {
+        final int base = world.getWorldTime() + 3 * 3600;
+        mission(base);
+        // the second flight of the user leaves 100 minutes after the first one lands
+        final FlightMissions.Mission second = mission(base + 3600 + 100 * 60);
+
+        final java.util.List<FlightDashboardController.MyFlightsDto> flights = controller.getMyFlights(USER_ID).getFlights();
+        final FlightDashboardController.RescheduleDto first = flights.get(0).getReschedule();
+        final FlightDashboardController.RescheduleDto last = flights.get(1).getReschedule();
+
+        // the first flight: nothing before it, the second one after it (planned departure), the options are with what they do to the second one
+        assertNull(first.getBefore());
+        assertEquals("KOAK - KSFO", first.getAfter().getRoute());
+        assertEquals(second.getPlannedDepartureWorldTime() * 1000L, first.getAfter().getTime());
+        assertEquals(true, first.getOptions().stream().allMatch(o -> o.getNextDep() != null));
+        // the last flight: the first one before it, nothing after it, no conflicts in its options
+        assertEquals("KOAK - KSFO", last.getBefore().getRoute());
+        assertNull(last.getAfter());
+        assertEquals(true, last.getOptions().stream().allMatch(o -> o.getNextDep() == null && o.getShortfallMinutes() == 0));
+    }
+
+    @Test
     void aFlightWithoutTransportFlightHasNoTransportFlightDto() {
         mission(world.getWorldTime() + 3600);
 
