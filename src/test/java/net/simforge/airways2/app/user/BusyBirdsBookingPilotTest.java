@@ -64,6 +64,16 @@ class BusyBirdsBookingPilotTest {
     }
 
     @Test
+    void anExcludedAirportIsNotOfferedToAPilotInACity() {
+        world.airport2city().create(oakland.getId(), cityId);
+        world.airport2city().create(sanFrancisco.getId(), cityId);
+        sanFrancisco.setExcluded(true);
+        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.City, cityId);
+
+        assertEquals(List.of("KOAK"), world.personControl().bookingAirports(p).stream().map(Airports.Airport::getIcao).toList());
+    }
+
+    @Test
     void pilotInACityMayBookAnAircraftAtAnAirportLinkedToTheCity() {
         world.airport2city().create(oakland.getId(), cityId);
         world.airport2city().create(sanFrancisco.getId(), cityId);

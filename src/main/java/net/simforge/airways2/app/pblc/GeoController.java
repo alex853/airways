@@ -9,6 +9,7 @@ import net.simforge.airways2.app.tools.ChangeTrackedCache;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -120,6 +121,7 @@ public class GeoController {
     private List<AirportDto> buildAirports(final World world) {
         final Map<Integer, String> countryNameById = new HashMap<>();
         return world.airports().all()
+                .filter(a -> !a.isExcluded())
                 .map(a -> new AirportDto(
                         Id.encode(a.getId()),
                         a.getLatitude(),
@@ -141,13 +143,16 @@ public class GeoController {
     }
 
     /**
-     * ICAO codes of airports linked to each city, built in a single pass over airport2city links.
+     * ICAO codes of the airports (not the excluded ones) linked to each city, built in a single pass over airport2city links.
      */
     private static Map<Integer, List<String>> icaosByCityId(final World world) {
         final Map<Integer, List<String>> result = new HashMap<>();
         world.airport2city().all().forEach(link -> {
-            final String icao = world.airports().getIcao(link.getAirportId()).orElseThrow();
-            result.computeIfAbsent(link.getCityId(), id -> new ArrayList<>()).add(icao);
+            final Airports.Airport airport = world.airports().byId(link.getAirportId()).orElseThrow();
+            if (airport.isExcluded()) {
+                return;
+            }
+            result.computeIfAbsent(link.getCityId(), id -> new ArrayList<>()).add(airport.getIcao());
         });
         return result;
     }

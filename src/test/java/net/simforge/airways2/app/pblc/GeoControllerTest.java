@@ -107,6 +107,20 @@ class GeoControllerTest {
     }
 
     @Test
+    public void test__excluded_airport_is_not_in_the_public_lists_and_comes_back_when_the_flag_is_removed() throws IOException {
+        final Airports.Airport hidden = world.airports().create(1, 2, "BBB", "BBBB", "Bravo");
+        world.airport2city().create(hidden.getId(), city.getId());
+        assertEquals(2, json(controller.getAirports(null)).size());
+
+        hidden.setExcluded(true);
+
+        assertEquals(1, json(controller.getAirports(null)).size());
+        assertEquals(1, json(controller.getCities(null)).get(0).get("airports").size());
+        hidden.setExcluded(false);
+        assertEquals(2, json(controller.getAirports(null)).size());
+    }
+
+    @Test
     public void test__unchanged_world_returns_the_same_response_without_touching_the_world() {
         final byte[] first = controller.getCities(null).getBody();
         final int readsAfterTheFirstCall = worldReads.get();

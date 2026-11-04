@@ -23,8 +23,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The world editor (airways/admin/map.html): everything the editor knows about a city or an airport, and the few things it may change. The map itself
@@ -51,6 +54,56 @@ public class WorldEditorController {
     @GetMapping("/airport")
     public AirportInfoDto getAirport(@RequestParam("icao") final String icao) {
         return worldBean.read(world -> toAirportInfo(world, findAirport(world, icao)));
+    }
+
+    /**
+     * All the cities and all the airports for the map of the editor, the excluded airports are in them (the public /geo lists do not have them).
+     */
+    @GetMapping("/cities")
+    public List<MapCityDto> getCities() {
+        return worldBean.read(WorldEditorController::mapCities);
+    }
+
+    @GetMapping("/airports")
+    public List<MapAirportDto> getAirports() {
+        return worldBean.read(WorldEditorController::mapAirports);
+    }
+
+    /**
+     * The flags of the airport: excluded (it does not take part in the flights) and hub (just a mark).
+     */
+    @PostMapping("/airport/excluded")
+    public AirportInfoDto setExcluded(@RequestParam("icao") final String icao, @RequestParam("enabled") final boolean enabled) {
+        return worldBean.modifySync(world -> {
+            final Airports.Airport airport = findAirport(world, icao);
+            airport.setExcluded(enabled);
+            log.info("world editor - the airport {} is {}", airport.getIcao(), enabled ? "excluded" : "not excluded");
+            return toAirportInfo(world, airport);
+        });
+    }
+
+    /**
+     * The country of the airport (the id of a country as /geo/countries gives it); an empty id makes the country unknown.
+     */
+    @PostMapping("/airport/country")
+    public AirportInfoDto setCountry(@RequestParam("icao") final String icao, @RequestParam(value = "country", required = false) final String countryIdStr) {
+        return worldBean.modifySync(world -> {
+            final Airports.Airport airport = findAirport(world, icao);
+            airport.setCountryId(findCountryId(world, countryIdStr));
+            log.info("world editor - the country of the airport {} is {}", airport.getIcao(),
+                    world.countries().byId(airport.getCountryId()).map(Countries.Country::getCode).orElse("unknown"));
+            return toAirportInfo(world, airport);
+        });
+    }
+
+    @PostMapping("/airport/hub")
+    public AirportInfoDto setHub(@RequestParam("icao") final String icao, @RequestParam("enabled") final boolean enabled) {
+        return worldBean.modifySync(world -> {
+            final Airports.Airport airport = findAirport(world, icao);
+            airport.setHub(enabled);
+            log.info("world editor - the airport {} is {}", airport.getIcao(), enabled ? "marked as a hub" : "not a hub");
+            return toAirportInfo(world, airport);
+        });
     }
 
     /**
@@ -176,9 +229,47 @@ public class WorldEditorController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "City " + idStr + " not found"));
     }
 
+    // zero is 'unknown'
+    private static int findCountryId(final World world, final String idStr) {
+        if (idStr == null || idStr.isBlank()) {
+            return 0;
+        }
+        final int id;
+        try {
+            id = Id.decode(idStr.trim());
+        } catch (final RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Country " + idStr + " not found");
+        }
+        return world.countries().byId(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Country " + idStr + " not found"))
+                .getId();
+    }
+
     private static Airports.Airport findAirport(final World world, final String icao) {
         return world.airports().byIcao(icao)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Airport " + icao + " not found"));
+    }
+
+    // the same lists as /geo/cities and /geo/airports have (the code is repeated on purpose, the editor does not depend on the public controller), without the cache, and with
+    // the excluded airports
+    static List<MapCityDto> mapCities(final World world) {
+        final Map<Integer, List<String>> icaosByCityId = new HashMap<>();
+        world.airport2city().all().forEach(link -> {
+            final String icao = world.airports().getIcao(link.getAirportId()).orElseThrow();
+            icaosByCityId.computeIfAbsent(link.getCityId(), id -> new ArrayList<>()).add(icao);
+        });
+        return world.cities().all()
+                .map(c -> new MapCityDto(Id.encode(c.getId()), c.getCountryId(), c.getName(), c.getPopulation(), c.getLatitude(), c.getLongitude(),
+                        icaosByCityId.getOrDefault(c.getId(), List.of())))
+                .toList();
+    }
+
+    static List<MapAirportDto> mapAirports(final World world) {
+        return world.airports().all()
+                .map(a -> new MapAirportDto(Id.encode(a.getId()), a.getLatitude(), a.getLongitude(), a.getIata(), a.getIcao(), a.getName(),
+                        world.countries().byId(a.getCountryId()).map(Countries.Country::getName).orElse(null)))
+                .sorted(Comparator.comparing(MapAirportDto::getIcao))
+                .toList();
     }
 
     static CityInfoDto toCityInfo(final World world, final Cities.City city) {
@@ -227,9 +318,35 @@ public class WorldEditorController {
                 airport.getLatitude(),
                 airport.getLongitude(),
                 airport.isExcluded(),
+                airport.isHub(),
+                airport.getCountryId() > 0 ? Id.encode(airport.getCountryId()) : null,
                 world.airportFacilities().hasFacility(airport, AirportFacilities.Type.BusinessAviationTerminal),
                 cities,
                 facilities);
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class MapCityDto {
+        private String id;
+        private int countryId;
+        private String name;
+        private int population;
+        private float latitude;
+        private float longitude;
+        private List<String> airports;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class MapAirportDto {
+        private String id;
+        private float latitude;
+        private float longitude;
+        private String iata;
+        private String icao;
+        private String name;
+        private String country;
     }
 
     @Data
@@ -269,6 +386,9 @@ public class WorldEditorController {
         private float latitude;
         private float longitude;
         private boolean excluded;
+        private boolean hub;
+        // as /geo/countries gives it, null when the country is unknown
+        private String countryId;
         private boolean businessTerminal;
         private List<LinkedCityDto> cities;
         private List<FacilityDto> facilities;

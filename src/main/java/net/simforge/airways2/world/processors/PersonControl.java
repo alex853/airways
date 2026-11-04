@@ -318,6 +318,7 @@ public class PersonControl {
             case City -> world.airport2city().allByCityId(person.getLocationId())
                     .map(link -> world.airports().byId(link.getAirportId()))
                     .flatMap(Optional::stream)
+                    .filter(airport -> !airport.isExcluded())
                     .sorted(Comparator.comparing(Airports.Airport::getIcao))
                     .toList();
             default -> List.of();

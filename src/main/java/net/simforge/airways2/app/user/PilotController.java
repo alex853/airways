@@ -290,7 +290,7 @@ public class PilotController {
         }
 
         // the code of an airport first
-        final Airports.Airport airport = text.length() == 4 ? world.airports().byIcao(text.toUpperCase()).orElse(null) : null;
+        final Airports.Airport airport = text.length() == 4 ? world.airports().byIcao(text.toUpperCase()).filter(a -> !a.isExcluded()).orElse(null) : null;
         if (airport != null) {
             matches.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.Airport, airport.getId(), airport.getIcao()), method, airport.getName()));
             return new TravelFindDto(null, matches);
@@ -347,6 +347,7 @@ public class PilotController {
     private static Airports.Airport findAirport(final World world, final String icao) {
         final String code = icao == null ? "" : icao.trim().toUpperCase();
         return world.airports().byIcao(code)
+                .filter(airport -> !airport.isExcluded())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no airport " + code));
     }
 

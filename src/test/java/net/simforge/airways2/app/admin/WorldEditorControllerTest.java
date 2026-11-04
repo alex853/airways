@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -69,6 +70,27 @@ class WorldEditorControllerTest {
         assertEquals(1, info.getFacilities().size());
         assertEquals("BusinessAviationTerminal", info.getFacilities().get(0).getType());
         assertNull(info.getFacilities().get(0).getOperator());
+    }
+
+    @Test
+    void theAirportShowsItsFlagsAndTheEditorListsHaveTheExcludedAirports() {
+        final Airports.Airport hidden = world.airports().create(11, 21, "HHH", "HHHH", "Hidden");
+        world.airport2city().create(hidden.getId(), city.getId());
+        hidden.setExcluded(true);
+        hidden.setHub(true);
+
+        final WorldEditorController.AirportInfoDto info = WorldEditorController.toAirportInfo(world, hidden);
+        assertTrue(info.isExcluded());
+        assertTrue(info.isHub());
+        assertNull(info.getCountryId());
+        hidden.setCountryId(world.countries().byCode("TT").orElseThrow().getId());
+        assertNotNull(WorldEditorController.toAirportInfo(world, hidden).getCountryId());
+        assertFalse(WorldEditorController.toAirportInfo(world, airport).isExcluded());
+        assertFalse(WorldEditorController.toAirportInfo(world, airport).isHub());
+
+        // the editor sees all the airports (the public lists are tested in GeoControllerTest)
+        assertEquals(2, WorldEditorController.mapAirports(world).size());
+        assertEquals(java.util.List.of("AAAA", "HHHH"), WorldEditorController.mapCities(world).get(0).getAirports().stream().sorted().toList());
     }
 
     @Test

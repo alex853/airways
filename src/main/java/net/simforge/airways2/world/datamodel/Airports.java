@@ -1,5 +1,6 @@
 package net.simforge.airways2.world.datamodel;
 
+import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
@@ -37,6 +38,10 @@ public class Airports {
     private final DataField flagsField = storage.getDataField(4);
     private final DataField icaoField = storage.getDataField(5);
     private final DataField nameIdField = storage.getDataField(6);
+
+    private final BitAccessField flagsBits = BitAccessField.instance(storage, flagsField);
+    private final BitAccessField.Section excludedBit = flagsBits.section(0, 1); // the airport does not take part in the flights
+    private final BitAccessField.Section hubBit = flagsBits.section(1, 1); // the airport is a hub, just a mark
 
     public Airports(final Strings strings) {
         this.strings = strings;
@@ -123,12 +128,21 @@ public class Airports {
             storage.set(id, countryIdField, countryId);
         }
 
-        public int getFlags() {
-            return storage.getAsInt(id, flagsField);
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+        public boolean isExcluded() {
+            return excludedBit.getBoolean(id);
         }
 
-        public void setFlags(final int flags) {
-            storage.set(id, flagsField, flags);
+        public void setExcluded(final boolean excluded) {
+            excludedBit.setBoolean(id, excluded);
+        }
+
+        public boolean isHub() {
+            return hubBit.getBoolean(id);
+        }
+
+        public void setHub(final boolean hub) {
+            hubBit.setBoolean(id, hub);
         }
 
         public String getName() {
@@ -141,15 +155,6 @@ public class Airports {
 
         public Geo.Coords getCoords() {
             return Geo.coords(getLatitude(), getLongitude());
-        }
-
-        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-        public boolean isExcluded() { // todo ak0 rework it into 'exclusion' field, or status, or something like that
-            String icao = getIcao();
-            return "LFPY".equals(icao)
-                    || "EDDT".equals(icao)
-                    || "LGAT".equals(icao)
-                    || "CGAS".equals(icao);
         }
 
         @Override
