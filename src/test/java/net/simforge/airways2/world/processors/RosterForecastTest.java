@@ -280,6 +280,25 @@ class RosterForecastTest {
     }
 
     @Test
+    void aFlightWhichIsInConflictWithTheFlightBeforeItHasTheTimesFromTheEarliestOneAndWhatTheyDoToTheFlightAfterIt() {
+        assertEquals(0, base % STEP);
+        flight(0, 60);
+        // the second flight is planned at 70, the first one lands at 60 and the gap is 30 minutes: it is in conflict, the earliest time is 90
+        flight(70, 60);
+        // at 90 the second flight lands at 150, and the third one (planned at 140) is short
+        flight(140, 60);
+
+        final RosterForecast.Choices choices = RosterForecast.rescheduleChoices(world, forecast(), 1).orElseThrow();
+
+        final int minute = Time.ONE_MINUTE;
+        assertFalse(choices.atEarliest());
+        assertEquals(new RosterForecast.Option(base + 90 * minute, base + 180 * minute, 40), choices.options().get(0));
+        assertEquals(new RosterForecast.Option(base + 105 * minute, base + 195 * minute, 55), choices.options().get(1));
+        // two hours after the earliest time
+        assertEquals(base + (90 + 120) * minute, choices.options().get(choices.options().size() - 1).departure());
+    }
+
+    @Test
     void aFlightWithoutTheOneAfterItHasOptionsWithoutConflicts() {
         final FlightMissions.Mission only = flight(0, 60);
 

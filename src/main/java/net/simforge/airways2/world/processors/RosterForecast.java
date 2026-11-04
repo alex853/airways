@@ -31,6 +31,8 @@ public final class RosterForecast {
     public static final int RESCHEDULE_OPTION_STEP = 15 * Time.ONE_MINUTE;
     // a flight which has no flight after it can be moved this far after the planned departure
     public static final int RESCHEDULE_WITHOUT_NEXT_FLIGHT = 12 * Time.ONE_HOUR;
+    // a flight which is planned earlier than its earliest time (it is in conflict with the flight before it) is offered the times this far after the earliest one
+    public static final int RESCHEDULE_AFTER_EARLIEST = 2 * Time.ONE_HOUR;
 
     public enum Level {
         RED,
@@ -176,7 +178,7 @@ public final class RosterForecast {
      *                  departure when there is none (the later times only make the flight after it later); without the current departure
      * @param before    the flight before it, null for the first one
      * @param after     the flight after it, null for the last one
-     * @param atEarliest the flight is already at the earliest time: no time of the move is earlier than the current one
+     * @param atEarliest the flight is already at the earliest time: there are no times to move to, and none is earlier than the current one
      */
     public record Choices(Window window, List<Option> options, Entry before, Entry after, boolean atEarliest) {
     }
@@ -195,9 +197,15 @@ public final class RosterForecast {
         final Entry before = index > 0 ? roster.get(index - 1) : null;
         final Entry after = index + 1 < roster.size() ? roster.get(index + 1) : null;
 
-        // from the earliest to the latest time without a conflict, and not later than the current departure when there is none (inside the limits of the shift)
+        // from the earliest to the latest time without a conflict, and not later than the current departure when there is none (inside the limits of the shift). A flight which
+        // is planned earlier than the earliest time is in conflict with the flight before it now: it has no "current departure" to stop at, so the times go on for two hours
+        // after the earliest one (the earliest is the best for the flight after it, the later ones are for the pilot who wants them for other reasons)
         final int maxShift = FlightMissionControl.RESCHEDULE_MAX_SHIFT_MINUTES * Time.ONE_MINUTE;
-        final int upper = Math.min(Math.max(window.get().latestDeparture(), planned), planned + maxShift);
+        int upper = Math.max(window.get().latestDeparture(), planned);
+        if (planned < window.get().earliestDeparture()) {
+            upper = Math.max(upper, window.get().earliestDeparture() + RESCHEDULE_AFTER_EARLIEST);
+        }
+        upper = Math.min(upper, planned + maxShift);
         final List<Option> options = new ArrayList<>();
         for (int time = window.get().earliestDeparture(); time <= upper; time += RESCHEDULE_OPTION_STEP) {
             if (time == planned) {
@@ -211,7 +219,7 @@ public final class RosterForecast {
             final int needed = time + duration + ShadowJetBooking.MIN_GAP_SECONDS;
             options.add(new Option(time, Math.max(nextBase, needed), needed > nextBase ? minutesUp(needed - nextBase) : 0));
         }
-        return Optional.of(new Choices(window.get(), options, before, after, window.get().earliestDeparture() >= planned));
+        return Optional.of(new Choices(window.get(), options, before, after, options.isEmpty() && window.get().earliestDeparture() >= planned));
     }
 
     /**
