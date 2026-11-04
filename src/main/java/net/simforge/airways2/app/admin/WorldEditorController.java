@@ -267,7 +267,7 @@ public class WorldEditorController {
     static List<MapAirportDto> mapAirports(final World world) {
         return world.airports().all()
                 .map(a -> new MapAirportDto(Id.encode(a.getId()), a.getLatitude(), a.getLongitude(), a.getIata(), a.getIcao(), a.getName(),
-                        world.countries().byId(a.getCountryId()).map(Countries.Country::getName).orElse(null)))
+                        world.countries().byId(a.getCountryId()).map(Countries.Country::getName).orElse(null), a.isExcluded(), a.isHub()))
                 .sorted(Comparator.comparing(MapAirportDto::getIcao))
                 .toList();
     }
@@ -347,6 +347,9 @@ public class WorldEditorController {
         private String icao;
         private String name;
         private String country;
+        // the flags colour the marker on the map of the editor
+        private boolean excluded;
+        private boolean hub;
     }
 
     @Data

@@ -90,6 +90,9 @@ class WorldEditorControllerTest {
 
         // the editor sees all the airports (the public lists are tested in GeoControllerTest)
         assertEquals(2, WorldEditorController.mapAirports(world).size());
+        final WorldEditorController.MapAirportDto hiddenOnTheMap = WorldEditorController.mapAirports(world).stream().filter(a -> a.getIcao().equals("HHHH")).findFirst().orElseThrow();
+        assertTrue(hiddenOnTheMap.isExcluded());
+        assertTrue(hiddenOnTheMap.isHub());
         assertEquals(java.util.List.of("AAAA", "HHHH"), WorldEditorController.mapCities(world).get(0).getAirports().stream().sorted().toList());
     }
 
