@@ -3,6 +3,7 @@ package net.simforge.airways2.world;
 public class AircraftTypeRemapping {
     public static String remap(String aircraftType) {
         return switch (aircraftType) {
+            case "A220" -> "BCS3";
             case "A32N" -> "A20N";
             case "A330" -> "A333";
             case "A340" -> "A346";
