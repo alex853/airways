@@ -570,6 +570,21 @@ public class Storage<T> {
                 }
                 return data.readString(fieldOffset + 1, len);
             }
+            case FixedLengthString -> {
+                if (data.get(fieldOffset) == 0) {
+                    return null;
+                }
+                final int maxLength = dataField.length();
+                int len = maxLength;
+                // the last byte is not zero in most cases: the string is as long as the field and there is nothing to search
+                if (data.get(fieldOffset + maxLength - 1) == 0) {
+                    len = 1;
+                    while (len < maxLength && data.get(fieldOffset + len) != 0) {
+                        len++;
+                    }
+                }
+                return data.readString(fieldOffset, len);
+            }
             default -> throw new IllegalStateException("Unsupported data type: " + dataField.dataType());
         }
     }
@@ -688,6 +703,17 @@ public class Storage<T> {
                 data.set(fieldOffset, (byte) value.length());
                 data.write(fieldOffset + 1, value.getBytes(), value.length());
             }
+            markChanged();
+        } else if (dataField.dataType() == DataType.FixedLengthString) {
+            final byte[] bytes = value == null ? new byte[0] : value.getBytes();
+            if (bytes.length > dataField.length()) {
+                throw new IllegalArgumentException("Value is too long, actual length " + bytes.length + " while max length is " + dataField.length());
+            }
+            for (final byte b : bytes) {
+                checkArgument(b != 0, "a zero character can not be stored in a fixed length string");
+            }
+            data.fill(fieldOffset, fieldOffset + dataField.size(), (byte) 0);
+            data.write(fieldOffset, bytes, bytes.length);
             markChanged();
         } else {
             throw new IllegalStateException("Unsupported data type: " + dataField.dataType());

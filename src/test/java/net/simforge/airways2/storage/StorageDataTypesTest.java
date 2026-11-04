@@ -21,6 +21,7 @@ class StorageDataTypesTest {
             .withDataField(DataField.of(DataType.PlainString).length(20))
             .withDataField(DataField.of(DataType.Signed40bit))
             .withDataField(DataField.of(DataType.Signed16bit))
+            .withDataField(DataField.of(DataType.FixedLengthString).length(4))
             .build();
 
     private final DataField signed32bitField = storage.getDataField(0);
@@ -35,6 +36,7 @@ class StorageDataTypesTest {
     private final DataField plainString20Field = storage.getDataField(9);
     private final DataField signed40bitField = storage.getDataField(10);
     private final DataField signed16bitField = storage.getDataField(11);
+    private final DataField fixedString4Field = storage.getDataField(12);
 
     private final int recordId = storage.addRecord();
 
@@ -174,7 +176,7 @@ class StorageDataTypesTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = { "PlainString" } )
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = { "PlainString", "FixedLengthString" } )
     public void test_length_method_is_not_applicable_to_most_of_types(final DataType dataType) {
         assertThrows(IllegalArgumentException.class,
                 () -> Storage.builder()
@@ -201,44 +203,45 @@ class StorageDataTypesTest {
             case Tenths8bit -> tenths8bitField;
             case Float16bit -> float16bitField;
             case PlainString -> plainString20Field;
+            case FixedLengthString -> fixedString4Field;
             case Signed40bit -> signed40bitField;
             case Signed16bit -> signed16bitField;
         };
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString", "Signed40bit"})
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString", "FixedLengthString", "Signed40bit"})
     public void test_getAsInt_is_not_applicable_to_not_integer_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsInt(recordId, fieldOf(dataType)));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "Signed40bit"})
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "FixedLengthString", "Signed40bit"})
     public void test_getAsFloat_is_not_applicable_to_not_float_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsFloat(recordId, fieldOf(dataType)));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString"})
-    public void test_getAsString_is_applicable_to_plain_string_only(final DataType dataType) {
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString", "FixedLengthString"})
+    public void test_getAsString_is_applicable_to_string_types_only(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.getAsString(recordId, fieldOf(dataType)));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString"})
+    @EnumSource(value = DataType.class, names = {"Float", "LatLong24bit", "LatLong16bit", "Tenths8bit", "Float16bit", "PlainString", "FixedLengthString"})
     public void test_set_int_is_not_applicable_to_not_integer_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString"})
+    @EnumSource(value = DataType.class, names = {"Signed32bit", "Signed16bit", "Unsigned8bit", "Unsigned16bit", "Unsigned24bit", "PlainString", "FixedLengthString"})
     public void test_set_float_is_not_applicable_to_not_float_types(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), 1.5f));
     }
 
     @ParameterizedTest
-    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString"})
-    public void test_set_string_is_applicable_to_plain_string_only(final DataType dataType) {
+    @EnumSource(value = DataType.class, mode = EnumSource.Mode.EXCLUDE, names = {"PlainString", "FixedLengthString"})
+    public void test_set_string_is_applicable_to_string_types_only(final DataType dataType) {
         assertThrows(IllegalStateException.class, () -> storage.set(recordId, fieldOf(dataType), "text"));
     }
 
@@ -262,8 +265,9 @@ class StorageDataTypesTest {
         final java.util.Set<DataType> covered = new java.util.HashSet<>(INT_TYPES);
         covered.addAll(FLOAT_TYPES);
         covered.add(DataType.PlainString);
+        covered.add(DataType.FixedLengthString);
         covered.add(DataType.Signed40bit);
 
         assertEquals(java.util.Set.of(DataType.values()), covered);
     }
-}
+}

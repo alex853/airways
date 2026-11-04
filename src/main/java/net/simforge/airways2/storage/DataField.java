@@ -12,8 +12,8 @@ public class DataField {
     private DataField(final DataType dataType,
                       final int length,
                       final DataField previousField) {
-        if (dataType != DataType.PlainString) {
-            checkArgument(length == 0, "length can be specified for PlainString only");
+        if (dataType != DataType.PlainString && dataType != DataType.FixedLengthString) {
+            checkArgument(length == 0, "length can be specified for strings only");
         } else {
             checkArgument(length > 0, "length should be 1 byte or higher");
             checkArgument(length <= 254, "length can not be higher than 254 bytes");
@@ -35,7 +35,7 @@ public class DataField {
     public static DataField of(final DataType dataType) {
         return new DataField(
                 dataType,
-                dataType == DataType.PlainString ? 20 : 0,
+                dataType == DataType.PlainString || dataType == DataType.FixedLengthString ? 20 : 0,
                 null);
     }
 
@@ -85,6 +85,7 @@ public class DataField {
             case Tenths8bit -> 1;
             case Float16bit -> 2;
             case PlainString -> 1 + length;
+            case FixedLengthString -> length;
             //case PackedTo6BitsString -> (length * 6) / 8 + (((length * 6) % 8) > 0 ? 1 : 0);
         };
     }
