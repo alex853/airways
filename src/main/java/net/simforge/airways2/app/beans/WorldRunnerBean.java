@@ -7,7 +7,6 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.WorldAccess;
 import net.simforge.airways2.worldbuilder.World25;
-import net.simforge.commons.misc.Misc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -21,6 +20,7 @@ import java.time.ZoneOffset;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -98,11 +98,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                 MemoryReport.print(); // once in 10 minutes
 
                 try (final Timing.Timer ignored0 = Timing.label("WorldRunnerBean - 9 - sleep")) {
-                    if (needToCatchTime) {
-                        Misc.sleep(1);
-                    } else {
-                        Misc.sleep(100);
-                    }
+                    // parked, not slept: modifySync wakes the thread up, so an action does not wait out the pause (up to 100 ms)
+                    LockSupport.parkNanos((needToCatchTime ? 1 : 100) * 1_000_000L);
                 }
             }
 
@@ -171,6 +168,10 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
 
         final ActionContext<T> actionContext = new ActionContext<>(action);
         actionQueue.add(actionContext);
+        final Thread worldThread = thread;
+        if (worldThread != null) {
+            LockSupport.unpark(worldThread);
+        }
         return actionContext.getResult();
     }
 

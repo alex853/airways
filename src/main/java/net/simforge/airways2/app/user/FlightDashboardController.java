@@ -2,6 +2,7 @@ package net.simforge.airways2.app.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.beans.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
 import net.simforge.airways2.app.tools.Id;
@@ -97,9 +98,12 @@ public class FlightDashboardController {
                 flight = world.flightMissions().byId(Id.decode(simStatus.getFlightMissionId()));
             }
             if (flight.isEmpty()) {
-                flight = findActiveFlight(world, userId);
+                final Optional<FlightMissions.Mission> found = timed("findActiveFlight", () -> findActiveFlight(world, userId));
+                flight = found;
             }
 
+            final Optional<FlightMissions.Mission> activeFlight = flight;
+            final SimTracker.UserStatus status = simStatus;
             final FlightMissions.Mission fm = flight.orElse(null);
             final TrackingMode mode = resolveMode(fm, simTrackerConnected);
 
@@ -109,14 +113,21 @@ public class FlightDashboardController {
             return new StatusDto(
                     mode,
                     // the limits are checks of the start only, the scans of the logbook and of the missions are not done for the flights in progress
-                    withPilotLimits(buildActions(world, fm, simStatus, simTrackerConnected, pilotAirportId(world, userId)),
-                            fm != null && fm.getStatus() == FlightMissions.Status.Dispatched ? pilotLimitChecks(world, userId) : List.of()),
+                    withPilotLimits(timed("buildActions", () -> buildActions(world, fm, status, simTrackerConnected, pilotAirportId(world, userId))),
+                            fm != null && fm.getStatus() == FlightMissions.Status.Dispatched ? timed("pilotLimitChecks", () -> pilotLimitChecks(world, userId)) : List.of()),
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
-                    flight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null),
-                    buildPilotDto(world, userId, verdictSim),
-                    ScheduleWarnings.of(world, fm).map(warning -> toScheduleWarningDto(world, warning)).orElse(null));
+                    timed("FlightUltraDto", () -> activeFlight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null)),
+                    timed("buildPilotDto", () -> buildPilotDto(world, userId, verdictSim)),
+                    timed("ScheduleWarnings", () -> ScheduleWarnings.of(world, fm).map(warning -> toScheduleWarningDto(world, warning)).orElse(null)));
         });
+    }
+
+    // the parts of the status are timed to see what the request spends its time on (/admin/timing)
+    private static <T> T timed(final String part, final java.util.function.Supplier<T> supplier) {
+        try (Timing.Timer ignored = Timing.label("FlightDashboard.status - " + part)) {
+            return supplier.get();
+        }
     }
 
     /**
