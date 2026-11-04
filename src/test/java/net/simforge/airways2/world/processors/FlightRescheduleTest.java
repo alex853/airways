@@ -78,6 +78,52 @@ class FlightRescheduleTest {
     }
 
     @Test
+    void aFlightCanBeMovedByAnyWholeMinutes() {
+        final FlightMissions.Mission mission = mission(3);
+        tfControl.createTransportFlight(mission);
+        final int departure = mission.getPlannedDepartureWorldTime();
+
+        control.reschedule(mission, 7);
+
+        assertEquals(departure + 7 * Time.ONE_MINUTE, mission.getPlannedDepartureWorldTime());
+    }
+
+    @Test
+    void aFlightMovedEarlierStartsTheCheckinEarlierAndCallsTheJourneysIntoTheNewWindow() {
+        final FlightMissions.Mission mission = mission(5);
+        final TransportFlights.Flight tf = tfControl.createTransportFlight(mission);
+        final Journeys.Journey waiting = journey(tf, Journeys.Status.WaitingForCheckIn, base() + 4 * Time.ONE_HOUR);
+
+        // the departure goes from 5 hours to 3 hours, the check-in window (from 2 hours to 30 minutes before the departure) goes from 3:00 - 4:30 to 1:00 - 2:30 from now
+        control.reschedule(mission, -120);
+
+        final int checkinStart = TransportFlightHelper.calcCheckinStartTime(mission);
+        assertEquals(world.getWorldTime() + 60 * Time.ONE_MINUTE, checkinStart);
+        assertEquals(checkinStart, tf.getHeartbeatTime());
+        assertTrue(waiting.getHeartbeatTime() >= checkinStart && waiting.getHeartbeatTime() <= TransportFlightHelper.calcCheckinEndTime(mission));
+        // the new moment of the check-in comes and the check-in starts
+        world.setWorldTime(checkinStart + Time.ONE_MINUTE);
+        assertTrue(tfControl.ifCheckInTimeComes(tf));
+    }
+
+    @Test
+    void aFlightMovedEarlierWhenItsCheckinWindowHasStartedAlreadyStartsTheCheckinAtOnce() {
+        final FlightMissions.Mission mission = mission(3);
+        final TransportFlights.Flight tf = tfControl.createTransportFlight(mission);
+        final Journeys.Journey waiting = journey(tf, Journeys.Status.WaitingForCheckIn, base() + 2 * Time.ONE_HOUR);
+
+        // the departure is in 30 minutes: the window of the check-in is over already, the journeys are called now and the flight starts the check-in now
+        control.reschedule(mission, -150);
+
+        assertEquals(world.getWorldTime(), tf.getHeartbeatTime());
+        assertEquals(world.getWorldTime(), waiting.getHeartbeatTime());
+    }
+
+    private int base() {
+        return world.getWorldTime();
+    }
+
+    @Test
     void aFlightInCheckinStaysInCheckinAndTheCheckedInStayCheckedIn() {
         final FlightMissions.Mission mission = mission(3);
         final TransportFlights.Flight tf = tfControl.createTransportFlight(mission);

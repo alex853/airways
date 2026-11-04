@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
-    public static final int RESCHEDULE_SHIFT_STEP_MINUTES = 5;
     public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 48 * 60;
     // boarding takes 10 mins and ends 10 mins before departure
     public static final int RESCHEDULE_MIN_DEPARTURE_RESERVE = 20 * Time.ONE_MINUTE;
@@ -436,7 +435,6 @@ public class FlightMissionControl {
     public List<FlightMissions.Mission> reschedule(final FlightMissions.Mission mission, final int shiftMinutes) {
         rescheduleChecks(mission).forEach((name, result) -> checkArgument(result, "reschedule - " + name + " failed"));
         checkArgument(shiftMinutes != 0, "reschedule - shift should not be zero");
-        checkArgument(shiftMinutes % RESCHEDULE_SHIFT_STEP_MINUTES == 0, "reschedule - shift should be a multiple of " + RESCHEDULE_SHIFT_STEP_MINUTES + " minutes");
         checkArgument(Math.abs(shiftMinutes) <= RESCHEDULE_MAX_SHIFT_MINUTES, "reschedule - shift should not exceed " + RESCHEDULE_MAX_SHIFT_MINUTES + " minutes");
 
         final int worldTime = world.getWorldTime();

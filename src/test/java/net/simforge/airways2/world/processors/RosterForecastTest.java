@@ -160,6 +160,110 @@ class RosterForecastTest {
         assertTrue(c3.estimate());
     }
 
+    // ---- the times which keep a flight between its neighbours (for the move of the flight)
+
+    private static final int STEP = RosterForecast.RESCHEDULE_OPTION_STEP;
+
+    private static int up(final int time) {
+        return (time + STEP - 1) / STEP * STEP;
+    }
+
+    private static int down(final int time) {
+        return time / STEP * STEP;
+    }
+
+    private RosterForecast.Window window(final int index) {
+        return RosterForecast.rescheduleWindow(world, forecast(), index).orElseThrow();
+    }
+
+    @Test
+    void theWindowOfAFlightIsFromTheGapAfterTheFlightBeforeToTheLastDepartureWhichLeavesTheGapBeforeTheFlightAfter() {
+        assertEquals(0, base % STEP);
+        flight(0, 60);
+        flight(150, 60);
+        flight(300, 60);
+
+        final RosterForecast.Window window = window(1);
+
+        // the first flight lands at 60, the gap of 30 minutes: 90; the third one leaves at 300, the gap of 30 minutes and the flight of 60 minutes: 210
+        assertEquals(up(base + 90 * Time.ONE_MINUTE), window.earliestDeparture());
+        assertEquals(down(base + 210 * Time.ONE_MINUTE), window.latestDeparture());
+        assertFalse(window.isEmpty());
+    }
+
+    @Test
+    void theFlightMovedToTheEdgesOfTheWindowHasNoConflictWithItsNeighbours() {
+        final FlightMissions.Mission first = flight(0, 60);
+        final FlightMissions.Mission second = flight(150, 60);
+        flight(300, 60);
+        final FlightMissionControl control = world.flightMissionControl();
+
+        final RosterForecast.Window window = window(1);
+        control.reschedule(second, (window.earliestDeparture() - second.getPlannedDepartureWorldTime()) / Time.ONE_MINUTE);
+        assertTrue(forecast().stream().allMatch(e -> e.conflict() == null));
+        assertEquals(window.earliestDeparture(), second.getPlannedDepartureWorldTime());
+
+        control.reschedule(second, (window.latestDeparture() - second.getPlannedDepartureWorldTime()) / Time.ONE_MINUTE);
+        assertTrue(forecast().stream().allMatch(e -> e.conflict() == null));
+        assertEquals(window.latestDeparture(), second.getPlannedDepartureWorldTime());
+        assertEquals(first.getId(), forecast().get(0).mission().getId());
+    }
+
+    @Test
+    void theWindowOfTheFirstFlightStartsAfterTheReserveOfTheDeparture() {
+        flight(60, 60);
+
+        final RosterForecast.Window window = window(0);
+
+        assertEquals(up(world.getWorldTime() + FlightMissionControl.RESCHEDULE_MIN_DEPARTURE_RESERVE), window.earliestDeparture());
+    }
+
+    @Test
+    void aFlightWithoutTheOneAfterItCanBeMovedTwelveHoursLater() {
+        final FlightMissions.Mission only = flight(0, 60);
+
+        assertEquals(down(only.getPlannedDepartureWorldTime() + RosterForecast.RESCHEDULE_WITHOUT_NEXT_FLIGHT), window(0).latestDeparture());
+    }
+
+    @Test
+    void theWindowOfAFlightUsesTheExpectedDepartureOfTheFlightAfterIt() {
+        assertEquals(0, base % STEP);
+        flight(0, 60);
+        flight(90, 60);
+        // the third flight is planned 10 minutes after the landing of the second one: it is in conflict and it would leave at 180, the gap after the second one
+        final FlightMissions.Mission third = flight(160, 60);
+
+        final List<RosterForecast.Entry> roster = forecast();
+        assertEquals(base + 180 * Time.ONE_MINUTE, roster.get(2).expectedDeparture());
+        final RosterForecast.Window window = RosterForecast.rescheduleWindow(world, roster, 1).orElseThrow();
+
+        // the second flight lands the gap before 180: it leaves not later than 90, and not earlier than 90 (the gap after the first one)
+        assertEquals(up(base + 90 * Time.ONE_MINUTE), window.earliestDeparture());
+        assertEquals(down(base + 90 * Time.ONE_MINUTE), window.latestDeparture());
+        assertEquals(third.getId(), roster.get(2).mission().getId());
+    }
+
+    @Test
+    void aFlightWhichHasNoTimeOfTheStepBetweenItsNeighboursHasAnEmptyWindow() {
+        assertEquals(0, base % STEP);
+        flight(0, 65);
+        // the flight is planned at 100: not earlier than 95 (the first flight lands at 65, the gap), not later than 100 (the third one is at 190), no time of the step is there
+        flight(100, 60);
+        flight(190, 60);
+
+        assertTrue(window(1).isEmpty());
+    }
+
+    @Test
+    void aFlightWhichHasLeftCannotBeMoved() {
+        final FlightMissions.Mission first = flight(0, 60);
+        world.flightMissionControl().start(first);
+        world.flightMissionControl().setTrackingMode(first, FlightMissions.TrackingMode.Manual);
+        world.flightMissionControl().blocksOff(first);
+
+        assertTrue(RosterForecast.rescheduleWindow(world, forecast(), 0).isEmpty());
+    }
+
     @Test
     void theFlightsWhichAreOverAndTheFlightsOfOthersAreNotInTheRoster() {
         flight(0, 60);

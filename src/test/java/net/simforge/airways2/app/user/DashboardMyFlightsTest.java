@@ -132,6 +132,19 @@ class DashboardMyFlightsTest {
     }
 
     @Test
+    void aFlightWhichCanBeMovedHasTheTimesOfTheMoveAndAFlightWhichHasLeftHasNone() {
+        final FlightMissions.Mission mission = mission(world.getWorldTime() + 3 * 3600);
+
+        final FlightDashboardController.RescheduleDto reschedule = controller.getMyFlights(USER_ID).getFlights().get(0).getReschedule();
+        assertEquals(15, reschedule.getStepMinutes());
+        assertEquals(0, reschedule.getFrom() % (15 * 60_000L));
+        assertEquals(0, reschedule.getTo() % (15 * 60_000L));
+
+        mission.setActualDepartureWorldTime(world.getWorldTime() + 3480);
+        assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getReschedule());
+    }
+
+    @Test
     void aFlightWithoutTransportFlightHasNoTransportFlightDto() {
         mission(world.getWorldTime() + 3600);
 

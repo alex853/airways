@@ -69,9 +69,15 @@ public class FlightDashboardController {
                     .toList();
 
             // what the roster is going to be like: the expected times, the divert, the conflicts with the flights before (the dashboard tells the same, ScheduleWarnings)
-            final Map<Integer, RosterForecast.Entry> forecast = RosterForecast.of(world, userId).stream()
-                    .collect(Collectors.toMap(entry -> entry.mission().getId(), entry -> entry));
-            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f, forecast.get(f.getId()))).toList());
+            final List<RosterForecast.Entry> roster = RosterForecast.of(world, userId);
+            final Map<Integer, RosterForecast.Entry> forecast = roster.stream().collect(Collectors.toMap(entry -> entry.mission().getId(), entry -> entry));
+            // the times which keep a flight between its neighbours, for the flights which can be moved
+            final Map<Integer, RosterForecast.Window> windows = new java.util.HashMap<>();
+            for (int i = 0; i < roster.size(); i++) {
+                final int missionId = roster.get(i).mission().getId();
+                RosterForecast.rescheduleWindow(world, roster, i).ifPresent(window -> windows.put(missionId, window));
+            }
+            return new MyFlightsResponse(userFlights.stream().map(f -> toMyFlightsDto(world, f, forecast.get(f.getId()), windows.get(f.getId()))).toList());
         });
     }
 
@@ -1031,7 +1037,7 @@ public class FlightDashboardController {
         checkArgument(actionAllowed, "'" + actionName + "' should be allowed");
     }
 
-    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast) {
+    private MyFlightsDto toMyFlightsDto(World world, FlightMissions.Mission flight, RosterForecast.Entry forecast, RosterForecast.Window rescheduleWindow) {
         checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(flight.getAircraftId()).orElseThrow();
@@ -1078,7 +1084,8 @@ public class FlightDashboardController {
                 world.transportFlightControl().getIncome(transportFlight)
         ) : null;
 
-        return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null);
+        return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null,
+                rescheduleWindow != null ? new RescheduleDto(rescheduleWindow.earliestDeparture() * 1000L, rescheduleWindow.latestDeparture() * 1000L, RosterForecast.RESCHEDULE_OPTION_STEP / Time.ONE_MINUTE) : null);
     }
 
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight, final World world) {
@@ -1201,6 +1208,20 @@ public class FlightDashboardController {
         private TransportFlightDto transportFlight;
         // the expected times, the divert and the conflict of the flight; null for a flight which has none of them (and for a flight which is over)
         private ForecastDto forecast;
+        // the times to which the flight can be moved, null for a flight which cannot be moved
+        private RescheduleDto reschedule;
+    }
+
+    /**
+     * The departures to which a flight can be moved without a conflict with its neighbours in the roster: from the earliest to the latest (UTC milliseconds), every stepMinutes
+     * minutes. from is later than to when there is no room between the neighbours.
+     */
+    @AllArgsConstructor
+    @Data
+    public static class RescheduleDto {
+        private final long from;
+        private final long to;
+        private final int stepMinutes;
     }
 
     // the expected time is told when it is 5 minutes or more from the planned one: less than that is not a delay, the estimates move by themselves

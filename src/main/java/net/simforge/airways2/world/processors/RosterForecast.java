@@ -27,6 +27,10 @@ import java.util.Optional;
 public final class RosterForecast {
     // the times which are suggested for a move are rounded up to this step
     private static final int SUGGESTION_STEP = 5 * Time.ONE_MINUTE;
+    // the times which the pilot chooses from for the move of a flight go by this step (from the whole hour: :00, :15, :30, :45)
+    public static final int RESCHEDULE_OPTION_STEP = 15 * Time.ONE_MINUTE;
+    // a flight which has no flight after it can be moved this far after the planned departure
+    public static final int RESCHEDULE_WITHOUT_NEXT_FLIGHT = 12 * Time.ONE_HOUR;
 
     public enum Level {
         RED,
@@ -89,10 +93,7 @@ public final class RosterForecast {
                 final int wanted = Math.max(flight.getPlannedDepartureWorldTime(), now);
                 departure = wanted;
                 if (previous != null) {
-                    // after a diverted flight the next one starts from the destination of the plan, when the aircraft is delivered there
-                    final int needed = previous.deliveryNotBefore() != 0
-                            ? previous.deliveryNotBefore() + ScheduleWarnings.DIVERT_TURNAROUND_TIME
-                            : previous.expectedArrival() + ShadowJetBooking.MIN_GAP_SECONDS;
+                    final int needed = earliestNextDeparture(previous);
                     if (wanted < needed) {
                         conflict = new Conflict(previous.conflict() == null ? Level.RED : Level.YELLOW,
                                 minutesUp(needed - wanted),
@@ -111,11 +112,66 @@ public final class RosterForecast {
         return result;
     }
 
+    /**
+     * The earliest departure of the flight which goes after the flight: the gap after its arrival, and after a diverted flight (which starts from the destination of the plan
+     * when the aircraft is delivered there) the hour of the turnaround after the delivery.
+     */
+    static int earliestNextDeparture(final Entry previous) {
+        return previous.deliveryNotBefore() != 0
+                ? previous.deliveryNotBefore() + ScheduleWarnings.DIVERT_TURNAROUND_TIME
+                : previous.expectedArrival() + ShadowJetBooking.MIN_GAP_SECONDS;
+    }
+
+    /**
+     * The times of the departure of a flight which keep it between its neighbours in the roster, for the move of the flight (the times go by RESCHEDULE_OPTION_STEP, from the
+     * earliest to the latest). The earliest is after the flight before it has landed and the gap has passed (not earlier than now plus the least reserve of the departure), the
+     * latest is the one where the flight lands the gap before the expected departure of the flight after it (the expected one: the flight after it may be moved by its own
+     * conflict already); a flight without the one after it can be moved 12 hours later. Both are inside the limits of the shift. The window is empty (the earliest is later than the
+     * latest) when there is no room between the neighbours.
+     *
+     * @return empty when the flight cannot be moved: it has left, or it is not in a state which the move needs (FlightMissionControl.rescheduleChecks)
+     */
+    public static Optional<Window> rescheduleWindow(final World world, final List<Entry> roster, final int index) {
+        final FlightMissions.Mission mission = roster.get(index).mission();
+        if (mission.getActualDepartureWorldTime() != 0 || !world.flightMissionControl().rescheduleChecks(mission).values().stream().allMatch(ok -> ok)) {
+            return Optional.empty();
+        }
+        final int planned = mission.getPlannedDepartureWorldTime();
+        final int maxShift = FlightMissionControl.RESCHEDULE_MAX_SHIFT_MINUTES * Time.ONE_MINUTE;
+
+        int earliest = world.getWorldTime() + FlightMissionControl.RESCHEDULE_MIN_DEPARTURE_RESERVE;
+        if (index > 0) {
+            earliest = Math.max(earliest, earliestNextDeparture(roster.get(index - 1)));
+        }
+        final int duration = mission.getPlannedArrivalWorldTime() - planned;
+        int latest = index + 1 < roster.size()
+                ? roster.get(index + 1).expectedDeparture() - ShadowJetBooking.MIN_GAP_SECONDS - duration
+                : planned + RESCHEDULE_WITHOUT_NEXT_FLIGHT;
+
+        earliest = Math.max(earliest, planned - maxShift);
+        latest = Math.min(latest, planned + maxShift);
+        return Optional.of(new Window(roundUp(earliest, RESCHEDULE_OPTION_STEP), Math.floorDiv(latest, RESCHEDULE_OPTION_STEP) * RESCHEDULE_OPTION_STEP));
+    }
+
+    /**
+     * @param earliestDeparture the earliest departure which keeps the flight between its neighbours (world time, on the step of the options)
+     * @param latestDeparture   the latest one
+     */
+    public record Window(int earliestDeparture, int latestDeparture) {
+        public boolean isEmpty() {
+            return earliestDeparture > latestDeparture;
+        }
+    }
+
     private static int minutesUp(final int seconds) {
         return (seconds + Time.ONE_MINUTE - 1) / Time.ONE_MINUTE;
     }
 
     private static int roundUp(final int time) {
-        return (time + SUGGESTION_STEP - 1) / SUGGESTION_STEP * SUGGESTION_STEP;
+        return roundUp(time, SUGGESTION_STEP);
+    }
+
+    private static int roundUp(final int time, final int step) {
+        return (time + step - 1) / step * step;
     }
 }
