@@ -40,7 +40,7 @@
 - **Flying после дивёрта**: You are going to {div} instead of {dest}. The passengers are expected at {dest} all the same, see the warnings below (у ferry без этой фразы). Cancel divert takes it back.
 - **Arrival**: The aircraft has landed and is taxiing in. Трекер: Blocks On follows the sim when it stops at the gate and the engines are shut down. Ручной: When it is parked, the parking
   brake is set and the engines are off, press Blocks On.
-- **Postflight**: The aircraft is at the gate. (У ferry дальше: Press Finish Flight to close the flight and get the pay, или The flight is being finished automatically.)
+- **Postflight**: The aircraft is at the gate. Не ferry с autoFinish: The flight will be finished automatically after the passengers have got off. (У ferry дальше: Press Finish Flight to close the flight and get the pay, или The flight is being finished automatically.)
 - **Finished**: The flight is finished and paid. The pilot rests at {dest}.
 
 ## Часть «Passengers» (по статусу транспортного рейса)
