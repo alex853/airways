@@ -947,6 +947,91 @@ public class FlightDashboardController {
     }
 
     /**
+     * "Resolve conflicts" of the roster: what the moves would be (FlightMissionControl.resolveConflicts), nothing is changed.
+     */
+    @GetMapping("/resolve-conflicts/preview")
+    public ResolveConflictsDto resolveConflictsPreview(@RequestAttribute("userId") int userId) {
+        return worldBean.read(world -> toResolveConflictsDto(world, world.flightMissionControl().resolveConflictsCascade(userId)));
+    }
+
+    /**
+     * "Resolve conflicts" of the roster: the flights in conflict and the ones after them are moved later, the least that the gaps need, all or none.
+     */
+    @PostMapping("/resolve-conflicts")
+    public ResolveConflictsDto resolveConflicts(@RequestAttribute("userId") int userId) {
+        return worldBean.modifySync(world -> {
+            final RosterCascade.Plan plan = world.flightMissionControl().resolveConflictsCascade(userId);
+            if (!plan.isPossible()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flights cannot be moved: "
+                        + plan.problems().stream().map(p -> FlightMissionHelper.formatRoute(world, p.mission().getId()) + " " + p.reason()).toList());
+            }
+            log.info("flight-dashboard - resolve conflicts of user {}, {} flights are moved", userId, plan.moves().size());
+            final ResolveConflictsDto dto = toResolveConflictsDto(world, plan);
+            world.flightMissionControl().resolveConflicts(userId);
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+            return dto;
+        });
+    }
+
+    /**
+     * "Reschedule together with the next flights": what the moves would be when the flight goes to this departure (UTC milliseconds), nothing is changed.
+     */
+    @GetMapping("/reschedule-with-next/preview")
+    public ResolveConflictsDto rescheduleWithNextPreview(@RequestAttribute("userId") int userId,
+                                                         @RequestParam(name = "flightId") String flightIdStr,
+                                                         @RequestParam(name = "departureTime") long departureTimeMillis) {
+        return worldBean.read(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+            return toResolveConflictsDto(world, rescheduleWithNextPlan(world, flight, departureTimeMillis));
+        });
+    }
+
+    /**
+     * "Reschedule together with the next flights": the flight goes to the departure and the flights after it are moved later when they need it, all or none.
+     */
+    @PostMapping("/reschedule-with-next")
+    public ResolveConflictsDto rescheduleWithNext(@RequestAttribute("userId") int userId,
+                                                  @RequestParam(name = "flightId") String flightIdStr,
+                                                  @RequestParam(name = "departureTime") long departureTimeMillis) {
+        return worldBean.modifySync(world -> {
+            final int flightId = Id.decode(flightIdStr);
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+            final RosterCascade.Plan plan = rescheduleWithNextPlan(world, flight, departureTimeMillis);
+            if (!plan.isPossible()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flights cannot be moved: "
+                        + plan.problems().stream().map(p -> FlightMissionHelper.formatRoute(world, p.mission().getId()) + " " + p.reason()).toList());
+            }
+            log.info("f/m #{} - flight-dashboard - reschedule with the next flights to {}, {} flights are moved", flightId, Time.toLdt((int) (departureTimeMillis / 1000)), plan.moves().size());
+            final ResolveConflictsDto dto = toResolveConflictsDto(world, plan);
+            world.flightMissionControl().rescheduleWithNext(flight, (int) (departureTimeMillis / 1000));
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+            return dto;
+        });
+    }
+
+    private RosterCascade.Plan rescheduleWithNextPlan(final World world, final FlightMissions.Mission flight, final long departureTimeMillis) {
+        checkArgument(flight.getCharacterMode() == FlightMissions.CharacterMode.PC, "flight should be in PC mode");
+        try {
+            return world.flightMissionControl().rescheduleWithNextCascade(flight, (int) (departureTimeMillis / 1000));
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    private static ResolveConflictsDto toResolveConflictsDto(final World world, final RosterCascade.Plan plan) {
+        return new ResolveConflictsDto(plan.isPossible(),
+                plan.moves().stream().map(m -> new CascadeMoveDto(FlightMissionHelper.formatRoute(world, m.mission().getId()), m.oldDeparture() * 1000L, m.newDeparture() * 1000L,
+                        m.connectionsLost(), m.connectionPaxLost())).toList(),
+                plan.problems().stream().map(p -> new CascadeProblemDto(FlightMissionHelper.formatRoute(world, p.mission().getId()), p.reason())).toList());
+    }
+
+    /**
      * After a landing at a wrong airport: what the flight on later at this departure does (FlightMissionControl.continueLater). departureTime is UTC milliseconds on the step of
      * 15 minutes, without it the earliest one is taken. The answer has the earliest and the latest departure and what the cascade does to the flights of the pilot.
      */
@@ -1051,6 +1136,14 @@ public class FlightDashboardController {
         private final int stepMinutes;
         private final long departure;
         private final long arrival;
+        private final boolean possible;
+        private final List<CascadeMoveDto> moves;
+        private final List<CascadeProblemDto> problems;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class ResolveConflictsDto {
         private final boolean possible;
         private final List<CascadeMoveDto> moves;
         private final List<CascadeProblemDto> problems;

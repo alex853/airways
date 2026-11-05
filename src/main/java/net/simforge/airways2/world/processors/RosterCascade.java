@@ -57,6 +57,55 @@ public final class RosterCascade {
      * @param excludedMissionIds the missions which are not moved: the flight which is put (when it exists) and the flight which the pilot has made
      */
     public static Plan plan(final World world, final int userId, final int insertedArrival, final Set<Integer> excludedMissionIds) {
+        return planFrom(world, userId, insertedArrival + ShadowJetBooking.MIN_GAP_SECONDS, excludedMissionIds, null, 0);
+    }
+
+    /**
+     * The flight is moved to the new departure and the flights of the pilot after it are moved later when they need it (the least, as {@link #plan}); the flights before it
+     * stay. The new departure must keep the gap after the flight before it: it is not checked here (FlightMissionControl.rescheduleWithNextCascade does).
+     */
+    public static Plan planRescheduleWithNext(final World world, final FlightMissions.Mission mission, final int newDeparture) {
+        final int duration = mission.getPlannedArrivalWorldTime() - mission.getPlannedDepartureWorldTime();
+        final Set<Integer> excluded = new java.util.HashSet<>();
+        for (final RosterForecast.Entry entry : RosterForecast.of(world, mission.getUserId())) {
+            excluded.add(entry.mission().getId());
+            if (entry.mission().getId() == mission.getId()) {
+                break;
+            }
+        }
+        return planFrom(world, mission.getUserId(), newDeparture + duration + ShadowJetBooking.MIN_GAP_SECONDS, excluded, mission, newDeparture);
+    }
+
+    /**
+     * The least moves which solve the conflicts of the roster (RosterForecast): the flights before the first red conflict stay where they are, the flight in conflict and
+     * every flight after it which is still too close are moved later, each exactly as much as the gap needs. A roster without a red conflict has an empty plan.
+     */
+    public static Plan planResolveConflicts(final World world, final int userId) {
+        final List<RosterForecast.Entry> roster = RosterForecast.of(world, userId);
+        int first = -1;
+        for (int i = 0; i < roster.size(); i++) {
+            final RosterForecast.Conflict conflict = roster.get(i).conflict();
+            if (conflict != null && conflict.level() == RosterForecast.Level.RED) {
+                first = i;
+                break;
+            }
+        }
+        if (first <= 0) {
+            return new Plan(List.of(), List.of());
+        }
+        final Set<Integer> before = new java.util.HashSet<>();
+        for (int i = 0; i < first; i++) {
+            before.add(roster.get(i).mission().getId());
+        }
+        return planFrom(world, userId, RosterForecast.earliestNextDeparture(roster.get(first - 1)), before, null, 0);
+    }
+
+    /**
+     * @param firstNeeded the earliest departure of the first flight which is moved
+     * @param head        the flight which is moved to {@code headDeparture} before the flights after it (null when there is none)
+     */
+    private static Plan planFrom(final World world, final int userId, final int firstNeeded, final Set<Integer> excludedMissionIds,
+                                 final FlightMissions.Mission head, final int headDeparture) {
         final List<FlightMissions.Mission> pending = world.flightMissions().allByUserId(userId)
                 .filter(m -> !FlightMissionHelper.isFinishedOrCancelled(m))
                 .filter(m -> m.getActualDepartureWorldTime() == 0)
@@ -70,13 +119,24 @@ public final class RosterCascade {
         // the times of the moved flights, for the connections of the journeys which are on two moved flights
         final Map<Integer, int[]> newTimes = new HashMap<>();
 
-        int previousArrival = insertedArrival;
+        // a moved flight may not start earlier than the reschedule allows
+        final int notBefore = world.getWorldTime() + FlightMissionControl.RESCHEDULE_MIN_DEPARTURE_RESERVE;
+        int nextNeeded = firstNeeded;
+        if (head != null && headDeparture != head.getPlannedDepartureWorldTime()) {
+            final int headPlanned = head.getPlannedDepartureWorldTime();
+            final String headReason = headDeparture < notBefore ? "it is too early" : whyCannotBeMoved(world, head, headDeparture - headPlanned, maxShift);
+            if (headReason != null) {
+                problems.add(new Problem(head, headReason));
+            }
+            newTimes.put(head.getId(), new int[]{headDeparture, headDeparture + head.getPlannedArrivalWorldTime() - headPlanned});
+            moves.add(new Move(head, headPlanned, headDeparture, 0, 0));
+        }
         for (final FlightMissions.Mission mission : pending) {
             final int planned = mission.getPlannedDepartureWorldTime();
             final int duration = mission.getPlannedArrivalWorldTime() - planned;
-            final int needed = previousArrival + ShadowJetBooking.MIN_GAP_SECONDS;
+            final int needed = Math.max(nextNeeded, notBefore);
             if (planned >= needed) {
-                previousArrival = mission.getPlannedArrivalWorldTime();
+                nextNeeded = mission.getPlannedArrivalWorldTime() + ShadowJetBooking.MIN_GAP_SECONDS;
                 continue;
             }
 
@@ -87,7 +147,7 @@ public final class RosterCascade {
             }
             newTimes.put(mission.getId(), new int[]{newDeparture, newDeparture + duration});
             moves.add(new Move(mission, planned, newDeparture, 0, 0));
-            previousArrival = newDeparture + duration;
+            nextNeeded = newDeparture + duration + ShadowJetBooking.MIN_GAP_SECONDS;
         }
 
         // the connections which the moves cost, now when all the new times are known

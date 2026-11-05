@@ -289,6 +289,53 @@ public class FlightMissionControl {
     }
 
     /**
+     * What "Reschedule together with the next flights" does: the flight goes to the new departure (not earlier than the gap after the flight before it, in whole minutes),
+     * and the flights after it are moved later the least that they need (RosterCascade.planRescheduleWithNext).
+     */
+    public RosterCascade.Plan rescheduleWithNextCascade(final FlightMissions.Mission mission, final int newDeparture) {
+        checkArgument(newDeparture % 60 == 0, "reschedule with next - the departure is not in whole minutes");
+        final java.util.List<RosterForecast.Entry> roster = RosterForecast.of(world, mission.getUserId());
+        for (int i = 1; i < roster.size(); i++) {
+            if (roster.get(i).mission().getId() == mission.getId()) {
+                checkArgument(newDeparture >= RosterForecast.earliestNextDeparture(roster.get(i - 1)),
+                        "reschedule with next - the flight is too close to the flight before it");
+            }
+        }
+        return RosterCascade.planRescheduleWithNext(world, mission, newDeparture);
+    }
+
+    /**
+     * Does {@link #rescheduleWithNextCascade}, all or none.
+     */
+    public RosterCascade.Plan rescheduleWithNext(final FlightMissions.Mission mission, final int newDeparture) {
+        final RosterCascade.Plan plan = rescheduleWithNextCascade(mission, newDeparture);
+        checkArgument(plan.isPossible(), "reschedule with next - the flights cannot be moved: %s",
+                plan.problems().stream().map(p -> "f/m #" + p.mission().getId() + " " + p.reason()).toList());
+        RosterCascade.apply(world, plan);
+        return plan;
+    }
+
+    /**
+     * What "Resolve conflicts" of the roster does: the flights of the user are moved later, the least that the gaps need (RosterCascade.planResolveConflicts).
+     */
+    public RosterCascade.Plan resolveConflictsCascade(final int userId) {
+        return RosterCascade.planResolveConflicts(world, userId);
+    }
+
+    /**
+     * Does the moves of {@link #resolveConflictsCascade}, all or none.
+     *
+     * @return the plan which was done (empty when the roster has no conflict)
+     */
+    public RosterCascade.Plan resolveConflicts(final int userId) {
+        final RosterCascade.Plan plan = resolveConflictsCascade(userId);
+        checkArgument(plan.isPossible(), "resolve conflicts - the flights cannot be moved: %s",
+                plan.problems().stream().map(p -> "f/m #" + p.mission().getId() + " " + p.reason()).toList());
+        RosterCascade.apply(world, plan);
+        return plan;
+    }
+
+    /**
      * What the cascade of the roster does when the flight goes on later at this departure (see continueLater): the flights of the pilot which have not left are moved after it.
      */
     public RosterCascade.Plan continueLaterCascade(final FlightMissions.Mission mission, final int departureTime) {
