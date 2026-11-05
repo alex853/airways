@@ -18,74 +18,48 @@
 (Finish) → `Finished`. Транспортный рейс идёт своей цепочкой: `Scheduled`, `CheckIn`, `WaitingForBoarding`, `Boarding`, `WaitingForDeparture`, `Departure`, `Flying`, `Arrival`,
 `WaitingForDeboarding`, `Deboarding`, `Finished`.
 
-## Тексты
+## Как это устроено (сделано 2026-11-05)
 
-### Dispatched (Before Start Flight), tf Scheduled
+Код: `simforge-web/airways/flight-dashboard.html` (`pilotNote`, `passengersNote`, `stageNotesHtml`), вставляется под заголовком этапа, перед предупреждением о следующих рейсах.
+Два абзаца с подписями «Flight» и «Passengers». «Flight» зависит от статуса рейса (`fmSt`) и режима (`SIM_TRACKER` или `MANUAL`) и показывается всегда; «Passengers» зависит от
+статуса транспортного рейса (`tfSt`), у ferry-рейса и у законченного рейса его нет. Для посадки не в плановом аэропорту абзацы не показываются (у неё свой заголовок и три колонки).
+Жирным: названия действий, числа и коды аэропортов (и во всех сообщениях ниже: предупреждения late/divert/conflict, подписи под кнопками Flying).
+Данные: `{dep}`, `{dest}`, `{div}`, `{pdep}`, `{cinStart}`, `{brdStart}`, `{brdEnd}`, `{ckdIn}`, `{ponBrd}`, `{debEnd}`.
 
-> The aircraft is assigned to you and stands at {dep}. The flight is planned for {pdep} UTC. The check-in of the passengers opens at {cinStart} UTC (it goes by itself, you do not
-> wait for it). When you are at the airport and ready to begin, start the flight: with the sim tracker the flight follows the sim (Blocks Off, Takeoff, Landing, Blocks On),
-> in the manual mode you press these steps yourself.
+## Часть «Flight» (по статусу рейса и режиму)
 
-Если красные условия (пилот не на месте, лимиты, самолёт занят): добавить «Fix the red conditions below first.»
+- **Dispatched** (всегда, независимо от регистрации): The aircraft is assigned to you and stands at {dep}. The flight is planned for {pdep} UTC. When you are at the airport and ready to begin,
+  start the flight: with the sim tracker the flight follows the sim (Blocks Off, Takeoff, Landing, Blocks On), in the manual mode you press these steps yourself. Если оба старта
+  недоступны: «Fix the red conditions below first.»
+- **Preflight**: The pilot studies the weather and the route, files the flight plan, walks around the aircraft, sets up the FMS and talks to the ground services about the fuel and the ramp.
+- **Preflight, двери закрыты (tf WaitingForDeparture; у ferry без «The doors are closed.»)**: трекер: Release the parking brake and push back: Blocks Off follows the sim.
+  Ручной: When the parking brake is released and the aircraft moves, press Blocks Off.
+- **Departure**: The aircraft is taxiing out. Трекер: Takeoff follows the sim when the wheels leave the ground. Ручной: Press Takeoff when you start the takeoff run.
+- **Flying**: The aircraft is on its way to {dest}. Трекер: The sim tracker lands the aircraft where you land it. Ручной: Press Landing after the touchdown (not earlier than 90% of
+  the planned flight time). Дальше: If you cannot land at {dest}, declare a Divert.
+- **Flying после дивёрта**: You are going to {div} instead of {dest}. The passengers are expected at {dest} all the same, see the warnings below (у ferry без этой фразы). Cancel divert takes it back.
+- **Arrival**: The aircraft has landed and is taxiing in. Трекер: Blocks On follows the sim when it stops at the gate and the engines are shut down. Ручной: When it is parked, the parking
+  brake is set and the engines are off, press Blocks On.
+- **Postflight**: The aircraft is at the gate. (У ferry дальше: Press Finish Flight to close the flight and get the pay, или The flight is being finished automatically.)
+- **Finished**: The flight is finished and paid. The pilot rests at {dest}.
 
-### Preflight
+## Часть «Passengers» (по статусу транспортного рейса)
 
-Регистрация обычно открывается задолго до Preflight (время открытия пишем в Dispatched), поэтому подготовка пилота описывается во всех вариантах, где регистрация идёт или ещё впереди.
-- **tf Scheduled** (регистрация ещё не открыта, редкий случай):
-  > The flight has started. The pilot studies the weather and the route, files the flight plan, walks around the aircraft, sets up the FMS and talks to the ground services
-  > about the fuel and the ramp.
-- **tf CheckIn** (регистрация идёт):
-  > The pilot studies the weather and the route, files the flight plan, walks around the aircraft, sets up the FMS and talks to the ground services about the fuel and the ramp.
-  > Meanwhile the passengers are checking in ({ckdIn} of {tTkts} so far). When the pilot is ready to let them on board, press Start Boarding (planned for {brdStart} UTC).
-- **tf WaitingForBoarding**:
-  > The check-in is over, the passengers are waiting at the gate. When the aircraft is ready, press Start Boarding.
-- **tf Boarding** (ручной режим и трекер одинаково):
-  > The passengers are boarding ({ponBrd} on board). The boarding ends at {brdEnd} UTC or when everybody is on board. Use the time to finish the preparation.
-  > Finish Boarding closes the doors now, but not everybody may be on board.
-- **tf WaitingForDeparture** (посадка закончена, Blocks Off ещё не было):
-  - трекер: > The doors are closed, the passengers are seated. Release the parking brake and push back: Blocks Off follows the sim.
-  - ручной: > The doors are closed, the passengers are seated. When the parking brake is released and the aircraft moves, press Blocks Off.
+- **Scheduled**: The check-in opens at {cinStart} UTC.
+- **CheckIn**: The passengers are checking in ({ckdIn} so far). До старта рейса: The boarding can be started after you start the flight. В Preflight: When the pilot is ready to let
+  them on board, press Start Boarding (planned for {brdStart} UTC).
+- **WaitingForBoarding**: The check-in is over, the passengers are waiting at the gate. До старта рейса: The boarding can be started after you start the flight. В Preflight: When the aircraft
+  is ready, press Start Boarding.
+- **Boarding**: The passengers are boarding ({ponBrd} on board). The boarding ends at {brdEnd} UTC or when everybody is on board. Finish Boarding closes the doors now, but not everybody may be on board.
+- **WaitingForDeparture, Departure**: The passengers are seated.
+- **Flying**: The passengers are in the air. (Без пункта назначения, потому что при дивёрте он ложный. Если рейс уже в Arrival, а транспортный рейс ещё Flying: The passengers are waiting for the
+  aircraft to reach the gate.)
+- **Arrival**: The passengers are waiting for the aircraft to reach the gate.
+- **WaitingForDeboarding**: The passengers are waiting to get off. Press Start Deboarding when you are ready.
+- **Deboarding**: The passengers are getting off ({ponBrd} left). The deboarding ends at {debEnd} UTC.
+- **Finished**: Everybody is off. Autofinish выключен: Press Finish Flight to close the flight and get the pay. Включён: The flight is being finished automatically.
 
-### Departure (после Blocks Off, до Takeoff)
+## Решено
 
-- трекер: > The aircraft is taxiing out. Takeoff follows the sim when the wheels leave the ground.
-- ручной: > The aircraft is taxiing out. Press Takeoff when you start the takeoff run (checks below).
-
-### Flying (над кнопками Landing и Divert)
-
-- трекер: > The aircraft is on its way to {dest}. The sim tracker lands the aircraft where you land it. If you cannot land at {dest}, declare a divert.
-- ручной: > The aircraft is on its way to {dest}. Press Landing after the touchdown (not earlier than 90% of the planned flight time). If you cannot land at {dest}, declare a divert.
-- после дивёрта (`div`): > You are going to {div} instead of {dest}. The passengers are expected at {dest} all the same, see the warnings above. Cancel divert takes it back.
-- рейс без пассажиров (ferry, tfSt null): убрать фразы про пассажиров, остальное то же.
-
-### Arrival (после Landing, до Blocks On)
-
-- трекер: > The aircraft has landed and is taxiing in. Blocks On follows the sim when it stops at the gate and the engines are shut down.
-- ручной: > The aircraft has landed and is taxiing in. When it is parked, the parking brake is set and the engines are off, press Blocks On.
-
-### Postflight
-
-- **tf WaitingForDeboarding** (самолёт на стоянке):
-  > The aircraft is at the gate. The passengers are waiting to get off. Press Start Deboarding when you are ready.
-- **tf WaitingForDeboarding, посадка не в плановом аэропорту**: у этого состояния уже есть три колонки (Continue now, Continue later, Cancel); добавить один общий абзац:
-  > The aircraft has landed at {aldgA}, not at {dest}. Decide what happens to the passengers.
-- **tf Deboarding**:
-  > The passengers are getting off ({ponBrd} left). The deboarding ends at {debEnd} UTC. The flight is finished after that
-  > (automatically{, or press Finish Flight when the autofinish is off}).
-- **tf Finished, ждём Finish Flight (autoFinish выключен)**:
-  > Everybody is off. Press Finish Flight to close the flight and get the pay.
-- **tf Finished, autoFinish включён**: > Everybody is off. The flight is being finished automatically.
-
-### Finished
-
-> The flight is finished and paid. The pilot rests at {dest}.
-
-(кнопки «To the pilot» и «Book another mission» уже есть)
-
-## Что решить перед реализацией
-
-1. Тексты показывать только пилоту рейса (как сейчас вся область) или всем: **только пилоту** (область и так для пилота).
-2. Где хранить: на сервере (`StatusDto.hint`, тексты на английском в одном месте, видны в тестах и в G7) или в `flight-dashboard.html` (тексты вместе с остальным рендером,
-   `?stub=` показывает их без сервера). Для дашборда в G7 (FlightBag) сервер удобнее.
-3. Стиль: нейтральный (как выше) или «сюжетный» (как в примере про пилота, FMS, граунд-сервисы). Выше смесь: сюжет на Preflight и Boarding, инструкции на остальных.
-4. Показывать ли «Time to departure» и подобные числа в тексте (сейчас они в плитках).
+Тексты в `flight-dashboard.html`, а не на сервере (проверяются на стабах `?stub=`); стиль: сюжет на Preflight, инструкции в остальном; числа «из скольких» (общее число проданных билетов) в
+тексте не показываются, как и в плитке Check-in. Не сделано: версия для G7 (FlightBag).
