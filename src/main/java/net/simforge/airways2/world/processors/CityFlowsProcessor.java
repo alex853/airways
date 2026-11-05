@@ -46,15 +46,16 @@ public class CityFlowsProcessor {
             final City2CityFlows.Flow c2cFlow = existingC2CFlows.computeIfAbsent(toCity.getId(),
                     (a) -> world.city2cityFlows().createInactive(thisCity.get().getId(), toCity.getId()));
             final boolean wasInactive = !c2cFlow.isActive();
+            // the fraction goes first: the size of the first group depends on the thickness of the flow
+            c2cFlow.setFlowFraction(flowFraction);
             if (wasInactive) {
                 c2cFlow.setActive(true);
 
-                c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize());
+                c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow));
                 c2cFlow.setAccumulatedFlow(0.0f);
                 c2cFlow.setAccumulatedFlowTime(world.getWorldTime());
             }
 
-            c2cFlow.setFlowFraction(flowFraction);
             if (wasInactive) {
                 c2cFlow.setHeartbeatTime(world.getWorldTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow));
             }

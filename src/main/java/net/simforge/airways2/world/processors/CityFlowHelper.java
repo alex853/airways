@@ -10,6 +10,8 @@ import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 public class CityFlowHelper {
     @SuppressWarnings("unused")
     private static final Logger log = LoggerFactory.getLogger(CityFlowHelper.class);
@@ -57,8 +59,33 @@ public class CityFlowHelper {
         }
     }
 
-    public static int randomGroupSize() {
-        return (int) (Math.random() * 10) + 1;
+    public static final int MIN_GROUP_SIZE = 1;
+    public static final int MAX_GROUP_SIZE = 10;
+    // a group of the typical size of a flow is accumulated in about this time
+    public static final double TARGET_GROUP_INTERVAL_DAYS = 1.0;
+
+    /**
+     * The size of the next group depends on the thickness of the flow: a thick flow (10 passengers per day and more) gets the groups of 9-10, a thin one
+     * (a passenger per day and less) gets 1-2, the ones between get the window of three sizes around passengers per day. The passengers per day stay
+     * the same, as the time to accumulate a group is proportional to its size, so a thick flow has fewer and bigger groups (fewer passes to catch up
+     * with the world), a thin flow has small groups, which are accumulated in a reasonable time and so are served from time to time.
+     */
+    public static int randomGroupSize(final World world, final City2CityFlows.Flow flow) {
+        final int[] range = groupSizeRange(getDailyPassengers(world, flow));
+        return ThreadLocalRandom.current().nextInt(range[0], range[1] + 1);
+    }
+
+    /** The passengers per day the flow generates, all factors taken into account. */
+    public static double getDailyPassengers(final World world, final City2CityFlows.Flow flow) {
+        final int dailyFlow = getDailyFlow(world, world.cityFlows().byCityFlow(flow).orElseThrow());
+        return dailyFlow * (double) flow.getFlowFraction() * flow.getSuccessRate();
+    }
+
+    /** The bounds [min, max] (inclusive) of the next group size for the flow of the passengers per day. */
+    static int[] groupSizeRange(final double dailyPassengers) {
+        final double center = Math.min(Math.max(dailyPassengers * TARGET_GROUP_INTERVAL_DAYS, MIN_GROUP_SIZE), MAX_GROUP_SIZE);
+        final int rounded = (int) Math.round(center);
+        return new int[] {Math.max(MIN_GROUP_SIZE, rounded - 1), Math.min(MAX_GROUP_SIZE, rounded + 1)};
     }
 
     public static int calcTimeToAccumulateFlow(final World world, final City2CityFlows.Flow flow) {
