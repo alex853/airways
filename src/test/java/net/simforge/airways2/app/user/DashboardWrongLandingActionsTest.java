@@ -62,17 +62,17 @@ class DashboardWrongLandingActionsTest {
     void afterALandingElsewhereThreeActionsReplaceTheOrdinaryButton() {
         mission.setActualLandingAirportId(other.getId());
 
-        assertEquals(List.of("continue-to-destination", "continue-later", "cancel-transport"), names());
+        assertEquals(List.of("continue-now", "continue-later", "cancel-transport"), names());
     }
 
     @Test
-    void continuingLaterIsOfferedButNotAvailable() {
+    void continuingLaterIsOfferedAndAvailable() {
         mission.setActualLandingAirportId(other.getId());
 
         final SimTracker.UserAction later = actions().stream().filter(a -> a.getName().equals("continue-later")).findFirst().orElseThrow();
 
-        assertFalse(later.isAllowed());
-        assertTrue(actions().stream().filter(a -> !a.getName().equals("continue-later")).allMatch(SimTracker.UserAction::isAllowed));
+        assertTrue(later.isAllowed());
+        assertTrue(actions().stream().allMatch(SimTracker.UserAction::isAllowed));
     }
 
     @Test
@@ -80,7 +80,7 @@ class DashboardWrongLandingActionsTest {
         mission.setActualLandingAirportId(other.getId());
         tf.setStatus(TransportFlights.Status.Deboarding);
 
-        assertFalse(names().contains("continue-to-destination"));
+        assertFalse(names().contains("continue-now"));
         assertFalse(names().contains("cancel-transport"));
     }
 }

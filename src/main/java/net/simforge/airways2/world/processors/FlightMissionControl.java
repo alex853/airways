@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 public class FlightMissionControl {
     private static final Logger log = LoggerFactory.getLogger(FlightMissionControl.class);
 
-    public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 48 * 60;
+    public static final int RESCHEDULE_MAX_SHIFT_MINUTES = 7 * 24 * 60;
     // boarding takes 10 mins and ends 10 mins before departure
     public static final int RESCHEDULE_MIN_DEPARTURE_RESERVE = 20 * Time.ONE_MINUTE;
 
@@ -235,13 +235,8 @@ public class FlightMissionControl {
      *
      * @return the new mission, it is Dispatched and the pilot starts it as any other
      */
-    public FlightMissions.Mission continueToDestination(final FlightMissions.Mission mission) {
-        checkArgument(mission.getStatus() == FlightMissions.Status.Postflight, "continue - the flight is %s, not Postflight", mission.getStatus());
-        checkArgument(mission.getCharacterMode() == FlightMissions.CharacterMode.PC, "continue - the flight is not a flight of a pilot");
-        checkArgument(FlightMissionHelper.isLandedAtWrongAirport(mission), "continue - the flight has not landed at a wrong airport");
-        final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(mission.getId())
-                .orElseThrow(() -> new IllegalArgumentException("continue - the flight has no transport flight"));
-        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "continue - the transport flight is %s", transportFlight.getStatus());
+    public FlightMissions.Mission continueNow(final FlightMissions.Mission mission) {
+        final TransportFlights.Flight transportFlight = checkWaitingForDecisionAfterWrongLanding(mission);
 
         final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
         final Airports.Airport from = world.airports().byId(mission.getActualLandingAirportId()).orElseThrow();
@@ -265,6 +260,86 @@ public class FlightMissionControl {
         log.info("t/f #{} - moved to f/m #{}, waiting for departure", transportFlight.getId(), next.getId());
 
         finish(mission);
+        return next;
+    }
+
+    // The least time from now to the departure of the flight which goes on later (decided 2026-11-05, it can be made longer once there is a reason)
+    public static final int CONTINUE_LATER_MIN_DELAY = 3 * Time.ONE_HOUR;
+
+    // the mission which has landed at a wrong airport and waits for the decision of the pilot, and its transport flight
+    private TransportFlights.Flight checkWaitingForDecisionAfterWrongLanding(final FlightMissions.Mission mission) {
+        checkArgument(mission.getStatus() == FlightMissions.Status.Postflight, "continue - the flight is %s, not Postflight", mission.getStatus());
+        checkArgument(mission.getCharacterMode() == FlightMissions.CharacterMode.PC, "continue - the flight is not a flight of a pilot");
+        checkArgument(FlightMissionHelper.isLandedAtWrongAirport(mission), "continue - the flight has not landed at a wrong airport");
+        final TransportFlights.Flight transportFlight = world.transportFlights().byFlightMissionId(mission.getId())
+                .orElseThrow(() -> new IllegalArgumentException("continue - the flight has no transport flight"));
+        checkArgument(transportFlight.getStatus() == TransportFlights.Status.WaitingForDeboarding, "continue - the transport flight is %s", transportFlight.getStatus());
+        return transportFlight;
+    }
+
+    /**
+     * The planned arrival of the flight which goes on from the airport of the landing to the destination of the plan at this departure.
+     */
+    public int continueLaterArrival(final FlightMissions.Mission mission, final int departureTime) {
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getActualLandingAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+        final String aircraftTypeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        return departureTime + (int) FlightMissionHelper.calculateFlightDuration(aircraftTypeIcao, from, to).toSeconds();
+    }
+
+    /**
+     * What the cascade of the roster does when the flight goes on later at this departure (see continueLater): the flights of the pilot which have not left are moved after it.
+     */
+    public RosterCascade.Plan continueLaterCascade(final FlightMissions.Mission mission, final int departureTime) {
+        return RosterCascade.plan(world, mission.getUserId(), continueLaterArrival(mission, departureTime), Set.of(mission.getId()));
+    }
+
+    /**
+     * The aircraft has landed not at the destination and the pilot cannot fly on now (tired, over a limit) and decides to fly later. The passengers get off here, and the same
+     * aircraft is going to take them on to the planned destination in a new mission of the same pilot at the chosen time, not earlier than CONTINUE_LATER_MIN_DELAY from now
+     * and not later than the limit of the shift. The new mission has its own transport flight, which the journeys of the first one are put on as the second flight of their trip
+     * (a journey which had a second flight loses it); the price of the trip is the income of the new flight, the first one is not paid. The new mission is a continuation
+     * (the mark is not used yet; the pilot must not cancel such a flight, when cancellations appear). The flights of the pilot which have not left are moved after the new one
+     * (RosterCascade), all or none: the flight is refused when one of them cannot be moved.
+     *
+     * @return the new mission, it is Dispatched and the pilot starts it as any other
+     */
+    public FlightMissions.Mission continueLater(final FlightMissions.Mission mission, final int departureTime) {
+        final TransportFlights.Flight transportFlight = checkWaitingForDecisionAfterWrongLanding(mission);
+        final int worldTime = world.getWorldTime();
+        checkArgument(departureTime % 60 == 0, "continue later - the departure is not in whole minutes");
+        checkArgument(departureTime >= worldTime + CONTINUE_LATER_MIN_DELAY, "continue later - the departure is earlier than %s minutes from now", CONTINUE_LATER_MIN_DELAY / 60);
+        checkArgument(departureTime <= worldTime + RESCHEDULE_MAX_SHIFT_MINUTES * 60, "continue later - the departure is too far from now");
+
+        final RosterCascade.Plan cascade = continueLaterCascade(mission, departureTime);
+        checkArgument(cascade.isPossible(), "continue later - the flights after it cannot be moved: %s",
+                cascade.problems().stream().map(p -> "f/m #" + p.mission().getId() + " " + p.reason()).toList());
+
+        final Aircrafts.Aircraft aircraft = world.aircrafts().byId(mission.getAircraftId()).orElseThrow();
+        final Airports.Airport from = world.airports().byId(mission.getActualLandingAirportId()).orElseThrow();
+        final Airports.Airport to = world.airports().byId(mission.getDestinationAirportId()).orElseThrow();
+
+        final FlightMissions.Mission next = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, from, to, departureTime);
+        next.setCharacterMode(FlightMissions.CharacterMode.PC);
+        next.setUserId(mission.getUserId());
+        next.setAutoFinish(mission.isAutoFinish());
+        next.setContinuation(true);
+        copyContract(mission, next, aircraft);
+        final TransportFlights.Flight nextTransportFlight = world.transportFlightControl().createTransportFlight(next);
+        log.info("f/m #{} - the flight goes on to {} later, in f/m #{} at {}, t/f #{}; the passengers of t/f #{} are put on it", mission.getId(), to.getIcao(), next.getId(),
+                Time.toLdt(departureTime), nextTransportFlight.getId(), transportFlight.getId());
+
+        world.journeys().allByTransportFlight1Id(transportFlight.getId())
+                .filter(journey -> journey.getStatus() == Journeys.Status.OnBoard || journey.getStatus() == Journeys.Status.WaitingForDeboarding)
+                .toList()
+                .forEach(journey -> world.journeyControl().bookContinuationFlight(journey, nextTransportFlight));
+
+        // the flights of the pilot after it: the new one is first
+        RosterCascade.apply(world, cascade);
+
+        // the passengers get off here; the journeys wait for the new flight as for the second flight of their trip
+        world.transportFlightControl().startDeboarding(transportFlight);
         return next;
     }
 

@@ -103,7 +103,7 @@ class ContinueAfterWrongLandingTest {
     void theFlightGoesOnToTheDestinationInANewMissionWithTheSameTransportFlight() {
         flyTo(mission, diversion);
 
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
 
         // the new mission: the same aircraft and pilot, from where the aircraft stands to the planned destination, not started yet
         assertEquals(FlightMissions.Status.Dispatched, next.getStatus());
@@ -131,7 +131,7 @@ class ContinueAfterWrongLandingTest {
     void theIncomeGoesWithTheTransportFlightToTheNewMission() {
         flyTo(mission, diversion);
 
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
 
         assertEquals(0, world.transportFlightControl().getIncomeOfMission(mission));
         assertEquals(INCOME, world.transportFlightControl().getIncomeOfMission(next));
@@ -141,7 +141,7 @@ class ContinueAfterWrongLandingTest {
     void theNewMissionHasAContractOfTheSamePilot() {
         flyTo(mission, diversion);
 
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
 
         final PilotContracts.Contract contract = world.pilotContracts().byFlightMissionId(next.getId()).orElseThrow();
         assertEquals(person.getId(), contract.getPersonId());
@@ -152,7 +152,7 @@ class ContinueAfterWrongLandingTest {
     @Test
     void theNewMissionIsStartedAsAnyOther() {
         flyTo(mission, diversion);
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
 
         final FlightMissionControl.StartResult started = control.start(next);
         assertTrue(started.started(), started.reason());
@@ -179,7 +179,7 @@ class ContinueAfterWrongLandingTest {
         flyTo(mission, diversion);
         assertEquals(Optional.empty(), world.transportFlightControl().payOperator(transportFlight));
 
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
         flyTo(next, destination);
         assertEquals(Optional.of(new TransportFlightControl.Payout(operator.getId(), INCOME)), world.transportFlightControl().payOperator(transportFlight));
     }
@@ -188,22 +188,22 @@ class ContinueAfterWrongLandingTest {
     void theContinuationIsRefusedWhenTheFlightLandedAtTheDestination() {
         flyTo(mission, destination);
 
-        assertThrows(IllegalArgumentException.class, () -> control.continueToDestination(mission));
+        assertThrows(IllegalArgumentException.class, () -> control.continueNow(mission));
     }
 
     @Test
     void theContinuationIsRefusedBeforeTheBlocksOn() {
         assertTrue(control.start(mission).started());
 
-        assertThrows(IllegalArgumentException.class, () -> control.continueToDestination(mission));
+        assertThrows(IllegalArgumentException.class, () -> control.continueNow(mission));
     }
 
     @Test
     void theContinuationIsRefusedTwice() {
         flyTo(mission, diversion);
-        control.continueToDestination(mission);
+        control.continueNow(mission);
 
-        assertThrows(IllegalArgumentException.class, () -> control.continueToDestination(mission));
+        assertThrows(IllegalArgumentException.class, () -> control.continueNow(mission));
     }
 
     @Test
@@ -242,7 +242,7 @@ class ContinueAfterWrongLandingTest {
         control.landing(mission, diversion);
         control.blocksOn(mission);
 
-        control.continueToDestination(mission);
+        control.continueNow(mission);
 
         assertTrue(entry().isDivertDeclared());
         assertFalse(entry().isUnplannedLanding());
@@ -253,7 +253,7 @@ class ContinueAfterWrongLandingTest {
     void aLandingElsewhereWithoutTheDeclarationIsUnplanned() {
         flyTo(mission, diversion);
 
-        control.continueToDestination(mission);
+        control.continueNow(mission);
 
         assertFalse(entry().isDivertDeclared());
         assertTrue(entry().isUnplannedLanding());
@@ -290,7 +290,7 @@ class ContinueAfterWrongLandingTest {
     @Test
     void aContinuedFlightWhichIsCancelledCancelsTheTransportationOfTheFirstOne() {
         flyTo(mission, diversion);
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
         assertTrue(next.isContinuation());
         assertFalse(entry().isTransportationCancelled());
 
@@ -325,7 +325,7 @@ class ContinueAfterWrongLandingTest {
         world.airport2city().create(diversion.getId(), cityDiversion.getId());
         final Journeys.Journey journey = journeyOnBoard(cityDeparture, cityDestination);
         flyTo(mission, diversion);
-        final FlightMissions.Mission next = control.continueToDestination(mission);
+        final FlightMissions.Mission next = control.continueNow(mission);
 
         control.cancelDispatched(next, "the pilot does not fly on");
 

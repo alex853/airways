@@ -449,6 +449,26 @@ public class JourneyControl {
         releaseTransportFlight2Tickets(journey);
     }
 
+    /**
+     * The first flight of the journey has landed not at its destination and the pilot flies on later in another flight (FlightMissionControl.continueLater): the other flight
+     * becomes the second flight of the journey, which gets off the first one at the landing airport and waits for it there. A second flight which the journey had is released
+     * (there is no third flight). The price of the trip which the first flight has is the price of the new one, so it is its income: the first flight is not paid.
+     */
+    public void bookContinuationFlight(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        checkNotNull(journey);
+        checkNotNull(flight);
+
+        if (journey.getTransportFlight2Id() != 0) {
+            dropSecondFlight(journey, "the first flight goes on later in t/f #" + flight.getId());
+        }
+        journey.setTransportFlight2Id(flight.getId());
+        world.transportFlightControl().obtainFlightTickets(flight, journey.getGroupSize(), journey.getBookedCabinService());
+        journey.setPrice2(journey.getPrice1());
+        world.transportFlightControl().addIncome(flight, journey.getPrice2());
+
+        log.info("j/y #{} - put on t/f #{} as the second flight, price {}", journey.getId(), flight.getId(), journey.getPrice2());
+    }
+
     private void releaseTransportFlight2Tickets(Journeys.Journey journey) {
         if (journey.getTransportFlight2Id() == 0) {
             return;

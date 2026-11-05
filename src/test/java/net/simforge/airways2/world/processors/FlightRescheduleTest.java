@@ -198,7 +198,7 @@ class FlightRescheduleTest {
         assertEquals(false, control.rescheduleChecks(mission).get("user-flight-check"));
     }
 
-    // the first flight departs in 3 hours and lands in 5, the second one departs in 10: the connection needs more than 4 hours between the landing and the departure
+    // the first flight departs in 3 hours and lands in 5, the second one departs in 10: the connection needs more than 2 hours between the landing and the departure
     private record Connection(FlightMissions.Mission mission1, TransportFlights.Flight tf1, FlightMissions.Mission mission2, TransportFlights.Flight tf2, Journeys.Journey journey) {
     }
 
@@ -219,7 +219,7 @@ class FlightRescheduleTest {
         final int remained = c.tf2.getRemainedTickets().getTotal();
         final int income = tfControl.getIncome(c.tf2);
 
-        // landing at 5:50, the connection is until 9:50, the second flight departs at 10:00
+        // landing at 5:50, the connection is until 7:50, the second flight departs at 10:00
         control.reschedule(c.mission1, 50);
 
         assertEquals(c.tf2.getId(), c.journey.getTransportFlight2Id());
@@ -232,7 +232,7 @@ class FlightRescheduleTest {
         final Connection c = connection();
         final int remained = c.tf2.getRemainedTickets().getTotal();
 
-        control.reschedule(c.mission1, 120);
+        control.reschedule(c.mission1, 190);
 
         // the journey stays on the first flight, the second one is released: the seats and the income of it
         assertEquals(c.tf1.getId(), c.journey.getTransportFlight1Id());
@@ -248,7 +248,7 @@ class FlightRescheduleTest {
     void aJourneyLosesItsSecondFlightWhenTheSecondFlightIsMovedEarlierThanTheConnection() {
         final Connection c = connection();
 
-        control.reschedule(c.mission2, -90);
+        control.reschedule(c.mission2, -200);
 
         assertEquals(c.tf1.getId(), c.journey.getTransportFlight1Id());
         assertEquals(0, c.journey.getTransportFlight2Id());
@@ -265,15 +265,15 @@ class FlightRescheduleTest {
     }
 
     @Test
-    void theFlightCanBeMovedByTwoDaysAtMost() {
+    void theFlightCanBeMovedBySevenDaysAtMost() {
         final FlightMissions.Mission mission = mission(3);
         tfControl.createTransportFlight(mission);
         final int departure = mission.getPlannedDepartureWorldTime();
 
-        control.reschedule(mission, 48 * 60);
-        assertEquals(departure + 2 * Time.ONE_DAY, mission.getPlannedDepartureWorldTime());
+        control.reschedule(mission, 7 * 24 * 60);
+        assertEquals(departure + 7 * Time.ONE_DAY, mission.getPlannedDepartureWorldTime());
 
-        assertThrows(IllegalArgumentException.class, () -> control.reschedule(mission, 48 * 60 + 5));
+        assertThrows(IllegalArgumentException.class, () -> control.reschedule(mission, 7 * 24 * 60 + 5));
     }
 
     @Test

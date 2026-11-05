@@ -139,6 +139,24 @@ class DashboardPilotLimitsTest {
     }
 
     @Test
+    void theFlightOnToTheDestinationAfterAWrongLandingIsNotAllowedOverALimitToo() {
+        final List<SimTracker.UserAction> actions = List.of(
+                new SimTracker.UserAction("continue-now", true, List.of()),
+                new SimTracker.UserAction("cancel-transport", true, List.of()));
+
+        final List<SimTracker.UserAction> over = FlightDashboardController.withPilotLimits(actions,
+                FlightDashboardController.pilotLimitChecks(world, pilotWithCredit(-60)));
+        assertFalse(over.get(0).isAllowed());
+        assertEquals(4, over.get(0).getChecks().size());
+        // the passengers can get off whatever the limits are
+        assertTrue(over.get(1).isAllowed());
+
+        final List<SimTracker.UserAction> within = FlightDashboardController.withPilotLimits(actions,
+                FlightDashboardController.pilotLimitChecks(world, pilotWithCredit(10 * 60)));
+        assertTrue(within.get(0).isAllowed());
+    }
+
+    @Test
     void withoutAPilotThereAreNoLimitChecks() {
         final List<SimTracker.UserAction> actions = List.of(new SimTracker.UserAction("start-flight-manual", true, List.of()));
 

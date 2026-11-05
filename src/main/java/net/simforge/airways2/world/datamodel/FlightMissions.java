@@ -349,7 +349,7 @@ public class FlightMissions {
         }
 
         /**
-         * The mission goes on after a landing at a wrong airport: the transport flight of the first mission was moved to it (FlightMissionControl.continueToDestination). When such a
+         * The mission goes on after a landing at a wrong airport: the transport flight of the first mission was moved to it (FlightMissionControl.continueNow). When such a
          * mission is cancelled, the transportation of the first one is cancelled too.
          */
         public boolean isContinuation() {

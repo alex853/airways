@@ -23,6 +23,7 @@ import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotContracts;
 import net.simforge.airways2.world.computations.PilotPay;
 import net.simforge.airways2.world.processors.OperatorPay;
+import net.simforge.airways2.world.processors.RosterCascade;
 import net.simforge.airways2.world.processors.RosterForecast;
 import net.simforge.airways2.world.processors.ScheduleWarnings;
 import net.simforge.airways2.world.computations.PilotPayRates;
@@ -114,7 +115,8 @@ public class FlightDashboardController {
                     mode,
                     // the limits are checks of the start only, the scans of the logbook and of the missions are not done for the flights in progress
                     withPilotLimits(timed("buildActions", () -> buildActions(world, fm, status, simTrackerConnected, pilotAirportId(world, userId))),
-                            fm != null && fm.getStatus() == FlightMissions.Status.Dispatched ? timed("pilotLimitChecks", () -> pilotLimitChecks(world, userId)) : List.of()),
+                            fm != null && (fm.getStatus() == FlightMissions.Status.Dispatched || isWaitingForDecisionAfterWrongLanding(fm))
+                                    ? timed("pilotLimitChecks", () -> pilotLimitChecks(world, userId)) : List.of()),
                     simStatus,
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     timed("FlightUltraDto", () -> activeFlight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null)),
@@ -152,14 +154,20 @@ public class FlightDashboardController {
                 new SimTracker.CheckResult("The flight time in 365 days is within the limit", flightTime.getLast365DaysMinutes() <= flightTime.getLimit365DaysMinutes()));
     }
 
-    // The limits are added to both starts of a flight (the tracked one and the manual one): the start is not allowed over a limit
+    // The aircraft has landed at a wrong airport and the pilot has to decide what happens to the passengers (the flight can go on to the destination at once)
+    private static boolean isWaitingForDecisionAfterWrongLanding(final FlightMissions.Mission flight) {
+        return flight.getStatus() == FlightMissions.Status.Postflight && FlightMissionHelper.isLandedAtWrongAirport(flight);
+    }
+
+    // The limits are added to both starts of a flight (the tracked one and the manual one) and to the flight on to the destination after a landing at a wrong airport
+    // (it starts a new mission at once): the start is not allowed over a limit
     static List<SimTracker.UserAction> withPilotLimits(final List<SimTracker.UserAction> actions, final List<SimTracker.CheckResult> limitChecks) {
         if (limitChecks.isEmpty()) {
             return actions;
         }
         final boolean withinLimits = limitChecks.stream().allMatch(SimTracker.CheckResult::isResult);
         return actions.stream().map(action -> {
-            if (!"start-flight".equals(action.getName()) && !"start-flight-manual".equals(action.getName())) {
+            if (!"start-flight".equals(action.getName()) && !"start-flight-manual".equals(action.getName()) && !"continue-now".equals(action.getName())) {
                 return action;
             }
             final List<SimTracker.CheckResult> checks = new ArrayList<>(action.getChecks());
@@ -237,8 +245,8 @@ public class FlightDashboardController {
             return;
         }
         actions.removeIf(action -> "start-deboarding".equals(action.getName()));
-        actions.add(manualAction("continue-to-destination"));
-        actions.add(new SimTracker.UserAction("continue-later", false, List.of(new SimTracker.CheckResult("It is not available yet", false))));
+        actions.add(manualAction("continue-now"));
+        actions.add(manualAction("continue-later"));
         actions.add(manualAction("cancel-transport"));
     }
 
@@ -909,10 +917,10 @@ public class FlightDashboardController {
     }
 
     /**
-     * After a landing at a wrong airport: the passengers stay on board and the flight goes on to the destination in a new mission (FlightMissionControl.continueToDestination).
+     * After a landing at a wrong airport: the passengers stay on board and the flight goes on to the destination in a new mission (FlightMissionControl.continueNow).
      */
-    @PostMapping("/continue-to-destination")
-    public StatusDto continueToDestination(@RequestAttribute("userId") int userId,
+    @PostMapping("/continue-now")
+    public StatusDto continueNow(@RequestAttribute("userId") int userId,
                                            @RequestParam(name = "flightId") String flightIdStr) {
         return worldBean.modifySync(world -> {
             checkUserMayUseDashboard(world, userId);
@@ -921,8 +929,13 @@ public class FlightDashboardController {
             final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
             checkIfFlightRelatesToUser(flight, userId);
 
-            log.info("f/m #{} - flight-dashboard - continue-to-destination", flightId);
-            world.flightMissionControl().continueToDestination(flight);
+            // the new mission starts at once, so the limits of the pilot are the same as at the start of a flight
+            pilotLimitChecks(world, userId).stream().filter(check -> !check.isResult()).findFirst().ifPresent(check -> {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flight can not go on, the check failed: " + check.getName());
+            });
+
+            log.info("f/m #{} - flight-dashboard - continue-now", flightId);
+            world.flightMissionControl().continueNow(flight);
 
             if (simTrackerBean.isUserConnected(userId)) {
                 simTrackerBean.refreshContext(userId);
@@ -930,6 +943,133 @@ public class FlightDashboardController {
 
             return getStatus(userId);
         });
+    }
+
+    /**
+     * After a landing at a wrong airport: what the flight on later at this departure does (FlightMissionControl.continueLater). departureTime is UTC milliseconds on the step of
+     * 15 minutes, without it the earliest one is taken. The answer has the earliest and the latest departure and what the cascade does to the flights of the pilot.
+     */
+    @GetMapping("/continue-later/preview")
+    public ContinueLaterPreviewDto continueLaterPreview(@RequestAttribute("userId") int userId,
+                                                        @RequestParam(name = "flightId") String flightIdStr,
+                                                        @RequestParam(name = "departureTime", required = false) Long departureTimeMillis) {
+        return worldBean.read(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+            checkWaitingForDecision(world, flight);
+
+            final int step = RosterForecast.RESCHEDULE_OPTION_STEP;
+            final int earliest = ceil(world.getWorldTime() + FlightMissionControl.CONTINUE_LATER_MIN_DELAY, step);
+            final int latest = Math.floorDiv(world.getWorldTime() + FlightMissionControl.RESCHEDULE_MAX_SHIFT_MINUTES * Time.ONE_MINUTE, step) * step;
+            final int departure = departureTimeMillis == null ? earliest : checkDeparture(departureTimeMillis, earliest, latest, step);
+
+            final FlightMissionControl control = world.flightMissionControl();
+            final RosterCascade.Plan plan = control.continueLaterCascade(flight, departure);
+            return new ContinueLaterPreviewDto(
+                    world.airports().getIcao(flight.getActualLandingAirportId()).orElse("?"),
+                    world.airports().getIcao(flight.getDestinationAirportId()).orElse("?"),
+                    earliest * 1000L, latest * 1000L, step / Time.ONE_MINUTE,
+                    departure * 1000L, control.continueLaterArrival(flight, departure) * 1000L,
+                    plan.isPossible(),
+                    plan.moves().stream().map(m -> new CascadeMoveDto(FlightMissionHelper.formatRoute(world, m.mission().getId()), m.oldDeparture() * 1000L, m.newDeparture() * 1000L,
+                            m.connectionsLost(), m.connectionPaxLost())).toList(),
+                    plan.problems().stream().map(p -> new CascadeProblemDto(FlightMissionHelper.formatRoute(world, p.mission().getId()), p.reason())).toList());
+        });
+    }
+
+    /**
+     * After a landing at a wrong airport: the pilot flies on later (FlightMissionControl.continueLater). The limits of the pilot do not stop it, it is for the pilot who cannot fly now.
+     */
+    @PostMapping("/continue-later")
+    public StatusDto continueLater(@RequestAttribute("userId") int userId,
+                                   @RequestParam(name = "flightId") String flightIdStr,
+                                   @RequestParam(name = "departureTime") long departureTimeMillis) {
+        return worldBean.modifySync(world -> {
+            checkUserMayUseDashboard(world, userId);
+            final int flightId = Id.decode(flightIdStr);
+
+            final FlightMissions.Mission flight = world.flightMissions().byId(flightId).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+            checkWaitingForDecision(world, flight);
+
+            final int step = RosterForecast.RESCHEDULE_OPTION_STEP;
+            final int earliest = ceil(world.getWorldTime() + FlightMissionControl.CONTINUE_LATER_MIN_DELAY, step);
+            final int latest = Math.floorDiv(world.getWorldTime() + FlightMissionControl.RESCHEDULE_MAX_SHIFT_MINUTES * Time.ONE_MINUTE, step) * step;
+            final int departure = checkDeparture(departureTimeMillis, earliest, latest, step);
+
+            final RosterCascade.Plan plan = world.flightMissionControl().continueLaterCascade(flight, departure);
+            if (!plan.isPossible()) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flights after it can not be moved: "
+                        + plan.problems().stream().map(p -> FlightMissionHelper.formatRoute(world, p.mission().getId()) + " " + p.reason()).toList());
+            }
+
+            log.info("f/m #{} - flight-dashboard - continue-later at {}", flightId, Time.toLdt(departure));
+            world.flightMissionControl().continueLater(flight, departure);
+
+            if (simTrackerBean.isUserConnected(userId)) {
+                simTrackerBean.refreshContext(userId);
+            }
+
+            return getStatus(userId);
+        });
+    }
+
+    private static int ceil(final int time, final int step) {
+        return (time + step - 1) / step * step;
+    }
+
+    private static int checkDeparture(final long departureTimeMillis, final int earliest, final int latest, final int step) {
+        final int departure = (int) (departureTimeMillis / 1000);
+        if (departureTimeMillis % 1000 != 0 || departure % step != 0 || departure < earliest || departure > latest) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the departure should be on the step of " + step / Time.ONE_MINUTE + " minutes, from the earliest to the latest time");
+        }
+        return departure;
+    }
+
+    // the flight has landed at a wrong airport and waits for the decision of the pilot (the same condition as the actions of the decision)
+    private static void checkWaitingForDecision(final World world, final FlightMissions.Mission flight) {
+        final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
+        if (!isWaitingForDecisionAfterWrongLanding(flight) || tf == null || tf.getStatus() != TransportFlights.Status.WaitingForDeboarding) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "the flight does not wait for the decision after a landing at a wrong airport");
+        }
+    }
+
+    /**
+     * The flight on later (UTC milliseconds): the earliest and the latest departure (on the step of stepMinutes), the departure which the moves are told for, and the arrival of the
+     * new flight. possible: the flights after it can be moved (problems say why not). moves: the flights of the pilot which are moved after the new one, connectionsLost: the
+     * journeys with two flights (and the passengers in them) which lose the second flight by the move.
+     */
+    @AllArgsConstructor
+    @Data
+    public static class ContinueLaterPreviewDto {
+        private final String from;
+        private final String to;
+        private final long earliest;
+        private final long latest;
+        private final int stepMinutes;
+        private final long departure;
+        private final long arrival;
+        private final boolean possible;
+        private final List<CascadeMoveDto> moves;
+        private final List<CascadeProblemDto> problems;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class CascadeMoveDto {
+        private final String route;
+        private final long oldDep;
+        private final long newDep;
+        private final int connectionsLost;
+        private final int connectionPaxLost;
+    }
+
+    @AllArgsConstructor
+    @Data
+    public static class CascadeProblemDto {
+        private final String route;
+        private final String reason;
     }
 
     /**
