@@ -1233,7 +1233,8 @@ public class FlightDashboardController {
                 // the carried passengers (the ones on board at the takeoff) are told after the landing, in the postflight and for a finished flight; before it the roster shows the
                 // passengers on board (onBoard), which go down in the deboarding
                 flight.getStatus() == FlightMissions.Status.Postflight || flight.getStatus() == FlightMissions.Status.Finished ? transportFlight.getPaxCarried() : null,
-                world.transportFlightControl().getIncome(transportFlight)
+                // zero for a flight which landed at a wrong airport: nothing is paid for it, the passengers' price goes to the continuation flight
+                world.transportFlightControl().getIncomeOfMission(flight)
         ) : null;
 
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null,
