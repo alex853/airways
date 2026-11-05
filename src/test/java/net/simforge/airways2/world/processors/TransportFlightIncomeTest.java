@@ -100,6 +100,36 @@ class TransportFlightIncomeTest {
     }
 
     @Test
+    void theAircraftMovesInTheCheckInNobodyBoardedAndTheIncomeIsZero() {
+        final TransportFlights.Flight flight = transportFlight(FlightMissions.CharacterMode.PC);
+        final Journeys.Journey first = journey(flight, 10, 1_000);
+        final Journeys.Journey second = journey(flight, 5, 2_500);
+        assertEquals(3_500, income(flight));
+
+        tfControl.whenFlightDepartsFromGate(flight);
+
+        assertEquals(TransportFlights.Status.Departure, flight.getStatus());
+        assertEquals(Journeys.Status.TooLateToBoard, first.getStatus());
+        assertEquals(Journeys.Status.TooLateToBoard, second.getStatus());
+        assertEquals(0, flight.getPaxOnBoard());
+        assertEquals(0, income(flight));
+    }
+
+    @Test
+    void theAircraftMovesWhileWaitingForTheBoardingNobodyBoardedAndTheIncomeIsZero() {
+        final TransportFlights.Flight flight = transportFlight(FlightMissions.CharacterMode.PC);
+        final Journeys.Journey journey = journey(flight, 10, 1_000);
+        flight.setStatus(TransportFlights.Status.WaitingForBoarding);
+
+        tfControl.whenFlightDepartsFromGate(flight);
+
+        assertEquals(TransportFlights.Status.Departure, flight.getStatus());
+        assertEquals(Journeys.Status.TooLateToBoard, journey.getStatus());
+        assertEquals(0, flight.getPaxOnBoard());
+        assertEquals(0, income(flight));
+    }
+
+    @Test
     void theIncomeIsInTheExtraRecordOfTheFlight() {
         final TransportFlights.Flight flight = transportFlight(FlightMissions.CharacterMode.PC);
 

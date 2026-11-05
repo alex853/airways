@@ -11,10 +11,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -381,11 +384,37 @@ public class TransportFlightControl {
         // the pilot is not obliged to wait for the end of the boarding, the journeys which are not on board are too late
         if (transportFlight.getStatus() == TransportFlights.Status.Boarding) {
             paxManager().boarding(transportFlight).finish();
+        } else if (BEFORE_BOARDING.contains(transportFlight.getStatus())) {
+            closeWithoutBoarding(transportFlight);
         }
 
         transportFlight.setStatus(TransportFlights.Status.Departure);
 
         log.info("t/f #{} - departed", transportFlight.getId());
+    }
+
+    // the statuses in which nobody is on board yet: the boarding has not begun
+    private static final Set<TransportFlights.Status> BEFORE_BOARDING = EnumSet.of(
+            TransportFlights.Status.Scheduled,
+            TransportFlights.Status.CheckIn,
+            TransportFlights.Status.WaitingForBoarding);
+
+    /**
+     * The aircraft starts moving before the boarding has begun: the same as at the end of the boarding (PaxManager.Boarding.finish), nobody boarded. All the journeys which
+     * wait for the check-in or the boarding are too late (the price is released, they go back to the departure city), nobody is on board, the income of the flight is zero.
+     * Without it the journeys would be released one by one by their heartbeats and the income would stay as the bookings have added it for some time.
+     */
+    private void closeWithoutBoarding(final TransportFlights.Flight transportFlight) {
+        final Collection<Journeys.Journey> failedToBoardJourneys = paxManager().journeysOf(transportFlight,
+                Journeys.Status.WaitingForCheckIn, Journeys.Status.WaitingForBoarding);
+        log.info("t/f #{} - departed before the boarding ({}), {} journeys are too late", transportFlight.getId(), transportFlight.getStatus(), failedToBoardJourneys.size());
+
+        failedToBoardJourneys.forEach(j -> world.journeyControl().tooLateToBoard(j));
+
+        transportFlight.setPaxOnBoard(paxManager().countPaxOnBoard(transportFlight));
+        recalculateIncome(transportFlight);
+        // the state of a boarding which could have been created by a look at the flight is not needed any more
+        paxManager().dropState(transportFlight);
     }
 
     public void whenFlightTakeoffs(final TransportFlights.Flight transportFlight) {

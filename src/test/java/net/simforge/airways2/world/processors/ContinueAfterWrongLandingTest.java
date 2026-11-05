@@ -68,12 +68,18 @@ class ContinueAfterWrongLandingTest {
         world.transportFlightControl().addIncome(transportFlight, INCOME);
     }
 
+    // the boarding is over before the aircraft moves: the income which the test has set stays (blocks off before the boarding makes the income zero, nobody is on board)
+    private void blocksOffAfterBoarding(final FlightMissions.Mission m) {
+        world.transportFlights().byFlightMissionId(m.getId()).ifPresent(tf -> tf.setStatus(TransportFlights.Status.WaitingForDeparture));
+        control.blocksOff(m);
+    }
+
     // the flight is flown to the gate of the airport: blocks on, the transport flight waits for the deboarding
     private void flyTo(final FlightMissions.Mission m, final Airports.Airport landingAirport) {
         final FlightMissionControl.StartResult started = control.start(m);
         assertTrue(started.started(), started.reason());
         control.setTrackingMode(m, FlightMissions.TrackingMode.Manual);
-        control.blocksOff(m);
+        blocksOffAfterBoarding(m);
         control.takeoff(m);
         control.landing(m, landingAirport);
         control.blocksOn(m);
@@ -157,7 +163,7 @@ class ContinueAfterWrongLandingTest {
         final FlightMissionControl.StartResult started = control.start(next);
         assertTrue(started.started(), started.reason());
         control.setTrackingMode(next, FlightMissions.TrackingMode.Manual);
-        control.blocksOff(next);
+        blocksOffAfterBoarding(next);
         control.takeoff(next);
         control.landing(next, destination);
         control.blocksOn(next);
@@ -236,7 +242,7 @@ class ContinueAfterWrongLandingTest {
     void aLandingAtTheDeclaredDivertIsMarkedAsDeclaredAndTheContinuationIsNotACancellation() {
         assertTrue(control.start(mission).started());
         control.setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
-        control.blocksOff(mission);
+        blocksOffAfterBoarding(mission);
         control.takeoff(mission);
         mission.setDivertAirportId(diversion.getId());
         control.landing(mission, diversion);
@@ -268,7 +274,7 @@ class ContinueAfterWrongLandingTest {
     void cancellingTheTransportationIsMarkedInTheLogbook() {
         assertTrue(control.start(mission).started());
         control.setTrackingMode(mission, FlightMissions.TrackingMode.Manual);
-        control.blocksOff(mission);
+        blocksOffAfterBoarding(mission);
         control.takeoff(mission);
         mission.setDivertAirportId(diversion.getId());
         control.landing(mission, diversion);
