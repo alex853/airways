@@ -358,15 +358,19 @@ public class SimTracker {
                 }
             }
 
-            if (result.getFlightMissionId() == null) {
+            // A flight which is not started yet (Dispatched) does not hold the context: an earlier flight can be booked (or moved) after it, the context follows the first one
+            final boolean followsNotStartedFlight = result.getFlightMissionId() != null
+                    && world.flightMissions().byId(result.getFlightMissionId()).map(fm -> fm.getStatus() == FlightMissions.Status.Dispatched).orElse(false);
+            if (result.getFlightMissionId() == null || followsNotStartedFlight) {
                 Optional<FlightMissions.Mission> nextActiveFlight = world.flightMissions()
                         .allByUserId(result.getUserId())
                         .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture)
                         .filter(mission -> !FlightMissionHelper.isFinishedOrCancelled(mission))
                         .findFirst();
-                if (nextActiveFlight.isPresent()) {
+                if (nextActiveFlight.isPresent() && !Integer.valueOf(nextActiveFlight.get().getId()).equals(result.getFlightMissionId())) {
+                    final Integer oldFlightMissionId = result.getFlightMissionId();
                     result = result.switchToFlightMissionId(nextActiveFlight.get().getId());
-                    log.info("new active flight mission found");
+                    log.info("f/m #{} - sim tracker of user {} follows this flight now (was {})", nextActiveFlight.get().getId(), result.getUserId(), oldFlightMissionId == null ? "none" : "f/m #" + oldFlightMissionId);
                 }
             }
 
