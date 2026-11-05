@@ -366,7 +366,8 @@ public class FlightDashboardController {
                 .filter(p -> p.getState() != Persons.State.Travelling && p.getLocationType() == Persons.LocationType.City)
                 .flatMap(p -> world.cities().byId(p.getLocationId()));
 
-        final boolean flightInProgress = simStatus.getFlightMissionId() != null || userHasActiveFlight(world, userId);
+        // Only a started flight counts: the tracker follows the next flight of the roster too (Dispatched), that is not a flight in progress and the pilot has to be at the airport
+        final boolean flightInProgress = userHasActiveFlight(world, userId);
 
         final UserLocationDto dto = buildUserLocationDto(expectedAirport, person.map(Persons.Person::getState).orElse(null), person.isPresent(), flightInProgress,
                 simStatus, pilotCity.isPresent());
