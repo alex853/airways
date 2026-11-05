@@ -557,6 +557,14 @@ public class FlightMissions {
     }
 
     public static final Comparator<Mission> sortByDepartureTimeFromFutureToPast = (m1, m2) -> m2.getPlannedDepartureWorldTime() - m1.getPlannedDepartureWorldTime();
-    public static final Comparator<Mission> sortByDepartureTimeFromPastToFuture = (m1, m2) -> m1.getPlannedDepartureWorldTime() - m2.getPlannedDepartureWorldTime();
+    /**
+     * The order of the flights of a pilot or an aircraft: by the time of the departure. A flight which has departed already is placed by its actual blocks off, not by the plan:
+     * it can leave much earlier than planned, and another flight of the roster may be moved to the time of the plan of this one (it has the same planned departure, or even an
+     * earlier one), but it is still after it. The ties are broken by the plan and then by the id, so the order does not depend on how the storage returns the flights.
+     */
+    public static final Comparator<Mission> sortByDepartureTimeFromPastToFuture = Comparator
+            .comparingInt((Mission m) -> m.getActualDepartureWorldTime() != 0 ? m.getActualDepartureWorldTime() : m.getPlannedDepartureWorldTime())
+            .thenComparingInt(Mission::getPlannedDepartureWorldTime)
+            .thenComparingInt(Mission::getId);
 
 }

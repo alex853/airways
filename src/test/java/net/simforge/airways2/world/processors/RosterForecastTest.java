@@ -323,6 +323,21 @@ class RosterForecastTest {
     }
 
     @Test
+    void aFlightWhichHasLeftIsBeforeAFlightMovedToItsPlannedDepartureWhateverTheOrderOfTheIds() {
+        // the second flight of the roster is moved to the planned departure of the first one, which has departed earlier than planned: the same plan, the lower id
+        final FlightMissions.Mission moved = flight(0, 60);
+        final FlightMissions.Mission left = flight(0, 60);
+        world.flightMissionControl().start(left);
+        world.flightMissionControl().setTrackingMode(left, FlightMissions.TrackingMode.Manual);
+        world.flightMissionControl().blocksOff(left);
+
+        final List<FlightMissions.Mission> order = world.flightMissions().allByUserId(USER_ID)
+                .sorted(FlightMissions.sortByDepartureTimeFromPastToFuture).toList();
+
+        assertEquals(List.of(left.getId(), moved.getId()), order.stream().map(FlightMissions.Mission::getId).toList());
+    }
+
+    @Test
     void aFlightWhichHasLeftCannotBeMoved() {
         final FlightMissions.Mission first = flight(0, 60);
         world.flightMissionControl().start(first);

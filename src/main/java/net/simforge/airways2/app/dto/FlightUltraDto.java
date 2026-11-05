@@ -10,6 +10,7 @@ import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.computations.FlightMissionToTimeline;
 import net.simforge.airways2.world.computations.FlightTimeline;
 import net.simforge.airways2.world.datamodel.*;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.PaxManager;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
 import net.simforge.airways2.world.processors.ScheduledFlightMissionGenerator;
@@ -68,6 +69,8 @@ public class FlightUltraDto {
     private final String alt;
     // the airport of the declared divert (ICAO), null if none; the planned alternate (alt) is lost then
     private final String div;
+    // the flight has landed at a wrong airport which was not declared as the divert (an unplanned landing); only true is sent
+    private final Boolean unplanned;
 
     public static FlightUltraDto from(
             World world,
@@ -128,7 +131,8 @@ public class FlightUltraDto {
                 fm.isAutoFinish() ? Boolean.TRUE : null,
 
                 world.airports().getIcao(fm.getAlternateAirportId()).orElse(null),
-                world.airports().getIcao(fm.getDivertAirportId()).orElse(null)
+                world.airports().getIcao(fm.getDivertAirportId()).orElse(null),
+                FlightMissionHelper.isLandedAtUnplannedAirport(fm) ? Boolean.TRUE : null
         );
     }
 

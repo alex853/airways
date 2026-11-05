@@ -61,9 +61,10 @@ public class PilotLogbook {
     // and the bits 1-5 between them are free for other flags. A record is one flight: one takeoff and one landing, each of them is
     // either at day (bit is 0) or at night (bit is 1). Nobody edits them.
     private final BitAccessField.Section ifrBit = flagsBits.section(0, 1); // 1 is IFR, 0 is VFR
-    // The flights which landed not at their destination (docs/diversions-and-alternates.md, section 7): a landing at the airport which the pilot declared as the divert, or
-    // a landing at any other airport; and the flight whose passengers were not delivered because the pilot cancelled the transportation. A normal flight has all three clear.
-    private final BitAccessField.Section divertDeclaredBit = flagsBits.section(1, 1);
+    // The flights which landed not at their destination (docs/diversions-and-alternates.md, section 7): "diverted" is set for every such landing, "unplanned" is set on top of it
+    // when the airport was not declared as the divert (so a declared divert has one flag, an unplanned one has two); and the flight whose passengers were not delivered because
+    // the pilot cancelled the transportation. A normal flight has all three clear.
+    private final BitAccessField.Section divertedBit = flagsBits.section(1, 1);
     private final BitAccessField.Section unplannedLandingBit = flagsBits.section(2, 1);
     private final BitAccessField.Section transportationCancelledBit = flagsBits.section(3, 1);
     private final BitAccessField.Section nightTakeoffBit = flagsBits.section(6, 1);
@@ -133,7 +134,7 @@ public class PilotLogbook {
         // the flight rules are not known yet, VFR until the source is connected
         ifrBit.setInt(id, 0);
         // a normal flight: landed at the destination, the passengers are not cancelled
-        divertDeclaredBit.setInt(id, 0);
+        divertedBit.setInt(id, 0);
         unplannedLandingBit.setInt(id, 0);
         transportationCancelledBit.setInt(id, 0);
         // the times are hours with one digit (Tenths8bit). Night time and IFR time are set later, zeros until then
@@ -265,18 +266,19 @@ public class PilotLogbook {
         }
 
         /**
-         * The flight landed at the airport which the pilot declared as the divert: statistics, no sanctions.
+         * The flight landed not at its destination, whatever the reason is: statistics. Alone it is a declared divert (no sanctions), together with isUnplannedLanding it is
+         * an unplanned one. The records written before the two flags became independent have the unplanned flag only, so it counts as a divert too.
          */
-        public boolean isDivertDeclared() {
-            return divertDeclaredBit.getBoolean(id);
+        public boolean isDiverted() {
+            return divertedBit.getBoolean(id) || unplannedLandingBit.getBoolean(id);
         }
 
-        public void setDivertDeclared(final boolean divertDeclared) {
-            divertDeclaredBit.setBoolean(id, divertDeclared);
+        public void setDiverted(final boolean diverted) {
+            divertedBit.setBoolean(id, diverted);
         }
 
         /**
-         * The flight landed at an airport which is neither the destination nor the declared divert: it leads to sanctions.
+         * The flight landed at an airport which is neither the destination nor the declared divert: it leads to sanctions. It always comes together with isDiverted.
          */
         public boolean isUnplannedLanding() {
             return unplannedLandingBit.getBoolean(id);

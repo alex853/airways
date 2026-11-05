@@ -671,11 +671,11 @@ public class PilotController {
             if (entry.getBlocksOnTime() < from) {
                 continue;
             }
-            if (entry.isDivertDeclared()) {
-                declaredDiverts++;
-            }
+            // diverted without the unplanned flag is a declared divert; an unplanned landing has both flags
             if (entry.isUnplannedLanding()) {
                 unplannedDiverts++;
+            } else if (entry.isDiverted()) {
+                declaredDiverts++;
             }
             if (entry.isTransportationCancelled()) {
                 cancelledFlights++;

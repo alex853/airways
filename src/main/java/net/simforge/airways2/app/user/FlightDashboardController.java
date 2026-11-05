@@ -1217,7 +1217,8 @@ public class FlightDashboardController {
                 FlightMissionHelper.isLandedAtWrongAirport(flight),
                 flight.getActualDepartureWorldTime() != 0 ? flight.getActualDepartureWorldTime() * 1000L : null,
                 flight.getActualArrivalWorldTime() != 0 ? flight.getActualArrivalWorldTime() * 1000L : null,
-                FlightMissionHelper.isLandedAtWrongAirport(flight) ? world.airports().getIcao(flight.getActualLandingAirportId()).orElse(null) : null
+                FlightMissionHelper.isLandedAtWrongAirport(flight) ? world.airports().getIcao(flight.getActualLandingAirportId()).orElse(null) : null,
+                FlightMissionHelper.isLandedAtUnplannedAirport(flight)
         );
 
         final TransportFlightDto transportFlightDto = transportFlight != null ? new TransportFlightDto(
@@ -1599,6 +1600,8 @@ public class FlightDashboardController {
         private Long actualArrival;
         // the airport (ICAO) where the flight has landed when it is not its destination, null otherwise
         private String landedIcao;
+        // the landing at a wrong airport was not declared as the divert: an unplanned landing (the roster says "unexpectedly")
+        private boolean unplanned;
     }
 
     @Data

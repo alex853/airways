@@ -93,6 +93,15 @@ public class FlightMissionHelper {
         return landingAirportId > 0 && landingAirportId != mission.getDestinationAirportId();
     }
 
+    /**
+     * The aircraft has landed at a wrong airport which the pilot did not declare as the divert (docs/diversions-and-alternates.md, section 7): an unplanned landing. A declared
+     * divert is a divert only. The same rule writes the logbook flags and tells the dashboard and the roster which message to show.
+     */
+    public static boolean isLandedAtUnplannedAirport(final FlightMissions.Mission mission) {
+        return isLandedAtWrongAirport(mission)
+                && !(mission.isDivertDeclared() && mission.getDivertAirportId() == mission.getActualLandingAirportId());
+    }
+
     public static boolean isFinishedOrCancelled(FlightMissions.Mission mission) {
         return mission.getStatus() == FlightMissions.Status.Finished
                 || mission.getStatus() == FlightMissions.Status.Cancelled;

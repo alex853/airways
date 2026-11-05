@@ -61,18 +61,21 @@ class PilotQualificationsTest {
     @Test
     void theDivertsAndTheCancelledFlightsAreCountedForTheLastThirtyDays() {
         final PilotLogbook.Entry declared = flight(1, citation, 2 * DAY, 60);
-        declared.setDivertDeclared(true);
+        declared.setDiverted(true);
         final PilotLogbook.Entry unplanned = flight(1, citation, 5 * DAY, 60);
+        unplanned.setDiverted(true);
         unplanned.setUnplannedLanding(true);
         unplanned.setTransportationCancelled(true);
         final PilotLogbook.Entry declaredCancelled = flight(1, citation, 10 * DAY, 60);
-        declaredCancelled.setDivertDeclared(true);
+        declaredCancelled.setDiverted(true);
         declaredCancelled.setTransportationCancelled(true);
         flight(1, citation, 20 * DAY, 60);                                       // a normal flight
         final PilotLogbook.Entry old = flight(1, citation, 40 * DAY, 60);        // outside the 30 days
+        old.setDiverted(true);
         old.setUnplannedLanding(true);
         old.setTransportationCancelled(true);
         final PilotLogbook.Entry another = flight(2, citation, 1 * DAY, 60);     // another pilot
+        another.setDiverted(true);
         another.setUnplannedLanding(true);
 
         final PilotController.LandingStatsDto stats = PilotController.buildQualifications(world, 1, now).getLandingStats();

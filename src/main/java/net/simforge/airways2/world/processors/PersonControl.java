@@ -140,14 +140,15 @@ public class PersonControl {
         if (!FlightMissionHelper.isLandedAtWrongAirport(mission)) {
             return;
         }
-        final boolean declared = mission.isDivertDeclared() && mission.getDivertAirportId() == mission.getActualLandingAirportId();
-        entry.setDivertDeclared(declared);
+        final boolean declared = !FlightMissionHelper.isLandedAtUnplannedAirport(mission);
+        // every landing at a wrong airport is a divert, an undeclared one is an unplanned landing on top of it (two flags)
+        entry.setDiverted(true);
         entry.setUnplannedLanding(!declared);
         final boolean cancelled = world.transportFlights().byFlightMissionId(mission.getId())
                 .map(transportFlight -> !world.transportFlightControl().isDelivered(transportFlight))
                 .orElse(false);
         entry.setTransportationCancelled(cancelled);
-        log.info("p/s #{} - logbook entry #{}: landed at a wrong airport, divert declared {}, unplanned landing {}, transportation cancelled {}, f/m #{}",
+        log.info("p/s #{} - logbook entry #{}: landed at a wrong airport, diverted true, divert declared {}, unplanned landing {}, transportation cancelled {}, f/m #{}",
                 entry.getPersonId(), entry.getId(), declared, !declared, cancelled, mission.getId());
     }
 
@@ -159,7 +160,7 @@ public class PersonControl {
         findPerson(cancelled).ifPresent(person -> world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId()))
                 .filter(entry -> entry.getAircraftId() == cancelled.getAircraftId()
                         && entry.getToAirportId() == cancelled.getDepartureAirportId()
-                        && (entry.isDivertDeclared() || entry.isUnplannedLanding())
+                        && entry.isDiverted()
                         && !entry.isTransportationCancelled())
                 .max(Comparator.comparingInt(PilotLogbook.Entry::getId))
                 .ifPresent(entry -> {

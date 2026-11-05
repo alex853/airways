@@ -227,7 +227,7 @@ class ContinueAfterWrongLandingTest {
         flyTo(mission, destination);
         control.finish(mission);
 
-        assertFalse(entry().isDivertDeclared());
+        assertFalse(entry().isDiverted());
         assertFalse(entry().isUnplannedLanding());
         assertFalse(entry().isTransportationCancelled());
     }
@@ -242,9 +242,11 @@ class ContinueAfterWrongLandingTest {
         control.landing(mission, diversion);
         control.blocksOn(mission);
 
+        assertTrue(FlightMissionHelper.isLandedAtWrongAirport(mission));
+        assertFalse(FlightMissionHelper.isLandedAtUnplannedAirport(mission));
         control.continueNow(mission);
 
-        assertTrue(entry().isDivertDeclared());
+        assertTrue(entry().isDiverted());
         assertFalse(entry().isUnplannedLanding());
         assertFalse(entry().isTransportationCancelled());
     }
@@ -253,9 +255,11 @@ class ContinueAfterWrongLandingTest {
     void aLandingElsewhereWithoutTheDeclarationIsUnplanned() {
         flyTo(mission, diversion);
 
+        assertTrue(FlightMissionHelper.isLandedAtUnplannedAirport(mission));
         control.continueNow(mission);
 
-        assertFalse(entry().isDivertDeclared());
+        // an unplanned landing has both flags: diverted and unplanned
+        assertTrue(entry().isDiverted());
         assertTrue(entry().isUnplannedLanding());
         assertFalse(entry().isTransportationCancelled());
     }
@@ -273,7 +277,7 @@ class ContinueAfterWrongLandingTest {
         world.transportFlightControl().cancelTransportation(transportFlight);
         control.finish(mission);
 
-        assertTrue(entry().isDivertDeclared());
+        assertTrue(entry().isDiverted());
         assertFalse(entry().isUnplannedLanding());
         assertTrue(entry().isTransportationCancelled());
     }
