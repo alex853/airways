@@ -49,6 +49,29 @@ public class CityFlowHelperTest {
         assertArrayEquals(new int[] {1, 2}, CityFlowHelper.groupSizeRange(1));
     }
 
+    private static final long DAY = 24 * 3600;
+
+    @Test
+    public void groupSizeRange_farBehindAndTheBiggestGroupIsInThePast_theBiggest() {
+        // the lag is 10 days, the biggest group needs 5 days; a thin flow too
+        assertArrayEquals(new int[] {10, 10}, CityFlowHelper.groupSizeRange(0.04, 10 * DAY, 5 * DAY));
+        assertArrayEquals(new int[] {10, 10}, CityFlowHelper.groupSizeRange(0.04, 10 * DAY, 10 * DAY));
+    }
+
+    @Test
+    public void groupSizeRange_farBehindAndTheBiggestGroupIsInTheFuture_cutProportionally() {
+        assertArrayEquals(new int[] {7, 7}, CityFlowHelper.groupSizeRange(70, 200 * DAY, 300 * DAY));
+        assertArrayEquals(new int[] {1, 1}, CityFlowHelper.groupSizeRange(70, 8 * DAY, 233 * DAY));
+        assertArrayEquals(new int[] {1, 1}, CityFlowHelper.groupSizeRange(70, 8 * DAY, Double.POSITIVE_INFINITY));
+    }
+
+    @Test
+    public void groupSizeRange_notFarBehind_byTheThicknessOfTheFlow() {
+        assertArrayEquals(new int[] {1, 2}, CityFlowHelper.groupSizeRange(0.04, 7 * DAY, 300 * DAY));
+        assertArrayEquals(new int[] {9, 10}, CityFlowHelper.groupSizeRange(70, 0, 300 * DAY));
+        assertArrayEquals(new int[] {1, 2}, CityFlowHelper.groupSizeRange(0.04, -5 * DAY, 300 * DAY));
+    }
+
     @Test
     public void groupSizeRange_middleFlowGetsWindowAroundPassengersPerDay() {
         assertArrayEquals(new int[] {4, 6}, CityFlowHelper.groupSizeRange(5));

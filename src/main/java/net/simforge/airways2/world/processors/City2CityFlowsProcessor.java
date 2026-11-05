@@ -62,7 +62,8 @@ public class City2CityFlowsProcessor {
         }
 
         if (c2cFlow.getNextGroupSize() == 0) {
-            c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow));
+            c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow,
+                    c2cFlow.getAccumulatedFlowTime() != 0 ? c2cFlow.getAccumulatedFlowTime() : c2cFlow.getHeartbeatTime()));
             log.warn("c2c #{}/{} {}-{} - next g/s was 0, set {}", c2cFlow.getFromCityId(), c2cFlow.getToCityId(), fromCity, toCity, c2cFlow.getNextGroupSize());
         }
 
@@ -82,9 +83,10 @@ public class City2CityFlowsProcessor {
         int groupSizeBeingGenerated = c2cFlow.getNextGroupSize();
         final int journeyId = world.journeyControl().create(c2cFlow, service).getId();
 
-        c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow));
         c2cFlow.setAccumulatedFlow(0);
         c2cFlow.setAccumulatedFlowTime(timeToAccumulateFlow);
+        // the size of the next group is chosen from the new clock: a flow far behind the world gets bigger groups to catch up with fewer journeys
+        c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow, timeToAccumulateFlow));
         c2cFlow.setHeartbeatTime(nextHeartbeat(worldTime, c2cFlow.getAccumulatedFlowTime() + CityFlowHelper.calcTimeToAccumulateFlow(world, c2cFlow)));
 
         log.info("#{}/{} {}-{}: NEW j/y #{} {}{}, nxt {}, a/t {}, h/b {}",

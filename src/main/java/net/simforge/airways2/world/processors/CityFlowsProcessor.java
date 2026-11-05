@@ -51,7 +51,7 @@ public class CityFlowsProcessor {
             if (wasInactive) {
                 c2cFlow.setActive(true);
 
-                c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow));
+                c2cFlow.setNextGroupSize(CityFlowHelper.randomGroupSize(world, c2cFlow, world.getWorldTime()));
                 c2cFlow.setAccumulatedFlow(0.0f);
                 c2cFlow.setAccumulatedFlowTime(world.getWorldTime());
             }
