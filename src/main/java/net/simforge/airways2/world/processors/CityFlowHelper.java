@@ -64,23 +64,30 @@ public class CityFlowHelper {
     // a group of the typical size of a flow is accumulated in about this time
     public static final double TARGET_GROUP_INTERVAL_DAYS = 1.0;
 
-    // a flow whose clock is behind the world by more than this is catching up: it gets the biggest groups to create fewer journeys
+    // a flow whose clock is behind the world by more than this is catching up: it gets the big groups (bigger than the usual maximum) to create fewer journeys
     public static final int CATCH_UP_LAG = 7 * Time.ONE_DAY;
+    public static final int CATCH_UP_MIN_GROUP_SIZE = 10;
+    public static final int CATCH_UP_MAX_GROUP_SIZE = 20;
 
     /**
      * The size of the next group. A flow which is far behind the world (its accumulated flow time is more than CATCH_UP_LAG in the past) is catching up:
-     * it gets the biggest group, and if even that group is accumulated in the future, the size is cut proportionally to the lag, so the clock reaches
-     * the world time (see groupSizeRange). Otherwise the size depends on the thickness of the flow: a thick flow (10 passengers per day and more)
-     * gets the groups of 9-10, a thin one (a passenger per day and less) gets 1-2, the ones between get the window of three sizes around passengers
-     * per day. The passengers per day stay the same, as the time to accumulate a group is proportional to its size, so a thick flow has fewer and
-     * bigger groups, a thin flow has small groups, which are accumulated in a reasonable time and so are served from time to time.
+     * it gets a random size from CATCH_UP_MIN_GROUP_SIZE to CATCH_UP_MAX_GROUP_SIZE (see catchUpGroupSize). Otherwise the size depends on the thickness
+     * of the flow: a thick flow (10 passengers per day and more) gets the groups of 9-10, a thin one (a passenger per day and less) gets 1-2, the ones
+     * between get the window of three sizes around passengers per day. The passengers per day stay the same, as the time to accumulate a group is
+     * proportional to its size, so a thick flow has fewer and bigger groups, a thin flow has small groups, which are accumulated in a reasonable time
+     * and so are served from time to time.
      *
      * @param accumulatedFlowTime the clock of the flow the next group starts from
      */
     public static int randomGroupSize(final World world, final City2CityFlows.Flow flow, final int accumulatedFlowTime) {
         final long lag = (long) world.getWorldTime() - accumulatedFlowTime;
-        final int[] range = groupSizeRange(getDailyPassengers(world, flow), lag, timeToAccumulateGroup(world, flow, MAX_GROUP_SIZE));
-        return ThreadLocalRandom.current().nextInt(range[0], range[1] + 1);
+        final ThreadLocalRandom random = ThreadLocalRandom.current();
+        if (lag > CATCH_UP_LAG) {
+            final int candidate = random.nextInt(CATCH_UP_MIN_GROUP_SIZE, CATCH_UP_MAX_GROUP_SIZE + 1);
+            return catchUpGroupSize(lag, timeToAccumulateGroup(world, flow, 1), candidate);
+        }
+        final int[] range = groupSizeRange(getDailyPassengers(world, flow));
+        return random.nextInt(range[0], range[1] + 1);
     }
 
     /** Seconds the flow needs to accumulate a whole group of the size from zero. */
@@ -90,19 +97,16 @@ public class CityFlowHelper {
     }
 
     /**
-     * The bounds [min, max] of the next group size. When the flow is behind the world by more than CATCH_UP_LAG, it is the biggest size, if
-     * the time to accumulate it is not later than now (the lag covers it), otherwise the biggest size cut proportionally to the lag (the lag of 200 days
-     * and 300 days for the biggest group give 10 * 200 / 300, that is 7), not less than the smallest size. Otherwise by the thickness of the flow.
+     * The size for a flow which is catching up: the candidate size if the time to accumulate it is not later than now (the lag covers it), otherwise
+     * the candidate cut proportionally to the lag (the lag of 200 days and 300 days for the candidate of 10 give 10 * 200 / 300, that is 7), not less
+     * than the smallest size.
      */
-    static int[] groupSizeRange(final double dailyPassengers, final long lag, final double timeToAccumulateMaxGroup) {
-        if (lag > CATCH_UP_LAG) {
-            if (timeToAccumulateMaxGroup <= lag) {
-                return new int[] {MAX_GROUP_SIZE, MAX_GROUP_SIZE};
-            }
-            final int size = (int) Math.min(Math.max(Math.round(MAX_GROUP_SIZE * lag / timeToAccumulateMaxGroup), MIN_GROUP_SIZE), MAX_GROUP_SIZE);
-            return new int[] {size, size};
+    static int catchUpGroupSize(final long lag, final double timeToAccumulateOne, final int candidate) {
+        final double timeToAccumulateCandidate = timeToAccumulateOne * candidate;
+        if (timeToAccumulateCandidate <= lag) {
+            return candidate;
         }
-        return groupSizeRange(dailyPassengers);
+        return (int) Math.max(Math.round(candidate * lag / timeToAccumulateCandidate), MIN_GROUP_SIZE);
     }
 
     /** The passengers per day the flow generates, all factors taken into account. */

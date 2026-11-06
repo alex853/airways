@@ -52,24 +52,19 @@ public class CityFlowHelperTest {
     private static final long DAY = 24 * 3600;
 
     @Test
-    public void groupSizeRange_farBehindAndTheBiggestGroupIsInThePast_theBiggest() {
-        // the lag is 10 days, the biggest group needs 5 days; a thin flow too
-        assertArrayEquals(new int[] {10, 10}, CityFlowHelper.groupSizeRange(0.04, 10 * DAY, 5 * DAY));
-        assertArrayEquals(new int[] {10, 10}, CityFlowHelper.groupSizeRange(0.04, 10 * DAY, 10 * DAY));
+    public void catchUpGroupSize_theCandidateIsCoveredByTheLag_theCandidate() {
+        // the lag is 10 days, a passenger needs half a day: 20 passengers need exactly 10 days
+        assertEquals(10, CityFlowHelper.catchUpGroupSize(10 * DAY, 0.5 * DAY, 10));
+        assertEquals(20, CityFlowHelper.catchUpGroupSize(10 * DAY, 0.5 * DAY, 20));
     }
 
     @Test
-    public void groupSizeRange_farBehindAndTheBiggestGroupIsInTheFuture_cutProportionally() {
-        assertArrayEquals(new int[] {7, 7}, CityFlowHelper.groupSizeRange(70, 200 * DAY, 300 * DAY));
-        assertArrayEquals(new int[] {1, 1}, CityFlowHelper.groupSizeRange(70, 8 * DAY, 233 * DAY));
-        assertArrayEquals(new int[] {1, 1}, CityFlowHelper.groupSizeRange(70, 8 * DAY, Double.POSITIVE_INFINITY));
-    }
-
-    @Test
-    public void groupSizeRange_notFarBehind_byTheThicknessOfTheFlow() {
-        assertArrayEquals(new int[] {1, 2}, CityFlowHelper.groupSizeRange(0.04, 7 * DAY, 300 * DAY));
-        assertArrayEquals(new int[] {9, 10}, CityFlowHelper.groupSizeRange(70, 0, 300 * DAY));
-        assertArrayEquals(new int[] {1, 2}, CityFlowHelper.groupSizeRange(0.04, -5 * DAY, 300 * DAY));
+    public void catchUpGroupSize_theCandidateIsInTheFuture_cutProportionally() {
+        // the lag is 200 days, the candidate needs 300 or 600 days
+        assertEquals(7, CityFlowHelper.catchUpGroupSize(200 * DAY, 30 * DAY, 10));
+        assertEquals(7, CityFlowHelper.catchUpGroupSize(200 * DAY, 30 * DAY, 20));
+        assertEquals(1, CityFlowHelper.catchUpGroupSize(8 * DAY, 23.3 * DAY, 10));
+        assertEquals(1, CityFlowHelper.catchUpGroupSize(8 * DAY, Double.POSITIVE_INFINITY, 15));
     }
 
     @Test
