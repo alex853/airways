@@ -11,11 +11,11 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * A BusyBirds flight is booked only for a user who has a pilot (person) who is Idle at the airport where the aircraft stands.
+ * A BusyBirds mission is booked only for a user who has a pilot (person); the state and the place of the pilot do not matter. The airports of the pilot (its airport, or the airports
+ * of its city) are told by the page of the pilot.
  */
 class BusyBirdsBookingPilotTest {
     private World world;
@@ -37,35 +37,8 @@ class BusyBirdsBookingPilotTest {
     }
 
     @Test
-    void theBookingWhichIgnoresThePilotStateNeedsOnlyAPilot() {
-        assertTrue(BusyBirdsController.noPilotProblem(world, 12345).contains("no pilot"));
-    }
-
-    @Test
     void noPersonNoBooking() {
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, 0, oakland.getId()).contains("no pilot"));
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, 12345, oakland.getId()).contains("no pilot"));
-    }
-
-    @Test
-    void idlePilotAtTheAirportOfTheAircraftMayBook() {
-        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.Airport, oakland.getId());
-
-        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()));
-    }
-
-    @Test
-    void busyPilotMayNotBook() {
-        final Persons.Person p = person(Persons.State.OnDuty, Persons.LocationType.Airport, oakland.getId());
-
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("busy"));
-    }
-
-    @Test
-    void pilotNowhereMayNotBook() {
-        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.None, 0);
-
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("not at an airport or in a city"));
+        assertTrue(BusyBirdsController.noPilotProblem(world, 12345).contains("no pilot"));
     }
 
     @Test
@@ -79,39 +52,11 @@ class BusyBirdsBookingPilotTest {
     }
 
     @Test
-    void pilotInACityMayBookAnAircraftAtAnAirportLinkedToTheCity() {
+    void aPilotInACityHasTheAirportsLinkedToTheCity() {
         world.airport2city().create(oakland.getId(), cityId);
         world.airport2city().create(sanFrancisco.getId(), cityId);
         final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.City, cityId);
 
-        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()));
-        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), sanFrancisco.getId()));
-        assertNull(BusyBirdsController.pilotBookingProblem(world, p.getId(), 0));
         assertEquals(List.of("KOAK", "KSFO"), world.personControl().bookingAirports(p).stream().map(Airports.Airport::getIcao).toList());
-    }
-
-    @Test
-    void pilotInACityMayNotBookAnAircraftAtAnAirportWhichIsNotLinkedToTheCity() {
-        world.airport2city().create(oakland.getId(), cityId);
-        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.City, cityId);
-
-        assertEquals("Your pilot is in Oakland, which is not linked to KSFO where the aircraft is, the flight cannot be booked.",
-                BusyBirdsController.pilotBookingProblem(world, p.getId(), sanFrancisco.getId()));
-    }
-
-    @Test
-    void aBusyPilotInACityMayNotBook() {
-        world.airport2city().create(oakland.getId(), cityId);
-        final Persons.Person p = person(Persons.State.Resting, Persons.LocationType.City, cityId);
-
-        assertTrue(BusyBirdsController.pilotBookingProblem(world, p.getId(), oakland.getId()).contains("busy"));
-    }
-
-    @Test
-    void pilotAtAnotherAirportThanTheAircraftMayNotBook() {
-        final Persons.Person p = person(Persons.State.Idle, Persons.LocationType.Airport, oakland.getId());
-
-        assertEquals("Your pilot is at KOAK but the aircraft is at KSFO, the flight cannot be booked.",
-                BusyBirdsController.pilotBookingProblem(world, p.getId(), sanFrancisco.getId()));
     }
 }

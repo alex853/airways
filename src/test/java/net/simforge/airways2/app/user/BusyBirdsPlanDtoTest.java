@@ -31,9 +31,9 @@ class BusyBirdsPlanDtoTest {
     }
 
     private BusyBirdsMissionControl.Leg leg(final BusyBirdsMissionControl.Leg.Type type, final int durationSeconds, final int baseIncome, final PilotPayParams params) {
-        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("GA7C", durationSeconds + 20 * 60); // the pay is for blocks off to blocks on: the flying time and 20 minutes of the taxi
+        final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("GA7C", durationSeconds + 20 * 60); // the pay is for blocks off to blocks on: the flying time and 20 minutes of the taxi, the leg ends at the blocks on
         final BusyBirdsPilotPay.Salary salary = new BusyBirdsPilotPay.Salary(PilotPay.flightPay(baseFlightPay, params), PilotPay.incomeShare(baseIncome, params));
-        return new BusyBirdsMissionControl.Leg(type, from, to, 400, 4, 0, durationSeconds, salary, BusyBirdsPilotPay.baseHourlyRate("GA7C"), baseIncome, params);
+        return new BusyBirdsMissionControl.Leg(type, from, to, 400, 4, 0, durationSeconds + 20 * 60, salary, BusyBirdsPilotPay.baseHourlyRate("GA7C"), baseIncome, params);
     }
 
     @Test

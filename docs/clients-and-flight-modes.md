@@ -14,7 +14,7 @@
 | **G7 FlightBag, вкладка Airways** | `C:\\Dev\\G7` (отдельный репозиторий, MSFS-аддон Gulfstream), `AirwaysTab.js`, заметки `docs/FlightBag-airways-notes.md` | EFB сбоку в кабине. Вкладка собирает несколько функций сразу (ниже) |
 
 **Что делает вкладка Airways в G7 FlightBag:**
-- выбор миссии BusyBirds (то же, что `busy-birds.html`) и бронь ферри-рейса (`PUT /busy-birds/ferry/book`);
+- ~~выбор миссии BusyBirds и бронь ферри-рейса~~ (убрано 2026-11-06: миссии букаются только на `busy-birds.html`, `PUT /busy-birds/ferry/book` удалён);
 - **отправка позреп из симулятора** (каждые 10 секунд) на наш сервер: это и есть клиентская часть `SimTracker`;
 - функции флайт-дашборда (статус рейса `status`, действия);
 - **stubbed posreps** (`?stubbed-posreps`, сценарный полёт «Let's fly»): имитация полёта, когда нет возможности или времени запускать симулятор, но

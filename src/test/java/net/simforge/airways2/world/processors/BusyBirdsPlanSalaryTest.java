@@ -70,6 +70,15 @@ class BusyBirdsPlanSalaryTest {
         return params;
     }
 
+    // the plans for a start in an hour, the pauses are the default ones
+    private List<BusyBirdsMissionControl.MissionPlan> plans(final Aircrafts.Aircraft forAircraft, final boolean ferryBackToBase, final PilotPayParams params) {
+        return plans(forAircraft, ferryBackToBase, params, List.of());
+    }
+
+    private List<BusyBirdsMissionControl.MissionPlan> plans(final Aircrafts.Aircraft forAircraft, final boolean ferryBackToBase, final PilotPayParams params, final List<Double> pauses) {
+        return world.busyBirdsMissionControl().buildPlans(journey, forAircraft, pauses, ferryBackToBase, params, world.getWorldTime() + Time.ONE_HOUR);
+    }
+
     private int income() {
         // the list shows a rough pay, the exact income is the price which the quote sets
         return world.busyBirdsMissionControl().quote(journey);
@@ -82,7 +91,7 @@ class BusyBirdsPlanSalaryTest {
         assertTrue(income > 0);
 
         final List<BusyBirdsMissionControl.MissionPlan> plans =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY);
+                plans(aircraft, true, FULL_PAY);
 
         assertEquals(1, plans.size());
         final BusyBirdsMissionControl.MissionPlan plan = plans.get(0);
@@ -110,7 +119,7 @@ class BusyBirdsPlanSalaryTest {
     @Test
     public void test__plan_without_the_return_leg_has_only_the_revenue_leg_salary() {
         final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0);
+                plans(aircraft, false, FULL_PAY).get(0);
 
         assertEquals(1, plan.getLegs().size());
         assertEquals(plan.getLegs().get(0).getSalary(), plan.getTotalSalary());
@@ -126,7 +135,7 @@ class BusyBirdsPlanSalaryTest {
 
     @Test
     public void test__the_quote_of_a_leg_and_the_contract_of_its_booked_flight_give_the_same_flight_pay() {
-        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
+        final BusyBirdsMissionControl.MissionPlan plan = plans(aircraft, true, FULL_PAY).get(0);
         final net.simforge.airways2.world.datamodel.Persons.Person person = world.persons().create(
                 net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, 1,
                 net.simforge.airways2.world.datamodel.Persons.LocationType.None, 0, 0, "AK", 0);
@@ -142,38 +151,34 @@ class BusyBirdsPlanSalaryTest {
     }
 
     @Test
-    public void test__every_leg_has_its_own_gap_the_first_one_from_now_the_others_from_the_arrival_of_the_previous_leg() {
-        final int now = world.getWorldTime();
-        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(2.0, 3.0), true, FULL_PAY).get(0);
+    public void test__the_first_leg_departs_at_the_given_time_and_the_pause_before_the_second_leg_is_counted_from_the_arrival_of_the_first_one() {
+        final int start = world.getWorldTime() + 5 * Time.ONE_HOUR;
+        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(3.0), true, FULL_PAY, start).get(0);
 
-        final int first = plan.getLegs().get(0).getPlannedDepTime() - now;
-        assertTrue(first >= 2 * Time.ONE_HOUR - 5 * Time.ONE_MINUTE && first <= 2 * Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "first gap " + first);
+        assertEquals(Time.alignTo5mins(start), plan.getLegs().get(0).getPlannedDepTime());
         final int second = plan.getLegs().get(1).getPlannedDepTime() - plan.getLegs().get(0).getPlannedArrTime();
-        assertTrue(second >= 3 * Time.ONE_HOUR - 5 * Time.ONE_MINUTE && second <= 3 * Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "second gap " + second);
+        assertTrue(second >= 3 * Time.ONE_HOUR && second < 3 * Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "pause " + second);
     }
 
     @Test
-    public void test__a_leg_without_a_gap_gets_the_default_one_half_an_hour_for_the_first_leg_and_an_hour_for_the_others() {
-        final int now = world.getWorldTime();
-        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.<Double>of(), true, FULL_PAY).get(0);
+    public void test__a_leg_without_a_pause_gets_the_default_one_half_an_hour() {
+        final BusyBirdsMissionControl.MissionPlan plan = plans(aircraft, true, FULL_PAY).get(0);
 
-        assertTrue(plan.getLegs().get(0).getPlannedDepTime() - now <= 30 * Time.ONE_MINUTE + 5 * Time.ONE_MINUTE);
         final int second = plan.getLegs().get(1).getPlannedDepTime() - plan.getLegs().get(0).getPlannedArrTime();
-        assertTrue(second >= Time.ONE_HOUR - 5 * Time.ONE_MINUTE && second <= Time.ONE_HOUR + 5 * Time.ONE_MINUTE, "second gap " + second);
+        assertTrue(second >= 30 * Time.ONE_MINUTE && second < 35 * Time.ONE_MINUTE, "pause " + second);
     }
 
     @Test
-    public void test__turnaround_time_can_be_half_an_hour() {
-        final BusyBirdsMissionControl.Leg revenue1 = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0).getLegs().get(0);
-        final BusyBirdsMissionControl.MissionPlan half = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 0.5, true, FULL_PAY).get(0);
-        final BusyBirdsMissionControl.MissionPlan hour = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
+    public void test__the_times_of_a_leg_are_the_times_of_its_flight_mission_so_the_pause_is_the_gap_of_the_roster() {
+        final BusyBirdsMissionControl.MissionPlan plan = plans(aircraft, true, FULL_PAY).get(0);
 
-        // the gap between the legs is the turnaround (plus the rounding of the departure time): 30 minutes less
-        final int gapHalf = half.getLegs().get(1).getPlannedDepTime() - half.getLegs().get(0).getPlannedArrTime();
-        final int gapHour = hour.getLegs().get(1).getPlannedDepTime() - hour.getLegs().get(0).getPlannedArrTime();
-        assertTrue(gapHalf >= 30 * Time.ONE_MINUTE && gapHalf < Time.ONE_HOUR);
-        assertEquals(30 * Time.ONE_MINUTE, gapHour - gapHalf);
-        assertEquals(revenue1.getPlannedDepTime(), half.getLegs().get(0).getPlannedDepTime());
+        for (final BusyBirdsMissionControl.Leg leg : plan.getLegs()) {
+            final net.simforge.airways2.world.datamodel.FlightMissions.Mission mission = FlightMissionHelper.scheduleDispatchedMission(
+                    world, aircraft, leg.getFromAirport(), leg.getToAirport(), leg.getPlannedDepTime());
+
+            assertEquals(mission.getPlannedDepartureWorldTime(), leg.getPlannedDepTime());
+            assertEquals(mission.getPlannedArrivalWorldTime(), leg.getPlannedArrTime(), leg.getFromAirport().getIcao() + "-" + leg.getToAirport().getIcao());
+        }
     }
 
     @Test
@@ -183,7 +188,7 @@ class BusyBirdsPlanSalaryTest {
         aircraft.setLocationAirportId(elsewhere.getId());
 
         final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0);
+                plans(aircraft, true, FULL_PAY).get(0);
 
         assertEquals(3, plan.getLegs().size());
         final BusyBirdsMissionControl.Leg first = plan.getLegs().get(0);
@@ -199,8 +204,8 @@ class BusyBirdsPlanSalaryTest {
         final Aircrafts.Aircraft glf = world.aircrafts().create(g700, "BB-GLA", base);
         glf.setAircraftOperatorId(aircraft.getAircraftOperatorId());
 
-        final BusyBirdsMissionControl.Leg small = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
-        final BusyBirdsMissionControl.Leg big = world.busyBirdsMissionControl().buildPlans(journey, glf, 1, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg small = plans(aircraft, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg big = plans(glf, false, FULL_PAY).get(0).getLegs().get(0);
 
         assertTrue(big.getSalary().flightPay() > 0);
         // the rate is 500 against 200, the Gulfstream also flies faster, so the duration is shorter
@@ -215,8 +220,8 @@ class BusyBirdsPlanSalaryTest {
         // the pilot has no currency at all and the level 0: a quarter of the flight pay, 0.5% of the income with a quarter off
         final PilotPayParams nothing = PilotPayParams.none();
 
-        final BusyBirdsMissionControl.Leg full = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
-        final BusyBirdsMissionControl.Leg poor = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, nothing).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg full = plans(aircraft, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg poor = plans(aircraft, false, nothing).get(0).getLegs().get(0);
 
         final int baseFlightPay = BusyBirdsPilotPay.baseFlightPay("C25C", (int) full.getPaidDuration().toSeconds());
         assertEquals(baseFlightPay, full.getSalary().flightPay());
@@ -229,7 +234,7 @@ class BusyBirdsPlanSalaryTest {
     @Test
     public void test__a_leg_knows_what_its_pay_is_made_of() {
         final int income = income();
-        final BusyBirdsMissionControl.Leg leg = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, false, FULL_PAY).get(0).getLegs().get(0);
+        final BusyBirdsMissionControl.Leg leg = plans(aircraft, false, FULL_PAY).get(0).getLegs().get(0);
 
         assertEquals(200, leg.getHourlyRate());
         assertEquals(income, leg.getBaseIncome());
@@ -239,31 +244,11 @@ class BusyBirdsPlanSalaryTest {
     @Test
     public void test__a_reposition_leg_has_no_base_income() {
         income();
-        final BusyBirdsMissionControl.Leg back = world.busyBirdsMissionControl().buildPlans(journey, aircraft, 1, true, FULL_PAY).get(0).getLegs().get(1);
+        final BusyBirdsMissionControl.Leg back = plans(aircraft, true, FULL_PAY).get(0).getLegs().get(1);
 
         assertEquals(BusyBirdsMissionControl.Leg.Type.Reposition, back.getType());
         assertEquals(0, back.getBaseIncome());
         assertEquals(0, back.getSalary().incomeShare());
     }
 
-    @Test
-    public void test__the_first_leg_departs_at_the_given_time_and_the_other_legs_follow_it_with_their_pauses() {
-        income();
-        final int start = world.getWorldTime() + 5 * Time.ONE_HOUR;
-
-        final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(0.5, 2.0), false, FULL_PAY, start).get(0);
-
-        assertEquals(Time.alignTo5mins(start), plan.getLegs().get(0).getPlannedDepTime());
-    }
-
-    @Test
-    public void test__without_the_departure_the_first_leg_goes_by_its_gap_from_now() {
-        income();
-
-        final BusyBirdsMissionControl.MissionPlan plan =
-                world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(2.0, 1.0), false, FULL_PAY).get(0);
-
-        assertEquals(Time.alignTo5mins(world.getWorldTime() + 2 * Time.ONE_HOUR), plan.getLegs().get(0).getPlannedDepTime());
-    }
 }

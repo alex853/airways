@@ -42,21 +42,6 @@ public class BusyBirdsController {
     private WorldRunnerBean worldBean;
 
     /**
-     * Whether the user may book BusyBirds flights at all: the pilot of the user is Idle at an airport or in a city. Whether the pilot stands where the aircraft
-     * stands is checked when an aircraft is booked.
-     */
-    @GetMapping("/booking-status")
-    public BookingStatusDto getBookingStatus(@RequestAttribute("userId") int userId) {
-        return worldBean.read(world -> {
-            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
-
-            final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
-            final String problem = pilotBookingProblem(world, personId, 0);
-            return new BookingStatusDto(problem == null, problem);
-        });
-    }
-
-    /**
      * The cities for the dropdowns of the page (the list of all missions is too big to load): all cities by name. The page preselects the current one.
      */
     @GetMapping("/cities")
@@ -195,10 +180,9 @@ public class BusyBirdsController {
     public BuildPlansResponse buildPlans(@RequestAttribute("userId") int userId,
                                          @RequestParam(name = "missionId") String missionId,
                                          @RequestParam(name = "aircraftId") String aircraftId,
-                                         @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
-                                         @RequestParam(name = "intervals", required = false) String intervals,
-                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
-                                         @RequestParam(name = "startTime", required = false) Long startTime) {
+                                         @RequestParam(name = "startTime") long startTime,
+                                         @RequestParam(name = "pauses", required = false) String pauses,
+                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
         // a quote changes the world: the price of the journey is set
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
@@ -208,14 +192,14 @@ public class BusyBirdsController {
 
             final int price = world.busyBirdsMissionControl().quote(journey);
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase,
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, pauses(pauses), ferryBackToBase,
                     payParamsOfUser(world, userId, aircraft), firstDepartureTime(startTime));
 
-            // with a start time every plan tells whether its time is free in the roster of the user
+            // every plan tells whether its time is free in the roster of the user
             final int now = world.getWorldTime();
             return new BuildPlansResponse(plans.stream().map(plan -> {
                 final PlanDto dto = PlanDto.from(plan);
-                if (startTime != null && dto.getStartTime() != null) {
+                if (dto.getStartTime() != null) {
                     dto.setSlot(checkStartSlot(world, userId, dto.getStartTime(), dto.getEndTime(), now));
                 }
                 return dto;
@@ -227,28 +211,25 @@ public class BusyBirdsController {
     public BookMissionResponse bookMission(@RequestAttribute("userId") int userId,
                                            @RequestParam(name = "missionId") String missionId,
                                            @RequestParam(name = "aircraftId") String aircraftId,
-                                           @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
-                                           @RequestParam(name = "intervals", required = false) String intervals,
+                                           @RequestParam(name = "startTime") long startTime,
+                                           @RequestParam(name = "pauses", required = false) String pauses,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
-                                           @RequestParam(name = "planId") String planId,
-                                           @RequestParam(name = "ignorePilotState", required = false, defaultValue = "false") boolean ignorePilotState,
-                                           @RequestParam(name = "startTime", required = false) Long startTime) {
+                                           @RequestParam(name = "planId") String planId) {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
             Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
-            // ignorePilotState (the page Book busyBirds): only a pilot is needed, not its state or place, as at ShadowJet (decided 2026-10-30); without it (the tab of G7,
-            // the flight here and now) the pilot has to be Idle where the aircraft stands
-            final String pilotProblem = ignorePilotState ? noPilotProblem(world, userId) : pilotBookingProblem(world, userId, aircraft);
+            // only a pilot is needed, not its state or place, as at ShadowJet (decided 2026-10-30): it is the business of the pilot to come to the aircraft and start the flight
+            final String pilotProblem = noPilotProblem(world, userId);
             if (pilotProblem != null) {
                 return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
             }
 
             // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
             final PilotPayParams payParams = payParamsOfUser(world, userId, aircraft);
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase, payParams,
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, pauses(pauses), ferryBackToBase, payParams,
                     firstDepartureTime(startTime));
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
@@ -260,14 +241,12 @@ public class BusyBirdsController {
                 return new BookMissionResponse("failure", plan.get().getMessages());
             }
 
-            // with a start time the whole mission (from the first departure to the last arrival) must fit into the roster of the user: not too soon, not later than 7 days from now,
-            // not closer than 30 minutes to another flight of the pilot; without it (the tab of G7, the flight here and now) nothing is checked, as it was
-            if (startTime != null) {
-                final PlanDto planDto = PlanDto.from(plan.get());
-                final StartSlotDto slot = checkStartSlot(world, userId, planDto.getStartTime(), planDto.getEndTime(), world.getWorldTime());
-                if (!slot.isFree()) {
-                    return new BookMissionResponse("failure", startSlotProblems(slot));
-                }
+            // the whole mission (from the first departure to the last arrival) must fit into the roster of the user: not too soon, not later than 7 days from now,
+            // not closer than 30 minutes to another flight of the pilot
+            final PlanDto planDto = PlanDto.from(plan.get());
+            final StartSlotDto slot = checkStartSlot(world, userId, planDto.getStartTime(), planDto.getEndTime(), world.getWorldTime());
+            if (!slot.isFree()) {
+                return new BookMissionResponse("failure", startSlotProblems(slot));
             }
 
             // the pilot contracts of the flights
@@ -301,56 +280,14 @@ public class BusyBirdsController {
         });
     }
 
-    @PutMapping("/ferry/book")
-    public BookMissionResponse bookFerryFlight(@RequestAttribute("userId") int userId,
-                                               @RequestParam(name = "aircraftId") String aircraftId,
-                                               @RequestParam(name = "destinationIcao") String destinationIcao) {
-        return worldBean.modifySync(world -> {
-            world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
-
-            Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
-
-            final String pilotProblem = pilotBookingProblem(world, userId, aircraft);
-            if (pilotProblem != null) {
-                return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
-            }
-
-            if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
-                return new BookMissionResponse("failure", Collections.singletonList("aircraft is not parked at airport"));
-            }
-            if (aircraft.getOperationalStatus() != Aircrafts.OperationalStatus.Idle) {
-                return new BookMissionResponse("failure", Collections.singletonList("aircraft is not idle"));
-            }
-
-            Optional<Airports.Airport> destinationAirport = world.airports().byIcao(destinationIcao.trim().toUpperCase());
-            if (destinationAirport.isEmpty()) {
-                return new BookMissionResponse("failure", Collections.singletonList("unable to find destination airport " + destinationIcao));
-            }
-
-            Airports.Airport departureAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
-            if (departureAirport.getId() == destinationAirport.get().getId()) {
-                return new BookMissionResponse("failure", Collections.singletonList("aircraft is already at destination airport"));
-            }
-
-            int departureTime = world.getWorldTime() + 30 * Time.ONE_MINUTE;
-
-            FlightMissions.Mission flight = FlightMissionHelper.scheduleDispatchedMission(world, aircraft, departureAirport, destinationAirport.get(), departureTime);
-            flight.setCharacterMode(FlightMissions.CharacterMode.PC);
-            flight.setUserId(userId);
-
-            return new BookMissionResponse("success", Collections.singletonList(
-                    "Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime())));
-        });
-    }
-
     // The mission of the page has to be booked not later than this from now, and the start may be earlier than 30 minutes from now by the difference of the clock of the browser
     // and the clock of the server
     static final int START_HORIZON_DAYS = 7;
     static final int START_CLOCK_TOLERANCE_SECONDS = 5 * 60;
 
-    // the world time (seconds) of the first departure for the start time of the request (UTC milliseconds), null without it
-    private static Integer firstDepartureTime(final Long startTimeMillis) {
-        return startTimeMillis == null ? null : (int) (startTimeMillis / 1000);
+    // the world time (seconds) of the first departure for the start time of the request (UTC milliseconds)
+    private static int firstDepartureTime(final long startTimeMillis) {
+        return (int) (startTimeMillis / 1000);
     }
 
     /**
@@ -385,70 +322,37 @@ public class BusyBirdsController {
         return problems;
     }
 
-    static final double MAX_LEG_GAP_HOURS = 48;
+    static final double MAX_PAUSE_HOURS = 48;
 
     /**
-     * The gaps before the legs of a plan: the parameter "intervals" is the hours before every leg separated by commas ("0.5,1,3": the first leg departs in
-     * half an hour from now, the second one an hour after the arrival of the first one and so on). Without it the first gap is the default one (30 minutes)
-     * and the others are the old "turnaroundTime".
+     * The pauses before the legs of a plan from the parameter "pauses": hours separated by commas, the first one is the pause before the second leg, the next one before the
+     * third leg ("0.5,3": half an hour before the second leg, three hours before the third one). Without it every pause is the default one, 30 minutes.
      */
-    static List<Double> legGaps(final String intervals, final double turnaroundTime) {
-        if (intervals == null || intervals.isBlank()) {
-            return List.of(BusyBirdsMissionControl.FIRST_LEG_DEPARTURE_GAP_MINUTES / 60.0, turnaroundTime, turnaroundTime);
+    static List<Double> pauses(final String pauses) {
+        if (pauses == null || pauses.isBlank()) {
+            return List.of();
         }
-        final List<Double> gaps = new ArrayList<>();
-        for (final String part : intervals.split(",")) {
+        final List<Double> hoursList = new ArrayList<>();
+        for (final String part : pauses.split(",")) {
             final double hours;
             try {
                 hours = Double.parseDouble(part.trim());
             } catch (final NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the interval is not a number: '" + part + "'");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the pause is not a number: '" + part + "'");
             }
-            if (!(hours >= 0 && hours <= MAX_LEG_GAP_HOURS)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the interval must be from 0 to " + (int) MAX_LEG_GAP_HOURS + " hours: " + hours);
+            if (!(hours >= 0 && hours <= MAX_PAUSE_HOURS)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "the pause must be from 0 to " + (int) MAX_PAUSE_HOURS + " hours: " + hours);
             }
-            gaps.add(hours);
+            hoursList.add(hours);
         }
-        return gaps;
+        return hoursList;
     }
 
-    // The booking which ignores the state and the place of the pilot needs a pilot (person) of the user and nothing else. Returns the reason of the refusal, null if the
-    // booking is allowed.
+    // The booking needs a pilot (person) of the user and nothing else: not the state, not the place. Returns the reason of the refusal, null if the booking is allowed.
     static String noPilotProblem(final World world, final int userId) {
         final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
         if (personId <= 0 || world.persons().byId(personId).isEmpty()) {
             return "You have no pilot (person), so no flight can be booked.";
-        }
-        return null;
-    }
-
-    // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands, or in a city which that airport is
-    // linked to (the pilot travels to the airport before the start). Returns the reason of the refusal, null if the booking is allowed.
-    private static String pilotBookingProblem(final World world, final int userId, final Aircrafts.Aircraft aircraft) {
-        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
-        return pilotBookingProblem(world, personId, aircraft.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport ? aircraft.getLocationAirportId() : 0);
-    }
-
-    static String pilotBookingProblem(final World world, final int personId, final int aircraftAirportId) {
-        final Optional<Persons.Person> person = personId > 0 ? world.persons().byId(personId) : Optional.empty();
-        if (person.isEmpty()) {
-            return "You have no pilot (person), so no flight can be booked.";
-        }
-        if (person.get().getState() != Persons.State.Idle) {
-            return "Your pilot is busy now (" + person.get().getState() + "), so no flight can be booked.";
-        }
-        final Persons.LocationType locationType = person.get().getLocationType();
-        if (locationType != Persons.LocationType.Airport && locationType != Persons.LocationType.City) {
-            return "Your pilot is not at an airport or in a city, so no flight can be booked.";
-        }
-        if (aircraftAirportId > 0 && world.personControl().bookingAirports(person.get()).stream().noneMatch(a -> a.getId() == aircraftAirportId)) {
-            final String aircraftAirport = world.airports().getIcao(aircraftAirportId).orElse("?");
-            if (locationType == Persons.LocationType.City) {
-                final String pilotCity = world.cities().byId(person.get().getLocationId()).map(c -> c.getName()).orElse("?");
-                return "Your pilot is in " + pilotCity + ", which is not linked to " + aircraftAirport + " where the aircraft is, the flight cannot be booked.";
-            }
-            final String pilotAirport = world.airports().getIcao(person.get().getLocationId()).orElse("?");
-            return "Your pilot is at " + pilotAirport + " but the aircraft is at " + aircraftAirport + ", the flight cannot be booked.";
         }
         return null;
     }
@@ -508,13 +412,6 @@ public class BusyBirdsController {
         private long latestStart;
         // the flight of the pilot which is too close (the first one), null if there is none
         private ShadowJetController.ConflictDto conflict;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class BookingStatusDto {
-        private boolean canBook;
-        private String problem;
     }
 
     @Data
