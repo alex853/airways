@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -172,7 +173,11 @@ public class UserStorage {
 
     private void save() {
         try {
-            strategy.save(storage::save);
+            // the strategy gives the path of a folder which does not exist yet (DiskStorageStrategy saves to a new temporary folder), the operation creates it
+            strategy.save(path -> {
+                Files.createDirectories(path);
+                storage.save(path);
+            });
             if (strategy instanceof DiskStorageStrategy disk) {
                 try {
                     disk.reduceWorldBackupCounts();

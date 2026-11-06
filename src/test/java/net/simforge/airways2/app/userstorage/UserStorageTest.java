@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class UserStorageTest {
     private static final String TOKEN = "abc123def456ghi789";
 
-    // the storage is written to one folder, without the backups
+    // the storage is written to one folder, without the backups; the folder is not created by the strategy, as DiskStorageStrategy does not create it (the operation does)
     private static WorldStorageStrategy folder(final Path dir) {
         return new WorldStorageStrategy() {
             @Override
@@ -26,7 +26,6 @@ class UserStorageTest {
 
             @Override
             public void save(final WorldIOOperation savingOps) throws IOException {
-                Files.createDirectories(dir);
                 savingOps.perform(dir);
             }
         };
