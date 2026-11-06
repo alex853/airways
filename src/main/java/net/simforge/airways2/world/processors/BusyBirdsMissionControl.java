@@ -87,6 +87,23 @@ public class BusyBirdsMissionControl {
         return outlooks;
     }
 
+    /**
+     * The seats of an aircraft for a mission: the seats of the business class in the cabin layout of its type (cabin-layouts.properties: C25C is J8, GLF5 is J12 and so on).
+     * A mission is booked in the class J, so a group which is bigger does not fit; a type without a layout has none.
+     */
+    public int seatsOf(final Aircrafts.Aircraft aircraft) {
+        final String typeIcao = world.aircraftTypes().byId(aircraft.getAircraftTypeId()).orElseThrow().getIcao();
+        return world.transportFlightControl().cabinLayoutOfType(typeIcao).get(CabinLayout.Service.J);
+    }
+
+    /** Why a group does not fit into the aircraft, null if it does. */
+    public static String seatsProblem(final int seats, final int groupSize) {
+        if (groupSize <= seats) {
+            return null;
+        }
+        return "Not enough seats: the aircraft has " + seats + ", the mission has " + groupSize + " passengers.";
+    }
+
     public List<Mission> getMissionsToBook() {
         return getMissionsToBook(0, 0);
     }
@@ -277,7 +294,6 @@ public class BusyBirdsMissionControl {
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
 
         // todo ak2 take into account aircraft max range
-        // todo ak2 check aircraft seats vs journey size
         if (aircraft.getLocationStatus() != Aircrafts.LocationStatus.ParkedAtAirport) {
             messages.add("aircraft is not parked at airport");
         }

@@ -120,7 +120,8 @@ public class BusyBirdsController {
                                 world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
                                 a.getRegNo(),
                                 outlook.airport().getIcao(),
-                                aircraftEarliestStart(outlook));
+                                aircraftEarliestStart(outlook),
+                                world.busyBirdsMissionControl().seatsOf(a));
                     })
                     .toList();
         });
@@ -211,6 +212,11 @@ public class BusyBirdsController {
             if (aircraftProblem != null) {
                 return new BuildPlansResponse(List.of(PlanDto.failure(aircraftProblem)), price);
             }
+            // the group has to fit into the aircraft
+            final String seatsProblem = BusyBirdsMissionControl.seatsProblem(world.busyBirdsMissionControl().seatsOf(aircraft), journey.getGroupSize());
+            if (seatsProblem != null) {
+                return new BuildPlansResponse(List.of(PlanDto.failure(seatsProblem)), price);
+            }
 
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, outlook.airport(), pauses(pauses), ferryBackToBase,
                     payParamsOfUser(world, userId, aircraft), firstDepartureTime(startTime));
@@ -252,6 +258,11 @@ public class BusyBirdsController {
             final String aircraftProblem = aircraftProblem(outlook, userId);
             if (aircraftProblem != null) {
                 return new BookMissionResponse("failure", Collections.singletonList(aircraftProblem));
+            }
+            // the group has to fit into the aircraft
+            final String seatsProblem = BusyBirdsMissionControl.seatsProblem(world.busyBirdsMissionControl().seatsOf(aircraft), journey.getGroupSize());
+            if (seatsProblem != null) {
+                return new BookMissionResponse("failure", Collections.singletonList(seatsProblem));
             }
 
             // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
@@ -497,6 +508,8 @@ public class BusyBirdsController {
         private String locationAirportIcao;
         // the earliest start of a new mission on the aircraft, UTC milliseconds: 0 for a free aircraft, 30 minutes after the last landing of its booked missions otherwise
         private long earliestStart;
+        // the seats for a mission (the business class of the cabin layout of the type): a mission with a bigger group does not fit
+        private int seats;
     }
 
     @Data

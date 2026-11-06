@@ -278,4 +278,39 @@ class BusyBirdsBookingStartTimeTest {
         assertEquals("failure", response.getStatus());
         assertTrue(String.join(" ", response.getMessages()).contains("missions of another pilot"), String.valueOf(response.getMessages()));
     }
+
+    // a group of the given size from the city of the departure to the city of the arrival
+    private Journeys.Journey journeyOf(final int groupSize) {
+        final Journeys.Journey j = world.journeys().create(Journeys.Status.LookingForTickets, fromCityId, toCityId, groupSize, CabinLayout.Service.J);
+        j.setLocationCityId(fromCityId);
+        return j;
+    }
+
+    @Test
+    void theAircraftTellsItsSeats() {
+        // C25C is J8 in cabin-layouts.properties
+        assertEquals(8, offered(userId).getSeats());
+    }
+
+    @Test
+    void aGroupWhichFillsTheSeatsIsBooked() {
+        final BusyBirdsController.BookMissionResponse response = book(userId, journeyOf(8), startAfterHours(30), true);
+
+        assertEquals("success", response.getStatus(), String.valueOf(response.getMessages()));
+    }
+
+    @Test
+    void aGroupBiggerThanTheSeatsIsRefusedAndNothingIsLeftBehind() {
+        final Journeys.Journey big = journeyOf(9);
+
+        final BusyBirdsController.PlanDto plan = controller.buildPlans(userId, Id.encode(big.getId()), Id.encode(aircraft.getId()), startAfterHours(30), null, true).getPlans().get(0);
+        assertEquals("failure", plan.getStatus());
+        assertTrue(String.join(" ", plan.getMessages()).contains("Not enough seats: the aircraft has 8, the mission has 9 passengers"), String.valueOf(plan.getMessages()));
+
+        final BusyBirdsController.BookMissionResponse response = controller.bookMission(userId, Id.encode(big.getId()), Id.encode(aircraft.getId()), startAfterHours(30), null, true, "EGLF-EDDB");
+        assertEquals("failure", response.getStatus());
+        assertTrue(String.join(" ", response.getMessages()).contains("Not enough seats"), String.valueOf(response.getMessages()));
+        assertEquals(0, flightsOfTheUser().size());
+        assertEquals(Journeys.Status.LookingForTickets, big.getStatus());
+    }
 }
