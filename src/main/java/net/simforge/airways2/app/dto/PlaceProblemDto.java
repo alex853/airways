@@ -19,20 +19,23 @@ public class PlaceProblemDto {
     private String departure;
     private String afterFrom;
     private String afterTo;
+    // set (and expected is null) when the pilot is now not at an airport: the city of the pilot or "a hotel"
+    private String pilotAt;
 
     /**
      * The warning for a flight which departs at departureWorldTime from departureAirportId, null when the pilot is expected there or the place is not known.
      */
     public static PlaceProblemDto check(final World world, final int userId, final int departureWorldTime, final int excludedMissionId, final int departureAirportId) {
         final Optional<PilotExpectedPlace.Expected> expected = PilotExpectedPlace.expected(world, userId, departureWorldTime, excludedMissionId);
-        if (expected.isEmpty() || expected.get().airport().getId() == departureAirportId) {
+        if (expected.isEmpty() || expected.get().airport() != null && expected.get().airport().getId() == departureAirportId) {
             return null;
         }
         final var after = expected.get().afterFlight();
         return new PlaceProblemDto(
-                expected.get().airport().getIcao(),
+                expected.get().airport() == null ? null : expected.get().airport().getIcao(),
                 world.airports().getIcao(departureAirportId).orElse("?"),
                 after == null ? null : world.airports().getIcao(after.getDepartureAirportId()).orElse("?"),
-                after == null ? null : world.airports().getIcao(after.getDestinationAirportId()).orElse("?"));
+                after == null ? null : world.airports().getIcao(after.getDestinationAirportId()).orElse("?"),
+                expected.get().pilotAt());
     }
 }

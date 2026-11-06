@@ -116,12 +116,13 @@ Gulfstream G600/G700 примерно $300–370k):
 
 ### Предупреждение о месте пилота (с 2026-11-06)
 Букинг ничего не запрещает по месту пилота, но предупреждает. `PilotExpectedPlace.expected(world, userId, время вылета, исключаемая миссия)`: пилот ожидается в аэропорту посадки предыдущего по времени
-рейса его ростера (фактическая посадка, иначе заявленный дивёрт, иначе назначение; отменённые не считаются), а перед самым первым рейсом там, где он стоит сейчас, но только если он в аэропорту
-(в городе, отеле или в пути аэропорта нет, предупреждения нет). `PlaceProblemDto.check(...)` сравнивает его с аэропортом вылета и отдаёт `{expected, departure, afterFrom, afterTo}` или null.
+невыполненного рейса его ростера (фактическая посадка, иначе заявленный дивёрт, иначе назначение; отменённые и **завершённые** не считаются: после завершённого рейса пилот мог уйти, например варпом),
+а перед первым невыполненным рейсом там, где он фактически стоит сейчас: в аэропорту, в городе (`pilotAt` = название города) или в отеле (`pilotAt` = «a hotel»); в пути (None) места не известно, предупреждения нет.
+`PlaceProblemDto.check(...)` сравнивает его с аэропортом вылета и отдаёт `{expected, departure, afterFrom, afterTo, pilotAt}` или null (`expected` = null, когда задан `pilotAt`).
 - `build-plans`: у плана поле `placeProblem` (первое плечо плана против места пилота к началу миссии). Страница показывает жёлтый блок под блоком Start: «Your pilot will not be at the aircraft…».
   Book не блокируется.
 - `GET /flight-dashboard/my-flights`: у рейса, который ещё не начался (Dispatched и запланированные), поле `placeProblem`; ростер пишет маленький жёлтый текст **над** плиткой такого рейса:
-  «After your previous flight (EGLF → EHRD) your pilot is expected at EHRD, but this flight departs from EGLL.» (или «Your pilot is at X now, but…» перед первым рейсом).
+  «After your previous flight (EGLF → EHRD) your pilot is expected at EHRD, but this flight departs from EGLL.» (или «Your pilot is at X now, but…», или «Your pilot is in Mexico City now, not at an airport, but…» перед первым невыполненным рейсом).
 
 ### Вместимость самолёта (с 2026-11-06)
 Группа миссии должна помещаться в самолёт: места самолёта это места класса J в раскладке салона его типа (`cabin-layouts.properties`: C25C J8, GLF4 J10, GLF5 J12, GLF6 J14, GA7C J16; миссия

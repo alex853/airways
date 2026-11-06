@@ -256,6 +256,34 @@ class DashboardMyFlightsTest {
     }
 
     @Test
+    void afterAFinishedFlightThePilotIsExpectedWhereItStandsNowNotWhereTheFlightLanded() {
+        world.persons().create(net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, USER_ID,
+                net.simforge.airways2.world.datamodel.Persons.LocationType.Hotel, 0, 0, "AK", 0);
+        final int now = world.getWorldTime();
+        final FlightMissions.Mission finished = missionBetween(oakland, sanFrancisco, now + 1800);
+        finished.setStatus(FlightMissions.Status.Finished);
+        final FlightMissions.Mission next = missionBetween(sanFrancisco, oakland, now + 3600);
+
+        // the pilot has moved away after the finished flight (warp, a trip): not at San Francisco, not at an airport at all
+        final net.simforge.airways2.app.dto.PlaceProblemDto problem = flightOf(next).getPlaceProblem();
+        assertNull(problem.getExpected());
+        assertEquals("a hotel", problem.getPilotAt());
+        assertEquals("KSFO", problem.getDeparture());
+        assertNull(problem.getAfterFrom());
+    }
+
+    @Test
+    void afterAFinishedFlightThePilotAtTheDepartureAirportHasNoPlaceProblem() {
+        world.persons().create(net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, USER_ID,
+                net.simforge.airways2.world.datamodel.Persons.LocationType.Airport, sanFrancisco.getId(), 0, "AK", 0);
+        final int now = world.getWorldTime();
+        missionBetween(oakland, sanFrancisco, now + 1800).setStatus(FlightMissions.Status.Finished);
+        final FlightMissions.Mission next = missionBetween(sanFrancisco, oakland, now + 3600);
+
+        assertNull(flightOf(next).getPlaceProblem());
+    }
+
+    @Test
     void aFlightWhichHasStartedAndACancelledFlightBeforeDoNotMakeAPlaceProblem() {
         final int now = world.getWorldTime();
         final FlightMissions.Mission cancelled = missionBetween(oakland, sanFrancisco, now + 3600);
