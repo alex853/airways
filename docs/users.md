@@ -11,11 +11,18 @@
 - id пользователя это id записи (на него ссылаются рейсы `mission.getUserId()` и контексты SimTracker, он не меняется). Токены ищутся по индексу в памяти.
 - `token` буквы и цифры, 10-40 символов, уникален; `personId` (персона пилота в `persons` мира, 0 значит «персоны нет», см. [persons-pilots.md](persons-pilots.md))
   и `vatsimCid` (0 неизвестен) от 0 до 16 777 215.
-- Регистрация и управление в коде: `create(token, personId, vatsimCid)`, `setToken`, `setPersonId`, `setVatsimCid`, `all()`, поиск `findById`, `findByToken`.
-  Эндпоинтов регистрации пока нет. В логе `User storage - u/s # - ...`, токены в лог не пишутся.
-- **Временная миграция:** при первом старте, если storage пуст, пользователи один раз импортируются из прежних файлов `./users/user-<id>.cfg` (`token`,
-  `person.id`, `vatsim.cid`, id берётся из имени файла и сохраняется; `last.location.airport` игнорируется). Сами файлы не меняются. После первого старта на
-  проде удалить `LegacyUsersImport` и `importLegacyUsers` в `UserStorage`.
+- Регистрация и управление в коде: `create(token, personId, vatsimCid)` (токен можно не задавать: `null`, пользователь без токена войти не может), `setToken`,
+  `generateToken(userId)` (случайные 24 буквы и цифры, заменяют прежний токен, сохраняются на диск до возврата), `setPersonId`, `setVatsimCid`, `all()`,
+  поиск `findById`, `findByToken`. В логе `User storage - u/s # - ...`, токены в лог не пишутся.
+- Прежние файлы `./users/user-<id>.cfg` больше не читаются: при первом старте нового storage (2026-11-06) пользователи были один раз импортированы с теми же id,
+  код импорта удалён. Сами cfg-файлы на проде можно убрать.
+
+## Админские методы (`UserController`, `/admin/user`)
+
+- `POST /admin/user/create`: новый пользователь без токена; пилот (персона `Idle`, случайные инициалы из двух больших букв, аватарки нет, место
+  город № 1, пока фиксировано), банковский счёт пилота, на него с системного счёта 1 переводятся 1000 (`StartMoney`, `Start money` в выписке пилота).
+  Всё, что может не получиться (город № 1, системный счёт), проверяется до создания пользователя. Ответ: `userId`, `personId`, `initials`, `bankAccountId`, `startMoney`.
+- `POST /admin/user/{id}/generate-token`: новый случайный токен пользователя в виде текста, он уже сохранён в storage и на диске; прежний токен перестаёт работать.
 
 ## Где используется
 
@@ -26,7 +33,7 @@
 
 ## Код
 
-`net.simforge.airways2.app.userstorage`: `User` (id, token, personId, vatsimCid), `UserStorage`, временный `LegacyUsersImport`.
+`net.simforge.airways2.app.userstorage`: `User` (id, token, personId, vatsimCid), `UserStorage`; админские методы в `app.admin.UserController`.
 
 ## /flight-dashboard/status: секция pilot
 

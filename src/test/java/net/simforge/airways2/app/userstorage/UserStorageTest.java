@@ -10,6 +10,7 @@ import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,13 +32,9 @@ class UserStorageTest {
         };
     }
 
-    private static void writeLegacyUser(final Path dir, final int userId, final String content) throws IOException {
-        Files.writeString(dir.resolve("user-" + userId + ".cfg"), content);
-    }
-
     @Test
     public void test__a_registered_user_is_found_by_id_and_by_token(@TempDir final Path dir) {
-        final UserStorage storage = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
 
         final User created = storage.create(TOKEN, 5, 913904);
 
@@ -55,11 +52,11 @@ class UserStorageTest {
     @Test
     public void test__users_survive_a_restart(@TempDir final Path dir) throws IOException {
         Files.createDirectories(dir.resolve("data"));
-        final UserStorage first = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage first = new UserStorage(folder(dir.resolve("data")));
         first.create(TOKEN, 5, 913904);
         first.create("second1234567890zz", 0, 0);
 
-        final UserStorage second = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage second = new UserStorage(folder(dir.resolve("data")));
 
         assertEquals(2, second.all().size());
         assertEquals(5, second.findByToken(TOKEN).orElseThrow().getPersonId());
@@ -70,17 +67,17 @@ class UserStorageTest {
     public void test__a_token_of_forty_characters_fits(@TempDir final Path dir) throws IOException {
         Files.createDirectories(dir.resolve("data"));
         final String longToken = "a1".repeat(20);
-        final UserStorage first = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage first = new UserStorage(folder(dir.resolve("data")));
         first.create(longToken, 1, 1);
 
-        final UserStorage second = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage second = new UserStorage(folder(dir.resolve("data")));
 
         assertEquals(longToken, second.findByToken(longToken).orElseThrow().getToken());
     }
 
     @Test
     public void test__a_wrong_token_is_refused(@TempDir final Path dir) {
-        final UserStorage storage = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
         storage.create(TOKEN, 0, 0);
 
         assertThrows(IllegalArgumentException.class, () -> storage.create("short", 0, 0));
@@ -92,7 +89,7 @@ class UserStorageTest {
 
     @Test
     public void test__a_number_out_of_three_bytes_is_refused(@TempDir final Path dir) {
-        final UserStorage storage = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
 
         assertThrows(IllegalArgumentException.class, () -> storage.create(TOKEN, -1, 0));
         assertThrows(IllegalArgumentException.class, () -> storage.create(TOKEN, 0, UserStorage.MAX_NUMBER + 1));
@@ -102,14 +99,14 @@ class UserStorageTest {
     @Test
     public void test__person_cid_and_token_are_changed(@TempDir final Path dir) throws IOException {
         Files.createDirectories(dir.resolve("data"));
-        final UserStorage storage = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
         final int userId = storage.create(TOKEN, 0, 0).getId();
 
         storage.setPersonId(userId, 7);
         storage.setVatsimCid(userId, 123456);
         storage.setToken(userId, "newtoken1234567890");
 
-        final UserStorage reloaded = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage reloaded = new UserStorage(folder(dir.resolve("data")));
         final User user = reloaded.findById(userId).orElseThrow();
         assertEquals(7, user.getPersonId());
         assertEquals(123456, user.getVatsimCid());
@@ -120,7 +117,7 @@ class UserStorageTest {
 
     @Test
     public void test__the_token_can_be_set_to_itself_but_not_to_the_token_of_another_user(@TempDir final Path dir) {
-        final UserStorage storage = new UserStorage(folder(dir.resolve("data")), dir.resolve("legacy"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
         final int first = storage.create(TOKEN, 0, 0).getId();
         storage.create("second1234567890zz", 0, 0);
 
@@ -130,62 +127,58 @@ class UserStorageTest {
         assertThrows(IllegalArgumentException.class, () -> storage.setPersonId(99, 1));
     }
 
-    // ---- the one-time import of the property files of the previous storage (temporary) ----
-
     @Test
-    public void test__legacy_files_are_imported_with_their_ids(@TempDir final Path dir) throws IOException {
-        final Path legacy = Files.createDirectories(dir.resolve("legacy"));
-        writeLegacyUser(legacy, 1, "token=abc123def456ghi789\nperson.id=1\nvatsim.cid=913904\n");
-        writeLegacyUser(legacy, 4, "token=second1234567890zz\nlast.location.airport=KOAK\n");
+    public void test__a_user_without_a_token_cannot_log_in_and_is_kept(@TempDir final Path dir) throws IOException {
+        Files.createDirectories(dir.resolve("data"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
 
-        final UserStorage storage = new UserStorage(folder(Files.createDirectories(dir.resolve("data"))), legacy);
+        final User created = storage.create(null, 0, 0);
 
-        final User first = storage.findById(1).orElseThrow();
-        assertEquals(1, first.getPersonId());
-        assertEquals(913904, first.getVatsimCid());
-        final User fourth = storage.findByToken("second1234567890zz").orElseThrow();
-        assertEquals(4, fourth.getId()); // the id of the file name, not the next free one
-        assertEquals(0, fourth.getPersonId());
-        assertEquals(0, fourth.getVatsimCid());
-        assertTrue(storage.findById(2).isEmpty());
-        assertTrue(storage.findById(3).isEmpty());
+        assertEquals(1, created.getId());
+        assertNull(created.getToken());
+        assertTrue(storage.findByToken("").isEmpty());
+        assertTrue(storage.findByToken(null).isEmpty());
+        final UserStorage reloaded = new UserStorage(folder(dir.resolve("data")));
+        assertNull(reloaded.findById(1).orElseThrow().getToken());
+        assertTrue(reloaded.findByToken("").isEmpty());
     }
 
     @Test
-    public void test__not_a_number_in_a_legacy_file_is_ignored(@TempDir final Path dir) throws IOException {
-        final Path legacy = Files.createDirectories(dir.resolve("legacy"));
-        writeLegacyUser(legacy, 1, "token=abc123def456ghi789\nperson.id=one\nvatsim.cid= \n");
+    public void test__two_users_without_a_token_do_not_clash(@TempDir final Path dir) {
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
 
-        final User user = new UserStorage(folder(Files.createDirectories(dir.resolve("data"))), legacy).findById(1).orElseThrow();
+        storage.create(null, 0, 0);
+        storage.create(null, 0, 0);
 
-        assertEquals(0, user.getPersonId());
-        assertEquals(0, user.getVatsimCid());
+        assertEquals(2, storage.all().size());
     }
 
     @Test
-    public void test__legacy_files_are_not_touched_and_are_imported_once(@TempDir final Path dir) throws IOException {
-        final Path legacy = Files.createDirectories(dir.resolve("legacy"));
-        final String content = "token=abc123def456ghi789\nperson.id=1\n";
-        writeLegacyUser(legacy, 1, content);
-        final Path data = Files.createDirectories(dir.resolve("data"));
-        new UserStorage(folder(data), legacy);
+    public void test__a_generated_token_is_saved_and_opens_the_user(@TempDir final Path dir) throws IOException {
+        Files.createDirectories(dir.resolve("data"));
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
+        final int userId = storage.create(null, 3, 0).getId();
 
-        // the file changes after the import, the storage already has the users and does not read the files again
-        writeLegacyUser(legacy, 1, "token=changed1234567890zz\nperson.id=9\n");
-        final UserStorage second = new UserStorage(folder(data), legacy);
+        final String token = storage.generateToken(userId);
 
-        assertEquals(1, second.findById(1).orElseThrow().getPersonId());
-        assertTrue(second.findByToken("abc123def456ghi789").isPresent());
-        assertFalse(second.findByToken("changed1234567890zz").isPresent());
+        assertEquals(UserStorage.GENERATED_TOKEN_LENGTH, token.length());
+        assertTrue(token.matches("[A-Za-z0-9]+"));
+        assertEquals(userId, storage.findByToken(token).orElseThrow().getId());
+        final UserStorage reloaded = new UserStorage(folder(dir.resolve("data")));
+        assertEquals(userId, reloaded.findByToken(token).orElseThrow().getId());
+        assertEquals(3, reloaded.findByToken(token).orElseThrow().getPersonId());
     }
 
     @Test
-    public void test__a_legacy_file_without_a_token_is_skipped(@TempDir final Path dir) throws IOException {
-        final Path legacy = Files.createDirectories(dir.resolve("legacy"));
-        writeLegacyUser(legacy, 1, "person.id=1\n");
+    public void test__a_new_generated_token_replaces_the_old_one(@TempDir final Path dir) {
+        final UserStorage storage = new UserStorage(folder(dir.resolve("data")));
+        final int userId = storage.create(TOKEN, 0, 0).getId();
 
-        final UserStorage storage = new UserStorage(folder(Files.createDirectories(dir.resolve("data"))), legacy);
+        final String token = storage.generateToken(userId);
 
-        assertTrue(storage.all().isEmpty());
+        assertFalse(TOKEN.equals(token));
+        assertTrue(storage.findByToken(TOKEN).isEmpty());
+        assertTrue(storage.findByToken(token).isPresent());
+        assertThrows(IllegalArgumentException.class, () -> storage.generateToken(99));
     }
 }

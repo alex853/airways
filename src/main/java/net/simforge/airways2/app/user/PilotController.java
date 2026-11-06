@@ -535,6 +535,7 @@ public class PilotController {
             case PilotIncomeShare -> "Income share";
             case JourneyPayment -> "Journey payment";
             case BalanceCheckpoint -> "Balance check";
+            case StartMoney -> "Start money";
         };
     }
 

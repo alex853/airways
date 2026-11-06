@@ -36,7 +36,9 @@ public class BankTransactions {
         // the pilot pays for the food to the bank, when it stops being free (PersonControl.setState, see PilotLiving)
         PilotMeals,
         // the pilot pays for the night to the bank, at the fall asleep
-        PilotLodging
+        PilotLodging,
+        // the bank gives the starting money to the account of a new user (admin, UserController)
+        StartMoney
     }
 
     private final Storage<BankTransaction> storage = Storage.<BankTransaction>builder()
