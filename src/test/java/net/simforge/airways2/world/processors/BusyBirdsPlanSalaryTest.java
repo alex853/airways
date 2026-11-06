@@ -245,4 +245,25 @@ class BusyBirdsPlanSalaryTest {
         assertEquals(0, back.getBaseIncome());
         assertEquals(0, back.getSalary().incomeShare());
     }
+
+    @Test
+    public void test__the_first_leg_departs_at_the_given_time_and_the_other_legs_follow_it_with_their_pauses() {
+        income();
+        final int start = world.getWorldTime() + 5 * Time.ONE_HOUR;
+
+        final BusyBirdsMissionControl.MissionPlan plan =
+                world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(0.5, 2.0), false, FULL_PAY, start).get(0);
+
+        assertEquals(Time.alignTo5mins(start), plan.getLegs().get(0).getPlannedDepTime());
+    }
+
+    @Test
+    public void test__without_the_departure_the_first_leg_goes_by_its_gap_from_now() {
+        income();
+
+        final BusyBirdsMissionControl.MissionPlan plan =
+                world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(2.0, 1.0), false, FULL_PAY).get(0);
+
+        assertEquals(Time.alignTo5mins(world.getWorldTime() + 2 * Time.ONE_HOUR), plan.getLegs().get(0).getPlannedDepTime());
+    }
 }

@@ -226,6 +226,15 @@ public class BusyBirdsMissionControl {
      * leg, one hour for the others.
      */
     public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams) {
+        return buildPlans(journey, aircraft, legGapHours, ferryBackToBase, payParams, null);
+    }
+
+    /**
+     * The same with the departure of the first leg: the world time in seconds (it is aligned up to 5 minutes, as every leg is), or null for the old way: the gap of the
+     * first leg from now. With the departure the gap of the first leg is not used. The pauses before the other legs are counted from the arrival of the previous leg.
+     */
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams,
+                                                                Integer firstDepartureTime) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -254,7 +263,7 @@ public class BusyBirdsMissionControl {
 
         for (Airports.Airport fromAirport : fromAirports) {
             for (Airports.Airport toAirport : toAirports) {
-                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, legGapHours, ferryBackToBase, payParams));
+                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, legGapHours, ferryBackToBase, payParams, firstDepartureTime));
             }
         }
 
@@ -263,7 +272,8 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams) {
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, List<Double> legGapHours, boolean ferryBackToBase, PilotPayParams payParams,
+                                 Integer firstDepartureTime) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
         Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
@@ -279,8 +289,8 @@ public class BusyBirdsMissionControl {
         List<Leg> legs = new ArrayList<>();
         Leg leg;
 
-        // every leg has its own gap: the first one is counted from now, the others from the arrival of the previous leg
-        int nextDepTime = world.getWorldTime() + legGapSeconds(legGapHours, 0);
+        // every leg has its own gap: the first one is counted from now (or it is the given departure), the others from the arrival of the previous leg
+        int nextDepTime = firstDepartureTime != null ? firstDepartureTime : world.getWorldTime() + legGapSeconds(legGapHours, 0);
 
         if (needFerryFlightToDepartureAirport) {
             leg = addLeg(nextDepTime, legs, Leg.Type.Reposition, locationAirport, fromAirport, 0, performanceData, aircraftTypeIcao, 0, payParams);

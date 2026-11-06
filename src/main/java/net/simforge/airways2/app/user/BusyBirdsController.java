@@ -26,6 +26,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -194,7 +197,8 @@ public class BusyBirdsController {
                                          @RequestParam(name = "aircraftId") String aircraftId,
                                          @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
                                          @RequestParam(name = "intervals", required = false) String intervals,
-                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase) {
+                                         @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
+                                         @RequestParam(name = "startTime", required = false) Long startTime) {
         // a quote changes the world: the price of the journey is set
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
@@ -205,9 +209,17 @@ public class BusyBirdsController {
             final int price = world.busyBirdsMissionControl().quote(journey);
 
             List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase,
-                    payParamsOfUser(world, userId, aircraft));
+                    payParamsOfUser(world, userId, aircraft), firstDepartureTime(startTime));
 
-            return new BuildPlansResponse(plans.stream().map(BusyBirdsController.PlanDto::from).toList(), price);
+            // with a start time every plan tells whether its time is free in the roster of the user
+            final int now = world.getWorldTime();
+            return new BuildPlansResponse(plans.stream().map(plan -> {
+                final PlanDto dto = PlanDto.from(plan);
+                if (startTime != null && dto.getStartTime() != null) {
+                    dto.setSlot(checkStartSlot(world, userId, dto.getStartTime(), dto.getEndTime(), now));
+                }
+                return dto;
+            }).toList(), price);
         });
     }
 
@@ -219,7 +231,8 @@ public class BusyBirdsController {
                                            @RequestParam(name = "intervals", required = false) String intervals,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
                                            @RequestParam(name = "planId") String planId,
-                                           @RequestParam(name = "ignorePilotState", required = false, defaultValue = "false") boolean ignorePilotState) {
+                                           @RequestParam(name = "ignorePilotState", required = false, defaultValue = "false") boolean ignorePilotState,
+                                           @RequestParam(name = "startTime", required = false) Long startTime) {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
@@ -235,7 +248,8 @@ public class BusyBirdsController {
 
             // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
             final PilotPayParams payParams = payParamsOfUser(world, userId, aircraft);
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase, payParams);
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, legGaps(intervals, turnaroundTime), ferryBackToBase, payParams,
+                    firstDepartureTime(startTime));
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
             if (plan.isEmpty()) {
@@ -244,6 +258,16 @@ public class BusyBirdsController {
 
             if (plan.get().getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
                 return new BookMissionResponse("failure", plan.get().getMessages());
+            }
+
+            // with a start time the whole mission (from the first departure to the last arrival) must fit into the roster of the user: not too soon, not later than 7 days from now,
+            // not closer than 30 minutes to another flight of the pilot; without it (the tab of G7, the flight here and now) nothing is checked, as it was
+            if (startTime != null) {
+                final PlanDto planDto = PlanDto.from(plan.get());
+                final StartSlotDto slot = checkStartSlot(world, userId, planDto.getStartTime(), planDto.getEndTime(), world.getWorldTime());
+                if (!slot.isFree()) {
+                    return new BookMissionResponse("failure", startSlotProblems(slot));
+                }
             }
 
             // the pilot contracts of the flights
@@ -317,6 +341,48 @@ public class BusyBirdsController {
             return new BookMissionResponse("success", Collections.singletonList(
                     "Flight mission # " + flight.getId() + " scheduled, departure time: " + TimeTools.ts(flight.getPlannedDepartureWorldTime())));
         });
+    }
+
+    // The mission of the page has to be booked not later than this from now, and the start may be earlier than 30 minutes from now by the difference of the clock of the browser
+    // and the clock of the server
+    static final int START_HORIZON_DAYS = 7;
+    static final int START_CLOCK_TOLERANCE_SECONDS = 5 * 60;
+
+    // the world time (seconds) of the first departure for the start time of the request (UTC milliseconds), null without it
+    private static Integer firstDepartureTime(final Long startTimeMillis) {
+        return startTimeMillis == null ? null : (int) (startTimeMillis / 1000);
+    }
+
+    /**
+     * Whether the mission [start, end] (UTC milliseconds, the first departure and the last arrival of the plan) can be booked: it starts not earlier than 30 minutes from now (with the
+     * tolerance of the clocks), not later than 7 days from now, and there are not less than 30 minutes between it and every flight of the pilot which is not over (the same rule as
+     * at ShadowJet, ShadowJetBooking.checkSlot, for the whole block of the legs).
+     */
+    static StartSlotDto checkStartSlot(final World world, final int userId, final long startMillis, final long endMillis, final int nowWorldTime) {
+        final ShadowJetController.SlotDto slot = ShadowJetController.checkSlot(world, userId, startMillis, endMillis, nowWorldTime - START_CLOCK_TOLERANCE_SECONDS);
+        final long nowMillis = nowWorldTime * 1000L;
+        final long latestStart = nowMillis + START_HORIZON_DAYS * 24 * 3600 * 1000L;
+        final boolean tooLate = startMillis > latestStart;
+        return new StartSlotDto(slot.isFree() && !tooLate, slot.isTooSoon(), tooLate, nowMillis + 30 * 60 * 1000L, latestStart, slot.getConflict());
+    }
+
+    static List<String> startSlotProblems(final StartSlotDto slot) {
+        final List<String> problems = new ArrayList<>();
+        if (slot.isTooSoon()) {
+            problems.add("The mission starts too soon: the earliest start is 30 minutes from now.");
+        }
+        if (slot.isTooLate()) {
+            problems.add("The mission starts too late: the latest start is " + START_HORIZON_DAYS + " days from now.");
+        }
+        final ShadowJetController.ConflictDto conflict = slot.getConflict();
+        if (conflict != null) {
+            final DateTimeFormatter format = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+            problems.add("The mission conflicts with your flight " + conflict.getFrom() + " - " + conflict.getTo() + ", "
+                    + LocalDateTime.ofEpochSecond(conflict.getDepartureTime() / 1000, 0, ZoneOffset.UTC).format(format) + " - "
+                    + LocalDateTime.ofEpochSecond(conflict.getArrivalTime() / 1000, 0, ZoneOffset.UTC).format(format)
+                    + " UTC: there must be at least 30 minutes between the flights.");
+        }
+        return problems;
     }
 
     static final double MAX_LEG_GAP_HOURS = 48;
@@ -427,6 +493,23 @@ public class BusyBirdsController {
         private String name;
     }
 
+    /**
+     * Whether a start of a mission can be booked (checkStartSlot): free when it is not too soon, not too late and has no conflict with the flights of the pilot.
+     * The times are UTC milliseconds.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class StartSlotDto {
+        private boolean free;
+        private boolean tooSoon;
+        private boolean tooLate;
+        // the earliest and the latest start which the server accepts now: 30 minutes and 7 days from now
+        private long earliestStart;
+        private long latestStart;
+        // the flight of the pilot which is too close (the first one), null if there is none
+        private ShadowJetController.ConflictDto conflict;
+    }
+
     @Data
     @AllArgsConstructor
     public static class BookingStatusDto {
@@ -476,10 +559,15 @@ public class BusyBirdsController {
         private List<LegDto> legs;
         private SalaryDto salary; // total for the pilot, the sum of the legs
         private List<String> messages;
+        // the first departure and the last arrival of the plan, UTC milliseconds (null for a failure)
+        private Long startTime;
+        private Long endTime;
+        // whether the time of the plan is free in the roster of the user: only for a request with a start time
+        private StartSlotDto slot;
 
         public static PlanDto from(BusyBirdsMissionControl.MissionPlan plan) {
             if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                return new PlanDto("failure", null, null, null, null, plan.getMessages());
+                return new PlanDto("failure", null, null, null, null, plan.getMessages(), null, null, null);
             }
 
             final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
@@ -495,7 +583,9 @@ public class BusyBirdsController {
                     SalaryDto.forLeg(leg)
             )).toList();
 
-            return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, SalaryDto.from(plan.getTotalSalary()), null);
+            final List<BusyBirdsMissionControl.Leg> legs = plan.getLegs();
+            return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, SalaryDto.from(plan.getTotalSalary()), null,
+                    legs.get(0).getPlannedDepTime() * 1000L, legs.get(legs.size() - 1).getPlannedArrTime() * 1000L, null);
         }
     }
 
