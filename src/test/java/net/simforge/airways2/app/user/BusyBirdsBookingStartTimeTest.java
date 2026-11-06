@@ -325,4 +325,36 @@ class BusyBirdsBookingStartTimeTest {
         assertEquals(0, flightsOfTheUser().size());
         assertEquals(Journeys.Status.LookingForTickets, big.getStatus());
     }
+
+    private BusyBirdsController.PlanDto planAt(final Journeys.Journey forJourney, final long startMillis) {
+        return controller.buildPlans(userId, Id.encode(forJourney.getId()), Id.encode(aircraft.getId()), startMillis, null, false).getPlans().get(0);
+    }
+
+    @Test
+    void thePlanHasNoPlaceProblemWhenThePilotIsWhereTheAircraftStarts() {
+        // the pilot stands at the base airport, the aircraft is there too
+        assertNull(planAt(journey, startAfterHours(30)).getPlaceProblem());
+    }
+
+    @Test
+    void thePlanTellsWhenThePilotIsNotWhereTheAircraftStartsButDoesNotStopTheBooking() {
+        final Persons.Person person = world.persons().byUserId(userId).orElseThrow();
+        person.setLocation(Persons.LocationType.Airport, destination.getId());
+
+        final net.simforge.airways2.app.dto.PlaceProblemDto problem = planAt(journey, startAfterHours(30)).getPlaceProblem();
+
+        assertEquals("EDDB", problem.getExpected());
+        assertEquals("EGLF", problem.getDeparture());
+        assertNull(problem.getAfterFrom());
+        assertEquals("success", book(userId, journey, startAfterHours(30), true).getStatus());
+    }
+
+    @Test
+    void aMissionWhichGoesOnAfterTheLastMissionStartsWherePilotAndAircraftBothAre() {
+        assertEquals("success", book(userId, journey, startAfterHours(30), false).getStatus());
+        final long earliest = offered(userId).getEarliestStart();
+
+        // the pilot is at Berlin after the first mission and so is the aircraft: no problem
+        assertNull(planAt(journeyBack(), earliest).getPlaceProblem());
+    }
 }

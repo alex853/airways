@@ -3,6 +3,7 @@ package net.simforge.airways2.app.user;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.dto.PlaceProblemDto;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
@@ -227,6 +228,8 @@ public class BusyBirdsController {
                 final PlanDto dto = PlanDto.from(plan);
                 if (dto.getStartTime() != null) {
                     dto.setSlot(checkStartSlot(world, userId, dto.getStartTime(), dto.getEndTime(), now, aircraftEarliestStart(outlook)));
+                    // the warning only: the pilot is not expected where the aircraft departs from (the first leg), the booking is not stopped by it
+                    dto.setPlaceProblem(PlaceProblemDto.check(world, userId, (int) (dto.getStartTime() / 1000), 0, plan.getLegs().get(0).getFromAirport().getId()));
                 }
                 return dto;
             }).toList(), price);
@@ -538,14 +541,16 @@ public class BusyBirdsController {
         private Long endTime;
         // whether the time of the plan is free in the roster of the user: only for a request with a start time
         private StartSlotDto slot;
+        // the pilot is not expected at the airport where the aircraft starts the mission (the flight before in the roster lands elsewhere), null when it is fine or not known
+        private PlaceProblemDto placeProblem;
 
         public static PlanDto failure(final String message) {
-            return new PlanDto("failure", null, null, null, null, List.of(message), null, null, null);
+            return new PlanDto("failure", null, null, null, null, List.of(message), null, null, null, null);
         }
 
         public static PlanDto from(BusyBirdsMissionControl.MissionPlan plan) {
             if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {
-                return new PlanDto("failure", null, null, null, null, plan.getMessages(), null, null, null);
+                return new PlanDto("failure", null, null, null, null, plan.getMessages(), null, null, null, null);
             }
 
             final List<LegDto> legDtos = plan.getLegs().stream().map(leg -> new LegDto(
@@ -563,7 +568,7 @@ public class BusyBirdsController {
 
             final List<BusyBirdsMissionControl.Leg> legs = plan.getLegs();
             return new PlanDto("success", plan.getId(), plan.getDescription(), legDtos, SalaryDto.from(plan.getTotalSalary()), null,
-                    legs.get(0).getPlannedDepTime() * 1000L, legs.get(legs.size() - 1).getPlannedArrTime() * 1000L, null);
+                    legs.get(0).getPlannedDepTime() * 1000L, legs.get(legs.size() - 1).getPlannedArrTime() * 1000L, null, null);
         }
     }
 

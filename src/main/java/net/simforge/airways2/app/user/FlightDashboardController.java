@@ -5,6 +5,7 @@ import lombok.Data;
 import net.simforge.airways2.app.tools.Timing;
 import net.simforge.airways2.app.beans.SimTrackerBean;
 import net.simforge.airways2.app.dto.FlightUltraDto;
+import net.simforge.airways2.app.dto.PlaceProblemDto;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
@@ -1331,8 +1332,15 @@ public class FlightDashboardController {
                 world.transportFlightControl().getIncomeOfMission(flight)
         ) : null;
 
+        // a flight which has not started yet and does not depart where the pilot is expected: the roster tells it above the flight (nothing is forbidden)
+        final boolean notStarted = flight.getStatus() == FlightMissions.Status.Dispatched || flight.getStatus() == FlightMissions.Status.PlannedManually
+                || flight.getStatus() == FlightMissions.Status.PlannedViaSchedule;
+        final PlaceProblemDto placeProblem = notStarted
+                ? PlaceProblemDto.check(world, flight.getUserId(), flight.getPlannedDepartureWorldTime(), flight.getId(), flight.getDepartureAirportId())
+                : null;
+
         return new MyFlightsDto(aircraftDto, flightDto, transportFlightDto, forecast != null ? toForecastDto(world, forecast) : null,
-                rescheduleChoices != null ? toRescheduleDto(world, rescheduleChoices) : null);
+                rescheduleChoices != null ? toRescheduleDto(world, rescheduleChoices) : null, placeProblem);
     }
 
     private String getNextPlannedFlightMissionStatus(final FlightMissions.Mission flight, final World world) {
@@ -1457,6 +1465,8 @@ public class FlightDashboardController {
         private ForecastDto forecast;
         // the times to which the flight can be moved, null for a flight which cannot be moved
         private RescheduleDto reschedule;
+        // the pilot is not expected at the airport where the flight departs (the flight before lands elsewhere), null when it is fine, not known or the flight has started
+        private PlaceProblemDto placeProblem;
     }
 
     /**

@@ -172,4 +172,102 @@ class DashboardMyFlightsTest {
 
         assertNull(controller.getMyFlights(USER_ID).getFlights().get(0).getTransportFlight());
     }
+
+    // ---- the warning that the pilot is not expected where a flight departs
+
+    private FlightMissions.Mission missionBetween(final Airports.Airport from, final Airports.Airport to, final int departureTime) {
+        final FlightMissions.Mission mission = world.flightMissions().createDispatchedMission(aircraft, from, to, departureTime, departureTime + 3600);
+        mission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        mission.setUserId(USER_ID);
+        return mission;
+    }
+
+    private FlightDashboardController.MyFlightsDto flightOf(final FlightMissions.Mission mission) {
+        return controller.getMyFlights(USER_ID).getFlights().stream()
+                .filter(f -> f.getFlight().getId().equals(net.simforge.airways2.app.tools.Id.encode(mission.getId()))).findFirst().orElseThrow();
+    }
+
+    @Test
+    void aFlightWhichDepartsWhereTheFlightBeforeLandsHasNoPlaceProblem() {
+        final int now = world.getWorldTime();
+        missionBetween(oakland, sanFrancisco, now + 3600);
+        final FlightMissions.Mission second = missionBetween(sanFrancisco, oakland, now + 6 * 3600);
+
+        assertNull(flightOf(second).getPlaceProblem());
+    }
+
+    @Test
+    void aFlightWhichDepartsFromAnotherAirportThanTheFlightBeforeLandsHasThePlaceProblem() {
+        final int now = world.getWorldTime();
+        missionBetween(oakland, sanFrancisco, now + 3600);
+        final FlightMissions.Mission second = missionBetween(oakland, sanFrancisco, now + 6 * 3600);
+
+        final net.simforge.airways2.app.dto.PlaceProblemDto problem = flightOf(second).getPlaceProblem();
+        assertEquals("KSFO", problem.getExpected());
+        assertEquals("KOAK", problem.getDeparture());
+        assertEquals("KOAK", problem.getAfterFrom());
+        assertEquals("KSFO", problem.getAfterTo());
+    }
+
+    @Test
+    void theLandingElsewhereMovesTheExpectedPlaceOfThePilot() {
+        final int now = world.getWorldTime();
+        final Airports.Airport sanJose = world.airports().create(37.36, -121.93, "SJC", "KSJC", "San Jose");
+        final FlightMissions.Mission first = missionBetween(oakland, sanFrancisco, now + 3600);
+        first.setActualLandingAirportId(sanJose.getId());
+        final FlightMissions.Mission fromSanJose = missionBetween(sanJose, oakland, now + 6 * 3600);
+
+        // the flight landed at San Jose (not at its destination): the next flight from San Jose is fine
+        assertNull(flightOf(fromSanJose).getPlaceProblem());
+    }
+
+    @Test
+    void aFlightFromTheDestinationWhichWasNotReachedHasThePlaceProblem() {
+        final int now = world.getWorldTime();
+        final Airports.Airport sanJose = world.airports().create(37.36, -121.93, "SJC", "KSJC", "San Jose");
+        final FlightMissions.Mission first = missionBetween(oakland, sanFrancisco, now + 3600);
+        first.setActualLandingAirportId(sanJose.getId());
+        final FlightMissions.Mission fromSanFrancisco = missionBetween(sanFrancisco, oakland, now + 6 * 3600);
+
+        // the pilot is at San Jose, where the flight has landed, not at San Francisco where it was going
+        assertEquals("KSJC", flightOf(fromSanFrancisco).getPlaceProblem().getExpected());
+    }
+
+    @Test
+    void beforeTheFirstFlightThePilotIsExpectedWhereItStandsNowIfItStandsAtAnAirport() {
+        world.persons().create(net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, USER_ID,
+                net.simforge.airways2.world.datamodel.Persons.LocationType.Airport, sanFrancisco.getId(), 0, "AK", 0);
+        final FlightMissions.Mission first = missionBetween(oakland, sanFrancisco, world.getWorldTime() + 3600);
+
+        final net.simforge.airways2.app.dto.PlaceProblemDto problem = flightOf(first).getPlaceProblem();
+
+        assertEquals("KSFO", problem.getExpected());
+        assertNull(problem.getAfterFrom());
+        assertNull(problem.getAfterTo());
+    }
+
+    @Test
+    void beforeTheFirstFlightThePilotInACityOrOnTheWayHasNoPlaceProblem() {
+        world.persons().create(net.simforge.airways2.world.datamodel.Persons.Type.Pilot, net.simforge.airways2.world.datamodel.Persons.State.Idle, USER_ID,
+                net.simforge.airways2.world.datamodel.Persons.LocationType.None, 0, 0, "AK", 0);
+        final FlightMissions.Mission first = missionBetween(oakland, sanFrancisco, world.getWorldTime() + 3600);
+
+        assertNull(flightOf(first).getPlaceProblem());
+    }
+
+    @Test
+    void aFlightWhichHasStartedAndACancelledFlightBeforeDoNotMakeAPlaceProblem() {
+        final int now = world.getWorldTime();
+        final FlightMissions.Mission cancelled = missionBetween(oakland, sanFrancisco, now + 3600);
+        cancelled.setStatus(FlightMissions.Status.Cancelled);
+        final FlightMissions.Mission second = missionBetween(oakland, sanFrancisco, now + 6 * 3600);
+        // the cancelled flight before does not count, so the pilot has no flight before: the place is not known
+        assertNull(flightOf(second).getPlaceProblem());
+
+        final FlightMissions.Mission third = missionBetween(oakland, sanFrancisco, now + 12 * 3600);
+        // the flight before (second) lands at San Francisco, the third departs from Oakland: the problem, until the third has started
+        assertEquals("KSFO", flightOf(third).getPlaceProblem().getExpected());
+        third.setStatus(FlightMissions.Status.Preflight);
+        assertNull(flightOf(third).getPlaceProblem());
+    }
 }
