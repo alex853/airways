@@ -778,6 +778,24 @@ public class AdminController {
     }
 
     /**
+     * Sets the size of the next group of the flow as it is given (1 to 255, the range of the field), nothing else is changed: the flow takes
+     * the size at its next pass, the time to accumulate it is calculated from the size.
+     */
+    @GetMapping(value = "/flows/c2c/group-size", produces = "text/plain")
+    public String updateC2CFlowGroupSize(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId, @RequestParam("size") int size) {
+        if (size < 1 || size > 255) {
+            throw new IllegalArgumentException("size must be 1 to 255: " + size);
+        }
+        return worldBean.modifySync(world -> {
+            City2CityFlows.Flow c2c = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId).orElseThrow();
+            final int was = c2c.getNextGroupSize();
+            c2c.setNextGroupSize(size);
+            log.info("c2c #{}/{} - next g/s set by admin, was {}, now {}", fromCityId, toCityId, was, size);
+            return "Done, next g/s was " + was + ", now " + size;
+        });
+    }
+
+    /**
      * Resets the heartbeat of every active flow to the world time: all of them are looked at in turn (10 per world step) and get their own heartbeat
      * (a/t + the time to accumulate, 9 to 11 minutes from now at least, 90 days from now at most).
      */
