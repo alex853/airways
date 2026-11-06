@@ -303,7 +303,11 @@ public class BusyBirdsController {
 
                 // all busyBirds aircraft are expected to have J-layout only
                 if (leg.getType() == BusyBirdsMissionControl.Leg.Type.Revenue) {
-                    TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight);
+                    // A business flight does not sell tickets: the group is booked as a whole and nobody is added to the rest of the cabin. So the transport flight has the seats of
+                    // the group only (not the whole cabin of the type), nothing is left to sell, whoever looks for a flight with free seats.
+                    // todo ak2 this holds while the size of the group does not change. When a part of a group may not show up (service level, satisfaction) and the journey shrinks, the
+                    // seats which it lets go (releaseFlightTickets, or a smaller group) must not become tickets for sale: the layout has to shrink with the group (or a flag "no sales").
+                    TransportFlights.Flight transportFlight = world.transportFlightControl().createTransportFlight(flight, CabinLayout.JY(journey.getGroupSize(), 0));
                     journey.setTransportFlight1Id(transportFlight.getId());
                     world.transportFlightControl().obtainFlightTickets(transportFlight, journey.getGroupSize(), CabinLayout.Service.J);
                     // the price of the journey is the income of the flight: the price of the business charter, the quote sets it if the pilot has booked without one

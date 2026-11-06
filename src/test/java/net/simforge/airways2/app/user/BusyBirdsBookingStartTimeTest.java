@@ -19,6 +19,7 @@ import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.Persons;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -155,6 +156,17 @@ class BusyBirdsBookingStartTimeTest {
         assertTrue(gap >= 30 * 60 && gap < 35 * 60, "the gap between the legs in seconds: " + gap);
         assertEquals(Journeys.Status.WaitingForCheckIn, journey.getStatus());
         assertTrue(journey.getTransportFlight1Id() > 0);
+    }
+
+    @Test
+    void noTicketsAreLeftToSellOnABusyBirdsFlight() {
+        // the aircraft has 8 seats and the group is 4: the other 4 seats must not be sold to the others
+        assertEquals("success", book(startAfterHours(30)).getStatus());
+
+        final TransportFlights.Flight transportFlight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+        assertEquals(4, transportFlight.getTotalTickets().getTotal());
+        assertEquals(0, transportFlight.getRemainedTickets().getTotal());
+        assertEquals(4, transportFlight.getTotalTickets().getTotal() - transportFlight.getRemainedTickets().getTotal(), "the passengers of the group are the tickets which are sold");
     }
 
     @Test
