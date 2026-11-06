@@ -76,7 +76,8 @@ class BusyBirdsPlanSalaryTest {
     }
 
     private List<BusyBirdsMissionControl.MissionPlan> plans(final Aircrafts.Aircraft forAircraft, final boolean ferryBackToBase, final PilotPayParams params, final List<Double> pauses) {
-        return world.busyBirdsMissionControl().buildPlans(journey, forAircraft, pauses, ferryBackToBase, params, world.getWorldTime() + Time.ONE_HOUR);
+        return world.busyBirdsMissionControl().buildPlans(journey, forAircraft, world.airports().byId(forAircraft.getLocationAirportId()).orElseThrow(), pauses, ferryBackToBase, params,
+                world.getWorldTime() + Time.ONE_HOUR);
     }
 
     private int income() {
@@ -153,7 +154,7 @@ class BusyBirdsPlanSalaryTest {
     @Test
     public void test__the_first_leg_departs_at_the_given_time_and_the_pause_before_the_second_leg_is_counted_from_the_arrival_of_the_first_one() {
         final int start = world.getWorldTime() + 5 * Time.ONE_HOUR;
-        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, List.of(3.0), true, FULL_PAY, start).get(0);
+        final BusyBirdsMissionControl.MissionPlan plan = world.busyBirdsMissionControl().buildPlans(journey, aircraft, base, List.of(3.0), true, FULL_PAY, start).get(0);
 
         assertEquals(Time.alignTo5mins(start), plan.getLegs().get(0).getPlannedDepTime());
         final int second = plan.getLegs().get(1).getPlannedDepTime() - plan.getLegs().get(0).getPlannedArrTime();

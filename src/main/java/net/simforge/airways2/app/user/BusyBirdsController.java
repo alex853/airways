@@ -101,13 +101,27 @@ public class BusyBirdsController {
         return worldBean.read(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
-            return world.aircrafts()
-                    .byAircraftOperatorIdAndIdleAndParkedAtAirport(World25.BusyBirdsOperatorId)
-                    .map(a -> new AircraftDto(
-                            Id.encode(a.getId()),
-                            world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
-                            a.getRegNo(),
-                            world.airports().byId(a.getLocationAirportId()).orElseThrow().getIcao()))
+            // the aircraft which are free (idle at an airport, no missions of anybody) and the aircraft which have missions of this user only: the mission goes on after them, the
+            // aircraft is where its last mission lands and is free from its arrival plus the least gap
+            final List<Aircrafts.Aircraft> all = world.aircrafts().byAircraftOperatorId(World25.BusyBirdsOperatorId).toList();
+            final Map<Integer, BusyBirdsMissionControl.AircraftOutlook> outlooks = world.busyBirdsMissionControl().outlooks(all);
+            return all.stream()
+                    .filter(a -> {
+                        final BusyBirdsMissionControl.AircraftOutlook outlook = outlooks.get(a.getId());
+                        if (outlook.airport() == null || !outlook.isOpenTo(userId)) {
+                            return false;
+                        }
+                        return outlook.hasOpenMissions() || (a.getOperationalStatus() == Aircrafts.OperationalStatus.Idle && a.getLocationStatus() == Aircrafts.LocationStatus.ParkedAtAirport);
+                    })
+                    .map(a -> {
+                        final BusyBirdsMissionControl.AircraftOutlook outlook = outlooks.get(a.getId());
+                        return new AircraftDto(
+                                Id.encode(a.getId()),
+                                world.aircraftTypes().byId(a.getAircraftTypeId()).orElseThrow().getIcao(),
+                                a.getRegNo(),
+                                outlook.airport().getIcao(),
+                                aircraftEarliestStart(outlook));
+                    })
                     .toList();
         });
     }
@@ -192,15 +206,21 @@ public class BusyBirdsController {
 
             final int price = world.busyBirdsMissionControl().quote(journey);
 
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, pauses(pauses), ferryBackToBase,
+            final BusyBirdsMissionControl.AircraftOutlook outlook = world.busyBirdsMissionControl().outlooks(List.of(aircraft)).get(aircraft.getId());
+            final String aircraftProblem = aircraftProblem(outlook, userId);
+            if (aircraftProblem != null) {
+                return new BuildPlansResponse(List.of(PlanDto.failure(aircraftProblem)), price);
+            }
+
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, outlook.airport(), pauses(pauses), ferryBackToBase,
                     payParamsOfUser(world, userId, aircraft), firstDepartureTime(startTime));
 
-            // every plan tells whether its time is free in the roster of the user
+            // every plan tells whether its time is free in the roster of the user and for the aircraft
             final int now = world.getWorldTime();
             return new BuildPlansResponse(plans.stream().map(plan -> {
                 final PlanDto dto = PlanDto.from(plan);
                 if (dto.getStartTime() != null) {
-                    dto.setSlot(checkStartSlot(world, userId, dto.getStartTime(), dto.getEndTime(), now));
+                    dto.setSlot(checkStartSlot(world, userId, dto.getStartTime(), dto.getEndTime(), now, aircraftEarliestStart(outlook)));
                 }
                 return dto;
             }).toList(), price);
@@ -227,9 +247,16 @@ public class BusyBirdsController {
                 return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
             }
 
+            // the aircraft is free, or all its missions are the missions of this user (the mission goes on after them)
+            final BusyBirdsMissionControl.AircraftOutlook outlook = world.busyBirdsMissionControl().outlooks(List.of(aircraft)).get(aircraft.getId());
+            final String aircraftProblem = aircraftProblem(outlook, userId);
+            if (aircraftProblem != null) {
+                return new BookMissionResponse("failure", Collections.singletonList(aircraftProblem));
+            }
+
             // the parameters of the pay are the currency and the level of the pilot on the type at the moment of the booking, the plans and the pilot contracts have them
             final PilotPayParams payParams = payParamsOfUser(world, userId, aircraft);
-            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, pauses(pauses), ferryBackToBase, payParams,
+            List<BusyBirdsMissionControl.MissionPlan> plans = world.busyBirdsMissionControl().buildPlans(journey, aircraft, outlook.airport(), pauses(pauses), ferryBackToBase, payParams,
                     firstDepartureTime(startTime));
 
             Optional<BusyBirdsMissionControl.MissionPlan> plan = plans.stream().filter(p -> planId.equals(p.getId())).findFirst();
@@ -242,9 +269,9 @@ public class BusyBirdsController {
             }
 
             // the whole mission (from the first departure to the last arrival) must fit into the roster of the user: not too soon, not later than 7 days from now,
-            // not closer than 30 minutes to another flight of the pilot
+            // not closer than 30 minutes to another flight of the pilot, and not before the aircraft is free (its booked missions are over and the least gap has passed)
             final PlanDto planDto = PlanDto.from(plan.get());
-            final StartSlotDto slot = checkStartSlot(world, userId, planDto.getStartTime(), planDto.getEndTime(), world.getWorldTime());
+            final StartSlotDto slot = checkStartSlot(world, userId, planDto.getStartTime(), planDto.getEndTime(), world.getWorldTime(), aircraftEarliestStart(outlook));
             if (!slot.isFree()) {
                 return new BookMissionResponse("failure", startSlotProblems(slot));
             }
@@ -290,17 +317,40 @@ public class BusyBirdsController {
         return (int) (startTimeMillis / 1000);
     }
 
+    // the earliest start which the aircraft allows (UTC milliseconds): 30 minutes after the last landing of its booked missions, 0 for an aircraft which has none
+    static long aircraftEarliestStart(final BusyBirdsMissionControl.AircraftOutlook outlook) {
+        return outlook.hasOpenMissions() ? outlook.freeFromWorldTime() * 1000L + 30 * 60 * 1000L : 0;
+    }
+
+    // why the user cannot book on the aircraft, null if the aircraft is free or goes on with the missions of this user
+    static String aircraftProblem(final BusyBirdsMissionControl.AircraftOutlook outlook, final int userId) {
+        if (outlook.airport() == null) {
+            return "The aircraft is not at an airport.";
+        }
+        if (!outlook.isOpenTo(userId)) {
+            return "The aircraft has missions of another pilot.";
+        }
+        return null;
+    }
+
     /**
      * Whether the mission [start, end] (UTC milliseconds, the first departure and the last arrival of the plan) can be booked: it starts not earlier than 30 minutes from now (with the
      * tolerance of the clocks), not later than 7 days from now, and there are not less than 30 minutes between it and every flight of the pilot which is not over (the same rule as
      * at ShadowJet, ShadowJetBooking.checkSlot, for the whole block of the legs).
      */
     static StartSlotDto checkStartSlot(final World world, final int userId, final long startMillis, final long endMillis, final int nowWorldTime) {
+        return checkStartSlot(world, userId, startMillis, endMillis, nowWorldTime, 0);
+    }
+
+    /** The same with the earliest start which the aircraft allows (0: it has no booked missions, see aircraftEarliestStart). */
+    static StartSlotDto checkStartSlot(final World world, final int userId, final long startMillis, final long endMillis, final int nowWorldTime, final long aircraftEarliestStart) {
         final ShadowJetController.SlotDto slot = ShadowJetController.checkSlot(world, userId, startMillis, endMillis, nowWorldTime - START_CLOCK_TOLERANCE_SECONDS);
         final long nowMillis = nowWorldTime * 1000L;
         final long latestStart = nowMillis + START_HORIZON_DAYS * 24 * 3600 * 1000L;
         final boolean tooLate = startMillis > latestStart;
-        return new StartSlotDto(slot.isFree() && !tooLate, slot.isTooSoon(), tooLate, nowMillis + 30 * 60 * 1000L, latestStart, slot.getConflict());
+        final boolean aircraftBusy = startMillis < aircraftEarliestStart;
+        return new StartSlotDto(slot.isFree() && !tooLate && !aircraftBusy, slot.isTooSoon(), tooLate, aircraftBusy, aircraftEarliestStart, nowMillis + 30 * 60 * 1000L, latestStart,
+                slot.getConflict());
     }
 
     static List<String> startSlotProblems(final StartSlotDto slot) {
@@ -310,6 +360,10 @@ public class BusyBirdsController {
         }
         if (slot.isTooLate()) {
             problems.add("The mission starts too late: the latest start is " + START_HORIZON_DAYS + " days from now.");
+        }
+        if (slot.isAircraftBusy()) {
+            problems.add("The aircraft is busy: its booked missions end later, the earliest start for it is "
+                    + LocalDateTime.ofEpochSecond(slot.getAircraftEarliestStart() / 1000, 0, ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")) + " UTC.");
         }
         final ShadowJetController.ConflictDto conflict = slot.getConflict();
         if (conflict != null) {
@@ -407,6 +461,9 @@ public class BusyBirdsController {
         private boolean free;
         private boolean tooSoon;
         private boolean tooLate;
+        // the aircraft is not free yet at the start: its booked missions end later (aircraftEarliestStart, UTC milliseconds, 0 for an aircraft which has none)
+        private boolean aircraftBusy;
+        private long aircraftEarliestStart;
         // the earliest and the latest start which the server accepts now: 30 minutes and 7 days from now
         private long earliestStart;
         private long latestStart;
@@ -436,7 +493,10 @@ public class BusyBirdsController {
         private String id;
         private String typeCode;
         private String regNo;
+        // the airport where the aircraft is when a new mission begins: where it stands now, or where its booked missions end
         private String locationAirportIcao;
+        // the earliest start of a new mission on the aircraft, UTC milliseconds: 0 for a free aircraft, 30 minutes after the last landing of its booked missions otherwise
+        private long earliestStart;
     }
 
     @Data
@@ -461,6 +521,10 @@ public class BusyBirdsController {
         private Long endTime;
         // whether the time of the plan is free in the roster of the user: only for a request with a start time
         private StartSlotDto slot;
+
+        public static PlanDto failure(final String message) {
+            return new PlanDto("failure", null, null, null, null, List.of(message), null, null, null);
+        }
 
         public static PlanDto from(BusyBirdsMissionControl.MissionPlan plan) {
             if (plan.getStatus() == BusyBirdsMissionControl.MissionPlan.Status.Failure) {

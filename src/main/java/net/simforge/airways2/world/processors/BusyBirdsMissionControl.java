@@ -39,6 +39,54 @@ public class BusyBirdsMissionControl {
         return world.aircraftOperators().byId(World25.BusyBirdsOperatorId).orElseThrow();
     }
 
+    /**
+     * Where an aircraft is going to be and from when it is free, by its missions which are not over (booked, in progress): after the last of them it stands at the airport
+     * of its arrival. Without such missions it is where it is now and free at once (freeFromWorldTime is 0).
+     *
+     * @param ownerUserId the user whose missions they are (0 without missions); sharedByUsers: the missions of several users (or without a user) are there, nobody continues them
+     */
+    public record AircraftOutlook(Airports.Airport airport, int freeFromWorldTime, int ownerUserId, boolean sharedByUsers) {
+        public boolean hasOpenMissions() {
+            return freeFromWorldTime > 0;
+        }
+
+        /** Whether the user may book on the aircraft: it has no missions of its own (free), or all the missions are the missions of this user (the continuation). */
+        public boolean isOpenTo(final int userId) {
+            return !hasOpenMissions() || (!sharedByUsers && ownerUserId == userId);
+        }
+    }
+
+    private static final FlightMissions.Status[] OPEN_STATUSES = {
+            FlightMissions.Status.PlannedManually, FlightMissions.Status.PlannedViaSchedule, FlightMissions.Status.Dispatched, FlightMissions.Status.Preflight,
+            FlightMissions.Status.Departure, FlightMissions.Status.Flying, FlightMissions.Status.Arrival, FlightMissions.Status.Postflight};
+
+    /**
+     * The outlooks of the aircraft (see AircraftOutlook), by the aircraft id. The missions of all of them are found by one pass of the storage of the missions.
+     */
+    public Map<Integer, AircraftOutlook> outlooks(final Collection<Aircrafts.Aircraft> aircraft) {
+        final Map<Integer, List<FlightMissions.Mission>> open = new HashMap<>();
+        if (!aircraft.isEmpty()) {
+            final Set<Integer> ids = aircraft.stream().map(Aircrafts.Aircraft::getId).collect(java.util.stream.Collectors.toSet());
+            world.flightMissions()
+                    .filter(Storage.Condition.and(world.flightMissions().byAircraftIdIn(ids), world.flightMissions().anyStatus(OPEN_STATUSES)))
+                    .forEach(m -> open.computeIfAbsent(m.getAircraftId(), k -> new ArrayList<>()).add(m));
+        }
+
+        final Map<Integer, AircraftOutlook> outlooks = new HashMap<>();
+        for (final Aircrafts.Aircraft a : aircraft) {
+            final List<FlightMissions.Mission> missions = open.get(a.getId());
+            if (missions == null || missions.isEmpty()) {
+                outlooks.put(a.getId(), new AircraftOutlook(world.airports().byId(a.getLocationAirportId()).orElse(null), 0, 0, false));
+                continue;
+            }
+            final FlightMissions.Mission last = missions.stream().max(Comparator.comparingInt(FlightMissions.Mission::getPlannedArrivalWorldTime)).orElseThrow();
+            final Set<Integer> users = missions.stream().map(FlightMissions.Mission::getUserId).collect(java.util.stream.Collectors.toSet());
+            outlooks.put(a.getId(), new AircraftOutlook(world.airports().byId(last.getDestinationAirportId()).orElse(null), last.getPlannedArrivalWorldTime(),
+                    users.size() == 1 ? users.iterator().next() : 0, users.size() != 1 || users.contains(0)));
+        }
+        return outlooks;
+    }
+
     public List<Mission> getMissionsToBook() {
         return getMissionsToBook(0, 0);
     }
@@ -217,12 +265,13 @@ public class BusyBirdsMissionControl {
      * The plans of a mission for an aircraft. The pay of every leg is what the pilot will get: it is calculated by the parameters of the pilot on the type of
      * the aircraft (the currency and the experience level, see PilotPay), the same as the pilot contract is going to be created with.
      * <p>
+     * The aircraft is at aircraftAirport when the mission begins (see outlooks: where it is now, or where its booked missions end).
      * The first leg departs at firstDepartureTime (the world time in seconds, it is aligned up to 5 minutes, as every leg is). The times of a leg are the times of its flight
      * mission, from blocks off to blocks on, so the pause between two legs is the real gap of the roster between the flights. pauseHours are the pauses before the second leg,
      * before the third one and so on (hours); a leg which has no pause in the list gets DEFAULT_LEG_PAUSE_MINUTES.
      */
-    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, List<Double> pauseHours, boolean ferryBackToBase, PilotPayParams payParams,
-                                                                int firstDepartureTime) {
+    public List<BusyBirdsMissionControl.MissionPlan> buildPlans(Journeys.Journey journey, Aircrafts.Aircraft aircraft, Airports.Airport aircraftAirport, List<Double> pauseHours,
+                                                                boolean ferryBackToBase, PilotPayParams payParams, int firstDepartureTime) {
         List<String> messages = new ArrayList<>();
 
         AircraftOperators.AircraftOperator busyBirdsOperator = getBusyBirdsOperator();
@@ -251,7 +300,7 @@ public class BusyBirdsMissionControl {
 
         for (Airports.Airport fromAirport : fromAirports) {
             for (Airports.Airport toAirport : toAirports) {
-                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, fromAirport, toAirport, messages, pauseHours, ferryBackToBase, payParams, firstDepartureTime));
+                plans.add(_buildPlan(journey, busyBirdsOperator, aircraft, aircraftAirport, fromAirport, toAirport, messages, pauseHours, ferryBackToBase, payParams, firstDepartureTime));
             }
         }
 
@@ -260,11 +309,10 @@ public class BusyBirdsMissionControl {
         return plans;
     }
 
-    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, List<Double> pauseHours, boolean ferryBackToBase, PilotPayParams payParams,
+    private MissionPlan _buildPlan(Journeys.Journey journey, AircraftOperators.AircraftOperator busyBirdsOperator, Aircrafts.Aircraft aircraft, Airports.Airport locationAirport, Airports.Airport fromAirport, Airports.Airport toAirport, List<String> messages, List<Double> pauseHours, boolean ferryBackToBase, PilotPayParams payParams,
                                  int firstDepartureTime) {
         Airports.Airport baseAirport = findNearestBaseAirport(world, busyBirdsOperator, toAirport).orElseThrow();
 
-        Airports.Airport locationAirport = world.airports().byId(aircraft.getLocationAirportId()).orElseThrow();
         boolean needFerryFlightToDepartureAirport = locationAirport.getId() != fromAirport.getId();
         boolean needFerryFlightToBaseAirport = toAirport.getId() != baseAirport.getId();
 

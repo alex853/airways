@@ -30,6 +30,8 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -45,6 +47,8 @@ class BusyBirdsBookingStartTimeTest {
     private Object oldUserStorage;
     private int userId;
     private Journeys.Journey journey;
+    private int fromCityId;
+    private int toCityId;
     private Aircrafts.Aircraft aircraft;
     private Airports.Airport base;
     private Airports.Airport destination;
@@ -75,6 +79,8 @@ class BusyBirdsBookingStartTimeTest {
         final int countryId = world.countries().create("GB", "United Kingdom").getId();
         final Cities.City fromCity = world.cities().create(countryId, "From", 51.28, -0.76, 100000);
         final Cities.City toCity = world.cities().create(countryId, "To", 52.5, 13.4, 100000);
+        fromCityId = fromCity.getId();
+        toCityId = toCity.getId();
         base = world.airports().create(51.28, -0.76, "FRM", "EGLF", "Farnborough");
         destination = world.airports().create(52.36, 13.5, "TOO", "EDDB", "Berlin");
         world.airport2city().create(base.getId(), fromCity.getId());
@@ -111,8 +117,23 @@ class BusyBirdsBookingStartTimeTest {
     }
 
     private BusyBirdsController.BookMissionResponse book(final long startMillis) {
-        final BusyBirdsController.BuildPlansResponse plans = controller.buildPlans(userId, Id.encode(journey.getId()), Id.encode(aircraft.getId()), startMillis, null, true);
-        return controller.bookMission(userId, Id.encode(journey.getId()), Id.encode(aircraft.getId()), startMillis, null, true, plans.getPlans().get(0).getId());
+        return book(userId, journey, startMillis, true);
+    }
+
+    private BusyBirdsController.BookMissionResponse book(final int forUserId, final Journeys.Journey forJourney, final long startMillis, final boolean ferryBackToBase) {
+        final BusyBirdsController.BuildPlansResponse plans = controller.buildPlans(forUserId, Id.encode(forJourney.getId()), Id.encode(aircraft.getId()), startMillis, null, ferryBackToBase);
+        return controller.bookMission(forUserId, Id.encode(forJourney.getId()), Id.encode(aircraft.getId()), startMillis, null, ferryBackToBase, plans.getPlans().get(0).getId());
+    }
+
+    // the journey back: from the city of the destination to the city of the departure
+    private Journeys.Journey journeyBack() {
+        final Journeys.Journey back = world.journeys().create(Journeys.Status.LookingForTickets, toCityId, fromCityId, 3, CabinLayout.Service.J);
+        back.setLocationCityId(toCityId);
+        return back;
+    }
+
+    private BusyBirdsController.AircraftDto offered(final int forUserId) {
+        return controller.getAvailableAircraft(forUserId).stream().filter(a -> a.getRegNo().equals("BB-CJA")).findFirst().orElse(null);
     }
 
     private List<FlightMissions.Mission> flightsOfTheUser() {
@@ -184,5 +205,77 @@ class BusyBirdsBookingStartTimeTest {
         assertEquals("failure", response.getStatus());
         assertTrue(String.join(" ", response.getMessages()).contains("no pilot"), String.valueOf(response.getMessages()));
         assertEquals(0, flightsOfTheUser().size());
+    }
+
+    @Test
+    void aFreeAircraftIsOfferedWhereItStandsAndFreeAtOnce() {
+        final BusyBirdsController.AircraftDto dto = offered(userId);
+
+        assertEquals("EGLF", dto.getLocationAirportIcao());
+        assertEquals(0, dto.getEarliestStart());
+    }
+
+    @Test
+    void theAircraftWithAMissionOfTheUserIsOfferedWhereTheMissionEndsAndFreeAfterIt() {
+        final long start = startAfterHours(30);
+        assertEquals("success", book(userId, journey, start, false).getStatus());
+        final FlightMissions.Mission mission = flightsOfTheUser().get(0);
+
+        final BusyBirdsController.AircraftDto dto = offered(userId);
+
+        assertEquals("EDDB", dto.getLocationAirportIcao());
+        assertEquals(mission.getPlannedArrivalWorldTime() * 1000L + 30 * 60 * 1000L, dto.getEarliestStart());
+    }
+
+    @Test
+    void aMissionGoesOnAfterTheLastMissionOfTheAircraftFromWhereItEnds() {
+        assertEquals("success", book(userId, journey, startAfterHours(30), false).getStatus());
+        final long earliest = offered(userId).getEarliestStart();
+
+        final BusyBirdsController.BookMissionResponse response = book(userId, journeyBack(), earliest, false);
+
+        assertEquals("success", response.getStatus(), String.valueOf(response.getMessages()));
+        final List<FlightMissions.Mission> flights = flightsOfTheUser();
+        assertEquals(2, flights.size(), "the revenue leg of the first mission and the revenue leg of the second one: no flight to the departure, the aircraft stands there");
+        assertEquals(destination.getId(), flights.get(1).getDepartureAirportId());
+        assertTrue(flights.get(1).getPlannedDepartureWorldTime() * 1000L >= earliest);
+    }
+
+    @Test
+    void aMissionBeforeTheAircraftIsFreeIsRefused() {
+        assertEquals("success", book(userId, journey, startAfterHours(30), false).getStatus());
+        final long earliest = offered(userId).getEarliestStart();
+        final Journeys.Journey back = journeyBack();
+
+        final BusyBirdsController.BookMissionResponse response = book(userId, back, earliest - 3600_000L, false);
+
+        assertEquals("failure", response.getStatus());
+        assertTrue(String.join(" ", response.getMessages()).contains("The aircraft is busy"), String.valueOf(response.getMessages()));
+        assertEquals(1, flightsOfTheUser().size());
+        assertEquals(Journeys.Status.LookingForTickets, back.getStatus());
+    }
+
+    @Test
+    void theSlotOfAPlanSaysWhenTheAircraftIsBusy() {
+        assertEquals("success", book(userId, journey, startAfterHours(30), false).getStatus());
+        final long earliest = offered(userId).getEarliestStart();
+
+        final BusyBirdsController.PlanDto plan = controller.buildPlans(userId, Id.encode(journeyBack().getId()), Id.encode(aircraft.getId()), earliest - 3600_000L, null, false).getPlans().get(0);
+
+        assertTrue(plan.getSlot().isAircraftBusy());
+        assertFalse(plan.getSlot().isFree());
+        assertEquals(earliest, plan.getSlot().getAircraftEarliestStart());
+    }
+
+    @Test
+    void anAircraftWithMissionsOfAnotherPilotIsNotOfferedAndNotBooked() {
+        assertEquals("success", book(userId, journey, startAfterHours(30), false).getStatus());
+        final Persons.Person other = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 1, Persons.LocationType.Airport, base.getId(), fromCityId, "BK", 0);
+        final int otherUserId = UserStorage.getInstance().create("OtherToken123456", other.getId(), 0).getId();
+
+        assertNull(offered(otherUserId));
+        final BusyBirdsController.BookMissionResponse response = book(otherUserId, journeyBack(), startAfterHours(80), false);
+        assertEquals("failure", response.getStatus());
+        assertTrue(String.join(" ", response.getMessages()).contains("missions of another pilot"), String.valueOf(response.getMessages()));
     }
 }

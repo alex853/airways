@@ -177,6 +177,13 @@ public class FlightMissions {
         return allForAircraft(aircraft).min(FlightMissions.sortByDepartureTimeFromFutureToPast);
     }
 
+    public Storage.Condition<Mission> byAircraftIdIn(final Collection<Integer> aircraftIds) {
+        checkNotNull(aircraftIds, "aircraftIds is mandatory");
+        final Set<Integer> ids = new HashSet<>(aircraftIds);
+
+        return recordId -> ids.contains(storage.getAsInt(recordId, aircraftIdField));
+    }
+
     public Storage.Condition<Mission> anyStatus(Status... statuses) {
         checkNotNull(statuses, "statuses is mandatory");
         checkArgument(statuses.length > 0, "statuses is mandatory");
