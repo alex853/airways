@@ -86,6 +86,8 @@ public class UserController {
         final Persons.Person person = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, user.getId(),
                 Persons.LocationType.City, START_CITY_ID, START_CITY_ID, initials, 0);
         users.setPersonId(user.getId(), person.getId());
+        // the flight of the pilot is finished by itself after the deboarding (docs/persons-pilots.md)
+        person.setAutoFinish(true);
 
         final BankAccounts.BankAccount account = world.bankAccounts().create(BankAccounts.Kind.Person, person.getId(), false, world.getWorldTime());
         person.setBankAccountId(account.getId());

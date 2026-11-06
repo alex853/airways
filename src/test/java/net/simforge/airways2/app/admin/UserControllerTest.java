@@ -75,6 +75,7 @@ class UserControllerTest {
         assertEquals(1, person.getLocationId());
         assertEquals(1, person.getOriginCityId());
         assertEquals(0, person.getAvatarId());
+        assertTrue(person.isAutoFinish());
         assertEquals(2, person.getInitials().length());
         assertTrue(person.getInitials().chars().allMatch(c -> c >= 'A' && c <= 'Z'));
         assertEquals(created.getInitials(), person.getInitials());
