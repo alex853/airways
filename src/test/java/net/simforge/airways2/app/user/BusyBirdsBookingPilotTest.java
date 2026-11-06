@@ -37,6 +37,11 @@ class BusyBirdsBookingPilotTest {
     }
 
     @Test
+    void theBookingWhichIgnoresThePilotStateNeedsOnlyAPilot() {
+        assertTrue(BusyBirdsController.noPilotProblem(world, 12345).contains("no pilot"));
+    }
+
+    @Test
     void noPersonNoBooking() {
         assertTrue(BusyBirdsController.pilotBookingProblem(world, 0, oakland.getId()).contains("no pilot"));
         assertTrue(BusyBirdsController.pilotBookingProblem(world, 12345, oakland.getId()).contains("no pilot"));

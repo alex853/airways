@@ -218,14 +218,17 @@ public class BusyBirdsController {
                                            @RequestParam(name = "turnaroundTime", required = false, defaultValue = "1") double turnaroundTime,
                                            @RequestParam(name = "intervals", required = false) String intervals,
                                            @RequestParam(name = "ferryBackToBase", required = false, defaultValue = "true") boolean ferryBackToBase,
-                                           @RequestParam(name = "planId") String planId) {
+                                           @RequestParam(name = "planId") String planId,
+                                           @RequestParam(name = "ignorePilotState", required = false, defaultValue = "false") boolean ignorePilotState) {
         return worldBean.modifySync(world -> {
             world.busyBirdsMissionControl().checkUserHasAccessToBusyBirds(userId);
 
             Aircrafts.Aircraft aircraft = world.aircrafts().byId(Id.decode(aircraftId)).orElseThrow();
             Journeys.Journey journey = world.journeys().byId(Id.decode(missionId)).orElseThrow();
 
-            final String pilotProblem = pilotBookingProblem(world, userId, aircraft);
+            // ignorePilotState (the page Book busyBirds): only a pilot is needed, not its state or place, as at ShadowJet (decided 2026-10-30); without it (the tab of G7,
+            // the flight here and now) the pilot has to be Idle where the aircraft stands
+            final String pilotProblem = ignorePilotState ? noPilotProblem(world, userId) : pilotBookingProblem(world, userId, aircraft);
             if (pilotProblem != null) {
                 return new BookMissionResponse("failure", Collections.singletonList(pilotProblem));
             }
@@ -341,6 +344,16 @@ public class BusyBirdsController {
             gaps.add(hours);
         }
         return gaps;
+    }
+
+    // The booking which ignores the state and the place of the pilot needs a pilot (person) of the user and nothing else. Returns the reason of the refusal, null if the
+    // booking is allowed.
+    static String noPilotProblem(final World world, final int userId) {
+        final int personId = UserStorage.getInstance().findById(userId).map(User::getPersonId).orElse(0);
+        if (personId <= 0 || world.persons().byId(personId).isEmpty()) {
+            return "You have no pilot (person), so no flight can be booked.";
+        }
+        return null;
     }
 
     // Nobody flies without a pilot: the user has to have a person who is Idle at the airport where the aircraft stands, or in a city which that airport is
