@@ -22,7 +22,8 @@
 - [storage-paged.md](storage-paged.md) — Storage: страничный режим (`paged()`), адаптер байтов, отсечка пустого хвоста (`tryTrimTail`), лог
 - [storage-extension.md](storage-extension.md) — как расширять запись хранилища (второе хранилище, копирование, валидация, своп) и `FixedLengthString`
 - [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
-- [users.md](users.md) — пользователи: временное хранилище на property-файлах, токены, последняя посадка
+- [users.md](users.md) — пользователи: свой storage (токен, персона, VATSIM CID), админские методы создания и токена
+- [g7-state-log.md](g7-state-log.md) — `POST /g7/state-log`: журнал событий инструмента G7 в файлы по дням (папка `./g7/`)
 - [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
 - [status-and-backlog.md](status-and-backlog.md) — статус и бэклог: брейндамп по пунктам (сделано / частично / не сделано), отложенное и дальние планы, напоминания по проду, тудушки в коде (сверка 2026-10-22)
 - [persons-pilots.md](persons-pilots.md) — Person: единая сущность пилотов и cabin crew (состав полей, связь с User, сценарий автономного пилота), дизайн, не реализовано

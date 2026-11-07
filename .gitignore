@@ -8,6 +8,7 @@ hosting-access
 /build/
 /World25/
 /world-data/
+/g7/
 /vatsim-tracker/
 /admin-requests.http
 /user-token.txt
