@@ -765,7 +765,12 @@ public class AdminController {
      */
     @GetMapping(value = "/flows/c2c/oldest", produces = "text/plain")
     public String getC2COldestFlows(@RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
-        return worldBean.read(world -> String.join(System.lineSeparator(), City2CityFlowHistogramAnalyser.oldestByClock(world, Math.min(limit, 200))) + System.lineSeparator());
+        return worldBean.read(world -> {
+            final int shown = Math.min(limit, 200);
+            final List<String> lines = new ArrayList<>(City2CityFlowHistogramAnalyser.oldestByClock(world, shown));
+            lines.add(City2CityFlowHistogramAnalyser.totalNeedPax(world, shown));
+            return String.join(System.lineSeparator(), lines) + System.lineSeparator();
+        });
     }
 
     @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")

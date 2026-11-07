@@ -161,6 +161,21 @@ class City2CityFlowHistogramAnalyserTest {
     }
 
     @Test
+    public void test__total_need_pax_counts_the_listed_lines_and_all_the_flows() {
+        final int now = world.getWorldTime();
+        flowWithClock(now - 400 * Time.ONE_DAY, true);
+        flowWithClock(now - 10 * Time.ONE_DAY, true);
+        flowWithClock(now - 3 * Time.ONE_DAY, true);
+        flowWithClock(0, true); // no clock: not counted
+
+        final String total = City2CityFlowHistogramAnalyser.totalNeedPax(world, 2);
+
+        assertTrue(total.startsWith("total need pax "), total);
+        assertTrue(total.contains(" in the 2 lines above, "), total);
+        assertTrue(total.endsWith(" in all 3 active flows with a clock"), total);
+    }
+
+    @Test
     public void test__oldest_by_clock_with_a_zero_limit_is_empty() {
         flowWithClock(world.getWorldTime() - Time.ONE_DAY, true);
 

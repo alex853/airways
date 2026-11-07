@@ -47,14 +47,42 @@ public class City2CityFlowHistogramAnalyser {
      */
     public static java.util.List<String> oldestByClock(final World world, final int limit) {
         final int worldTime = world.getWorldTime();
-        final java.util.List<String[]> rows = world.city2cityFlows().all()
-                .filter(City2CityFlows.Flow::isActive)
-                .filter(c2c -> c2c.getAccumulatedFlowTime() != 0)
-                .sorted(java.util.Comparator.comparingInt(City2CityFlows.Flow::getAccumulatedFlowTime))
+        final java.util.List<String[]> rows = flowsByClock(world)
                 .limit(Math.max(0, limit))
                 .map(c2c -> describeFlow(world, c2c, worldTime))
                 .toList();
         return alignColumns(rows);
+    }
+
+    private static java.util.stream.Stream<City2CityFlows.Flow> flowsByClock(final World world) {
+        return world.city2cityFlows().all()
+                .filter(City2CityFlows.Flow::isActive)
+                .filter(c2c -> c2c.getAccumulatedFlowTime() != 0)
+                .sorted(java.util.Comparator.comparingInt(City2CityFlows.Flow::getAccumulatedFlowTime));
+    }
+
+    /**
+     * The sum of the "need pax" column of the lines oldestByClock gives for the limit, and the same sum for all the active flows with a clock
+     * (the flows whose estimate can not be calculated are not counted).
+     */
+    public static String totalNeedPax(final World world, final int limit) {
+        final int worldTime = world.getWorldTime();
+        final long[] listed = new long[1];
+        final long[] all = new long[1];
+        final int[] index = new int[1];
+        flowsByClock(world).forEach(c2c -> {
+            long pax = 0;
+            try {
+                pax = passengersToCatchUp(world, c2c, worldTime);
+            } catch (final RuntimeException e) {
+                // not counted, the line of the flow says "unknown"
+            }
+            all[0] += pax;
+            if (index[0]++ < limit) {
+                listed[0] += pax;
+            }
+        });
+        return "total need pax " + listed[0] + " in the " + Math.min(Math.max(0, limit), index[0]) + " lines above, " + all[0] + " in all " + index[0] + " active flows with a clock";
     }
 
     /** The cells of the rows are padded to the width of the widest cell of the column, so the separators go one under another; the last column is not padded. */
