@@ -137,6 +137,30 @@ class City2CityFlowHistogramAnalyserTest {
     }
 
     @Test
+    public void test__oldest_by_clock_columns_are_aligned_and_have_the_passengers_to_catch_up() {
+        final int now = world.getWorldTime();
+        flowWithClock(now - 400 * Time.ONE_DAY, true);
+        flowWithClock(now - 10 * Time.ONE_DAY, true);
+
+        final java.util.List<String> lines = City2CityFlowHistogramAnalyser.oldestByClock(world, 2);
+
+        assertEquals(2, lines.size());
+        for (int i = 0; i < 2; i++) {
+            assertTrue(lines.get(i).contains(" | need pax "), lines.get(i));
+        }
+        // every separator is at the same position in all the lines up to the last column
+        int from0 = 0;
+        int from1 = 0;
+        for (int column = 0; column < 4; column++) {
+            final int p0 = lines.get(0).indexOf(" | ", from0);
+            final int p1 = lines.get(1).indexOf(" | ", from1);
+            assertEquals(p0, p1, lines.get(0) + "\n" + lines.get(1));
+            from0 = p0 + 1;
+            from1 = p1 + 1;
+        }
+    }
+
+    @Test
     public void test__oldest_by_clock_with_a_zero_limit_is_empty() {
         flowWithClock(world.getWorldTime() - Time.ONE_DAY, true);
 

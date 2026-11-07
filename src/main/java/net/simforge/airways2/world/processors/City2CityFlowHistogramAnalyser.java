@@ -47,18 +47,65 @@ public class City2CityFlowHistogramAnalyser {
      */
     public static java.util.List<String> oldestByClock(final World world, final int limit) {
         final int worldTime = world.getWorldTime();
-        return world.city2cityFlows().all()
+        final java.util.List<String[]> rows = world.city2cityFlows().all()
                 .filter(City2CityFlows.Flow::isActive)
                 .filter(c2c -> c2c.getAccumulatedFlowTime() != 0)
                 .sorted(java.util.Comparator.comparingInt(City2CityFlows.Flow::getAccumulatedFlowTime))
                 .limit(Math.max(0, limit))
                 .map(c2c -> describeFlow(world, c2c, worldTime))
                 .toList();
+        return alignColumns(rows);
     }
 
-    private static String describeFlow(final World world, final City2CityFlows.Flow c2c, final int worldTime) {
-        final String from = world.cities().byId(c2c.getFromCityId()).map(city -> city.getName()).orElse("?");
-        final String to = world.cities().byId(c2c.getToCityId()).map(city -> city.getName()).orElse("?");
+    /** The cells of the rows are padded to the width of the widest cell of the column, so the separators go one under another; the last column is not padded. */
+    private static java.util.List<String> alignColumns(final java.util.List<String[]> rows) {
+        final int columns = rows.stream().mapToInt(row -> row.length).max().orElse(0);
+        final int[] widths = new int[columns];
+        for (final String[] row : rows) {
+            for (int i = 0; i < row.length; i++) {
+                widths[i] = Math.max(widths[i], row[i].length());
+            }
+        }
+        return rows.stream().map(row -> {
+            final StringBuilder line = new StringBuilder();
+            for (int i = 0; i < row.length; i++) {
+                if (i > 0) {
+                    line.append(" | ");
+                }
+                line.append(row[i]);
+                if (i < row.length - 1) {
+                    line.append(" ".repeat(widths[i] - row[i].length()));
+                }
+            }
+            return line.toString();
+        }).toList();
+    }
+
+    private static String shortName(final String name) {
+        return name.length() > 5 ? name.substring(0, 5) : name;
+    }
+
+    /**
+     * How many passengers (the sum of the group sizes) the flow has to generate for its clock to reach the world time with the current parameters:
+     * the delay in days multiplied by the passengers per day of the flow (see CityFlowHelper.getDailyPassengers). Zero for a flow which is not behind.
+     */
+    static long passengersToCatchUp(final World world, final City2CityFlows.Flow c2c, final int worldTime) {
+        final long lag = (long) worldTime - c2c.getAccumulatedFlowTime();
+        if (lag <= 0) {
+            return 0;
+        }
+        return Math.round(lag / (double) Time.ONE_DAY * CityFlowHelper.getDailyPassengers(world, c2c));
+    }
+
+    private static String[] describeFlow(final World world, final City2CityFlows.Flow c2c, final int worldTime) {
+        final String from = shortName(world.cities().byId(c2c.getFromCityId()).map(city -> city.getName()).orElse("?"));
+        final String to = shortName(world.cities().byId(c2c.getToCityId()).map(city -> city.getName()).orElse("?"));
+        String catchUp;
+        try {
+            catchUp = "need pax " + passengersToCatchUp(world, c2c, worldTime);
+        } catch (final RuntimeException e) {
+            catchUp = "need pax unknown (" + e.getClass().getSimpleName() + ")";
+        }
         String toAccumulate;
         String sum;
         try {
@@ -70,12 +117,16 @@ public class City2CityFlowHistogramAnalyser {
             toAccumulate = "unknown (" + e.getClass().getSimpleName() + ")";
             sum = "unknown";
         }
-        return "#" + c2c.getFromCityId() + "/" + c2c.getToCityId() + " " + from + " - " + to
-                + " | a/t " + Time.toLdtOrNull(c2c.getAccumulatedFlowTime()) + " (" + (worldTime - c2c.getAccumulatedFlowTime()) / Time.ONE_DAY + " d behind)"
-                + " | h/b " + Time.toLdtOrNull(c2c.getHeartbeatTime())
-                + " | time to accumulate " + toAccumulate + " | a/t + it = " + sum
-                + " | next g/s " + c2c.getNextGroupSize() + ", accumulated flow " + c2c.getAccumulatedFlow()
-                + " | s/r " + c2c.getSuccessRate() + ", flow fraction " + c2c.getFlowFraction();
+        return new String[] {
+                "#" + c2c.getFromCityId() + "/" + c2c.getToCityId() + " " + from + " - " + to,
+                "a/t " + Time.toLdtOrNull(c2c.getAccumulatedFlowTime()) + " (" + (worldTime - c2c.getAccumulatedFlowTime()) / Time.ONE_DAY + " d behind)",
+                catchUp,
+                "h/b " + Time.toLdtOrNull(c2c.getHeartbeatTime()),
+                "time to accumulate " + toAccumulate,
+                "a/t + it = " + sum,
+                "next g/s " + c2c.getNextGroupSize() + ", accumulated flow " + c2c.getAccumulatedFlow(),
+                "s/r " + c2c.getSuccessRate() + ", flow fraction " + c2c.getFlowFraction()
+        };
     }
 
     // by the heartbeat of the flows
