@@ -280,7 +280,7 @@ class DashboardManualActionsTest {
             final SimTracker.UserAction elsewhere = FlightDashboardController.buildActions(world, mission, sim, true, pilotAirportId).get(0);
             assertEquals("start-flight", elsewhere.getName());
             assertFalse(elsewhere.isAllowed());
-            assertFalse(elsewhere.getChecks().get(elsewhere.getChecks().size() - 1).isResult());
+            assertFalse(elsewhere.getChecks().stream().filter(c -> c.getName().startsWith("The pilot is at the departure airport")).findFirst().orElseThrow().isResult());
         }
     }
 

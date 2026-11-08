@@ -159,6 +159,19 @@ public class FlightMissionHelper {
     public static final double EARLIEST_LANDING_SHARE_OF_FLYING_TIME = 0.9;
 
     /**
+     * A flight can be started (Dispatched to Preflight) not earlier than this long before its planned departure: a flight which is days ahead cannot be started and cannot
+     * hold the aircraft and the pilot (it is not an endless window for the pilot who has booked a flight in advance).
+     */
+    public static final int START_WINDOW_SECONDS = 3 * Time.ONE_HOUR;
+
+    /**
+     * The earliest time when a Dispatched flight can be started by the pilot: 3 hours before the planned departure (START_WINDOW_SECONDS).
+     */
+    public static int calcEarliestAllowedStartTime(final FlightMissions.Mission flight) {
+        return flight.getPlannedDepartureWorldTime() - START_WINDOW_SECONDS;
+    }
+
+    /**
      * The earliest time of a manual landing: 90% of the planned flying time after the takeoff (EARLIEST_LANDING_SHARE_OF_FLYING_TIME). The planned time of the mission is from
      * blocks off to blocks on, it has the taxi before the takeoff and after the landing, so they are taken off: the flying time is what is left. (A share of the whole block
      * time would be later than the planned landing for a short flight.)

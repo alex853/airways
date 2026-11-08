@@ -28,7 +28,7 @@
 
 ## Часть «Flight» (по статусу рейса и режиму)
 
-- **Dispatched** (всегда, независимо от регистрации): The aircraft is assigned to you and stands at {dep}. The flight is planned for {pdep} UTC. When you are at the airport and ready to begin,
+- **Dispatched** (всегда, независимо от регистрации): The aircraft is assigned to you and stands at {dep}. The flight is planned for {pdep} UTC, the start opens 3 hours before it. When you are at the airport and ready to begin,
   start the flight: with the sim tracker the flight follows the sim (Blocks Off, Takeoff, Landing, Blocks On), in the manual mode you press these steps yourself. Если оба старта
   недоступны: «Fix the red conditions below first.»
 - **Preflight**: The pilot studies the weather and the route, files the flight plan, walks around the aircraft, sets up the FMS and talks to the ground services about the fuel and the ramp.
@@ -63,3 +63,12 @@
 
 Тексты в `flight-dashboard.html`, а не на сервере (проверяются на стабах `?stub=`); стиль: сюжет на Preflight, инструкции в остальном; числа «из скольких» (общее число проданных билетов) в
 тексте не показываются, как и в плитке Check-in. Не сделано: версия для G7 (FlightBag).
+
+## Окно старта рейса (2026-11-08)
+
+Рейс можно начать не раньше, чем за 3 часа до планового вылета (`FlightMissionHelper.START_WINDOW_SECONDS`, `calcEarliestAllowedStartTime`). Раньше пилот мог начать рейс, до вылета которого дни: он занимал самолёт и пилота. Правило проверяется в слое пилота, не в `FlightMissionControl.start` (его используют ещё автостарт рейсов ИИ и VATSIM).
+
+- Условие `The flight can be started not earlier than 3 hours before the planned departure (from yyyy-MM-dd HH:mm UTC)` добавляется к обоим стартам (`start-flight`, `start-flight-manual`) рейса в статусе `Dispatched` (`FlightDashboardController.withStartWindow`); пока оно красное, действие `allowed=false`. Дашборд и вкладка G7 получают его в `actions[].checks`, отдельных полей нет.
+- `POST /flight-dashboard/start-flight` до окна отвечает `409` (`the flight can not be started, the check failed: ...`) в обоих режимах.
+- Не касается: `continue-now` после посадки не в плановом (рейс продолжения начинается сразу), `continue-later` (новый рейс будет в окне, когда подойдёт время), рейсы после старта.
+- Веб: условие в списке под кнопками, дата жирным, стаб `?stub=too-early`. G7: кнопка Start flight неактивна, под ней строкой текст условия.

@@ -55,6 +55,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 @CrossOrigin
 public class FlightDashboardController {
     private static final Logger log = LoggerFactory.getLogger(FlightDashboardController.class);
+    // the time when the start of a flight opens, in the text of the check (UTC, like all the times of the dashboard)
+    private static final java.time.format.DateTimeFormatter START_WINDOW_FORMAT = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     @Autowired
     private WorldRunnerBean worldBean;
@@ -177,6 +179,31 @@ public class FlightDashboardController {
         }).toList();
     }
 
+    // The start of a flight is open from 3 hours before the planned departure (FlightMissionHelper.START_WINDOW_SECONDS): both starts of a flight which is not
+    // started yet get this check, the endpoint of the start refuses the start before it too. The text says the time when the start opens.
+    static SimTracker.CheckResult startWindowCheck(final World world, final FlightMissions.Mission flight) {
+        final int earliest = FlightMissionHelper.calcEarliestAllowedStartTime(flight);
+        final String opens = Time.toLdt(earliest).format(START_WINDOW_FORMAT);
+        return new SimTracker.CheckResult("The flight can be started not earlier than 3 hours before the planned departure (from " + opens + " UTC)",
+                world.getWorldTime() >= earliest);
+    }
+
+    // The starts of a flight which is not started yet are not allowed before the window of the start (startWindowCheck); the other actions are not touched
+    static List<SimTracker.UserAction> withStartWindow(final World world, final FlightMissions.Mission flight, final List<SimTracker.UserAction> actions) {
+        if (flight.getStatus() != FlightMissions.Status.Dispatched) {
+            return actions;
+        }
+        final SimTracker.CheckResult check = startWindowCheck(world, flight);
+        return actions.stream().map(action -> {
+            if (!"start-flight".equals(action.getName()) && !"start-flight-manual".equals(action.getName())) {
+                return action;
+            }
+            final List<SimTracker.CheckResult> checks = new ArrayList<>(action.getChecks());
+            checks.add(check);
+            return new SimTracker.UserAction(action.getName(), action.isAllowed() && check.isResult(), checks);
+        }).toList();
+    }
+
     // The next active flight of the user: the earliest one which is not finished or cancelled.
     private static Optional<FlightMissions.Mission> findActiveFlight(final World world, final int userId) {
         return world.flightMissions()
@@ -232,7 +259,7 @@ public class FlightDashboardController {
             actions.removeIf(action -> "finish-flight".equals(action.getName()));
         }
         offerDecisionAfterWrongLanding(world, flight, actions);
-        return actions;
+        return withStartWindow(world, flight, actions);
     }
 
     // The aircraft has landed not at the destination and is at the gate: the passengers do not get off by the ordinary button, the pilot decides what happens to them.
@@ -511,6 +538,13 @@ public class FlightDashboardController {
             if (pilotAirportId != flight.getDepartureAirportId()) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "the pilot is at " + world.airports().getIcao(pilotAirportId).orElse("no airport (travel to the airport first)")
                         + " but the flight departs from " + world.airports().getIcao(flight.getDepartureAirportId()).orElse("?"));
+            }
+
+            // the start is open from 3 hours before the planned departure, the same for both modes
+            final SimTracker.CheckResult startWindow = startWindowCheck(world, flight);
+            if (!startWindow.isResult()) {
+                log.warn("f/m #{} - flight-dashboard - start-flight refused, too early: {}", flightId, startWindow.getName());
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "the flight can not be started, the check failed: " + startWindow.getName());
             }
 
             // the limits of the pilot (awake, duty and flight time) are the same for both modes
