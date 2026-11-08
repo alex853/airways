@@ -1,78 +1,74 @@
 package net.simforge.airways2.tools;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * The pictures which can be the avatar of a pilot. The list is avatars.csv of the resources (columns: file, forbidden): the file is the name of an icon (the
- * 32x32 icons of FatCow on simforge.net), forbidden is 1 for a picture which must not be shown. The avatarId of a person is the number of the row of the file,
- * the first row after the header is 1, 0 is no avatar. The rows are never moved or deleted, otherwise everybody gets another picture: a picture which is not
- * wanted any more is forbidden, new pictures are added to the end.
+ * The pictures which can be the avatar of a pilot or of a passenger (docs/avatars.md). The list and the four flags of every picture (forbidden, common, pilot, special)
+ * are in {@link AvatarList}; this class is its single instance of the server and the short ways to the questions the game asks. The live file of the list is
+ * ./avatars/avatars.csv (the folder is the system property airways.avatars.folder, the tests give another one), it is outside of the classpath: the admin page changes it.
+ * The pictures are the 32x32 icons of FatCow on simforge.net.
  * <p>
- * The list stays on the server: the pages get only the name of the picture of the pilot and never the list of all of them.
+ * The list stays on the server: the pages get only the name of the picture of the pilot and never the list of all of them, the admin page gets all of it.
  */
 public final class Avatars {
-    private static final Logger log = LoggerFactory.getLogger(Avatars.class);
-
     // the pictures for a person who has no avatar yet: by the parity of the id of the person
     public static final String DEFAULT_FOR_ODD_PERSON_ID = "user_pilot.png";
     public static final String DEFAULT_FOR_EVEN_PERSON_ID = "user_pilot_civil.png";
 
-    private record Row(String file, boolean forbidden) {
+    private static final class Holder {
+        static final AvatarList LIST = AvatarList.forFile(Paths.get(System.getProperty("airways.avatars.folder", "./avatars"), "avatars.csv"));
     }
 
-    private static volatile List<Row> rows;
-
     private Avatars() {
+    }
+
+    /**
+     * The single list of the server.
+     */
+    public static AvatarList shared() {
+        return Holder.LIST;
     }
 
     /**
      * The file of the picture by the avatarId, empty if there is no such picture (0, a number out of the list) or it is forbidden.
      */
     public static Optional<String> fileOf(final int avatarId) {
-        final List<Row> all = rows();
-        if (avatarId < 1 || avatarId > all.size()) {
-            return Optional.empty();
-        }
-        final Row row = all.get(avatarId - 1);
-        return row.forbidden() ? Optional.empty() : Optional.of(row.file());
+        return shared().shownFileOf(avatarId);
     }
 
     /**
-     * The files of all the pictures which may be chosen (the forbidden ones are not in it), in the order of the list.
+     * The files which a pilot may choose (the flag pilot, not forbidden), in the order of the list.
      */
     public static List<String> allowedFiles() {
-        return rows().stream().filter(row -> !row.forbidden()).map(Row::file).toList();
+        return shared().pilotFiles();
     }
 
     /**
-     * The avatarId of an allowed picture by its file name, empty if there is no such picture or it is forbidden. The name must be exactly the name of the
-     * list, so nothing else (a path, another file) can be chosen.
+     * The files which a passenger gets at random (the flag common, not forbidden), in the order of the list.
+     */
+    public static List<String> commonFiles() {
+        return shared().commonFiles();
+    }
+
+    /**
+     * The files of the special journeys (the flag special, not forbidden), in the order of the list.
+     */
+    public static List<String> specialFiles() {
+        return shared().specialFiles();
+    }
+
+    /**
+     * The avatarId of a picture which a pilot may choose by its file name, empty if there is no such picture, it is forbidden or a pilot may not choose it.
      */
     public static Optional<Integer> idOfAllowedFile(final String file) {
-        if (file == null) {
-            return Optional.empty();
-        }
-        final List<Row> all = rows();
-        for (int i = 0; i < all.size(); i++) {
-            if (all.get(i).file().equals(file)) {
-                return all.get(i).forbidden() ? Optional.empty() : Optional.of(i + 1);
-            }
-        }
-        return Optional.empty();
+        return shared().idOfPilotFile(file);
     }
 
     /**
-     * The picture to show for a person: its own if it has one which is allowed, otherwise one of two pilots by the parity of the id of the person.
+     * The picture to show for a person: its own if it has one which is not forbidden (the pilot may have chosen it when the picture was allowed to him, it stays),
+     * otherwise one of two pilots by the parity of the id of the person.
      */
     public static String shownFile(final int personId, final int avatarId) {
         return fileOf(avatarId).orElse(personId % 2 != 0 ? DEFAULT_FOR_ODD_PERSON_ID : DEFAULT_FOR_EVEN_PERSON_ID);
@@ -82,44 +78,6 @@ public final class Avatars {
      * The number of the pictures in the list (forbidden ones too).
      */
     public static int size() {
-        return rows().size();
-    }
-
-    private static List<Row> rows() {
-        List<Row> result = rows;
-        if (result == null) {
-            synchronized (Avatars.class) {
-                result = rows;
-                if (result == null) {
-                    result = load();
-                    rows = result;
-                }
-            }
-        }
-        return result;
-    }
-
-    private static List<Row> load() {
-        final List<Row> loaded = new ArrayList<>();
-        try (InputStream stream = Avatars.class.getResourceAsStream("/avatars.csv")) {
-            if (stream == null) {
-                log.error("avatars.csv is not found, there are no avatars");
-                return List.of();
-            }
-            final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
-            reader.readLine(); // the header
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.isBlank()) {
-                    continue;
-                }
-                final String[] parts = line.split(",", -1);
-                loaded.add(new Row(parts[0].trim(), parts.length > 1 && "1".equals(parts[1].trim())));
-            }
-        } catch (final IOException e) {
-            log.error("avatars.csv cannot be read, there are no avatars", e);
-            return List.of();
-        }
-        return List.copyOf(loaded);
+        return shared().size();
     }
 }

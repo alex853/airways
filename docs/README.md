@@ -23,6 +23,7 @@
 - [storage-extension.md](storage-extension.md) — как расширять запись хранилища (второе хранилище, копирование, валидация, своп) и `FixedLengthString`
 - [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
 - [users.md](users.md) — пользователи: свой storage (токен, персона, VATSIM CID), админские методы создания и токена
+- [avatars.md](avatars.md) — список иконок и четыре флага (forbidden, common, pilot, special), файл вне classpath, админская страница; план аватарок пассажиров
 - [g7-state-log.md](g7-state-log.md) — `POST /g7/state-log`: журнал событий инструмента G7 в файлы по дням (папка `./g7/`)
 - [braindump-schedule-pay-pilots.md](braindump-schedule-pay-pilots.md) — брейндамп 2026-10-18: окна чекина/боардинга, выбор времени отбытия, оплата пилота, Person/Pilot, логбук (идеи, не решения)
 - [status-and-backlog.md](status-and-backlog.md) — статус и бэклог: брейндамп по пунктам (сделано / частично / не сделано), отложенное и дальние планы, напоминания по проду, тудушки в коде (сверка 2026-10-22)

@@ -43,4 +43,6 @@ dependencies {
 
 test {
     useJUnitPlatform()
+    // the live list of the avatars is a file outside of the classpath: the tests read the seed of the resources, a folder which is not there, and never the file of a developer
+    systemProperty 'airways.avatars.folder', "${buildDir}/avatars-not-there"
 }
