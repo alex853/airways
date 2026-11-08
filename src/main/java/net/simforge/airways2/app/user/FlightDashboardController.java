@@ -11,6 +11,7 @@ import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.app.vatsimtracker.VatsimTrackerBean;
 import net.simforge.airways2.pilottracker.SimTracker;
+import net.simforge.airways2.tools.Avatars;
 import net.simforge.airways2.tools.TimeTools;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
 import net.simforge.airways2.world.Time;
@@ -22,7 +23,9 @@ import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotContracts;
+import net.simforge.airways2.world.computations.PassengerAvatars;
 import net.simforge.airways2.world.computations.PilotPay;
+import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.processors.OperatorPay;
 import net.simforge.airways2.world.processors.RosterCascade;
 import net.simforge.airways2.world.processors.RosterForecast;
@@ -598,6 +601,48 @@ public class FlightDashboardController {
 
             return buildManualPay(world, flight);
         });
+    }
+
+    /**
+     * The passengers who are on board of the flight now, in the order of the row (docs/avatars.md): the avatar of every passenger (the initials and the icon, they come
+     * from the id of the journey and are not stored) in the order which is random, the same every time and mixes the journeys. The dashboards show it as a row of small
+     * icons, which grows with the boarding and shrinks with the deboarding; they ask for it when the number of the passengers or the status of the transport flight
+     * changes. A flight without passengers (a ferry) has an empty row.
+     */
+    @GetMapping("/passengers")
+    public PassengersDto getPassengers(@RequestAttribute("userId") int userId,
+                                       @RequestParam(name = "flightId") String flightIdStr) {
+        return worldBean.read(world -> {
+            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
+            checkIfFlightRelatesToUser(flight, userId);
+
+            return buildPassengers(world, flight, Avatars.commonFiles());
+        });
+    }
+
+    // The journeys which are in the aircraft: on board, or waiting to get off (the ones who got off are gone from the row, the ones who have not boarded are not in it yet)
+    private static final Journeys.Status[] STATUSES_IN_THE_AIRCRAFT = {Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding};
+
+    static PassengersDto buildPassengers(final World world, final FlightMissions.Mission flight, final List<String> iconPool) {
+        final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
+        if (tf == null) {
+            return new PassengersDto(0, List.of());
+        }
+
+        record Seat(long key, PassengerAvatars.PassengerAvatar avatar) {
+        }
+        final List<Seat> seats = new ArrayList<>();
+        for (final Journeys.Journey journey : world.paxManager().journeysOf(tf, STATUSES_IN_THE_AIRCRAFT)) {
+            final List<PassengerAvatars.PassengerAvatar> avatars = PassengerAvatars.of(journey.getId(), journey.getGroupSize(), iconPool);
+            for (int index = 0; index < avatars.size(); index++) {
+                seats.add(new Seat(PassengerAvatars.seatKey(tf.getId(), journey.getId(), index), avatars.get(index)));
+            }
+        }
+        seats.sort(java.util.Comparator.comparingLong(Seat::key));
+
+        return new PassengersDto(seats.size(), seats.stream()
+                .map(seat -> new PassengerDto("pax", seat.avatar().initials(), seat.avatar().icon()))
+                .toList());
     }
 
     static ManualPayDto buildManualPay(final World world, final FlightMissions.Mission flight) {
@@ -1472,6 +1517,24 @@ public class FlightDashboardController {
         private final int flightPay;
         private final int incomeShare;
         private final int total;
+    }
+
+    // The row of the passengers on board: kind is 'pax' (a passenger of a journey), the pilots who are carried will be 'pilot'; icon is the file of the icon
+    // (the pages know where the icons are), initials are two letters
+    @Data
+    @AllArgsConstructor
+    public static class PassengerDto {
+        private final String kind;
+        private final String initials;
+        private final String icon;
+    }
+
+    // count is the number of the passengers in the row (all of them are in the list)
+    @Data
+    @AllArgsConstructor
+    public static class PassengersDto {
+        private final int count;
+        private final List<PassengerDto> passengers;
     }
 
     // What the contract promises (byContract) and what is left if the flight is started manually (ifManual); both are null if the flight has no contract
