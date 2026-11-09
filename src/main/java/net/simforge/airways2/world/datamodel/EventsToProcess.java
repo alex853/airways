@@ -68,6 +68,17 @@ public class EventsToProcess {
                 && readStatusRaw(recordId) == Status.Processed.ordinal());
     }
 
+    public Optional<Event> byId(final int id) {
+        return storage.byId(id);
+    }
+
+    /**
+     * The highest id of the storage (deleted records are inside), the end of the walk of Cleanup.
+     */
+    public int getLastRecordId() {
+        return storage.getLastRecordId();
+    }
+
     public void deleteById(final int id) {
         storage.deleteRecord(id);
     }

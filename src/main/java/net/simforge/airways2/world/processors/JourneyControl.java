@@ -307,7 +307,7 @@ public class JourneyControl {
         releaseBookingPrice(journey, transportFlight1);
 
         // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
-        // the short delay gives a good chance that the transport flight still exists, see FlightCleanup
+        // the short delay gives a good chance that the transport flight still exists, see Cleanup
         journey.setStatus(Journeys.Status.TooLateToBoard);
         journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_MINUTE, 5 * Time.ONE_MINUTE));
 

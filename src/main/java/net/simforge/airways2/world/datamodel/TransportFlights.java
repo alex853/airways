@@ -123,6 +123,13 @@ public class TransportFlights {
     }
 
     /**
+     * The highest id of the storage (deleted records are inside), the end of the walk of Cleanup.
+     */
+    public int getLastRecordId() {
+        return storage.getLastRecordId();
+    }
+
+    /**
      * The transport flight goes on in another mission: the passengers who are on board continue the flight with the new mission (the aircraft landed not at the destination and
      * flies on). The index of the missions is kept.
      */

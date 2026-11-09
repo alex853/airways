@@ -9,7 +9,7 @@
 (`Journey.transportFlight1Id`, `TransportFlight.flightMissionId`, `Aircraft.locationAirportId` и т.д.). Если запись
 удалена, а её номер сразу выдан новой записи, любая «висячая» ссылка на старую запись молча превращается в ссылку
 на чужой объект. Проявления: журни «села» не на тот рейс, orphaned-журни, странные t/f и f/m в логах после
-`FlightCleanup`.
+`Cleanup`.
 
 ## Как сейчас
 

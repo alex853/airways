@@ -9,6 +9,7 @@ import net.simforge.airways2.storage.Storage;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -66,6 +67,17 @@ public class EventLog {
             || (readObject2Id(recordId) == id && readObject2TypeRaw(recordId) == typeRaw)
             || (readObject3Id(recordId) == id && readObject3TypeRaw(recordId) == typeRaw)
             || (readObject4Id(recordId) == id && readObject4TypeRaw(recordId) == typeRaw));
+    }
+
+    public Optional<Event> byId(final int id) {
+        return storage.byId(id);
+    }
+
+    /**
+     * The highest id of the storage (deleted records are inside), the end of the walk of Cleanup.
+     */
+    public int getLastRecordId() {
+        return storage.getLastRecordId();
     }
 
     public void deleteById(final int id) {

@@ -64,6 +64,8 @@ public class World {
 
     private final BusyBirdsMissionControl busyBirdsMissionControl = new BusyBirdsMissionControl(this);
     private final BankControl bankControl = new BankControl(this);
+    // the walk through the storages which removes the outdated objects; its cursors live in memory, the first pass is delayed after the start
+    private final Cleanup cleanup = new Cleanup(this);
 
     private static final int worldTimeStep = 10;
 
@@ -345,9 +347,8 @@ public class World {
             timing("City2CityFlowsProcessor", () -> City2CityFlowsProcessor.process(this));
             timing("City2CityFlowHistogramAnalyser", () -> City2CityFlowHistogramAnalyser.process(this));
 
-            timing("MiscCleanups", () -> MiscCleanups.process(this));
             timing("JourneyStats", () -> JourneyStats.process(this));
-            timing("FlightsCleanup", () -> FlightCleanup.process(this));
+            timing("Cleanup", cleanup::process);
         } catch (final RuntimeException e) {
             log.error("error during world processor", e);
         }

@@ -23,7 +23,7 @@
   (`restartAfterTooLateToBoard`): `transportFlight1Id = 0`, билеты tf2 возвращаются, journey уходит в
   `LookingForTickets` (общий хелпер `scheduleLookingForTickets`).
 - Терминальные статусы (удаляются `cleanup` через сутки): `Finished`, `CouldNotFindTickets`, **`Orphaned`**.
-- **`Orphaned`** — рейс (tf) журни неизвестен (удалён `FlightCleanup`), с ней ничего сделать нельзя
+- **`Orphaned`** — рейс (tf) журни неизвестен (удалён `Cleanup`), с ней ничего сделать нельзя
   (`JourneyControl.orphaned`: возвращает билеты tf2, если они ещё есть, чистится через сутки).
 - **Ожидающие статусы живут по heartbeat раз в минуту** (`JourneyProcessor`):
   - `WaitingForCheckIn` — tf нет → `Orphaned`;
@@ -31,8 +31,8 @@
     → `tooLateToBoard`; иначе проверка через минуту;
   - `WaitingForDeboarding` — tf нет → `Orphaned`; tf в `Deboarding` или уже `Finished` → `deboard` («прибыли», дальше обычный
     воркфлоу); иначе проверка через минуту.
-- `TooLateToBoard`: heartbeat 1–5 минут (чтобы tf ещё существовал, см. `FlightCleanup`).
-- `FlightCleanup` при удалении tf до удаления разбирает журни: ссылающиеся как `t/f1` → `resetJourneyForcefully`
+- `TooLateToBoard`: heartbeat 1–5 минут (чтобы tf ещё существовал, см. `Cleanup`).
+- `Cleanup` при удалении tf до удаления разбирает журни: ссылающиеся как `t/f1` → `resetJourneyForcefully`
   (в `LookingForTickets`, если миссия ещё есть, иначе `Orphaned`), как `t/f2` → ссылка обнуляется.
 - **Последний известный город.** `Journey.lastKnownLocationCityId` (занимает первые 2 из резервных байт записи)
   обновляется в `JourneyControl` явным вызовом рядом с каждым `journey.setLocationCityId(...)` с ненулевым городом
@@ -113,7 +113,7 @@
    ставится везде, где ставится `locationCityId` (явные вызовы в `JourneyControl`), в том числе до `checkin`, поэтому
    `tooLateToBoard` из `waitingForCheckin` тоже возвращает в известный город. События остаются только для старых
    записей без поля.
-2. **`FlightCleanup` и `WaitingForDeboarding`.** При удалении tf журни из `WaitingForDeboarding` сбрасываются в
+2. **`Cleanup` и `WaitingForDeboarding`.** При удалении tf журни из `WaitingForDeboarding` сбрасываются в
    `LookingForTickets` и возвращаются в город перед рейсом (хотя уже прилетели). Мы решили пока так и оставить,
    пока ничего не делаем с «мёртвыми». Открытый вопрос: считать их прибывшими (`justArrived`), а не возвращать.
 3. **Счётчик `paxOnBoard`.** Гипотеза, не проверенная: при посадке `PaxManager` пишет
@@ -165,7 +165,7 @@
 
 **Снимок журни на проход (2026-10-29).** `/admin/timing` показал, что весь `TransportFlightProcessor` (проход около 5 секунд под блокировкой мира, около 80 рейсов в посадке) это сканы хранилища журни: каждый скан около 24,5 мс, на тик посадки их три (`areAllBoarded`, два в `Boarding.refreshState`), на тик высадки один. Теперь `TransportFlightProcessor.process` перед обработкой рейсов вызывает `paxManager().beginPass()`: журни в статусах `WaitingForCheckIn`, `WaitingForBoarding`, `OnBoard`, `WaitingForDeboarding` читаются из хранилища один раз и раскладываются по `transportFlight1Id` (`Map<Integer, List<Journey>>`, порядок по id сохраняется); в `finally` вызывается `endPass()`. Все поиски `PaxManager` идут через `journeysOf(tf, статусы...)`: из снимка берётся список рейса, а **статус и рейс журни проверяются в момент вопроса** (`Journey` это представление, оно читает хранилище), поэтому то, что меняет сам проход (журни села, ушла, опоздала), видно сразу. Устаревания нет, потому что внутри прохода журни извне не меняются: регистрация, билеты и прибытие делают другие процессоры, события (`StartAutomaticDeboarding`) обработаны до снимка. Вне прохода (действия пользователя: start-boarding, start-deboarding) поиск идёт по хранилищу как раньше. Метки тайминга `PaxManager - …# scan` остались и покажут эффект; новая метка `PaxManager - pass snapshot # journeys scan`. Постоянный индекс в `Storage` (по образцу `HeartbeatIndex`) не делали: он тяжёл по памяти (куча 144 МБ) и не нужен, пока проход дешёвый.
 
-**Индекс журней по рейсу вместо снимка (2026-11-04).** Снимок на проход (абзац выше) убран: `beginPass`/`endPass`/`passSnapshot` удалены. `Journeys` ведёт индекс «transport flight → отсортированный `int[]` id журней» по **обоим** полям (`transportFlight1Id` и `transportFlight2Id`): массив массивов, внешний индекс это id рейса, внутренний `int[]` пересоздаётся на каждое изменение (старый остаётся тому, кто по нему идёт, так что журню можно менять, пока обходятся журни её рейса). Ведётся в `setTransportFlight1Id`/`setTransportFlight2Id` и `deleteById`, перестраивается при загрузке. Запросы: `allByTransportFlight1Id`, `allByAnyTransportFlightId` (порядок по id, как был у скана; первый рейс журни перепроверяется в момент обхода). Через них идут `PaxManager.journeysOf`, `unloadJourneysForcefully`, пинги при сдвиге рейса, `releaseLostConnections`, `scheduleDeboardingForAllOnBoardJourneys`, удаление рейсов в `FlightCleanup`: каждый такой поиск был полным сканом журней (около 90 мс при 600 тысячах), теперь это выборка по рейсу. Память: около 4 байт на журню плюс 16 байт заголовка на рейс с журнями.
+**Индекс журней по рейсу вместо снимка (2026-11-04).** Снимок на проход (абзац выше) убран: `beginPass`/`endPass`/`passSnapshot` удалены. `Journeys` ведёт индекс «transport flight → отсортированный `int[]` id журней» по **обоим** полям (`transportFlight1Id` и `transportFlight2Id`): массив массивов, внешний индекс это id рейса, внутренний `int[]` пересоздаётся на каждое изменение (старый остаётся тому, кто по нему идёт, так что журню можно менять, пока обходятся журни её рейса). Ведётся в `setTransportFlight1Id`/`setTransportFlight2Id` и `deleteById`, перестраивается при загрузке. Запросы: `allByTransportFlight1Id`, `allByAnyTransportFlightId` (порядок по id, как был у скана; первый рейс журни перепроверяется в момент обхода). Через них идут `PaxManager.journeysOf`, `unloadJourneysForcefully`, пинги при сдвиге рейса, `releaseLostConnections`, `scheduleDeboardingForAllOnBoardJourneys`, удаление рейсов в `Cleanup`: каждый такой поиск был полным сканом журней (около 90 мс при 600 тысячах), теперь это выборка по рейсу. Память: около 4 байт на журню плюс 16 байт заголовка на рейс с журнями.
 
 **Отключение VATSIM-пилота (`PilotContext`), что происходит с f/m, t/f и журни:**
 

@@ -159,6 +159,13 @@ public class FlightMissions {
         return storage.byId(id);
     }
 
+    /**
+     * The highest id of the storage (deleted records are inside), the end of the walk of Cleanup.
+     */
+    public int getLastRecordId() {
+        return storage.getLastRecordId();
+    }
+
     public Stream<Mission> allForAircraft(final Aircrafts.Aircraft aircraft) {
         checkNotNull(aircraft, "aircraft is mandatory");
         return storage.filter(recordId -> storage.getAsInt(recordId, aircraftIdField) == aircraft.getId());
@@ -338,6 +345,10 @@ public class FlightMissions {
 
         /**
          * The alternate airport of the flight, 0 when there is none (and for the old records, and when a divert is declared: the same field holds the divert then).
+         * <p>
+         * A QUESTIONABLE DECISION: the planned alternate and the airport of the declared divert share one field (the bit "divert declared" tells which one it holds), and the planned
+         * alternate is lost when a divert is declared. It was done only to save room in the record (no new field, no conversion of the saved file). If the flight ever gets
+         * several alternate airports (it would be good), the storage will be extended anyway: that is the moment to separate the two and to redo this.
          */
         public int getAlternateAirportId() {
             return isDivertDeclared() ? 0 : storage.getAsInt(id, alternateAirportIdField);

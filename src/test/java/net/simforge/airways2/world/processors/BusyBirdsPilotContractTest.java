@@ -23,7 +23,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
@@ -286,7 +285,7 @@ class BusyBirdsPilotContractTest {
     }
 
     @Test
-    public void test__the_contract_is_removed_with_the_flight_mission_by_the_cleanup() throws Exception {
+    public void test__the_contract_is_removed_with_the_flight_mission_by_the_cleanup() {
         final FlightMissions.Mission finished = mission(3600);
         finished.setStatus(FlightMissions.Status.Finished);
         // eleven days later: the finished flight is old enough for the cleanup, the new one is not
@@ -295,11 +294,8 @@ class BusyBirdsPilotContractTest {
         world.busyBirdsMissionControl().createContract(finished, person.getId(), allGood(1));
         world.busyBirdsMissionControl().createContract(fresh, person.getId(), allGood(1));
 
-        // the cleanup runs not more often than once a minute, the test lets it run
-        final Field lastExecution = FlightCleanup.class.getDeclaredField("lastExecution");
-        lastExecution.setAccessible(true);
-        lastExecution.setLong(null, 0);
-        FlightCleanup.process(world);
+        // the cleanup of the world starts later and walks with a budget, the test lets it walk at once and whole
+        new Cleanup(world, System::currentTimeMillis, 0, 0, 10_000_000_000L, 1000).process();
 
         assertEquals(Optional.empty(), world.flightMissions().byId(finished.getId()));
         assertEquals(Optional.empty(), world.pilotContracts().byFlightMissionId(finished.getId()));

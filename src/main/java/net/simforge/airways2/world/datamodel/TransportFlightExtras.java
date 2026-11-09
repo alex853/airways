@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  * which do (the transport flights of the missions of the pilots, ShadowJet first of all), not for all of them.
  * <p>
  * A record is for one transport flight (transportFlightId, it never changes), it is created when the flight needs the data and it is deleted with the transport flight
- * (FlightCleanup, the admin deletions of transport flights). The records are found by the transport flight, the index is kept in create() and
+ * (Cleanup, the admin deletions of transport flights). The records are found by the transport flight, the index is kept in create() and
  * deleteByTransportFlightId() and rebuilt after the loading, as in PilotContracts.
  * <p>
  * The record is 32 bytes: 1 byte of the deletion status, 3 bytes of the transport flight, 3 bytes of the income and 25 bytes of the reserve.

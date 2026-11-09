@@ -179,6 +179,14 @@ public class Storage<T> {
     }
 
     /**
+     * The highest record id which has ever been given, 0 for an empty storage. Deleted records are inside of it: it is the end of a walk through the storage by ids
+     * (byId() gives an empty result for a deleted record), see Cleanup.
+     */
+    public int getLastRecordId() {
+        return getTotalStoredRecordCount();
+    }
+
+    /**
      * count of all records - existing and deleted
      */
     private int getTotalStoredRecordCount() {

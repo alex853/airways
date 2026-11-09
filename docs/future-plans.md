@@ -9,7 +9,7 @@
 
 `JourneyControl.deboard` переводит журню в `JustArrived` с heartbeat до часа вперёд, а `locationCityId` ставится только
 позже в `justArrived` (`moveToCityNextToLandingAirportOrToCity`, который читает `transportFlight1` и f/m через
-`orElseThrow`). Если в это окно t/f или f/m удалены (`FlightCleanup`, отмена), обработка падает исключением;
+`orElseThrow`). Если в это окно t/f или f/m удалены (`Cleanup`, отмена), обработка падает исключением;
 `processJourney` уже обнулил heartbeat, поэтому журня остаётся в `JustArrived` с `heartbeat = 0` и не обрабатывается
 никогда.
 
