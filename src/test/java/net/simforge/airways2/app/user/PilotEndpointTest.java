@@ -206,6 +206,34 @@ class PilotEndpointTest {
         assertEquals(0, details.getGapsMinutes());
     }
 
+    @Test
+    void dutyDetailsShowOnlyTheRestOfAStartedFlightAsPlannedNotTheWholeFlightTwice() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        person.setState(Persons.State.OnDuty);
+        person.setDutyStartTime(world.getWorldTime() - 2 * 60);
+        final Airports.Airport other = world.airports().create(37.62, -122.38, "SFO", "KSFO", "San Francisco");
+        final net.simforge.airways2.world.datamodel.Aircrafts.Aircraft aircraft =
+                world.aircrafts().create(world.aircraftTypes().create("C25C", "CNJ"), "BB-CJA", oakland);
+        final int now = world.getWorldTime();
+        // the preflight of this flight has been started 2 minutes ago, the departure is in 40 minutes: the flight is one piece, in progress, not a planned one besides
+        final net.simforge.airways2.world.datamodel.FlightMissions.Mission started =
+                world.flightMissions().createDispatchedMission(aircraft, oakland, other, now + 40 * 60, now + 2 * 3600);
+        started.setUserId(person.getUserId());
+        started.setStatus(net.simforge.airways2.world.datamodel.FlightMissions.Status.Preflight);
+
+        final PilotController.DutyDetailsDto details = PilotController.buildDutyDetails(world, person);
+
+        assertEquals(1, details.getSegments().size());
+        assertEquals("flight", details.getSegments().get(0).getType());
+        // the rest of the flight: from now to the arrival (the departure + 80 min of the plan = now + 2 h) and the postflight of 20 minutes
+        assertEquals(1, details.getPlanned().size());
+        assertEquals("planned", details.getPlanned().get(0).getType());
+        assertEquals(now * 1000L, details.getPlanned().get(0).getFrom());
+        assertEquals((now + 2 * 3600 + 20 * 60) * 1000L, details.getPlanned().get(0).getTo());
+        assertTrue(details.isOnDuty());
+    }
+
     // ---- the flight time of the last 30 and 365 days
 
     @Test

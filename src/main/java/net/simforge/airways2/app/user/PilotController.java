@@ -490,10 +490,19 @@ public class PilotController {
         // the flights of the roster which have not started: the preflight of a flight begins before its departure, the postflight ends after its arrival
         final List<DutySegmentDto> planned = new ArrayList<>();
         for (final RosterForecast.Entry entry : RosterForecast.of(world, person.getUserId())) {
-            if (entry.mission().getActualDepartureWorldTime() != 0 || entry.expectedDeparture() == 0) {
+            if (entry.expectedDeparture() == 0) {
                 continue;
             }
-            final int start = entry.expectedDeparture() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE;
+            // a flight which is started (Start flight is done, the pilot is on duty, the preflight goes on) is the flight in progress of the periods above (up to now), it is not a
+            // planned flight: only the rest of it is shown, from now to the arrival and the postflight
+            final boolean started = switch (entry.mission().getStatus()) {
+                case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                default -> false;
+            };
+            if (!started && entry.mission().getActualDepartureWorldTime() != 0) {
+                continue;
+            }
+            final int start = started ? now : entry.expectedDeparture() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE;
             final int end = entry.expectedArrival() + FlightTimeline.POSTFLIGHT_MINUTES * Time.ONE_MINUTE;
             if (end > now && start <= now + DUTY_DETAILS_AHEAD_SECONDS) {
                 planned.add(new DutySegmentDto("planned", start * 1000L, end * 1000L, FlightMissionHelper.formatRoute(world, entry.mission().getId()), 0));
