@@ -219,7 +219,21 @@ public class BusyBirdsMissionControl {
 
     // The base flight pay for the actual time of the flight, blocks off to blocks on (the same time as in the logbook, PersonControl.writeLogbook), at the rates of the operator and the type.
     // If the times are not valid (they are not set, or the flight is longer than the logbook takes) the planned pay of the contract is kept, the pilot is not left without it.
+    // A flight which was flown as booked (it is not a divert and not a continuation after one) is paid not less than the planned pay of the contract, which the booking promised
+    // (decided 2026-11-09): the planned time is a bit longer than the real one, and the pilot should not get less than the page said. A longer flight is paid by the actual time.
+    // A flight which landed at another airport and the continuation after it are always paid by the actual time.
     private int actualBaseFlightPay(final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final PilotContracts.Contract contract) {
+        final int actualPay = actualTimeBaseFlightPay(mission, aircraft, contract);
+        final boolean asBooked = !FlightMissionHelper.isLandedAtWrongAirport(mission) && !mission.isContinuation();
+        if (asBooked && actualPay < contract.getBaseFlightPay()) {
+            log.info("f/m #{} - the flight is as booked (no divert, no continuation): the base flight pay is not less than the planned {} (by the actual time {})",
+                    mission.getId(), contract.getBaseFlightPay(), actualPay);
+            return contract.getBaseFlightPay();
+        }
+        return actualPay;
+    }
+
+    private int actualTimeBaseFlightPay(final FlightMissions.Mission mission, final Aircrafts.Aircraft aircraft, final PilotContracts.Contract contract) {
         final int blocksOff = mission.getActualDepartureWorldTime();
         final int blocksOn = mission.getActualArrivalWorldTime();
         if (blocksOff < Time.START_TIME_EPOCH_SECONDS || blocksOn < blocksOff || blocksOn - blocksOff > 1530 * Time.ONE_MINUTE) {
@@ -233,7 +247,8 @@ public class BusyBirdsMissionControl {
     /**
      * The pilot of a finished flight of BusyBirds or of ShadowJet (the rates of each, OperatorPay) gets paid by the contract of the flight: the flight pay and the income share which PilotPay calculates from
      * the base numbers and the parameters of the contract. The flight pay is by the actual time from blocks off to blocks on, not by the planned one of the contract
-     * (decided 2026-11-02, every pay is by the actual time). The operator pays the pilot by two transfers from its account to the account of the person: the
+     * (decided 2026-11-02, every pay is by the actual time), but not less than the planned one of the contract for a flight as booked: not a divert and not a continuation after
+     * one (decided 2026-11-09, see actualBaseFlightPay). The operator pays the pilot by two transfers from its account to the account of the person: the
      * flight pay and the income share (if an account does not exist, nothing moves, see BankControl.transferIfAccountsExist). It is written to the log too.
      * <p>
      * A flight without a contract (a free ferry flight, a flight booked before the contracts, a manual dispatch) pays nothing.

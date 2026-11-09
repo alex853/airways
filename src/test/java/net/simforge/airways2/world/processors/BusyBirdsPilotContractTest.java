@@ -330,11 +330,18 @@ class BusyBirdsPilotContractTest {
 
     // the planned time of the mission is 2 hours, 400 base flight pay in the contract (200 per hour); blocks off and blocks on are the actual times
     private int flightPayForBlockTime(final int blockSeconds) {
+        return flightPayForBlockTime(blockSeconds, mission -> {
+        });
+    }
+
+    // the same for a flight which is changed by the tweak first (a divert, a continuation)
+    private int flightPayForBlockTime(final int blockSeconds, final java.util.function.Consumer<FlightMissions.Mission> tweak) {
         final FlightMissions.Mission mission = mission(2 * 3600);
         final PilotContracts.Contract contract = world.busyBirdsMissionControl().createContract(mission, person.getId(), allGood(3));
         assertEquals(400, contract.getBaseFlightPay());
         mission.setActualDepartureWorldTime(world.getWorldTime());
         mission.setActualArrivalWorldTime(world.getWorldTime() + blockSeconds);
+        tweak.accept(mission);
 
         final int flightPay = world.busyBirdsMissionControl().payPilot(mission).orElseThrow().flightPay();
 
@@ -344,12 +351,42 @@ class BusyBirdsPilotContractTest {
     }
 
     @Test
-    public void test__the_flight_pay_is_by_the_actual_time_from_blocks_off_to_blocks_on() {
+    public void test__a_flight_as_booked_is_paid_not_less_than_the_planned_time_and_by_the_actual_time_when_it_is_longer() {
         final int planned = flightPayForBlockTime(2 * 3600);
 
-        // half of the planned time, half of the pay; one and a half times of it, one and a half times of the pay
-        assertEquals(Math.round(planned / 2.0), flightPayForBlockTime(3600));
+        // a shorter flight (no divert, no continuation) is paid by the planned time, what the booking promised; a longer one by the actual time
+        assertEquals(planned, flightPayForBlockTime(3600));
+        assertEquals(planned, flightPayForBlockTime(2 * 3600 - 60));
         assertEquals(Math.round(planned * 1.5), flightPayForBlockTime(3 * 3600));
+    }
+
+    @Test
+    public void test__a_flight_which_landed_at_another_airport_is_paid_by_the_actual_time_even_if_it_is_shorter() {
+        final int planned = flightPayForBlockTime(2 * 3600);
+        final Airports.Airport other = world.airports().create(52.0, 5.0, "OTH", "EHAM", "Amsterdam");
+
+        // the destination was B, the aircraft landed at another airport after one hour: the pay is by the hour, and by the actual time when it is longer too
+        assertEquals(Math.round(planned / 2.0), flightPayForBlockTime(3600, mission -> mission.setActualLandingAirportId(other.getId())));
+        assertEquals(Math.round(planned * 1.5), flightPayForBlockTime(3 * 3600, mission -> mission.setActualLandingAirportId(other.getId())));
+    }
+
+    @Test
+    public void test__the_continuation_after_a_divert_is_paid_by_the_actual_time_even_if_it_is_shorter() {
+        final int planned = flightPayForBlockTime(2 * 3600);
+
+        assertEquals(Math.round(planned / 2.0), flightPayForBlockTime(3600, mission -> mission.setContinuation(true)));
+    }
+
+    @Test
+    public void test__a_flight_which_landed_at_its_destination_after_a_declared_divert_is_as_booked() {
+        final int planned = flightPayForBlockTime(2 * 3600);
+        final Airports.Airport other = world.airports().create(52.0, 5.0, "OTH", "EHAM", "Amsterdam");
+
+        // the divert was declared but the aircraft landed at the destination: nothing was diverted
+        assertEquals(planned, flightPayForBlockTime(3600, mission -> {
+            mission.setDivertAirportId(other.getId());
+            mission.setActualLandingAirportId(airportB.getId());
+        }));
     }
 
     @Test
