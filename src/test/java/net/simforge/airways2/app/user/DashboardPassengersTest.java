@@ -1,7 +1,6 @@
 package net.simforge.airways2.app.user;
 
-import net.simforge.airways2.app.user.FlightDashboardController.PassengerDto;
-import net.simforge.airways2.app.user.FlightDashboardController.PassengersDto;
+import net.simforge.airways2.app.user.FlightDashboardController.PassengerRowDto;
 import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.world.InMemoryStorageStrategy;
 import net.simforge.airways2.world.Time;
@@ -18,17 +17,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * The row of the passengers on board: who is in it (the journeys which are in the aircraft), the avatars (from the id of the journey) and the order (from the id of the
- * transport flight).
+ * The row of the passengers on board, a part of the status: who is in it (the journeys which are in the aircraft and the first passengers of the journey which is boarding, as
+ * many as the tile counts), the order (the queue of the boarding), the avatars (from the id of the journey) and the compact form.
  */
 class DashboardPassengersTest {
     private static final List<String> POOL = List.of("a.png", "b.png", "c.png", "d.png", "e.png", "f.png");
@@ -51,6 +49,7 @@ class DashboardPassengersTest {
         final int departure = world.getWorldTime() + Time.ONE_HOUR;
         mission = world.flightMissions().createDispatchedMission(aircraft, a, b, departure, departure + 2 * Time.ONE_HOUR);
         tf = world.transportFlightControl().createTransportFlight(mission);
+        tf.setStatus(TransportFlights.Status.Flying);
     }
 
     private Journeys.Journey journey(final Journeys.Status status, final int groupSize) {
@@ -59,24 +58,50 @@ class DashboardPassengersTest {
         return journey;
     }
 
-    private PassengersDto row() {
-        return FlightDashboardController.buildPassengers(world, mission, POOL);
+    private PassengerRowDto row() {
+        return FlightDashboardController.buildPassengerRow(world, mission, POOL);
+    }
+
+    // the places of the passengers in the row as the journey and the number: 12345/2
+    private static List<String> places(final PassengerRowDto row) {
+        final List<String> result = new ArrayList<>();
+        for (final long id : row.getIds()) {
+            result.add((id / 4096) + "/" + (id % 4096));
+        }
+        return result;
     }
 
     @Test
     void theRowIsOnePassengerPerPlaceOfTheJourneysWhichAreInTheAircraft() {
         journey(Journeys.Status.OnBoard, 4);
         journey(Journeys.Status.WaitingForDeboarding, 2);
-        // not in the aircraft: waiting for the boarding, too late, got off
+        // not in the aircraft: waiting for the boarding, too late
         journey(Journeys.Status.WaitingForBoarding, 3);
         journey(Journeys.Status.WaitingForCheckIn, 5);
         journey(Journeys.Status.TooLateToBoard, 7);
 
-        final PassengersDto row = row();
+        final PassengerRowDto row = row();
 
         assertEquals(6, row.getCount());
-        assertEquals(6, row.getPassengers().size());
-        assertTrue(row.getPassengers().stream().allMatch(p -> p.getKind().equals("pax")));
+        assertEquals(6, row.getIds().length);
+        assertEquals(12, row.getInitials().length());
+        assertEquals("xxxxxx", row.getKinds());
+        assertEquals(6, row.getIcons().length);
+    }
+
+    @Test
+    void thereIsNoRowBeforeTheBoardingAndAfterTheDeboarding() {
+        journey(Journeys.Status.OnBoard, 3);
+        for (final TransportFlights.Status status : List.of(TransportFlights.Status.Scheduled, TransportFlights.Status.CheckIn,
+                TransportFlights.Status.WaitingForBoarding, TransportFlights.Status.Finished)) {
+            tf.setStatus(status);
+            assertNull(row(), status.name());
+        }
+        for (final TransportFlights.Status status : List.of(TransportFlights.Status.WaitingForDeparture, TransportFlights.Status.Departure, TransportFlights.Status.Flying,
+                TransportFlights.Status.Arrival, TransportFlights.Status.WaitingForDeboarding, TransportFlights.Status.Deboarding)) {
+            tf.setStatus(status);
+            assertNotNull(row(), status.name());
+        }
     }
 
     @Test
@@ -84,70 +109,144 @@ class DashboardPassengersTest {
         final Journeys.Journey first = journey(Journeys.Status.OnBoard, 3);
         final Journeys.Journey second = journey(Journeys.Status.OnBoard, 2);
 
-        final List<String> expected = new ArrayList<>();
+        final PassengerRowDto row = row();
+
+        int position = 0;
         for (final Journeys.Journey j : List.of(first, second)) {
-            PassengerAvatars.of(j.getId(), j.getGroupSize(), POOL).forEach(a -> expected.add(a.initials() + "/" + a.icon()));
+            final List<PassengerAvatars.PassengerAvatar> avatars = PassengerAvatars.of(j.getId(), j.getGroupSize(), POOL);
+            for (final PassengerAvatars.PassengerAvatar avatar : avatars) {
+                assertEquals(avatar.initials(), row.getInitials().substring(position * 2, position * 2 + 2));
+                assertEquals(avatar.icon(), row.getIconTable().get(row.getIcons()[position]));
+                position++;
+            }
         }
-        final List<String> shown = row().getPassengers().stream().map(p -> p.getInitials() + "/" + p.getIcon()).toList();
-
-        assertEquals(expected.stream().sorted().toList(), shown.stream().sorted().toList());
+        assertEquals(5, position);
     }
 
     @Test
-    void theOrderIsTheSameEveryTimeAndDoesNotDependOnTheOthersWhoAreAboard() {
-        for (int i = 0; i < 6; i++) {
-            journey(Journeys.Status.OnBoard, 3);
-        }
-        final List<PassengerDto> before = row().getPassengers();
-        assertEquals(before, row().getPassengers());
+    void theRowIsTheQueueOfTheBoardingAndAJourneyWhichComesLaterJoinsAtTheEnd() {
+        final Journeys.Journey first = journey(Journeys.Status.OnBoard, 2);
+        final Journeys.Journey second = journey(Journeys.Status.OnBoard, 3);
+        tf.setStatus(TransportFlights.Status.WaitingForDeparture);
+        final List<String> before = places(row());
 
-        // a journey comes aboard: the ones who were there stay in the same order
+        assertEquals(List.of(first.getId() + "/0", first.getId() + "/1", second.getId() + "/0", second.getId() + "/1", second.getId() + "/2"), before);
+
         final Journeys.Journey late = journey(Journeys.Status.OnBoard, 2);
-        final List<PassengerDto> after = row().getPassengers();
-        final List<PassengerDto> withoutNew = new ArrayList<>(after);
-        for (final PassengerAvatars.PassengerAvatar a : PassengerAvatars.of(late.getId(), 2, POOL)) {
-            withoutNew.remove(new PassengerDto("pax", a.initials(), a.icon()));
-        }
-        assertEquals(before, withoutNew);
+        final List<String> after = places(row());
+        assertEquals(before, after.subList(0, 5));
+        assertEquals(List.of(late.getId() + "/0", late.getId() + "/1"), after.subList(5, 7));
     }
 
     @Test
-    void thePassengersOfAJourneyAreNotTogether() {
-        final Map<Integer, Integer> sizes = new HashMap<>();
+    void theJourneyWhichIsBoardingAddsItsFirstPassengersUpToTheNumberOfTheTile() {
+        journey(Journeys.Status.OnBoard, 3);
+        final Journeys.Journey boarding = journey(Journeys.Status.WaitingForBoarding, 4);
+        final Journeys.Journey waiting = journey(Journeys.Status.WaitingForBoarding, 2);
+        tf.setStatus(TransportFlights.Status.Boarding);
+        tf.setPaxOnBoard(5); // 3 on board and 2 of the journey which is boarding
+
+        final PassengerRowDto row = row();
+
+        assertEquals(5, row.getCount());
+        final List<String> places = places(row);
+        assertEquals(boarding.getId() + "/0", places.get(3));
+        assertEquals(boarding.getId() + "/1", places.get(4));
+        assertTrue(places.stream().noneMatch(p -> p.startsWith(waiting.getId() + "/")));
+
+        // the counter goes on: the next passenger of the same journey, the earlier ones do not move
+        tf.setPaxOnBoard(6);
+        final List<String> next = places(row());
+        assertEquals(places, next.subList(0, 5));
+        assertEquals(boarding.getId() + "/2", next.get(5));
+    }
+
+    @Test
+    void whenTheJourneyHasBoardedTheOnesWhoWereInTheRowStayWhereTheyAre() {
+        journey(Journeys.Status.OnBoard, 3);
+        final Journeys.Journey boarding = journey(Journeys.Status.WaitingForBoarding, 2);
+        tf.setStatus(TransportFlights.Status.Boarding);
+        tf.setPaxOnBoard(4);
+        final List<String> whileBoarding = places(row());
+
+        boarding.setStatus(Journeys.Status.OnBoard);
+
+        // the whole journey is aboard now (5), the four who were there are in their places and the last one joins
+        final List<String> boarded = places(row());
+        assertEquals(5, boarded.size());
+        assertEquals(whileBoarding, boarded.subList(0, 4));
+    }
+
+    @Test
+    void theRowIsNotCompletedWhenTheTileHasNoMorePassengersThanTheJourneysOnBoard() {
+        journey(Journeys.Status.OnBoard, 3);
+        journey(Journeys.Status.WaitingForBoarding, 4);
+        tf.setStatus(TransportFlights.Status.Boarding);
+
+        tf.setPaxOnBoard(3);
+        assertEquals(3, row().getCount());
+        tf.setPaxOnBoard(0);
+        assertEquals(3, row().getCount());
+    }
+
+    @Test
+    void thePassengersWhoAreWaitingAreNotInTheRowOutsideTheBoarding() {
+        journey(Journeys.Status.OnBoard, 2);
+        journey(Journeys.Status.WaitingForBoarding, 4);
+        tf.setStatus(TransportFlights.Status.Flying);
+        tf.setPaxOnBoard(6);
+
+        assertEquals(2, row().getCount());
+    }
+
+    @Test
+    void theFirstOnesLeaveFirstAtTheDeboarding() {
+        final Journeys.Journey first = journey(Journeys.Status.WaitingForDeboarding, 2);
+        final Journeys.Journey second = journey(Journeys.Status.WaitingForDeboarding, 3);
+        tf.setStatus(TransportFlights.Status.Deboarding);
+        final List<String> before = places(row());
+        assertEquals(5, before.size());
+
+        first.setStatus(Journeys.Status.Finished);
+
+        // the journey which got off is gone from the beginning of the row, the rest stay in their order
+        assertEquals(before.subList(2, 5), places(row()));
+        assertEquals(second.getId() + "/0", places(row()).get(0));
+    }
+
+    @Test
+    void theIconsAreInATableAndEveryPassengerHasTheNumberOfItsIcon() {
         for (int i = 0; i < 30; i++) {
-            final Journeys.Journey journey = journey(Journeys.Status.OnBoard, 4);
-            sizes.put(journey.getId(), 4);
+            journey(Journeys.Status.OnBoard, 4);
         }
-        // the avatars of one journey are all different in the test pool often enough to see who is who
-        final List<PassengerDto> row = row().getPassengers();
-        assertEquals(120, row.size());
 
-        // the places in the row of the passengers of the first journey: they are spread, not 4 in a row
-        final Journeys.Journey first = world.journeys().allByTransportFlight1Id(tf.getId()).min(Comparator.comparingInt(Journeys.Journey::getId)).orElseThrow();
-        final List<Integer> places = new ArrayList<>();
-        for (final PassengerAvatars.PassengerAvatar a : PassengerAvatars.of(first.getId(), 4, POOL)) {
-            places.add(row.indexOf(new PassengerDto("pax", a.initials(), a.icon())));
+        final PassengerRowDto row = row();
+
+        assertEquals(120, row.getCount());
+        assertEquals(new java.util.HashSet<>(row.getIconTable()).size(), row.getIconTable().size()); // every file once
+        assertTrue(POOL.containsAll(row.getIconTable()));
+        for (final int number : row.getIcons()) {
+            assertTrue(number >= 0 && number < row.getIconTable().size());
         }
-        places.sort(Integer::compare);
-        assertTrue(places.get(3) - places.get(0) > 8, "places " + places);
+        // the table is short, so the row is compact: not a file name for every passenger
+        assertTrue(row.getIconTable().size() <= POOL.size());
     }
 
     @Test
-    void aFlightWithoutTheTransportFlightHasAnEmptyRow() {
+    void aFlightWithoutTheTransportFlightHasNoRow() {
         final FlightMissions.Mission ferry = world.flightMissions().createDispatchedMission(
                 world.aircrafts().all().findFirst().orElseThrow(), world.airports().byIcao("AAAA").orElseThrow(), world.airports().byIcao("BBBB").orElseThrow(),
                 world.getWorldTime() + 5 * Time.ONE_HOUR, world.getWorldTime() + 7 * Time.ONE_HOUR);
 
-        final PassengersDto row = FlightDashboardController.buildPassengers(world, ferry, POOL);
-
-        assertEquals(0, row.getCount());
-        assertTrue(row.getPassengers().isEmpty());
+        assertNull(FlightDashboardController.buildPassengerRow(world, ferry, POOL));
     }
 
     @Test
-    void anEmptyAircraftHasAnEmptyRow() {
+    void anEmptyAircraftHasNoRow() {
         journey(Journeys.Status.WaitingForBoarding, 3);
+        tf.setStatus(TransportFlights.Status.Boarding);
+        tf.setPaxOnBoard(0);
 
-        assertEquals(0, row().getCount());
+        assertNull(row());
     }
 }

@@ -127,7 +127,8 @@ public class FlightDashboardController {
                     new VatsimStatusDto(), // todo ak2 vatsim tracking & dashboard integration rework
                     timed("FlightUltraDto", () -> activeFlight.map(f -> FlightUltraDto.from(world, f, true)).orElse(null)),
                     timed("buildPilotDto", () -> buildPilotDto(world, userId, verdictSim)),
-                    timed("ScheduleWarnings", () -> ScheduleWarnings.of(world, fm).map(warning -> toScheduleWarningDto(world, warning)).orElse(null)));
+                    timed("ScheduleWarnings", () -> ScheduleWarnings.of(world, fm).map(warning -> toScheduleWarningDto(world, warning)).orElse(null)),
+                    timed("passengers", () -> fm == null ? null : buildPassengerRow(world, fm, Avatars.commonFiles())));
         });
     }
 
@@ -603,46 +604,79 @@ public class FlightDashboardController {
         });
     }
 
+    // The statuses of the transport flight when the passengers are in the aircraft (the row of the passengers is shown)
+    private static final java.util.Set<TransportFlights.Status> ROW_STATUSES = java.util.EnumSet.of(
+            TransportFlights.Status.Boarding, TransportFlights.Status.WaitingForDeparture, TransportFlights.Status.Departure, TransportFlights.Status.Flying,
+            TransportFlights.Status.Arrival, TransportFlights.Status.WaitingForDeboarding, TransportFlights.Status.Deboarding);
+
     /**
-     * The passengers who are on board of the flight now, in the order of the row (docs/avatars.md): the avatar of every passenger (the initials and the icon, they come
-     * from the id of the journey and are not stored) in the order which is random, the same every time and mixes the journeys. The dashboards show it as a row of small
-     * icons, which grows with the boarding and shrinks with the deboarding; they ask for it when the number of the passengers or the status of the transport flight
-     * changes. A flight without passengers (a ferry) has an empty row.
+     * The row of the passengers on board (docs/avatars.md), it is a part of every status while there are passengers in the aircraft, null otherwise. It is a queue: the order
+     * is the order of the boarding (the journeys by their id, a journey by the numbers of its passengers), so a new passenger joins at the end, and at the deboarding the first
+     * ones leave first. The number of the passengers is always the number the tile shows (the passengers on board of the transport flight): a journey which is boarding is
+     * boarded by as many passengers (the first of them) as the counter of the boarding has counted. The avatars come from the id of the journey and are not stored.
+     * <p>
+     * The row is compact (a status goes often): the id of a passenger (the id of the journey times 4096 plus the number of the passenger, the pages follow the passengers by it
+     * to move the icons), the initials as a string of two letters of every passenger, the kind as a letter of every passenger, the files of the icons as a table with the
+     * numbers in it.
      */
-    @GetMapping("/passengers")
-    public PassengersDto getPassengers(@RequestAttribute("userId") int userId,
-                                       @RequestParam(name = "flightId") String flightIdStr) {
-        return worldBean.read(world -> {
-            final FlightMissions.Mission flight = world.flightMissions().byId(Id.decode(flightIdStr)).orElseThrow();
-            checkIfFlightRelatesToUser(flight, userId);
-
-            return buildPassengers(world, flight, Avatars.commonFiles());
-        });
-    }
-
-    // The journeys which are in the aircraft: on board, or waiting to get off (the ones who got off are gone from the row, the ones who have not boarded are not in it yet)
-    private static final Journeys.Status[] STATUSES_IN_THE_AIRCRAFT = {Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding};
-
-    static PassengersDto buildPassengers(final World world, final FlightMissions.Mission flight, final List<String> iconPool) {
+    static PassengerRowDto buildPassengerRow(final World world, final FlightMissions.Mission flight, final List<String> iconPool) {
         final TransportFlights.Flight tf = world.transportFlights().byFlightMissionId(flight.getId()).orElse(null);
-        if (tf == null) {
-            return new PassengersDto(0, List.of());
+        if (tf == null || !ROW_STATUSES.contains(tf.getStatus())) {
+            return null;
         }
 
-        record Seat(long key, PassengerAvatars.PassengerAvatar avatar) {
-        }
-        final List<Seat> seats = new ArrayList<>();
-        for (final Journeys.Journey journey : world.paxManager().journeysOf(tf, STATUSES_IN_THE_AIRCRAFT)) {
-            final List<PassengerAvatars.PassengerAvatar> avatars = PassengerAvatars.of(journey.getId(), journey.getGroupSize(), iconPool);
-            for (int index = 0; index < avatars.size(); index++) {
-                seats.add(new Seat(PassengerAvatars.seatKey(tf.getId(), journey.getId(), index), avatars.get(index)));
+        // the ids of the passengers in the aircraft: on board, or waiting to get off (the ones who got off are gone, the ones who are not boarded are not there yet)
+        final List<Long> places = new ArrayList<>();
+        for (final Journeys.Journey journey : world.paxManager().journeysOf(tf, Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding)) {
+            for (int index = 0; index < journey.getGroupSize(); index++) {
+                places.add(passengerPlace(journey.getId(), index));
             }
         }
-        seats.sort(java.util.Comparator.comparingLong(Seat::key));
+        // the boarding counts the passengers one by one, a journey becomes boarded when all of it has boarded: the first passengers of the journeys which are waiting complete
+        // the row to the number of the tile
+        if (tf.getStatus() == TransportFlights.Status.Boarding) {
+            int missing = tf.getPaxOnBoard() - places.size();
+            for (final Journeys.Journey journey : world.paxManager().journeysOf(tf, Journeys.Status.WaitingForBoarding).stream()
+                    .sorted(java.util.Comparator.comparingInt(Journeys.Journey::getId)).toList()) {
+                for (int index = 0; index < journey.getGroupSize() && missing > 0; index++, missing--) {
+                    places.add(passengerPlace(journey.getId(), index));
+                }
+            }
+        }
+        if (places.isEmpty()) {
+            return null;
+        }
+        places.sort(Long::compare);
 
-        return new PassengersDto(seats.size(), seats.stream()
-                .map(seat -> new PassengerDto("pax", seat.avatar().initials(), seat.avatar().icon()))
-                .toList());
+        final StringBuilder initials = new StringBuilder();
+        final StringBuilder kinds = new StringBuilder();
+        final List<String> iconTable = new ArrayList<>();
+        final Map<String, Integer> iconNumbers = new java.util.HashMap<>();
+        final long[] ids = new long[places.size()];
+        final int[] icons = new int[places.size()];
+        for (int i = 0; i < places.size(); i++) {
+            final long place = places.get(i);
+            final PassengerAvatars.PassengerAvatar avatar = PassengerAvatars.passenger((int) (place / PASSENGERS_PER_JOURNEY_LIMIT), (int) (place % PASSENGERS_PER_JOURNEY_LIMIT), iconPool);
+            ids[i] = place;
+            initials.append(avatar.initials());
+            kinds.append('x');
+            final Integer known = iconNumbers.get(avatar.icon());
+            if (known == null) {
+                iconNumbers.put(avatar.icon(), iconTable.size());
+                icons[i] = iconTable.size();
+                iconTable.add(avatar.icon());
+            } else {
+                icons[i] = known;
+            }
+        }
+        return new PassengerRowDto(places.size(), ids, initials.toString(), kinds.toString(), iconTable, icons);
+    }
+
+    // the place of a passenger in the row: the id of the journey and the number of the passenger in it, in one number (it grows with the order of the boarding)
+    private static final int PASSENGERS_PER_JOURNEY_LIMIT = 4096;
+
+    private static long passengerPlace(final int journeyId, final int index) {
+        return (long) journeyId * PASSENGERS_PER_JOURNEY_LIMIT + index;
     }
 
     static ManualPayDto buildManualPay(final World world, final FlightMissions.Mission flight) {
@@ -1519,22 +1553,18 @@ public class FlightDashboardController {
         private final int total;
     }
 
-    // The row of the passengers on board: kind is 'pax' (a passenger of a journey), the pilots who are carried will be 'pilot'; icon is the file of the icon
-    // (the pages know where the icons are), initials are two letters
+    // The row of the passengers on board, compact (see buildPassengerRow): count is the number of the passengers, ids the id of every one (it never changes while the passenger
+    // is aboard), initials two letters of every passenger one after another, kinds a letter of every passenger (x a passenger, p a pilot who is carried, they are not yet), the
+    // files of the icons are in iconTable and icons has the number in the table for every passenger
     @Data
     @AllArgsConstructor
-    public static class PassengerDto {
-        private final String kind;
-        private final String initials;
-        private final String icon;
-    }
-
-    // count is the number of the passengers in the row (all of them are in the list)
-    @Data
-    @AllArgsConstructor
-    public static class PassengersDto {
+    public static class PassengerRowDto {
         private final int count;
-        private final List<PassengerDto> passengers;
+        private final long[] ids;
+        private final String initials;
+        private final String kinds;
+        private final List<String> iconTable;
+        private final int[] icons;
     }
 
     // What the contract promises (byContract) and what is left if the flight is started manually (ifManual); both are null if the flight has no contract
@@ -1685,6 +1715,8 @@ public class FlightDashboardController {
         private final UserLocationDto pilot;
         // What the flight does to the next flights of the pilot (late, or diverted with passengers); null when there is nothing to tell
         private final ScheduleWarningDto scheduleWarning;
+        // The passengers who are in the aircraft now, for the row of the icons; null before the boarding and after the deboarding
+        private final PassengerRowDto passengers;
     }
 
     /**

@@ -16,7 +16,7 @@ class SimTrackerControllerTest {
     void posrepAnswersWithTheStatusBuiltAfterTheReportIsProcessed() {
         final SimTrackerBean simTrackerBean = mock(SimTrackerBean.class);
         final FlightDashboardController dashboard = mock(FlightDashboardController.class);
-        final FlightDashboardController.StatusDto status = new FlightDashboardController.StatusDto(null, null, null, null, null, null, null);
+        final FlightDashboardController.StatusDto status = new FlightDashboardController.StatusDto(null, null, null, null, null, null, null, null);
         when(dashboard.getStatus(anyInt())).thenReturn(status);
         final SimTrackerController controller = new SimTrackerController();
         ReflectionTestUtils.setField(controller, "simTrackerBean", simTrackerBean);
