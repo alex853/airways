@@ -157,6 +157,55 @@ class PilotEndpointTest {
         assertTrue(duty.isOnDuty());
     }
 
+    @Test
+    void dutyDetailsShowTheFlightsAndTheGapsWhichCountAndTheNumbersOfTheTile() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        // duty of an entry is the blocks, 30 minutes before and 20 minutes after: A is 10:30..7:40 ago, B 7:30..4:40 ago (a gap of 10 minutes after A: duty), C 2:30..0:40 ago
+        // (a gap of 2 h 10 min after B: not duty), D is 30 hours ago (not on the ribbon)
+        logbookEntry(person, 10, 8);
+        logbookEntry(person, 7, 5);
+        logbookEntry(person, 2, 1);
+        logbookEntry(person, 30, 28);
+
+        final PilotController.DutyDetailsDto details = PilotController.buildDutyDetails(world, person);
+
+        assertEquals(170 + 10 + 170 + 110, details.getTotalMinutes());
+        assertEquals(170 + 170 + 110, details.getFlightsMinutes());
+        assertEquals(10, details.getGapsMinutes());
+        assertEquals(PilotController.buildDuty(world, person).getLast24HoursMinutes(), details.getTotalMinutes());
+        assertEquals(14 * 60, details.getLimitMinutes());
+        assertEquals(120, details.getGapLimitMinutes());
+        assertEquals(4, details.getSegments().size());
+        assertEquals("flight", details.getSegments().get(0).getType());
+        assertEquals("gap", details.getSegments().get(1).getType());
+        assertEquals(10, details.getSegments().get(1).getMinutesInWindow());
+        assertEquals("flight", details.getSegments().get(2).getType());
+        assertEquals("KOAK - KSFO", details.getSegments().get(2).getRoute());
+        assertEquals("flight", details.getSegments().get(3).getType());
+        assertTrue(details.getPlanned().isEmpty());
+        assertEquals(world.getWorldTime() * 1000L, details.getNow());
+        assertEquals((world.getWorldTime() - 24 * 3600) * 1000L, details.getWindowStart());
+        assertFalse(details.isOnDuty());
+    }
+
+    @Test
+    void dutyDetailsKeepAnOldFlightOfTheLeftEarOutOfTheNumbers() {
+        world.setWorldTime(world.getWorldTime() + 100 * 3600);
+        final Persons.Person person = freshPilot();
+        // 25.5 h .. 24.7 h ago: before the window of 24 hours, on the ribbon, not counted, and it does not join the flight of the window after it
+        logbookEntry(person, 26, 25).setDuty(world.getWorldTime() - (25 * 3600 + 1800), world.getWorldTime() - (24 * 3600 + 2400));
+        logbookEntry(person, 23, 22);
+
+        final PilotController.DutyDetailsDto details = PilotController.buildDutyDetails(world, person);
+
+        assertEquals(2, details.getSegments().size());
+        assertEquals(0, details.getSegments().get(0).getMinutesInWindow());
+        assertEquals(PilotController.buildDuty(world, person).getLast24HoursMinutes(), details.getTotalMinutes());
+        assertEquals(details.getTotalMinutes(), details.getFlightsMinutes());
+        assertEquals(0, details.getGapsMinutes());
+    }
+
     // ---- the flight time of the last 30 and 365 days
 
     @Test

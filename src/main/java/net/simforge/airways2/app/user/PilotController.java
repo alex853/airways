@@ -20,6 +20,9 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.FlightMissionHelper;
+import net.simforge.airways2.world.processors.RosterForecast;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
@@ -44,6 +47,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -72,6 +76,14 @@ public class PilotController {
             });
         }
         return worldBean.read(world -> buildPilot(world, personOf(world, userId)));
+    }
+
+    /**
+     * How the duty time is made: the flights and the gaps on a ribbon of 24 hours (Details of the duty tile).
+     */
+    @GetMapping("/duty-details")
+    public DutyDetailsDto getDutyDetails(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> buildDutyDetails(world, personOf(world, userId)));
     }
 
     /**
@@ -381,8 +393,23 @@ public class PilotController {
      */
     static DutyDto buildDuty(final World world, final Persons.Person person) {
         final int now = world.getWorldTime();
-        final int windowStart = now - PilotDuty.WINDOW_SECONDS;
-        final List<int[]> periods = new ArrayList<>();
+        final List<DutyPeriod> found = dutyPeriods(world, person, now, now - PilotDuty.WINDOW_SECONDS);
+        final List<int[]> periods = found.stream().map(p -> new int[]{p.start(), p.end()}).toList();
+        return new DutyDto(PilotDuty.dutyMinutesInWindow(periods, now), PilotDuty.LIMIT_MINUTES, person.getState() == Persons.State.OnDuty);
+    }
+
+    /**
+     * A period of duty (world time): from Start flight to Finish flight; route is null for a flight in progress which is not known.
+     */
+    private record DutyPeriod(int start, int end, String route) {
+    }
+
+    /**
+     * The periods of the duty of the pilot which end after {@code from}: the finished flights of the logbook (with the kept duty, or the blocks with the preflight and
+     * the postflight for an entry written before it was kept) and the flight in progress from its start up to now.
+     */
+    private static List<DutyPeriod> dutyPeriods(final World world, final Persons.Person person, final int now, final int from) {
+        final List<DutyPeriod> periods = new ArrayList<>();
 
         world.pilotLogbook().filter(world.pilotLogbook().byPersonId(person.getId())).forEach(entry -> {
             final int start;
@@ -394,29 +421,94 @@ public class PilotController {
                 start = entry.getBlocksOffTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE;
                 end = entry.getBlocksOnTime() + FlightTimeline.POSTFLIGHT_MINUTES * Time.ONE_MINUTE;
             }
-            if (end > windowStart) {
-                periods.add(new int[]{start, end});
+            if (end > from) {
+                periods.add(new DutyPeriod(start, end, world.airports().getIcao(entry.getFromAirportId()).orElse("?")
+                        + " - " + world.airports().getIcao(entry.getToAirportId()).orElse("?")));
             }
         });
 
-        boolean onDuty = false;
         if (person.getState() == Persons.State.OnDuty) {
-            onDuty = true;
+            final Optional<FlightMissions.Mission> flight = world.flightMissions().allByUserId(person.getUserId())
+                    .filter(fm -> switch (fm.getStatus()) {
+                        case Preflight, Departure, Flying, Arrival, Postflight -> true;
+                        default -> false;
+                    })
+                    .min(Comparator.comparingInt(FlightMissions.Mission::getPlannedDepartureWorldTime));
             int start = person.getDutyStartTime();
             if (start <= 0) {
                 // the flight was started before the start was kept: the preflight starts before the planned blocks off
-                start = world.flightMissions().allByUserId(person.getUserId())
-                        .filter(fm -> switch (fm.getStatus()) {
-                            case Preflight, Departure, Flying, Arrival, Postflight -> true;
-                            default -> false;
-                        })
-                        .mapToInt(fm -> fm.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE)
-                        .min().orElse(now);
+                start = flight.map(fm -> fm.getPlannedDepartureWorldTime() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE).orElse(now);
             }
-            periods.add(new int[]{Math.min(start, now), now});
+            periods.add(new DutyPeriod(Math.min(start, now), now, flight.map(fm -> FlightMissionHelper.formatRoute(world, fm.getId())).orElse(null)));
+        }
+        return periods;
+    }
+
+    // how far after now the planned flights are shown on the ribbon of the duty (the right "ear")
+    static final int DUTY_DETAILS_AHEAD_SECONDS = Time.ONE_HOUR;
+    // how far before the window of 24 hours the flights are told (the left "ear")
+    static final int DUTY_DETAILS_BEHIND_SECONDS = Time.ONE_HOUR;
+
+    /**
+     * How the duty of the last 24 hours is made (the Details of the tile): the periods of duty (flights from Start flight to Finish flight), the gaps between them which
+     * count as duty too (shorter than PilotDuty.CHAIN_GAP_SECONDS), and the planned flights of the next hour. Times are UTC milliseconds, the pieces are not cut at the window:
+     * minutesInWindow tells how much of a piece is in the last 24 hours. The numbers are the same as in the tile.
+     */
+    static DutyDetailsDto buildDutyDetails(final World world, final Persons.Person person) {
+        final int now = world.getWorldTime();
+        final int windowStart = now - PilotDuty.WINDOW_SECONDS;
+        final List<DutyPeriod> periods = new ArrayList<>(dutyPeriods(world, person, now, windowStart - DUTY_DETAILS_BEHIND_SECONDS));
+        periods.sort(Comparator.comparingInt(DutyPeriod::start));
+
+        final List<DutySegmentDto> segments = new ArrayList<>();
+        long unionSeconds = 0;
+        int reached = 0;
+        final List<int[]> inWindow = new ArrayList<>();
+        for (final DutyPeriod period : periods) {
+            if (period.end() <= windowStart) {
+                // over before the window (the left ear of the ribbon): shown, but it is not counted and does not join the flights of the window, as in the tile
+                segments.add(segment("flight", period.start(), period.end(), period.route(), now, windowStart));
+                continue;
+            }
+            inWindow.add(new int[]{period.start(), period.end()});
+            if (reached != 0 && period.start() > reached && period.start() - reached < PilotDuty.CHAIN_GAP_SECONDS) {
+                // the pilot did not go off duty between the flights: the gap is duty
+                segments.add(segment("gap", reached, period.start(), null, now, windowStart));
+            }
+            segments.add(segment("flight", period.start(), period.end(), period.route(), now, windowStart));
+            final int from = Math.max(Math.max(period.start(), reached), windowStart);
+            final int to = Math.min(period.end(), now);
+            if (to > from) {
+                unionSeconds += to - from;
+            }
+            reached = Math.max(reached, period.end());
         }
 
-        return new DutyDto(PilotDuty.dutyMinutesInWindow(periods, now), PilotDuty.LIMIT_MINUTES, onDuty);
+        final int totalMinutes = PilotDuty.dutyMinutesInWindow(inWindow, now);
+        final int flightsMinutes = (int) Math.min(unionSeconds / 60, totalMinutes);
+
+        // the flights of the roster which have not started: the preflight of a flight begins before its departure, the postflight ends after its arrival
+        final List<DutySegmentDto> planned = new ArrayList<>();
+        for (final RosterForecast.Entry entry : RosterForecast.of(world, person.getUserId())) {
+            if (entry.mission().getActualDepartureWorldTime() != 0 || entry.expectedDeparture() == 0) {
+                continue;
+            }
+            final int start = entry.expectedDeparture() - FlightTimeline.START_TO_BLOCKS_OFF_MINUTES * Time.ONE_MINUTE;
+            final int end = entry.expectedArrival() + FlightTimeline.POSTFLIGHT_MINUTES * Time.ONE_MINUTE;
+            if (end > now && start <= now + DUTY_DETAILS_AHEAD_SECONDS) {
+                planned.add(new DutySegmentDto("planned", start * 1000L, end * 1000L, FlightMissionHelper.formatRoute(world, entry.mission().getId()), 0));
+            }
+        }
+
+        return new DutyDetailsDto(now * 1000L, windowStart * 1000L, totalMinutes, PilotDuty.LIMIT_MINUTES, flightsMinutes, Math.max(0, totalMinutes - flightsMinutes),
+                PilotDuty.CHAIN_GAP_SECONDS / 60, FlightTimeline.START_TO_BLOCKS_OFF_MINUTES, FlightTimeline.POSTFLIGHT_MINUTES,
+                person.getState() == Persons.State.OnDuty, segments, planned);
+    }
+
+    private static DutySegmentDto segment(final String type, final int start, final int end, final String route, final int now, final int windowStart) {
+        final int from = Math.max(start, windowStart);
+        final int to = Math.min(end, now);
+        return new DutySegmentDto(type, start * 1000L, end * 1000L, route, to > from ? (to - from) / 60 : 0);
     }
 
     /**
@@ -859,6 +951,43 @@ public class PilotController {
         private int limitMinutes;
         // true if a flight is in progress and its time up to now is in the number
         private boolean onDuty;
+    }
+
+    /**
+     * The Details of the duty tile (UTC milliseconds, minutes). flightsMinutes + gapsMinutes = totalMinutes: the minutes of the flights in the last 24 hours (the overlaps
+     * counted once) and the minutes of the gaps between flights which count as duty. gapLimitMinutes: a gap shorter than it counts. preflightMinutes, postflightMinutes: what
+     * a flight adds before the blocks off and after the blocks on (for the planned flights and the old entries of the logbook).
+     */
+    @Data
+    @AllArgsConstructor
+    public static class DutyDetailsDto {
+        private long now;
+        private long windowStart;
+        private int totalMinutes;
+        private int limitMinutes;
+        private int flightsMinutes;
+        private int gapsMinutes;
+        private int gapLimitMinutes;
+        private int preflightMinutes;
+        private int postflightMinutes;
+        private boolean onDuty;
+        // the periods of duty and the gaps which count, in the order of the time
+        private List<DutySegmentDto> segments;
+        // the flights of the roster which have not started, the next hour
+        private List<DutySegmentDto> planned;
+    }
+
+    /**
+     * type: flight, gap or planned; route is null for a gap; minutesInWindow: how much of the piece is in the last 24 hours.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class DutySegmentDto {
+        private String type;
+        private long from;
+        private long to;
+        private String route;
+        private int minutesInWindow;
     }
 
     @Data
