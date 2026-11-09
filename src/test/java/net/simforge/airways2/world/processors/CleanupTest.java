@@ -194,4 +194,43 @@ class CleanupTest {
         // the budget is over at once, so the first sweep in the turn (the event log) visits one object only
         assertEquals(2, world.eventLog().all().count());
     }
+
+    @Test
+    public void test__the_stats_of_the_runs_are_logged_every_10_minutes() {
+        final ch.qos.logback.classic.Logger logger = (ch.qos.logback.classic.Logger) org.slf4j.LoggerFactory.getLogger(Cleanup.class);
+        final ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender = new ch.qos.logback.core.read.ListAppender<>();
+        appender.start();
+        logger.addAppender(appender);
+        final ch.qos.logback.classic.Level oldLevel = logger.getLevel();
+        logger.setLevel(ch.qos.logback.classic.Level.INFO);
+        try {
+            final AtomicLong clock = new AtomicLong(1_000_000L);
+            final long budgetNanos = 5_000_000L;
+            final Cleanup cleanup = new Cleanup(world, clock::get, 1_000_000_000L, 0, budgetNanos, 1000);
+
+            for (int i = 0; i < 3; i++) {
+                clock.addAndGet(60_000L);
+                cleanup.process();
+            }
+            assertTrue(statsLines(appender).isEmpty(), "10 minutes have not passed");
+
+            clock.addAndGet(Cleanup.STATS_INTERVAL_MILLIS);
+            cleanup.process();
+
+            final java.util.List<String> lines = statsLines(appender);
+            assertEquals(1, lines.size(), lines.toString());
+            assertTrue(lines.get(0).startsWith("cleanup - stats for 13 min: 4 runs, budget 20 ms in all, spent "), lines.get(0));
+            assertTrue(lines.get(0).endsWith(" runs over the budget"), lines.get(0));
+        } finally {
+            logger.detachAppender(appender);
+            logger.setLevel(oldLevel);
+        }
+    }
+
+    private static java.util.List<String> statsLines(final ch.qos.logback.core.read.ListAppender<ch.qos.logback.classic.spi.ILoggingEvent> appender) {
+        return appender.list.stream()
+                .map(ch.qos.logback.classic.spi.ILoggingEvent::getFormattedMessage)
+                .filter(m -> m.startsWith("cleanup - stats"))
+                .toList();
+    }
 }

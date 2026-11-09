@@ -45,9 +45,10 @@ import java.util.function.LongSupplier;
 public class Cleanup {
     private static final Logger log = LoggerFactory.getLogger(Cleanup.class);
 
-    static final int DEFAULT_BATCH = 1000;
+    static final int DEFAULT_BATCH = 10_000;
     static final long DEFAULT_BUDGET_NANOS = 5_000_000L;
     static final long PASS_INTERVAL_MILLIS = 3_600_000L;
+    static final long STATS_INTERVAL_MILLIS = 600_000L;
     // after the start of the server the first sweep starts in 5 minutes and every next one 5 minutes after the previous one
     private static final long FIRST_START_DELAY_MILLIS = 5 * 60_000L;
     private static final long START_DELAY_STEP_MILLIS = 5 * 60_000L;
@@ -79,8 +80,14 @@ public class Cleanup {
     private final List<Sweep> sweeps = new ArrayList<>();
     private int firstSweep;
 
+    // the statistics of the runs, written to the log every 10 minutes (STATS_INTERVAL_MILLIS)
+    private long statsSinceMillis;
+    private int statsRuns;
+    private int statsOverBudgetRuns;
+    private long statsSpentNanos;
+
     /**
-     * The cleanup of the world with the default budget (5 ms of a run), the batch (1000 objects of a sweep in a run) and the start of the sweeps: the first one in 5 minutes after
+     * The cleanup of the world with the default budget (5 ms of a run), the batch (10 000 objects of a sweep in a run) and the start of the sweeps: the first one in 5 minutes after
      * the creation, every next one 5 minutes later.
      */
     public Cleanup(final World world) {
@@ -94,6 +101,7 @@ public class Cleanup {
         this.batch = batch;
 
         final long createdAt = clockMillis.getAsLong();
+        this.statsSinceMillis = createdAt;
         sweeps.add(new Sweep("event log", createdAt + firstStartDelayMillis, () -> world.eventLog().getLastRecordId(), this::visitEvent));
         sweeps.add(new Sweep("events to process", createdAt + firstStartDelayMillis + startDelayStepMillis, () -> world.eventsToProcess().getLastRecordId(), this::visitEventToProcess));
         sweeps.add(new Sweep("flight missions", createdAt + firstStartDelayMillis + 2 * startDelayStepMillis, () -> world.flightMissions().getLastRecordId(), this::visitFlightMission));
@@ -104,7 +112,8 @@ public class Cleanup {
      * One run: every sweep which is due goes on from its cursor, for the time of the budget in all.
      */
     public void process() {
-        final long deadline = System.nanoTime() + budgetNanos;
+        final long startNanos = System.nanoTime();
+        final long deadline = startNanos + budgetNanos;
         try {
             for (int i = 0; i < sweeps.size(); i++) {
                 // the first sweep of the turn always goes forward (by one object at least), the next ones only while the budget is not over
@@ -116,7 +125,33 @@ public class Cleanup {
         } finally {
             firstSweep = (firstSweep + 1) % sweeps.size();
             logRemoved();
+            collectStats(System.nanoTime() - startNanos);
         }
+    }
+
+    // The runs of the last 10 minutes: how many, the budget of all of them (runs * the budget of a run), how much of it has really been spent, how many runs went over the budget
+    // (a run is over the budget by one object at most). It tells whether the budget and the batch are chosen well.
+    private void collectStats(final long spentNanos) {
+        statsRuns++;
+        statsSpentNanos += spentNanos;
+        if (spentNanos > budgetNanos) {
+            statsOverBudgetRuns++;
+        }
+
+        final long now = clockMillis.getAsLong();
+        if (now - statsSinceMillis < STATS_INTERVAL_MILLIS) {
+            return;
+        }
+
+        final long budgetMillis = statsRuns * budgetNanos / 1_000_000;
+        final long spentMillis = statsSpentNanos / 1_000_000;
+        log.info("cleanup - stats for {} min: {} runs, budget {} ms in all, spent {} ms ({}%), {} runs over the budget",
+                (now - statsSinceMillis) / 60_000, statsRuns, budgetMillis, spentMillis,
+                budgetMillis > 0 ? spentMillis * 100 / budgetMillis : 0, statsOverBudgetRuns);
+        statsSinceMillis = now;
+        statsRuns = 0;
+        statsOverBudgetRuns = 0;
+        statsSpentNanos = 0;
     }
 
     private final class Sweep {
