@@ -10,6 +10,7 @@ hosting-access
 /world-data/
 /g7/
 /avatars/
+/calendar/
 /vatsim-tracker/
 /admin-requests.http
 /user-token.txt

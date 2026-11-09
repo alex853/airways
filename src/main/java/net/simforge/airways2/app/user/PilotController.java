@@ -3,6 +3,7 @@ package net.simforge.airways2.app.user;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import net.simforge.airways2.app.beans.WorldRunnerBean;
+import net.simforge.airways2.app.pblc.CalendarKeys;
 import net.simforge.airways2.app.userstorage.User;
 import net.simforge.airways2.app.userstorage.UserStorage;
 import net.simforge.airways2.tools.Avatars;
@@ -71,6 +72,19 @@ public class PilotController {
             });
         }
         return worldBean.read(world -> buildPilot(world, personOf(world, userId)));
+    }
+
+    /**
+     * The path of the calendar link of the pilot (docs/calendar.md): the page adds the address of the server and gives it to the pilot to subscribe to the flights in a
+     * calendar. 503 while the admin has not generated the secret of the server.
+     */
+    @GetMapping("/calendar-link")
+    public Map<String, String> getCalendarLink(@RequestAttribute("userId") final int userId) {
+        final String slug = CalendarKeys.getInstance().slugOf(userId);
+        if (slug == null) {
+            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "the calendar is not set up yet");
+        }
+        return Map.of("path", "/calendar/" + slug + ".ics");
     }
 
     /**
