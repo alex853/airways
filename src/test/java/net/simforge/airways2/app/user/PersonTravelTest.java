@@ -654,7 +654,32 @@ class PersonTravelTest {
 
         assertFalse(place.getAirline().isFound());
         assertTrue(place.getAirline().getLegs().isEmpty());
-        assertEquals("No flights from Oakland towards Fresno yet", place.getProblem());
+        // it is a note and not the problem of the place: no flights yet does not forbid the travel, the journey keeps looking
+        assertEquals("No flights from Oakland towards Fresno yet", place.getAirline().getNote());
+        assertNull(place.getProblem());
+    }
+
+    @Test
+    void withNoRouteYetThePilotWhoHasNotTheReserveIsToldSo() {
+        airportOfFresno(0);
+        pilotIsIn(oaklandCity);
+        world.bankControl().transfer(pilotAccount.getId(), bank.getId(), 1_000_000 - 50, BankTransactions.Type.Travel);
+
+        final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
+
+        assertEquals("Not enough money: 200 must stay on the account", place.getProblem());
+        assertEquals("No flights from Oakland towards Fresno yet", place.getAirline().getNote());
+    }
+
+    @Test
+    void aPlaceWhichIsTooCloseForTheAirlineIsAProblemOfThePlace() {
+        pilotIsIn(oaklandCity);
+        final Cities.City nearby = world.cities().create(world.countries().all().findFirst().orElseThrow().getId(), "Berkeley", 37.87, -122.27, 100_000);
+
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Airline", nearby.getName());
+
+        assertEquals("Too close, from 100 miles", found.getMatches().get(0).getProblem());
+        assertNull(found.getMatches().get(0).getAirline().getNote());
     }
 
     @Test

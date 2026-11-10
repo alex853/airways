@@ -174,6 +174,8 @@ class AirlineTravelEstimateTest {
         assertTrue(result.legs().isEmpty());
         assertEquals(0, result.price());
         assertEquals("No flights from Aville towards Bville yet", result.problem());
+        // it does not forbid the travel: the journey keeps looking for flights
+        assertFalse(result.blocking());
     }
 
     @Test
@@ -184,6 +186,7 @@ class AirlineTravelEstimateTest {
 
         assertFalse(result.found());
         assertEquals("Too close, from 100 miles", result.problem());
+        assertTrue(result.blocking());
     }
 
     @Test
@@ -201,6 +204,8 @@ class AirlineTravelEstimateTest {
 
         assertFalse(result.found());
         assertEquals("There are no airports in Bville", result.problem());
+        // nothing can arrive in a city without airports, whatever the flights are
+        assertTrue(result.blocking());
     }
 
     // ---- the variants: the route of the search and the other ways which the flights allow, the most frequent first (the rarest flight of the route is its frequency)

@@ -64,6 +64,10 @@
 decided automatically: the first flight that is found. Below are the most likely routes.», под вариантами «In fact, completely different routes are possible, and you cannot choose one. These are shown to give
 you the scale of the time and the cost.» Пилот маршрут не выбирает: варианты только для масштаба времени и денег.
 
+**Нет маршрута не запрещает поездку** (решено пользователем 2026-11-10): если рейсов между аэропортами за последние дни нет (`No flights from X towards Y yet`, `No route found ...`), это **заметка** оценки
+(`AirlineEstimateDto.note`, `Result.blocking = false`), а не причина отказа места: журни пилота сама ищет рейсы, и они появляются всё время. Цена тогда не известна, на счёте должно быть не меньше запаса 200.
+Запрещают то, что само не изменится (`Result.blocking`, причина в `problem` места, красным): города нет, тот же город, ближе 100 миль, в городе цели нет аэропортов, не хватает денег.
+
 **Что показывается:** рейсы маршрута (аэропорты, расстояние, сколько рейсов в неделю, цена билета), цена всех билетов (`ShadowJetPricing.price` для одного пассажира, эконом), «нужно на счёте»
 (цена плюс запас 200, `PilotTravel.AIRLINE_MONEY_RESERVE`), **время: «около N-2N дней»**, по 1-2 дня на рейс (`LEG_MIN_DAYS`, `LEG_MAX_DAYS`; времени по расписанию нет, рейсы живых людей).
 Если маршрута нет, в окне причина (`No flights from X towards Y yet`, `Too close, from 100 miles`, `There are no airports in Y`, ...); если денег меньше цены плюс запас, `Not enough money`.

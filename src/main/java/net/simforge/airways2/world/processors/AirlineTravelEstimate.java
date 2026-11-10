@@ -28,6 +28,9 @@ import java.util.Set;
  * frequent; a flight right to the destination, if it is a hub, is the best of them), and then goes on from the city of that hub;
  * 2. or a direct flight to an airport of the destination city (the most frequent);
  * 3. or two flights with a stopover (the pair which has the rarer flight the most frequent).
+ * A route which is not found (no flights between these airports in the last days) does NOT forbid the travel: the journey of the pilot keeps looking for flights and they appear all the
+ * time, so it is only told (Result.blocking is false). What forbids it is something which can not change by itself: a city which does not exist, the same city, a distance under 100 miles,
+ * a destination without airports (blocking).
  * That is the route of the search (estimate). variants() gives it and the other ways to get there which the same flights allow (the best direct flight and the best pair of flights with
  * a stopover, if they are not the same route), SORTED BY THE FREQUENCY of the route, not by the steps of the search: the most frequent first (the frequency of a route is the one of its
  * rarest flight, the route is as frequent as its bottleneck), at equal frequency the one with fewer flights, then the cheaper one. So a route through a hub with frequent flights is
@@ -51,9 +54,10 @@ public final class AirlineTravelEstimate {
 
     /**
      * The estimate: the flights, the price of all of them and the time as the days from-to; the problem tells why there is no route (null when there is one). The title is the
-     * name of the route for the page: a direct flight, through a hub or with a stopover (null when there is no route).
+     * name of the route for the page: a direct flight, through a hub or with a stopover (null when there is no route). Blocking tells whether the problem forbids the travel (a distance
+     * under 100 miles, a city which is not there) or is only a note (no flights yet: the journey keeps looking).
      */
-    public record Result(List<Leg> legs, long price, int minDays, int maxDays, String problem, String title) {
+    public record Result(List<Leg> legs, long price, int minDays, int maxDays, String problem, String title, boolean blocking) {
         public boolean found() {
             return problem == null;
         }
@@ -80,19 +84,19 @@ public final class AirlineTravelEstimate {
         final Optional<Cities.City> fromCity = world.cities().byId(fromCityId);
         final Optional<Cities.City> toCity = world.cities().byId(toCityId);
         if (fromCity.isEmpty() || toCity.isEmpty()) {
-            return failure("There is no such city");
+            return failure("There is no such city", true);
         }
         if (fromCityId == toCityId) {
-            return failure("The pilot is in " + toCity.get().getName() + " already");
+            return failure("The pilot is in " + toCity.get().getName() + " already", true);
         }
         final double distance = Geo.distance(fromCity.get().getCoords(), toCity.get().getCoords());
         if (distance < PilotTravel.AIRLINE_MIN_DISTANCE_NM) {
-            return failure("Too close, from " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles");
+            return failure("Too close, from " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles", true);
         }
         final Geo.Coords target = toCity.get().getCoords();
         final Set<Integer> targetAirports = airportsOf(toCityId);
         if (targetAirports.isEmpty()) {
-            return failure("There are no airports in " + toCity.get().getName());
+            return failure("There are no airports in " + toCity.get().getName(), true);
         }
 
         final List<Leg> legs = new ArrayList<>();
@@ -102,11 +106,11 @@ public final class AirlineTravelEstimate {
         while (!arrived && legs.size() < MAX_LEGS) {
             final Cities.City current = world.cities().byId(currentCityId).orElse(null);
             if (current == null || !visitedCities.add(currentCityId)) {
-                return failure("No route found to " + toCity.get().getName());
+                return failure("No route found to " + toCity.get().getName(), false);
             }
             final Set<Integer> currentAirports = airportsOf(currentCityId);
             if (currentAirports.isEmpty()) {
-                return failure("There are no airports in " + current.getName());
+                return failure("There are no airports in " + current.getName(), false);
             }
             final double distanceNow = Geo.distance(current.getCoords(), target);
 
@@ -119,7 +123,7 @@ public final class AirlineTravelEstimate {
                 } else {
                     currentCityId = cityOfAirport(hubLeg.toAirportId());
                     if (currentCityId == 0) {
-                        return failure("No route found to " + toCity.get().getName());
+                        return failure("No route found to " + toCity.get().getName(), false);
                     }
                 }
                 continue;
@@ -141,10 +145,10 @@ public final class AirlineTravelEstimate {
                 continue;
             }
 
-            return failure("No flights from " + current.getName() + " towards " + toCity.get().getName() + " yet");
+            return failure("No flights from " + current.getName() + " towards " + toCity.get().getName() + " yet", false);
         }
         if (!arrived) {
-            return failure("No route found to " + toCity.get().getName() + " in " + MAX_LEGS + " flights");
+            return failure("No route found to " + toCity.get().getName() + " in " + MAX_LEGS + " flights", false);
         }
 
         return route(legs);
@@ -209,7 +213,7 @@ public final class AirlineTravelEstimate {
 
     private Result route(final List<Leg> legs) {
         final long price = legs.stream().mapToLong(Leg::price).sum();
-        return new Result(List.copyOf(legs), price, legs.size() * LEG_MIN_DAYS, legs.size() * LEG_MAX_DAYS, null, titleOf(legs));
+        return new Result(List.copyOf(legs), price, legs.size() * LEG_MIN_DAYS, legs.size() * LEG_MAX_DAYS, null, titleOf(legs), false);
     }
 
     // the name of the route: a direct flight, through the hubs, or with a stopover (the airports in the middle are named)
@@ -226,8 +230,8 @@ public final class AirlineTravelEstimate {
         return (allHubs ? "Through " : "Stopover in ") + String.join(", ", middle);
     }
 
-    private static Result failure(final String problem) {
-        return new Result(List.of(), 0, 0, 0, problem, null);
+    private static Result failure(final String problem, final boolean blocking) {
+        return new Result(List.of(), 0, 0, 0, problem, null, blocking);
     }
 
     // the airports which serve the city, without the airports which are out of the game

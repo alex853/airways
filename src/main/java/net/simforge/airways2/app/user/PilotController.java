@@ -336,7 +336,9 @@ public class PilotController {
         // the variants are sorted by the frequency of the route, the first one is the most frequent: the fields of the estimate and the money are of it
         final List<AirlineTravelEstimate.Result> variants = estimator.variants(from.id(), to.id());
         final AirlineTravelEstimate.Result estimate = variants.get(0);
-        String problem = estimate.problem();
+        // a route which is not found yet does not forbid the travel (the journey keeps looking for flights): it is a note of the estimate, not the problem of the place
+        String problem = estimate.blocking() ? estimate.problem() : null;
+        final String note = estimate.blocking() ? null : estimate.problem();
         final List<AirlineLegDto> legs = legsOf(estimate);
         final List<AirlineRouteDto> routes = new ArrayList<>();
         if (estimate.found()) {
@@ -346,12 +348,15 @@ public class PilotController {
             }
         }
         final long balance = world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(0L);
+        // without a route the price is not known: the reserve is what the account must have at least
         final long needed = estimate.price() + PilotTravel.AIRLINE_MONEY_RESERVE;
         if (problem == null && balance < needed) {
-            problem = "Not enough money: the tickets cost about " + estimate.price() + " and " + PilotTravel.AIRLINE_MONEY_RESERVE + " more must stay on the account";
+            problem = estimate.found()
+                    ? "Not enough money: the tickets cost about " + estimate.price() + " and " + PilotTravel.AIRLINE_MONEY_RESERVE + " more must stay on the account"
+                    : "Not enough money: " + PilotTravel.AIRLINE_MONEY_RESERVE + " must stay on the account";
         }
         final AirlineEstimateDto airline = new AirlineEstimateDto(estimate.found(), legs, estimate.price(), PilotTravel.AIRLINE_MONEY_RESERVE, needed, balance,
-                estimate.minDays(), estimate.maxDays(), routes);
+                estimate.minDays(), estimate.maxDays(), routes, note);
         return new TravelPlaceDto("city", Id.encode(to.id()), to.name(), subtitle, distance, estimate.minDays() * 24 * 60, estimate.price(), false, problem, airline);
     }
 
@@ -1253,6 +1258,8 @@ public class PilotController {
         private int maxDays;
         // the routes, the most frequent first (it is the same as the fields above): a direct flight, through a hub, a stopover
         private List<AirlineRouteDto> routes;
+        // why there is no route yet (no flights in the last days), null when there is one; it does not forbid the travel, the journey keeps looking for flights
+        private String note;
     }
 
     /**
