@@ -24,17 +24,19 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Persons of the world who have their own life: pilots and cabin crew (passengers are not persons, they are journeys).
  * It is one entity for a pilot and for a person, see docs/persons-pilots.md.
  * <p>
- * THE EXTENSION OF THE RECORD (docs/persons-record-extension.md, steps in docs/storage-extension.md): the record of the person grows from 32 to 40 bytes, so there are two storages
- * for now. The main one is "persons" (32 bytes), everything is read from it. The second one is "persons2" (40 bytes: the same fields and the new ones): it is read from the disk as it was
- * saved, only checked field by field against the main one (secondStorageMismatches: after the load and at every save), and every change of the main one is repeated in it (mirror).
- * A difference is logged as an error, nothing is repaired, the world goes on. The new fields exist only in the second storage and nobody uses them yet. After the swap (persons2
- * becomes the main one) the old storage goes away.
+ * THE EXTENSION OF THE RECORD (docs/persons-record-extension.md, steps in docs/storage-extension.md): the record of the person has grown from 32 to 40 bytes. THE SWAP IS DONE
+ * (step 3): the main storage is now "persons2" (40 bytes: the old fields and the new ones), everything is read from it and written to it. The old storage "persons" (32 bytes,
+ * only the old fields) is kept for a few restarts as a copy: it is read from the disk as it was saved, only checked field by field against the main one (legacyStorageMismatches: after
+ * the load and at every save), and every change of the main one is repeated in it (mirror). So the code of the step 2 can still read the world if the swap has to be rolled back.
+ * A difference is logged as an error, nothing is repaired, the world goes on. The new fields (pilotJourneyId, reserves) are in the main storage and nobody uses them yet. After
+ * a few clean restarts the old storage goes away (step 4).
  */
 public class Persons {
     private static final Logger log = LoggerFactory.getLogger(Persons.class);
 
+    // The MAIN storage, 40 bytes (the file "persons2"; the name is left as it was while the old file is kept as a copy)
     private final Storage<Person> storage = Storage.<Person>builder()
-            .name("persons")
+            .name("persons2")
             .withInstantiator(Person::new)
             .withIdOf(DataType.Unsigned24bit)
             // -------------------------------------------------- record deletion status    1 byte
@@ -54,7 +56,11 @@ public class Persons {
             .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes, see PilotRest  2 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // creditTime, when the credit was fixed (falling asleep or waking up), 0 is not started  4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // dutyStartTime, when the flight in progress was started, 0 is no flight in progress  4 bytes
-            // ----------------------------------------------------- sum                   32 bytes
+            // ----------------------------------------------------- the fields of the old record   32 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // pilotJourneyId, the journey of the pilot, 0 is none   3 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve (it may become flags: for now the one flag of the travel by airline, "get off at the nearest landing", goes to the free bits 12-13 of initials)  1 byte
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            // ----------------------------------------------------- sum                   40 bytes
             .withHeartbeatIndex(2) // heartbeatField index: position among withDataField calls (type=0, state=1, heartbeatTime=2)
             .build();
 
@@ -73,10 +79,10 @@ public class Persons {
     private final DataField creditTimeField = storage.getDataField(12);
     private final DataField dutyStartTimeField = storage.getDataField(13);
 
-    // The second storage of the extension (see the javadoc of the class): the fields of the main storage on the same places, then the new ones. Its objects are the ids only, nobody
-    // reads Person from it.
-    private final Storage<Integer> storage2 = Storage.<Integer>builder()
-            .name("persons2")
+    // The OLD storage of the extension (see the javadoc of the class), 32 bytes (the file "persons"): the fields of the old record on the same places. It is a copy of the main one, its
+    // objects are the ids only, nobody reads Person from it.
+    private final Storage<Integer> legacyStorage = Storage.<Integer>builder()
+            .name("persons")
             .withInstantiator(id -> id)
             .withIdOf(DataType.Unsigned24bit)
             // -------------------------------------------------- record deletion status    1 byte
@@ -94,24 +100,20 @@ public class Persons {
             .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes        2 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // creditTime                4 bytes
             .withDataField(DataField.of(DataType.Signed32bit)) // dutyStartTime             4 bytes
-            // ----------------------------------------------------- the fields of the main storage   32 bytes
-            .withDataField(DataField.of(DataType.Unsigned24bit)) // pilotJourneyId, the journey of the pilot, 0 is none   3 bytes
-            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve (it may become flags: for now the one flag of the travel by airline, "get off at the nearest landing", goes to the free bits 12-13 of initials)  1 byte
-            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
-            // ----------------------------------------------------- sum                   40 bytes
+            // ----------------------------------------------------- sum                   32 bytes
             .withHeartbeatIndex(2)
             .build();
 
-    // the fields which both storages have: indexes 0..13 of the main storage, the same indexes of the second one
+    // the fields which both storages have: indexes 0..13 of the main storage, the same indexes of the old one
     private static final int SHARED_FIELD_COUNT = 14;
     private static final int MAX_MISMATCHES_TOLD = 20;
 
-    // a field of the main storage to the same field of the second one (their DataField objects are not the same)
-    private final Map<DataField, DataField> secondFieldOf = new IdentityHashMap<>();
+    // a field of the main storage to the same field of the old one (their DataField objects are not the same)
+    private final Map<DataField, DataField> legacyFieldOf = new IdentityHashMap<>();
 
     {
         for (int i = 0; i < SHARED_FIELD_COUNT; i++) {
-            secondFieldOf.put(storage.getDataField(i), storage2.getDataField(i));
+            legacyFieldOf.put(storage.getDataField(i), legacyStorage.getDataField(i));
         }
     }
 
@@ -157,48 +159,48 @@ public class Persons {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-        // the second storage is read from the disk as it was saved (it is not made again from the main one any more), and it is only checked against the main one
-        this.storage2.loadIfExists(rootPath);
-        checkTheSecondStorageAfterTheLoad();
+        // the old storage is read from the disk as it was saved and it is only checked against the main one
+        this.legacyStorage.loadIfExists(rootPath);
+        checkTheLegacyStorageAfterTheLoad();
     }
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
 
-        final List<String> mismatches = secondStorageMismatches();
+        final List<String> mismatches = legacyStorageMismatches();
         if (!mismatches.isEmpty()) {
-            log.error("persons2 - the second storage differs from the main one at the save: {}", mismatches);
+            log.error("persons - the old storage differs from the main one (persons2) at the save: {}", mismatches);
         }
-        storage2.save(rootPath);
+        legacyStorage.save(rootPath);
     }
 
     /**
-     * The second storage which is read from the disk is checked against the main one, field by field. Nothing is repaired: a difference (or the missing file of the second storage) is
+     * The old storage which is read from the disk is checked against the main one, field by field. Nothing is repaired: a difference (or the missing file of the old storage) is
      * logged as an error, the world goes on, the main storage is the one which is read.
      */
-    private void checkTheSecondStorageAfterTheLoad() {
-        final List<String> mismatches = secondStorageMismatches();
+    private void checkTheLegacyStorageAfterTheLoad() {
+        final List<String> mismatches = legacyStorageMismatches();
         if (mismatches.isEmpty()) {
-            log.info("persons2 - the second storage is loaded from the disk and checked field by field: {} records, no differences", storage.getLastRecordId());
+            log.info("persons - the old storage is loaded from the disk and checked against the main one (persons2) field by field: {} records, no differences", storage.getLastRecordId());
         } else {
-            log.error("persons2 - THE SECOND STORAGE DIFFERS FROM THE MAIN ONE AFTER THE LOAD (nothing is repaired): {}", mismatches);
+            log.error("persons - THE OLD STORAGE DIFFERS FROM THE MAIN ONE (persons2) AFTER THE LOAD (nothing is repaired): {}", mismatches);
         }
     }
 
     /**
-     * The differences between the main and the second storage, field by field of the fields they share (an empty list means they are the same). The first
+     * The differences between the main and the old storage, field by field of the fields they share (an empty list means they are the same). The first
      * MAX_MISMATCHES_TOLD are told.
      */
-    List<String> secondStorageMismatches() {
+    List<String> legacyStorageMismatches() {
         final List<String> mismatches = new ArrayList<>();
-        final int last = Math.max(storage.getLastRecordId(), storage2.getLastRecordId());
-        if (storage.getLastRecordId() != storage2.getLastRecordId()) {
-            mismatches.add("the last id is " + storage.getLastRecordId() + " in persons and " + storage2.getLastRecordId() + " in persons2");
+        final int last = Math.max(storage.getLastRecordId(), legacyStorage.getLastRecordId());
+        if (storage.getLastRecordId() != legacyStorage.getLastRecordId()) {
+            mismatches.add("the last id is " + storage.getLastRecordId() + " in persons2 and " + legacyStorage.getLastRecordId() + " in persons");
         }
         for (int id = 1; id <= last && mismatches.size() < MAX_MISMATCHES_TOLD; id++) {
             final boolean exists = storage.byId(id).isPresent();
-            if (exists != storage2.byId(id).isPresent()) {
-                mismatches.add("p/s #" + id + " is " + (exists ? "live in persons and not in persons2" : "not live in persons and live in persons2"));
+            if (exists != legacyStorage.byId(id).isPresent()) {
+                mismatches.add("p/s #" + id + " is " + (exists ? "live in persons2 and not in persons" : "not live in persons2 and live in persons"));
                 continue;
             }
             if (!exists) {
@@ -206,29 +208,29 @@ public class Persons {
             }
             for (int i = 0; i < SHARED_FIELD_COUNT && mismatches.size() < MAX_MISMATCHES_TOLD; i++) {
                 final int value = storage.getAsInt(id, storage.getDataField(i));
-                final int value2 = storage2.getAsInt(id, storage2.getDataField(i));
+                final int value2 = legacyStorage.getAsInt(id, legacyStorage.getDataField(i));
                 if (value != value2) {
-                    mismatches.add("p/s #" + id + " field " + i + " is " + value + " in persons and " + value2 + " in persons2");
+                    mismatches.add("p/s #" + id + " field " + i + " is " + value + " in persons2 and " + value2 + " in persons");
                 }
             }
         }
         return mismatches;
     }
 
-    // for the tests: the second storage
-    Storage<Integer> secondStorage() {
-        return storage2;
+    // for the tests: the old storage
+    Storage<Integer> legacyStorage() {
+        return legacyStorage;
     }
 
     /**
-     * Repeats the value of a field of the main storage in the second one. The second storage is a copy and has no changes of its own. If it has no such record (it has gone out of step
-     * with the main one), nothing is written and the check (secondStorageMismatches) tells about it.
+     * Repeats the value of a field of the main storage in the old one. The old storage is a copy and has no changes of its own. If it has no such record (it has gone out of step
+     * with the main one), nothing is written and the check (legacyStorageMismatches) tells about it.
      */
     private void mirror(final int id, final DataField field) {
-        if (storage2.byId(id).isEmpty()) {
+        if (legacyStorage.byId(id).isEmpty()) {
             return;
         }
-        storage2.set(id, secondFieldOf.get(field), storage.getAsInt(id, field));
+        legacyStorage.set(id, legacyFieldOf.get(field), storage.getAsInt(id, field));
     }
 
     public Stream<Person> all() {
@@ -301,10 +303,10 @@ public class Persons {
         checkNotNull(locationType);
 
         final int id = storage.addRecord();
-        // the same id is expected from the second storage (nobody deletes persons in the game, so both storages give the next id); if not, the check tells about it
-        final int id2 = storage2.addRecord();
+        // the same id is expected from the old storage (nobody deletes persons in the game, so both storages give the next id); if not, the check tells about it
+        final int id2 = legacyStorage.addRecord();
         if (id2 != id) {
-            log.error("persons2 - p/s #{} is created in persons, but persons2 gave the id {}: THE SECOND STORAGE IS OUT OF STEP", id, id2);
+            log.error("persons - p/s #{} is created in persons2, but persons gave the id {}: THE OLD STORAGE IS OUT OF STEP", id, id2);
         }
         final Person person = new Person(id);
         person.setType(type);
@@ -320,8 +322,8 @@ public class Persons {
 
     public void deleteById(final int id) {
         storage.deleteRecord(id);
-        if (storage2.byId(id).isPresent()) {
-            storage2.deleteRecord(id);
+        if (legacyStorage.byId(id).isPresent()) {
+            legacyStorage.deleteRecord(id);
         }
     }
 

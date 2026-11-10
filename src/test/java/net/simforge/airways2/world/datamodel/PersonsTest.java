@@ -157,10 +157,10 @@ class PersonsTest {
         assertEquals(Persons.LocationType.Airport, loaded.byId(second.getId()).orElseThrow().getLocationType());
     }
 
-    // ---- the second storage of the extension of the record (persons2, 40 bytes): a copy of the main one, field by field
+    // ---- the extension of the record: the main storage is persons2 (40 bytes), the old one persons (32 bytes) is a copy of it, field by field
 
     @Test
-    public void test__second_storage_is_40_bytes_and_a_copy_of_the_main_one_after_all_the_changes(@TempDir final Path dir) throws IOException {
+    public void test__main_storage_is_40_bytes_and_the_old_one_is_a_copy_of_it_after_all_the_changes(@TempDir final Path dir) throws IOException {
         final Persons.Person first = pilot(3);
         first.setState(Persons.State.OnDuty);
         first.setHeartbeatTime(123456);
@@ -179,14 +179,14 @@ class PersonsTest {
         world.persons().deleteById(second.getId());
         pilot(0);
 
-        assertEquals(List.of(), world.persons().secondStorageMismatches());
+        assertEquals(List.of(), world.persons().legacyStorageMismatches());
         world.persons().save(dir);
         assertEquals(3 * 32, Files.size(dir.resolve("persons")));
         assertEquals(3 * 40, Files.size(dir.resolve("persons2")));
     }
 
     @Test
-    public void test__second_storage_is_read_from_the_disk_and_checked_against_the_main_one(@TempDir final Path dir) throws IOException {
+    public void test__both_storages_are_read_from_the_disk_and_the_old_one_is_checked_against_the_main_one(@TempDir final Path dir) throws IOException {
         final Persons.Person first = pilot(3);
         first.setHeartbeatTime(1000);
         first.setWarpDrive(true);
@@ -200,69 +200,96 @@ class PersonsTest {
         final Persons loaded = new Persons();
         loaded.loadIfExists(dir);
 
-        assertEquals(List.of(), loaded.secondStorageMismatches());
-        assertEquals(3, loaded.secondStorage().getLastRecordId());
-        assertTrue(loaded.secondStorage().byId(third.getId()).isEmpty());
+        assertEquals(List.of(), loaded.legacyStorageMismatches());
+        assertEquals(3, loaded.legacyStorage().getLastRecordId());
+        assertTrue(loaded.legacyStorage().byId(third.getId()).isEmpty());
         assertTrue(loaded.byId(first.getId()).orElseThrow().isWarpDrive());
-        // the heartbeat index of the second storage is built by the load of the file: the earliest heartbeat first
-        assertEquals(second.getId(), loaded.secondStorage().nextForHeartbeat(10_000).orElseThrow());
-        assertEquals(List.of(), loaded.secondStorage().checkHeartbeatIndex());
+        // the persons are read from the main storage, its heartbeat index is built by the load of the file: the earliest heartbeat first
+        assertEquals(second.getId(), loaded.nextForHeartbeat(10_000).orElseThrow().getId());
+        assertEquals(List.of(), loaded.checkHeartbeatIndex());
+        assertEquals(List.of(), loaded.legacyStorage().checkHeartbeatIndex());
         // a change after the load goes to both
         loaded.byId(first.getId()).orElseThrow().setInitials("ZZ");
-        assertEquals(List.of(), loaded.secondStorageMismatches());
+        assertEquals(List.of(), loaded.legacyStorageMismatches());
     }
 
     @Test
-    public void test__a_second_storage_file_which_differs_is_told_after_the_load_and_not_repaired(@TempDir final Path dir) throws IOException {
+    public void test__new_fields_are_in_the_main_storage_and_survive_the_save_and_load(@TempDir final Path dir) throws IOException {
         pilot(3);
-        pilot(0);
         world.persons().save(dir);
-        // the file of the second storage is changed by hand: the first byte of the first record after its header is the type
+        // the record is 40 bytes: the header, the 31 bytes of the old fields, then the new ones: pilotJourneyId (3 bytes), the reserves (1 and 4 bytes)
         final byte[] bytes = Files.readAllBytes(dir.resolve("persons2"));
-        bytes[1] = (byte) (bytes[1] + 1);
+        assertEquals(40, bytes.length);
+        bytes[32] = 0x01;
+        bytes[33] = 0x02;
+        bytes[34] = 0x03;
         Files.write(dir.resolve("persons2"), bytes);
 
         final Persons loaded = new Persons();
         loaded.loadIfExists(dir);
+        loaded.save(dir);
 
-        final List<String> mismatches = loaded.secondStorageMismatches();
-        assertEquals(1, mismatches.size(), mismatches.toString());
-        assertTrue(mismatches.get(0).startsWith("p/s #1 field 0 is 1 in persons and 2 in persons2"), mismatches.toString());
-        // nothing is repaired: the value is still the changed one
-        assertEquals(2, loaded.secondStorage().getAsInt(1, loaded.secondStorage().getDataField(0)));
-        assertEquals(Persons.Type.Pilot, loaded.byId(1).orElseThrow().getType());
+        // the new bytes stay as they were, the check of the old fields does not see them
+        assertEquals(List.of(), loaded.legacyStorageMismatches());
+        final byte[] after = Files.readAllBytes(dir.resolve("persons2"));
+        assertEquals(0x01, after[32]);
+        assertEquals(0x02, after[33]);
+        assertEquals(0x03, after[34]);
     }
 
     @Test
-    public void test__a_missing_file_of_the_second_storage_is_told_after_the_load(@TempDir final Path dir) throws IOException {
+    public void test__an_old_storage_file_which_differs_is_told_after_the_load_and_not_repaired(@TempDir final Path dir) throws IOException {
         pilot(3);
+        pilot(0);
         world.persons().save(dir);
-        Files.delete(dir.resolve("persons2"));
+        // the file of the old storage is changed by hand: the first byte of the first record after its header is the type
+        final byte[] bytes = Files.readAllBytes(dir.resolve("persons"));
+        bytes[1] = (byte) (bytes[1] + 1);
+        Files.write(dir.resolve("persons"), bytes);
 
         final Persons loaded = new Persons();
         loaded.loadIfExists(dir);
 
-        final List<String> mismatches = loaded.secondStorageMismatches();
+        final List<String> mismatches = loaded.legacyStorageMismatches();
+        assertEquals(1, mismatches.size(), mismatches.toString());
+        assertTrue(mismatches.get(0).startsWith("p/s #1 field 0 is 1 in persons2 and 2 in persons"), mismatches.toString());
+        // nothing is repaired: the old storage has the changed value, the persons are read from the main storage
+        assertEquals(2, loaded.legacyStorage().getAsInt(1, loaded.legacyStorage().getDataField(0)));
+        assertEquals(Persons.Type.Pilot, loaded.byId(1).orElseThrow().getType());
+    }
+
+    @Test
+    public void test__a_missing_file_of_the_old_storage_is_told_after_the_load(@TempDir final Path dir) throws IOException {
+        pilot(3);
+        world.persons().save(dir);
+        Files.delete(dir.resolve("persons"));
+
+        final Persons loaded = new Persons();
+        loaded.loadIfExists(dir);
+
+        final List<String> mismatches = loaded.legacyStorageMismatches();
         assertFalse(mismatches.isEmpty());
-        assertTrue(mismatches.get(0).contains("the last id is 1 in persons and 0 in persons2"), mismatches.toString());
+        assertTrue(mismatches.get(0).contains("the last id is 1 in persons2 and 0 in persons"), mismatches.toString());
+        // the persons are still there: they are read from the main storage
+        assertEquals(1, loaded.all().count());
     }
 
     @Test
     public void test__a_difference_between_the_storages_is_told_not_thrown() {
         final Persons.Person person = pilot(3);
-        assertEquals(List.of(), world.persons().secondStorageMismatches());
+        assertEquals(List.of(), world.persons().legacyStorageMismatches());
 
-        // the second storage is changed by hand: field 3 is the user id
-        final var second = world.persons().secondStorage();
-        second.set(person.getId(), second.getDataField(3), 99);
+        // the old storage is changed by hand: field 3 is the user id
+        final var legacy = world.persons().legacyStorage();
+        legacy.set(person.getId(), legacy.getDataField(3), 99);
         pilot(0);
-        second.deleteRecord(2);
+        legacy.deleteRecord(2);
 
-        final List<String> mismatches = world.persons().secondStorageMismatches();
+        final List<String> mismatches = world.persons().legacyStorageMismatches();
 
         assertEquals(2, mismatches.size(), mismatches.toString());
-        assertTrue(mismatches.get(0).contains("p/s #1 field 3 is 3 in persons and 99 in persons2"), mismatches.toString());
-        assertTrue(mismatches.get(1).contains("p/s #2 is live in persons and not in persons2"), mismatches.toString());
+        assertTrue(mismatches.get(0).contains("p/s #1 field 3 is 3 in persons2 and 99 in persons"), mismatches.toString());
+        assertTrue(mismatches.get(1).contains("p/s #2 is live in persons2 and not in persons"), mismatches.toString());
     }
 
     // ---- the initials are 12 bits of a 16 bit field, the highest bit is the warp drive
