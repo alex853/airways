@@ -25,10 +25,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * It is one entity for a pilot and for a person, see docs/persons-pilots.md.
  * <p>
  * THE EXTENSION OF THE RECORD (docs/persons-record-extension.md, steps in docs/storage-extension.md): the record of the person grows from 32 to 40 bytes, so there are two storages
- * for now. The main one is "persons" (32 bytes), everything is read from it. The second one is "persons2" (40 bytes: the same fields and the new ones): it is made again at every
- * load of the world from the main one, field by field (copyAllFieldsToTheSecondStorage), checked field by field (secondStorageMismatches: after the copy and at every save), and every change
- * of the main one is repeated in it (mirror). A difference is logged as an error and does not stop the world. The new fields exist only in the second storage and nobody uses them yet:
- * they would be lost at the next load, because the second one is made from the main one. After the swap (persons2 becomes the main one) the old storage goes away.
+ * for now. The main one is "persons" (32 bytes), everything is read from it. The second one is "persons2" (40 bytes: the same fields and the new ones): it is read from the disk as it was
+ * saved, only checked field by field against the main one (secondStorageMismatches: after the load and at every save), and every change of the main one is repeated in it (mirror).
+ * A difference is logged as an error, nothing is repaired, the world goes on. The new fields exist only in the second storage and nobody uses them yet. After the swap (persons2
+ * becomes the main one) the old storage goes away.
  */
 public class Persons {
     private static final Logger log = LoggerFactory.getLogger(Persons.class);
@@ -157,8 +157,9 @@ public class Persons {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
-        // the second storage is never read from the disk: it is made from the main one
-        copyAllFieldsToTheSecondStorage();
+        // the second storage is read from the disk as it was saved (it is not made again from the main one any more), and it is only checked against the main one
+        this.storage2.loadIfExists(rootPath);
+        checkTheSecondStorageAfterTheLoad();
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -172,29 +173,15 @@ public class Persons {
     }
 
     /**
-     * The second storage is made again from the main one: reset, then a record for every id of the main storage (the ids are the same, a deleted record of the main storage is deleted
-     * in the second one too) and the copy of every field by the usual get and set, so the heartbeat index of the second storage is built by the same way as it is kept.
+     * The second storage which is read from the disk is checked against the main one, field by field. Nothing is repaired: a difference (or the missing file of the second storage) is
+     * logged as an error, the world goes on, the main storage is the one which is read.
      */
-    private void copyAllFieldsToTheSecondStorage() {
-        storage2.reset();
-        final int lastRecordId = storage.getLastRecordId();
-        for (int id = 1; id <= lastRecordId; id++) {
-            final int id2 = storage2.addRecord();
-            checkArgument(id2 == id, "the second storage gave id %s for id %s", id2, id);
-            if (storage.byId(id).isEmpty()) {
-                storage2.deleteRecord(id2);
-                continue;
-            }
-            for (int i = 0; i < SHARED_FIELD_COUNT; i++) {
-                storage2.set(id2, storage2.getDataField(i), storage.getAsInt(id, storage.getDataField(i)));
-            }
-        }
-
+    private void checkTheSecondStorageAfterTheLoad() {
         final List<String> mismatches = secondStorageMismatches();
         if (mismatches.isEmpty()) {
-            log.info("persons2 - the second storage is made from the main one and checked field by field: {} records, no differences", lastRecordId);
+            log.info("persons2 - the second storage is loaded from the disk and checked field by field: {} records, no differences", storage.getLastRecordId());
         } else {
-            log.error("persons2 - THE SECOND STORAGE DIFFERS FROM THE MAIN ONE AFTER THE COPY: {}", mismatches);
+            log.error("persons2 - THE SECOND STORAGE DIFFERS FROM THE MAIN ONE AFTER THE LOAD (nothing is repaired): {}", mismatches);
         }
     }
 

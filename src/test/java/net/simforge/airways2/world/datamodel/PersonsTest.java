@@ -186,7 +186,7 @@ class PersonsTest {
     }
 
     @Test
-    public void test__second_storage_is_made_again_from_the_main_one_at_every_load(@TempDir final Path dir) throws IOException {
+    public void test__second_storage_is_read_from_the_disk_and_checked_against_the_main_one(@TempDir final Path dir) throws IOException {
         final Persons.Person first = pilot(3);
         first.setHeartbeatTime(1000);
         first.setWarpDrive(true);
@@ -204,14 +204,47 @@ class PersonsTest {
         assertEquals(3, loaded.secondStorage().getLastRecordId());
         assertTrue(loaded.secondStorage().byId(third.getId()).isEmpty());
         assertTrue(loaded.byId(first.getId()).orElseThrow().isWarpDrive());
-        // the heartbeat index of the second storage is built by the copy: the earliest heartbeat first
+        // the heartbeat index of the second storage is built by the load of the file: the earliest heartbeat first
         assertEquals(second.getId(), loaded.secondStorage().nextForHeartbeat(10_000).orElseThrow());
         assertEquals(List.of(), loaded.secondStorage().checkHeartbeatIndex());
-        // a new person after the load goes to both
-        final Persons.Person fourth = loaded.create(Persons.Type.Pilot, Persons.State.Idle, 0, Persons.LocationType.None, 0, 0, null, 0);
-        fourth.setHeartbeatTime(100);
+        // a change after the load goes to both
+        loaded.byId(first.getId()).orElseThrow().setInitials("ZZ");
         assertEquals(List.of(), loaded.secondStorageMismatches());
-        assertEquals(fourth.getId(), loaded.secondStorage().nextForHeartbeat(10_000).orElseThrow());
+    }
+
+    @Test
+    public void test__a_second_storage_file_which_differs_is_told_after_the_load_and_not_repaired(@TempDir final Path dir) throws IOException {
+        pilot(3);
+        pilot(0);
+        world.persons().save(dir);
+        // the file of the second storage is changed by hand: the first byte of the first record after its header is the type
+        final byte[] bytes = Files.readAllBytes(dir.resolve("persons2"));
+        bytes[1] = (byte) (bytes[1] + 1);
+        Files.write(dir.resolve("persons2"), bytes);
+
+        final Persons loaded = new Persons();
+        loaded.loadIfExists(dir);
+
+        final List<String> mismatches = loaded.secondStorageMismatches();
+        assertEquals(1, mismatches.size(), mismatches.toString());
+        assertTrue(mismatches.get(0).startsWith("p/s #1 field 0 is 1 in persons and 2 in persons2"), mismatches.toString());
+        // nothing is repaired: the value is still the changed one
+        assertEquals(2, loaded.secondStorage().getAsInt(1, loaded.secondStorage().getDataField(0)));
+        assertEquals(Persons.Type.Pilot, loaded.byId(1).orElseThrow().getType());
+    }
+
+    @Test
+    public void test__a_missing_file_of_the_second_storage_is_told_after_the_load(@TempDir final Path dir) throws IOException {
+        pilot(3);
+        world.persons().save(dir);
+        Files.delete(dir.resolve("persons2"));
+
+        final Persons loaded = new Persons();
+        loaded.loadIfExists(dir);
+
+        final List<String> mismatches = loaded.secondStorageMismatches();
+        assertFalse(mismatches.isEmpty());
+        assertTrue(mismatches.get(0).contains("the last id is 1 in persons and 0 in persons2"), mismatches.toString());
     }
 
     @Test
