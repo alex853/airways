@@ -93,7 +93,7 @@ heartbeat, назначения, состояния) пока нет.
 - Фича-флаг варпа (`Person.isWarpDrive`) включается `POST /admin/person/{id}/warp-drive?enabled=true` и нигде не показывается в ответах сервера.
 
 **История мест (2026-11-10).** Travel и прибытие пишутся событиями в `EventLog` (`PersonControl.travel` и `arrive`; у события `object1` это персона, поэтому они живут 30 дней, а не 7, см. `Cleanup`):
-`PersonTravelStarted` (601; `object2` способ `TravelMethod`, `object3` куда, `object4` откуда, место это аэропорт или город), `PersonArrivedToCity` (602) и `PersonArrivedToAirport` (603) (`object2` место);
+`PersonTravelStarted` (601; `object2` способ `TravelMethod`, `object3` куда, `object4` откуда, место это аэропорт или город), `PersonArrivedToCity` (602) и `PersonArrivedToAirport` (603) (`object2` место), `PersonFlewFlight` (604; `object2` откуда, `object3` куда, время по blocks on, пишется в `onMissionFinished`; в истории «Flew from A to B»);
 новые `ObjectType`: `City` (8), `TravelMethod` (9; id это `PilotTravel.Method.code()`: WarpDrive 1, Mach3 2, Airline 3, Ground 4, коды не менять). Мгновенный варп пишет оба события подряд. На странице пилота
 в плитке Location кнопка **History** (правый нижний угол, у Travel верхний), окно показывает события в обратном хронологическом порядке (не больше 50), тексты делает сервер
 (`GET /pilot/location-history`, `PilotController.buildLocationHistory`): `Started travelling by ground from Glasgow to EGPH`, `Arrived at EGPH`, `Arrived in Glasgow`. Событий по прилётам с рейсов здесь нет,

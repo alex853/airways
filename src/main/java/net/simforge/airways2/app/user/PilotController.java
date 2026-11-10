@@ -615,7 +615,7 @@ public class PilotController {
         final List<EventLog.Event> events = world.eventLog().byObject(personCode, person.getId())
                 .filter(e -> e.getObject1TypeRaw() == personCode && e.getObject1Id() == person.getId())
                 .filter(e -> switch (e.getType() != null ? e.getType() : EventLog.EventType.PersonBecameIdle) {
-                    case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport -> true;
+                    case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport, PersonFlewFlight -> true;
                     default -> false;
                 })
                 .sorted(Comparator.comparingInt(EventLog.Event::getTime).thenComparingInt(EventLog.Event::getId).reversed())
@@ -633,6 +633,8 @@ public class PilotController {
                 }
                 case PersonArrivedToCity -> history.add(new LocationEventDto(event.getTime() * 1000L, "arrived", "Arrived in " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
                 case PersonArrivedToAirport -> history.add(new LocationEventDto(event.getTime() * 1000L, "arrived", "Arrived at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
+                case PersonFlewFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "flew",
+                        "Flew from " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
                 default -> { }
             }
         }

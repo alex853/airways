@@ -79,6 +79,11 @@ public class PersonControl {
             setState(person, Persons.State.Idle, "f/m #" + mission.getId() + " finished");
             writeLogbook(person, mission);
             person.setDutyStartTime(0);
+            // the history of the places of the pilot: the flight, at the time of the blocks on
+            final int blocksOn = mission.getActualArrivalWorldTime();
+            final int toAirportId = mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId();
+            world.eventLog().log(blocksOn >= Time.START_TIME_EPOCH_SECONDS ? blocksOn : world.getWorldTime(), EventLog.EventType.PersonFlewFlight, EventLog.id(person),
+                    EventLog.airportId(mission.getDepartureAirportId()), EventLog.airportId(toAirportId), null);
         });
     }
 

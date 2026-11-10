@@ -255,6 +255,8 @@ public class EventLog {
         PersonArrivedToCity(602),
         // object2 is the airport the pilot has arrived at
         PersonArrivedToAirport(603),
+        // the pilot has flown a flight (PersonControl.onMissionFinished, time of the blocks on): object2 the airport it left, object3 the airport of the landing
+        PersonFlewFlight(604),
         ;
 
         private final int code;

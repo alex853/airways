@@ -237,6 +237,17 @@ class PersonTravelTest {
     }
 
     @Test
+    void theHistoryTellsAFlownFlight() {
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonFlewFlight, EventLog.id(person), EventLog.airportId(oakland.getId()), EventLog.airportId(sanFrancisco.getId()), null);
+
+        final List<PilotController.LocationEventDto> history = PilotController.buildLocationHistory(world, person);
+
+        assertEquals(1, history.size());
+        assertEquals("flew", history.get(0).getType());
+        assertEquals("Flew from KOAK to KSFO", history.get(0).getText());
+    }
+
+    @Test
     void theHistoryHasTheEventsOfThePilotOnlyAndTheEventsOfThePersonLiveThirtyDays() {
         final Persons.Person other = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 2, Persons.LocationType.Airport, oakland.getId(), 0, "BB", 0);
         other.setBankAccountId(pilotAccount.getId());
