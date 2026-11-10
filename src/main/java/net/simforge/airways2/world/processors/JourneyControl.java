@@ -5,6 +5,7 @@ import net.simforge.airways2.tools.CabinLayout;
 import net.simforge.airways2.tools.Tools;
 import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
+import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.computations.ShadowJetPricing;
 import net.simforge.airways2.world.datamodel.*;
 import net.simforge.airways2.worldbuilder.World25;
@@ -272,10 +273,12 @@ public class JourneyControl {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.WaitingForDeboarding);
 
-        journey.setStatus(Journeys.Status.JustArrived);
-        journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
-
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
+
+        // the way from the airport of the landing to the city takes the time of the ground way (the same speed and minimum as the ground travel of a pilot)
+        final int groundMinutes = groundWayMinutes(journey, airportsOf(flight)[1]);
+        journey.setStatus(Journeys.Status.JustArrived);
+        journey.setHeartbeatTime(world.getWorldTime() + groundMinutes * Time.ONE_MINUTE);
         // the flight could be already finished, then there is nothing to decrease
         if (flight.getStatus() == TransportFlights.Status.Deboarding) {
             world.transportFlightControl().decreasePaxOnBoard(flight, journey.getGroupSize());
@@ -305,8 +308,9 @@ public class JourneyControl {
         moveToLandingAirportCity(journey, transportFlight1);
 
         if (noMoreTransportFlights(journey)) {
+            // the way to the city is already waited (deboard), only a few seconds to spread the journeys over the ticks
             journey.setStatus(Journeys.Status.ItinerariesDone);
-            journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
+            journey.setHeartbeatTime(world.getWorldTime() + Tools.random(10, 100));
         } else {
             // the pilot asked to leave at the next landing: it stays here, the second flight is released
             if (leavePilotAtLandingIfAsked(journey)) {
@@ -711,6 +715,20 @@ public class JourneyControl {
             log.warn("j/y #{} - t/f #{} or its mission not found, last known location is not set, location is set to the from city", journey.getId(), journey.getTransportFlight1Id());
             FlightStats.event("journey - move back to departure city - no FM found");
         }
+    }
+
+    // The minutes of the ground way from the airport to the city the journey will be in (the city of the destination if the airport is linked to it, else the first linked city);
+    // the minimum when the airport or its city is unknown.
+    private int groundWayMinutes(final Journeys.Journey journey, final int airportId) {
+        final Airports.Airport airport = airportId > 0 ? world.airports().byId(airportId).orElse(null) : null;
+        if (airport == null) {
+            return PilotTravel.GROUND_MIN_MINUTES;
+        }
+        final List<Integer> cities = world.airport2city().allByAirportId(airportId).map(Airport2City.Link::getCityId).toList();
+        final int cityId = cities.contains(journey.getToCityId()) ? journey.getToCityId() : cities.stream().findFirst().orElse(0);
+        return world.cities().byId(cityId)
+                .map(city -> PilotTravel.groundMinutes(Geo.distance(airport.getCoords(), city.getCoords())))
+                .orElse(PilotTravel.GROUND_MIN_MINUTES);
     }
 
     private void moveToLandingAirportCity(Journeys.Journey journey, TransportFlights.Flight transportFlight1) {

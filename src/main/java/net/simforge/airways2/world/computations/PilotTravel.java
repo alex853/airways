@@ -91,6 +91,13 @@ public final class PilotTravel {
         };
     }
 
+    /**
+     * The time of the ground way of the distance (the same speed and the same minimum as the ground travel of a pilot). The journeys use it for the way from the airport of the landing to the city.
+     */
+    public static int groundMinutes(final double distanceNm) {
+        return quote(Method.Ground, distanceNm).durationMinutes();
+    }
+
     // the time of the distance at the speed, a whole minute up, not less than a minute
     private static int minutes(final double distanceNm, final int knots) {
         return Math.max(1, (int) Math.ceil(distanceNm / knots * 60));

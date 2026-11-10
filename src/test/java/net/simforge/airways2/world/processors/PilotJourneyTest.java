@@ -285,6 +285,24 @@ public class PilotJourneyTest {
         assertTrue(pilot.getAwakeCreditMinutes() >= PilotRest.AIRLINE_DEBOARD_MIN_MINUTES);
     }
 
+    @Test
+    public void theWayFromTheAirportToTheCityTakesTheGroundTimeNotAFreeHour() {
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        final TransportFlights.Flight flight = flightTo(targetAirport, 60);
+        final Journeys.Journey journey = start();
+        JourneyProcessor.process(world);
+        journey.setStatus(Journeys.Status.WaitingForDeboarding);
+        flight.setStatus(TransportFlights.Status.Deboarding);
+        final int now = world.getWorldTime();
+
+        world.journeyControl().deboard(journey);
+
+        // the airport is in the city or close to it: the minimum of the ground way, a quarter of an hour (not a random wait of up to an hour)
+        final int wait = journey.getHeartbeatTime() - now;
+        assertTrue(wait >= net.simforge.airways2.world.computations.PilotTravel.GROUND_MIN_MINUTES * Time.ONE_MINUTE, "wait " + wait);
+        assertTrue(wait <= 45 * Time.ONE_MINUTE, "wait " + wait);
+    }
+
     // ---- the history of the pilot: what is written to the event log and how the page tells it
 
     private java.util.List<String> history() {
