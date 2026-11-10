@@ -10,6 +10,7 @@ import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.Countries;
+import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.processors.PersonControl;
 import net.simforge.airways2.world.processors.PersonProcessor;
@@ -201,6 +202,51 @@ class PersonTravelTest {
         assertEquals(london.getId(), person.getLocationId());
         // the pilot is free again: it is going to fall asleep by itself
         assertTrue(person.getHeartbeatTime() > world.getWorldTime());
+    }
+
+    // ---- the history of the places: the events of the travel are in the event log and the page tells them, the newest first
+
+    @Test
+    void theHistoryTellsTheStartAndTheArrivalOfATravelNewestFirst() {
+        world.personControl().travel(person, PilotTravel.Method.Mach3, place(london), distance(oakland, london));
+        arrive();
+
+        final List<PilotController.LocationEventDto> history = PilotController.buildLocationHistory(world, person);
+
+        assertEquals(2, history.size(), history.toString());
+        assertEquals("arrived", history.get(0).getType());
+        assertEquals("Arrived at EGLL", history.get(0).getText());
+        assertEquals("started", history.get(1).getType());
+        assertEquals("Started travelling at Mach 3 from KOAK to EGLL", history.get(1).getText());
+        assertEquals(world.getWorldTime() * 1000L, history.get(0).getTime());
+    }
+
+    @Test
+    void theHistoryOfAWarpDriveHasTheStartAndTheArrivalAtOnceAndAStartFromACityIsFromTheCity() {
+        person.setWarpDrive(true);
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(fresno), distance(oakland, fresno));
+        world.personControl().travel(person, PilotTravel.Method.WarpDrive, place(sanFrancisco), distance(sanFrancisco, fresno));
+
+        final List<String> texts = PilotController.buildLocationHistory(world, person).stream().map(PilotController.LocationEventDto::getText).toList();
+
+        assertEquals(List.of(
+                "Arrived at KSFO",
+                "Started travelling by warp drive from Fresno to KSFO",
+                "Arrived in Fresno",
+                "Started travelling by warp drive from KOAK to Fresno"), texts);
+    }
+
+    @Test
+    void theHistoryHasTheEventsOfThePilotOnlyAndTheEventsOfThePersonLiveThirtyDays() {
+        final Persons.Person other = world.persons().create(Persons.Type.Pilot, Persons.State.Idle, 2, Persons.LocationType.Airport, oakland.getId(), 0, "BB", 0);
+        other.setBankAccountId(pilotAccount.getId());
+        world.personControl().travel(other, PilotTravel.Method.Ground, place(sanFrancisco), distance(oakland, sanFrancisco));
+
+        assertTrue(PilotController.buildLocationHistory(world, person).isEmpty());
+        assertEquals(1, PilotController.buildLocationHistory(world, other).size());
+        // the events have the person as the first object: the cleanup keeps them longer than the others (30 days, not 7)
+        final var event = world.eventLog().byObject(EventLog.ObjectType.Person.code(), other.getId()).findFirst().orElseThrow();
+        assertEquals(EventLog.ObjectType.Person.code(), event.getObject1TypeRaw());
     }
 
     @Test

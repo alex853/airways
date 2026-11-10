@@ -20,6 +20,7 @@ import net.simforge.airways2.world.datamodel.Aircrafts;
 import net.simforge.airways2.app.tools.Id;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
+import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.RosterForecast;
@@ -84,6 +85,14 @@ public class PilotController {
     @GetMapping("/duty-details")
     public DutyDetailsDto getDutyDetails(@RequestAttribute("userId") final int userId) {
         return worldBean.read(world -> buildDutyDetails(world, personOf(world, userId)));
+    }
+
+    /**
+     * The history of the places of the pilot (History of the Location tile): the travels it has started and where it has arrived, the newest first.
+     */
+    @GetMapping("/location-history")
+    public List<LocationEventDto> getLocationHistory(@RequestAttribute("userId") final int userId) {
+        return worldBean.read(world -> buildLocationHistory(world, personOf(world, userId)));
     }
 
     /**
@@ -512,6 +521,76 @@ public class PilotController {
         return new DutyDetailsDto(now * 1000L, windowStart * 1000L, totalMinutes, PilotDuty.LIMIT_MINUTES, flightsMinutes, Math.max(0, totalMinutes - flightsMinutes),
                 PilotDuty.CHAIN_GAP_SECONDS / 60, FlightTimeline.START_TO_BLOCKS_OFF_MINUTES, FlightTimeline.POSTFLIGHT_MINUTES,
                 person.getState() == Persons.State.OnDuty, segments, planned);
+    }
+
+    // how many events the history of the places tells
+    static final int LOCATION_HISTORY_LIMIT = 50;
+
+    /**
+     * The events of the travel of the pilot from the event log (PersonControl.travel and arrive, object1 is the person), the newest first, up to LOCATION_HISTORY_LIMIT. The text
+     * is made here, the page only shows it.
+     */
+    static List<LocationEventDto> buildLocationHistory(final World world, final Persons.Person person) {
+        final int personCode = EventLog.ObjectType.Person.code();
+        final List<EventLog.Event> events = world.eventLog().byObject(personCode, person.getId())
+                .filter(e -> e.getObject1TypeRaw() == personCode && e.getObject1Id() == person.getId())
+                .filter(e -> switch (e.getType() != null ? e.getType() : EventLog.EventType.PersonBecameIdle) {
+                    case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport -> true;
+                    default -> false;
+                })
+                .sorted(Comparator.comparingInt(EventLog.Event::getTime).thenComparingInt(EventLog.Event::getId).reversed())
+                .limit(LOCATION_HISTORY_LIMIT)
+                .toList();
+
+        final List<LocationEventDto> history = new ArrayList<>();
+        for (final EventLog.Event event : events) {
+            switch (event.getType()) {
+                case PersonTravelStarted -> {
+                    final PilotTravel.Method method = PilotTravel.Method.byCode(event.getObject2Id());
+                    final String from = event.getObject4TypeRaw() != 0 ? eventPlaceName(world, event.getObject4TypeRaw(), event.getObject4Id()) : null;
+                    history.add(new LocationEventDto(event.getTime() * 1000L, "started",
+                            "Started travelling " + travelWay(method) + (from != null ? " from " + from : "") + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                }
+                case PersonArrivedToCity -> history.add(new LocationEventDto(event.getTime() * 1000L, "arrived", "Arrived in " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
+                case PersonArrivedToAirport -> history.add(new LocationEventDto(event.getTime() * 1000L, "arrived", "Arrived at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
+                default -> { }
+            }
+        }
+        return history;
+    }
+
+    private static String travelWay(final PilotTravel.Method method) {
+        if (method == null) {
+            return "";
+        }
+        return switch (method) {
+            case WarpDrive -> "by warp drive";
+            case Mach3 -> "at Mach 3";
+            case Airline -> "by airline";
+            case Ground -> "by ground";
+        };
+    }
+
+    // the name of an airport (its ICAO code) or a city of an event of the log, "?" if it is not there any more
+    private static String eventPlaceName(final World world, final int objectTypeRaw, final int id) {
+        if (objectTypeRaw == EventLog.ObjectType.Airport.code()) {
+            return world.airports().getIcao(id).orElse("?");
+        }
+        if (objectTypeRaw == EventLog.ObjectType.City.code()) {
+            return world.cities().byId(id).map(Cities.City::getName).orElse("?");
+        }
+        return "?";
+    }
+
+    /**
+     * One line of the history of the places: time is UTC milliseconds, type is started or arrived.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class LocationEventDto {
+        private long time;
+        private String type;
+        private String text;
     }
 
     private static DutySegmentDto segment(final String type, final int start, final int end, final String route, final int now, final int windowStart) {

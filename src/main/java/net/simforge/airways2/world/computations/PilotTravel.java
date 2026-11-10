@@ -11,22 +11,38 @@ public final class PilotTravel {
 
     public enum Method {
         // the feature flag of the person (Person.isWarpDrive): the pilot is there at once and it costs nothing
-        WarpDrive("Warp drive"),
+        WarpDrive(1, "Warp drive"),
         // the personal aircraft of Mach 3, it is very expensive
-        Mach3("Travel at Mach 3"),
+        Mach3(2, "Travel at Mach 3"),
         // the tickets of the airlines (the journey of the pilot in the common pool): not made yet, it is only a place in the list
-        Airline("Travel by airline to another city"),
+        Airline(3, "Travel by airline to another city"),
         // trains and cars: cheap and slow
-        Ground("Travel by ground");
+        Ground(4, "Travel by ground");
 
+        // the code is kept in the events of the log (EventLog, the object type TravelMethod): never change it
+        private final int code;
         private final String title;
 
-        Method(final String title) {
+        Method(final int code, final String title) {
+            this.code = code;
             this.title = title;
+        }
+
+        public int code() {
+            return code;
         }
 
         public String title() {
             return title;
+        }
+
+        public static Method byCode(final int code) {
+            for (final Method method : values()) {
+                if (method.code == code) {
+                    return method;
+                }
+            }
+            return null;
         }
     }
 

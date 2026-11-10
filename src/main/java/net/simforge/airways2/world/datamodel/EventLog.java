@@ -247,6 +247,14 @@ public class EventLog {
 
         // the person became free (Idle): the moment from which the meals of the person are counted, see PersonControl
         PersonBecameIdle(600),
+
+        // the travel of a pilot by itself (PersonControl.travel, arrive), the history in the Location tile of the pilot page. Object1 is the person (so the events live 30 days, see Cleanup).
+        // PersonTravelStarted: object2 the way (TravelMethod), object3 the place where the pilot goes (an airport or a city), object4 the place it leaves (an airport or a city, may be absent)
+        PersonTravelStarted(601),
+        // object2 is the city the pilot has arrived in
+        PersonArrivedToCity(602),
+        // object2 is the airport the pilot has arrived at
+        PersonArrivedToAirport(603),
         ;
 
         private final int code;
@@ -274,7 +282,10 @@ public class EventLog {
         Airport(4),
         TransportFlight(5),
         ScheduledFlight(6),
-        Person(7);
+        Person(7),
+        City(8),
+        // the way of a travel of a pilot: the id is PilotTravel.Method.code()
+        TravelMethod(9);
 
         private final int code;
 
@@ -328,6 +339,16 @@ public class EventLog {
 
     public static EventLogId userId(int userId) {
         return new EventLogId(ObjectType.User, userId);
+    }
+
+    public static EventLogId cityId(final int cityId) {
+        checkArgument(cityId > 0);
+        return new EventLogId(ObjectType.City, cityId);
+    }
+
+    public static EventLogId travelMethodId(final int methodCode) {
+        checkArgument(methodCode > 0);
+        return new EventLogId(ObjectType.TravelMethod, methodCode);
     }
 
     public static EventLogId airportId(final int airportId) {

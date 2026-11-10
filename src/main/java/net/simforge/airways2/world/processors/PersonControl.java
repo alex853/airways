@@ -343,11 +343,15 @@ public class PersonControl {
         }
 
         final String reason = method.title() + " to " + destination.name();
+        final Place from = currentPlace(person).orElse(null);
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonTravelStarted, EventLog.id(person), EventLog.travelMethodId(method.code()),
+                eventPlaceId(destination), from != null ? eventPlaceId(from) : null);
         if (quote.durationMinutes() == 0) {
             // the pilot leaves the place at once, so the meals there are paid now and the count starts again at the new place
             settleLiving(person, false);
             setLocation(person, destination.type(), destination.id(), reason);
             markIdle(person);
+            logArrived(person);
             log.info("p/s #{} - travel {}, {} paid, at once", person.getId(), reason, price);
             return;
         }
@@ -439,6 +443,21 @@ public class PersonControl {
         }
         // the falling asleep by itself is scheduled again from the awake time the pilot has now (setState does it)
         setState(person, Persons.State.Idle, "arrived");
+        logArrived(person);
+    }
+
+    // the place of the event log: an airport or a city
+    private static EventLog.EventLogId eventPlaceId(final Place place) {
+        return place.type() == Persons.LocationType.Airport ? EventLog.airportId(place.id()) : EventLog.cityId(place.id());
+    }
+
+    // the pilot is at the place of the arrival (the airport or the city of its location): the event for the history of the pilot
+    private void logArrived(final Persons.Person person) {
+        switch (person.getLocationType()) {
+            case Airport -> world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonArrivedToAirport, EventLog.id(person), EventLog.airportId(person.getLocationId()), null, null);
+            case City -> world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonArrivedToCity, EventLog.id(person), EventLog.cityId(person.getLocationId()), null, null);
+            default -> { }
+        }
     }
 
     // ---- the initials
