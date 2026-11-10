@@ -423,14 +423,14 @@ class PersonTravelTest {
     }
 
     @Test
-    void theMenuOfACityHasTheAirlineWhichCannotBeChosenAndGround() {
+    void theMenuOfACityHasTheAirlineWhichShowsTheEstimateAndGround() {
         pilotIsIn(oaklandCity);
 
         final PilotController.TravelMethodsDto menu = PilotController.buildTravelMethods(world, person);
 
         assertEquals("city", menu.getLocation());
         assertEquals(List.of("Airline", "Ground"), methodNames(menu));
-        assertFalse(menu.getMethods().get(0).isAvailable());
+        assertTrue(menu.getMethods().get(0).isAvailable());
         assertTrue(menu.getMethods().get(1).isAvailable());
     }
 
@@ -573,6 +573,124 @@ class PersonTravelTest {
         assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Ground", "city", "!!!"));
         assertThrows(ResponseStatusException.class, () -> PilotController.startTravel(world, person, "Warp" + "Drive", "airport", "EGLL"));
         assertEquals(Persons.State.Idle, person.getState());
+    }
+
+    // ---- the airline: the estimate of the flights, the price and the days is shown, the start is not open yet
+
+    private Airports.Airport airportOfFresno(final int flightsFromOakland) {
+        final Airports.Airport fresnoAirport = world.airports().create(36.78, -119.72, "FAT", "KFAT", "Fresno");
+        world.airport2city().create(fresnoAirport.getId(), fresno.getId());
+        for (int i = 0; i < flightsFromOakland; i++) {
+            world.airport2airportDailyFlightStats().incrementTodayCount(oakland.getId(), fresnoAirport.getId());
+        }
+        return fresnoAirport;
+    }
+
+    private PilotController.TravelPlaceDto airlinePlaceOfFresno() {
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Airline", "Fresno");
+        assertNull(found.getMessage());
+        assertEquals(1, found.getMatches().size());
+        return found.getMatches().get(0);
+    }
+
+    @Test
+    void theAirlineShowsTheFlightsTheTicketsAndTheDaysAndCannotBeStartedYet() {
+        final Airports.Airport fresnoAirport = airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+
+        final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
+
+        assertFalse(place.isAvailable());
+        assertNull(place.getProblem());
+        final PilotController.AirlineEstimateDto airline = place.getAirline();
+        assertTrue(airline.isFound());
+        assertEquals(1, airline.getLegs().size());
+        assertEquals("KOAK", airline.getLegs().get(0).getFrom());
+        assertEquals("KFAT", airline.getLegs().get(0).getTo());
+        assertEquals(10, airline.getLegs().get(0).getFlightsPerWeek());
+        assertEquals(airline.getLegs().get(0).getPrice(), airline.getPrice());
+        assertEquals(airline.getPrice(), place.getPrice());
+        assertEquals(PilotTravel.AIRLINE_MONEY_RESERVE, airline.getReserve());
+        assertEquals(airline.getPrice() + PilotTravel.AIRLINE_MONEY_RESERVE, airline.getNeeded());
+        assertEquals(1, airline.getMinDays());
+        assertEquals(2, airline.getMaxDays());
+        assertEquals(fresno.getName(), place.getTitle());
+        assertEquals(fresnoAirport.getIcao(), airline.getLegs().get(0).getTo());
+    }
+
+    @Test
+    void theAirlineEstimateHasTheRoutesTheMostLikelyOneFirst() {
+        airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+
+        final PilotController.AirlineEstimateDto airline = airlinePlaceOfFresno().getAirline();
+
+        assertEquals(1, airline.getRoutes().size());
+        assertEquals("Direct flight", airline.getRoutes().get(0).getTitle());
+        assertTrue(airline.getRoutes().get(0).isMostLikely());
+        assertEquals(airline.getPrice(), airline.getRoutes().get(0).getPrice());
+        assertEquals(airline.getLegs().size(), airline.getRoutes().get(0).getLegs().size());
+    }
+
+    @Test
+    void theAirlineStartIsRefusedByTheServerWhateverTheEstimateIs() {
+        airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+
+        final ResponseStatusException e = assertThrows(ResponseStatusException.class,
+                () -> PilotController.startTravel(world, person, "Airline", "city", Id.encode(fresno.getId())));
+
+        assertEquals("Coming soon", e.getReason());
+        assertEquals(Persons.State.Idle, person.getState());
+        assertEquals(0, world.journeys().all().count());
+    }
+
+    @Test
+    void theAirlineEstimateTellsThatThereAreNoFlightsYet() {
+        airportOfFresno(0);
+        pilotIsIn(oaklandCity);
+
+        final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
+
+        assertFalse(place.getAirline().isFound());
+        assertTrue(place.getAirline().getLegs().isEmpty());
+        assertEquals("No flights from Oakland towards Fresno yet", place.getProblem());
+    }
+
+    @Test
+    void thePilotWhoCannotPayTheTicketsAndTheReserveIsToldSo() {
+        airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+        // the tickets are about 50: the account has 20
+        world.bankControl().transfer(pilotAccount.getId(), bank.getId(), 1_000_000 - 20, BankTransactions.Type.Travel);
+
+        final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
+
+        assertTrue(place.getAirline().isFound());
+        assertEquals(20, place.getAirline().getBalance());
+        assertTrue(place.getProblem().startsWith("Not enough money: the tickets cost about "), place.getProblem());
+        assertFalse(place.isAvailable());
+    }
+
+    @Test
+    void theAirlineTakesTheNamesOfCitiesNotTheCodesOfAirports() {
+        pilotIsIn(oaklandCity);
+
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Airline", "KFAT");
+
+        assertEquals("There is no city like KFAT", found.getMessage());
+        airportOfFresno(1);
+        assertEquals("The airline goes from a city to a city: type the name of a city, not the code of an airport",
+                PilotController.findTravelPlaces(world, person, "Airline", "KFAT").getMessage());
+    }
+
+    @Test
+    void theOtherWaysHaveNoAirlineEstimate() {
+        pilotIsIn(oaklandCity);
+
+        final PilotController.TravelFindDto found = PilotController.findTravelPlaces(world, person, "Ground", "Fresno");
+
+        assertNull(found.getMatches().get(0).getAirline());
     }
 
     // ---- what the page of the pilot knows

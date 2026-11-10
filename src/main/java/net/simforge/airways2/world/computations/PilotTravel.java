@@ -53,6 +53,9 @@ public final class PilotTravel {
     // too close: the personal aircraft of Mach 3 is for 500 miles and more, the airline for 100 miles and more
     public static final int MACH3_MIN_DISTANCE_NM = 500;
     public static final int AIRLINE_MIN_DISTANCE_NM = 100;
+    // the money which must stay on the account of the pilot after the tickets of a travel by airline are paid: the price is fixed at the booking and paid at the landing, the pilot may spend
+    // something meanwhile (docs/status-and-backlog.md, backlog 19)
+    public static final long AIRLINE_MONEY_RESERVE = 200;
     public static final int GROUND_KNOTS = 30;
     public static final int GROUND_PRICE_PER_MILE = 2;
     // even the shortest trip by ground (an airport and its city) takes a quarter of an hour and costs something

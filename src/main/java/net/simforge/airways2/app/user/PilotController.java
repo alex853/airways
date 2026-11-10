@@ -22,6 +22,7 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.processors.AirlineTravelEstimate;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.RosterForecast;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -268,9 +269,9 @@ public class PilotController {
         final boolean atAirport = here.type() == Persons.LocationType.Airport;
         final List<TravelMethodDto> methods = new ArrayList<>();
         if (!atAirport) {
-            // the journeys go from a city to a city, so the airline is for a city; it is not made yet
+            // the journeys go from a city to a city, so the airline is for a city; the window shows the estimate (the flights, the price, the time), the start is not open yet
             methods.add(new TravelMethodDto(PilotTravel.Method.Airline.name(), PilotTravel.Method.Airline.title(),
-                    "Coming soon, from " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles, reasonable prices", false));
+                    "From " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles, reasonable prices: the estimate of the flights, the price and the time (the start is not open yet)", true));
         }
         if (atAirport) {
             methods.add(new TravelMethodDto(PilotTravel.Method.Mach3.name(), PilotTravel.Method.Mach3.title(),
@@ -307,12 +308,57 @@ public class PilotController {
     // the place with the distance, the time, the money and the reason why the pilot cannot go there this way (null when it can)
     private static TravelPlaceDto placeDto(final World world, final Persons.Person person, final PersonControl.Place from, final PersonControl.Place to,
                                            final PilotTravel.Method method, final String subtitle) {
+        return placeDto(world, person, from, to, method, subtitle, null);
+    }
+
+    // the estimator is for the airline only (it reads the frequencies of the flights once for all the places of the answer)
+    private static TravelPlaceDto placeDto(final World world, final Persons.Person person, final PersonControl.Place from, final PersonControl.Place to,
+                                           final PilotTravel.Method method, final String subtitle, final AirlineTravelEstimate estimator) {
         final double distance = distanceNm(world, from, to);
+        if (method == PilotTravel.Method.Airline) {
+            return airlinePlaceDto(world, person, from, to, subtitle, distance, estimator != null ? estimator : new AirlineTravelEstimate(world));
+        }
         final PilotTravel.Quote quote = PilotTravel.quote(method, distance);
         final String problem = world.personControl().travelProblem(person, method, to, distance);
         final boolean airport = to.type() == Persons.LocationType.Airport;
         return new TravelPlaceDto(airport ? "airport" : "city", airport ? to.name() : Id.encode(to.id()), to.name(), subtitle, distance,
-                quote.durationMinutes(), quote.price(), problem == null, problem);
+                quote.durationMinutes(), quote.price(), problem == null, problem, null);
+    }
+
+    // The estimate of a travel by airline to the city (nothing is booked): the flights, the price, the days. The pilot cannot start it yet (available is false whatever the estimate says),
+    // the problem tells why it cannot be done at all: not a city, too close, no route, not enough money.
+    private static TravelPlaceDto airlinePlaceDto(final World world, final Persons.Person person, final PersonControl.Place from, final PersonControl.Place to, final String subtitle,
+                                                  final double distance, final AirlineTravelEstimate estimator) {
+        if (from.type() != Persons.LocationType.City || to.type() != Persons.LocationType.City) {
+            return new TravelPlaceDto(to.type() == Persons.LocationType.Airport ? "airport" : "city", to.type() == Persons.LocationType.Airport ? to.name() : Id.encode(to.id()), to.name(),
+                    subtitle, distance, 0, 0, false, "The airline goes from a city to a city", null);
+        }
+        // the variants are sorted by the frequency of the route, the first one is the most frequent: the fields of the estimate and the money are of it
+        final List<AirlineTravelEstimate.Result> variants = estimator.variants(from.id(), to.id());
+        final AirlineTravelEstimate.Result estimate = variants.get(0);
+        String problem = estimate.problem();
+        final List<AirlineLegDto> legs = legsOf(estimate);
+        final List<AirlineRouteDto> routes = new ArrayList<>();
+        if (estimate.found()) {
+            for (int i = 0; i < variants.size(); i++) {
+                final AirlineTravelEstimate.Result variant = variants.get(i);
+                routes.add(new AirlineRouteDto(variant.title(), i == 0, legsOf(variant), variant.price(), variant.minDays(), variant.maxDays()));
+            }
+        }
+        final long balance = world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(0L);
+        final long needed = estimate.price() + PilotTravel.AIRLINE_MONEY_RESERVE;
+        if (problem == null && balance < needed) {
+            problem = "Not enough money: the tickets cost about " + estimate.price() + " and " + PilotTravel.AIRLINE_MONEY_RESERVE + " more must stay on the account";
+        }
+        final AirlineEstimateDto airline = new AirlineEstimateDto(estimate.found(), legs, estimate.price(), PilotTravel.AIRLINE_MONEY_RESERVE, needed, balance,
+                estimate.minDays(), estimate.maxDays(), routes);
+        return new TravelPlaceDto("city", Id.encode(to.id()), to.name(), subtitle, distance, estimate.minDays() * 24 * 60, estimate.price(), false, problem, airline);
+    }
+
+    private static List<AirlineLegDto> legsOf(final AirlineTravelEstimate.Result result) {
+        return result.legs().stream()
+                .map(leg -> new AirlineLegDto(leg.fromIcao(), leg.toIcao(), leg.distanceNm(), leg.flightsPerWeek(), leg.price()))
+                .toList();
     }
 
     static TravelFindDto findTravelPlaces(final World world, final Persons.Person person, final String methodName, final String query) {
@@ -322,6 +368,10 @@ public class PilotController {
         final List<TravelPlaceDto> matches = new ArrayList<>();
         if (text.isEmpty()) {
             return new TravelFindDto("Type the name of a city or the ICAO code of an airport", matches);
+        }
+
+        if (method == PilotTravel.Method.Airline) {
+            return findAirlineCities(world, person, here, text);
         }
 
         // the code of an airport first
@@ -349,6 +399,31 @@ public class PilotController {
                 .forEach(city -> matches.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName()), method,
                         world.countries().byId(city.getCountryId()).map(c -> c.getName()).orElse(null))));
         return new TravelFindDto(matches.isEmpty() ? "There is no airport or city like " + text : null, matches);
+    }
+
+    // by airline the places are the cities only (the journeys go from a city to a city): the same search by the name as for the other ways, one estimator for all the cities found
+    private static TravelFindDto findAirlineCities(final World world, final Persons.Person person, final PersonControl.Place here, final String text) {
+        final String lower = text.toLowerCase();
+        List<Cities.City> found = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(text)).toList();
+        if (found.isEmpty()) {
+            found = world.cities().all().filter(c -> c.getName().toLowerCase().startsWith(lower)).toList();
+        }
+        if (found.isEmpty()) {
+            found = world.cities().all().filter(c -> c.getName().toLowerCase().contains(lower)).toList();
+        }
+        final AirlineTravelEstimate estimator = new AirlineTravelEstimate(world);
+        final List<TravelPlaceDto> matches = new ArrayList<>();
+        found.stream()
+                .sorted(java.util.Comparator.comparingInt(Cities.City::getPopulation).reversed())
+                .limit(8)
+                .forEach(city -> matches.add(placeDto(world, person, here, new PersonControl.Place(Persons.LocationType.City, city.getId(), city.getName()), PilotTravel.Method.Airline,
+                        world.countries().byId(city.getCountryId()).map(c -> c.getName()).orElse(null), estimator)));
+        if (matches.isEmpty()) {
+            return new TravelFindDto(text.length() == 4 && world.airports().byIcao(text.toUpperCase()).isPresent()
+                    ? "The airline goes from a city to a city: type the name of a city, not the code of an airport"
+                    : "There is no city like " + text, matches);
+        }
+        return new TravelFindDto(null, matches);
     }
 
     static void startTravel(final World world, final Persons.Person person, final String methodName, final String kind, final String id) {
@@ -1156,6 +1231,53 @@ public class PilotController {
         private boolean available;
         // why not, null when available
         private String problem;
+        // the estimate of a travel by airline (the flights, the price, the days), null for the other ways
+        private AirlineEstimateDto airline;
+    }
+
+    /**
+     * The estimate of a travel by airline: nothing is booked. found is false when there is no route (the problem of the place says why), the days are from-to for all the flights.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class AirlineEstimateDto {
+        private boolean found;
+        private List<AirlineLegDto> legs;
+        // the tickets of all the flights
+        private long price;
+        // what must stay on the account after the tickets are paid, and the sum of the two: the account must have it when the journey is booked
+        private long reserve;
+        private long needed;
+        private long balance;
+        private int minDays;
+        private int maxDays;
+        // the routes, the most frequent first (it is the same as the fields above): a direct flight, through a hub, a stopover
+        private List<AirlineRouteDto> routes;
+    }
+
+    /**
+     * One route of the estimate: how it is called (a direct flight, through a hub, a stopover), whether it is the first (the most frequent) one, its flights, the tickets and the days.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class AirlineRouteDto {
+        private String title;
+        private boolean mostLikely;
+        private List<AirlineLegDto> legs;
+        private long price;
+        private int minDays;
+        private int maxDays;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class AirlineLegDto {
+        private String from;
+        private String to;
+        private double distanceNm;
+        // how many flights there were between the two airports in the days of the flight stats
+        private int flightsPerWeek;
+        private long price;
     }
 
     @Data
