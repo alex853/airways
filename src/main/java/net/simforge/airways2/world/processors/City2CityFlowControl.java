@@ -22,6 +22,10 @@ public class City2CityFlowControl {
     }
 
     public void updateSuccessRate(final Journeys.Journey journey, final float deltaPercents) {
+        // the journey of a pilot is not of the flow of the passengers of the cities, it does not tell anything about the cities
+        if (journey.isPilotJourney()) {
+            return;
+        }
         updateCity2CityFlowSuccessRateBothDirections(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
     }
 

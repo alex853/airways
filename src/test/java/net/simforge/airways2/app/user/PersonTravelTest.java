@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -605,13 +606,13 @@ class PersonTravelTest {
     }
 
     @Test
-    void theAirlineShowsTheFlightsTheTicketsAndTheDaysAndCannotBeStartedYet() {
+    void theAirlineShowsTheFlightsTheTicketsAndTheDaysAndCanBeStarted() {
         final Airports.Airport fresnoAirport = airportOfFresno(10);
         pilotIsIn(oaklandCity);
 
         final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
 
-        assertFalse(place.isAvailable());
+        assertTrue(place.isAvailable());
         assertNull(place.getProblem());
         final PilotController.AirlineEstimateDto airline = place.getAirline();
         assertTrue(airline.isFound());
@@ -621,8 +622,6 @@ class PersonTravelTest {
         assertEquals(10, airline.getLegs().get(0).getFlightsPerWeek());
         assertEquals(airline.getLegs().get(0).getPrice(), airline.getPrice());
         assertEquals(airline.getPrice(), place.getPrice());
-        assertEquals(PilotTravel.AIRLINE_MONEY_RESERVE, airline.getReserve());
-        assertEquals(airline.getPrice() + PilotTravel.AIRLINE_MONEY_RESERVE, airline.getNeeded());
         assertEquals(1, airline.getMinDays());
         assertEquals(2, airline.getMaxDays());
         assertEquals(fresno.getName(), place.getTitle());
@@ -644,16 +643,66 @@ class PersonTravelTest {
     }
 
     @Test
-    void theAirlineStartIsRefusedByTheServerWhateverTheEstimateIs() {
+    void theAirlineStartMakesTheJourneyOfThePilotAndThePilotTravels() {
         airportOfFresno(10);
         pilotIsIn(oaklandCity);
 
-        final ResponseStatusException e = assertThrows(ResponseStatusException.class,
-                () -> PilotController.startTravel(world, person, "Airline", "city", Id.encode(fresno.getId())));
+        PilotController.startTravel(world, person, "Airline", "city", Id.encode(fresno.getId()));
 
-        assertEquals("Coming soon", e.getReason());
+        assertEquals(Persons.State.Travelling, person.getState());
+        assertTrue(person.getPilotJourneyId() > 0);
+        assertEquals(1, world.journeys().all().filter(j -> j.isPilotJourney()).count());
+        // no money is taken at the start
+        assertEquals(1_000_000, pilotAccount.getBalance());
+    }
+
+    @Test
+    void theAirlineStartWithNoFlightsYetIsNotRefused() {
+        airportOfFresno(0);
+        pilotIsIn(oaklandCity);
+
+        PilotController.startTravel(world, person, "Airline", "city", Id.encode(fresno.getId()));
+
+        assertEquals(Persons.State.Travelling, person.getState());
+    }
+
+    @Test
+    void theAirlineStartIsRefusedForWhatCannotChange() {
+        airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+        final Cities.City nearby = world.cities().create(world.countries().all().findFirst().orElseThrow().getId(), "Berkeley", 37.87, -122.27, 100_000);
+
+        final ResponseStatusException tooClose = assertThrows(ResponseStatusException.class,
+                () -> PilotController.startTravel(world, person, "Airline", "city", Id.encode(nearby.getId())));
+        assertEquals("Too close, from 100 miles", tooClose.getReason());
+
+        final ResponseStatusException airport = assertThrows(ResponseStatusException.class,
+                () -> PilotController.startTravel(world, person, "Airline", "airport", "KFAT"));
+        assertEquals(org.springframework.http.HttpStatus.BAD_REQUEST, airport.getStatus());
         assertEquals(Persons.State.Idle, person.getState());
         assertEquals(0, world.journeys().all().count());
+    }
+
+    @Test
+    void theTilesOfTheAirlineTravelTellWhereThePilotIsAndWhatTheJourneyDoes() {
+        airportOfFresno(10);
+        pilotIsIn(oaklandCity);
+        assertNull(PilotController.buildPilot(world, person).getAirlineTravel());
+
+        PilotController.startTravel(world, person, "Airline", "city", Id.encode(fresno.getId()));
+        final PilotController.PilotDto pilot = PilotController.buildPilot(world, person);
+
+        final PilotController.AirlineTravelDto travel = pilot.getAirlineTravel();
+        assertEquals("Fresno", travel.getToCity());
+        assertEquals("Oakland", travel.getFromCity());
+        assertEquals("Looking for a flight", travel.getStatus());
+        assertEquals("From Oakland", travel.getStatusHint());
+        assertNull(travel.getRoute());
+        assertNotNull(travel.getNextSearchTime());
+        // the pilot waits in the city of the journey, it is Travelling
+        assertEquals("Travelling", pilot.getState());
+        assertEquals("Oakland", pilot.getCityName());
+        assertNull(pilot.getDestinationCity());
     }
 
     @Test
@@ -671,18 +720,6 @@ class PersonTravelTest {
     }
 
     @Test
-    void withNoRouteYetThePilotWhoHasNotTheReserveIsToldSo() {
-        airportOfFresno(0);
-        pilotIsIn(oaklandCity);
-        world.bankControl().transfer(pilotAccount.getId(), bank.getId(), 1_000_000 - 50, BankTransactions.Type.Travel);
-
-        final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
-
-        assertEquals("Not enough money: 200 must stay on the account", place.getProblem());
-        assertEquals("No flights from Oakland towards Fresno yet", place.getAirline().getNote());
-    }
-
-    @Test
     void aPlaceWhichIsTooCloseForTheAirlineIsAProblemOfThePlace() {
         pilotIsIn(oaklandCity);
         final Cities.City nearby = world.cities().create(world.countries().all().findFirst().orElseThrow().getId(), "Berkeley", 37.87, -122.27, 100_000);
@@ -694,18 +731,18 @@ class PersonTravelTest {
     }
 
     @Test
-    void thePilotWhoCannotPayTheTicketsAndTheReserveIsToldSo() {
+    void theMoneyOnTheAccountIsNotCheckedAndThereIsNoReserve() {
         airportOfFresno(10);
         pilotIsIn(oaklandCity);
-        // the tickets are about 50: the account has 20
+        // the tickets are about 50: the account has 20, and it is not a problem of the place
         world.bankControl().transfer(pilotAccount.getId(), bank.getId(), 1_000_000 - 20, BankTransactions.Type.Travel);
 
         final PilotController.TravelPlaceDto place = airlinePlaceOfFresno();
 
         assertTrue(place.getAirline().isFound());
         assertEquals(20, place.getAirline().getBalance());
-        assertTrue(place.getProblem().startsWith("Not enough money: the tickets cost about "), place.getProblem());
-        assertFalse(place.isAvailable());
+        // decided 2026-11-10: no reserve, no check; the page only advises to have twice the tickets
+        assertNull(place.getProblem());
     }
 
     @Test

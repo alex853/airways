@@ -8,11 +8,14 @@ import net.simforge.airways2.world.computations.PilotTravel;
 import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.BankAccounts;
 import net.simforge.airways2.world.datamodel.BankTransactions;
+import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
 import net.simforge.airways2.world.Time;
+import net.simforge.commons.misc.Geo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -448,6 +451,138 @@ public class PersonControl {
         }
         // the falling asleep by itself is scheduled again from the awake time the pilot has now (setState does it)
         setState(person, Persons.State.Idle, "arrived");
+        logArrived(person);
+    }
+
+    // ---- the travel by airline: the pilot is the passenger of a journey of its own (docs/pilot-airline-travel.md)
+
+    /**
+     * The pilot starts to travel by airline to the city: the journey of a pilot is created (it looks for a flight every 10-15 minutes and never gives up), the pilot is Travelling
+     * until the journey brings it to the city. Nothing is paid yet. The pilot must be free and in a city, not in the city of the destination and not closer than 100 miles.
+     *
+     * @throws IllegalStateException    the pilot cannot start now, the message says why
+     * @throws IllegalArgumentException the pilot is in the city already or the city is not there
+     */
+    public Journeys.Journey startAirlineTravel(final Persons.Person person, final int toCityId) {
+        if (person.getState() != Persons.State.Idle) {
+            throw new IllegalStateException("Only a free pilot can travel, the pilot is " + person.getState());
+        }
+        if (person.getLocationType() != Persons.LocationType.City) {
+            throw new IllegalStateException("The airline travel starts from a city");
+        }
+        // as for the other ways: the pilot must have a bank account, the tickets are paid from it (so there is no travel for free)
+        if (world.bankAccounts().byId(person.getBankAccountId()).isEmpty()) {
+            throw new IllegalStateException("The pilot has no bank account");
+        }
+        final int fromCityId = person.getLocationId();
+        if (fromCityId == toCityId) {
+            throw new IllegalArgumentException("The pilot is in the city already");
+        }
+        final Cities.City fromCity = world.cities().byId(fromCityId).orElseThrow(() -> new IllegalStateException("The city of the pilot is not found"));
+        final Cities.City toCity = world.cities().byId(toCityId).orElseThrow(() -> new IllegalArgumentException("There is no such city"));
+        final double distanceNm = Geo.distance(fromCity.getCoords(), toCity.getCoords());
+        if (distanceNm < PilotTravel.AIRLINE_MIN_DISTANCE_NM) {
+            throw new IllegalStateException("Too close, from " + PilotTravel.AIRLINE_MIN_DISTANCE_NM + " miles");
+        }
+
+        final Journeys.Journey journey = world.journeyControl().createPilotJourney(fromCityId, toCityId);
+        // the state first (leaving Idle clears the heartbeat and pays the meals of the place), then the link to the journey
+        setState(person, Persons.State.Travelling, "by airline to " + toCity.getName());
+        person.setPilotJourneyId(journey.getId());
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonTravelStarted, EventLog.id(person), EventLog.travelMethodId(PilotTravel.Method.Airline.code()),
+                EventLog.cityId(toCityId), EventLog.cityId(fromCityId));
+        onPilotJourneySearch(person, fromCityId, toCityId);
+        log.info("p/s #{} - travel by airline to {}, j/y #{}", person.getId(), toCity.getName(), journey.getId());
+        return journey;
+    }
+
+    /**
+     * The pilot looks for a flight from the city (the start of the travel, a landing which is not the destination): the event for the history.
+     */
+    public void onPilotJourneySearch(final Persons.Person person, final int fromCityId, final int toCityId) {
+        if (fromCityId > 0 && toCityId > 0) {
+            world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonSearchStarted, EventLog.id(person), EventLog.cityId(fromCityId), EventLog.cityId(toCityId), null);
+        }
+    }
+
+    /**
+     * A flight of the journey is found and booked, at the price.
+     */
+    public void onPilotJourneyFoundFlight(final Persons.Person person, final int fromAirportId, final int toAirportId, final int price) {
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonFoundFlight, EventLog.id(person),
+                EventLog.airportId(fromAirportId), EventLog.airportId(toAirportId), EventLog.amount(price));
+    }
+
+    // the events "could not afford a flight" of a pilot are not more often than once in this time: a search every 10-15 minutes would write them by hundreds
+    static final int COULD_NOT_AFFORD_EVENT_INTERVAL = Time.ONE_HOUR;
+    private final Map<Integer, Integer> couldNotAffordEventTime = new HashMap<>();
+
+    /**
+     * The journey has found a flight which would do, but the account has less than its ticket: the flight is skipped and the search goes on. It is written to the history once an hour at
+     * most for a pilot (the time is kept in memory, after a restart one more event is possible).
+     */
+    public void onPilotJourneyCouldNotAfford(final Persons.Person person, final int fromAirportId, final int toAirportId, final int price) {
+        final int now = world.getWorldTime();
+        final Integer last = couldNotAffordEventTime.get(person.getId());
+        if (last != null && now - last < COULD_NOT_AFFORD_EVENT_INTERVAL) {
+            return;
+        }
+        couldNotAffordEventTime.put(person.getId(), now);
+        world.eventLog().log(now, EventLog.EventType.PersonCouldNotAffordFlight, EventLog.id(person),
+                EventLog.airportId(fromAirportId), EventLog.airportId(toAirportId), EventLog.amount(price));
+        log.info("p/s #{} - a flight {} -> {} is skipped, the ticket {} is more than the account has", person.getId(), fromAirportId, toAirportId, price);
+    }
+
+    /**
+     * A step of the journey of the pilot with a flight (the check-in, the boarding, the wait for the next flight): the event with the two airports.
+     */
+    public void onPilotJourneyFlightStep(final Persons.Person person, final EventLog.EventType type, final int fromAirportId, final int toAirportId) {
+        world.eventLog().log(world.getWorldTime(), type, EventLog.id(person), EventLog.airportId(fromAirportId), EventLog.airportId(toAirportId), null);
+    }
+
+    /**
+     * The booked flight of the journey did not take place (too late to board, the flight was cancelled).
+     */
+    public void onPilotJourneyFlightFailed(final Persons.Person person, final int fromAirportId, final int toAirportId) {
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonFlightFailed, EventLog.id(person), EventLog.airportId(fromAirportId), EventLog.airportId(toAirportId), null);
+    }
+
+    /**
+     * The pilot has got off a flight of its journey: it pays the price of the flight (to the account of the passengers, which pays the operator of the flight as for all the
+     * passengers; if the account has less, the pilot pays what it has, the rest is written to the log, and the pilot goes on) and the awake time is a random one from two to twelve hours.
+     */
+    public void onPilotJourneyDeboarded(final Persons.Person person, final Journeys.Journey journey, final int price, final int airportId) {
+        if (airportId > 0) {
+            world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonDeboarded, EventLog.id(person), EventLog.airportId(airportId), null, null);
+        }
+        payAirlineTicket(person, journey, price);
+        final int before = awakeCreditIsNotStarted(person) ? 0 : PilotRest.creditNow(person.getAwakeCreditMinutes(), person.getCreditTime(), world.getWorldTime());
+        final int awake = Tools.random(PilotRest.AIRLINE_DEBOARD_MIN_MINUTES, PilotRest.AIRLINE_DEBOARD_MAX_MINUTES);
+        person.setAwakeCredit(awake, world.getWorldTime());
+        log.info("p/s #{} - got off a flight of j/y #{}, awake credit {} -> {} min", person.getId(), journey.getId(), before, awake);
+    }
+
+    // the pilot pays for the flight which it has flown: the price was fixed at the booking
+    private void payAirlineTicket(final Persons.Person person, final Journeys.Journey journey, final int price) {
+        if (price <= 0) {
+            return;
+        }
+        if (person.getBankAccountId() <= 0) {
+            log.warn("p/s #{} - the ticket {} of j/y #{} is not paid, the pilot has no bank account", person.getId(), price, journey.getId());
+            return;
+        }
+        final long paid = world.bankControl().transferUpTo(person.getBankAccountId(), BankAccounts.SystemPassengersAccountId, price, BankTransactions.Type.Travel);
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonPaidTicket, EventLog.id(person), EventLog.amount(paid), EventLog.amount(price), null);
+        log.info("p/s #{} - the ticket of j/y #{} is paid, {}{}", person.getId(), journey.getId(), paid, paid < price ? " of " + price + " (the account had no more)" : "");
+    }
+
+    /**
+     * The journey of the pilot has come to the city of its destination: the link is cleared and the pilot is free in this city.
+     */
+    public void onPilotJourneyArrived(final Persons.Person person, final Journeys.Journey journey) {
+        person.setPilotJourneyId(0);
+        setLocation(person, Persons.LocationType.City, journey.getToCityId(), "j/y #" + journey.getId() + " arrived");
+        setState(person, Persons.State.Idle, "arrived by airline");
         logArrived(person);
     }
 

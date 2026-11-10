@@ -22,7 +22,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * It is one entity for a pilot and for a person, see docs/persons-pilots.md.
  */
 public class Persons {
-    // The record is 40 bytes (it was 32), the file is "persons2": docs/persons-record-extension.md. The new fields are not used yet.
+    // The record is 40 bytes (it was 32), the file is "persons2": docs/persons-record-extension.md. The pilotJourneyId and the leaveAtNextLanding flag are used by the travel by airline (PersonControl.startAirlineTravel).
     private final Storage<Person> storage = Storage.<Person>builder()
             .name("persons2")
             .withInstantiator(Person::new)

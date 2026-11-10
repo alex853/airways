@@ -35,6 +35,9 @@ public final class PilotRest {
     // two to ten hours, see PersonControl.arrive. Otherwise the trip just makes the awake time smaller.
     public static final int TRIP_REST_MIN_MINUTES = 2 * 60;
     public static final int TRIP_REST_MAX_MINUTES = 10 * 60;
+    // The pilot who travels by airline gets off a flight with a random awake time from two to twelve hours (it is simple on purpose, decided 2026-11-09), see PersonControl.onPilotJourneyDeboarded
+    public static final int AIRLINE_DEBOARD_MIN_MINUTES = 2 * 60;
+    public static final int AIRLINE_DEBOARD_MAX_MINUTES = 12 * 60;
     // minutes of the credit for a minute of sleep
     public static final int CREDIT_PER_SLEEP_MINUTE = 2;
 

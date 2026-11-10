@@ -22,6 +22,8 @@ import net.simforge.airways2.world.datamodel.Airports;
 import net.simforge.airways2.world.datamodel.Cities;
 import net.simforge.airways2.world.datamodel.EventLog;
 import net.simforge.airways2.world.datamodel.FlightMissions;
+import net.simforge.airways2.world.datamodel.Journeys;
+import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.AirlineTravelEstimate;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.RosterForecast;
@@ -325,8 +327,8 @@ public class PilotController {
                 quote.durationMinutes(), quote.price(), problem == null, problem, null);
     }
 
-    // The estimate of a travel by airline to the city (nothing is booked): the flights, the price, the days. The pilot cannot start it yet (available is false whatever the estimate says),
-    // the problem tells why it cannot be done at all: not a city, too close, no route, not enough money.
+    // The estimate of a travel by airline to the city (nothing is booked): the flights, the price, the days. The pilot can start it when there is no problem: the problem tells why it
+    // cannot be done at all (not a city, too close, no airports in the city); no flights yet is a note, not a problem.
     private static TravelPlaceDto airlinePlaceDto(final World world, final Persons.Person person, final PersonControl.Place from, final PersonControl.Place to, final String subtitle,
                                                   final double distance, final AirlineTravelEstimate estimator) {
         if (from.type() != Persons.LocationType.City || to.type() != Persons.LocationType.City) {
@@ -337,7 +339,7 @@ public class PilotController {
         final List<AirlineTravelEstimate.Result> variants = estimator.variants(from.id(), to.id());
         final AirlineTravelEstimate.Result estimate = variants.get(0);
         // a route which is not found yet does not forbid the travel (the journey keeps looking for flights): it is a note of the estimate, not the problem of the place
-        String problem = estimate.blocking() ? estimate.problem() : null;
+        final String problem = estimate.blocking() ? estimate.problem() : null;
         final String note = estimate.blocking() ? null : estimate.problem();
         final List<AirlineLegDto> legs = legsOf(estimate);
         final List<AirlineRouteDto> routes = new ArrayList<>();
@@ -348,16 +350,10 @@ public class PilotController {
             }
         }
         final long balance = world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(0L);
-        // without a route the price is not known: the reserve is what the account must have at least
-        final long needed = estimate.price() + PilotTravel.AIRLINE_MONEY_RESERVE;
-        if (problem == null && balance < needed) {
-            problem = estimate.found()
-                    ? "Not enough money: the tickets cost about " + estimate.price() + " and " + PilotTravel.AIRLINE_MONEY_RESERVE + " more must stay on the account"
-                    : "Not enough money: " + PilotTravel.AIRLINE_MONEY_RESERVE + " must stay on the account";
-        }
-        final AirlineEstimateDto airline = new AirlineEstimateDto(estimate.found(), legs, estimate.price(), PilotTravel.AIRLINE_MONEY_RESERVE, needed, balance,
+        // there is no reserve and no check of the money (decided 2026-11-10): the real costs may be more than the estimate, the page only advises to have twice the tickets
+        final AirlineEstimateDto airline = new AirlineEstimateDto(estimate.found(), legs, estimate.price(), balance,
                 estimate.minDays(), estimate.maxDays(), routes, note);
-        return new TravelPlaceDto("city", Id.encode(to.id()), to.name(), subtitle, distance, estimate.minDays() * 24 * 60, estimate.price(), false, problem, airline);
+        return new TravelPlaceDto("city", Id.encode(to.id()), to.name(), subtitle, distance, estimate.minDays() * 24 * 60, estimate.price(), problem == null, problem, airline);
     }
 
     private static List<AirlineLegDto> legsOf(final AirlineTravelEstimate.Result result) {
@@ -434,6 +430,10 @@ public class PilotController {
     static void startTravel(final World world, final Persons.Person person, final String methodName, final String kind, final String id) {
         final PilotTravel.Method method = parseMethod(methodName);
         final PersonControl.Place here = freePlace(world, person);
+        if (method == PilotTravel.Method.Airline) {
+            startAirlineTravel(world, person, here, kind, id);
+            return;
+        }
         final PersonControl.Place destination;
         if ("airport".equals(kind)) {
             final Airports.Airport airport = findAirport(world, id);
@@ -454,6 +454,32 @@ public class PilotController {
         }
         try {
             world.personControl().travel(person, method, destination, distanceNm(world, here, destination));
+        } catch (final IllegalStateException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+    }
+
+    // The travel by airline: from a city to a city, the journey of the pilot looks for the flights (PersonControl.startAirlineTravel). What cannot change by itself is refused here with the
+    // reason of the estimate (no such city, the same city, too close, no airports in the city); no flights yet is not a reason.
+    private static void startAirlineTravel(final World world, final Persons.Person person, final PersonControl.Place here, final String kind, final String id) {
+        if (!"city".equals(kind)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The airline goes to a city");
+        }
+        if (here.type() != Persons.LocationType.City) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "The airline goes from a city to a city");
+        }
+        final int toCityId;
+        try {
+            toCityId = Id.decode(id);
+        } catch (final RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no such city");
+        }
+        final AirlineTravelEstimate.Result estimate = new AirlineTravelEstimate(world).estimate(here.id(), toCityId);
+        if (estimate.blocking()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, estimate.problem());
+        }
+        try {
+            world.personControl().startAirlineTravel(person, toCityId);
         } catch (final IllegalStateException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
@@ -610,12 +636,14 @@ public class PilotController {
      * The events of the travel of the pilot from the event log (PersonControl.travel and arrive, object1 is the person), the newest first, up to LOCATION_HISTORY_LIMIT. The text
      * is made here, the page only shows it.
      */
-    static List<LocationEventDto> buildLocationHistory(final World world, final Persons.Person person) {
+    public static List<LocationEventDto> buildLocationHistory(final World world, final Persons.Person person) {
         final int personCode = EventLog.ObjectType.Person.code();
         final List<EventLog.Event> events = world.eventLog().byObject(personCode, person.getId())
                 .filter(e -> e.getObject1TypeRaw() == personCode && e.getObject1Id() == person.getId())
                 .filter(e -> switch (e.getType() != null ? e.getType() : EventLog.EventType.PersonBecameIdle) {
-                    case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport, PersonFlewFlight -> true;
+                    case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport, PersonFlewFlight,
+                         PersonSearchStarted, PersonFoundFlight, PersonCouldNotAffordFlight, PersonDeboarded, PersonPaidTicket, PersonFlightFailed,
+                         PersonCheckedIn, PersonBoarded, PersonWaitingNextFlight -> true;
                     default -> false;
                 })
                 .sorted(Comparator.comparingInt(EventLog.Event::getTime).thenComparingInt(EventLog.Event::getId).reversed())
@@ -635,6 +663,26 @@ public class PilotController {
                 case PersonArrivedToAirport -> history.add(new LocationEventDto(event.getTime() * 1000L, "arrived", "Arrived at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
                 case PersonFlewFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "flew",
                         "Flew from " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonSearchStarted -> history.add(new LocationEventDto(event.getTime() * 1000L, "search",
+                        "Looking for a flight from " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " towards " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonFoundFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "found",
+                        "Found a flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())
+                                + ", the ticket is " + event.getObject4Id()));
+                case PersonCouldNotAffordFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "money",
+                        "Could not book a flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())
+                                + ": not enough money for the ticket, " + event.getObject4Id()));
+                case PersonDeboarded -> history.add(new LocationEventDto(event.getTime() * 1000L, "deboarded", "Got off the flight at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
+                case PersonPaidTicket -> history.add(new LocationEventDto(event.getTime() * 1000L, "paid",
+                        event.getObject2Id() == event.getObject3Id() ? "Paid " + event.getObject2Id() + " for the ticket"
+                                : "Paid " + event.getObject2Id() + " of " + event.getObject3Id() + " for the ticket (the account had no more)"));
+                case PersonCheckedIn -> history.add(new LocationEventDto(event.getTime() * 1000L, "checkin",
+                        "Checked in for the flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonBoarded -> history.add(new LocationEventDto(event.getTime() * 1000L, "boarded",
+                        "Boarded the flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonWaitingNextFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "waiting",
+                        "Waiting at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " for the next flight to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonFlightFailed -> history.add(new LocationEventDto(event.getTime() * 1000L, "failed",
+                        "The flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id()) + " did not take place"));
                 default -> { }
             }
         }
@@ -758,6 +806,19 @@ public class PilotController {
             default -> { }
         }
 
+        // The pilot who travels by airline: where it is now is told by its journey (the city where it waits, or the flight it is on), not by the place of the arrival
+        final AirlineTravelDto airlineTravel = buildAirlineTravel(world, person);
+        if (airlineTravel != null) {
+            airportIcao = null;
+            airportName = null;
+            destinationIcao = null;
+            destinationCity = null;
+            cityName = airlineTravel.getCityNow();
+            if (cityName == null) {
+                destinationIcao = airlineTravel.getFlightTo();
+            }
+        }
+
         // the money of the pilot: the balance of the bank account the person refers to, null while the person has no account
         final Long bankBalance = person.getBankAccountId() > 0
                 ? world.bankAccounts().byId(person.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(null)
@@ -766,7 +827,100 @@ public class PilotController {
         return new PilotDto(person.getInitials(), shownAvatarImage(person), person.getState().name(), person.getLocationType().name(), airportIcao, airportName, cityName, bankBalance,
                 buildAwake(world, person), buildDuty(world, person), buildFlightTime(world, person), destinationIcao, destinationCity,
                 world.personControl().bookingAirports(person).stream().map(Airports.Airport::getIcao).toList(),
-                new SettingsDto(person.isAutoFinish(), person.isWarpDrive() ? Boolean.TRUE : null));
+                new SettingsDto(person.isAutoFinish(), person.isWarpDrive() ? Boolean.TRUE : null), airlineTravel);
+    }
+
+    /**
+     * The travel of the pilot by airline for the tiles of the page, null when the pilot does not travel so: where to and from where, where the pilot is now, what the journey does now
+     * (the status and what it means), the flight it has found, the ticket. The texts are made here, the page only shows them.
+     */
+    static AirlineTravelDto buildAirlineTravel(final World world, final Persons.Person person) {
+        if (person.getPilotJourneyId() == 0) {
+            return null;
+        }
+        final Journeys.Journey journey = world.journeys().byId(person.getPilotJourneyId()).orElse(null);
+        if (journey == null) {
+            return null;
+        }
+        final String toCity = world.cities().byId(journey.getToCityId()).map(Cities.City::getName).orElse("?");
+        final String fromCity = world.cities().byId(journey.getFromCityId()).map(Cities.City::getName).orElse("?");
+        final String cityNow = journey.getLocationCityId() > 0 ? world.cities().byId(journey.getLocationCityId()).map(Cities.City::getName).orElse(null) : null;
+
+        String flightFrom = null;
+        String flightTo = null;
+        Long departure = null;
+        Integer price = null;
+        final TransportFlights.Flight flight = journey.getTransportFlight1Id() > 0 ? world.transportFlights().byId(journey.getTransportFlight1Id()).orElse(null) : null;
+        final FlightMissions.Mission mission = flight != null ? world.flightMissions().byId(flight.getFlightMissionId()).orElse(null) : null;
+        if (mission != null) {
+            flightFrom = world.airports().getIcao(mission.getDepartureAirportId()).orElse("?");
+            flightTo = world.airports().getIcao(mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId()).orElse("?");
+            departure = (long) mission.getPlannedDepartureWorldTime() * 1000L;
+            price = journey.getPrice1();
+        }
+        final String route = flightFrom != null ? flightFrom + " \u2192 " + flightTo : null;
+
+        final String status;
+        final String hint;
+        Long nextSearch = null;
+        switch (journey.getStatus()) {
+            case LookingForTickets -> {
+                status = "Looking for a flight";
+                hint = "From " + (cityNow != null ? cityNow : fromCity);
+                nextSearch = journey.getHeartbeatTime() > 0 ? (long) journey.getHeartbeatTime() * 1000L : null;
+            }
+            case WaitingForCheckIn -> {
+                status = "Flight found";
+                hint = "Waiting for the check-in";
+            }
+            case WaitingForBoarding -> {
+                status = "Checked in";
+                hint = "Waiting for the boarding";
+            }
+            case OnBoard -> {
+                status = "On board";
+                hint = "The flight is on the way";
+            }
+            case WaitingForDeboarding -> {
+                status = "Landing";
+                hint = "Getting off the flight";
+            }
+            case JustArrived, ItinerariesDone -> {
+                status = "Landed";
+                hint = "Deciding what is next";
+            }
+            case TooLateToBoard -> {
+                status = "Missed the flight";
+                hint = "Looking for another one";
+            }
+            default -> {
+                status = journey.getStatus().name();
+                hint = "";
+            }
+        }
+        return new AirlineTravelDto(toCity, fromCity, cityNow, status, hint, route, flightFrom, flightTo, departure, price, nextSearch);
+    }
+
+    /**
+     * The travel of the pilot by airline, for the tiles. cityNow is the city where the pilot waits (null while it is in a flight or at the airport of a flight); the flight is
+     * the one the journey has booked or is on, with the planned departure (UTC ms) and the ticket; nextSearchTime (UTC ms) is when the journey looks for a flight next.
+     */
+    @Data
+    @AllArgsConstructor
+    public static class AirlineTravelDto {
+        private String toCity;
+        private String fromCity;
+        private String cityNow;
+        // what the journey does now and what it means
+        private String status;
+        private String statusHint;
+        // the flight: "EGPH -> EDDF" and its airports, null when there is none
+        private String route;
+        private String flightFrom;
+        private String flightTo;
+        private Long departureTime;
+        private Integer price;
+        private Long nextSearchTime;
     }
 
     /**
@@ -1089,6 +1243,8 @@ public class PilotController {
         private List<String> bookingAirports;
         // the settings of the pilot (the page of the pilot shows them, the user cannot change them yet)
         private SettingsDto settings;
+        // the travel by airline, null when the pilot does not travel so
+        private AirlineTravelDto airlineTravel;
     }
 
     @Data
@@ -1252,9 +1408,7 @@ public class PilotController {
         private List<AirlineLegDto> legs;
         // the tickets of all the flights
         private long price;
-        // what must stay on the account after the tickets are paid, and the sum of the two: the account must have it when the journey is booked
-        private long reserve;
-        private long needed;
+        // the money on the account: the page advises to have twice the tickets, nothing is checked
         private long balance;
         private int minDays;
         private int maxDays;

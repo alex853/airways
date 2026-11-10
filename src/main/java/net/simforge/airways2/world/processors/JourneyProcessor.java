@@ -7,6 +7,8 @@ import net.simforge.airways2.world.Time;
 import net.simforge.airways2.world.World;
 import net.simforge.airways2.world.datamodel.Airport2City;
 import net.simforge.airways2.world.datamodel.Airports;
+import net.simforge.airways2.world.datamodel.BankAccounts;
+import net.simforge.airways2.world.datamodel.Persons;
 import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
@@ -41,6 +43,8 @@ public class JourneyProcessor {
     static class RouteIndex {
         private final World world;
         private Map<Integer, List<TFM>> byDepartureAirportId;
+        // the journeys of pilots which have skipped a flight because the account has less than the ticket, and the first of such flights (for the event)
+        private final Map<Integer, TFM> skippedForMoney = new HashMap<>();
 
         RouteIndex(final World world) {
             this.world = world;
@@ -59,9 +63,16 @@ public class JourneyProcessor {
             }
 
             final List<TFM> result = new ArrayList<>();
+            final Persons.Person pilot = journey.isPilotJourney() ? world.persons().byPilotJourneyId(journey.getId()).orElse(null) : null;
+            final long balance = pilot != null ? world.bankAccounts().byId(pilot.getBankAccountId()).map(BankAccounts.BankAccount::getBalance).orElse(Long.MAX_VALUE) : Long.MAX_VALUE;
             for (final int airportId : airportIds) {
                 for (final TFM tfm : byDepartureAirportId.getOrDefault(airportId, List.of())) {
                     if (tfm.tf.getRemainedTickets().chooseService(journey.getGroupSize(), journey.getPreferredCabinService()) != null) {
+                        // the pilot takes a flight whose ticket the account can pay (no reserve, decided 2026-11-10); the others are skipped, and it is told to the pilot
+                        if (pilot != null && world.journeyControl().ticketPrice(tfm.tf, journey) > balance) {
+                            skippedForMoney.putIfAbsent(journey.getId(), tfm);
+                            continue;
+                        }
                         result.add(tfm);
                     }
                 }
@@ -75,6 +86,14 @@ public class JourneyProcessor {
 
     private static void processJourney(final World world, final Journeys.Journey journey, final RouteIndex routes) {
         journey.setHeartbeatTime(0);
+
+        // the journey of a pilot which has no pilot (the link is lost): nobody travels by it, it is finished as orphaned
+        if (journey.isPilotJourney() && world.persons().byPilotJourneyId(journey.getId()).isEmpty()
+                && journey.getStatus() != Journeys.Status.Finished && journey.getStatus() != Journeys.Status.Orphaned && journey.getStatus() != Journeys.Status.CouldNotFindTickets) {
+            log.warn("j/y #{} - the journey of a pilot has no pilot, {} status, orphaned", journey.getId(), journey.getStatus());
+            world.journeyControl().orphaned(journey);
+            return;
+        }
 
         switch (journey.getStatus()) {
             case LookingForTickets -> lookingForTickets(world, journey, routes);
@@ -130,6 +149,18 @@ public class JourneyProcessor {
                 world.journeyControl().waitForCheckin(journey);
                 return;
             }
+        }
+
+        if (journey.isPilotJourney()) {
+            // nothing is booked: if a flight was skipped for the money, the pilot is told
+            final TFM skipped = routes.skippedForMoney.get(journey.getId());
+            if (skipped != null) {
+                world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> world.personControl().onPilotJourneyCouldNotAfford(person,
+                        skipped.fm.getDepartureAirportId(), skipped.fm.getDestinationAirportId(), world.journeyControl().ticketPrice(skipped.tf, journey)));
+            }
+            // the journey of a pilot never gives up and does not count the attempts: the pilot or the user ends it
+            journey.setHeartbeatTime(world.getWorldTime() + world.journeyControl().nextSearchDelay(journey));
+            return;
         }
 
         if (journey.getAttemptCounter() < 3) {
@@ -315,6 +346,11 @@ public class JourneyProcessor {
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
         if (!world.journeyControl().isToCityReached(journey)) {
             world.journeyControl().toCityNotReached(journey);
+            return;
+        }
+
+        if (journey.isPilotJourney()) {
+            world.journeyControl().finishPilotJourney(journey);
             return;
         }
 

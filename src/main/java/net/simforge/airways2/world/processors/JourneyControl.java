@@ -27,6 +27,10 @@ public class JourneyControl {
 
     private static final int TERMINAL_STATUS_DURATION = Time.ONE_DAY;
 
+    // the journey of a pilot (travel by airline) looks for a flight every 10-15 minutes, it never gives up (docs/pilot-airline-travel.md)
+    public static final int PILOT_SEARCH_MIN_INTERVAL = 10 * Time.ONE_MINUTE;
+    public static final int PILOT_SEARCH_MAX_INTERVAL = 15 * Time.ONE_MINUTE;
+
     private final World world;
 
     public JourneyControl(World world) {
@@ -49,6 +53,26 @@ public class JourneyControl {
         return journey;
     }
 
+    /**
+     * The journey of a pilot: one person, economy, from the city to the city, looks for a flight at once. The person is linked to it by the caller (PersonControl.startAirlineTravel).
+     */
+    public Journeys.Journey createPilotJourney(final int fromCityId, final int toCityId) {
+        final Journeys.Journey journey = world.journeys().create(Journeys.Status.LookingForTickets, fromCityId, toCityId, 1, CabinLayout.Service.Y);
+        journey.setPilotJourney(true);
+        journey.setHeartbeatTime(world.getWorldTime());
+        journey.setLocationCityId(fromCityId);
+        journey.setLastKnownLocationCityId(fromCityId);
+        log.info("j/y #{} - the journey of a pilot is created, from city #{} to city #{}", journey.getId(), fromCityId, toCityId);
+        return journey;
+    }
+
+    // when the journey searches the next time: the journey of a pilot every 10-15 minutes, the others in one to three days
+    int nextSearchDelay(final Journeys.Journey journey) {
+        return journey.isPilotJourney()
+                ? Tools.random(PILOT_SEARCH_MIN_INTERVAL, PILOT_SEARCH_MAX_INTERVAL)
+                : Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY);
+    }
+
     // 'No checks' means that the method does not check if the operation is valid with all those parameters
     public void bookDirectFlightJourneyNoChecks(Journeys.Journey journey, TransportFlights.Flight flight) {
         checkNotNull(journey);
@@ -68,15 +92,71 @@ public class JourneyControl {
         // Every journey gets the price of its flight at the booking, whatever the flight is (decided 2026-10-30): by the distance of the flight, the passengers and the ACTUAL
         // class of the booking (the seats which the journey got, with the upgrade or the downgrade), not by the preferred one. The price is the income of the flight, if it is
         // a flight of a pilot (the PC flights, addIncome skips the others).
+        // the journey of a pilot has the price of the flight as the others: it is the income of the flight, and the pilot pays it when it gets off (PersonControl.onPilotJourneyDeboarded)
         final int price = legPrice(flight, journey.getGroupSize(), cabinService);
         journey.setPrice1(price);
         journey.setPrice2(0);
         logLegPrice(journey, price, flight, cabinService);
         world.transportFlightControl().addIncome(flight, price);
+        pilotFoundFlight(journey, flight, price);
 
         journey.setTransportFlight2Id(0);
 
         journey.setBookedCabinService(cabinService);
+    }
+
+    // the airports of a flight: where it departs and where it lands (the destination while the landing is not known), zeros if the mission is not found
+    private int[] airportsOf(final TransportFlights.Flight flight) {
+        return world.flightMissions().byId(flight.getFlightMissionId())
+                .map(mission -> new int[]{mission.getDepartureAirportId(), mission.getActualLandingAirportId() > 0 ? mission.getActualLandingAirportId() : mission.getDestinationAirportId()})
+                .orElse(new int[]{0, 0});
+    }
+
+    // the history of the pilot: a flight is found for the journey of a pilot
+    private void pilotFoundFlight(final Journeys.Journey journey, final TransportFlights.Flight flight, final int price) {
+        if (!journey.isPilotJourney()) {
+            return;
+        }
+        final int[] airports = airportsOf(flight);
+        world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> {
+            if (airports[0] > 0 && airports[1] > 0) {
+                world.personControl().onPilotJourneyFoundFlight(person, airports[0], airports[1], price);
+            }
+        });
+    }
+
+    // the history of the pilot: a step with a flight (the check-in, the boarding)
+    private void pilotFlightStep(final Journeys.Journey journey, final TransportFlights.Flight flight, final EventLog.EventType type) {
+        if (!journey.isPilotJourney()) {
+            return;
+        }
+        final int[] airports = airportsOf(flight);
+        world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> {
+            if (airports[0] > 0 && airports[1] > 0) {
+                world.personControl().onPilotJourneyFlightStep(person, type, airports[0], airports[1]);
+            }
+        });
+    }
+
+    // the history of the pilot: the flight of its journey did not take place (too late to board, cancelled)
+    private void pilotFlightFailed(final Journeys.Journey journey, final TransportFlights.Flight flight) {
+        if (!journey.isPilotJourney()) {
+            return;
+        }
+        final int[] airports = airportsOf(flight);
+        world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> {
+            if (airports[0] > 0 && airports[1] > 0) {
+                world.personControl().onPilotJourneyFlightFailed(person, airports[0], airports[1]);
+            }
+        });
+    }
+
+    /**
+     * The price of the flight for the journey in the class of the seats the journey would get, the same as at the booking (for the pilot to see whether the account is enough).
+     */
+    int ticketPrice(final TransportFlights.Flight flight, final Journeys.Journey journey) {
+        final CabinLayout.Service service = flight.getRemainedTickets().chooseService(journey.getGroupSize(), journey.getPreferredCabinService());
+        return legPrice(flight, journey.getGroupSize(), service != null ? service : journey.getPreferredCabinService());
     }
 
     // the price of the journey on a flight: by the distance of the flight (so every pair of airports has its own price), the passengers and the class (ShadowJetPricing)
@@ -129,6 +209,7 @@ public class JourneyControl {
         journey.setPrice1(price1);
         logLegPrice(journey, price1, flight1, service);
         world.transportFlightControl().addIncome(flight1, price1);
+        pilotFoundFlight(journey, flight1, price1);
 
         journey.setTransportFlight2Id(flight2.getId());
         world.transportFlightControl().obtainFlightTickets(flight2, journey.getGroupSize(), service);
@@ -136,6 +217,7 @@ public class JourneyControl {
         journey.setPrice2(price2);
         logLegPrice(journey, price2, flight2, service);
         world.transportFlightControl().addIncome(flight2, price2);
+        pilotFoundFlight(journey, flight2, price2);
 
         journey.setBookedCabinService(service);
     }
@@ -170,6 +252,7 @@ public class JourneyControl {
         final TransportFlights.Flight flight = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
         world.transportFlightControl().increasePaxCheckedIn(flight, journey.getGroupSize());
 
+        pilotFlightStep(journey, flight, EventLog.EventType.PersonCheckedIn);
         log.info("j/y #{} - checked-in to t/f #{}", journey.getId(), journey.getTransportFlight1Id());
     }
 
@@ -181,6 +264,7 @@ public class JourneyControl {
 
         world.c2cFlowControl().updateSuccessRate(journey, 0.025f);
 
+        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> pilotFlightStep(journey, flight, EventLog.EventType.PersonBoarded));
         log.info("j/y #{} - boarded to t/f #{}", journey.getId(), journey.getTransportFlight1Id());
     }
 
@@ -198,6 +282,12 @@ public class JourneyControl {
         }
 
         log.info("j/y #{} - deboarded from t/f #{}, g/s {}, new PAX on board {}", journey.getId(), journey.getTransportFlight1Id(), journey.getGroupSize(), flight.getPaxOnBoard());
+
+        if (journey.isPilotJourney()) {
+            // the price of the flight which the pilot has flown is price1 (the next flight of a stopover route is price2 until justArrived shifts it)
+            final int landingAirportId = airportsOf(flight)[1];
+            world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> world.personControl().onPilotJourneyDeboarded(person, journey, journey.getPrice1(), landingAirportId));
+        }
     }
 
     public void justArrived(final Journeys.Journey journey) {
@@ -205,7 +295,9 @@ public class JourneyControl {
         checkArgument(journey.getStatus() == Journeys.Status.JustArrived);
 
         final TransportFlights.Flight transportFlight1 = world.transportFlights().byId(journey.getTransportFlight1Id()).orElseThrow();
-        world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.01f);
+        if (!journey.isPilotJourney()) {
+            world.c2cFlowControl().updateSuccessRate(transportFlight1, 0.01f);
+        }
 
         // the transport flight is paid to its operator as a whole when it is finished (TransportFlightControl.payOperator), not by every journey
         shiftToNextTransportFlight(journey);
@@ -216,6 +308,17 @@ public class JourneyControl {
             journey.setStatus(Journeys.Status.ItinerariesDone);
             journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
         } else {
+            // the pilot is at the airport of the stopover and waits for the second flight of its route
+            if (journey.isPilotJourney()) {
+                world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(next -> {
+                    final int[] airports = airportsOf(next);
+                    world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> {
+                        if (airports[0] > 0 && airports[1] > 0) {
+                            world.personControl().onPilotJourneyFlightStep(person, EventLog.EventType.PersonWaitingNextFlight, airports[0], airports[1]);
+                        }
+                    });
+                });
+            }
             waitForCheckin(journey);
         }
     }
@@ -265,6 +368,9 @@ public class JourneyControl {
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
 
         scheduleLookingForTickets(journey);
+        if (journey.isPilotJourney()) {
+            world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> world.personControl().onPilotJourneySearch(person, journey.getLocationCityId(), journey.getToCityId()));
+        }
 
         log.info("j/y #{} - TO city not reached, looking for tickets scheduled", journey.getId());
     }
@@ -272,7 +378,22 @@ public class JourneyControl {
     private void scheduleLookingForTickets(final Journeys.Journey journey) {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setAttemptCounter(0);
-        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY));
+        journey.setHeartbeatTime(world.getWorldTime() + nextSearchDelay(journey));
+    }
+
+    /**
+     * The journey of a pilot has come to the city of its destination: it is finished and the pilot is free there (PersonControl.onPilotJourneyArrived).
+     */
+    public void finishPilotJourney(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.isPilotJourney());
+        checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
+
+        journey.setStatus(Journeys.Status.Finished);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+        world.persons().byPilotJourneyId(journey.getId()).ifPresent(person -> world.personControl().onPilotJourneyArrived(person, journey));
+
+        log.info("j/y #{} - the journey of a pilot is finished, cleanup scheduled", journey.getId());
     }
 
     public void finish(final Journeys.Journey journey) {
@@ -305,6 +426,7 @@ public class JourneyControl {
         final TransportFlights.Flight transportFlight1 = transportFlight1O.get();
         world.c2cFlowControl().updateSuccessRate(transportFlight1, -0.01f);
         releaseBookingPrice(journey, transportFlight1);
+        pilotFlightFailed(journey, transportFlight1);
 
         // the status is not terminal, the journey gets back to looking for tickets in restartAfterTooLateToBoard
         // the short delay gives a good chance that the transport flight still exists, see Cleanup
@@ -329,6 +451,16 @@ public class JourneyControl {
         final boolean flightMissionExists = flightMissionId > 0 && world.flightMissions().byId(flightMissionId).isPresent();
 
         releaseTransportFlight2Tickets(journey);
+
+        // the journey of a pilot does not die: the pilot goes on, from the last known city (nobody else will look for a flight for it)
+        if (journey.isPilotJourney() && world.persons().byPilotJourneyId(journey.getId()).isPresent()) {
+            journey.setTransportFlight1Id(0);
+            journey.setPrice1(0);
+            moveBackToDepartureCity(journey);
+            scheduleLookingForTickets(journey);
+            log.info("j/y #{} - the journey of a pilot has lost its t/f #{}, was in {} status, looking for tickets again", journey.getId(), transportFlightId, oldStatus);
+            return;
+        }
 
         journey.setStatus(Journeys.Status.Orphaned);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
@@ -413,10 +545,16 @@ public class JourneyControl {
 
         Journeys.Status oldStatus = journey.getStatus();
 
-        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> releaseBookingPrice(journey, flight));
+        world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> {
+            releaseBookingPrice(journey, flight);
+            // the journey was on a flight which is cancelled or lost; the one which is waiting for a deboarding at the end of a finished flight is not a failed one
+            if (oldStatus != Journeys.Status.WaitingForDeboarding || flight.getStatus() != TransportFlights.Status.Finished) {
+                pilotFlightFailed(journey, flight);
+            }
+        });
 
         journey.setStatus(Journeys.Status.LookingForTickets);
-        journey.setHeartbeatTime(world.getWorldTime() + Time.ONE_HOUR);
+        journey.setHeartbeatTime(world.getWorldTime() + (journey.isPilotJourney() ? nextSearchDelay(journey) : Time.ONE_HOUR));
 
         // the journey which is on the aircraft is where the aircraft is; the one which has not boarded waits where it was
         final boolean onTheAircraft = oldStatus == Journeys.Status.OnBoard || oldStatus == Journeys.Status.WaitingForDeboarding;

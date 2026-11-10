@@ -257,6 +257,25 @@ public class EventLog {
         PersonArrivedToAirport(603),
         // the pilot has flown a flight (PersonControl.onMissionFinished, time of the blocks on): object2 the airport it left, object3 the airport of the landing
         PersonFlewFlight(604),
+
+        // the travel of a pilot by airline (the journey of a pilot, PersonControl.onPilotJourney*), object1 is the person:
+        // the pilot looks for a flight (at the start and at every landing which is not the destination): object2 the city where it is, object3 the city where it goes
+        PersonSearchStarted(605),
+        // a flight is found and booked: object2 the airport of the departure, object3 the airport of the arrival, object4 the price (Amount)
+        PersonFoundFlight(606),
+        // a flight which would do is skipped because the account has less than the ticket (once an hour at most): object2, object3 the airports, object4 the price (Amount)
+        PersonCouldNotAffordFlight(607),
+        // the pilot has got off a flight: object2 the airport
+        PersonDeboarded(608),
+        // the ticket is paid: object2 what is paid (Amount), object3 the price (Amount), they differ when the account had less
+        PersonPaidTicket(609),
+        // the booked flight did not take place or was cancelled: object2, object3 the airports of the flight
+        PersonFlightFailed(610),
+        // the pilot has checked in for the booked flight / has boarded it: object2, object3 the airports of the flight
+        PersonCheckedIn(611),
+        PersonBoarded(612),
+        // the pilot is at the airport of a stopover and waits for the second flight of its route: object2 the airport where it is, object3 the airport where the next flight lands
+        PersonWaitingNextFlight(613),
         ;
 
         private final int code;
@@ -287,7 +306,9 @@ public class EventLog {
         Person(7),
         City(8),
         // the way of a travel of a pilot: the id is PilotTravel.Method.code()
-        TravelMethod(9);
+        TravelMethod(9),
+        // a sum of money: the id is the amount
+        Amount(10);
 
         private final int code;
 
@@ -351,6 +372,10 @@ public class EventLog {
     public static EventLogId travelMethodId(final int methodCode) {
         checkArgument(methodCode > 0);
         return new EventLogId(ObjectType.TravelMethod, methodCode);
+    }
+
+    public static EventLogId amount(final long amount) {
+        return new EventLogId(ObjectType.Amount, (int) Math.max(0, Math.min(Integer.MAX_VALUE, amount)));
     }
 
     public static EventLogId airportId(final int airportId) {
