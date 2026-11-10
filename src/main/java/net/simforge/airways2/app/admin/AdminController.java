@@ -773,6 +773,30 @@ public class AdminController {
         });
     }
 
+    /**
+     * Takes the oldest (by a/t) flows whose clock is in the past and whose time to accumulate the next group is longer than 100 days (limit of them,
+     * 20 by default, 200 at most), sets the next group size of them to 1 and the heartbeat to the world time: the flow takes the small group at its next
+     * pass, which is soon. Nothing else is changed.
+     */
+    @GetMapping(value = "/flows/c2c/slow-reset", produces = "text/plain")
+    public String resetSlowC2CFlows(@RequestParam(name = "limit", required = false, defaultValue = "20") int limit) {
+        return worldBean.modifySync(world -> {
+            final int worldTime = world.getWorldTime();
+            final List<City2CityFlows.Flow> flows = City2CityFlowHistogramAnalyser.lateWithLongAccumulation(world, Math.min(limit, 200), 100 * Time.ONE_DAY);
+            final List<String> lines = new ArrayList<>();
+            for (final City2CityFlows.Flow c2c : flows) {
+                final int was = c2c.getNextGroupSize();
+                final int daysToAccumulate = CityFlowHelper.calcTimeToAccumulateFlow(world, c2c) / Time.ONE_DAY;
+                c2c.setNextGroupSize(1);
+                c2c.setHeartbeatTime(worldTime);
+                log.info("c2c #{}/{} - slow-reset, next g/s {} -> 1 ({} d to accumulate), h/b set to {}", c2c.getFromCityId(), c2c.getToCityId(), was, daysToAccumulate, Time.toLdt(worldTime));
+                lines.add("#" + c2c.getFromCityId() + "/" + c2c.getToCityId() + " g/s " + was + " -> 1, was " + daysToAccumulate + " d to accumulate");
+            }
+            lines.add("Done, " + flows.size() + " flows");
+            return String.join(System.lineSeparator(), lines) + System.lineSeparator();
+        });
+    }
+
     @GetMapping(value = "/flows/c2c/heartbeat", produces = "text/plain")
     public String updateC2CFlowHeartbeat(@RequestParam("from") int fromCityId, @RequestParam("to") int toCityId) {
         return worldBean.modifySync(world -> {

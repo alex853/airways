@@ -176,6 +176,23 @@ class City2CityFlowHistogramAnalyserTest {
     }
 
     @Test
+    public void test__late_with_long_accumulation_takes_the_late_flows_with_the_time_to_accumulate_over_the_threshold() {
+        final int now = world.getWorldTime();
+        final City2CityFlows.Flow oldest = flowWithClock(now - 400 * Time.ONE_DAY, true);
+        final City2CityFlows.Flow middle = flowWithClock(now - 10 * Time.ONE_DAY, true);
+        flowWithClock(now - 3 * Time.ONE_DAY, true);
+        flowWithClock(now + 3 * Time.ONE_DAY, true);   // the clock is in the future: not taken
+        flowWithClock(now - 900 * Time.ONE_DAY, false); // inactive: not taken
+
+        // the flows have accumulated everything (the time to accumulate is zero): over -1, but not over 0
+        final java.util.List<City2CityFlows.Flow> taken = City2CityFlowHistogramAnalyser.lateWithLongAccumulation(world, 2, -1);
+        assertEquals(2, taken.size());
+        assertEquals(oldest.getFromCityId(), taken.get(0).getFromCityId());
+        assertEquals(middle.getFromCityId(), taken.get(1).getFromCityId());
+        assertTrue(City2CityFlowHistogramAnalyser.lateWithLongAccumulation(world, 20, 0).isEmpty());
+    }
+
+    @Test
     public void test__oldest_by_clock_with_a_zero_limit_is_empty() {
         flowWithClock(world.getWorldTime() - Time.ONE_DAY, true);
 

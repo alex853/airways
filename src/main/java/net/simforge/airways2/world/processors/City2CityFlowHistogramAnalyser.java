@@ -62,6 +62,25 @@ public class City2CityFlowHistogramAnalyser {
     }
 
     /**
+     * The active flows with the oldest clock (a/t), the oldest first (at most limit), whose clock is in the past and whose time to accumulate the next
+     * group is longer than minTimeToAccumulate: the flows which are late and wait for a very long time for the group they have chosen.
+     */
+    public static java.util.List<City2CityFlows.Flow> lateWithLongAccumulation(final World world, final int limit, final int minTimeToAccumulate) {
+        final int worldTime = world.getWorldTime();
+        return flowsByClock(world)
+                .filter(c2c -> c2c.getAccumulatedFlowTime() < worldTime)
+                .filter(c2c -> {
+                    try {
+                        return CityFlowHelper.calcTimeToAccumulateFlow(world, c2c) > minTimeToAccumulate;
+                    } catch (final RuntimeException e) {
+                        return false;
+                    }
+                })
+                .limit(Math.max(0, limit))
+                .toList();
+    }
+
+    /**
      * The sum of the "need pax" column of the lines oldestByClock gives for the limit, and the same sum for all the active flows with a clock
      * (the flows whose estimate can not be calculated are not counted).
      */
