@@ -58,6 +58,10 @@ public class JourneyProcessor {
                 byDepartureAirportId = new HashMap<>();
                 world.transportFlights().allOpenForTickets().forEach(tf -> {
                     final TFM tfm = toTfm(world, tf);
+                    // a flight from an airport to the same airport is a loop, not a connection for the search
+                    if (tfm.fm.getDepartureAirportId() == tfm.fm.getDestinationAirportId()) {
+                        return;
+                    }
                     byDepartureAirportId.computeIfAbsent(tfm.fm.getDepartureAirportId(), id -> new ArrayList<>()).add(tfm);
                 });
             }

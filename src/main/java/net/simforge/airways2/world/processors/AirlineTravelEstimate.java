@@ -74,7 +74,8 @@ public final class AirlineTravelEstimate {
         this.world = world;
         world.airport2airportDailyFlightStats().all().forEach(stat -> {
             final int count = stat.getTotalCount();
-            if (count > 0) {
+            // a "flight" from an airport to the same airport is a loop, not a connection: the route search does not look at it (the stats keep such records, see the inbox)
+            if (count > 0 && stat.getFromAirportId() != stat.getToAirportId()) {
                 flights.computeIfAbsent(stat.getFromAirportId(), id -> new HashMap<>()).merge(stat.getToAirportId(), count, Integer::sum);
             }
         });

@@ -99,6 +99,20 @@ class AirlineTravelEstimateTest {
     }
 
     @Test
+    void aLoopFromAnAirportToItselfIsNotAConnection() {
+        flights(airportA, airportA, 30);
+        flights(airportA, airportB, 3);
+
+        final AirlineTravelEstimate.Result result = estimate(cityA, cityB);
+
+        assertTrue(result.found(), result.problem());
+        assertEquals(1, result.legs().size());
+        assertEquals("KBBB", result.legs().get(0).toIcao());
+        // the variants have no stopover through the loop
+        assertTrue(new AirlineTravelEstimate(world).variants(cityA.getId(), cityB.getId()).stream().allMatch(v -> v.legs().size() == 1));
+    }
+
+    @Test
     void theMostFrequentOfTheDirectFlightsIsTaken() {
         final Airports.Airport secondB = airport(cityB, "BB2", "KBB2");
         flights(airportA, airportB, 3);
