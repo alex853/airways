@@ -577,10 +577,75 @@ public class PersonControl {
     }
 
     /**
+     * The pilot cancels the travel by airline. Not on a flight: it ends at once, the booked flight is released, the pilot is free in the city where it is. On a flight (or just landed): it
+     * cannot get off in the air, so the flag "leave at the next landing" is set and the journey ends at the landing (JourneyControl.leavePilotAtLandingIfAsked).
+     *
+     * @return true when the travel is ended, false when the flag is set
+     * @throws IllegalStateException the pilot does not travel by airline
+     */
+    public boolean cancelAirlineTravel(final Persons.Person person) {
+        if (person.getState() != Persons.State.Travelling || person.getPilotJourneyId() == 0) {
+            throw new IllegalStateException("The pilot does not travel by airline");
+        }
+        final Journeys.Journey journey = world.journeys().byId(person.getPilotJourneyId()).orElse(null);
+        if (journey == null) {
+            // the journey is lost: the pilot is freed where it is (the place of the person is the city it started from)
+            log.warn("p/s #{} - the journey #{} of the travel is not found, the pilot is freed", person.getId(), person.getPilotJourneyId());
+            person.setPilotJourneyId(0);
+            person.setLeaveAtNextLanding(false);
+            setState(person, Persons.State.Idle, "the travel is cancelled, no journey");
+            return true;
+        }
+        if (JourneyControl.isOnFlight(journey)) {
+            if (!person.isLeaveAtNextLanding()) {
+                person.setLeaveAtNextLanding(true);
+                world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonLeaveFlagSet, EventLog.id(person), null, null, null);
+                log.info("p/s #{} - asks to leave at the next landing, j/y #{}", person.getId(), journey.getId());
+            }
+            return false;
+        }
+        final boolean flightBooked = journey.getStatus() == Journeys.Status.WaitingForCheckIn || journey.getStatus() == Journeys.Status.WaitingForBoarding;
+        world.journeyControl().endPilotJourneyEarly(journey, flightBooked, "cancelled by the pilot");
+        onPilotJourneyEnded(person, journey, "cancelled");
+        return true;
+    }
+
+    /**
+     * The pilot changes its mind: it stays on the journey and does not leave at the next landing.
+     *
+     * @throws IllegalStateException the pilot does not travel by airline
+     */
+    public void stayOnAirlineTravel(final Persons.Person person) {
+        if (person.getState() != Persons.State.Travelling || person.getPilotJourneyId() == 0) {
+            throw new IllegalStateException("The pilot does not travel by airline");
+        }
+        if (person.isLeaveAtNextLanding()) {
+            person.setLeaveAtNextLanding(false);
+            world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonLeaveFlagCleared, EventLog.id(person), null, null, null);
+            log.info("p/s #{} - stays on the journey, the flag to leave at the next landing is cleared", person.getId());
+        }
+    }
+
+    /**
+     * The journey of the pilot has ended before its destination (cancelled, left at a landing): the link is cleared and the pilot is free in the city where the journey is (the city of the
+     * last landing or the city where it waited).
+     */
+    public void onPilotJourneyEnded(final Persons.Person person, final Journeys.Journey journey, final String reason) {
+        final int cityId = journey.getLocationCityId() > 0 ? journey.getLocationCityId()
+                : (journey.getLastKnownLocationCityId() > 0 ? journey.getLastKnownLocationCityId() : journey.getFromCityId());
+        person.setPilotJourneyId(0);
+        person.setLeaveAtNextLanding(false);
+        setLocation(person, Persons.LocationType.City, cityId, "j/y #" + journey.getId() + " " + reason);
+        setState(person, Persons.State.Idle, "the travel by airline: " + reason);
+        world.eventLog().log(world.getWorldTime(), EventLog.EventType.PersonTravelCancelled, EventLog.id(person), EventLog.cityId(cityId), null, null);
+    }
+
+    /**
      * The journey of the pilot has come to the city of its destination: the link is cleared and the pilot is free in this city.
      */
     public void onPilotJourneyArrived(final Persons.Person person, final Journeys.Journey journey) {
         person.setPilotJourneyId(0);
+        person.setLeaveAtNextLanding(false);
         setLocation(person, Persons.LocationType.City, journey.getToCityId(), "j/y #" + journey.getId() + " arrived");
         setState(person, Persons.State.Idle, "arrived by airline");
         logArrived(person);

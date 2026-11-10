@@ -25,6 +25,7 @@ import net.simforge.airways2.world.datamodel.FlightMissions;
 import net.simforge.airways2.world.datamodel.Journeys;
 import net.simforge.airways2.world.datamodel.TransportFlights;
 import net.simforge.airways2.world.processors.AirlineTravelEstimate;
+import net.simforge.airways2.world.processors.JourneyControl;
 import net.simforge.airways2.world.processors.FlightMissionHelper;
 import net.simforge.airways2.world.processors.RosterForecast;
 import net.simforge.airways2.world.datamodel.PilotLogbook;
@@ -485,6 +486,38 @@ public class PilotController {
         }
     }
 
+    /**
+     * The pilot cancels the travel by airline: not on a flight it ends at once, on a flight the pilot leaves at the next landing (the flag). The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/travel/cancel")
+    public PilotDto cancelTravel(@RequestAttribute("userId") final int userId) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            try {
+                world.personControl().cancelAirlineTravel(person);
+            } catch (final IllegalStateException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            }
+            return buildPilot(world, person);
+        });
+    }
+
+    /**
+     * The pilot changes its mind about leaving at the next landing. The answer is the pilot as GET /pilot gives it.
+     */
+    @PostMapping("/travel/stay")
+    public PilotDto stayOnTravel(@RequestAttribute("userId") final int userId) {
+        return worldBean.modifySync(world -> {
+            final Persons.Person person = personOf(world, userId);
+            try {
+                world.personControl().stayOnAirlineTravel(person);
+            } catch (final IllegalStateException e) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+            }
+            return buildPilot(world, person);
+        });
+    }
+
     private static Airports.Airport findAirport(final World world, final String icao) {
         final String code = icao == null ? "" : icao.trim().toUpperCase();
         return world.airports().byIcao(code)
@@ -643,7 +676,7 @@ public class PilotController {
                 .filter(e -> switch (e.getType() != null ? e.getType() : EventLog.EventType.PersonBecameIdle) {
                     case PersonTravelStarted, PersonArrivedToCity, PersonArrivedToAirport, PersonFlewFlight,
                          PersonSearchStarted, PersonFoundFlight, PersonCouldNotAffordFlight, PersonDeboarded, PersonPaidTicket, PersonFlightFailed,
-                         PersonCheckedIn, PersonBoarded, PersonWaitingNextFlight -> true;
+                         PersonCheckedIn, PersonBoarded, PersonWaitingNextFlight, PersonTravelCancelled, PersonLeaveFlagSet, PersonLeaveFlagCleared -> true;
                     default -> false;
                 })
                 .sorted(Comparator.comparingInt(EventLog.Event::getTime).thenComparingInt(EventLog.Event::getId).reversed())
@@ -681,6 +714,10 @@ public class PilotController {
                         "Boarded the flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
                 case PersonWaitingNextFlight -> history.add(new LocationEventDto(event.getTime() * 1000L, "waiting",
                         "Waiting at " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " for the next flight to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id())));
+                case PersonTravelCancelled -> history.add(new LocationEventDto(event.getTime() * 1000L, "cancelled",
+                        "Ended the travel by airline in " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id())));
+                case PersonLeaveFlagSet -> history.add(new LocationEventDto(event.getTime() * 1000L, "flag", "Asked to leave the journey at the next landing"));
+                case PersonLeaveFlagCleared -> history.add(new LocationEventDto(event.getTime() * 1000L, "flag", "Changed its mind: stays on the journey"));
                 case PersonFlightFailed -> history.add(new LocationEventDto(event.getTime() * 1000L, "failed",
                         "The flight " + eventPlaceName(world, event.getObject2TypeRaw(), event.getObject2Id()) + " to " + eventPlaceName(world, event.getObject3TypeRaw(), event.getObject3Id()) + " did not take place"));
                 default -> { }
@@ -834,7 +871,7 @@ public class PilotController {
      * The travel of the pilot by airline for the tiles of the page, null when the pilot does not travel so: where to and from where, where the pilot is now, what the journey does now
      * (the status and what it means), the flight it has found, the ticket. The texts are made here, the page only shows them.
      */
-    static AirlineTravelDto buildAirlineTravel(final World world, final Persons.Person person) {
+    public static AirlineTravelDto buildAirlineTravel(final World world, final Persons.Person person) {
         if (person.getPilotJourneyId() == 0) {
             return null;
         }
@@ -898,7 +935,8 @@ public class PilotController {
                 hint = "";
             }
         }
-        return new AirlineTravelDto(toCity, fromCity, cityNow, status, hint, route, flightFrom, flightTo, departure, price, nextSearch);
+        return new AirlineTravelDto(toCity, fromCity, cityNow, status, hint, route, flightFrom, flightTo, departure, price, nextSearch,
+                JourneyControl.isOnFlight(journey), person.isLeaveAtNextLanding());
     }
 
     /**
@@ -921,6 +959,9 @@ public class PilotController {
         private Long departureTime;
         private Integer price;
         private Long nextSearchTime;
+        // the pilot is on a flight (or has just got off): it cannot cancel at once, it can leave at the next landing; the flag is set
+        private boolean onFlight;
+        private boolean leaveAtNextLanding;
     }
 
     /**

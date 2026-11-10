@@ -345,6 +345,10 @@ public class JourneyProcessor {
 
     private static void itinerariesDone(final World world, final Journeys.Journey journey) {
         if (!world.journeyControl().isToCityReached(journey)) {
+            // the pilot asked to leave at the next landing: the journey ends here
+            if (world.journeyControl().leavePilotAtLandingIfAsked(journey)) {
+                return;
+            }
             world.journeyControl().toCityNotReached(journey);
             return;
         }

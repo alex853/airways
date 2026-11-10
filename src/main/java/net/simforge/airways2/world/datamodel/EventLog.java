@@ -276,6 +276,11 @@ public class EventLog {
         PersonBoarded(612),
         // the pilot is at the airport of a stopover and waits for the second flight of its route: object2 the airport where it is, object3 the airport where the next flight lands
         PersonWaitingNextFlight(613),
+        // the pilot has ended the travel by airline (cancelled it or left at a landing): object2 the city where the pilot stays
+        PersonTravelCancelled(614),
+        // the pilot asked to leave at the next landing / changed its mind
+        PersonLeaveFlagSet(615),
+        PersonLeaveFlagCleared(616),
         ;
 
         private final int code;

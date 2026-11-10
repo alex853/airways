@@ -268,6 +268,16 @@ public class TransportFlightControl {
         transportFlight.setPaxCheckedIn(transportFlight.getPaxCheckedIn() + groupSize);
     }
 
+    /**
+     * A journey which has checked in leaves the flight (the pilot cancels its travel): the check-in counter goes down with its seats, otherwise the check-in would end too early.
+     */
+    public void decreasePaxCheckedIn(final TransportFlights.Flight transportFlight, final int groupSize) {
+        checkNotNull(transportFlight);
+        checkArgument(groupSize > 0);
+
+        transportFlight.setPaxCheckedIn(Math.max(0, transportFlight.getPaxCheckedIn() - groupSize));
+    }
+
     public boolean areAllPaxCheckedIn(final TransportFlights.Flight transportFlight) {
         checkNotNull(transportFlight);
         checkArgument(transportFlight.getStatus() == TransportFlights.Status.CheckIn);

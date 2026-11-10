@@ -308,6 +308,10 @@ public class JourneyControl {
             journey.setStatus(Journeys.Status.ItinerariesDone);
             journey.setHeartbeatTime(world.getWorldTime() + (int) (Math.random() * Time.ONE_HOUR));
         } else {
+            // the pilot asked to leave at the next landing: it stays here, the second flight is released
+            if (leavePilotAtLandingIfAsked(journey)) {
+                return;
+            }
             // the pilot is at the airport of the stopover and waits for the second flight of its route
             if (journey.isPilotJourney()) {
                 world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(next -> {
@@ -379,6 +383,58 @@ public class JourneyControl {
         journey.setStatus(Journeys.Status.LookingForTickets);
         journey.setAttemptCounter(0);
         journey.setHeartbeatTime(world.getWorldTime() + nextSearchDelay(journey));
+    }
+
+    // the statuses in which the pilot is on a flight or just got off it: the travel cannot be cancelled at once, the pilot asks to leave at the next landing
+    public static boolean isOnFlight(final Journeys.Journey journey) {
+        return EnumSet.of(Journeys.Status.OnBoard, Journeys.Status.WaitingForDeboarding, Journeys.Status.JustArrived, Journeys.Status.ItinerariesDone).contains(journey.getStatus());
+    }
+
+    /**
+     * The journey of a pilot ends before the destination (the pilot cancels the travel, or leaves at a landing): the flight it has booked and has not flown is released (the seats, the
+     * income of the flight and the check-in), nothing was paid for it, the journey is Finished and cleanup deletes it. The caller frees the pilot (PersonControl).
+     *
+     * @param releaseFirstFlight true when the first flight of the journey is a booked one which the pilot has not flown (it waits for the check-in or the boarding, or it is the second flight
+     *                           of the route at the landing)
+     */
+    public void endPilotJourneyEarly(final Journeys.Journey journey, final boolean releaseFirstFlight, final String reason) {
+        checkNotNull(journey);
+        checkArgument(journey.isPilotJourney());
+
+        if (releaseFirstFlight && journey.getTransportFlight1Id() != 0) {
+            final Journeys.Status status = journey.getStatus();
+            world.transportFlights().byId(journey.getTransportFlight1Id()).ifPresent(flight -> {
+                world.transportFlightControl().releaseFlightTickets(flight, journey.getGroupSize(), journey.getBookedCabinService());
+                world.transportFlightControl().subtractIncome(flight, journey.getPrice1());
+                if (status == Journeys.Status.WaitingForBoarding) {
+                    world.transportFlightControl().decreasePaxCheckedIn(flight, journey.getGroupSize());
+                }
+            });
+        }
+        journey.setTransportFlight1Id(0);
+        journey.setPrice1(0);
+        releaseTransportFlight2Tickets(journey);
+
+        journey.setStatus(Journeys.Status.Finished);
+        journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
+        log.info("j/y #{} - the journey of a pilot ends before its destination ({}), cleanup scheduled", journey.getId(), reason);
+    }
+
+    /**
+     * The pilot has asked to leave at the next landing and the journey has landed, not in the city of its destination: the journey ends here (the next flight, if it is booked, is
+     * released) and the pilot is free in this city. Returns true when it ended. The caller is a landing (justArrived with a second flight, itinerariesDone).
+     */
+    boolean leavePilotAtLandingIfAsked(final Journeys.Journey journey) {
+        if (!journey.isPilotJourney() || isToCityReached(journey)) {
+            return false;
+        }
+        final Persons.Person person = world.persons().byPilotJourneyId(journey.getId()).orElse(null);
+        if (person == null || !person.isLeaveAtNextLanding()) {
+            return false;
+        }
+        endPilotJourneyEarly(journey, true, "left at a landing");
+        world.personControl().onPilotJourneyEnded(person, journey, "left at a landing");
+        return true;
     }
 
     /**

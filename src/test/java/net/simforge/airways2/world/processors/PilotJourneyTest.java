@@ -394,6 +394,155 @@ public class PilotJourneyTest {
         assertEquals("The flight OOOO to EGLL did not take place", history().get(0));
     }
 
+    // ---- the exit: cancel at once when not on a flight, the flag "leave at the next landing" on a flight
+
+    @Test
+    public void cancelWhileLookingForAFlightFreesThePilotInTheCityAtOnce() {
+        final Journeys.Journey journey = start();
+
+        assertTrue(world.personControl().cancelAirlineTravel(pilot));
+
+        assertEquals(Persons.State.Idle, pilot.getState());
+        assertEquals(0, pilot.getPilotJourneyId());
+        assertEquals(Persons.LocationType.City, pilot.getLocationType());
+        assertEquals(origin.getId(), pilot.getLocationId());
+        assertEquals(Journeys.Status.Finished, journey.getStatus());
+        assertEquals("Ended the travel by airline in Origin", history().get(0));
+        // the journey does not look for flights any more
+        journey.setHeartbeatTime(0);
+        JourneyProcessor.process(world);
+        assertEquals(Journeys.Status.Finished, journey.getStatus());
+    }
+
+    @Test
+    public void cancelWithABookedFlightReleasesItsSeatAndIncome() {
+        final Airports.Airport hub = airport("EGLL", city("Hub", 10), 10);
+        final TransportFlights.Flight flight = flightTo(hub, 60);
+        final int seatsBefore = flight.getRemainedTickets().get(net.simforge.airways2.tools.CabinLayout.Service.Y);
+        final Journeys.Journey journey = start();
+        JourneyProcessor.process(world);
+        assertEquals(seatsBefore - 1, flight.getRemainedTickets().get(net.simforge.airways2.tools.CabinLayout.Service.Y));
+        assertTrue(world.transportFlightControl().getIncome(flight) > 0);
+
+        assertTrue(world.personControl().cancelAirlineTravel(pilot));
+
+        assertEquals(seatsBefore, flight.getRemainedTickets().get(net.simforge.airways2.tools.CabinLayout.Service.Y));
+        assertEquals(0, world.transportFlightControl().getIncome(flight));
+        assertEquals(0, journey.getTransportFlight1Id());
+        assertEquals(Persons.State.Idle, pilot.getState());
+        assertEquals(origin.getId(), pilot.getLocationId());
+        assertEquals(1000, pilotAccount.getBalance());
+    }
+
+    @Test
+    public void cancelAfterTheCheckInTakesThePilotOffTheCheckInCount() {
+        final Airports.Airport hub = airport("EGLL", city("Hub", 10), 10);
+        final TransportFlights.Flight flight = flightTo(hub, 60);
+        final Journeys.Journey journey = start();
+        JourneyProcessor.process(world);
+        flight.setStatus(TransportFlights.Status.CheckIn);
+        world.journeyControl().checkin(journey);
+        assertEquals(1, flight.getPaxCheckedIn());
+
+        assertTrue(world.personControl().cancelAirlineTravel(pilot));
+
+        assertEquals(0, flight.getPaxCheckedIn());
+        // the pilot is back in the city where it was before the check-in
+        assertEquals(origin.getId(), pilot.getLocationId());
+        assertEquals(Persons.State.Idle, pilot.getState());
+    }
+
+    @Test
+    public void onAFlightCancelOnlySetsTheFlagAndStayClearsIt() {
+        final Journeys.Journey journey = start();
+        journey.setStatus(Journeys.Status.OnBoard);
+
+        assertFalse(world.personControl().cancelAirlineTravel(pilot));
+
+        assertTrue(pilot.isLeaveAtNextLanding());
+        assertEquals(Persons.State.Travelling, pilot.getState());
+        assertEquals(Journeys.Status.OnBoard, journey.getStatus());
+        assertEquals("Asked to leave the journey at the next landing", history().get(0));
+        assertTrue(net.simforge.airways2.app.user.PilotController.buildAirlineTravel(world, pilot).isLeaveAtNextLanding());
+        assertTrue(net.simforge.airways2.app.user.PilotController.buildAirlineTravel(world, pilot).isOnFlight());
+
+        world.personControl().stayOnAirlineTravel(pilot);
+
+        assertFalse(pilot.isLeaveAtNextLanding());
+        assertEquals("Changed its mind: stays on the journey", history().get(0));
+    }
+
+    @Test
+    public void atALandingNotInTheDestinationTheFlagEndsTheJourneyAndThePilotIsFreeThere() {
+        final Cities.City hubCity = city("Hub", 10);
+        final Journeys.Journey journey = start();
+        journey.setStatus(Journeys.Status.OnBoard);
+        world.personControl().cancelAirlineTravel(pilot);
+        journey.setStatus(Journeys.Status.ItinerariesDone);
+        journey.setLocationCityId(hubCity.getId());
+        journey.setHeartbeatTime(world.getWorldTime());
+
+        JourneyProcessor.process(world);
+
+        assertEquals(Journeys.Status.Finished, journey.getStatus());
+        assertEquals(Persons.State.Idle, pilot.getState());
+        assertEquals(hubCity.getId(), pilot.getLocationId());
+        assertEquals(0, pilot.getPilotJourneyId());
+        assertFalse(pilot.isLeaveAtNextLanding());
+        assertEquals("Ended the travel by airline in Hub", history().get(0));
+    }
+
+    @Test
+    public void atALandingInTheDestinationTheFlagChangesNothingAndIsCleared() {
+        final Journeys.Journey journey = start();
+        journey.setStatus(Journeys.Status.OnBoard);
+        world.personControl().cancelAirlineTravel(pilot);
+        journey.setStatus(Journeys.Status.ItinerariesDone);
+        journey.setLocationCityId(target.getId());
+        journey.setHeartbeatTime(world.getWorldTime());
+
+        JourneyProcessor.process(world);
+
+        assertEquals(target.getId(), pilot.getLocationId());
+        assertEquals(Persons.State.Idle, pilot.getState());
+        assertFalse(pilot.isLeaveAtNextLanding());
+        assertEquals("Arrived in Target", history().get(0));
+    }
+
+    @Test
+    public void atAStopoverTheFlagReleasesTheSecondFlightAndThePilotStaysThere() {
+        final Cities.City hubCity = city("Hub", 10);
+        final Airports.Airport hub = airport("EGLL", hubCity, 10);
+        final Airports.Airport targetAirport = airport("TTTT", target, 30);
+        final TransportFlights.Flight first = flightTo(hub, 60);
+        final Aircrafts.Aircraft aircraft = world.aircrafts().create(aircraftType, "A-2000", hub);
+        final int departure = world.getWorldTime() + 8 * Time.ONE_HOUR;
+        final FlightMissions.Mission secondMission = world.flightMissions().createDispatchedMission(aircraft, hub, targetAirport, departure, departure + 2 * Time.ONE_HOUR);
+        secondMission.setCharacterMode(FlightMissions.CharacterMode.PC);
+        secondMission.setUserId(2);
+        final TransportFlights.Flight second = world.transportFlightControl().createTransportFlight(secondMission);
+        final int seatsBefore = second.getRemainedTickets().get(net.simforge.airways2.tools.CabinLayout.Service.Y);
+        final Journeys.Journey journey = start();
+        world.journeyControl().bookStopoverFlightsJourneyNoChecks(journey, first, second);
+        world.flightMissions().byId(first.getFlightMissionId()).orElseThrow().setActualLandingAirportId(hub.getId());
+        journey.setStatus(Journeys.Status.OnBoard);
+        world.personControl().cancelAirlineTravel(pilot);
+        journey.setStatus(Journeys.Status.JustArrived);
+
+        world.journeyControl().justArrived(journey);
+
+        assertEquals(seatsBefore, second.getRemainedTickets().get(net.simforge.airways2.tools.CabinLayout.Service.Y));
+        assertEquals(Journeys.Status.Finished, journey.getStatus());
+        assertEquals(Persons.State.Idle, pilot.getState());
+        assertEquals(0, pilot.getPilotJourneyId());
+    }
+
+    @Test
+    public void aPilotWhoDoesNotTravelByAirlineCannotCancel() {
+        assertThrows(IllegalStateException.class, () -> world.personControl().cancelAirlineTravel(pilot));
+        assertThrows(IllegalStateException.class, () -> world.personControl().stayOnAirlineTravel(pilot));
+    }
+
     // ---- the lost flight and the lost pilot
 
     @Test
