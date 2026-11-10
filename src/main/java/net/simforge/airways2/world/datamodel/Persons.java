@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -64,9 +66,12 @@ public class Persons {
     private final DataField awakeCreditMinutesField = storage.getDataField(11);
     private final DataField creditTimeField = storage.getDataField(12);
     private final DataField dutyStartTimeField = storage.getDataField(13);
+    private final DataField pilotJourneyIdField = storage.getDataField(14);
+    // storage.getDataField(15) and (16) are the reserves
 
     private final BitAccessField initialsBits = BitAccessField.instance(storage, initialsField);
     private final BitAccessField.Section initialsSection = initialsBits.section(0, 12);
+    private final BitAccessField.Section leaveAtNextLandingBit = initialsBits.section(12, 1);
     private final BitAccessField.Section autoFinishBit = initialsBits.section(14, 1);
     private final BitAccessField.Section warpDriveBit = initialsBits.section(15, 1);
 
@@ -105,8 +110,19 @@ public class Persons {
         return initials.replace(" ", "");
     }
 
+    // The journey of a pilot who travels by airline to the person: the journey knows no person (the bit "journey of a pilot" in Journeys tells only that it is such a journey), so the
+    // persons are found by it through this index. It is kept by Person.setPilotJourneyId and deleteById and rebuilt after the load.
+    private final Map<Integer, Integer> personIdByPilotJourneyId = new ConcurrentHashMap<>();
+
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        personIdByPilotJourneyId.clear();
+        storage.all().forEach(person -> {
+            final int journeyId = person.getPilotJourneyId();
+            if (journeyId != 0) {
+                personIdByPilotJourneyId.put(journeyId, person.getId());
+            }
+        });
     }
 
     public void save(final Path rootPath) throws IOException {
@@ -127,6 +143,14 @@ public class Persons {
 
     public Optional<Person> byId(final int id) {
         return storage.byId(id);
+    }
+
+    /**
+     * The person whose journey by airline it is (the journey of a pilot, Person.getPilotJourneyId), empty if no person travels by this journey.
+     */
+    public Optional<Person> byPilotJourneyId(final int journeyId) {
+        final Integer personId = personIdByPilotJourneyId.get(journeyId);
+        return personId != null ? storage.byId(personId) : Optional.empty();
     }
 
     /**
@@ -196,6 +220,7 @@ public class Persons {
     }
 
     public void deleteById(final int id) {
+        storage.byId(id).ifPresent(person -> personIdByPilotJourneyId.remove(person.getPilotJourneyId(), id)); // before the record is cleared by the deletion
         storage.deleteRecord(id);
     }
 
@@ -356,6 +381,40 @@ public class Persons {
 
         public void setDutyStartTime(final int dutyStartTime) {
             storage.set(id, dutyStartTimeField, dutyStartTime);
+        }
+
+        /**
+         * The journey of the pilot who travels by airline (the journey of a pilot: a journey of one person from city to city, see Journeys.Journey.isPilotJourney), zero if the pilot does
+         * not travel this way. While it is not zero the pilot is Travelling.
+         */
+        public int getPilotJourneyId() {
+            return storage.getAsInt(id, pilotJourneyIdField);
+        }
+
+        public void setPilotJourneyId(final int pilotJourneyId) {
+            checkArgument(DataType.Unsigned24bit.contains(pilotJourneyId), "pilotJourneyId is out of 24 bits");
+            final int oldJourneyId = getPilotJourneyId();
+            if (pilotJourneyId != 0) {
+                final Integer otherPersonId = personIdByPilotJourneyId.get(pilotJourneyId);
+                checkArgument(otherPersonId == null || otherPersonId == id, "the journey %s is the journey of the person %s already", pilotJourneyId, otherPersonId);
+            }
+            storage.set(id, pilotJourneyIdField, pilotJourneyId);
+            personIdByPilotJourneyId.remove(oldJourneyId, id);
+            if (pilotJourneyId != 0) {
+                personIdByPilotJourneyId.put(pilotJourneyId, id);
+            }
+        }
+
+        /**
+         * The pilot who travels by airline has asked to get off at the nearest landing (the flight it is on goes on to the end, then the journey ends where the aircraft has landed
+         * instead of looking for the next flight). The pilot can take it back before the landing.
+         */
+        public boolean isLeaveAtNextLanding() {
+            return leaveAtNextLandingBit.getBoolean(id);
+        }
+
+        public void setLeaveAtNextLanding(final boolean leaveAtNextLanding) {
+            leaveAtNextLandingBit.setBoolean(id, leaveAtNextLanding);
         }
 
         public int getBankAccountId() {

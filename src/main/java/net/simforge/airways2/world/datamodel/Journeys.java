@@ -50,6 +50,8 @@ public class Journeys {
     private final DataField statusRawField = storage.getDataField(0);
     private final BitAccessField statusFieldBits = BitAccessField.instance(storage, statusRawField);
     private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
+    // bit 6: the journey of a pilot (a person travels by airline, see Persons.Person.getPilotJourneyId): the special handling of such a journey is by this bit
+    private final BitAccessField.Section pilotJourneyBitField = statusFieldBits.section(6, 1);
     private final BitAccessField.Section returningBackBitField = statusFieldBits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(1);
     private final DataField fromCityIdField = storage.getDataField(2);
@@ -234,6 +236,7 @@ public class Journeys {
         preferredCabinServiceBitField.setInt(id, service.ordinal());
         bookedCabinServiceBitField.setInt(id, service.ordinal());
         returningBackBitField.setBoolean(id, false);
+        pilotJourneyBitField.setBoolean(id, false);
         attemptCounterBitField.setInt(id, 0);
 
         return journey;
@@ -270,6 +273,18 @@ public class Journeys {
         public void setStatus(final Status status) {
             checkNotNull(status);
             statusBitField.setInt(id, status.code());
+        }
+
+        /**
+         * This is the journey of a pilot (one person, city to city, travel by airline): it is looked after in its own way (the search every 10-15 minutes, no limit of the attempts,
+         * the payment and the exit are the pilot's). The person of the journey is found by Persons.byPilotJourneyId.
+         */
+        public boolean isPilotJourney() {
+            return pilotJourneyBitField.getBoolean(id);
+        }
+
+        public void setPilotJourney(final boolean pilotJourney) {
+            pilotJourneyBitField.setBoolean(id, pilotJourney);
         }
 
         public boolean isReturningBack() {

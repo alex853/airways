@@ -203,6 +203,111 @@ class PersonsTest {
         assertEquals(List.of(), loaded.checkHeartbeatIndex());
     }
 
+    // ---- the journey of a pilot who travels by airline and the flag "get off at the nearest landing"
+
+    @Test
+    public void test__a_new_person_has_no_journey_and_no_flag() {
+        final Persons.Person person = pilot(3);
+
+        assertEquals(0, person.getPilotJourneyId());
+        assertFalse(person.isLeaveAtNextLanding());
+        assertTrue(world.persons().byPilotJourneyId(777).isEmpty());
+    }
+
+    @Test
+    public void test__the_journey_of_a_pilot_is_kept_found_and_taken_off() {
+        final Persons.Person person = pilot(3);
+        person.setInitials("MB");
+
+        person.setPilotJourneyId(777_777);
+
+        assertEquals(777_777, person.getPilotJourneyId());
+        assertEquals(person.getId(), world.persons().byPilotJourneyId(777_777).orElseThrow().getId());
+        // the other fields stay
+        assertEquals("MB", person.getInitials());
+        assertEquals(3, person.getUserId());
+        assertEquals(42, person.getAvatarId());
+
+        person.setPilotJourneyId(5);
+        assertTrue(world.persons().byPilotJourneyId(777_777).isEmpty());
+        assertEquals(person.getId(), world.persons().byPilotJourneyId(5).orElseThrow().getId());
+
+        person.setPilotJourneyId(0);
+        assertEquals(0, person.getPilotJourneyId());
+        assertTrue(world.persons().byPilotJourneyId(5).isEmpty());
+    }
+
+    @Test
+    public void test__the_journey_id_is_24_bits_and_one_journey_is_of_one_person() {
+        final Persons.Person first = pilot(3);
+        final Persons.Person second = pilot(0);
+
+        first.setPilotJourneyId(16_777_215);
+        assertThrows(IllegalArgumentException.class, () -> first.setPilotJourneyId(16_777_216));
+        assertThrows(IllegalArgumentException.class, () -> first.setPilotJourneyId(-1));
+        // the same journey for the same person is fine, for another person it is not
+        first.setPilotJourneyId(16_777_215);
+        assertThrows(IllegalArgumentException.class, () -> second.setPilotJourneyId(16_777_215));
+        assertEquals(first.getId(), world.persons().byPilotJourneyId(16_777_215).orElseThrow().getId());
+        assertEquals(0, second.getPilotJourneyId());
+    }
+
+    @Test
+    public void test__a_deleted_person_leaves_the_index() {
+        final Persons.Person person = pilot(0);
+        person.setPilotJourneyId(42);
+
+        world.persons().deleteById(person.getId());
+
+        assertTrue(world.persons().byPilotJourneyId(42).isEmpty());
+    }
+
+    @Test
+    public void test__the_flag_is_bit_12_of_the_initials_field_and_does_not_touch_the_initials_the_warp_drive_and_the_auto_finish() {
+        final Persons.Person person = pilot(3);
+        person.setInitials("ZZ");
+        person.setWarpDrive(true);
+        person.setAutoFinish(true);
+
+        person.setLeaveAtNextLanding(true);
+
+        assertTrue(person.isLeaveAtNextLanding());
+        assertEquals("ZZ", person.getInitials());
+        assertTrue(person.isWarpDrive());
+        assertTrue(person.isAutoFinish());
+
+        person.setInitials("AB");
+        person.setWarpDrive(false);
+        assertTrue(person.isLeaveAtNextLanding());
+
+        person.setLeaveAtNextLanding(false);
+        assertFalse(person.isLeaveAtNextLanding());
+        assertEquals("AB", person.getInitials());
+        assertTrue(person.isAutoFinish());
+    }
+
+    @Test
+    public void test__the_journey_the_flag_and_the_index_survive_the_save_and_the_load(@TempDir final Path dir) throws IOException {
+        final Persons.Person first = pilot(3);
+        first.setPilotJourneyId(123_456);
+        first.setLeaveAtNextLanding(true);
+        final Persons.Person second = pilot(0);
+
+        world.persons().save(dir);
+        final Persons loaded = new Persons();
+        loaded.loadIfExists(dir);
+
+        assertEquals(123_456, loaded.byId(first.getId()).orElseThrow().getPilotJourneyId());
+        assertTrue(loaded.byId(first.getId()).orElseThrow().isLeaveAtNextLanding());
+        assertEquals(0, loaded.byId(second.getId()).orElseThrow().getPilotJourneyId());
+        assertFalse(loaded.byId(second.getId()).orElseThrow().isLeaveAtNextLanding());
+        // the index is built by the load
+        assertEquals(first.getId(), loaded.byPilotJourneyId(123_456).orElseThrow().getId());
+        // and it goes on to be kept
+        loaded.byId(second.getId()).orElseThrow().setPilotJourneyId(9);
+        assertEquals(second.getId(), loaded.byPilotJourneyId(9).orElseThrow().getId());
+    }
+
     // ---- the initials are 12 bits of a 16 bit field, the highest bit is the warp drive
 
     @Test
