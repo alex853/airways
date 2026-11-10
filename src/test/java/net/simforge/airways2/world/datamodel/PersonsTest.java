@@ -157,6 +157,81 @@ class PersonsTest {
         assertEquals(Persons.LocationType.Airport, loaded.byId(second.getId()).orElseThrow().getLocationType());
     }
 
+    // ---- the second storage of the extension of the record (persons2, 40 bytes): a copy of the main one, field by field
+
+    @Test
+    public void test__second_storage_is_40_bytes_and_a_copy_of_the_main_one_after_all_the_changes(@TempDir final Path dir) throws IOException {
+        final Persons.Person first = pilot(3);
+        first.setState(Persons.State.OnDuty);
+        first.setHeartbeatTime(123456);
+        first.setLocation(Persons.LocationType.City, 77);
+        first.setOriginCityId(5);
+        first.setInitials("MB");
+        first.setWarpDrive(true);
+        first.setAutoFinish(true);
+        first.setAvatarId(4242);
+        first.setAwakeCredit(-90, 5000);
+        first.setDutyStartTime(777);
+        first.setBankAccountId(1_000_000);
+        first.setType(Persons.Type.CabinCrew);
+        first.setUserId(9);
+        final Persons.Person second = pilot(0);
+        world.persons().deleteById(second.getId());
+        pilot(0);
+
+        assertEquals(List.of(), world.persons().secondStorageMismatches());
+        world.persons().save(dir);
+        assertEquals(3 * 32, Files.size(dir.resolve("persons")));
+        assertEquals(3 * 40, Files.size(dir.resolve("persons2")));
+    }
+
+    @Test
+    public void test__second_storage_is_made_again_from_the_main_one_at_every_load(@TempDir final Path dir) throws IOException {
+        final Persons.Person first = pilot(3);
+        first.setHeartbeatTime(1000);
+        first.setWarpDrive(true);
+        first.setInitials("MB");
+        final Persons.Person second = pilot(0);
+        second.setHeartbeatTime(500);
+        final Persons.Person third = pilot(0);
+        world.persons().deleteById(third.getId());
+        world.persons().save(dir);
+
+        final Persons loaded = new Persons();
+        loaded.loadIfExists(dir);
+
+        assertEquals(List.of(), loaded.secondStorageMismatches());
+        assertEquals(3, loaded.secondStorage().getLastRecordId());
+        assertTrue(loaded.secondStorage().byId(third.getId()).isEmpty());
+        assertTrue(loaded.byId(first.getId()).orElseThrow().isWarpDrive());
+        // the heartbeat index of the second storage is built by the copy: the earliest heartbeat first
+        assertEquals(second.getId(), loaded.secondStorage().nextForHeartbeat(10_000).orElseThrow());
+        assertEquals(List.of(), loaded.secondStorage().checkHeartbeatIndex());
+        // a new person after the load goes to both
+        final Persons.Person fourth = loaded.create(Persons.Type.Pilot, Persons.State.Idle, 0, Persons.LocationType.None, 0, 0, null, 0);
+        fourth.setHeartbeatTime(100);
+        assertEquals(List.of(), loaded.secondStorageMismatches());
+        assertEquals(fourth.getId(), loaded.secondStorage().nextForHeartbeat(10_000).orElseThrow());
+    }
+
+    @Test
+    public void test__a_difference_between_the_storages_is_told_not_thrown() {
+        final Persons.Person person = pilot(3);
+        assertEquals(List.of(), world.persons().secondStorageMismatches());
+
+        // the second storage is changed by hand: field 3 is the user id
+        final var second = world.persons().secondStorage();
+        second.set(person.getId(), second.getDataField(3), 99);
+        pilot(0);
+        second.deleteRecord(2);
+
+        final List<String> mismatches = world.persons().secondStorageMismatches();
+
+        assertEquals(2, mismatches.size(), mismatches.toString());
+        assertTrue(mismatches.get(0).contains("p/s #1 field 3 is 3 in persons and 99 in persons2"), mismatches.toString());
+        assertTrue(mismatches.get(1).contains("p/s #2 is live in persons and not in persons2"), mismatches.toString());
+    }
+
     // ---- the initials are 12 bits of a 16 bit field, the highest bit is the warp drive
 
     @Test

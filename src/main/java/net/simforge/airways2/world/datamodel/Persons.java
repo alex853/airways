@@ -4,11 +4,16 @@ import net.simforge.airways2.storage.BitAccessField;
 import net.simforge.airways2.storage.DataField;
 import net.simforge.airways2.storage.DataType;
 import net.simforge.airways2.storage.Storage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -18,8 +23,16 @@ import static com.google.common.base.Preconditions.checkNotNull;
 /**
  * Persons of the world who have their own life: pilots and cabin crew (passengers are not persons, they are journeys).
  * It is one entity for a pilot and for a person, see docs/persons-pilots.md.
+ * <p>
+ * THE EXTENSION OF THE RECORD (docs/persons-record-extension.md, steps in docs/storage-extension.md): the record of the person grows from 32 to 40 bytes, so there are two storages
+ * for now. The main one is "persons" (32 bytes), everything is read from it. The second one is "persons2" (40 bytes: the same fields and the new ones): it is made again at every
+ * load of the world from the main one, field by field (copyAllFieldsToTheSecondStorage), checked field by field (secondStorageMismatches: after the copy and at every save), and every change
+ * of the main one is repeated in it (mirror). A difference is logged as an error and does not stop the world. The new fields exist only in the second storage and nobody uses them yet:
+ * they would be lost at the next load, because the second one is made from the main one. After the swap (persons2 becomes the main one) the old storage goes away.
  */
 public class Persons {
+    private static final Logger log = LoggerFactory.getLogger(Persons.class);
+
     private final Storage<Person> storage = Storage.<Person>builder()
             .name("persons")
             .withInstantiator(Person::new)
@@ -59,6 +72,48 @@ public class Persons {
     private final DataField awakeCreditMinutesField = storage.getDataField(11);
     private final DataField creditTimeField = storage.getDataField(12);
     private final DataField dutyStartTimeField = storage.getDataField(13);
+
+    // The second storage of the extension (see the javadoc of the class): the fields of the main storage on the same places, then the new ones. Its objects are the ids only, nobody
+    // reads Person from it.
+    private final Storage<Integer> storage2 = Storage.<Integer>builder()
+            .name("persons2")
+            .withInstantiator(id -> id)
+            .withIdOf(DataType.Unsigned24bit)
+            // -------------------------------------------------- record deletion status    1 byte
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // type                     1 byte
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // state                    1 byte
+            .withDataField(DataField.of(DataType.Signed32bit)) // heartbeatTime             4 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // userId                  2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // locationType             1 byte
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // locationId              2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // originCityId            2 bytes
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // initials, autoFinish, warpDrive  2 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve                  1 byte
+            .withDataField(DataField.of(DataType.Unsigned16bit)) // avatarId                2 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // bankAccountId           3 bytes
+            .withDataField(DataField.of(DataType.Signed16bit)) // awakeCreditMinutes        2 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // creditTime                4 bytes
+            .withDataField(DataField.of(DataType.Signed32bit)) // dutyStartTime             4 bytes
+            // ----------------------------------------------------- the fields of the main storage   32 bytes
+            .withDataField(DataField.of(DataType.Unsigned24bit)) // pilotJourneyId, the journey of the pilot, 0 is none   3 bytes
+            .withDataField(DataField.of(DataType.Unsigned8bit)) // reserve (it may become flags: for now the one flag of the travel by airline, "get off at the nearest landing", goes to the free bits 12-13 of initials)  1 byte
+            .withDataField(DataField.of(DataType.Signed32bit)) // reserve                   4 bytes
+            // ----------------------------------------------------- sum                   40 bytes
+            .withHeartbeatIndex(2)
+            .build();
+
+    // the fields which both storages have: indexes 0..13 of the main storage, the same indexes of the second one
+    private static final int SHARED_FIELD_COUNT = 14;
+    private static final int MAX_MISMATCHES_TOLD = 20;
+
+    // a field of the main storage to the same field of the second one (their DataField objects are not the same)
+    private final Map<DataField, DataField> secondFieldOf = new IdentityHashMap<>();
+
+    {
+        for (int i = 0; i < SHARED_FIELD_COUNT; i++) {
+            secondFieldOf.put(storage.getDataField(i), storage2.getDataField(i));
+        }
+    }
 
     private final BitAccessField initialsBits = BitAccessField.instance(storage, initialsField);
     private final BitAccessField.Section initialsSection = initialsBits.section(0, 12);
@@ -102,10 +157,91 @@ public class Persons {
 
     public void loadIfExists(final Path rootPath) throws IOException {
         this.storage.loadIfExists(rootPath);
+        // the second storage is never read from the disk: it is made from the main one
+        copyAllFieldsToTheSecondStorage();
     }
 
     public void save(final Path rootPath) throws IOException {
         storage.save(rootPath);
+
+        final List<String> mismatches = secondStorageMismatches();
+        if (!mismatches.isEmpty()) {
+            log.error("persons2 - the second storage differs from the main one at the save: {}", mismatches);
+        }
+        storage2.save(rootPath);
+    }
+
+    /**
+     * The second storage is made again from the main one: reset, then a record for every id of the main storage (the ids are the same, a deleted record of the main storage is deleted
+     * in the second one too) and the copy of every field by the usual get and set, so the heartbeat index of the second storage is built by the same way as it is kept.
+     */
+    private void copyAllFieldsToTheSecondStorage() {
+        storage2.reset();
+        final int lastRecordId = storage.getLastRecordId();
+        for (int id = 1; id <= lastRecordId; id++) {
+            final int id2 = storage2.addRecord();
+            checkArgument(id2 == id, "the second storage gave id %s for id %s", id2, id);
+            if (storage.byId(id).isEmpty()) {
+                storage2.deleteRecord(id2);
+                continue;
+            }
+            for (int i = 0; i < SHARED_FIELD_COUNT; i++) {
+                storage2.set(id2, storage2.getDataField(i), storage.getAsInt(id, storage.getDataField(i)));
+            }
+        }
+
+        final List<String> mismatches = secondStorageMismatches();
+        if (mismatches.isEmpty()) {
+            log.info("persons2 - the second storage is made from the main one and checked field by field: {} records, no differences", lastRecordId);
+        } else {
+            log.error("persons2 - THE SECOND STORAGE DIFFERS FROM THE MAIN ONE AFTER THE COPY: {}", mismatches);
+        }
+    }
+
+    /**
+     * The differences between the main and the second storage, field by field of the fields they share (an empty list means they are the same). The first
+     * MAX_MISMATCHES_TOLD are told.
+     */
+    List<String> secondStorageMismatches() {
+        final List<String> mismatches = new ArrayList<>();
+        final int last = Math.max(storage.getLastRecordId(), storage2.getLastRecordId());
+        if (storage.getLastRecordId() != storage2.getLastRecordId()) {
+            mismatches.add("the last id is " + storage.getLastRecordId() + " in persons and " + storage2.getLastRecordId() + " in persons2");
+        }
+        for (int id = 1; id <= last && mismatches.size() < MAX_MISMATCHES_TOLD; id++) {
+            final boolean exists = storage.byId(id).isPresent();
+            if (exists != storage2.byId(id).isPresent()) {
+                mismatches.add("p/s #" + id + " is " + (exists ? "live in persons and not in persons2" : "not live in persons and live in persons2"));
+                continue;
+            }
+            if (!exists) {
+                continue;
+            }
+            for (int i = 0; i < SHARED_FIELD_COUNT && mismatches.size() < MAX_MISMATCHES_TOLD; i++) {
+                final int value = storage.getAsInt(id, storage.getDataField(i));
+                final int value2 = storage2.getAsInt(id, storage2.getDataField(i));
+                if (value != value2) {
+                    mismatches.add("p/s #" + id + " field " + i + " is " + value + " in persons and " + value2 + " in persons2");
+                }
+            }
+        }
+        return mismatches;
+    }
+
+    // for the tests: the second storage
+    Storage<Integer> secondStorage() {
+        return storage2;
+    }
+
+    /**
+     * Repeats the value of a field of the main storage in the second one. The second storage is a copy and has no changes of its own. If it has no such record (it has gone out of step
+     * with the main one), nothing is written and the check (secondStorageMismatches) tells about it.
+     */
+    private void mirror(final int id, final DataField field) {
+        if (storage2.byId(id).isEmpty()) {
+            return;
+        }
+        storage2.set(id, secondFieldOf.get(field), storage.getAsInt(id, field));
     }
 
     public Stream<Person> all() {
@@ -178,6 +314,11 @@ public class Persons {
         checkNotNull(locationType);
 
         final int id = storage.addRecord();
+        // the same id is expected from the second storage (nobody deletes persons in the game, so both storages give the next id); if not, the check tells about it
+        final int id2 = storage2.addRecord();
+        if (id2 != id) {
+            log.error("persons2 - p/s #{} is created in persons, but persons2 gave the id {}: THE SECOND STORAGE IS OUT OF STEP", id, id2);
+        }
         final Person person = new Person(id);
         person.setType(type);
         person.setState(state);
@@ -192,6 +333,9 @@ public class Persons {
 
     public void deleteById(final int id) {
         storage.deleteRecord(id);
+        if (storage2.byId(id).isPresent()) {
+            storage2.deleteRecord(id);
+        }
     }
 
     @SuppressWarnings("LombokGetterMayBeUsed")
@@ -213,6 +357,7 @@ public class Persons {
         public void setType(final Type type) {
             checkNotNull(type);
             storage.set(id, typeField, type.code());
+            mirror(id, typeField);
         }
 
         public State getState() {
@@ -222,6 +367,7 @@ public class Persons {
         public void setState(final State state) {
             checkNotNull(state);
             storage.set(id, stateField, state.code());
+            mirror(id, stateField);
         }
 
         public int getHeartbeatTime() {
@@ -230,6 +376,7 @@ public class Persons {
 
         public void setHeartbeatTime(final int heartbeatTime) {
             storage.set(id, heartbeatTimeField, heartbeatTime);
+            mirror(id, heartbeatTimeField);
         }
 
         /**
@@ -242,6 +389,7 @@ public class Persons {
         public void setUserId(final int userId) {
             checkArgument(DataType.Unsigned16bit.contains(userId), "userId is out of 16 bits");
             storage.set(id, userIdField, userId);
+            mirror(id, userIdField);
         }
 
         public boolean isPlayerCharacter() {
@@ -262,6 +410,8 @@ public class Persons {
             checkArgument(locationType != LocationType.None || locationId == 0, "a person who is nowhere has no location id");
             storage.set(id, locationTypeField, locationType.code());
             storage.set(id, locationIdField, locationId);
+            mirror(id, locationTypeField);
+            mirror(id, locationIdField);
         }
 
         public int getOriginCityId() {
@@ -271,6 +421,7 @@ public class Persons {
         public void setOriginCityId(final int originCityId) {
             checkArgument(DataType.Unsigned16bit.contains(originCityId), "originCityId is out of 16 bits");
             storage.set(id, originCityIdField, originCityId);
+            mirror(id, originCityIdField);
         }
 
         /**
@@ -282,6 +433,7 @@ public class Persons {
 
         public void setInitials(final String initials) {
             initialsSection.setInt(id, encodeInitials(initials));
+            mirror(id, initialsField);
         }
 
         /**
@@ -298,6 +450,7 @@ public class Persons {
 
         public void setAutoFinish(final boolean autoFinish) {
             autoFinishBit.setBoolean(id, autoFinish);
+            mirror(id, initialsField);
         }
 
         public boolean isWarpDrive() {
@@ -306,6 +459,7 @@ public class Persons {
 
         public void setWarpDrive(final boolean warpDrive) {
             warpDriveBit.setBoolean(id, warpDrive);
+            mirror(id, initialsField);
         }
 
         public int getAvatarId() {
@@ -315,6 +469,7 @@ public class Persons {
         public void setAvatarId(final int avatarId) {
             checkArgument(DataType.Unsigned16bit.contains(avatarId), "avatarId is out of 16 bits");
             storage.set(id, avatarIdField, avatarId);
+            mirror(id, avatarIdField);
         }
 
         /**
@@ -340,6 +495,8 @@ public class Persons {
             checkArgument(DataType.Signed16bit.contains(awakeCreditMinutes), "awake credit is out of 16 bits: %s", awakeCreditMinutes);
             storage.set(id, awakeCreditMinutesField, awakeCreditMinutes);
             storage.set(id, creditTimeField, creditTime);
+            mirror(id, awakeCreditMinutesField);
+            mirror(id, creditTimeField);
         }
 
         /**
@@ -351,6 +508,7 @@ public class Persons {
 
         public void setDutyStartTime(final int dutyStartTime) {
             storage.set(id, dutyStartTimeField, dutyStartTime);
+            mirror(id, dutyStartTimeField);
         }
 
         public int getBankAccountId() {
@@ -360,6 +518,7 @@ public class Persons {
         public void setBankAccountId(final int bankAccountId) {
             checkArgument(DataType.Unsigned24bit.contains(bankAccountId), "bankAccountId is out of 24 bits");
             storage.set(id, bankAccountIdField, bankAccountId);
+            mirror(id, bankAccountIdField);
         }
 
         @Override

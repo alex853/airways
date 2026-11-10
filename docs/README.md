@@ -21,6 +21,7 @@
 - [storage-quarantine.md](storage-quarantine.md) — Storage: карантин удалённых записей (не переиспользовать id сразу), дизайн
 - [storage-paged.md](storage-paged.md) — Storage: страничный режим (`paged()`), адаптер байтов, отсечка пустого хвоста (`tryTrimTail`), лог
 - [storage-extension.md](storage-extension.md) — как расширять запись хранилища (второе хранилище, копирование, валидация, своп) и `FixedLengthString`
+- [persons-record-extension.md](persons-record-extension.md) — расширение записи персоны 32 → 40 байт (второе хранилище `persons2`): раскладка, как устроено, шаги
 - [future-plans.md](future-plans.md) — дальние планы: пересчёт ETA в полёте и другие отложенные темы
 - [users.md](users.md) — пользователи: свой storage (токен, персона, VATSIM CID), админские методы создания и токена
 - [avatars.md](avatars.md) — список иконок и четыре флага (forbidden, common, pilot, special), файл вне classpath, админская страница; план аватарок пассажиров
