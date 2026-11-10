@@ -58,7 +58,7 @@
 7. Проверить результат (`/geo/cities`, `/admin/airport/missing-cities`, `/admin/airport/create-links?dryRun=true`).
 
 Для города, который **уже есть в мире**, импорт население не обновит — нужно выставить его вручную
-(разовый метод вроде `/admin/f1-tour-fixes` с `city.setPopulation(...)`).
+(редактор мира, `POST /admin/world/city/population`; разовый метод `/admin/f1-tour-fixes` удалён 2026-11-10, записи журнала ниже про него исторические).
 
 ## Операция «добавить аэропорт из списка отсутствующих (VATSIM)»
 

@@ -94,6 +94,16 @@ public class Cities {
             return readCountryId(id);
         }
 
+        public void setCountryId(final int countryId) {
+            storage.set(id, countryIdField, countryId);
+        }
+
+        /** Moves the city (the reuse of a city for another place, see ReuseCity). */
+        public void setCoords(final double latitude, final double longitude) {
+            storage.set(id, latitudeField, (float) latitude);
+            storage.set(id, longitudeField, (float) longitude);
+        }
+
         public float getLatitude() {
             return storage.getAsFloat(id, latitudeField);
         }

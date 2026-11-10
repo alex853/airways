@@ -17,6 +17,7 @@ import net.simforge.airways2.world.processors.AircraftHelper;
 import net.simforge.airways2.world.processors.City2CityFlowHistogramAnalyser;
 import net.simforge.airways2.world.processors.CityFlowHelper;
 import net.simforge.airways2.world.processors.TransportFlightHelper;
+import net.simforge.airways2.worldbuilder.tools.ReuseCity;
 import net.simforge.airways2.worldbuilder.tools.ImportCities;
 import net.simforge.commons.io.Csv;
 import net.simforge.commons.io.IOHelper;
@@ -921,97 +922,6 @@ public class AdminController {
         return getFlowInfo(idStr);
     }
 
-    // One-shot: renames cities to the English names and sets agglomeration populations (the tail of the old
-    // number is kept). The content is replaced each time. Cities are looked up by name, so renames go first.
-    @GetMapping("/f1-tour-fixes")
-    public void f1TourFixes() {
-        worldBean.modifySync(world -> {
-            renameCity(world, "Wien", "Vienna");
-            renameCity(world, "Praha", "Prague");
-            renameCity(world, "Geneve", "Geneva");
-            renameCity(world, "Mexico", "Mexico City");
-            setCityPopulation(world, "Paris", 11500700);
-            setCityPopulation(world, "New York", 19000700);
-            setCityPopulation(world, "Atlanta", 6300900);
-            setCityPopulation(world, "Washington", 6400500);
-            setCityPopulation(world, "Boston", 4900100);
-            setCityPopulation(world, "Chicago", 9500400);
-            setCityPopulation(world, "Houston", 7300100);
-            setCityPopulation(world, "Dallas", 5500600);
-            setCityPopulation(world, "Fort Worth", 2400800);
-            setCityPopulation(world, "Miami", 3000500);
-            setCityPopulation(world, "Fort Lauderdale", 1500000);
-            setCityPopulation(world, "Tampa", 2400300);
-            setCityPopulation(world, "St. Petersburg", 750500);
-            setCityPopulation(world, "Detroit", 4300100);
-            setCityPopulation(world, "Phoenix", 5000900);
-            setCityPopulation(world, "Denver", 2400000);
-            setCityPopulation(world, "Aurora", 600000);
-            setCityPopulation(world, "San Diego", 3300000);
-            setCityPopulation(world, "San Antonio", 2600900);
-            setCityPopulation(world, "Baltimore", 2800600);
-            setCityPopulation(world, "Madrid", 6700000);
-            setCityPopulation(world, "Barcelona", 5300400);
-            setCityPopulation(world, "London", 9500300);
-            setCityPopulation(world, "Manchester", 2800500);
-            setCityPopulation(world, "Athens", 3600100);
-            setCityPopulation(world, "Lisbon", 2900700);
-            setCityPopulation(world, "Istanbul", 15500200);
-            setCityPopulation(world, "Zurich", 1400900);
-            setCityPopulation(world, "Helsinki", 1500324);
-            setCityPopulation(world, "Dublin", 2100900);
-            setCityPopulation(world, "Brussels", 2100800);
-            setCityPopulation(world, "Vienna", 2900100);
-            setCityPopulation(world, "Prague", 2700800);
-            setCityPopulation(world, "Budapest", 3000300);
-            setCityPopulation(world, "Mumbai", 20000500);
-            setCityPopulation(world, "Moscow", 13000300);
-            setCityPopulation(world, "Saint Petersburg", 5600400);
-            setCityPopulation(world, "Toronto", 6500800);
-            setCityPopulation(world, "Santiago de Chile", 6500900);
-            setCityPopulation(world, "Kowloon", 6000200);
-            setCityPopulation(world, "Hong Kong Island", 1500800);
-            setCityPopulation(world, "Tokyo", 13500200);
-            setCityPopulation(world, "Stockholm", 2400400);
-            setCityPopulation(world, "Copenhagen", 2100700);
-            setCityPopulation(world, "Birmingham", 2900700);
-            setCityPopulation(world, "Glasgow", 1800800);
-            setCityPopulation(world, "Liverpool", 900100);
-            setCityPopulation(world, "Edinburgh", 900600);
-            setCityPopulation(world, "Gothenburg", 1000300);
-            setCityPopulation(world, "Gdansk", 1100000);
-            setCityPopulation(world, "Geneva", 1000200);
-            setCityPopulation(world, "Nice", 1000800);
-            setCityPopulation(world, "Stuttgart", 2700500);
-            setCityPopulation(world, "Warsaw", 3100600);
-            setCityPopulation(world, "Jeddah", 4700200);
-            setCityPopulation(world, "Bursa", 3100600);
-            setCityPopulation(world, "Tijuana", 2100800);
-
-            return null;
-        });
-    }
-
-    private static void renameCity(final World world, final String oldName, final String newName) {
-        final Optional<Cities.City> city = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(oldName)).findFirst();
-        if (city.isEmpty()) {
-            log.warn("f1-tour-fixes - rename city '{}' to '{}': city not found, skipped", oldName, newName);
-            return;
-        }
-        city.get().setName(newName);
-        log.info("f1-tour-fixes - city '{}' renamed to '{}'", oldName, newName);
-    }
-
-    private static void setCityPopulation(final World world, final String name, final int population) {
-        final Optional<Cities.City> city = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(name)).findFirst();
-        if (city.isEmpty()) {
-            log.warn("f1-tour-fixes - set population of '{}': city not found, skipped", name);
-            return;
-        }
-        log.info("f1-tour-fixes - city '{}' population {} -> {}", name, city.get().getPopulation(), population);
-        city.get().setPopulation(population);
-    }
-
     @GetMapping(value = "/airport/missing-cities", produces = "text/plain")
     public String printAirportsWithMissingCities() throws IOException {
         Csv citiesCsv = ImportCities.loadCityPopulationCsv();
@@ -1109,6 +1019,31 @@ public class AdminController {
             }
 
             return Strings.join(results, '\n');
+        });
+    }
+
+    /**
+     * The reuse of a city (see ReuseCity and docs/city-reuse.md): the city with the given name (it should be the only one with it) becomes another city
+     * in another place, its id is kept. dryRun is true by default, only the report is made then.
+     */
+    @GetMapping(value = "/city/reuse", produces = "text/plain")
+    public String reuseCity(@RequestParam("city") String cityName,
+                            @RequestParam("name") String newName,
+                            @RequestParam("country") String countryCode,
+                            @RequestParam("lat") double latitude,
+                            @RequestParam("lon") double longitude,
+                            @RequestParam("population") int population,
+                            @RequestParam(name = "dryRun", defaultValue = "true") boolean dryRun) {
+        return worldBean.modifySync(world -> {
+            final List<Cities.City> found = world.cities().all().filter(c -> c.getName().equalsIgnoreCase(cityName)).toList();
+            if (found.size() != 1) {
+                return "Expected exactly one city named " + cityName + ", found " + found.size();
+            }
+            try {
+                return Strings.join(ReuseCity.reuse(world, found.get(0).getId(), newName, countryCode, latitude, longitude, population, dryRun), '\n');
+            } catch (final IllegalArgumentException e) {
+                return "Not done: " + e.getMessage();
+            }
         });
     }
 

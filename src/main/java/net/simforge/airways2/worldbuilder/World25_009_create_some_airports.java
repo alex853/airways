@@ -56,7 +56,7 @@ public class World25_009_create_some_airports {
                 "TNCM",
                 "UMKK", "UMMS",
                 "VRMM",
-                "VAAH",
+                "VAAH", "VOBL",
                 "VTBS", "VTSP",
                 "WAAA", "WADD",
                 "WMKK",
