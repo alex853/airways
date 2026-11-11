@@ -1030,6 +1030,7 @@ public class AdminController {
     public String reuseCity(@RequestParam("city") String cityName,
                             @RequestParam("name") String newName,
                             @RequestParam("country") String countryCode,
+                            @RequestParam(name = "countryName", required = false) String countryName,
                             @RequestParam("lat") double latitude,
                             @RequestParam("lon") double longitude,
                             @RequestParam("population") int population,
@@ -1040,7 +1041,7 @@ public class AdminController {
                 return "Expected exactly one city named " + cityName + ", found " + found.size();
             }
             try {
-                return Strings.join(ReuseCity.reuse(world, found.get(0).getId(), newName, countryCode, latitude, longitude, population, dryRun), '\n');
+                return Strings.join(ReuseCity.reuse(world, found.get(0).getId(), newName, countryCode, countryName, latitude, longitude, population, dryRun), '\n');
             } catch (final IllegalArgumentException e) {
                 return "Not done: " + e.getMessage();
             }

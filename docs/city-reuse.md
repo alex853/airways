@@ -4,7 +4,7 @@
 
 ## Что делает
 
-`GET /admin/city/reuse?city=<имя города в мире>&name=<новое имя>&country=<код страны, например IN>&lat=&lon=&population=&dryRun=true` (`AdminController.reuseCity`, логика в `worldbuilder/tools/ReuseCity`). Город ищется по имени, оно должно быть единственным в мире. `dryRun` по умолчанию `true`: показывается только отчёт, ничего не меняется. Правила отказа: страны нет в мире, координаты вне диапазона, пустое имя, население меньше нуля, город с таким именем в этой стране уже есть.
+`GET /admin/city/reuse?city=<имя города в мире>&name=<новое имя>&country=<код страны, например IN>&countryName=<имя страны, только если страны с таким кодом ещё нет в мире>&lat=&lon=&population=&dryRun=true` (`AdminController.reuseCity`, логика в `worldbuilder/tools/ReuseCity`). Город ищется по имени, оно должно быть единственным в мире. `dryRun` по умолчанию `true`: показывается только отчёт, ничего не меняется. Если страны с таким кодом в мире нет (остров, заморская территория), передаётся `countryName`, и страна создаётся (при `dryRun` отчёт только говорит об этом). Правила отказа: страны нет в мире и нет `countryName`, координаты вне диапазона, пустое имя, население меньше нуля, город с таким именем в этой стране уже есть.
 
 При `dryRun=false`:
 - меняются имя, страна, координаты, население;
@@ -27,3 +27,19 @@
 
 - **Bengaluru:** население 14 000 300 (CSV было 4 547 300, оценка городской агломерации около 14 млн, хвост CSV сохранён), координаты 12.97, 77.56 (как в CSV). В радиусе 25 nm пригороды от 100 тысяч вливаются (`del` в CSV): Dasarahalli 279 300, Bommanahalli 213 200, Krishnarajapura 198 600. Аэропорт `VOBL` (Kempegowda Intl): строка в `icaodata.csv` (`civil`, `size` 6200, оценка), `World25_009`.
 - **Fort Lauderdale:** укрупнён соседями Broward: 1 500 000 + Coral Springs 128 700 + Pembroke Pines 151 400 + Hollywood 144 400 + Miramar 100 600 = 2 025 100 (Broward County около 2,0 млн). В CSV у этих четырёх `del`, в CSV население 2 025 100; в мире после деплоя выставляется в редакторе мира (метод `f1TourFixes` удалён 2026-11-10). Miramar пограничный (13,6 nm до Miami и 14,0 nm до Fort Lauderdale), отнесён к Broward. Hialeah (226 700, 6,8 nm до Miami) по правилу «ближайшее ядро» достаётся Miami, пока не сделано. Pembroke Pines, Hollywood и Miramar как города мира пока остаются (двойной счёт населения до их реюза или удаления): кандидаты на следующие реюзы.
+
+### Как это прошло (2026-11-10)
+
+1. Деплой коммита с `VOBL` в `icaodata.csv` и в `World25_009` (`009` включён на время деплоя), затем `009` закомментирован обратно (коммит без пуша). Аэропорт `VOBL` (BLR, Kempegowda International) появился в мире.
+2. `reuse` с `dryRun=true`: Coral Springs (US, население 128 700) в Bengaluru (IN, 12.97 77.56, население 14 000 300). Отчёт: снимутся линки `KFLL`, `KMIA`, `KOPF`, `KPBI` (у всех есть другие города), активных потоков из города 53 и в город 63, в городе 6965 пассажиров `LookingForTickets` (умрут с `could not find tickets`, это старый хвост), 231 `SpendingTheirTime`, 352 `CouldNotFindTickets`, 30 `Finished`, людей и игроков в городе нет.
+3. `reuse` с `dryRun=false`.
+4. `create-links?icao=VOBL&dryRun=false`: аэропорт слинкован с Bengaluru.
+5. В редакторе мира (`airways/admin/map.html`) остаток: страна аэропорта `VOBL` (India) и население Fort Lauderdale 2 025 100.
+
+Выполнено пользователем через админку. Если процедура повторяется: всё то же, шаги 2-5 на каждый город; до `dryRun=false` смотреть в отчёте, есть ли в городе игроки (пилоты пользователей) и сколько журней.
+
+## Второй случай: Hollywood в Guadeloupe, аэропорт TFFR (2026-11-11, подготовлено)
+
+Страна Guadeloupe в мире отсутствует (городов в CSV для GP нет совсем, как и для остальных заморских территорий Франции), поэтому реюз получил параметр `countryName`. Город по образцу островов (Malta, Sint Maarten) один на весь архипелаг: Guadeloupe, 384 000 (оценка, перепись около 384 тысяч), координаты 16.24, -61.53 (район Pointe-a-Pitre, 2 nm от аэропорта). Зерно в `city-population.csv` (`Guadeloupe,GP,Guadeloupe,384000,16.24,-61.53`). Аэропорт `TFFR` (Le Raizet, `civil`, `size` 3510) есть в `icaodata.csv` и в refdata, добавлен в `World25_009` (`009` включён для деплоя). Мелкие аэродромы архипелага (TFFB, STFR, LSAN, GANS, TFFM, `size` менее 1200) не берём; Martinique (TFFF, 105 nm) отдельный остров, следующее зерно. Донор: Hollywood (`DSzdY`, 144 400, уже влит в Fort Lauderdale).
+
+Решения пользователя (2026-11-11): имя города Guadeloupe, население 384 000, attraction 15 (после реюза, в редакторе мира или `set-attraction`: реюз возвращает attraction к 1.0), донор Hollywood, флаги сайта не трогаем. Порядок после деплоя: `reuse` Hollywood (`city=Hollywood&name=Guadeloupe&country=GP&countryName=Guadeloupe&lat=16.24&lon=-61.53&population=384000`, сначала `dryRun`), `create-links?icao=TFFR&dryRun=false`, в редакторе мира страна аэропорта `TFFR` (Guadeloupe) и attraction 15.

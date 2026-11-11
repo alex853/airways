@@ -43,7 +43,7 @@ class ReuseCityTest {
 
     @Test
     void dryRunChangesNothingAndReports() {
-        final List<String> report = ReuseCity.reuse(world, city.getId(), "Bengaluru", "in", 12.97, 77.56, 13_000_000, true);
+        final List<String> report = ReuseCity.reuse(world, city.getId(), "Bengaluru", "in", null, 12.97, 77.56, 13_000_000, true);
 
         assertEquals("DRY RUN - nothing is changed", report.get(0));
         assertTrue(report.stream().anyMatch(line -> line.contains("Coral Springs") && line.contains("Bengaluru")), report.toString());
@@ -59,7 +59,7 @@ class ReuseCityTest {
     void theCityBecomesAnotherCityAndKeepsItsId() {
         final int id = city.getId();
 
-        final List<String> report = ReuseCity.reuse(world, id, " Bengaluru ", "IN", 12.97, 77.56, 13_000_000, false);
+        final List<String> report = ReuseCity.reuse(world, id, " Bengaluru ", "IN", null, 12.97, 77.56, 13_000_000, false);
 
         assertEquals("Done", report.get(report.size() - 1));
         final Cities.City reused = world.cities().byId(id).orElseThrow();
@@ -80,21 +80,47 @@ class ReuseCityTest {
     }
 
     @Test
+    void aCountryWhichIsNotInTheWorldIsCreatedWhenItsNameIsGiven() {
+        final int countries = (int) world.countries().all().count();
+
+        final List<String> dryRun = ReuseCity.reuse(world, city.getId(), "Guadeloupe", "gp", "Guadeloupe", 16.24, -61.53, 384_000, true);
+        assertTrue(dryRun.stream().anyMatch(line -> line.contains("country GP does not exist, it will be created with the name Guadeloupe")), dryRun.toString());
+        assertTrue(world.countries().byCode("GP").isEmpty());
+        assertEquals(countries, world.countries().all().count());
+
+        ReuseCity.reuse(world, city.getId(), "Guadeloupe", "gp", "Guadeloupe", 16.24, -61.53, 384_000, false);
+        final int countryId = world.countries().byCode("GP").orElseThrow().getId();
+        assertEquals("Guadeloupe", world.countries().byId(countryId).orElseThrow().getName());
+        assertEquals(countryId, city.getCountryId());
+        assertEquals(countries + 1, world.countries().all().count());
+
+        // the country exists now: the name is not needed
+        ReuseCity.reuse(world, city.getId(), "Guadeloupe", "GP", null, 16.24, -61.53, 384_000, false);
+        assertEquals(countries + 1, world.countries().all().count());
+    }
+
+    @Test
+    void aCountryWhichIsNotInTheWorldWithoutAnameIsRefused() {
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Guadeloupe", "GP", " ", 16.24, -61.53, 1, false));
+        assertTrue(world.countries().byCode("GP").isEmpty());
+    }
+
+    @Test
     void aNameWhichExistsInTheCountryIsRefused() {
         final int us = world.countries().byCode("US").orElseThrow().getId();
         world.cities().create(us, "Miami", 25.77, -80.19, 3_000_000);
 
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Miami", "US", 25.0, -80.0, 1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Miami", "US", null, 25.0, -80.0, 1, false));
         assertEquals("Coral Springs", city.getName());
     }
 
     @Test
     void unacceptableParametersAreRefused() {
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "ZZ", 12.97, 77.56, 1, false));
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "IN", 112.97, 77.56, 1, false));
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), " ", "IN", 12.97, 77.56, 1, false));
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "IN", 12.97, 77.56, -1, false));
-        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, 9999, "Bengaluru", "IN", 12.97, 77.56, 1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "ZZ", null, 12.97, 77.56, 1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "IN", null, 112.97, 77.56, 1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), " ", "IN", null, 12.97, 77.56, 1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, city.getId(), "Bengaluru", "IN", null, 12.97, 77.56, -1, false));
+        assertThrows(IllegalArgumentException.class, () -> ReuseCity.reuse(world, 9999, "Bengaluru", "IN", null, 12.97, 77.56, 1, false));
         assertEquals("Coral Springs", city.getName());
     }
 }

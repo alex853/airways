@@ -53,7 +53,7 @@ public class World25_009_create_some_airports {
                 "ROAH", "RKPC",
                 "RJBB", "RJFF", "RJOO", "RPVM",
                 "SCEL",
-                "TNCM",
+                "TFFR", "TNCM",
                 "UMKK", "UMMS",
                 "VRMM",
                 "VAAH", "VOBL",

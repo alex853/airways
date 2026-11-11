@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 /**
@@ -30,6 +31,8 @@ public class ReuseCity {
     private static final Logger log = LoggerFactory.getLogger(ReuseCity.class);
 
     /**
+     * @param countryName the name of the country to create when there is no country with the code in the world yet (an island, an overseas territory); it is
+     *                    not used when the country exists, and may be empty then
      * @param dryRun nothing is changed, only the report is made
      * @return the lines of the report: what the city is, what is going to be changed (was changed) and what stays attached to it
      * @throws IllegalArgumentException the parameters are not acceptable
@@ -38,6 +41,7 @@ public class ReuseCity {
                                      final int cityId,
                                      final String newName,
                                      final String countryCode,
+                                     final String countryName,
                                      final double latitude,
                                      final double longitude,
                                      final int population,
@@ -47,8 +51,12 @@ public class ReuseCity {
         if (newName == null || newName.isBlank()) {
             throw new IllegalArgumentException("The new name should not be empty");
         }
-        final Countries.Country country = world.countries().byCode(countryCode == null ? "" : countryCode.trim().toUpperCase())
-                .orElseThrow(() -> new IllegalArgumentException("Country " + countryCode + " not found"));
+        final String code = countryCode == null ? "" : countryCode.trim().toUpperCase();
+        final Optional<Countries.Country> existingCountry = world.countries().byCode(code);
+        final String newCountryName = countryName == null ? "" : countryName.trim();
+        if (existingCountry.isEmpty() && (code.isEmpty() || newCountryName.isEmpty())) {
+            throw new IllegalArgumentException("Country " + countryCode + " not found, give countryName to create it");
+        }
         if (!(latitude >= -90 && latitude <= 90) || !(longitude >= -180 && longitude <= 180)) {
             throw new IllegalArgumentException("Coordinates are out of range: " + latitude + ", " + longitude);
         }
@@ -56,10 +64,10 @@ public class ReuseCity {
             throw new IllegalArgumentException("Population should not be negative");
         }
         final String name = newName.trim();
-        world.cities().byCountryIdAndName(country.getId(), name)
+        existingCountry.flatMap(country -> world.cities().byCountryIdAndName(country.getId(), name))
                 .filter(other -> other.getId() != cityId)
                 .ifPresent(other -> {
-                    throw new IllegalArgumentException("City " + name + " exists in " + country.getCode() + " already, id " + other.getId());
+                    throw new IllegalArgumentException("City " + name + " exists in " + code + " already, id " + other.getId());
                 });
 
         final List<String> report = new ArrayList<>();
@@ -70,8 +78,12 @@ public class ReuseCity {
 
         final String oldCountry = world.countries().byId(city.getCountryId()).map(Countries.Country::getCode).orElse("?");
         report.add("city " + cityId + ": " + city.getName() + " (" + oldCountry + ", " + city.getLatitude() + " " + city.getLongitude()
-                + ", population " + city.getPopulation() + ") -> " + name + " (" + country.getCode() + ", " + (float) latitude + " " + (float) longitude
+                + ", population " + city.getPopulation() + ") -> " + name + " (" + code + ", " + (float) latitude + " " + (float) longitude
                 + ", population " + population + ")");
+
+        if (existingCountry.isEmpty()) {
+            report.add("country " + code + " does not exist, it will be created with the name " + newCountryName);
+        }
 
         final List<Airport2City.Link> links = world.airport2city().allByCityId(cityId).toList();
         for (final Airport2City.Link link : links) {
@@ -110,6 +122,11 @@ public class ReuseCity {
             return report;
         }
 
+        final Countries.Country country = existingCountry.orElseGet(() -> {
+            final Countries.Country created = world.countries().create(code, newCountryName);
+            log.info("country {} '{}' created", code, newCountryName);
+            return created;
+        });
         final String oldName = city.getName();
         for (final Airport2City.Link link : links) {
             world.airport2city().delete(link.getAirportId(), cityId);
@@ -123,7 +140,7 @@ public class ReuseCity {
             flow.setMobilityFactor(CityFlowHelper.DEFAULT_MOBILITY_FACTOR);
             flow.setLastRedistributionTime(0);
         }
-        log.info("city {} reused - '{}' is now '{}' ({}, {} {}, population {}), {} airport links removed", cityId, oldName, name, country.getCode(),
+        log.info("city {} reused - '{}' is now '{}' ({}, {} {}, population {}), {} airport links removed", cityId, oldName, name, code,
                 (float) latitude, (float) longitude, population, links.size());
         report.add("");
         report.add("Done");
