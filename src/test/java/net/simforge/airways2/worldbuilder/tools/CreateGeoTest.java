@@ -112,6 +112,18 @@ class CreateGeoTest {
     }
 
     @Test
+    void withTheNameAndTheCoordinatesGivenTheLibraryIsNotAskedAtAll() {
+        final Function<String, Optional<CreateAirport.AirportData>> neverAsked = icao -> {
+            throw new AssertionError("the lookup must not be called");
+        };
+        final CreateAirport.Overrides overrides = new CreateAirport.Overrides("Carrasco", "MVD", -34.8378, -56.0303);
+
+        CreateAirport.create(world, "SUMU", overrides, "EG", null, false, neverAsked);
+
+        assertEquals("Carrasco", world.airports().byIcao("SUMU").orElseThrow().getName());
+    }
+
+    @Test
     void theValuesGivenByHandWinAndFillTheGaps() {
         final CreateAirport.Overrides overrides = new CreateAirport.Overrides("My Field", "mmm", 10.5, 20.5);
 

@@ -288,6 +288,11 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
             } catch (final RuntimeException e) {
                 log.error("error on action execution", e);
                 thrownException = e;
+            } catch (final Throwable e) {
+                // an Error (a failed class initialization, a missing class) must not kill the world thread: the world would stop for good and the callers
+                // of modifySync would wait for ever
+                log.error("error (not an exception) on action execution", e);
+                thrownException = new RuntimeException(e);
             }
             latch.countDown();
             finished = true;

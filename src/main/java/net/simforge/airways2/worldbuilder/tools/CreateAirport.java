@@ -72,7 +72,9 @@ public class CreateAirport {
         });
 
         final Overrides given = overrides == null ? Overrides.NONE : overrides;
-        final Optional<AirportData> found = lookup.apply(code);
+        // with the name and the coordinates given by hand the library and icaodata.csv are not asked at all
+        final boolean everythingIsGiven = given.name() != null && !given.name().isBlank() && given.latitude() != null && given.longitude() != null;
+        final Optional<AirportData> found = everythingIsGiven ? Optional.empty() : lookup.apply(code);
         if (found.isPresent() && found.get().type() != null && !"civil".equals(found.get().type())) {
             throw new IllegalArgumentException("Airport " + code + " is not civil (" + found.get().type() + "), it is not created");
         }
