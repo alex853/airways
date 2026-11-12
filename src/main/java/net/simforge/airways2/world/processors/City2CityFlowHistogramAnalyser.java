@@ -226,7 +226,9 @@ public class City2CityFlowHistogramAnalyser {
         }
         line.append(" | D0-6 ").append(join(counts, 0, DAYS))
                 .append(" | W2-").append(LAST_WEEK).append(' ').append(join(counts, DAYS, BUCKETS - 1))
-                .append(" | L ").append(counts[BUCKETS - 1]);
+                .append(" | L ").append(counts[BUCKETS - 1])
+                // the flows that are switched off (they are not in the buckets above): too thin, too far, or made only to keep the success rate
+                .append(" | inactive ").append(world.city2cityFlows().all().filter(c2c -> !c2c.isActive()).count());
         return line.toString();
     }
 
