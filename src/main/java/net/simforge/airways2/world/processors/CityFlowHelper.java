@@ -109,6 +109,52 @@ public class CityFlowHelper {
         return (int) Math.max(Math.round(candidate * lag / timeToAccumulateCandidate), MIN_GROUP_SIZE);
     }
 
+    // A flow whose rate (the passengers per day it generates, all factors taken into account) is lower than this is not worth being: a group of one passenger
+    // takes more than 100 days to accumulate. Such flows are switched off by the redistribution (see selectFlowsByRate).
+    public static final double MIN_FLOW_RATE_PER_DAY = 0.01;
+
+    /** A destination of a city for the selection by the rate: its flow units and the success rate of its flow (zero is 'not known yet'). */
+    public record RateCandidate(int cityId, float units, float successRate) {
+    }
+
+    /**
+     * Selects the destinations of a city whose flow is not too thin. The rate of a destination is {@code dailyFlow × units / sum of units of the selected ×
+     * success rate}; the success rate that is not known yet (zero) is STARTING_SUCCESS_RATE. The destinations are dropped one by one, the weakest first, and
+     * after every drop the shares of the others are calculated again (the share of a dropped one goes to the rest, so the city sends the same number of
+     * passengers by fewer and fuller flows); it goes on while the weakest one is thinner than MIN_FLOW_RATE_PER_DAY. At least the strongest destination is
+     * always kept, a city is not left without a flow.
+     *
+     * @return the ids of the selected cities
+     */
+    public static java.util.Set<Integer> selectFlowsByRate(final double dailyFlow, final java.util.List<RateCandidate> candidates) {
+        final java.util.List<RateCandidate> selected = new java.util.ArrayList<>(candidates);
+        while (selected.size() > 1) {
+            double totalUnits = 0;
+            for (final RateCandidate candidate : selected) {
+                totalUnits += candidate.units();
+            }
+            RateCandidate weakest = null;
+            double weakestRate = Double.MAX_VALUE;
+            for (final RateCandidate candidate : selected) {
+                final double successRate = candidate.successRate() > 0 ? candidate.successRate() : STARTING_SUCCESS_RATE;
+                final double rate = totalUnits > 0 ? dailyFlow * (candidate.units() / totalUnits) * successRate : 0;
+                if (rate < weakestRate) {
+                    weakestRate = rate;
+                    weakest = candidate;
+                }
+            }
+            if (weakestRate >= MIN_FLOW_RATE_PER_DAY) {
+                break;
+            }
+            selected.remove(weakest);
+        }
+        final java.util.Set<Integer> result = new java.util.HashSet<>();
+        for (final RateCandidate candidate : selected) {
+            result.add(candidate.cityId());
+        }
+        return result;
+    }
+
     /** The passengers per day the flow generates, all factors taken into account. */
     public static double getDailyPassengers(final World world, final City2CityFlows.Flow flow) {
         final int dailyFlow = getDailyFlow(world, world.cityFlows().byCityFlow(flow).orElseThrow());

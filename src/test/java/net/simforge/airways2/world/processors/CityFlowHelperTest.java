@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class CityFlowHelperTest {
     @Test
@@ -65,6 +66,60 @@ public class CityFlowHelperTest {
         assertEquals(7, CityFlowHelper.catchUpGroupSize(200 * DAY, 30 * DAY, 20));
         assertEquals(1, CityFlowHelper.catchUpGroupSize(8 * DAY, 23.3 * DAY, 10));
         assertEquals(1, CityFlowHelper.catchUpGroupSize(8 * DAY, Double.POSITIVE_INFINITY, 15));
+    }
+
+    private static CityFlowHelper.RateCandidate candidate(final int cityId, final float units, final float successRate) {
+        return new CityFlowHelper.RateCandidate(cityId, units, successRate);
+    }
+
+    @Test
+    public void selectFlowsByRate_thickFlowsAreAllKept() {
+        // 41 passengers a day shared by 4 equal destinations at the known success rate 0.3: 3 a day each
+        final java.util.Set<Integer> kept = CityFlowHelper.selectFlowsByRate(41, java.util.List.of(
+                candidate(1, 0.2f, 0.3f), candidate(2, 0.2f, 0.3f), candidate(3, 0.2f, 0.3f), candidate(4, 0.2f, 0.3f)));
+
+        assertEquals(java.util.Set.of(1, 2, 3, 4), kept);
+    }
+
+    @Test
+    public void selectFlowsByRate_thinFlowsAreDroppedAndTheirShareGoesToTheOthers() {
+        // 10 passengers a day, one strong destination (9 units) and one thin (0.001 units, success rate 0.03): the thin one is under 0.01 a day
+        final java.util.Set<Integer> kept = CityFlowHelper.selectFlowsByRate(10, java.util.List.of(
+                candidate(1, 9f, 0.3f), candidate(2, 0.001f, 0.03f)));
+
+        assertEquals(java.util.Set.of(1), kept);
+    }
+
+    @Test
+    public void selectFlowsByRate_theWeakestGoesFirstSoABorderlineOneCanStay() {
+        // 1 passenger a day, success rate 0.3 for all: with all three the rates are 0.2, 0.2 and 0.0002 (the last is dropped) and then 0.15 each
+        final java.util.Set<Integer> kept = CityFlowHelper.selectFlowsByRate(1, java.util.List.of(
+                candidate(1, 1f, 0.3f), candidate(2, 1f, 0.3f), candidate(3, 0.001f, 0.3f)));
+
+        assertEquals(java.util.Set.of(1, 2), kept);
+    }
+
+    @Test
+    public void selectFlowsByRate_theSuccessRateCounts_andZeroIsTheStartingOne() {
+        // equal units; the destination with the known low success rate is thin, the new one (zero) is taken as the starting 0.33
+        final java.util.Set<Integer> kept = CityFlowHelper.selectFlowsByRate(0.05, java.util.List.of(
+                candidate(1, 1f, 0.0f), candidate(2, 1f, 0.0001f)));
+
+        assertEquals(java.util.Set.of(1), kept);
+    }
+
+    @Test
+    public void selectFlowsByRate_aCityWithoutPassengersKeepsTheStrongestDestinationOnly() {
+        final java.util.Set<Integer> kept = CityFlowHelper.selectFlowsByRate(0, java.util.List.of(
+                candidate(1, 0.5f, 0.3f), candidate(2, 0.9f, 0.3f), candidate(3, 0.2f, 0.3f)));
+
+        assertEquals(1, kept.size());
+        assertTrue(kept.size() == 1 && kept.stream().allMatch(id -> id >= 1 && id <= 3));
+    }
+
+    @Test
+    public void selectFlowsByRate_noCandidatesIsEmpty() {
+        assertTrue(CityFlowHelper.selectFlowsByRate(100, java.util.List.of()).isEmpty());
     }
 
     @Test
