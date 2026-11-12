@@ -134,6 +134,10 @@ public class World25_008_create_aircraft_types {
 
         aircraftTypes.byIcao("E55P").orElseGet(() -> aircraftTypes.create("E55P", "EP3"));
 
+        aircraftTypes.byIcao("FA7X").orElseGet(() -> aircraftTypes.create("FA7X", null));
+        aircraftTypes.byIcao("FA8X").orElseGet(() -> aircraftTypes.create("FA8X", null));
+
+        aircraftTypes.byIcao("GLF3").orElseGet(() -> aircraftTypes.create("GLF3", "GJ3"));
         aircraftTypes.byIcao("GLF4").orElseGet(() -> aircraftTypes.create("GLF4", "GJ4"));
         aircraftTypes.byIcao("GLF5").orElseGet(() -> aircraftTypes.create("GLF5", "GJ5"));
         aircraftTypes.byIcao("GLF6").orElseGet(() -> aircraftTypes.create("GLF6", "GJ6"));
