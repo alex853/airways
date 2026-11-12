@@ -37,7 +37,6 @@ public class City2CityFlowControl {
 
         final Collection<Integer> fromCityIds = world.airport2city().allByAirportId(fromAirportId).map(Airport2City.Link::getCityId).toList();
         final Collection<Integer> toCityIds = world.airport2city().allByAirportId(toAirportId).map(Airport2City.Link::getCityId).toList();
-        // todo ak2 check for intersection? what to do in case of intersection?
 
         fromCityIds.forEach(
                 fromCityId -> toCityIds.forEach(
@@ -45,6 +44,14 @@ public class City2CityFlowControl {
     }
 
     private void updateCity2CityFlowSuccessRateBothDirections(final int fromCityId, final int toCityId, final float deltaPercents) {
+        if (fromCityId == toCityId) {
+            // a flight between two airports of one city, or a journey inside a city: there is no flow of a city to itself
+            final String city = Formatting.shortCity(world.cities().byId(fromCityId).orElseThrow().getName());
+            log.info("c2c #{}/{} {}-{} - s/r - SKIP SELF-INBOUND FLOW",
+                    fromCityId, toCityId, city, city);
+            return;
+        }
+
         final String forward = updateCity2CityFlowSuccessRateOneDirection(fromCityId, toCityId, deltaPercents);
         final String backward = updateCity2CityFlowSuccessRateOneDirection(toCityId, fromCityId, deltaPercents);
 
@@ -57,14 +64,16 @@ public class City2CityFlowControl {
 
     // returns the part of the log line, null if there is no flow
     private String updateCity2CityFlowSuccessRateOneDirection(final int fromCityId, final int toCityId, final float deltaPercents) {
-        final Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId);
+        Optional<City2CityFlows.Flow> flow = world.city2cityFlows().getFromCityIdToCityId(fromCityId, toCityId);
 
         final String fromCity = Formatting.shortCity(world.cities().byId(fromCityId).orElseThrow().getName());
         final String toCity = Formatting.shortCity(world.cities().byId(toCityId).orElseThrow().getName());
 
         if (flow.isEmpty()) {
-            log.warn("c2c #{}/{} {}-{} - s/r - NO FLOW FOUND", fromCityId, toCityId, fromCity, toCity);
-            return null;
+            // The pair did not pass the thresholds of the redistribution (too thin or too far), so it has no flow, but the people fly between these cities: the
+            // inactive flow is created to keep the success rate, the redistribution takes it into account when the pair becomes a flow.
+            flow = Optional.of(world.city2cityFlows().createInactive(fromCityId, toCityId));
+            log.info("c2c #{}/{} {}-{} - s/r - there was no flow, an inactive one is created to keep the success rate", fromCityId, toCityId, fromCity, toCity);
         }
 
         final float originalSuccessRate = flow.get().getSuccessRate();
