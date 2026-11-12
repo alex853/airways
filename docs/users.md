@@ -56,9 +56,6 @@
 
 ## TODO (обязательное)
 
-- **Серверная защита:** сейчас при `WRONG_AIRPORT` блокирует только веб-морда. Нужно, чтобы POST-действия
-  `/flight-dashboard/*` (`start-flight`, `start-boarding`, `reschedule`, `blocks-off` и др.) тоже отказывали на
-  бэке при `WRONG_AIRPORT`.
 - Опции переезда/перелёта для пилота, оказавшегося не в том аэропорту.
 - Для персоны в `Resting` и `Travelling` придумать «разбудить» и «вернуть» (сейчас просто `PERSON_NOT_IDLE`, `todo ak3` в `FlightDashboardController`).
 
