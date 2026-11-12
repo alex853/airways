@@ -7,7 +7,7 @@
 
 - [busy-birds.md](busy-birds.md) — BusyBirds: корпоративные/бизнес-авиа миссии (контроллер, планирование, бронирование)
 - [city-airport-playbook.md](city-airport-playbook.md) — playbook: как добавлять города и аэропорты (анализ, население, имена, острова, терминалы, порядок работы)
-- [city-reuse.md](city-reuse.md) — реюз города: запись города получает другое место (имя, страна, координаты, население), потоки пересчитываются, `GET /admin/city/reuse`
+- [city-reuse.md](city-reuse.md) — реюз города: запись города получает другое место (имя, страна, координаты, население), потоки пересчитываются, `GET /admin/geo/city/reuse`
 - [aircraft-types-playbook.md](aircraft-types-playbook.md) — playbook: как добавлять типы самолётов (flight-stats, мир `008`, макет салона, `refdata-aircrafts`, порядок работы)
 - [flight-dashboard-texts.md](flight-dashboard-texts.md) — тексты-пояснения этапов дашборда полёта (часть про пилота и часть про пассажиров), как они устроены
 - [airports-record-extension.md](airports-record-extension.md) — запись аэропорта (сделано 2026-11-04): `FixedLengthString` для кодов, `countryId`, флаги excluded и hub, админская карта, что фильтруется по excluded

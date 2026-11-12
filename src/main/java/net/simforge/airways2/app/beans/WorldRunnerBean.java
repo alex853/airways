@@ -38,6 +38,8 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final Queue<ActionContext<?>> actionQueue = new ConcurrentLinkedQueue<>();
     private long flightStatsLastSaved = 0;
+    // set by requestSave(): the world cycle saves the world 5 minutes after the first request, not at the next hourly save
+    private final DeferredSaveRequest saveRequest = new DeferredSaveRequest();
 
     @Override
     public void run(final ApplicationArguments args) {
@@ -74,7 +76,13 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
                             }
                         }
 
-                        if (lastSaved + saveWorldPeriod < now) {
+                        final boolean requestedSaveIsDue = saveRequest.isDue(System.currentTimeMillis());
+                        if (requestedSaveIsDue || lastSaved + saveWorldPeriod < now) {
+                            if (requestedSaveIsDue) {
+                                log.info("world is saved out of turn, it was requested");
+                            }
+                            // any save does the requested one
+                            saveRequest.clear();
                             try (final Timing.Timer ignored = Timing.label("WorldRunnerBean - 06 - saveWorld")) {
                                 saveWorld();
                             }
@@ -149,6 +157,17 @@ public class WorldRunnerBean implements WorldAccess, ApplicationRunner, Disposab
      */
     public World getWorldForChangeStamps() {
         return world;
+    }
+
+    /**
+     * Makes the world cycle save the world 5 minutes after the FIRST request, not at the next hourly save. For the changes which must not be lost if the
+     * server stops before the hourly save: new countries, cities and airports (see AdminGeoController). The save is deferred, so the changes which come one
+     * after another (an airport, then a city half a minute later) are saved by one save; the requests which come while it waits do not move it.
+     */
+    public void requestSave() {
+        if (saveRequest.request(System.currentTimeMillis())) {
+            log.info("world save is requested, it is due in {} minutes", DeferredSaveRequest.DELAY_MILLIS / 60000);
+        }
     }
 
     @Override

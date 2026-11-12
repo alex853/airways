@@ -33,7 +33,7 @@
 ## Соглашение `del`
 
 Пригород/район, вошедший в население соседнего большого города, помечается в CSV префиксом `del ` в имени
-(например `del Ecatepec`). Такие записи игнорируются (в т.ч. в `/admin/airport/missing-cities`).
+(например `del Ecatepec`). Такие записи игнорируются (в т.ч. в `/admin/geo/airport/missing-cities`).
 
 ## Операция «актуализировать и укрупнить мажорный сити»
 
@@ -53,12 +53,12 @@
    `size >= 5000` в `icaodata.csv` в радиусе 50 nm от города (`ImportMajorAirportsInVicinityOfCities`).
    Мелкие аэропорты, добавленные через `World25_009_create_some_airports` (`ImportSelectedAirports`),
    создаются **без** airport2city-линков — их надо привязывать вручную:
-   `/admin/airport/create-links?icao=...` (по умолчанию `dryRun=true`, ничего не меняет; для реального создания
+   `/admin/geo/airport/create-links?icao=...` (по умолчанию `dryRun=true`, ничего не меняет; для реального создания
    линков нужно передать `dryRun=false`).
-7. Проверить результат (`/geo/cities`, `/admin/airport/missing-cities`, `/admin/airport/create-links?dryRun=true`).
+7. Проверить результат (`/geo/cities`, `/admin/geo/airport/missing-cities`, `/admin/geo/airport/create-links?dryRun=true`).
 
 Для города, который **уже есть в мире**, импорт население не обновит — нужно выставить его вручную
-(редактор мира, `POST /admin/world/city/population`; разовый метод `/admin/f1-tour-fixes` удалён 2026-11-10, записи журнала ниже про него исторические).
+(редактор мира, `POST /admin/world/city/population`).
 
 ## Операция «добавить аэропорт из списка отсутствующих (VATSIM)»
 
@@ -103,14 +103,14 @@
 
 ## Ситуации и что делать в каждой
 
-| Ситуация | Пример | CSV | `World25_012` | `World25_009` | `f1-tour-fixes` | Вручную после деплоя |
-|---|---|---|---|---|---|---|
-| Город в мире, пригородов в CSV нет | Austin | население | уже есть | — | `setPopulation` | `f1-tour-fixes` |
-| Города нет в мире, страна есть | Mexico City | население + `del` | добавить | — | — | проверка |
-| Нет ни страны, ни города, ни аэропортов | Sao Paulo | имя + население + `del` | добавить | — | — | проверка (страна создаётся импортом) |
-| Город в мире, пригороды слиты, есть бизнес-аэропорт | Las Vegas | население + `del` | уже есть | мелкий аэропорт (KHND) | `setPopulation` | `f1-tour-fixes`, `create-links`, attraction/mobility |
-| Мир уже правильный, CSV отстал | San Francisco | население как в мире + `del` | — | — | — | — (мир не трогаем) |
-| Город в мире с заниженным населением, нужны вторичные аэропорты | Los Angeles | население + `del` | уже есть | вторичные (KBUR, KSNA) | `setPopulation` | `f1-tour-fixes`, `create-links` |
+| Ситуация | Пример | CSV | `World25_012` | `World25_009` | Вручную после деплоя |
+|---|---|---|---|---|---|
+| Город в мире, пригородов в CSV нет | Austin | население | уже есть | — | население в редакторе мира |
+| Города нет в мире, страна есть | Mexico City | население + `del` | добавить | — | проверка |
+| Нет ни страны, ни города, ни аэропортов | Sao Paulo | имя + население + `del` | добавить | — | проверка (страна создаётся импортом) |
+| Город в мире, пригороды слиты, есть бизнес-аэропорт | Las Vegas | население + `del` | уже есть | мелкий аэропорт (KHND) | население в редакторе мира, `create-links`, attraction/mobility |
+| Мир уже правильный, CSV отстал | San Francisco | население как в мире + `del` | — | — | — (мир не трогаем) |
+| Город в мире с заниженным населением, нужны вторичные аэропорты | Los Angeles | население + `del` | уже есть | вторичные (KBUR, KSNA) | население в редакторе мира, `create-links` |
 
 Общие правила: импорт существующие города не обновляет; аэропорты `size < 5000` не линкуются автоматически;
 расстояния в nm; пригороды ≥100 тыс. → `del`, мельче 100 тыс. не трогаем; соседние самостоятельные рынки
@@ -154,7 +154,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
 | Salt Lake City | 2 779 900 | ~2 700 000 | Wasatch Front, спорно (метро ~1.3M) |
 
 Правила те же: хвост сохраняем, общий бюджет кластера разносим между ядрами без двойного счёта, правки через
-`AdminController.f1TourFixes` и `city-population.csv`.
+редактор мира и `city-population.csv`.
 
 ### 4. Страна аэропорта: нет собственного `countryId` — закрыто
 
@@ -194,27 +194,27 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   - **Nuuk (GL, BGGH, 943, `009`):** в CSV для Greenland не было строки: добавлена `Greenland,GL,Nuuk,19000,64.19,-51.68` (координаты аэропорта).
   - **YSWS (Western Sydney International, AU) убран из этого пакета** (решение пользователя 2026-11-01, сделаем позже): он добавлен в refdata-airports 3.1.4 (`added/YSWS.properties`, там же `VOBL`), так что пойдёт через `009` без правки `icaodata.csv`, когда вернёмся. Вместе с **MHPR** (Palmerola, Honduras, заменил Toncontin для коммерческих рейсов в 2021; нет ни в `icaodata.csv`, ни в refdata, ни в мире) он в списке особых аэропортов ниже.
   - Терминалы бизнес-авиации не ставим. Attraction 10: Sharm El Sheikh, Fuerteventura, Queenstown (`/admin/flows/set-attraction` после деплоя, id из `/geo/cities`, блоки в `admin-requests.http`). `create-links` после деплоя: WAAA, MHTG, MROC, NZQN, GCFV, BGGH. Импорты `009`, `012`, `013` в `Application.main` раскомментированы на деплой, после деплоя и вызовов закомментировать обратно.
-- **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется через `/admin/f1-tour-fixes`.
+- **Austin (US):** 2 475 600. CSV обновлён, население в мире выставляется в редакторе мира.
   Пригородов в CSV нет.
 - **Mexico City (MX, в CSV `Mexico`):** 21 705 100. 17 пригородов ≥100 тыс. помечены `del`
   (Ecatepec, Nezahualcoyotl, Naucalpan, Tlalnepantla, Chimalhuacan, Lopez mateos, Cuautitlan izcalli, Xico,
   Coacalco, Ixtapaluca, Los reyes, Nicolas romero, Buenavista, San pablo de las salinas, Chalco, Huixquilucan,
   Texcoco). Добавлен в `World25_012_selected_cities`. Toluca (MMTO) остаётся отдельным городом.
 - **Las Vegas (US):** 2 327 900 (агломерация Las Vegas–Henderson–Paradise). Город уже был в мире, население
-  выставляется через `/admin/f1-tour-fixes`. Пригороды `del`: Paradise, Henderson, Sunrise manor, North las vegas,
+  выставляется в редакторе мира. Пригороды `del`: Paradise, Henderson, Sunrise manor, North las vegas,
   Spring valley. Аэропорт KLAS; KINS (Indian Springs AF Aux) привязан ошибочно — игнорируем. KHND (Henderson Executive,
   бизнес-авиация, size 1524) добавлен в `World25_009_create_some_airports` и привязан к Las Vegas. KVGT в мир не добавляем (возможно позже).
 - **San Francisco (US):** в мире уже 7 650 000 (Bay Area); CSV приведён к этому значению (было 746 900). 12 городов
   ≥100 тыс. помечены `del` (San jose, Oakland, Fremont, Hayward, Sunnyvale, Concord, Vallejo, Santa clara,
   Richmond, Antioch, Berkeley, Daly city). Мир не менялся. Аэропорты KSFO, KOAK, KSJC уже в мире.
 - **Los Angeles (US):** 12 847 400 (агломерация LA–Long Beach–Anaheim). Город уже был в мире, население
-  выставляется через `/admin/f1-tour-fixes`. 20 пригородов ≥100 тыс. ближнего круга помечены `del` (East los
+  выставляется в редакторе мира. 20 пригородов ≥100 тыс. ближнего круга помечены `del` (East los
   angeles, Glendale, Inglewood, Pasadena, Downey, Burbank, El monte, Norwalk, Torrance, Long beach, West covina,
   Fullerton, Garden grove, Anaheim, Pomona, Huntington beach, Orange, Santa clarita, Santa ana, Costa mesa).
   Дальние (Ontario, Irvine, Riverside, Palmdale и др.) не трогаем.
-- **Abu Dhabi (AE):** 1 560 400 (город ~1,5 млн). Пригородов в CSV нет. Город уже в мире, население через
-  `/admin/f1-tour-fixes`. Аэропорт OMAA; OMAD (Bateen, бизнес-авиация) добавлен в `World25_009_create_some_airports` и привязан к Abu Dhabi.
-- **Dubai (AE):** 5 940 600 (Dubai + Sharjah + Ajman). Город уже в мире, население через `/admin/f1-tour-fixes`.
+- **Abu Dhabi (AE):** 1 560 400 (город ~1,5 млн). Пригородов в CSV нет. Город уже в мире, население в
+  редакторе мира. Аэропорт OMAA; OMAD (Bateen, бизнес-авиация) добавлен в `World25_009_create_some_airports` и привязан к Abu Dhabi.
+- **Dubai (AE):** 5 940 600 (Dubai + Sharjah + Ajman). Город уже в мире, население в редакторе мира.
   `del As-sariqah` (Sharjah), `del #ajman`. Ras al-Khaimah, Fujairah, Al Ain остаются отдельными. Аэропорт OMDB;
   OMSJ (Sharjah Intl) добавлен в `World25_009_create_some_airports` и привязан к Dubai.
 - **Sydney (AU, аэропорт YSSY):** CSV 4 277 200 → 6 077 200 (Greater Sydney ~5,3 млн + Wollongong + Newcastle, ~6,1 млн).
@@ -280,14 +280,14 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   VTBS. VTBK Kamphaeng Saen не берём. Attraction 2 (`set-attraction`).
 - **Италия — актуализация существующих городов:** `Roma` → `Rome` (2 618 900 → 4 318 900, агломерация), `Milano` →
   `Milan` (1 212 900 → 4 312 900, urban area; `del Monza`, `del Bergamo`), Venice 271 800 → 850 800 (метро с
-  Местре и Падуей). Naples, Palermo не менялись. Имена — шаг `RenameCities` в `World25_013`, население — `f1-tour-fixes`
+  Местре и Падуей). Naples, Palermo не менялись. Имена — шаг `RenameCities` в `World25_013`, население — в редакторе мира
   (ImportCities не обновляет существующие). **LIML Linate** (size 3043, 4 nm) добавлен в `World25_009`, линк
   `create-links?icao=LIML` на Milan. Attraction: Rome 5, Venice 5, Milan 3, Naples 2, Palermo 2.
 - **Германия — актуализация до агломераций:** 15 городов подняты до агломерации, 31 город ≥100k в радиусе 25 nm от
   ближайшего ядра слит `del` (Рейн-Рур поделён по ближайшему ядру: Essen, Duisburg, Dusseldorf, Dortmund, Koln, Bonn;
   Rhein-Main — Frankfurt; Halle — Leipzig; Potsdam — Berlin и т.д.). Bremen 745 000 не меняется (задан под F1),
   Oldenburg не сливается. Английские имена: Munchen → Munich, Koln → Cologne, Nurnberg → Nuremberg, Hannover →
-  Hanover, Frankfurt am Main → Frankfurt (`RenameCities` в `World25_013`). Население — `f1-tour-fixes`. Attraction в
+  Hanover, Frankfurt am Main → Frankfurt (`RenameCities` в `World25_013`). Население — в редакторе мира. Attraction в
   Германии не ставим. **EDLW** (Dortmund, size 1997) добавлен в `World25_009`, `create-links?icao=EDLW` с дефолтным
   радиусом.
 - **Osaka / Kobe / Kyoto (JP, аэропорты RJBB и RJOO) — из списка отсутствующих по VATSIM, «семя» Кансая:** три
@@ -355,7 +355,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Hamburg 53 nm и Hannover 52 nm в радиус не попадают). Население Bremen 545 000 → 745 000 (город ~570 тыс. +
   Delmenhorst 76 тыс. и пригороды); Oldenburg (158 600, 22 nm) и Bremerhaven (119 500, 31 nm) — отдельные
   города, как и остальные города Рура/Нижней Саксонии. Население существующего города выставляется
-  `/admin/f1-tour-fixes`.
+  в редакторе мира.
 - **Третья группа (особые):** LIRN → Naples (CSV `Napoli` → `Naples`, 995 000 → 3 095 000, агломерация ~3,1 млн;
   пригороды <100 тыс. не трогаем, Salerno 144 300 отдельный рынок); аэропорт LIRN переименован
   `Capodichino Mil` → `Capodichino` (шаг `World25_013`, `RenameAirports`). EFKS → Kuusamo 18 800 как есть
@@ -485,7 +485,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   (`set-attraction`).
 - **Ревизия населения мира и имён (F1 Tour Fixes):** часть импортированных городов осталась с населением
   по CSV (муниципалитет), а не по агломерации. Укрупнены (хвост старого числа сохранён) через
-  `AdminController.f1TourFixes` и в `city-population.csv`: Paris 11.5M, New York 19.0M, Atlanta 6.3M, Washington
+  редактор мира и в `city-population.csv`: Paris 11.5M, New York 19.0M, Atlanta 6.3M, Washington
   6.4M, Boston 4.9M, Chicago 9.5M, Houston 7.3M, Dallas 5.5M + Fort Worth 2.4M (метро 7.9M), Miami 3.0M + Fort
   Lauderdale 1.5M (Florida-кластер), Tampa 2.4M + St. Petersburg 0.75M, Detroit 4.3M, Phoenix 5.0M, Denver 2.4M +
   Aurora 0.6M, San Diego 3.3M, San Antonio 2.6M, Baltimore 2.8M, Madrid 6.7M, Barcelona 5.3M, London 9.5M,
@@ -496,7 +496,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   1.0M, Gdansk 1.1M, Geneva 1.0M, Nice 1.0M, Stuttgart 2.7M, Warsaw 3.1M, Jeddah 4.7M, Bursa 3.1M, Tijuana
   2.1M. Для поликентричных кластеров общий бюджет агломерации разнесён между ядрами, чтобы не было двойного
   счёта потока. Переименованы: `Wien` → `Vienna`, `Praha` → `Prague`, `Geneve` → `Geneva`, `Mexico` → `Mexico
-  City` (в CSV, в `World25_012` и в мире через `f1TourFixes`). Оценки приблизительные. Импорты `009`, `012`,
+  City` (в CSV, в `World25_012` и в мире через редактор мира). Оценки приблизительные. Импорты `009`, `012`,
   `013` закомментированы в `Application.main`.
 - **EKBI, HEGN, TJSJ, YBBN, OJAI, GCLP, MMUN, MYNN — пакет из списка отсутствующих по VATSIM (2026-10-16):**
   - **Billund (DK, EKBI):** в CSV город был как населённый пункт, `Billund` 6 100 → 400 100 (зона притяжения
@@ -609,7 +609,7 @@ LPMA, ENBR, EGJJ, EVRA, LGKR, LPFR, LGIR, LTAI, LGSK, LICJ, LIRN, LGRP, LDDU, LD
   Терминалы `BusinessAviationTerminal` не создаём (решение пользователя). Шаги `009`, `012`, `013` включены на деплой. После деплоя: `create-links` для WADD, ZSAM, VAAH, MDPC и attraction Denpasar 8, Punta Cana 5.
 
 - **Партия 2026-10-22 (EGNT, DTTA, GMMN, OOMS, тонкие регионы по VATSIM-бэклогу):**
-  - **Newcastle upon Tyne (GB, EGNT):** CSV 190 600 → 1 100 600 (Tyneside + Wearside). `del Sunderland` (183 800, 13 nm). Gateshead, South Shields (<100k) не трогаем; Middlesbrough (147k, ~32 nm, Teesside EGNV) отдельный рынок. Имя по решению пользователя «Newcastle upon Tyne» (в CSV есть южноафриканский Newcastle 309k, он не импортируется, но при `f1TourFixes` по имени был бы неоднозначен). EGNT size 2326: `009` + `create-links`. Имя аэропорта «Newcastle Intl».
+  - **Newcastle upon Tyne (GB, EGNT):** CSV 190 600 → 1 100 600 (Tyneside + Wearside). `del Sunderland` (183 800, 13 nm). Gateshead, South Shields (<100k) не трогаем; Middlesbrough (147k, ~32 nm, Teesside EGNV) отдельный рынок. Имя по решению пользователя «Newcastle upon Tyne» (в CSV есть южноафриканский Newcastle 309k, он не импортируется). EGNT size 2326: `009` + `create-links`. Имя аэропорта «Newcastle Intl».
   - **Tunis (TN, DTTA):** CSV 695 500 → 2 700 500 (Greater Tunis). `del Aryanah` (217 600, 3 nm). Страны Tunisia в мире не было, создаётся импортом. DTTA size 7868 подтянется автоматически. Имя «Tunis Carthage». DTTB (Sidi Ahmed, 32 nm, числится civil, на деле авиабаза) и мелкие DTTI не берём.
   - **Casablanca (MA, GMMN):** население оставлено как в CSV, 3 672 900 (по решению пользователя «поменьше», агломерацию 4,3M не ставим). Имена в CSV исправлены: `Ad-d#ar-al-bayda` → Casablanca, `H#uribkah` → Khouribga (отдельный рынок, 44 nm). `del Settat` (124 800, граничный случай по расстоянию, по решению пользователя помечен). Rabat/Salé (GMME) не вливаем. GMMN size 3744: `009` + `create-links`. Имя аэропорта «Casablanca Mohammed V». GMMC Anfa и GMMT Tit Mellil (GA) не берём.
   - **Muscat (OM, OOMS):** в CSV города Muscat не было. Ядром взят `Masqat` (56 400), переименован в Muscat, население 1 400 400 (агломерация ~1,4M, координаты ядра). `del As-sib` (248 200), `del Bawsar` (172 200), `del Ruwi` (116 600). Barka (78k) и Matrah (78k) <100k, не трогаем. Страны Oman в мире не было. OOMS size 4339: `009` + `create-links`. Имя «Muscat Intl». Военные Izki и Firq не берём.
