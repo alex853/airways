@@ -224,12 +224,22 @@ class DashboardPassengersTest {
 
         assertEquals(120, row.getCount());
         assertEquals(new java.util.HashSet<>(row.getIconTable()).size(), row.getIconTable().size()); // every file once
-        assertTrue(POOL.containsAll(row.getIconTable()));
+        // the icons are of the pool, and of the fixed avatars of the special groups (the journeys of the first ids)
+        final java.util.Set<String> fixedIcons = new java.util.HashSet<>();
+        for (int journeyId = 1; journeyId <= 100; journeyId++) {
+            final var group = net.simforge.airways2.world.computations.SpecialGroupAvatars.of(journeyId);
+            if (group != null) {
+                group.forEach(avatar -> fixedIcons.add(avatar.icon()));
+            }
+        }
+        final java.util.Set<String> allowed = new java.util.HashSet<>(POOL);
+        allowed.addAll(fixedIcons);
+        assertTrue(allowed.containsAll(row.getIconTable()));
         for (final int number : row.getIcons()) {
             assertTrue(number >= 0 && number < row.getIconTable().size());
         }
         // the table is short, so the row is compact: not a file name for every passenger
-        assertTrue(row.getIconTable().size() <= POOL.size());
+        assertTrue(row.getIconTable().size() <= allowed.size());
     }
 
     @Test

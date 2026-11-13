@@ -26,6 +26,10 @@ public class City2CityFlowControl {
         if (journey.isPilotJourney()) {
             return;
         }
+        // nor is the special group: its cities are random, it is not of a flow
+        if (journey.isSpecialGroup()) {
+            return;
+        }
         updateCity2CityFlowSuccessRateBothDirections(journey.getFromCityId(), journey.getToCityId(), deltaPercents);
     }
 

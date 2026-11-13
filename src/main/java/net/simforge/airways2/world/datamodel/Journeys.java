@@ -52,6 +52,8 @@ public class Journeys {
     private final BitAccessField.Section statusBitField = statusFieldBits.section(0, 4);
     // bit 6: the journey of a pilot (a person travels by airline, see Persons.Person.getPilotJourneyId): the special handling of such a journey is by this bit
     private final BitAccessField.Section pilotJourneyBitField = statusFieldBits.section(6, 1);
+    // bit 5: the special group (the immortal journey, see Journey.isSpecialGroup and docs/special-group-journeys.md)
+    private final BitAccessField.Section specialGroupBitField = statusFieldBits.section(5, 1);
     private final BitAccessField.Section returningBackBitField = statusFieldBits.section(7, 1);
     private final DataField heartbeatTimeField = storage.getDataField(1);
     private final DataField fromCityIdField = storage.getDataField(2);
@@ -237,6 +239,7 @@ public class Journeys {
         bookedCabinServiceBitField.setInt(id, service.ordinal());
         returningBackBitField.setBoolean(id, false);
         pilotJourneyBitField.setBoolean(id, false);
+        specialGroupBitField.setBoolean(id, false);
         attemptCounterBitField.setInt(id, 0);
 
         return journey;
@@ -287,6 +290,19 @@ public class Journeys {
             pilotJourneyBitField.setBoolean(id, pilotJourney);
         }
 
+        /**
+         * The special group: an immortal journey (a fixed group of travellers who go from city to city for ever). It is an ordinary journey for the search and for the bookings (BusyBirds
+         * and ShadowJet see it as any other), but it never ends: instead of CouldNotFindTickets it chooses another random city, instead of the return trip it goes to a random city,
+         * and it is never Finished (JourneyControl). It is not of a flow of the cities (no success rate).
+         */
+        public boolean isSpecialGroup() {
+            return specialGroupBitField.getBoolean(id);
+        }
+
+        public void setSpecialGroup(final boolean specialGroup) {
+            specialGroupBitField.setBoolean(id, specialGroup);
+        }
+
         public boolean isReturningBack() {
             return returningBackBitField.getBoolean(id);
         }
@@ -332,6 +348,16 @@ public class Journeys {
 
         public int getGroupSize() {
             return storage.getAsInt(id, groupSizeField);
+        }
+
+        public void setGroupSize(final int groupSize) {
+            checkArgument(groupSize >= 1);
+            storage.set(id, groupSizeField, groupSize);
+        }
+
+        public void setPreferredCabinService(final CabinLayout.Service service) {
+            checkNotNull(service);
+            preferredCabinServiceBitField.setInt(id, service.ordinal());
         }
 
         public CabinLayout.Service getPreferredCabinService() {

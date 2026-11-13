@@ -23,6 +23,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 public class JourneyControl {
     private static final Logger log = LoggerFactory.getLogger(JourneyControl.class);
 
+    // the special group looks for tickets soon after it has chosen a city (the sleep in the city was the wait), the attempts go on as of any journey
+    public static final int SPECIAL_GROUP_MAX_SIZE = 32;
+    private static final int SPECIAL_SEARCH_MIN_DELAY = 10 * Time.ONE_MINUTE;
+    private static final int SPECIAL_SEARCH_MAX_DELAY = 2 * Time.ONE_HOUR;
     private static final int MAX_STAY_AT_DESTINATION = 7 * Time.ONE_DAY;
     private static final int MIN_STAY_AT_DESTINATION = Time.ONE_DAY;
 
@@ -331,6 +335,132 @@ public class JourneyControl {
         }
     }
 
+    /**
+     * The special group goes to a random city from the city where it is now: after the sleep in a city (instead of the return trip of an ordinary journey), or when it has found no
+     * tickets to its city (instead of CouldNotFindTickets). The city is not the one where the group is and not the one it was going to (after the sleep it is the same city), if
+     * there is any other. The search starts soon, the attempts are counted from zero. It is never a returning back journey.
+     */
+    public void goToRandomCity(final Journeys.Journey journey, final String reason) {
+        checkNotNull(journey);
+        checkArgument(journey.isSpecialGroup());
+
+        final int locationCityId = currentCityOf(journey);
+        final int oldToCityId = journey.getToCityId();
+        final int toCityId = randomCityOtherThan(locationCityId, oldToCityId);
+        journey.setReturningBack(false);
+        journey.setFromCityId(locationCityId);
+        journey.setLocationCityId(locationCityId);
+        journey.setLastKnownLocationCityId(locationCityId);
+        journey.setToCityId(toCityId);
+
+        scheduleSpecialSearch(journey);
+
+        log.info("j/y #{} - the special group {}, goes to a random city #{} (was #{}) from #{}, looking for tickets scheduled", journey.getId(), reason, toCityId, oldToCityId, locationCityId);
+    }
+
+    /**
+     * The special group is in a terminal status (it must not be, a status of an old record, an admin action): it is brought back to the search from where it is.
+     */
+    public void reviveSpecialGroup(final Journeys.Journey journey) {
+        checkNotNull(journey);
+        checkArgument(journey.isSpecialGroup());
+
+        final Journeys.Status oldStatus = journey.getStatus();
+        journey.setTransportFlight1Id(0);
+        journey.setPrice1(0);
+        releaseTransportFlight2Tickets(journey);
+        journey.setReturningBack(false);
+        final int locationCityId = currentCityOf(journey);
+        journey.setLocationCityId(locationCityId);
+        if (journey.getToCityId() == locationCityId) {
+            journey.setToCityId(randomCityOtherThan(locationCityId));
+        }
+        journey.setFromCityId(locationCityId);
+
+        scheduleSpecialSearch(journey);
+
+        log.warn("j/y #{} - the special group was in {} status, it is brought back to the search from city #{}", journey.getId(), oldStatus, locationCityId);
+    }
+
+    /**
+     * Sets or clears the flag of the special group on a journey (the admin does it by the id of the journey). The return trip does not exist for a group, so the flag clears
+     * "returning back". A group in a terminal status is brought back to the search by the processor. Idempotent.
+     */
+    public void setSpecialGroup(final Journeys.Journey journey, final boolean specialGroup) {
+        checkNotNull(journey);
+
+        journey.setSpecialGroup(specialGroup);
+        if (specialGroup) {
+            journey.setReturningBack(false);
+        }
+
+        log.info("j/y #{} - the flag of the special group is {}, {} status", journey.getId(), specialGroup ? "set" : "cleared", journey.getStatus());
+    }
+
+    /**
+     * The size of the group and its class of service of a special group (the admin sets them, a group is a fixed set of travellers). It is changed only while the group holds no seats: when it
+     * looks for tickets or spends its time in a city; the seats of a booked flight are of the old size.
+     */
+    public void setSpecialGroupParams(final Journeys.Journey journey, final int groupSize, final CabinLayout.Service service) {
+        checkNotNull(journey);
+        checkNotNull(service);
+        checkArgument(groupSize >= 1 && groupSize <= SPECIAL_GROUP_MAX_SIZE, "The size of the group is from 1 to " + SPECIAL_GROUP_MAX_SIZE);
+        if (!journey.isSpecialGroup()) {
+            throw new IllegalStateException("The journey is not a special group");
+        }
+        if (journey.getStatus() != Journeys.Status.LookingForTickets && journey.getStatus() != Journeys.Status.SpendingTheirTime) {
+            throw new IllegalStateException("The special group holds seats in " + journey.getStatus() + " status, the size and the class cannot be changed now");
+        }
+
+        final int oldSize = journey.getGroupSize();
+        final CabinLayout.Service oldService = journey.getPreferredCabinService();
+        journey.setGroupSize(groupSize);
+        journey.setPreferredCabinService(service);
+        journey.setBookedCabinService(service);
+
+        log.info("j/y #{} - the special group size {} -> {}, class {} -> {}", journey.getId(), oldSize, groupSize, oldService, service);
+    }
+
+    private void scheduleSpecialSearch(final Journeys.Journey journey) {
+        journey.setStatus(Journeys.Status.LookingForTickets);
+        journey.setAttemptCounter(0);
+        journey.setHeartbeatTime(world.getWorldTime() + Tools.random(SPECIAL_SEARCH_MIN_DELAY, SPECIAL_SEARCH_MAX_DELAY));
+    }
+
+    // where the journey is: the location city, else the last known one, else the city it started from
+    private int currentCityOf(final Journeys.Journey journey) {
+        if (journey.getLocationCityId() > 0) {
+            return journey.getLocationCityId();
+        }
+        return journey.getLastKnownLocationCityId() > 0 ? journey.getLastKnownLocationCityId() : journey.getFromCityId();
+    }
+
+    // A random city which has an airport and is not too close to the city (the airline does not fly under 100 miles); the same choice for the special groups everywhere.
+    int randomCityOtherThan(final int cityId) {
+        return randomCityOtherThan(cityId, 0);
+    }
+
+    // the same, and not the city alsoNotCityId either; if there is no other city, this one is allowed
+    int randomCityOtherThan(final int cityId, final int alsoNotCityId) {
+        final int other = randomCandidate(cityId, alsoNotCityId);
+        final int result = other > 0 ? other : randomCandidate(cityId, 0);
+        if (result == 0) {
+            throw new IllegalStateException("There is no city to go to for the special group");
+        }
+        return result;
+    }
+
+    private int randomCandidate(final int cityId, final int alsoNotCityId) {
+        final Geo.Coords here = world.cities().byId(cityId).map(Cities.City::getCoords).orElse(null);
+        final List<Integer> candidates = world.cities().all()
+                .filter(city -> city.getId() != cityId && city.getId() != alsoNotCityId)
+                .filter(city -> here == null || Geo.distance(here, city.getCoords()) >= PilotTravel.AIRLINE_MIN_DISTANCE_NM)
+                .filter(city -> world.airport2city().allByCityId(city.getId()).findAny().isPresent())
+                .map(Cities.City::getId)
+                .toList();
+        return Tools.random(candidates).orElse(0);
+    }
+
     public void startSpendingTheirTime(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
@@ -460,6 +590,13 @@ public class JourneyControl {
         checkNotNull(journey);
         checkArgument(journey.getStatus() == Journeys.Status.ItinerariesDone);
 
+        // the special group is never finished: it sleeps in the city and goes on
+        if (journey.isSpecialGroup()) {
+            log.warn("j/y #{} - the special group cannot be finished, it spends its time instead", journey.getId());
+            startSpendingTheirTime(journey);
+            return;
+        }
+
         journey.setStatus(Journeys.Status.Finished);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
@@ -522,6 +659,16 @@ public class JourneyControl {
             return;
         }
 
+        // the special group does not die either: it goes on from the last known city, as the journey of a pilot
+        if (journey.isSpecialGroup()) {
+            journey.setTransportFlight1Id(0);
+            journey.setPrice1(0);
+            moveBackToDepartureCity(journey);
+            scheduleSpecialSearch(journey);
+            log.info("j/y #{} - the special group has lost its t/f #{}, was in {} status, looking for tickets again", journey.getId(), transportFlightId, oldStatus);
+            return;
+        }
+
         journey.setStatus(Journeys.Status.Orphaned);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);
 
@@ -550,6 +697,12 @@ public class JourneyControl {
     public void couldNotFindTickets(final Journeys.Journey journey) {
         checkNotNull(journey);
         checkArgument(Journeys.Status.LookingForTickets == journey.getStatus());
+
+        // the special group does not give up: it chooses another city
+        if (journey.isSpecialGroup()) {
+            goToRandomCity(journey, "found no tickets");
+            return;
+        }
 
         journey.setStatus(Journeys.Status.CouldNotFindTickets);
         journey.setHeartbeatTime(world.getWorldTime() + TERMINAL_STATUS_DURATION);

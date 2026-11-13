@@ -16,6 +16,8 @@ import static com.google.common.base.Preconditions.checkArgument;
  * <p>
  * <b>The algorithm must not change after it is released:</b> the avatars of the journeys which exist would change. The values are fixed by PassengerAvatarsTest
  * (computed independently of this code).
+ * <p>
+ * The exception is the special groups (SpecialGroupAvatars): their avatars are the fixed list of the table.
  */
 public final class PassengerAvatars {
     // the picture when the pool of the common icons is empty
@@ -51,6 +53,20 @@ public final class PassengerAvatars {
      * The passenger number {@code index} (from 0) of a journey.
      */
     public static PassengerAvatar passenger(final int journeyId, final int index, final List<String> iconPool) {
+        checkArgument(index >= 0 && index < MAX_GROUP_SIZE, "the passenger number is 0 to %s: %s", MAX_GROUP_SIZE - 1, index);
+        // a special group has its own hand-made avatars: they are taken as they are, not by the hash
+        final PassengerAvatar fixed = SpecialGroupAvatars.passenger(journeyId, index);
+        if (fixed != null) {
+            return fixed;
+        }
+        return hashed(journeyId, index, iconPool);
+    }
+
+    /**
+     * The passenger by the hash of the journey (the ordinary journeys, and a passenger of a special group beyond its list). The tests of the algorithm use it so that they do not
+     * depend on the table of the special groups.
+     */
+    static PassengerAvatar hashed(final int journeyId, final int index, final List<String> iconPool) {
         checkArgument(index >= 0 && index < MAX_GROUP_SIZE, "the passenger number is 0 to %s: %s", MAX_GROUP_SIZE - 1, index);
         final long state = mix(mix(journeyId) + index);
 

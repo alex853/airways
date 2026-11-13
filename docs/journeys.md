@@ -54,8 +54,7 @@
   heartbeat = now + 1 мин и она засыпает снова (как `WaitingForBoarding`). Если tf уже `Finished`, журни
   разгружается сразу.
   `JourneyControl.deboard` уменьшает `paxOnBoard`, только если tf ещё в `Deboarding` (если tf уже `Finished`, то нет).
-- `/admin/journey/delete-invalid?dryRun=true` — чистка невалидных journeys (в т.ч. терминальные без heartbeat,
-  `TooLateToBoard` без heartbeat получает heartbeat = now).
+- `/admin/journey/delete-invalid` убран 2026-11-13 (чистка невалидных journeys по запросу пользователя).
 
 ## Далёкое будущее
 

@@ -24,12 +24,17 @@ class PassengerAvatarsTest {
         return new PassengerAvatar(initials, icon);
     }
 
+    // the algorithm of the hash without the special groups (they have their own test, SpecialGroupAvatarsTest)
+    private static List<PassengerAvatar> hashedOf(final int journeyId, final int groupSize, final List<String> pool) {
+        return java.util.stream.IntStream.range(0, groupSize).mapToObj(index -> PassengerAvatars.hashed(journeyId, index, pool)).toList();
+    }
+
     @Test
     void theValuesAreFixedForever() {
-        assertEquals(List.of(av("PJ", "a.png"), av("FB", "f.png"), av("TK", "h.png")), PassengerAvatars.of(1, 3, POOL));
-        assertEquals(List.of(av("PU", "c.png"), av("QK", "d.png"), av("FC", "h.png")), PassengerAvatars.of(2, 3, POOL));
-        assertEquals(List.of(av("RI", "g.png"), av("QA", "a.png"), av("DU", "h.png")), PassengerAvatars.of(12345, 3, POOL));
-        assertEquals(List.of(av("QH", "f.png"), av("QH", "c.png"), av("SV", "d.png")), PassengerAvatars.of(600000, 3, POOL));
+        assertEquals(List.of(av("PJ", "a.png"), av("FB", "f.png"), av("TK", "h.png")), hashedOf(1, 3, POOL));
+        assertEquals(List.of(av("PU", "c.png"), av("QK", "d.png"), av("FC", "h.png")), hashedOf(2, 3, POOL));
+        assertEquals(List.of(av("RI", "g.png"), av("QA", "a.png"), av("DU", "h.png")), hashedOf(12345, 3, POOL));
+        assertEquals(List.of(av("QH", "f.png"), av("QH", "c.png"), av("SV", "d.png")), hashedOf(600000, 3, POOL));
     }
 
     @Test
@@ -49,13 +54,13 @@ class PassengerAvatarsTest {
 
     @Test
     void withoutIconsThePictureIsTheFallback() {
-        assertEquals(av("QU", "user.png"), PassengerAvatars.passenger(7, 0, List.of()));
+        assertEquals(av("QU", "user.png"), PassengerAvatars.hashed(7, 0, List.of()));
     }
 
     @Test
     void theSameJourneyAlwaysGivesTheSameList() {
-        assertEquals(PassengerAvatars.of(777, 6, POOL), PassengerAvatars.of(777, 6, POOL));
-        assertEquals(PassengerAvatars.of(777, 6, POOL), PassengerAvatars.of(777, 6, new ArrayList<>(POOL)));
+        assertEquals(hashedOf(777, 6, POOL), hashedOf(777, 6, POOL));
+        assertEquals(hashedOf(777, 6, POOL), hashedOf(777, 6, new ArrayList<>(POOL)));
     }
 
     @Test
@@ -63,24 +68,24 @@ class PassengerAvatarsTest {
         final List<String> reversed = new ArrayList<>(POOL);
         java.util.Collections.reverse(reversed);
 
-        assertEquals(PassengerAvatars.of(777, 20, POOL), PassengerAvatars.of(777, 20, reversed));
+        assertEquals(hashedOf(777, 20, POOL), hashedOf(777, 20, reversed));
     }
 
     @Test
     void aPassengerDoesNotDependOnTheSizeOfTheGroup() {
-        final List<PassengerAvatar> four = PassengerAvatars.of(555, 4, POOL);
-        final List<PassengerAvatar> nine = PassengerAvatars.of(555, 9, POOL);
+        final List<PassengerAvatar> four = hashedOf(555, 4, POOL);
+        final List<PassengerAvatar> nine = hashedOf(555, 9, POOL);
 
         assertEquals(4, four.size());
         assertEquals(9, nine.size());
         assertEquals(four, nine.subList(0, 4));
-        assertEquals(nine.get(7), PassengerAvatars.passenger(555, 7, POOL));
+        assertEquals(nine.get(7), PassengerAvatars.hashed(555, 7, POOL));
     }
 
     @Test
     void theInitialsAreTwoCapitalEnglishLetters() {
         for (int journeyId = 1; journeyId <= 2000; journeyId++) {
-            for (final PassengerAvatar avatar : PassengerAvatars.of(journeyId, 3, POOL)) {
+            for (final PassengerAvatar avatar : hashedOf(journeyId, 3, POOL)) {
                 assertTrue(avatar.initials().matches("[A-Z]{2}"), avatar.initials());
             }
         }
@@ -91,7 +96,7 @@ class PassengerAvatarsTest {
         final Map<String, Integer> counts = new HashMap<>();
         final Map<String, Integer> letters = new HashMap<>();
         for (int journeyId = 1; journeyId <= 5000; journeyId++) {
-            for (final PassengerAvatar avatar : PassengerAvatars.of(journeyId, 4, POOL)) {
+            for (final PassengerAvatar avatar : hashedOf(journeyId, 4, POOL)) {
                 assertTrue(POOL.contains(avatar.icon()), avatar.icon());
                 counts.merge(avatar.icon(), 1, Integer::sum);
                 letters.merge(avatar.initials().substring(0, 1), 1, Integer::sum);
@@ -112,8 +117,8 @@ class PassengerAvatarsTest {
         int changed = 0;
         int total = 0;
         for (int journeyId = 1; journeyId <= 3000; journeyId++) {
-            final PassengerAvatar before = PassengerAvatars.passenger(journeyId, 0, POOL);
-            final PassengerAvatar after = PassengerAvatars.passenger(journeyId, 0, bigger);
+            final PassengerAvatar before = PassengerAvatars.hashed(journeyId, 0, POOL);
+            final PassengerAvatar after = PassengerAvatars.hashed(journeyId, 0, bigger);
             total++;
             if (!before.equals(after)) {
                 changed++;
@@ -130,8 +135,8 @@ class PassengerAvatarsTest {
         final List<String> smaller = new ArrayList<>(POOL);
         smaller.remove("c.png");
         for (int journeyId = 1; journeyId <= 3000; journeyId++) {
-            final PassengerAvatar before = PassengerAvatars.passenger(journeyId, 0, POOL);
-            final PassengerAvatar after = PassengerAvatars.passenger(journeyId, 0, smaller);
+            final PassengerAvatar before = PassengerAvatars.hashed(journeyId, 0, POOL);
+            final PassengerAvatar after = PassengerAvatars.hashed(journeyId, 0, smaller);
             if (!before.icon().equals("c.png")) {
                 assertEquals(before, after);
             } else {
@@ -184,7 +189,7 @@ class PassengerAvatarsTest {
     void aGroupWhichIsTooBigAndANegativeNumberAreRefused() {
         assertThrows(IllegalArgumentException.class, () -> PassengerAvatars.of(1, -1, POOL));
         assertThrows(IllegalArgumentException.class, () -> PassengerAvatars.of(1, 5000, POOL));
-        assertThrows(IllegalArgumentException.class, () -> PassengerAvatars.passenger(1, -1, POOL));
+        assertThrows(IllegalArgumentException.class, () -> PassengerAvatars.hashed(1, -1, POOL));
         assertThrows(IllegalArgumentException.class, () -> PassengerAvatars.seatKey(1, 1, 4096));
         assertTrue(PassengerAvatars.of(1, 0, POOL).isEmpty());
     }

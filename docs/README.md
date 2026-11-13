@@ -19,6 +19,7 @@
 - [heartbeat-index.md](heartbeat-index.md) — индекс по heartbeat (`HeartbeatIndex`, `Storage.withHeartbeatIndex`) для журни и рейсов, circuit breaker в `Processing`
 - [boarding-planning.md](boarding-planning.md) — планирование чекина и посадки по вместимости борта, Preflight по длительности посадки (решено, не реализовано); дебординг дробным счётчиком (реализовано)
 - [journeys.md](journeys.md) — journeys: жизненный цикл, локация, решения (ItinerariesDone, TooLateToBoard), далёкое будущее
+- [special-group-journeys.md](special-group-journeys.md) — особые группы: бессмертные журни (флаг, случайные города, размер и класс админом)
 - [journeys-hub-mode.md](journeys-hub-mode.md) — перелёты через хабы (hub mode): идея, статус, драйран, план (отложено)
 - [storage-quarantine.md](storage-quarantine.md) — Storage: карантин удалённых записей (не переиспользовать id сразу), дизайн
 - [storage-paged.md](storage-paged.md) — Storage: страничный режим (`paged()`), адаптер байтов, отсечка пустого хвоста (`tryTrimTail`), лог

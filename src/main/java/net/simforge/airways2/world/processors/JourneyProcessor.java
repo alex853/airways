@@ -108,7 +108,14 @@ public class JourneyProcessor {
             case ItinerariesDone -> itinerariesDone(world, journey);
             case SpendingTheirTime -> switchToReturnTrip(world, journey);
             case TooLateToBoard -> world.journeyControl().restartAfterTooLateToBoard(journey);
-            case Finished, CouldNotFindTickets, Orphaned -> cleanup(world, journey);
+            case Finished, CouldNotFindTickets, Orphaned -> {
+                // the special group is never in a terminal status: if it is (an old record, an admin action), it is brought back to the search
+                if (journey.isSpecialGroup()) {
+                    world.journeyControl().reviveSpecialGroup(journey);
+                } else {
+                    cleanup(world, journey);
+                }
+            }
         }
     }
 
@@ -171,6 +178,7 @@ public class JourneyProcessor {
             journey.setHeartbeatTime(world.getWorldTime() + Tools.random(Time.ONE_DAY, 3 * Time.ONE_DAY));
             journey.setAttemptCounter(journey.getAttemptCounter() + 1);
         } else {
+            // the special group chooses another city instead of CouldNotFindTickets (JourneyControl.couldNotFindTickets)
             world.journeyControl().couldNotFindTickets(journey);
         }
     }
@@ -362,6 +370,12 @@ public class JourneyProcessor {
             return;
         }
 
+        // the special group sleeps in the city and goes to a random one, it never finishes (and has no return trip)
+        if (journey.isSpecialGroup()) {
+            world.journeyControl().startSpendingTheirTime(journey);
+            return;
+        }
+
         if (journey.isReturningBack()) {
             world.journeyControl().finish(journey);
         } else {
@@ -370,6 +384,10 @@ public class JourneyProcessor {
     }
 
     private static void switchToReturnTrip(final World world, final Journeys.Journey journey) {
+        if (journey.isSpecialGroup()) {
+            world.journeyControl().goToRandomCity(journey, "has spent its time");
+            return;
+        }
         world.journeyControl().switchToReturnTrip(journey);
     }
 
