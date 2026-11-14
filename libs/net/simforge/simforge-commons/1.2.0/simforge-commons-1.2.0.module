@@ -1,0 +1,83 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.simforge",
+    "module": "simforge-commons",
+    "version": "1.2.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "simforge-commons-1.2.0.jar",
+          "url": "simforge-commons-1.2.0.jar",
+          "size": 69273,
+          "sha512": "a0ad1c67b7fffd6c71ea2752dcf60c2b6cf8845b0e62ecdbb5d1653a958ca3097e1d62ec27d396eeb4bc5d5a3ffe5cb46e63ff38ae3aa28d35b2d0473e4e75ba",
+          "sha256": "26638d2d7ec10a5cfb829830054100ac58749fe3b4949e8da84f1661ab283584",
+          "sha1": "b9517c2a324ff75e8b317a6c96d52551a2f4c435",
+          "md5": "251c0fa9e5d8b356d3a48248ee061c60"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "org.slf4j",
+          "module": "slf4j-api",
+          "version": {
+            "requires": "1.7.21"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.6.2"
+          }
+        },
+        {
+          "group": "javax.mail",
+          "module": "mail",
+          "version": {
+            "requires": "1.4.7"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "simforge-commons-1.2.0.jar",
+          "url": "simforge-commons-1.2.0.jar",
+          "size": 69273,
+          "sha512": "a0ad1c67b7fffd6c71ea2752dcf60c2b6cf8845b0e62ecdbb5d1653a958ca3097e1d62ec27d396eeb4bc5d5a3ffe5cb46e63ff38ae3aa28d35b2d0473e4e75ba",
+          "sha256": "26638d2d7ec10a5cfb829830054100ac58749fe3b4949e8da84f1661ab283584",
+          "sha1": "b9517c2a324ff75e8b317a6c96d52551a2f4c435",
+          "md5": "251c0fa9e5d8b356d3a48248ee061c60"
+        }
+      ]
+    }
+  ]
+}

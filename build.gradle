@@ -13,19 +13,33 @@ java {
 
 repositories {
     mavenCentral()
-    mavenLocal()
+    // simforge libraries live in the repo (maven layout with poms, so transitive dependencies resolve); no external repo
     maven {
-        url 'https://mymavenrepo.com/repo/9k6aQjU4o2RPUv5zfolv/' // simforge repo read url
+        url uri('libs')
+    }
+}
+
+// the poms of the libraries ask for RELEASE of each other: pin them to the versions in libs/
+def simforgeVersions = [
+        'simforge-commons'   : '1.2.0',
+        'simforge-atmosphere': '1.1.0',
+        'refdata-aircrafts'  : '1.6.0',
+        'refdata-airports'   : '3.1.4',
+        'network-view-core'  : '1.2.11',
+]
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'net.simforge' && simforgeVersions.containsKey(details.requested.name)) {
+            details.useVersion simforgeVersions[details.requested.name]
+        }
     }
 }
 
 dependencies {
-    implementation 'net.simforge:simforge-commons:latest.release'
-//    implementation 'net.simforge:simforge-commons-ext:latest.release'
-//    implementation 'net.simforge:simforge-atmosphere:latest.release'
-    implementation 'net.simforge:refdata-aircrafts:latest.release'
-    implementation 'net.simforge:refdata-airports:latest.release'
-    implementation 'net.simforge:network-view-core:latest.release'
+    implementation 'net.simforge:simforge-commons:1.2.0'
+    implementation 'net.simforge:refdata-aircrafts:1.6.0'
+    implementation 'net.simforge:refdata-airports:3.1.4'
+    implementation 'net.simforge:network-view-core:1.2.11'
 
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'

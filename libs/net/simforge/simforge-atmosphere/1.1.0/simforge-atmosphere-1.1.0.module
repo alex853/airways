@@ -1,0 +1,116 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.simforge",
+    "module": "simforge-atmosphere",
+    "version": "1.1.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "simforge-atmosphere-1.1.0.jar",
+          "url": "simforge-atmosphere-1.1.0.jar",
+          "size": 6159,
+          "sha512": "3c86d999f55442315e3693cb126d8ab74934afe7d8d14d3d64e49ccd2dafa67d0c644747df95d5155fa2dbdb058d71d7e61558fc77176ed7c694b6e89f04fcd9",
+          "sha256": "0f4f8663174364c9e1035660366e9b7c4318a4f51d5f640fd2bc4d4bed7f5470",
+          "sha1": "fc054ab2940cfc1c6f462d50964a6cfd791336aa",
+          "md5": "b82cabd5b41273b9283603ba07b448a9"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.simforge",
+          "module": "simforge-commons",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "net.simforge",
+          "module": "refdata-airports",
+          "version": {
+            "requires": "latest.release"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "simforge-atmosphere-1.1.0.jar",
+          "url": "simforge-atmosphere-1.1.0.jar",
+          "size": 6159,
+          "sha512": "3c86d999f55442315e3693cb126d8ab74934afe7d8d14d3d64e49ccd2dafa67d0c644747df95d5155fa2dbdb058d71d7e61558fc77176ed7c694b6e89f04fcd9",
+          "sha256": "0f4f8663174364c9e1035660366e9b7c4318a4f51d5f640fd2bc4d4bed7f5470",
+          "sha1": "fc054ab2940cfc1c6f462d50964a6cfd791336aa",
+          "md5": "b82cabd5b41273b9283603ba07b448a9"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "simforge-atmosphere-1.1.0-javadoc.jar",
+          "url": "simforge-atmosphere-1.1.0-javadoc.jar",
+          "size": 29827,
+          "sha512": "dd71f10c5c44ada7c654e060a6714fcd139de898b9ac113eeb7ff44907240161a59a57d7a4364efeba8531fcafaada371ac31c7078e070600618d625a1b69526",
+          "sha256": "1567e4b45ca4e5bf3cf030abe20357822ef26217021b2c103e8690a5d08d55d5",
+          "sha1": "6645bf426a28cc1ca737c04a7df109cd5b07e322",
+          "md5": "f8e58b3cbacacf71c0f870d8d2296114"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "simforge-atmosphere-1.1.0-sources.jar",
+          "url": "simforge-atmosphere-1.1.0-sources.jar",
+          "size": 3195,
+          "sha512": "cd2c854fb810857aad7c5714d45f66fd601db0b480f4e84c6c4b91a20a56167bf605f6799a1dce0f5a059ec00c399af5515610b936faf958f8225806fb365ef4",
+          "sha256": "2b7c9bafda104bdff20660888c528085de01167ad07a754e7e3910f1512832fa",
+          "sha1": "01eb22658f00b560d616681110e0b5aa3d9b0709",
+          "md5": "cbe19a17bff347d236f8ad6baa9282af"
+        }
+      ]
+    }
+  ]
+}

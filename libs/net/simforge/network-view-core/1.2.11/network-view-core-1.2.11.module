@@ -1,0 +1,144 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.simforge",
+    "module": "network-view-core",
+    "version": "1.2.11",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "network-view-core-1.2.11.jar",
+          "url": "network-view-core-1.2.11.jar",
+          "size": 68566,
+          "sha512": "71cec41b6901adc5523e9d6524ef801a7fd0ea5909fc2e74e284749458e738d3ede39504f2ac4828380f2206d8312bb9330cac00c68dde51dbe2e8dc25e587f7",
+          "sha256": "d8d4edfde398ca7f9227f5b6593cb094dae01c60a4fc4250057d3ef796f17bc4",
+          "sha1": "22fd7c6607d48879389015804362a54645360fae",
+          "md5": "844a9ecf0684cb9ee909f2e5288ed5ca"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.simforge",
+          "module": "simforge-commons",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "net.simforge",
+          "module": "simforge-atmosphere",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "net.simforge",
+          "module": "refdata-airports",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "org.hibernate",
+          "module": "hibernate-core",
+          "version": {
+            "requires": "5.0.1.Final"
+          }
+        },
+        {
+          "group": "org.hibernate",
+          "module": "hibernate-java8",
+          "version": {
+            "requires": "5.0.1.Final"
+          }
+        },
+        {
+          "group": "org.slf4j",
+          "module": "slf4j-api",
+          "version": {
+            "requires": "1.7.30"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "network-view-core-1.2.11.jar",
+          "url": "network-view-core-1.2.11.jar",
+          "size": 68566,
+          "sha512": "71cec41b6901adc5523e9d6524ef801a7fd0ea5909fc2e74e284749458e738d3ede39504f2ac4828380f2206d8312bb9330cac00c68dde51dbe2e8dc25e587f7",
+          "sha256": "d8d4edfde398ca7f9227f5b6593cb094dae01c60a4fc4250057d3ef796f17bc4",
+          "sha1": "22fd7c6607d48879389015804362a54645360fae",
+          "md5": "844a9ecf0684cb9ee909f2e5288ed5ca"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "network-view-core-1.2.11-javadoc.jar",
+          "url": "network-view-core-1.2.11-javadoc.jar",
+          "size": 121414,
+          "sha512": "322dddfaef578a2ed6d6f4302792babfeb8e9604e84a996c4e6bf7579bee5675330c7c2ab123e4bbee670ce39d2f898a8f7f92ec45680d78e2f4d301bf0ddc45",
+          "sha256": "9a02a7d0e1ffcf40cc6aa531c2dd2dbd014cb43cdd13611305e872a42f94454f",
+          "sha1": "9d3d3acc69f55182c83576a380866613298d4b74",
+          "md5": "0e552034d1d2345e6fb029cc31850451"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "network-view-core-1.2.11-sources.jar",
+          "url": "network-view-core-1.2.11-sources.jar",
+          "size": 31110,
+          "sha512": "3eeafe9773022c14a83ab78509d4a09d4f9b64bc276fa03a9ca39d654052ce7e12faec1283135577e9660b6554dd65496edfd2a9b6c8eeaada5b4bd01a4debd5",
+          "sha256": "99d40750e6539931d04b3956800688fa40de6cfde02196cabf7a2374e6815a47",
+          "sha1": "cf162b9fa355b43ac3b95ac0fa2c4de670331670",
+          "md5": "aa7ddc76e7e633c9f9854c46721fafb0"
+        }
+      ]
+    }
+  ]
+}

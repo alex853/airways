@@ -1,0 +1,137 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.simforge",
+    "module": "refdata-aircrafts",
+    "version": "1.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.3.2"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "refdata-aircrafts-1.6.0.jar",
+          "url": "refdata-aircrafts-1.6.0.jar",
+          "size": 123625,
+          "sha512": "24d726d2724fe15f48f84a4011ffd8cc75ca8c0b4b1591521f74aa024e3b9e2856960a61f583d737e809e766d4c316935ddd207b978d6484d7decd1f73ef2b17",
+          "sha256": "0c91cae5253fd3ef18cae15d54cd5f4ca11d669fc2ce090a6b070ebc0c6bddfa",
+          "sha1": "4aad6f65525bc60c38904c2aabf4d67bdfecdc21",
+          "md5": "77e34e5bedc0838c88a029bccc511c36"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.simforge",
+          "module": "simforge-commons",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "net.simforge",
+          "module": "simforge-atmosphere",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "ch.qos.logback",
+          "module": "logback-classic",
+          "version": {
+            "requires": "1.1.7"
+          }
+        },
+        {
+          "group": "com.google.guava",
+          "module": "guava",
+          "version": {
+            "requires": "21.0"
+          }
+        },
+        {
+          "group": "com.google.code.gson",
+          "module": "gson",
+          "version": {
+            "requires": "2.8.6"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "refdata-aircrafts-1.6.0.jar",
+          "url": "refdata-aircrafts-1.6.0.jar",
+          "size": 123625,
+          "sha512": "24d726d2724fe15f48f84a4011ffd8cc75ca8c0b4b1591521f74aa024e3b9e2856960a61f583d737e809e766d4c316935ddd207b978d6484d7decd1f73ef2b17",
+          "sha256": "0c91cae5253fd3ef18cae15d54cd5f4ca11d669fc2ce090a6b070ebc0c6bddfa",
+          "sha1": "4aad6f65525bc60c38904c2aabf4d67bdfecdc21",
+          "md5": "77e34e5bedc0838c88a029bccc511c36"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "refdata-aircrafts-1.6.0-javadoc.jar",
+          "url": "refdata-aircrafts-1.6.0-javadoc.jar",
+          "size": 21513,
+          "sha512": "4ab151506698bd1105508159c11d13dce8933d1437ff4598669c2daf574c56344bcb7eeae92b72208aaea34b9b3e83e00ff4897d2c4d33923cd413faebdcc11c",
+          "sha256": "744aeccb3f5fd043f72df9f85c2fc85d2d42810c0b83a5900054eea01c9baea1",
+          "sha1": "805e4cd50fada5a5c0aa804986ff3dc7672413c1",
+          "md5": "f745b210bcd66346f2974cf0c95f59a5"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "refdata-aircrafts-1.6.0-sources.jar",
+          "url": "refdata-aircrafts-1.6.0-sources.jar",
+          "size": 119316,
+          "sha512": "30d726cac37d7b4174a85e4d737f6a25a2e15f292090e5bda565fca902010273a1e5828979f843b154619ef0c9cff219e081e44d53829af0f16cb39bf96db313",
+          "sha256": "b1405742362d7d30fffad2761c479408e86da06652f59103474bf862ac59c3da",
+          "sha1": "b460121daf89e823517062de6cae3759edc1e76e",
+          "md5": "d9a2206d30a1f79ebd17b22e58fa1595"
+        }
+      ]
+    }
+  ]
+}

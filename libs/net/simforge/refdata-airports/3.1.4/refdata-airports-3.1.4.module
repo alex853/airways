@@ -1,0 +1,116 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "net.simforge",
+    "module": "refdata-airports",
+    "version": "3.1.4",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "refdata-airports-3.1.4.jar",
+          "url": "refdata-airports-3.1.4.jar",
+          "size": 939720,
+          "sha512": "8c809a6f05303d74a83b822a145646ea909d1300e0cc06d79d7a4265089d23fd176347a393b412d3d70572b716694a44320e196d78c9f5a1647cbd099913b4ae",
+          "sha256": "b8fffd60fbf2b3cde7779bb5617c604bcf4968f7bff188b5c96557d03cc2df73",
+          "sha1": "2b870c0befde33cb534d55be6acb5849661d23d8",
+          "md5": "5b3f78d37d4cccf06772e0dccbb9d23b"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "net.simforge",
+          "module": "simforge-commons",
+          "version": {
+            "requires": "latest.release"
+          }
+        },
+        {
+          "group": "org.junit.jupiter",
+          "module": "junit-jupiter",
+          "version": {
+            "requires": "5.4.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "refdata-airports-3.1.4.jar",
+          "url": "refdata-airports-3.1.4.jar",
+          "size": 939720,
+          "sha512": "8c809a6f05303d74a83b822a145646ea909d1300e0cc06d79d7a4265089d23fd176347a393b412d3d70572b716694a44320e196d78c9f5a1647cbd099913b4ae",
+          "sha256": "b8fffd60fbf2b3cde7779bb5617c604bcf4968f7bff188b5c96557d03cc2df73",
+          "sha1": "2b870c0befde33cb534d55be6acb5849661d23d8",
+          "md5": "5b3f78d37d4cccf06772e0dccbb9d23b"
+        }
+      ]
+    },
+    {
+      "name": "javadocElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "refdata-airports-3.1.4-javadoc.jar",
+          "url": "refdata-airports-3.1.4-javadoc.jar",
+          "size": 76340,
+          "sha512": "b0b8aa73fe82dd896802c15046d8de3eb51e63826d5175dfb7d53e1e8a2620d809703ae578a9875034ba68e63253e05c6a439b1ec3bb82546f71c8a0eb8b7d2e",
+          "sha256": "832744ec799d859426b4a9a702c6fb72269c828eca3204518bda7296ac24945b",
+          "sha1": "71c18cbbd7e3a1dccc3add530c82a807fac66610",
+          "md5": "675f9d3a8caacc5e3327d021f743c0ee"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "refdata-airports-3.1.4-sources.jar",
+          "url": "refdata-airports-3.1.4-sources.jar",
+          "size": 921478,
+          "sha512": "5d8bf23a419ccbce20183b66a4dc1c0cff677296108594cb393c2640cce4adae798b1097b756318fe9604d437e9ac71767859d05f5ac76dc39155b6b6475cc4b",
+          "sha256": "dc0513b93e386838d1db7b629bf2b79e1e5b17dd6e4a1f1cddcf3d0301c9f5f0",
+          "sha1": "d18dab8c64e5512e6c2c8dd6a07f8f2ae9c8c54a",
+          "md5": "0429d78248ba6f25f21f3b1b36f04099"
+        }
+      ]
+    }
+  ]
+}
